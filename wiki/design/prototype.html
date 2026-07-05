@@ -146,6 +146,41 @@
 
   .cap-note { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
 
+  /* ===== 游戏主页签（内容分层） ===== */
+  .game-tabs { display: flex; gap: 4px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .game-tab {
+    padding: 11px 22px; border: none; background: none; cursor: pointer;
+    font-size: 14px; font-family: inherit; color: var(--muted);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .game-tab:hover { color: var(--ink); }
+  .game-tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--primary); }
+  .game-tab:disabled { color: var(--faint); cursor: not-allowed; }
+  .game-tab .tab-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); margin-left: 6px; vertical-align: 2px; }
+  .game-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* 常驻状态条：切走页签也能看到进度脉搏 */
+  .status-strip { display: flex; gap: 10px; padding: 8px 24px; background: oklch(0.19 0.015 262); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .strip-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 3px 12px; border-radius: 6px;
+    background: var(--surface); border: 1px solid var(--line);
+    font-size: 12.5px; color: var(--muted); cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .strip-item:hover { border-color: var(--line-strong); color: var(--ink); }
+  .strip-item b { color: var(--ink); font-weight: 600; }
+  .strip-item .mini-bar { width: 72px; height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
+  .strip-item .mini-bar > i { display: block; height: 100%; background: var(--primary); }
+  .strip-item .mini-bar.fight > i { background: var(--hp); }
+
+  .game-pane { display: none; }
+  .game-pane.active { display: block; }
+  .pane-wrap { max-width: 1000px; margin: 0 auto; padding: 20px 24px 48px; width: 100%; }
+  .pane-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .pane-grid { grid-template-columns: 1fr; } }
+  .pane-grid .panel + .panel { margin-top: 16px; }
+
   /* ===== 战斗区 ===== */
   .map-tabs { display: flex; border-bottom: 1px solid var(--line); }
   .map-tab { flex: 1; text-align: center; padding: 10px 4px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; }
@@ -403,7 +438,7 @@
 
 <!-- ============ S1 开局第一分钟 ============ -->
 <section class="scene" id="s1">
-  <div class="scene-note"><b>场景 1 / 开局</b>第 1 轮开局：境界 1、无路线、地图 1 自动推进。武学面板锁定，首个目标是攒 2,800 内力突破境界 2 解锁路线。</div>
+  <div class="scene-note"><b>场景 1 / 开局</b>第 1 轮开局：境界 1、无路线、地图 1 自动推进。武学与声望阁页签锁定（锁定文案即目标指引），首个目标是攒 2,800 内力突破境界 2 解锁路线。可点：修炼/战斗页签、状态条。</div>
   <header class="topbar">
     <div class="game-title serif">江湖无尽录<span class="round">第 1 轮</span></div>
     <div class="realm-chip"><span class="name serif">江湖新丁</span><span class="lv">境界 1 / 5</span></div>
@@ -414,36 +449,49 @@
       <div class="res rep"><div class="label">声望</div><div class="value">0</div></div>
     </div>
   </header>
-  <div class="layout">
-    <div>
-      <section class="panel">
-        <div class="panel-head">突破充能 <span class="sub">境界 1 → 2 · 初窥门径</span></div>
-        <div class="panel-body">
-          <div class="kv"><span class="k">总消耗</span><span class="v">2,800 内力（560 × 5 段）</span></div>
-          <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg part"><i style="width:60%"></i></div><div class="charge-seg"></div><div class="charge-seg"></div><div class="charge-seg"></div></div>
-          <div class="charge-label"><span>已注入 896 / 2,800</span><span>第 2 段 60%</span></div>
-          <button class="btn">注入充能</button>
-          <div class="cap-note">突破至境界 2 后，选择你的武学路线</div>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">挂机产出</div>
-        <div class="panel-body">
-          <div class="zone-box">
-            <div class="zt">内力 / 秒 · 资源产出域</div>
-            <div class="zone-line"><span class="base">9.0 × 1.25<sup>0</sup> = 9.0</span> = <span class="result">9.0</span></div>
-            <div class="zone-legend"><span class="perm">永久（无）</span><span class="temp">本轮（无）</span></div>
+  <div class="game-tabs">
+    <button class="game-tab active" data-pane="s1-cultivate" onclick="switchPane(this)">修炼</button>
+    <button class="game-tab" data-pane="s1-battle" onclick="switchPane(this)">战斗</button>
+    <button class="game-tab" disabled title="突破至境界 2 后解锁">武学 · 境界 2 解锁</button>
+    <button class="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
+  </div>
+  <div class="status-strip">
+    <span class="strip-item" onclick="jumpPane('s1','s1-cultivate')">突破充能 <span class="mini-bar"><i style="width:32%"></i></span> <b>1/5 段</b> · 第 2 段 60%</span>
+    <span class="strip-item" onclick="jumpPane('s1','s1-battle')">村外小径 <b>2/8</b> · 对战 拦路泼皮 <span class="mini-bar fight"><i style="width:59%"></i></span></span>
+  </div>
+
+  <!-- 页签 · 修炼 -->
+  <div class="game-pane active" id="s1-cultivate">
+    <div class="pane-wrap">
+      <div class="pane-grid">
+        <section class="panel">
+          <div class="panel-head">突破充能 <span class="sub">境界 1 → 2 · 初窥门径</span></div>
+          <div class="panel-body">
+            <div class="kv"><span class="k">总消耗</span><span class="v">2,800 内力（560 × 5 段）</span></div>
+            <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg part"><i style="width:60%"></i></div><div class="charge-seg"></div><div class="charge-seg"></div><div class="charge-seg"></div></div>
+            <div class="charge-label"><span>已注入 896 / 2,800</span><span>第 2 段 60%</span></div>
+            <button class="btn">注入充能</button>
+            <div class="cap-note">突破至境界 2 后，选择你的武学路线</div>
           </div>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">武学</div>
-        <div class="panel-body">
-          <div class="cap-note" style="margin:0; font-size:13px; padding:8px 0; text-align:center; color:var(--muted)">突破至境界 2 后解锁三大路线<br>华山 · 剑 / 少林 · 金钟 / 唐门 · 毒</div>
-        </div>
-      </section>
+        </section>
+        <section class="panel">
+          <div class="panel-head">挂机产出</div>
+          <div class="panel-body">
+            <div class="zone-box">
+              <div class="zt">内力 / 秒 · 资源产出域</div>
+              <div class="zone-line"><span class="base">9.0 × 1.25<sup>0</sup> = 9.0</span> = <span class="result">9.0</span></div>
+              <div class="zone-legend"><span class="perm">永久（无）</span><span class="temp">本轮（无）</span></div>
+            </div>
+            <div class="cap-note">归隐后可用声望购买永久加成，下一轮产出更快</div>
+          </div>
+        </section>
+      </div>
     </div>
-    <div>
+  </div>
+
+  <!-- 页签 · 战斗 -->
+  <div class="game-pane" id="s1-battle">
+    <div class="pane-wrap">
       <section class="panel">
         <div class="map-tabs">
           <div class="map-tab active">村外小径<span class="prog">2 / 8</span></div>
@@ -477,16 +525,6 @@
           <div class="log-line"><span class="turn">回合 2</span>拦路泼皮攻击被<span class="info-t">闪避</span></div>
           <div class="log-line"><span class="turn">回合 3</span>你普攻<span class="crit-t">暴击！</span>造成 <span class="dmg">15</span> 伤害</div>
         </div>
-      </section>
-    </div>
-    <div>
-      <section class="panel">
-        <div class="panel-head">路线</div>
-        <div class="panel-body"><div class="cap-note" style="margin:0; font-size:13px; text-align:center; padding:8px 0">尚未选择路线<br>境界 2 解锁</div></div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">声望节点 <span class="sub">首次归隐后解锁</span></div>
-        <div class="panel-body"><div class="cap-note" style="margin:0; font-size:13px; text-align:center; padding:8px 0">归隐后以声望换取永久加成<br>下一轮更快、更强</div></div>
       </section>
     </div>
   </div>
@@ -543,7 +581,7 @@
 
 <!-- ============ S3 主界面 · 推图中 ============ -->
 <section class="scene" id="s3">
-  <div class="scene-note"><b>场景 3 / 主界面</b>第 2 轮中期状态：境界 3、唐门路线、洛阳近郊第 7 关（精英·铁臂僧）。这是玩家 80% 时间所见的核心界面。可点：「换路线」按钮。</div>
+  <div class="scene-note"><b>场景 3 / 主界面</b>第 2 轮中期：境界 3、唐门、洛阳近郊第 7 关。主界面按内容分四个页签（修炼/战斗/武学/声望阁）；顶栏下的常驻状态条保证切走页签也能看到充能与战斗脉搏，点击可跳转。可点：四个页签、状态条、「换路线」。</div>
   <header class="topbar">
     <div class="game-title serif">江湖无尽录<span class="round">第 2 轮</span></div>
     <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
@@ -554,46 +592,59 @@
       <div class="res rep"><div class="label">声望</div><div class="value">40</div><div class="rate" style="color:var(--faint)">累计 130</div></div>
     </div>
   </header>
-  <div class="layout">
-    <div>
-      <section class="panel">
-        <div class="panel-head">突破充能 <span class="sub">境界 3 → 4 · 炉火纯青</span></div>
-        <div class="panel-body">
-          <div class="kv"><span class="k">总消耗</span><span class="v">10,000 内力（2,000 × 5 段）</span></div>
-          <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg part"><i></i></div><div class="charge-seg"></div></div>
-          <div class="charge-label"><span>已注入 6,900 / 10,000</span><span>第 4 段 45%</span></div>
-          <button class="btn">注入充能</button>
-          <div class="cap-note">第 5 段注满后需手动点击「突破」完成晋升</div>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">挂机产出</div>
-        <div class="panel-body">
-          <div class="zone-box">
-            <div class="zt">内力 / 秒 · 资源产出域</div>
-            <div class="zone-line"><span class="base">9.0 × 1.25<sup>2</sup> = 14.1</span> × <span class="perm">(1 + 20%)</span> = <span class="result">16.9</span></div>
-            <div class="zone-legend"><span class="perm">永久（旧梦重温 +20%）</span><span class="temp">本轮（无）</span></div>
+  <div class="game-tabs">
+    <button class="game-tab" data-pane="s3-cultivate" onclick="switchPane(this)">修炼</button>
+    <button class="game-tab active" data-pane="s3-battle" onclick="switchPane(this)">战斗</button>
+    <button class="game-tab" data-pane="s3-skill" onclick="switchPane(this)">武学<span class="tab-dot" title="可升级"></span></button>
+    <button class="game-tab" data-pane="s3-rep" onclick="switchPane(this)">声望阁</button>
+  </div>
+  <div class="status-strip">
+    <span class="strip-item" onclick="jumpPane('s3','s3-cultivate')">突破充能 <span class="mini-bar"><i style="width:69%"></i></span> <b>3/5 段</b> · 第 4 段 45%</span>
+    <span class="strip-item" onclick="jumpPane('s3','s3-battle')">洛阳近郊 <b>7/10</b> · 对战 铁臂僧 <span class="mini-bar fight"><i style="width:57.5%"></i></span></span>
+  </div>
+
+  <!-- 页签 · 修炼 -->
+  <div class="game-pane" id="s3-cultivate">
+    <div class="pane-wrap">
+      <div class="pane-grid">
+        <section class="panel">
+          <div class="panel-head">突破充能 <span class="sub">境界 3 → 4 · 炉火纯青</span></div>
+          <div class="panel-body">
+            <div class="kv"><span class="k">总消耗</span><span class="v">10,000 内力（2,000 × 5 段）</span></div>
+            <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg part"><i></i></div><div class="charge-seg"></div></div>
+            <div class="charge-label"><span>已注入 6,900 / 10,000</span><span>第 4 段 45%</span></div>
+            <button class="btn">注入充能</button>
+            <div class="cap-note">第 5 段注满后需手动点击「突破」完成晋升</div>
           </div>
+        </section>
+        <div>
+          <section class="panel">
+            <div class="panel-head">挂机产出</div>
+            <div class="panel-body">
+              <div class="zone-box">
+                <div class="zt">内力 / 秒 · 资源产出域</div>
+                <div class="zone-line"><span class="base">9.0 × 1.25<sup>2</sup> = 14.1</span> × <span class="perm">(1 + 20%)</span> = <span class="result">16.9</span></div>
+                <div class="zone-legend"><span class="perm">永久（旧梦重温 +20%）</span><span class="temp">本轮（无）</span></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">突破后变化预览 <span class="sub">境界 4 · 炉火纯青</span></div>
+            <div class="panel-body">
+              <div class="kv"><span class="k">气血</span><span class="v">290 → <b style="color:var(--poison)">495</b></span></div>
+              <div class="kv"><span class="k">攻击</span><span class="v">29 → <b style="color:var(--poison)">49</b></span></div>
+              <div class="kv"><span class="k">挂机产出</span><span class="v">16.9 → <b style="color:var(--poison)">21.1</b> / 秒</span></div>
+              <div class="kv"><span class="k">武学等级上限</span><span class="v">6 → <b style="color:var(--poison)">8</b></span></div>
+            </div>
+          </section>
         </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">武学 · 毒功 <span class="sub">上限 = 境界×2</span></div>
-        <div class="panel-body">
-          <div class="skill-row">
-            <span class="sname">淬毒心法</span><span class="slv">Lv 5 / 6</span>
-            <span class="seff">攻 +5% · 毒系数 +9.0pp</span>
-            <button class="skill-btn">升级 1,076</button>
-          </div>
-          <div class="skill-row">
-            <span class="sname">机制节点</span><span class="slv">1 / 3</span>
-            <span class="seff">初始毒层 +2（已购）</span>
-            <button class="skill-btn">节点 2 · 80 阅历</button>
-          </div>
-          <div class="cap-note">武学等级上限 6（境界 3 × 2）；突破至境界 4 后解锁 Lv 7–8</div>
-        </div>
-      </section>
+      </div>
     </div>
-    <div>
+  </div>
+
+  <!-- 页签 · 战斗 -->
+  <div class="game-pane active" id="s3-battle">
+    <div class="pane-wrap">
       <section class="panel">
         <div class="map-tabs">
           <div class="map-tab">村外小径<span class="prog">已通关 8/8</span></div>
@@ -621,7 +672,7 @@
           </div>
           <div class="counter-hint"><b>破甲</b>：本敌攻击无视你 40% 防御——护甲流在此收益降低，毒伤不受影响。<span class="src">来源：声望节点「再入江湖」</span></div>
         </div>
-        <div class="log">
+        <div class="log" style="max-height:320px">
           <div class="log-title">战斗记录 · 自动结算</div>
           <div class="log-line"><span class="turn">回合 0</span>唐门暗器出手，<span class="poison-t">施毒 3 层</span>（初始 1 + 节点 +2）</div>
           <div class="log-line"><span class="turn">回合 1</span>你普攻（×0.60）命中，造成 <span class="dmg">16</span> 伤害，<span class="poison-t">毒 +1 层</span></div>
@@ -635,45 +686,89 @@
         </div>
       </section>
     </div>
-    <div>
-      <section class="panel">
-        <div class="panel-head"><span class="route-name serif">唐门 · 毒</span></div>
-        <div class="panel-body">
-          <ul class="route-mech">
-            <li>第 0 回合自动<b>施毒 1 层</b>，每次命中 <b>+1 层</b></li>
-            <li>毒伤 = 攻击 × <b>21%</b>（基础 12% + 武学 9pp）× 层数</li>
-            <li>毒<b>无视防御、绕过护盾</b>，不可暴击</li>
-            <li>层数上限 <b>8</b>，满层触发<b>毒爆 50%</b></li>
-            <li>代价：普攻伤害 <b>×0.60</b></li>
-          </ul>
-          <button class="btn ghost" onclick="openModal('modal-switch')">换路线</button>
+  </div>
+
+  <!-- 页签 · 武学 -->
+  <div class="game-pane" id="s3-skill">
+    <div class="pane-wrap">
+      <div class="pane-grid">
+        <div>
+          <section class="panel">
+            <div class="panel-head">武学 · 毒功 <span class="sub">上限 = 境界×2</span></div>
+            <div class="panel-body">
+              <div class="skill-row">
+                <span class="sname">淬毒心法</span><span class="slv">Lv 5 / 6</span>
+                <span class="seff">攻 +5% · 毒系数 +9.0pp</span>
+                <button class="skill-btn">升级 1,076</button>
+              </div>
+              <div class="skill-row">
+                <span class="sname">机制节点</span><span class="slv">1 / 3</span>
+                <span class="seff">初始毒层 +2（已购）</span>
+                <button class="skill-btn">节点 2 · 80 阅历</button>
+              </div>
+              <div class="cap-note">武学等级上限 6（境界 3 × 2）；突破至境界 4 后解锁 Lv 7–8</div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">乘区透视 <span class="sub">每个最终量 ≤ 2 乘区</span></div>
+            <div class="panel-body">
+              <div class="zone-box">
+                <div class="zt">最终攻击 · 战斗域</div>
+                <div class="zone-line"><span class="base">基础 29</span> × <span class="perm">(1 + 0%)</span> × <span class="temp">(1 + 5%)</span> = <span class="result">30.5</span></div>
+                <div class="zone-legend"><span class="perm">永久加成</span><span class="temp">本轮加成（武学 攻+5%）</span></div>
+              </div>
+              <div class="zone-box">
+                <div class="zt">对 Boss 伤害 · 战斗域</div>
+                <div class="zone-line"><span class="base">结算伤害</span> × <span class="perm">(1 + 0%)</span> = <span class="result">×1.00</span></div>
+                <div class="zone-legend"><span class="perm">「破关心得」购买后 +10%</span></div>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">乘区透视 <span class="sub">每个最终量 ≤ 2 乘区</span></div>
-        <div class="panel-body">
-          <div class="zone-box">
-            <div class="zt">最终攻击 · 战斗域</div>
-            <div class="zone-line"><span class="base">基础 29</span> × <span class="perm">(1 + 0%)</span> × <span class="temp">(1 + 5%)</span> = <span class="result">30.5</span></div>
-            <div class="zone-legend"><span class="perm">永久加成</span><span class="temp">本轮加成（武学 攻+5%）</span></div>
+        <section class="panel">
+          <div class="panel-head"><span class="route-name serif">唐门 · 毒</span></div>
+          <div class="panel-body">
+            <ul class="route-mech">
+              <li>第 0 回合自动<b>施毒 1 层</b>，每次命中 <b>+1 层</b></li>
+              <li>毒伤 = 攻击 × <b>21%</b>（基础 12% + 武学 9pp）× 层数</li>
+              <li>毒<b>无视防御、绕过护盾</b>，不可暴击</li>
+              <li>层数上限 <b>8</b>，满层触发<b>毒爆 50%</b></li>
+              <li>代价：普攻伤害 <b>×0.60</b></li>
+            </ul>
+            <button class="btn ghost" onclick="openModal('modal-switch')">换路线</button>
           </div>
-          <div class="zone-box">
-            <div class="zt">对 Boss 伤害 · 战斗域</div>
-            <div class="zone-line"><span class="base">结算伤害</span> × <span class="perm">(1 + 0%)</span> = <span class="result">×1.00</span></div>
-            <div class="zone-legend"><span class="perm">「破关心得」购买后 +10%</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页签 · 声望阁 -->
+  <div class="game-pane" id="s3-rep">
+    <div class="pane-wrap">
+      <div class="pane-grid">
+        <section class="panel">
+          <div class="panel-head">声望节点 <span class="sub">余 40 / 累计 130</span></div>
+          <div class="panel-body">
+            <div class="node-row"><span class="nname">轻装上路 <span class="owned">已购</span></span><span class="price">30</span></div>
+            <div class="node-row"><span class="nname">旧梦重温 <span class="owned">已购</span></span><span class="price">60</span></div>
+            <div class="node-row"><span class="nname">武道笔记 · 开局 +40 阅历</span><span class="price">40</span></div>
+            <div class="node-row dim"><span class="nname">破关心得 · 对 Boss 伤害 +10%</span><span class="price">70</span></div>
+            <div class="node-row dim"><span class="nname">师门指引 · 开局送机制节点 1</span><span class="price">80</span></div>
+            <button class="btn ghost" onclick="showScene('s8')">进入声望阁（全部 8 个节点）</button>
           </div>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head">声望节点 <span class="sub">余 40 / 累计 130</span></div>
-        <div class="panel-body">
-          <div class="node-row"><span class="nname">轻装上路 <span class="owned">已购</span></span><span class="price">30</span></div>
-          <div class="node-row"><span class="nname">旧梦重温 <span class="owned">已购</span></span><span class="price">60</span></div>
-          <div class="node-row"><span class="nname">武道笔记 · 开局 +40 阅历</span><span class="price">40</span></div>
-          <div class="node-row dim"><span class="nname">破关心得 · 对 Boss 伤害 +10%</span><span class="price">70</span></div>
-          <button class="btn ghost" onclick="showScene('s8')">查看全部 8 个节点</button>
-        </div>
-      </section>
+        </section>
+        <section class="panel">
+          <div class="panel-head">本轮声望预估 <span class="sub">归隐时结算</span></div>
+          <div class="panel-body">
+            <div class="kv"><span class="k">击败山贼头目（Boss 1）</span><span class="v">20</span></div>
+            <div class="kv"><span class="k">击败铁掌恶僧（Boss 2）</span><span class="v" style="color:var(--faint)">未击败</span></div>
+            <div class="kv"><span class="k">击败黑风寨主（Boss 3）</span><span class="v" style="color:var(--faint)">未击败</span></div>
+            <div class="kv"><span class="k">表现奖励 · 精英首杀 2/5</span><span class="v" style="color:var(--gold)">+8%</span></div>
+            <div class="kv" style="border-top:1px solid var(--line); margin-top:6px; padding-top:8px"><span class="k"><b>当前预估</b></span><span class="v" style="color:var(--gold); font-weight:700">21</span></div>
+            <div class="cap-note">境界不计声望分；打进度才是唯一的声望来源</div>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 </section>
@@ -1066,8 +1161,33 @@
     if (e.key === 'ArrowLeft' && cur > 0) showScene(SCENES[cur - 1]);
     if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.open, .ceremony.open, .breakthrough-flash.open').forEach(m => m.classList.remove('open'));
   });
-  showScene(SCENES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 's1');
-  window.addEventListener('hashchange', () => { if (SCENES.includes(location.hash.slice(1))) showScene(location.hash.slice(1)); });
+  function applyHash() {
+    const h = location.hash.slice(1);
+    if (SCENES.includes(h)) { showScene(h); return true; }
+    const pane = h && document.getElementById(h);
+    if (pane && pane.classList.contains('game-pane')) {
+      const scene = pane.closest('.scene');
+      showScene(scene.id);
+      jumpPane(scene.id, h);
+      return true;
+    }
+    return false;
+  }
+  if (!applyHash()) showScene('s1');
+  window.addEventListener('hashchange', applyHash);
+
+  /* ===== 游戏主页签 ===== */
+  function switchPane(btn) {
+    const scene = btn.closest('.scene');
+    const pane = btn.dataset.pane;
+    scene.querySelectorAll('.game-pane').forEach(p => p.classList.toggle('active', p.id === pane));
+    scene.querySelectorAll('.game-tab').forEach(t => t.classList.toggle('active', t.dataset.pane === pane));
+  }
+  function jumpPane(sceneId, paneId) {
+    const scene = document.getElementById(sceneId);
+    scene.querySelectorAll('.game-pane').forEach(p => p.classList.toggle('active', p.id === paneId));
+    scene.querySelectorAll('.game-tab').forEach(t => t.classList.toggle('active', t.dataset.pane === paneId));
+  }
 
   /* ===== 弹窗 ===== */
   function openModal(id) { document.getElementById(id).classList.add('open'); }

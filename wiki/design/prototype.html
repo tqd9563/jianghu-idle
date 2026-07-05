@@ -87,10 +87,12 @@
   .realm-chip { display: flex; align-items: baseline; gap: 8px; }
   .realm-chip .name { font-size: 16px; font-weight: 600; color: var(--primary); }
   .realm-chip .lv { font-size: 12px; color: var(--muted); }
-  .res-group { display: flex; gap: 24px; margin-left: auto; }
-  .res { text-align: right; }
+  /* 资源仪表簇：一个容器、四个等高格、统一基线 */
+  .res-group { display: flex; margin-left: auto; border: 1px solid var(--line); border-radius: 8px; background: oklch(0.19 0.015 262); overflow: hidden; }
+  .res { display: flex; align-items: baseline; gap: 7px; padding: 8px 16px; }
+  .res + .res { border-left: 1px solid var(--line); }
   .res .label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; }
-  .res .value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: var(--glow-num); }
+  .res .value { font-size: 15.5px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: var(--glow-num); }
   .res .rate { font-size: 11px; color: var(--poison); font-variant-numeric: tabular-nums; }
   .res.rep .value { color: var(--gold); }
 
@@ -146,8 +148,9 @@
 
   .cap-note { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
 
-  /* ===== 游戏主页签（内容分层） ===== */
-  .game-tabs { display: flex; gap: 4px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  /* ===== 游戏主页签（内容分层）：页签居左，进度脉搏居右，共占一行 ===== */
+  .game-tabs { display: flex; gap: 4px; align-items: center; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .tab-pulse { display: flex; gap: 10px; margin-left: auto; padding: 6px 0; }
   .game-tab {
     padding: 11px 22px; border: none; background: none; cursor: pointer;
     font-size: 14px; font-family: inherit; color: var(--muted);
@@ -159,8 +162,7 @@
   .game-tab .tab-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); margin-left: 6px; vertical-align: 2px; }
   .game-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-  /* 常驻状态条：切走页签也能看到进度脉搏 */
-  .status-strip { display: flex; gap: 10px; padding: 8px 24px; background: oklch(0.19 0.015 262); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  /* 常驻进度脉搏胶囊（位于页签行右侧） */
   .strip-item {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 3px 12px; border-radius: 6px;
@@ -438,7 +440,7 @@
 
 <!-- ============ S1 开局第一分钟 ============ -->
 <section class="scene" id="s1">
-  <div class="scene-note"><b>场景 1 / 开局</b>第 1 轮开局：境界 1、无路线、地图 1 自动推进。武学与声望阁页签锁定（锁定文案即目标指引），首个目标是攒 2,800 内力突破境界 2 解锁路线。可点：修炼/战斗页签、状态条。</div>
+  <div class="scene-note"><b>场景 1 / 开局</b>第 1 轮开局：境界 1、无路线、地图 1 自动推进。武学与声望阁页签锁定（锁定文案即目标指引），首个目标是攒 2,800 内力突破境界 2 解锁路线。可点：修炼/战斗页签、页签行右侧的进度胶囊。</div>
   <header class="topbar">
     <div class="game-title serif">江湖无尽录<span class="round">第 1 轮</span></div>
     <div class="realm-chip"><span class="name serif">江湖新丁</span><span class="lv">境界 1 / 5</span></div>
@@ -454,10 +456,10 @@
     <button class="game-tab" data-pane="s1-battle" onclick="switchPane(this)">战斗</button>
     <button class="game-tab" disabled title="突破至境界 2 后解锁">武学 · 境界 2 解锁</button>
     <button class="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
-  </div>
-  <div class="status-strip">
-    <span class="strip-item" onclick="jumpPane('s1','s1-cultivate')">运转周天 <span class="mini-bar"><i style="width:32%"></i></span> <b>1/5</b> · 第二周天 60%</span>
-    <span class="strip-item" onclick="jumpPane('s1','s1-battle')">村外小径 <b>2/8</b> · 对战 拦路泼皮 <span class="mini-bar fight"><i style="width:59%"></i></span></span>
+    <div class="tab-pulse">
+      <span class="strip-item" onclick="jumpPane('s1','s1-cultivate')">运转周天 <span class="mini-bar"><i style="width:32%"></i></span> <b>1/5</b> · 第二周天 60%</span>
+      <span class="strip-item" onclick="jumpPane('s1','s1-battle')">村外小径 <b>2/8</b> · 对战 拦路泼皮 <span class="mini-bar fight"><i style="width:59%"></i></span></span>
+    </div>
   </div>
 
   <!-- 页签 · 修炼 -->
@@ -580,7 +582,7 @@
 
 <!-- ============ S3 主界面 · 推图中 ============ -->
 <section class="scene" id="s3">
-  <div class="scene-note"><b>场景 3 / 主界面</b>第 2 轮中期：境界 3、唐门、洛阳近郊第 7 关。主界面按内容分四个页签（修炼/战斗/武学/声望阁）；顶栏下的常驻状态条保证切走页签也能看到周天与战斗脉搏，点击可跳转。可点：四个页签、状态条、「换路线」。</div>
+  <div class="scene-note"><b>场景 3 / 主界面</b>第 2 轮中期：境界 3、唐门、洛阳近郊第 7 关。主界面按内容分四个页签（修炼/战斗/武学/声望阁）；页签行右侧的常驻进度胶囊保证切走页签也能看到周天与战斗脉搏，点击可跳转。可点：四个页签、进度胶囊、「换路线」。</div>
   <header class="topbar">
     <div class="game-title serif">江湖无尽录<span class="round">第 2 轮</span></div>
     <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
@@ -596,10 +598,10 @@
     <button class="game-tab active" data-pane="s3-battle" onclick="switchPane(this)">战斗</button>
     <button class="game-tab" data-pane="s3-skill" onclick="switchPane(this)">武学<span class="tab-dot" title="可升级"></span></button>
     <button class="game-tab" data-pane="s3-rep" onclick="switchPane(this)">声望阁</button>
-  </div>
-  <div class="status-strip">
-    <span class="strip-item" onclick="jumpPane('s3','s3-cultivate')">运转周天 <span class="mini-bar"><i style="width:69%"></i></span> <b>3/5</b> · 第四周天 45%</span>
-    <span class="strip-item" onclick="jumpPane('s3','s3-battle')">洛阳近郊 <b>7/10</b> · 对战 铁臂僧 <span class="mini-bar fight"><i style="width:57.5%"></i></span></span>
+    <div class="tab-pulse">
+      <span class="strip-item" onclick="jumpPane('s3','s3-cultivate')">运转周天 <span class="mini-bar"><i style="width:69%"></i></span> <b>3/5</b> · 第四周天 45%</span>
+      <span class="strip-item" onclick="jumpPane('s3','s3-battle')">洛阳近郊 <b>7/10</b> · 对战 铁臂僧 <span class="mini-bar fight"><i style="width:57.5%"></i></span></span>
+    </div>
   </div>
 
   <!-- 页签 · 修炼 -->

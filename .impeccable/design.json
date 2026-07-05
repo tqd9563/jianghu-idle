@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-05T14:18:50Z",
+  "title": "Design System: 江湖无尽录",
+  "extensions": {
+    "colorMeta": {
+      "candle-gold": { "role": "primary", "displayName": "烛火暖金", "canonical": "oklch(0.76 0.13 78)", "tonalRamp": ["oklch(0.15 0.13 78)", "oklch(0.27 0.13 78)", "oklch(0.38 0.13 78)", "oklch(0.50 0.13 78)", "oklch(0.62 0.13 78)", "oklch(0.76 0.13 78)", "oklch(0.86 0.10 78)", "oklch(0.95 0.05 78)"] },
+      "sword-cyan": { "role": "secondary", "displayName": "剑气冷青", "canonical": "oklch(0.74 0.10 215)", "tonalRamp": ["oklch(0.15 0.10 215)", "oklch(0.27 0.10 215)", "oklch(0.38 0.10 215)", "oklch(0.50 0.10 215)", "oklch(0.62 0.10 215)", "oklch(0.74 0.10 215)", "oklch(0.85 0.07 215)", "oklch(0.95 0.03 215)"] },
+      "poison-green": { "role": "tertiary", "displayName": "毒翠", "canonical": "oklch(0.72 0.14 145)", "tonalRamp": ["oklch(0.15 0.14 145)", "oklch(0.27 0.14 145)", "oklch(0.38 0.14 145)", "oklch(0.50 0.14 145)", "oklch(0.62 0.14 145)", "oklch(0.72 0.14 145)", "oklch(0.84 0.10 145)", "oklch(0.95 0.04 145)"] },
+      "blood-red": { "role": "tertiary", "displayName": "血褐", "canonical": "oklch(0.64 0.17 25)", "tonalRamp": ["oklch(0.15 0.17 25)", "oklch(0.25 0.17 25)", "oklch(0.35 0.17 25)", "oklch(0.45 0.17 25)", "oklch(0.55 0.17 25)", "oklch(0.64 0.17 25)", "oklch(0.80 0.10 25)", "oklch(0.95 0.03 25)"] },
+      "shield-blue": { "role": "tertiary", "displayName": "盾青", "canonical": "oklch(0.70 0.10 240)", "tonalRamp": ["oklch(0.15 0.10 240)", "oklch(0.26 0.10 240)", "oklch(0.37 0.10 240)", "oklch(0.48 0.10 240)", "oklch(0.59 0.10 240)", "oklch(0.70 0.10 240)", "oklch(0.83 0.07 240)", "oklch(0.95 0.03 240)"] },
+      "crit-ember": { "role": "tertiary", "displayName": "燎原橙", "canonical": "oklch(0.70 0.16 45)", "tonalRamp": ["oklch(0.15 0.16 45)", "oklch(0.26 0.16 45)", "oklch(0.37 0.16 45)", "oklch(0.48 0.16 45)", "oklch(0.59 0.16 45)", "oklch(0.70 0.16 45)", "oklch(0.83 0.10 45)", "oklch(0.95 0.04 45)"] },
+      "night-bg": { "role": "neutral", "displayName": "夜幕", "canonical": "oklch(0.165 0.014 262)", "tonalRamp": ["oklch(0.13 0.012 262)", "oklch(0.165 0.014 262)", "oklch(0.19 0.015 262)", "oklch(0.215 0.016 262)", "oklch(0.26 0.018 262)", "oklch(0.32 0.02 262)", "oklch(0.48 0.03 262)", "oklch(0.56 0.015 262)"] },
+      "ink-warm": { "role": "neutral", "displayName": "暖墨", "canonical": "oklch(0.90 0.012 85)", "tonalRamp": ["oklch(0.30 0.012 85)", "oklch(0.40 0.012 85)", "oklch(0.50 0.014 85)", "oklch(0.60 0.015 85)", "oklch(0.70 0.015 85)", "oklch(0.80 0.013 85)", "oklch(0.90 0.012 85)", "oklch(0.96 0.008 85)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "宋体专名", "purpose": "游戏标题、境界名、敌人名、仪式大字。仅限江湖专名（The Serif-Is-Sacred Rule）。" },
+      "body": { "displayName": "界面正文", "purpose": "说明、日志、机制描述。系统无衬线栈。" },
+      "data": { "displayName": "账台数字", "purpose": "一切数值。tabular-nums 等宽，右对齐成列（The Tabular Rule）。" },
+      "label": { "displayName": "标签注脚", "purpose": "字段标签、来源分解小字，淡墨 + 0.05em。" }
+    },
+    "shadows": [
+      { "name": "panel", "value": "0 2px 8px oklch(0.08 0.01 262 / 0.5)", "purpose": "面板静置阴影，极轻。" },
+      { "name": "modal", "value": "0 12px 48px oklch(0.05 0.01 262 / 0.7)", "purpose": "弹窗浮出。" },
+      { "name": "num-glow", "value": "0 0 12px oklch(0.76 0.13 78 / 0.35)", "purpose": "仅限顶栏资源数值与仪式数字的金色微光（The Midnight Rule）。" }
+    ],
+    "motion": [
+      { "name": "ease-sharp", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "默认状态转换缓动，150–300ms。" },
+      { "name": "pulse", "value": "box-shadow 呼吸光圈 1.6s infinite", "purpose": "全屏唯一推荐行动（突破就绪/归隐入口），同屏至多一个。" },
+      { "name": "fade-up", "value": "opacity+translateY 0.7s ease-sharp, 逐项 0.2–1.9s 延迟", "purpose": "峰终演出分步淡入；reduced-motion 降级为瞬时。" }
+    ],
+    "breakpoints": [
+      { "name": "layout-collapse", "value": "1200px" },
+      { "name": "route-cards-stack", "value": "980px" },
+      { "name": "pane-grid-stack", "value": "900px" },
+      { "name": "shop-grid-stack", "value": "860px" },
+      { "name": "seclusion-cols-stack", "value": "720px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "主行动按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "烛火暖金主按钮，每屏至多一个；pulse 变体仅限当前唯一推荐行动。",
+      "html": "<button class=\"ds-btn-primary\">突破 · 一流高手</button>",
+      "css": ".ds-btn-primary { display: inline-block; min-width: 220px; padding: 9px 24px; border: none; border-radius: 6px; background: oklch(0.76 0.13 78); color: oklch(0.18 0.03 78); font-size: 14px; font-weight: 600; cursor: pointer; transition: filter 0.15s; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid oklch(0.74 0.10 215); outline-offset: 2px; }"
+    },
+    {
+      "name": "描线按钮",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "次级操作：透明底 + 重线描边，hover 覆冷青浅底。",
+      "html": "<button class=\"ds-btn-ghost\">再逛逛江湖</button>",
+      "css": ".ds-btn-ghost { display: inline-block; min-width: 180px; padding: 9px 24px; border: 1px solid oklch(0.48 0.03 262); border-radius: 6px; background: transparent; color: oklch(0.90 0.012 85); font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; } .ds-btn-ghost:hover { background: oklch(0.74 0.10 215 / 0.14); }"
+    },
+    {
+      "name": "面板",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "账本格线式容器：卡面底 + 1px 描线 + 头部下划线。禁止嵌套。",
+      "html": "<section class=\"ds-panel\"><div class=\"ds-panel-head\">运转周天 <span>境界 3 → 4 · 炉火纯青</span></div><div class=\"ds-panel-body\">丹田内力 6,900 / 10,000</div></section>",
+      "css": ".ds-panel { width: 300px; background: oklch(0.215 0.016 262); border: 1px solid oklch(0.32 0.02 262); border-radius: 8px; box-shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5); overflow: hidden; color: oklch(0.90 0.012 85); font-size: 14px; } .ds-panel-head { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 14px; border-bottom: 1px solid oklch(0.32 0.02 262); font-weight: 600; } .ds-panel-head span { font-size: 12px; font-weight: 400; color: oklch(0.70 0.015 85); } .ds-panel-body { padding: 12px 14px; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "语义标签",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "敌人/机制标签：1px 语义色描边同色字。精英=金、Boss=血、机制=冷青。",
+      "html": "<span class=\"ds-tag ds-tag-elite\">精英</span> <span class=\"ds-tag ds-tag-trait\">破甲</span>",
+      "css": ".ds-tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; font-weight: 500; border: 1px solid currentColor; margin-right: 4px; } .ds-tag-elite { color: oklch(0.76 0.13 78); } .ds-tag-trait { color: oklch(0.74 0.10 215); background: oklch(0.74 0.10 215 / 0.14); }"
+    },
+    {
+      "name": "游戏页签",
+      "kind": "nav",
+      "refersTo": "game-tab-active",
+      "description": "主导航：无底色，active 金色下划线；锁定文案即目标指引。",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-active\">修炼</button><button class=\"ds-tab\">战斗</button><button class=\"ds-tab\" disabled>声望阁 · 归隐后解锁</button></nav>",
+      "css": ".ds-tabs { display: flex; gap: 4px; border-bottom: 1px solid oklch(0.32 0.02 262); background: oklch(0.215 0.016 262); padding: 0 12px; } .ds-tab { padding: 11px 22px; border: none; background: none; font-size: 14px; color: oklch(0.70 0.015 85); border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; } .ds-tab:hover { color: oklch(0.90 0.012 85); } .ds-tab.ds-active { color: oklch(0.90 0.012 85); font-weight: 600; border-bottom-color: oklch(0.76 0.13 78); } .ds-tab:disabled { color: oklch(0.56 0.015 262); cursor: not-allowed; }"
+    },
+    {
+      "name": "进度胶囊",
+      "kind": "custom",
+      "refersTo": "pulse-capsule",
+      "description": "页签行右侧常驻的进度脉搏：迷你进度条 + 等宽数字，点击跳转对应页签。",
+      "html": "<span class=\"ds-pulse\">运转周天 <span class=\"ds-pulse-bar\"><i style=\"width:69%\"></i></span> <b>3/5</b> · 第四周天 45%</span>",
+      "css": ".ds-pulse { display: inline-flex; align-items: center; gap: 8px; padding: 3px 12px; border-radius: 6px; background: oklch(0.215 0.016 262); border: 1px solid oklch(0.32 0.02 262); font-size: 12.5px; color: oklch(0.70 0.015 85); cursor: pointer; font-variant-numeric: tabular-nums; } .ds-pulse:hover { border-color: oklch(0.48 0.03 262); color: oklch(0.90 0.012 85); } .ds-pulse b { color: oklch(0.90 0.012 85); } .ds-pulse-bar { width: 72px; height: 6px; border-radius: 3px; background: oklch(0.28 0.018 262); overflow: hidden; display: inline-block; } .ds-pulse-bar i { display: block; height: 100%; background: oklch(0.76 0.13 78); }"
+    },
+    {
+      "name": "周天充能条",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "签名组件：5 段周天进度（丹田内力的派生显示），满段金实心、进行段 65% 金。",
+      "html": "<div class=\"ds-charge\"><div class=\"ds-seg ds-full\"></div><div class=\"ds-seg ds-full\"></div><div class=\"ds-seg ds-full\"></div><div class=\"ds-seg ds-part\"><i></i></div><div class=\"ds-seg\"></div></div>",
+      "css": ".ds-charge { display: flex; gap: 5px; width: 300px; } .ds-seg { flex: 1; height: 14px; border-radius: 4px; background: oklch(0.28 0.018 262); position: relative; overflow: hidden; } .ds-seg.ds-full { background: oklch(0.76 0.13 78); } .ds-seg.ds-part i { position: absolute; inset: 0; width: 45%; background: oklch(0.76 0.13 78); opacity: 0.65; }"
+    },
+    {
+      "name": "乘区透视",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "签名组件：数值透明立场的旗舰——基础 × 永久(金) × 本轮(冷青) = 结果(金)。",
+      "html": "<div class=\"ds-zone\"><div class=\"ds-zone-t\">最终攻击 · 战斗域</div><div class=\"ds-zone-l\"><span class=\"ds-b\">基础 29</span> × <span class=\"ds-p\">(1 + 0%)</span> × <span class=\"ds-t\">(1 + 5%)</span> = <span class=\"ds-r\">30.5</span></div></div>",
+      "css": ".ds-zone { width: 320px; background: oklch(0.26 0.018 262); border-radius: 6px; padding: 10px 12px; font-variant-numeric: tabular-nums; font-size: 13px; } .ds-zone-t { font-size: 12px; color: oklch(0.56 0.015 262); margin-bottom: 4px; } .ds-zone-l { line-height: 1.8; color: oklch(0.90 0.012 85); } .ds-b { color: oklch(0.70 0.015 85); } .ds-p { color: oklch(0.76 0.13 78); font-weight: 600; } .ds-t { color: oklch(0.74 0.10 215); font-weight: 600; } .ds-r { color: oklch(0.76 0.13 78); font-weight: 700; font-size: 15px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "夜雨客栈的账台",
+    "overview": "江湖夜雨里的一方账台：烛火照着账本，窗外是刀光与雨声。整套系统由两种气质咬合而成——武侠的夜（深蓝黑的底色、烛火暖金、剑气冷青、宋体专名）与账台的秤（tabular-nums 等宽数字、来源分解、双列对照表、一切数值可查）。氛围负责让玩家相信自己身在江湖，账本负责让玩家相信每一个数字。只有氛围是廉价页游，只有账本是 SaaS 后台。",
+    "keyCharacteristics": [
+      "深夜低照度分层：bg → surface → surface-raised 三级色调承载深度，阴影极轻",
+      "烛火暖金只标记「进展与主行动」，剑气冷青只标记「信息与教学」",
+      "六种战斗状态色是语义词汇表，永不用于装饰",
+      "宋体衬线只给江湖专名，界面与数据一律无衬线",
+      "高密度但有层级：页签分职责，仪表簇统一基线，留白即层级"
+    ],
+    "rules": [
+      { "name": "The Candlelight Rule", "body": "烛火暖金只照两样东西：进展（充能、声望、周天）与主行动（每屏至多一个金色按钮）。金色一旦泛滥，账台就成了赌场。", "section": "colors" },
+      { "name": "The Semantic Ink Rule", "body": "五种战斗状态色只允许携带各自的语义出现，且永远伴随文字标签。", "section": "colors" },
+      { "name": "The Serif-Is-Sacred Rule", "body": "宋体只出现在有名字的东西上——人、地、境界、招式、仪式。衬线一旦进表格，账台就成了戏台。", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "任何会变化的数字必须 tabular-nums 等宽渲染，右对齐成列。数字跳动时列不能晃。", "section": "typography" },
+      { "name": "The Midnight Rule", "body": "平面为常态，辉光是仪式。若某个日常组件看起来在发光，说明它越权了。", "section": "elevation" }
+    ],
+    "dos": [
+      "Do 所有可变数字用 tabular-nums 并右对齐成列；来源分解用淡墨小字挂在数值行下。",
+      "Do 保持单一数据源：同一数值三处渲染必须一致（golden 对照覆盖）。",
+      "Do 把演出预算全部花在峰终（归隐结算、突破瞬间）；日常交互 150–300ms 尖锐 ease-out。",
+      "Do 每个动效配 prefers-reduced-motion 降级。",
+      "Do 锁定态写明解锁条件，锁定文案即目标指引。"
+    ],
+    "donts": [
+      "Don't 廉价页游感：闪烁按钮、红点轰炸、战力飙升弹字、多个按钮同时呼吸发光。",
+      "Don't 低幼卡通休闲风：高饱和亮色大圆角糖果质感。",
+      "Don't 通用 SaaS 仪表盘气质：江湖专名必须走宋体，界面语言必须是武侠母语。",
+      "Don't border-left 彩条强调、渐变文字、装饰性毛玻璃。",
+      "Don't 日常组件辉光、非语义场合使用战斗状态色、表格里使用衬线。",
+      "Don't 发明第 8 项属性的展示位；不给无加成属性行写废字——留白即层级。"
+    ]
+  }
+}

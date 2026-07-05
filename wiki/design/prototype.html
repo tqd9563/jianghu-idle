@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《江湖无尽录》MVP-0 交互原型 · 夜色江湖</title>
+<style>
+  :root {
+    /* 夜色江湖 · 夜雨烛火剑气 */
+    --bg: oklch(0.165 0.014 262);
+    --surface: oklch(0.215 0.016 262);
+    --surface-2: oklch(0.26 0.018 262);
+    --ink: oklch(0.90 0.012 85);
+    --muted: oklch(0.70 0.015 85);
+    --faint: oklch(0.56 0.015 262);
+    --line: oklch(0.32 0.02 262);
+    --line-strong: oklch(0.48 0.03 262);
+    --primary: oklch(0.76 0.13 78);          /* 烛火暖金 */
+    --primary-ink: oklch(0.18 0.03 78);
+    --accent: oklch(0.74 0.10 215);           /* 剑气冷青 */
+    --accent-soft: oklch(0.74 0.10 215 / 0.14);
+    --gold: oklch(0.76 0.13 78);
+    --gold-soft: oklch(0.76 0.13 78 / 0.12);
+    --poison: oklch(0.72 0.14 145);
+    --hp: oklch(0.64 0.17 25);
+    --hp-soft: oklch(0.64 0.17 25 / 0.15);
+    --shield: oklch(0.70 0.10 240);
+    --crit: oklch(0.70 0.16 45);
+    --bar-track: oklch(0.28 0.018 262);
+    --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+    --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
+    /* z-index 语义层 */
+    --z-nav: 40; --z-modal-backdrop: 60; --z-modal: 61; --z-ceremony: 70;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    font-size: 14px; line-height: 1.55; min-height: 100vh;
+  }
+  .serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+
+  /* ===== 审阅导航（原型专用，非游戏 UI） ===== */
+  .proto-nav {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 208px;
+    background: oklch(0.13 0.012 262);
+    border-right: 1px solid var(--line);
+    padding: 14px 10px; overflow-y: auto; z-index: var(--z-nav);
+  }
+  .proto-nav .pn-title { font-size: 13px; font-weight: 700; padding: 0 8px 4px; }
+  .proto-nav .pn-sub { font-size: 11px; color: var(--faint); padding: 0 8px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .proto-nav .pn-group { font-size: 11px; color: var(--faint); letter-spacing: 0.08em; padding: 10px 8px 4px; }
+  .proto-nav button {
+    display: block; width: 100%; text-align: left;
+    padding: 7px 10px; margin: 1px 0; border: none; border-radius: 6px;
+    background: transparent; color: var(--muted);
+    font-size: 12.5px; font-family: inherit; cursor: pointer;
+  }
+  .proto-nav button:hover { background: var(--surface); color: var(--ink); }
+  .proto-nav button.active { background: var(--primary); color: var(--primary-ink); font-weight: 600; }
+  .proto-nav .pn-key { float: right; color: inherit; opacity: 0.5; font-size: 11px; }
+
+  .stage-area { margin-left: 208px; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* 场景说明条 */
+  .scene-note {
+    display: flex; gap: 10px; align-items: baseline;
+    padding: 8px 24px;
+    background: oklch(0.13 0.012 262);
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px; color: var(--muted);
+  }
+  .scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; white-space: nowrap; }
+
+  .scene { display: none; }
+  .scene.active { display: block; }
+
+  /* ===== 顶栏 ===== */
+  .topbar {
+    display: flex; align-items: center; gap: 28px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .game-title { font-size: 19px; font-weight: 700; letter-spacing: 0.06em; }
+  .game-title .round { font-size: 12px; color: var(--primary); border: 1px solid currentColor; border-radius: 4px; padding: 1px 8px; margin-left: 10px; vertical-align: 2px; letter-spacing: 0.1em; }
+  .realm-chip { display: flex; align-items: baseline; gap: 8px; }
+  .realm-chip .name { font-size: 16px; font-weight: 600; color: var(--primary); }
+  .realm-chip .lv { font-size: 12px; color: var(--muted); }
+  .res-group { display: flex; gap: 24px; margin-left: auto; }
+  .res { text-align: right; }
+  .res .label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; }
+  .res .value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: var(--glow-num); }
+  .res .rate { font-size: 11px; color: var(--poison); font-variant-numeric: tabular-nums; }
+  .res.rep .value { color: var(--gold); }
+
+  /* ===== 布局与面板 ===== */
+  .layout {
+    display: grid; grid-template-columns: 300px 1fr 300px;
+    gap: 16px; padding: 16px 24px 48px;
+    max-width: 1440px; margin: 0 auto; width: 100%;
+  }
+  @media (max-width: 1200px) { .layout { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+  .panel + .panel { margin-top: 16px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+  .panel-head .sub { font-size: 12px; font-weight: 400; color: var(--muted); }
+  .panel-body { padding: 12px 14px; }
+
+  .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; font-size: 13px; }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-variant-numeric: tabular-nums; font-weight: 500; }
+  .formula { font-size: 12px; color: var(--muted); background: var(--surface-2); border-radius: 6px; padding: 8px 10px; margin-top: 8px; font-variant-numeric: tabular-nums; line-height: 1.7; }
+
+  .bar { height: 8px; border-radius: 4px; background: var(--bar-track); overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+  .bar.hp > i { background: var(--hp); }
+  .bar.enemy-hp { height: 14px; border-radius: 5px; }
+  .bar.enemy-hp > i { background: var(--hp); }
+
+  .charge-track { display: flex; gap: 5px; margin: 10px 0 6px; }
+  .charge-seg { flex: 1; height: 14px; border-radius: 4px; background: var(--bar-track); position: relative; overflow: hidden; }
+  .charge-seg.full { background: var(--primary); }
+  .charge-seg.part > i { position: absolute; inset: 0; width: 45%; background: var(--primary); opacity: 0.65; }
+  .charge-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .btn {
+    display: inline-block; width: 100%;
+    padding: 9px 0; margin-top: 10px;
+    border: none; border-radius: 6px;
+    background: var(--primary); color: var(--primary-ink);
+    font-size: 14px; font-weight: 600; font-family: inherit;
+    cursor: pointer; text-align: center;
+    transition: filter 0.15s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { background: var(--bar-track); color: var(--faint); cursor: not-allowed; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line-strong); color: var(--ink); font-weight: 500; }
+  .btn.ghost:hover { background: var(--accent-soft); }
+  .btn.danger { background: var(--hp); color: oklch(0.98 0.005 25); }
+  .btn.pulse { animation: pulse 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 oklch(0.76 0.13 78 / 0.45); }
+    50% { box-shadow: 0 0 0 10px oklch(0.76 0.13 78 / 0); }
+  }
+
+  .cap-note { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
+
+  /* ===== 战斗区 ===== */
+  .map-tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .map-tab { flex: 1; text-align: center; padding: 10px 4px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; }
+  .map-tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--primary); }
+  .map-tab.locked { color: var(--faint); cursor: not-allowed; }
+  .map-tab .prog { display: block; font-size: 11px; font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .map-tab.active .prog { color: var(--primary); }
+
+  .battle-stage { padding: 16px 18px; }
+  .fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
+  .fighter { padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+  .fighter .fname { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fighter .frealm { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .vs { align-self: center; font-size: 15px; font-weight: 700; color: var(--faint); letter-spacing: 0.1em; padding-top: 30px; }
+  .hp-num { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 8px 0 3px; }
+  .mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; font-size: 12px; }
+  .mini-stats span { color: var(--muted); }
+  .mini-stats b { font-variant-numeric: tabular-nums; font-weight: 600; margin-left: 3px; }
+
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 4px; font-weight: 500; border: 1px solid; }
+  .tag.elite { color: var(--gold); border-color: var(--gold); }
+  .tag.boss { color: var(--hp); border-color: var(--hp); background: var(--hp-soft); }
+  .tag.trait { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .tag.poison-tag { color: var(--poison); border-color: var(--poison); }
+  .tag.shield-tag { color: var(--shield); border-color: var(--shield); }
+  .tag.crit-tag { color: var(--crit); border-color: var(--crit); }
+
+  .counter-hint { margin-top: 12px; padding: 8px 12px; background: var(--accent-soft); border-radius: 6px; font-size: 12.5px; }
+  .counter-hint b { color: var(--accent); }
+  .counter-hint .src { color: var(--faint); font-size: 11px; margin-left: 6px; }
+
+  .status-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 2px 9px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); font-variant-numeric: tabular-nums; }
+  .status-pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .status-pill.p { color: var(--poison); border-color: var(--poison); } .status-pill.p .dot { background: var(--poison); }
+  .status-pill.r { color: var(--hp); border-color: var(--hp); } .status-pill.r .dot { background: var(--hp); }
+
+  .log { border-top: 1px solid var(--line); padding: 12px 18px; max-height: 230px; overflow-y: auto; }
+  .log-title { font-size: 12px; color: var(--faint); letter-spacing: 0.08em; margin-bottom: 8px; }
+  .log-line { font-size: 13px; padding: 2.5px 0; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .log-line .turn { display: inline-block; width: 52px; color: var(--faint); font-size: 12px; }
+  .log-line .dmg { color: var(--ink); font-weight: 600; }
+  .log-line .poison-t { color: var(--poison); font-weight: 600; }
+  .log-line .crit-t { color: var(--crit); font-weight: 700; }
+  .log-line .info-t { color: var(--accent); }
+  .log-line .lose-t { color: var(--hp); font-weight: 700; }
+
+  /* ===== 乘区透视 ===== */
+  .zone-box { background: var(--surface-2); border-radius: 6px; padding: 10px 12px; margin-top: 8px; }
+  .zone-box:first-child { margin-top: 0; }
+  .zone-box .zt { font-size: 12px; color: var(--faint); margin-bottom: 4px; }
+  .zone-line { font-size: 13px; font-variant-numeric: tabular-nums; line-height: 1.8; }
+  .zone-line .base { color: var(--muted); }
+  .zone-line .perm { color: var(--gold); font-weight: 600; }
+  .zone-line .temp { color: var(--accent); font-weight: 600; }
+  .zone-line .result { color: var(--primary); font-weight: 700; font-size: 15px; }
+  .zone-legend { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--faint); }
+  .zone-legend .perm::before, .zone-legend .temp::before { content: "■"; margin-right: 4px; }
+  .zone-legend .perm { color: var(--gold); }
+  .zone-legend .temp { color: var(--accent); }
+
+  /* ===== 武学 / 节点 ===== */
+  .skill-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .skill-row:last-child { border-bottom: none; }
+  .skill-row .sname { font-weight: 600; font-size: 13.5px; }
+  .skill-row .slv { font-size: 12px; color: var(--primary); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .skill-row .seff { font-size: 12px; color: var(--muted); flex: 1; }
+  .skill-btn { font-size: 12px; padding: 4px 12px; border-radius: 5px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink); cursor: pointer; font-family: inherit; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .skill-btn:hover { background: var(--accent-soft); }
+
+  .route-mech { font-size: 12.5px; color: var(--muted); line-height: 1.8; list-style: none; }
+  .route-mech li { padding-left: 14px; position: relative; }
+  .route-mech li::before { content: ""; position: absolute; left: 0; top: 0.72em; width: 5px; height: 5px; border-radius: 50%; background: var(--poison); }
+  .route-mech b { color: var(--ink); }
+  .route-name { font-size: 16px; font-weight: 700; color: var(--poison); }
+
+  .node-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; font-size: 13px; gap: 8px; }
+  .node-row .owned { color: var(--poison); font-size: 12px; }
+  .node-row .price { color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .node-row .nname { color: var(--ink); }
+  .node-row.dim .nname { color: var(--faint); }
+
+  /* ===== 路线选择场景 ===== */
+  .route-select-wrap { max-width: 1080px; margin: 0 auto; padding: 44px 24px 60px; text-align: center; }
+  .route-select-wrap h1 { font-size: 28px; letter-spacing: 0.12em; margin-bottom: 8px; }
+  .route-select-wrap .lede { color: var(--muted); margin-bottom: 6px; }
+  .route-select-wrap .lede-sub { color: var(--faint); font-size: 12.5px; margin-bottom: 32px; }
+  .route-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; }
+  @media (max-width: 980px) { .route-cards { grid-template-columns: 1fr; } }
+  .route-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 22px 20px; cursor: pointer; position: relative;
+    transition: border-color 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .route-card:hover { transform: translateY(-3px); }
+  .route-card.selected { border-color: var(--rc); }
+  .route-card.selected::after { content: "已选"; position: absolute; top: 14px; right: 14px; font-size: 12px; color: var(--rc); border: 1px solid var(--rc); border-radius: 4px; padding: 1px 8px; }
+  .route-card .rc-name { font-size: 21px; font-weight: 700; color: var(--rc); letter-spacing: 0.08em; }
+  .route-card .rc-style { font-size: 12.5px; color: var(--muted); margin: 2px 0 14px; }
+  .route-card .rc-grant { font-size: 12px; color: var(--faint); letter-spacing: 0.06em; margin-bottom: 6px; }
+  .route-card ul { list-style: none; font-size: 13px; color: var(--muted); line-height: 1.9; }
+  .route-card ul b { color: var(--ink); }
+  .route-card .rc-cost { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--hp); }
+  .route-card.hs { --rc: var(--crit); }
+  .route-card.sl { --rc: var(--shield); }
+  .route-card.tm { --rc: var(--poison); }
+  .route-confirm { max-width: 420px; margin: 32px auto 0; }
+
+  /* ===== 弹窗 ===== */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: oklch(0.08 0.01 262 / 0.72);
+    display: none; align-items: center; justify-content: center;
+    z-index: var(--z-modal-backdrop); padding: 24px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px;
+    max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 12px 48px oklch(0.05 0.01 262 / 0.7);
+    z-index: var(--z-modal);
+    animation: modal-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes modal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .modal-head { padding: 16px 22px 12px; border-bottom: 1px solid var(--line); font-size: 17px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .modal-head .step-dots { font-size: 12px; color: var(--faint); font-weight: 400; }
+  .modal-body { padding: 18px 22px 22px; }
+  .modal-actions { display: flex; gap: 12px; margin-top: 18px; }
+  .modal-actions .btn { margin-top: 0; }
+
+  /* 失败提示 */
+  .fail-title { color: var(--hp); font-size: 18px; font-weight: 700; }
+  .fail-diag { margin: 14px 0; }
+  .fail-diag .fd-main { padding: 12px 14px; background: var(--hp-soft); border-radius: 8px; font-size: 14.5px; line-height: 1.7; }
+  .fail-diag .fd-main b { color: var(--hp); }
+  .fail-diag .fd-extra { padding: 9px 14px; margin-top: 8px; background: var(--surface-2); border-radius: 8px; font-size: 13px; color: var(--muted); }
+  .fail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .fail-stats .fs { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+  .fail-stats .fs .k { font-size: 11px; color: var(--faint); }
+  .fail-stats .fs .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* 归隐三栏 */
+  .seclusion-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .seclusion-cols { grid-template-columns: 1fr; } }
+  .sc-col { border-radius: 10px; padding: 14px; border: 1px solid var(--line); }
+  .sc-col h4 { font-size: 13px; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .sc-col.gain { background: var(--gold-soft); border-color: oklch(0.76 0.13 78 / 0.4); }
+  .sc-col.gain h4 { color: var(--gold); }
+  .sc-col.lose { background: var(--hp-soft); border-color: oklch(0.64 0.17 25 / 0.4); }
+  .sc-col.lose h4 { color: var(--hp); }
+  .sc-col.keep { background: var(--accent-soft); border-color: oklch(0.74 0.10 215 / 0.4); }
+  .sc-col.keep h4 { color: var(--accent); }
+  .sc-col ul { list-style: none; font-size: 13px; line-height: 2; color: var(--muted); }
+  .sc-col ul b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .sc-col .total { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 15px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+  /* 归隐演出 */
+  .ceremony {
+    position: fixed; inset: 0; z-index: var(--z-ceremony);
+    background: radial-gradient(ellipse at 50% 38%, oklch(0.22 0.03 78 / 0.9), oklch(0.10 0.012 262 / 0.98) 70%);
+    display: none; align-items: center; justify-content: center; text-align: center;
+  }
+  .ceremony.open { display: flex; }
+  .ceremony .c-inner { max-width: 560px; padding: 24px; }
+  .ceremony .c-kicker { color: var(--faint); letter-spacing: 0.3em; font-size: 13px; }
+  .ceremony h2 { font-size: 34px; letter-spacing: 0.18em; margin: 14px 0 6px; color: var(--ink); }
+  .ceremony .c-rep { font-size: 56px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; text-shadow: 0 0 32px oklch(0.76 0.13 78 / 0.5); margin: 18px 0 4px; }
+  .ceremony .c-rep-label { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+  .ceremony .c-summary { color: var(--muted); font-size: 14.5px; line-height: 2; }
+  .ceremony .c-summary b { color: var(--ink); }
+  .ceremony .btn { max-width: 300px; margin: 28px auto 0; }
+  .ceremony .fade-item { opacity: 0; animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .ceremony .fade-item:nth-child(2) { animation-delay: 0.2s; }
+  .ceremony .fade-item:nth-child(3) { animation-delay: 0.5s; }
+  .ceremony .fade-item:nth-child(4) { animation-delay: 0.9s; }
+  .ceremony .fade-item:nth-child(5) { animation-delay: 1.4s; }
+  .ceremony .fade-item:nth-child(6) { animation-delay: 1.9s; }
+  @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  /* 突破演出 */
+  .breakthrough-flash {
+    position: fixed; inset: 0; z-index: var(--z-ceremony);
+    background: radial-gradient(ellipse at 50% 45%, oklch(0.30 0.05 78 / 0.95), oklch(0.10 0.012 262 / 0.98) 75%);
+    display: none; align-items: center; justify-content: center; text-align: center;
+  }
+  .breakthrough-flash.open { display: flex; }
+  .breakthrough-flash h2 { font-size: 40px; letter-spacing: 0.22em; color: var(--primary); text-shadow: 0 0 40px oklch(0.76 0.13 78 / 0.6); }
+  .breakthrough-flash .bt-sub { color: var(--muted); margin-top: 10px; font-size: 14px; }
+  .breakthrough-flash .bt-stats { margin: 22px auto 0; max-width: 380px; text-align: left; }
+  .breakthrough-flash .bt-stats .kv .v { color: var(--poison); }
+
+  /* 声望商店场景 */
+  .shop-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; width: 100%; }
+  .shop-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+  .shop-head h1 { font-size: 22px; letter-spacing: 0.1em; }
+  .shop-head .bal { font-size: 15px; color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 860px) { .shop-grid { grid-template-columns: 1fr; } }
+  .shop-node { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .shop-node .sn-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .shop-node .sn-name { font-size: 15.5px; font-weight: 700; }
+  .shop-node .sn-price { font-size: 15px; color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .shop-node .sn-type { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 6px; align-self: flex-start; }
+  .shop-node .sn-eff { font-size: 13px; color: var(--muted); line-height: 1.7; flex: 1; }
+  .shop-node .btn { margin-top: 8px; padding: 7px 0; font-size: 13px; }
+  .shop-node.owned { border-color: oklch(0.72 0.14 145 / 0.5); }
+  .shop-node.owned .sn-name::after { content: " ✓ 已购"; color: var(--poison); font-size: 12px; font-weight: 500; }
+  .shop-node.rec { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px oklch(0.76 0.13 78 / 0.15); }
+  .shop-node .sn-rec-tag { font-size: 11px; color: var(--gold); }
+
+  /* 保底/门槛横幅 */
+  .banner { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; border: 1px solid; }
+  .banner.gold { background: var(--gold-soft); border-color: oklch(0.76 0.13 78 / 0.45); }
+  .banner.red { background: var(--hp-soft); border-color: oklch(0.64 0.17 25 / 0.45); }
+  .banner h3 { font-size: 16px; margin-bottom: 4px; }
+  .banner.gold h3 { color: var(--gold); }
+  .banner.red h3 { color: var(--hp); }
+  .banner p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .banner p b { color: var(--ink); }
+  .banner .banner-actions { display: flex; gap: 12px; max-width: 460px; }
+
+  .focus-wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 60px; width: 100%; }
+  .focus-wrap h1 { font-size: 22px; letter-spacing: 0.1em; margin-bottom: 16px; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 审阅导航 ============ -->
+<nav class="proto-nav" aria-label="原型场景导航">
+  <div class="pn-title">MVP-0 交互原型</div>
+  <div class="pn-sub">夜色江湖 · 审阅导航（← → 键切换）</div>
+  <div class="pn-group">首轮 · 开局</div>
+  <button data-scene="s1">1 开局第一分钟</button>
+  <button data-scene="s2">2 路线选择</button>
+  <div class="pn-group">首轮 · 中期</div>
+  <button data-scene="s3">3 主界面 · 推图中</button>
+  <button data-scene="s4">4 Boss 失败提示</button>
+  <button data-scene="s5">5 突破时刻</button>
+  <div class="pn-group">首轮 · 终局</div>
+  <button data-scene="s6">6 归隐门槛达成</button>
+  <button data-scene="s7">7 归隐结算流程</button>
+  <button data-scene="s8">8 声望商店</button>
+  <div class="pn-group">分支状态</div>
+  <button data-scene="s9">9 保底归隐</button>
+  <button data-scene="s10">10 换路线</button>
+</nav>
+
+<div class="stage-area">
+
+<!-- ============ S1 开局第一分钟 ============ -->
+<section class="scene" id="s1">
+  <div class="scene-note"><b>场景 1 / 开局</b>第 1 轮开局：境界 1、无路线、地图 1 自动推进。武学面板锁定，首个目标是攒 2,800 内力突破境界 2 解锁路线。</div>
+  <header class="topbar">
+    <div class="game-title serif">江湖无尽录<span class="round">第 1 轮</span></div>
+    <div class="realm-chip"><span class="name serif">江湖新丁</span><span class="lv">境界 1 / 5</span></div>
+    <div class="res-group">
+      <div class="res"><div class="label">内力</div><div class="value">340</div><div class="rate">+9.0 / 秒</div></div>
+      <div class="res"><div class="label">银两</div><div class="value">20</div></div>
+      <div class="res"><div class="label">阅历</div><div class="value">6</div></div>
+      <div class="res rep"><div class="label">声望</div><div class="value">0</div></div>
+    </div>
+  </header>
+  <div class="layout">
+    <div>
+      <section class="panel">
+        <div class="panel-head">突破充能 <span class="sub">境界 1 → 2 · 初窥门径</span></div>
+        <div class="panel-body">
+          <div class="kv"><span class="k">总消耗</span><span class="v">2,800 内力（560 × 5 段）</span></div>
+          <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg part"><i style="width:60%"></i></div><div class="charge-seg"></div><div class="charge-seg"></div><div class="charge-seg"></div></div>
+          <div class="charge-label"><span>已注入 896 / 2,800</span><span>第 2 段 60%</span></div>
+          <button class="btn">注入充能</button>
+          <div class="cap-note">突破至境界 2 后，选择你的武学路线</div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">挂机产出</div>
+        <div class="panel-body">
+          <div class="zone-box">
+            <div class="zt">内力 / 秒 · 资源产出域</div>
+            <div class="zone-line"><span class="base">9.0 × 1.25<sup>0</sup> = 9.0</span> = <span class="result">9.0</span></div>
+            <div class="zone-legend"><span class="perm">永久（无）</span><span class="temp">本轮（无）</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">武学</div>
+        <div class="panel-body">
+          <div class="cap-note" style="margin:0; font-size:13px; padding:8px 0; text-align:center; color:var(--muted)">突破至境界 2 后解锁三大路线<br>华山 · 剑 / 少林 · 金钟 / 唐门 · 毒</div>
+        </div>
+      </section>
+    </div>
+    <div>
+      <section class="panel">
+        <div class="map-tabs">
+          <div class="map-tab active">村外小径<span class="prog">2 / 8</span></div>
+          <div class="map-tab locked">洛阳近郊<span class="prog">通关村外小径解锁</span></div>
+          <div class="map-tab locked">华山古道<span class="prog">通关洛阳近郊解锁</span></div>
+        </div>
+        <div class="battle-stage">
+          <div class="fighters">
+            <div class="fighter">
+              <div class="fname serif">你</div>
+              <div class="frealm">江湖新丁 · 境界 1</div>
+              <div class="hp-num"><span>气血</span><span>91 / 100</span></div>
+              <div class="bar hp"><i style="width:91%"></i></div>
+              <div class="mini-stats"><span>攻<b>10</b></span><span>防<b>5</b></span><span>命<b>100</b></span><span>闪<b>10</b></span></div>
+            </div>
+            <div class="vs serif">对决</div>
+            <div class="fighter">
+              <div class="fname serif">拦路泼皮</div>
+              <div class="frealm">村外小径 · 第 2 关</div>
+              <div class="hp-num"><span>气血</span><span>19 / 32</span></div>
+              <div class="bar enemy-hp"><i style="width:59%"></i></div>
+              <div class="mini-stats"><span>攻<b>4.7</b></span><span>防<b>2.3</b></span><span>命<b>94</b></span><span>闪<b>8</b></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="log">
+          <div class="log-title">战斗记录 · 自动结算（胜利后自动进入下一关）</div>
+          <div class="log-line"><span class="turn">回合 1</span>你普攻命中，造成 <span class="dmg">10</span> 伤害</div>
+          <div class="log-line"><span class="turn">回合 1</span>拦路泼皮攻击，你受到 <span class="dmg">4</span> 伤害</div>
+          <div class="log-line"><span class="turn">回合 2</span>你普攻命中，造成 <span class="dmg">10</span> 伤害</div>
+          <div class="log-line"><span class="turn">回合 2</span>拦路泼皮攻击被<span class="info-t">闪避</span></div>
+          <div class="log-line"><span class="turn">回合 3</span>你普攻<span class="crit-t">暴击！</span>造成 <span class="dmg">15</span> 伤害</div>
+        </div>
+      </section>
+    </div>
+    <div>
+      <section class="panel">
+        <div class="panel-head">路线</div>
+        <div class="panel-body"><div class="cap-note" style="margin:0; font-size:13px; text-align:center; padding:8px 0">尚未选择路线<br>境界 2 解锁</div></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">声望节点 <span class="sub">首次归隐后解锁</span></div>
+        <div class="panel-body"><div class="cap-note" style="margin:0; font-size:13px; text-align:center; padding:8px 0">归隐后以声望换取永久加成<br>下一轮更快、更强</div></div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S2 路线选择 ============ -->
+<section class="scene" id="s2">
+  <div class="scene-note"><b>场景 2 / 路线选择</b>境界 2 突破完成后全屏弹出（首轮 ≈5.4 分钟）。三张卡可点选。选择即得路线赠予，此后可随时换线（阅历全返 + 200 银两摩擦费）。</div>
+  <div class="route-select-wrap">
+    <h1 class="serif">择 路</h1>
+    <p class="lede">初窥门径之后，你要走哪条路？</p>
+    <p class="lede-sub">选择即获得路线赠予；日后可在主界面换路线——已投入阅历全额返还，仅收 200 银两盘缠</p>
+    <div class="route-cards">
+      <div class="route-card hs" onclick="selectRoute(this)">
+        <div class="rc-name serif">华山 · 剑</div>
+        <div class="rc-style">快剑爆发 · 短战最强，看脸不稳</div>
+        <div class="rc-grant">选择即得</div>
+        <ul>
+          <li>暴击率 <b>+10pp</b>，暴击伤害 <b>+20pp</b></li>
+          <li><b>开战首击必定暴击</b></li>
+          <li>剑意满 5 层自动施展爆发剑招</li>
+        </ul>
+        <div class="rc-cost">短板：面对高闪敌人命中不稳</div>
+      </div>
+      <div class="route-card sl" onclick="selectRoute(this)">
+        <div class="rc-name serif">少林 · 金钟</div>
+        <div class="rc-style">铁壁反伤 · 打不死你，磨死对手</div>
+        <div class="rc-grant">选择即得</div>
+        <ul>
+          <li>开战自动获得 <b>30% 气血护盾</b></li>
+          <li>受击自动反伤 <b>25%</b></li>
+          <li>防御 <b>+20%</b></li>
+        </ul>
+        <div class="rc-cost">短板：金钟不防毒，输出最慢</div>
+      </div>
+      <div class="route-card tm selected" onclick="selectRoute(this)">
+        <div class="rc-name serif">唐门 · 毒</div>
+        <div class="rc-style">叠毒后期 · 越拖越强，开局最软</div>
+        <div class="rc-grant">选择即得</div>
+        <ul>
+          <li>开战自动<b>施毒 1 层</b>，命中 <b>+1 层</b>（上限 8）</li>
+          <li>毒伤系数 <b>12%</b>，无视防御、绕过护盾</li>
+          <li>满层触发<b>毒爆 50%</b></li>
+        </ul>
+        <div class="rc-cost">代价：普攻伤害 ×0.60，短战偏慢</div>
+      </div>
+    </div>
+    <div class="route-confirm">
+      <button class="btn pulse" onclick="showScene('s3')">踏上唐门之路</button>
+      <div class="cap-note" style="text-align:center">点击确认后进入主界面（原型演示跳转）</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S3 主界面 · 推图中 ============ -->
+<section class="scene" id="s3">
+  <div class="scene-note"><b>场景 3 / 主界面</b>第 2 轮中期状态：境界 3、唐门路线、洛阳近郊第 7 关（精英·铁臂僧）。这是玩家 80% 时间所见的核心界面。可点：「换路线」按钮。</div>
+  <header class="topbar">
+    <div class="game-title serif">江湖无尽录<span class="round">第 2 轮</span></div>
+    <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
+    <div class="res-group">
+      <div class="res"><div class="label">内力</div><div class="value">12,480</div><div class="rate">+16.9 / 秒</div></div>
+      <div class="res"><div class="label">银两</div><div class="value">530</div></div>
+      <div class="res"><div class="label">阅历</div><div class="value">189</div></div>
+      <div class="res rep"><div class="label">声望</div><div class="value">40</div><div class="rate" style="color:var(--faint)">累计 130</div></div>
+    </div>
+  </header>
+  <div class="layout">
+    <div>
+      <section class="panel">
+        <div class="panel-head">突破充能 <span class="sub">境界 3 → 4 · 炉火纯青</span></div>
+        <div class="panel-body">
+          <div class="kv"><span class="k">总消耗</span><span class="v">10,000 内力（2,000 × 5 段）</span></div>
+          <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg part"><i></i></div><div class="charge-seg"></div></div>
+          <div class="charge-label"><span>已注入 6,900 / 10,000</span><span>第 4 段 45%</span></div>
+          <button class="btn">注入充能</button>
+          <div class="cap-note">第 5 段注满后需手动点击「突破」完成晋升</div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">挂机产出</div>
+        <div class="panel-body">
+          <div class="zone-box">
+            <div class="zt">内力 / 秒 · 资源产出域</div>
+            <div class="zone-line"><span class="base">9.0 × 1.25<sup>2</sup> = 14.1</span> × <span class="perm">(1 + 20%)</span> = <span class="result">16.9</span></div>
+            <div class="zone-legend"><span class="perm">永久（旧梦重温 +20%）</span><span class="temp">本轮（无）</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">武学 · 毒功 <span class="sub">上限 = 境界×2</span></div>
+        <div class="panel-body">
+          <div class="skill-row">
+            <span class="sname">淬毒心法</span><span class="slv">Lv 5 / 6</span>
+            <span class="seff">攻 +5% · 毒系数 +9.0pp</span>
+            <button class="skill-btn">升级 1,076</button>
+          </div>
+          <div class="skill-row">
+            <span class="sname">机制节点</span><span class="slv">1 / 3</span>
+            <span class="seff">初始毒层 +2（已购）</span>
+            <button class="skill-btn">节点 2 · 80 阅历</button>
+          </div>
+          <div class="cap-note">武学等级上限 6（境界 3 × 2）；突破至境界 4 后解锁 Lv 7–8</div>
+        </div>
+      </section>
+    </div>
+    <div>
+      <section class="panel">
+        <div class="map-tabs">
+          <div class="map-tab">村外小径<span class="prog">已通关 8/8</span></div>
+          <div class="map-tab active">洛阳近郊<span class="prog">7 / 10</span></div>
+          <div class="map-tab locked">华山古道<span class="prog">通关洛阳近郊解锁</span></div>
+        </div>
+        <div class="battle-stage">
+          <div class="fighters">
+            <div class="fighter">
+              <div class="fname serif">你 <span class="tag poison-tag">唐门</span></div>
+              <div class="frealm">小有所成 · 境界 3</div>
+              <div class="hp-num"><span>气血</span><span>233 / 290</span></div>
+              <div class="bar hp"><i style="width:80%"></i></div>
+              <div class="mini-stats"><span>攻<b>30.5</b></span><span>防<b>15</b></span><span>命<b>124</b></span><span>闪<b>16</b></span></div>
+            </div>
+            <div class="vs serif">对决</div>
+            <div class="fighter">
+              <div class="fname serif">铁臂僧 <span class="tag elite">精英</span><span class="tag trait">破甲</span></div>
+              <div class="frealm">洛阳近郊 · 第 7 关</div>
+              <div class="hp-num"><span>气血</span><span>214 / 372</span></div>
+              <div class="bar enemy-hp"><i style="width:57.5%"></i></div>
+              <div class="mini-stats"><span>攻<b>19.5</b></span><span>防<b>17.8</b></span><span>命<b>119</b></span><span>闪<b>12</b></span></div>
+              <div class="status-row"><span class="status-pill p"><span class="dot"></span>中毒 4 / 8 层</span></div>
+            </div>
+          </div>
+          <div class="counter-hint"><b>破甲</b>：本敌攻击无视你 40% 防御——护甲流在此收益降低，毒伤不受影响。<span class="src">来源：声望节点「再入江湖」</span></div>
+        </div>
+        <div class="log">
+          <div class="log-title">战斗记录 · 自动结算</div>
+          <div class="log-line"><span class="turn">回合 0</span>唐门暗器出手，<span class="poison-t">施毒 3 层</span>（初始 1 + 节点 +2）</div>
+          <div class="log-line"><span class="turn">回合 1</span>你普攻（×0.60）命中，造成 <span class="dmg">16</span> 伤害，<span class="poison-t">毒 +1 层</span></div>
+          <div class="log-line"><span class="turn">回合 1</span>毒发：4 层 × 系数 21% → <span class="poison-t">26 毒伤</span>（无视防御）</div>
+          <div class="log-line"><span class="turn">回合 1</span>铁臂僧<span class="info-t">破甲</span>一击，你受到 <span class="dmg">17</span> 伤害</div>
+          <div class="log-line"><span class="turn">回合 2</span>你普攻命中，造成 <span class="dmg">15</span> 伤害，<span class="poison-t">毒 +1 层（5/8）</span></div>
+          <div class="log-line"><span class="turn">回合 2</span>毒发：5 层 → <span class="poison-t">32 毒伤</span></div>
+          <div class="log-line"><span class="turn">回合 2</span>铁臂僧攻击被<span class="info-t">闪避</span></div>
+          <div class="log-line"><span class="turn">回合 3</span>你普攻<span class="crit-t">暴击！</span>造成 <span class="dmg">23</span> 伤害，<span class="poison-t">毒 +1 层（6/8）</span></div>
+          <div class="log-line"><span class="turn">回合 3</span>毒发：6 层 → <span class="poison-t">38 毒伤</span></div>
+        </div>
+      </section>
+    </div>
+    <div>
+      <section class="panel">
+        <div class="panel-head"><span class="route-name serif">唐门 · 毒</span></div>
+        <div class="panel-body">
+          <ul class="route-mech">
+            <li>第 0 回合自动<b>施毒 1 层</b>，每次命中 <b>+1 层</b></li>
+            <li>毒伤 = 攻击 × <b>21%</b>（基础 12% + 武学 9pp）× 层数</li>
+            <li>毒<b>无视防御、绕过护盾</b>，不可暴击</li>
+            <li>层数上限 <b>8</b>，满层触发<b>毒爆 50%</b></li>
+            <li>代价：普攻伤害 <b>×0.60</b></li>
+          </ul>
+          <button class="btn ghost" onclick="openModal('modal-switch')">换路线</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">乘区透视 <span class="sub">每个最终量 ≤ 2 乘区</span></div>
+        <div class="panel-body">
+          <div class="zone-box">
+            <div class="zt">最终攻击 · 战斗域</div>
+            <div class="zone-line"><span class="base">基础 29</span> × <span class="perm">(1 + 0%)</span> × <span class="temp">(1 + 5%)</span> = <span class="result">30.5</span></div>
+            <div class="zone-legend"><span class="perm">永久加成</span><span class="temp">本轮加成（武学 攻+5%）</span></div>
+          </div>
+          <div class="zone-box">
+            <div class="zt">对 Boss 伤害 · 战斗域</div>
+            <div class="zone-line"><span class="base">结算伤害</span> × <span class="perm">(1 + 0%)</span> = <span class="result">×1.00</span></div>
+            <div class="zone-legend"><span class="perm">「破关心得」购买后 +10%</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">声望节点 <span class="sub">余 40 / 累计 130</span></div>
+        <div class="panel-body">
+          <div class="node-row"><span class="nname">轻装上路 <span class="owned">已购</span></span><span class="price">30</span></div>
+          <div class="node-row"><span class="nname">旧梦重温 <span class="owned">已购</span></span><span class="price">60</span></div>
+          <div class="node-row"><span class="nname">武道笔记 · 开局 +40 阅历</span><span class="price">40</span></div>
+          <div class="node-row dim"><span class="nname">破关心得 · 对 Boss 伤害 +10%</span><span class="price">70</span></div>
+          <button class="btn ghost" onclick="showScene('s8')">查看全部 8 个节点</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S4 Boss 失败提示 ============ -->
+<section class="scene" id="s4">
+  <div class="scene-note"><b>场景 4 / 失败提示</b>境界 3 挑战 Boss 2（推荐境界 4）失败。诊断规则从上到下取第一条命中（此处规则 1：境界偏低），最多附加一条次优先项。免费重试，但战斗有 15–30 秒不可跳过的演出时长。可点：「查看失败提示」。</div>
+  <header class="topbar">
+    <div class="game-title serif">江湖无尽录<span class="round">第 1 轮</span></div>
+    <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
+    <div class="res-group">
+      <div class="res"><div class="label">内力</div><div class="value">3,210</div><div class="rate">+14.1 / 秒</div></div>
+      <div class="res"><div class="label">银两</div><div class="value">490</div></div>
+      <div class="res"><div class="label">阅历</div><div class="value">96</div></div>
+      <div class="res rep"><div class="label">声望</div><div class="value">0</div></div>
+    </div>
+  </header>
+  <div class="layout" style="grid-template-columns: 1fr; max-width: 900px;">
+    <div>
+      <section class="panel">
+        <div class="map-tabs">
+          <div class="map-tab">村外小径<span class="prog">已通关 8/8</span></div>
+          <div class="map-tab active">洛阳近郊<span class="prog">10 / 10 · Boss</span></div>
+          <div class="map-tab locked">华山古道<span class="prog">击败铁掌恶僧解锁</span></div>
+        </div>
+        <div class="battle-stage">
+          <div class="fighters">
+            <div class="fighter">
+              <div class="fname serif">你 <span class="tag poison-tag">唐门</span></div>
+              <div class="frealm">小有所成 · 境界 3</div>
+              <div class="hp-num"><span>气血</span><span style="color:var(--hp)">0 / 290</span></div>
+              <div class="bar hp"><i style="width:0%"></i></div>
+              <div class="mini-stats"><span>攻<b>30.5</b></span><span>防<b>15</b></span><span>命<b>124</b></span><span>闪<b>16</b></span></div>
+            </div>
+            <div class="vs serif">败</div>
+            <div class="fighter">
+              <div class="fname serif">铁掌恶僧 <span class="tag boss">Boss 2</span><span class="tag trait">高防</span><span class="tag trait">高攻</span></div>
+              <div class="frealm">洛阳近郊 · 第 10 关</div>
+              <div class="hp-num"><span>气血</span><span>573 / 950</span></div>
+              <div class="bar enemy-hp"><i style="width:60%"></i></div>
+              <div class="mini-stats"><span>攻<b>34</b></span><span>防<b>55</b></span><span>命<b>132</b></span><span>闪<b>14</b></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="log">
+          <div class="log-title">战斗记录 · 战败</div>
+          <div class="log-line"><span class="turn">回合 9</span>毒发：7 层 → <span class="poison-t">44 毒伤</span></div>
+          <div class="log-line"><span class="turn">回合 9</span>铁掌恶僧重击，你受到 <span class="dmg">29</span> 伤害</div>
+          <div class="log-line"><span class="turn">回合 10</span>你普攻命中，造成 <span class="dmg">11</span> 伤害（高防减免 65%）</div>
+          <div class="log-line"><span class="turn">回合 10</span>铁掌恶僧重击，你受到 <span class="dmg">31</span> 伤害</div>
+          <div class="log-line"><span class="turn">回合 11</span><span class="lose-t">你倒下了。战败——敌方剩余 60% 气血</span></div>
+        </div>
+      </section>
+      <div style="max-width:360px; margin:16px auto 0;">
+        <button class="btn danger pulse" onclick="openModal('modal-fail')">查看失败提示</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S5 突破时刻 ============ -->
+<section class="scene" id="s5">
+  <div class="scene-note"><b>场景 5 / 突破时刻</b>充能式突破的最后一步：5 段全满后按钮变为「突破」，必须手动点击——突破是玩家的主动仪式，不是后台自动事件。可点：「突破 · 一流高手」按钮触发演出。</div>
+  <div class="focus-wrap">
+    <h1 class="serif">突破 · 境界 4 → 5</h1>
+    <section class="panel" style="max-width:520px">
+      <div class="panel-head">突破充能 <span class="sub">境界 4 → 5 · 一流高手</span></div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">总消耗</span><span class="v">21,000 内力（4,200 × 5 段）</span></div>
+        <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div></div>
+        <div class="charge-label"><span>已注入 21,000 / 21,000</span><span style="color:var(--primary)">充能完成</span></div>
+        <button class="btn pulse" onclick="openCeremony('bt-flash')">突破 · 一流高手</button>
+        <div class="cap-note">这是首轮最大单笔投资（约占全轮内力收入 40%）；充能期间推图、精英、武学升级并行，不是干等</div>
+      </div>
+    </section>
+    <section class="panel" style="max-width:520px">
+      <div class="panel-head">突破后变化预览</div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">气血</span><span class="v">495 → <b style="color:var(--poison)">840</b></span></div>
+        <div class="kv"><span class="k">攻击</span><span class="v">49 → <b style="color:var(--poison)">84</b></span></div>
+        <div class="kv"><span class="k">防御</span><span class="v">26 → <b style="color:var(--poison)">44</b></span></div>
+        <div class="kv"><span class="k">挂机产出</span><span class="v">17.6 → <b style="color:var(--poison)">22.0</b> / 秒</span></div>
+        <div class="kv"><span class="k">武学等级上限</span><span class="v">8 → <b style="color:var(--poison)">10</b></span></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ S6 归隐门槛达成 ============ -->
+<section class="scene" id="s6">
+  <div class="scene-note"><b>场景 6 / 归隐门槛</b>境界 5 + 击败黑风寨主（Boss 3），归隐解锁（首轮 45–60 分钟）。玩家可立即归隐，或继续补精英首杀刷表现分。可点：「归隐 · 退出江湖」进入结算流程。</div>
+  <div class="focus-wrap">
+    <div class="banner gold">
+      <h3 class="serif">江湖路尽 · 归隐已解锁</h3>
+      <p>你已达到<b>一流高手（境界 5）</b>并击败<b>黑风寨主</b>。归隐后，本轮战绩化为声望——用它换取永久加成，下一轮走得更快、更远。</p>
+      <div class="banner-actions">
+        <button class="btn pulse" onclick="showScene('s7')">归隐 · 退出江湖</button>
+        <button class="btn ghost">再逛逛江湖</button>
+      </div>
+    </div>
+    <section class="panel" style="max-width:560px">
+      <div class="panel-head">声望预估 <span class="sub">归隐时结算</span></div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">击败山贼头目（Boss 1）</span><span class="v">20</span></div>
+        <div class="kv"><span class="k">击败铁掌恶僧（Boss 2）</span><span class="v">30</span></div>
+        <div class="kv"><span class="k">击败黑风寨主（Boss 3）</span><span class="v">50</span></div>
+        <div class="kv" style="border-top:1px solid var(--line); margin-top:6px; padding-top:8px"><span class="k">里程碑小计</span><span class="v">100</span></div>
+        <div class="kv"><span class="k">表现奖励 · 精英首杀 5/5（+4% × 5）</span><span class="v" style="color:var(--gold)">+20%</span></div>
+        <div class="kv"><span class="k">表现奖励 · 全图通关 28/28</span><span class="v" style="color:var(--gold)">+10%</span></div>
+        <div class="kv" style="border-top:1px solid var(--line); margin-top:6px; padding-top:8px"><span class="k"><b>归隐可得声望</b></span><span class="v" style="color:var(--gold); font-size:17px; font-weight:700">130</span></div>
+        <div class="cap-note">表现奖励封顶 +30%；境界本身不计声望分。本轮用时 46 分钟（短于 15 分钟会触发短轮惩罚）</div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ S7 归隐结算流程 ============ -->
+<section class="scene" id="s7">
+  <div class="scene-note"><b>场景 7 / 归隐结算</b>规格书 §8.6 四步硬性流程：① 三栏损益预览 → ② 二次确认 → ③ 结算演出 → ④ 落地引导（30 秒内完成首次购买）。可点：从「查看归隐预览」开始完整走一遍。</div>
+  <div class="focus-wrap">
+    <h1 class="serif">归隐结算流程（§8.6）</h1>
+    <p style="color:var(--muted); margin-bottom:20px">peak-end 时刻：玩家必须在信息完整的前提下做决定，声望入账要有演出，「永久变强」要在 30 秒内被兑现。</p>
+    <div style="max-width:360px">
+      <button class="btn pulse" onclick="openModal('modal-seclusion-1')">① 查看归隐预览</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S8 声望商店 ============ -->
+<section class="scene" id="s8">
+  <div class="scene-note"><b>场景 8 / 声望商店</b>8 节点定稿（总价 420 ≈ 3.2 轮买空）。首轮结算 130 声望，推荐首购「旧梦重温」（二轮提速主引擎）。可点：各节点「购买」按钮（原型内实时扣减余额）。</div>
+  <div class="shop-wrap">
+    <div class="shop-head">
+      <h1 class="serif">声望阁</h1>
+      <div class="bal">声望余额 <span id="rep-balance">130</span> / 累计 130</div>
+    </div>
+    <div class="shop-grid">
+      <div class="shop-node rec" data-price="60">
+        <div class="sn-top"><span class="sn-name">旧梦重温</span><span class="sn-price">60</span></div>
+        <span class="sn-type">效率</span>
+        <div class="sn-eff">挂机内力产出 <b>+20%</b>——二轮提速的主引擎，与境界产出系数复利。<div class="sn-rec-tag">★ 推荐首购</div></div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="50">
+        <div class="sn-top"><span class="sn-name">快速入门</span><span class="sn-price">50</span></div>
+        <span class="sn-type">节奏</span>
+        <div class="sn-eff">境界 2 与境界 3 的突破消耗 <b>−30%</b>（消耗折减域，与产出加成复合加速前期）。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="30">
+        <div class="sn-top"><span class="sn-name">轻装上路</span><span class="sn-price">30</span></div>
+        <span class="sn-type">策略</span>
+        <div class="sn-eff">每轮<b>第一次换路线免收</b> 200 银两摩擦费——鼓励构筑实验。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="40">
+        <div class="sn-top"><span class="sn-name">再入江湖</span><span class="sn-price">40</span></div>
+        <span class="sn-type">信息</span>
+        <div class="sn-eff">战斗前<b>预览敌人标签与克制提示</b>（高闪/破甲/净化/反伤/毒）。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="40">
+        <div class="sn-top"><span class="sn-name">武道笔记</span><span class="sn-price">40</span></div>
+        <span class="sn-type">资源</span>
+        <div class="sn-eff">每轮开局 <b>+40 阅历</b>——恰好提前买下第一个机制节点。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="50">
+        <div class="sn-top"><span class="sn-name">江湖熟路</span><span class="sn-price">50</span></div>
+        <span class="sn-type">效率</span>
+        <div class="sn-eff">地图战斗奖励 <b>+20%</b>（内力/银两/阅历，资源产出域加法合并）。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="70">
+        <div class="sn-top"><span class="sn-name">破关心得</span><span class="sn-price">70</span></div>
+        <span class="sn-type">战斗</span>
+        <div class="sn-eff">对 Boss 伤害 <b>+10%</b>（战斗域永久乘区，全路线通用）。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+      <div class="shop-node" data-price="80">
+        <div class="sn-top"><span class="sn-name">师门指引</span><span class="sn-price">80</span></div>
+        <span class="sn-type">策略</span>
+        <div class="sn-eff">每轮开局<b>免费获得当前路线的机制节点 1</b>，换路线跟随生效（无死节点）。</div>
+        <button class="btn" onclick="buyNode(this)">购买</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S9 保底归隐 ============ -->
+<section class="scene" id="s9">
+  <div class="scene-note"><b>场景 9 / 完成率保底</b>境界 5 但 Boss 3 连续失败 ≥3 次（或停滞超 10–15 分钟）时开放低收益归隐——声望 ×60%。门槛设在内容边缘，没有保底就没有闭环。可点：「低收益归隐」。</div>
+  <div class="focus-wrap">
+    <div class="banner red">
+      <h3 class="serif">黑风寨主挡住了你的去路</h3>
+      <p>你已达到<b>一流高手（境界 5）</b>，但黑风寨主连续 <b>3 次</b>击败了你。你可以选择<b>低收益归隐</b>（声望按 60% 结算），或继续强化后再战——<b>击败黑风寨主可获得全额声望</b>。</p>
+      <div class="banner-actions">
+        <button class="btn ghost">再战黑风寨主</button>
+        <button class="btn danger" onclick="openModal('modal-fallback')">低收益归隐 · 36 声望</button>
+      </div>
+    </div>
+    <section class="panel" style="max-width:560px">
+      <div class="panel-head">保底声望预估</div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">里程碑（Boss 1 + Boss 2）</span><span class="v">50</span></div>
+        <div class="kv"><span class="k">表现奖励 · 精英首杀 5/5 + 通关 27/28</span><span class="v" style="color:var(--gold)">+20%</span></div>
+        <div class="kv"><span class="k">保底折减</span><span class="v" style="color:var(--hp)">× 60%</span></div>
+        <div class="kv" style="border-top:1px solid var(--line); margin-top:6px; padding-top:8px"><span class="k"><b>归隐可得声望</b></span><span class="v" style="color:var(--gold); font-size:17px; font-weight:700">36</span></div>
+        <div class="cap-note">36 声望仍可购买「轻装上路」（30）——保底轮也有一次永久成长，重置不是白走</div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ S10 换路线 ============ -->
+<section class="scene" id="s10">
+  <div class="scene-note"><b>场景 10 / 换路线</b>换线规则：已投入阅历 100% 返还 + 200 银两摩擦费（若已购「轻装上路」则每轮首次免费）。武学等级清零重练（内力可再生）。此场景直接展示弹窗形态，也可在场景 3 点「换路线」触发。</div>
+  <div class="focus-wrap">
+    <h1 class="serif">换路线</h1>
+    <div style="max-width:360px"><button class="btn" onclick="openModal('modal-switch')">打开换路线弹窗</button></div>
+  </div>
+</section>
+
+</div><!-- /stage-area -->
+
+<!-- ============ 弹窗：失败提示 ============ -->
+<div class="modal-backdrop" id="modal-fail" onclick="backdropClose(event, this)">
+  <div class="modal" role="dialog" aria-label="战斗失败">
+    <div class="modal-head"><span class="fail-title serif">战败 · 铁掌恶僧</span></div>
+    <div class="modal-body">
+      <div class="fail-diag">
+        <div class="fd-main"><b>当前境界偏低</b>——继续修炼可提高基础属性。铁掌恶僧推荐境界 4，你当前境界 3。</div>
+        <div class="fd-extra">另：你的输出不足（敌方剩余 60% 气血）——强化主武学或提升境界。</div>
+      </div>
+      <div class="fail-stats">
+        <div class="fs"><div class="k">战斗回合</div><div class="v">11 / 50</div></div>
+        <div class="fs"><div class="k">敌方剩余气血</div><div class="v">60%</div></div>
+        <div class="fs"><div class="k">你的实际命中率</div><div class="v">89%</div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('modal-fail')">回去修炼（突破充能 69%）</button>
+        <button class="btn ghost" onclick="closeModal('modal-fail')">立即重试（免费 · 战斗约 25 秒）</button>
+      </div>
+      <div class="cap-note">重试免费无惩罚；战斗演出 15–30 秒不可跳过——重试节奏由演出时长自然限速</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：换路线 ============ -->
+<div class="modal-backdrop" id="modal-switch" onclick="backdropClose(event, this)">
+  <div class="modal" role="dialog" aria-label="换路线确认">
+    <div class="modal-head">换路线 · 唐门 → 少林</div>
+    <div class="modal-body">
+      <div class="seclusion-cols" style="grid-template-columns: 1fr 1fr">
+        <div class="sc-col keep">
+          <h4>你将取回</h4>
+          <ul>
+            <li>已投入阅历 <b>120</b>（100% 返还）</li>
+            <li>武学已耗内力 <b>2,189</b> 不返还<br><span style="font-size:12px; color:var(--faint)">内力可再生，挂机即可挣回</span></li>
+          </ul>
+        </div>
+        <div class="sc-col lose">
+          <h4>你将支付</h4>
+          <ul>
+            <li>盘缠 <b>200 银两</b>（余 530）</li>
+            <li>淬毒心法 Lv 5 清零，金钟从 Lv 0 重练</li>
+          </ul>
+        </div>
+      </div>
+      <div class="formula" style="margin-top:14px">已购「轻装上路」节点时，每轮第一次换路线免收盘缠</div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('modal-switch')">改投少林</button>
+        <button class="btn ghost" onclick="closeModal('modal-switch')">再想想</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：归隐 ① 三栏预览 ============ -->
+<div class="modal-backdrop" id="modal-seclusion-1" onclick="backdropClose(event, this)">
+  <div class="modal" role="dialog" aria-label="归隐预览">
+    <div class="modal-head">归隐预览 <span class="step-dots">第 1 步 / 共 4 步 · 预览 → 确认 → 结算 → 声望阁</span></div>
+    <div class="modal-body">
+      <div class="seclusion-cols">
+        <div class="sc-col gain">
+          <h4>你将获得</h4>
+          <ul>
+            <li>山贼头目 <b>20</b></li>
+            <li>铁掌恶僧 <b>30</b></li>
+            <li>黑风寨主 <b>50</b></li>
+            <li>表现奖励 <b>+30%</b><br><span style="font-size:12px; color:var(--faint)">精英 5/5 · 全通 28/28（封顶）</span></li>
+          </ul>
+          <div class="total">声望 130</div>
+        </div>
+        <div class="sc-col lose">
+          <h4>你将失去</h4>
+          <ul>
+            <li>境界：一流高手 → <b>江湖新丁</b></li>
+            <li>地图进度：28 关 → <b>第 1 关</b></li>
+            <li>淬毒心法 <b>Lv 8 → 0</b></li>
+            <li>内力 <b>1,240</b> / 银两 <b>830</b> / 阅历 <b>59</b></li>
+          </ul>
+        </div>
+        <div class="sc-col keep">
+          <h4>你将保留</h4>
+          <ul>
+            <li>声望与<b>全部已购节点</b></li>
+            <li>三张地图<b>首通记录</b></li>
+            <li>路线任选（不锁定）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('modal-seclusion-1'); openModal('modal-seclusion-2')">我看清了，继续</button>
+        <button class="btn ghost" onclick="closeModal('modal-seclusion-1')">再逛逛江湖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：归隐 ② 二次确认 ============ -->
+<div class="modal-backdrop" id="modal-seclusion-2" onclick="backdropClose(event, this)">
+  <div class="modal" style="max-width:480px" role="dialog" aria-label="归隐二次确认">
+    <div class="modal-head">最后确认 <span class="step-dots">第 2 步 / 共 4 步</span></div>
+    <div class="modal-body">
+      <p style="font-size:15px; line-height:1.9">封刀、挂剑、退隐山林。<br>这一段江湖将化作 <b style="color:var(--gold)">130 声望</b>，本轮其余一切归零。<br><span style="color:var(--muted)">下一轮，你会比这一轮更快。</span></p>
+      <div class="modal-actions">
+        <button class="btn danger" onclick="closeModal('modal-seclusion-2'); openCeremony('ceremony')">归隐 · 就此别过</button>
+        <button class="btn ghost" onclick="closeModal('modal-seclusion-2')">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 归隐 ③ 结算演出 ============ -->
+<div class="ceremony" id="ceremony">
+  <div class="c-inner">
+    <div class="c-kicker fade-item">第 一 轮 · 终</div>
+    <h2 class="serif fade-item">事了拂衣去</h2>
+    <div class="c-rep fade-item" id="rep-counter">0</div>
+    <div class="c-rep-label fade-item">声望入账</div>
+    <p class="c-summary fade-item">你的第一段江湖：<b>46 分钟</b>，从江湖新丁走到<b>一流高手</b>，<br>击败 <b>3</b> 位强敌与 <b>5</b> 位精英，走到了<b>华山古道</b>之巅。</p>
+    <button class="btn fade-item" onclick="closeCeremony('ceremony'); showScene('s8')">进入声望阁 · 兑现永久成长</button>
+  </div>
+</div>
+
+<!-- ============ 突破演出 ============ -->
+<div class="breakthrough-flash" id="bt-flash">
+  <div class="c-inner">
+    <div class="c-kicker fade-item">境 界 突 破</div>
+    <h2 class="serif fade-item">一流高手</h2>
+    <div class="bt-sub fade-item">内力鼓荡，脱胎换骨——境界 5 / 5</div>
+    <div class="bt-stats fade-item">
+      <div class="kv"><span class="k" style="color:var(--muted)">气血</span><span class="v">495 → 840</span></div>
+      <div class="kv"><span class="k" style="color:var(--muted)">攻击</span><span class="v">49 → 84</span></div>
+      <div class="kv"><span class="k" style="color:var(--muted)">防御</span><span class="v">26 → 44</span></div>
+      <div class="kv"><span class="k" style="color:var(--muted)">武学上限</span><span class="v">Lv 8 → Lv 10</span></div>
+    </div>
+    <button class="btn fade-item" style="max-width:280px; margin:26px auto 0" onclick="closeCeremony('bt-flash')">继续</button>
+  </div>
+</div>
+
+<!-- ============ 弹窗：保底归隐确认 ============ -->
+<div class="modal-backdrop" id="modal-fallback" onclick="backdropClose(event, this)">
+  <div class="modal" style="max-width:480px" role="dialog" aria-label="低收益归隐确认">
+    <div class="modal-head">低收益归隐 <span class="step-dots">保底通道</span></div>
+    <div class="modal-body">
+      <p style="font-size:14.5px; line-height:1.9">未竟的江湖也算一段江湖。<br>本次归隐声望按 <b style="color:var(--hp)">60%</b> 结算：<b style="color:var(--gold)">36 声望</b>。<br><span style="color:var(--muted)">若击败黑风寨主再归隐，可得全额 <b>91+</b> 声望。</span></p>
+      <div class="modal-actions">
+        <button class="btn danger" onclick="closeModal('modal-fallback')">接受 · 低收益归隐</button>
+        <button class="btn ghost" onclick="closeModal('modal-fallback')">回去再战</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ===== 场景切换 ===== */
+  const SCENES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'];
+  function showScene(id) {
+    document.querySelectorAll('.scene').forEach(s => s.classList.toggle('active', s.id === id));
+    document.querySelectorAll('.proto-nav button').forEach(b => b.classList.toggle('active', b.dataset.scene === id));
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.proto-nav button').forEach(b => b.addEventListener('click', () => showScene(b.dataset.scene)));
+  document.addEventListener('keydown', (e) => {
+    if (/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    const cur = SCENES.indexOf(document.querySelector('.scene.active').id);
+    if (e.key === 'ArrowRight' && cur < SCENES.length - 1) showScene(SCENES[cur + 1]);
+    if (e.key === 'ArrowLeft' && cur > 0) showScene(SCENES[cur - 1]);
+    if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.open, .ceremony.open, .breakthrough-flash.open').forEach(m => m.classList.remove('open'));
+  });
+  showScene(SCENES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 's1');
+  window.addEventListener('hashchange', () => { if (SCENES.includes(location.hash.slice(1))) showScene(location.hash.slice(1)); });
+
+  /* ===== 弹窗 ===== */
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function backdropClose(e, el) { if (e.target === el) el.classList.remove('open'); }
+
+  /* ===== 演出 ===== */
+  function openCeremony(id) {
+    const el = document.getElementById(id);
+    el.classList.add('open');
+    el.querySelectorAll('.fade-item').forEach(f => { f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; });
+    if (id === 'ceremony') countUp();
+  }
+  function closeCeremony(id) { document.getElementById(id).classList.remove('open'); }
+  function countUp() {
+    const el = document.getElementById('rep-counter');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) { el.textContent = '+130'; return; }
+    let v = 0; el.textContent = '0';
+    const start = performance.now();
+    (function tick(now) {
+      const t = Math.min((now - start) / 1600, 1);
+      v = Math.round(130 * (1 - Math.pow(1 - t, 4)));
+      el.textContent = '+' + v;
+      if (t < 1) requestAnimationFrame(tick);
+    })(performance.now());
+  }
+
+  /* ===== 路线选择 ===== */
+  function selectRoute(card) {
+    document.querySelectorAll('.route-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    const name = card.querySelector('.rc-name').textContent.trim();
+    document.querySelector('.route-confirm .btn').textContent = '踏上' + name.split(' ')[0] + '之路';
+  }
+
+  /* ===== 声望商店 ===== */
+  let repBalance = 130;
+  function buyNode(btn) {
+    const node = btn.closest('.shop-node');
+    const price = parseInt(node.dataset.price, 10);
+    if (node.classList.contains('owned') || price > repBalance) return;
+    repBalance -= price;
+    node.classList.add('owned');
+    node.classList.remove('rec');
+    btn.textContent = '已生效 · 每一轮';
+    btn.disabled = true;
+    document.getElementById('rep-balance').textContent = repBalance;
+    document.querySelectorAll('.shop-node:not(.owned)').forEach(n => {
+      const b = n.querySelector('.btn');
+      if (parseInt(n.dataset.price, 10) > repBalance) { b.disabled = true; b.textContent = '声望不足'; }
+    });
+  }
+</script>
+</body>
+</html>

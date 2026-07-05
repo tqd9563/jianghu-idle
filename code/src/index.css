@@ -197,6 +197,85 @@ body {
 .fade-item:nth-child(5) { animation-delay: 1.3s; }
 @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
+/* ===== 战斗页 ===== */
+.pane-wrap.wide { max-width: 1080px; }
+.strip-item .mini-bar.fight > i { background: var(--blood-red); }
+
+.map-tabs { display: flex; border-bottom: 1px solid var(--line); }
+.map-tab { flex: 1; text-align: center; padding: 10px 4px; font-size: 13px; color: var(--ink-muted); border-bottom: 2px solid transparent; cursor: pointer; }
+.map-tab.active { color: var(--ink-warm); font-weight: 600; border-bottom-color: var(--candle-gold); }
+.map-tab.locked { color: var(--ink-faint); cursor: not-allowed; }
+.map-tab .prog { display: block; font-size: 11px; font-variant-numeric: tabular-nums; margin-top: 1px; font-weight: 400; }
+.map-tab.active .prog { color: var(--candle-gold); }
+
+.battle-stage { padding: 16px 18px; }
+.fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
+.fighter { padding: 12px 14px; background: var(--night-surface-raised); border: 1px solid var(--line); border-radius: var(--r-md); }
+.fighter .fname { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fighter .frealm { font-size: 12px; color: var(--ink-muted); margin-bottom: 8px; }
+.vs { align-self: center; font-size: 15px; font-weight: 700; color: var(--ink-faint); letter-spacing: 0.1em; padding-top: 30px; }
+.hp-num { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; margin: 8px 0 3px; }
+.bar { height: 8px; border-radius: var(--r-xs); background: var(--bar-track); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: var(--r-xs); background: var(--candle-gold); transition: width 0.3s var(--ease-sharp); }
+.bar.hp > i { background: var(--hp, var(--blood-red)); background: var(--blood-red); }
+.bar.enemy-hp { height: 14px; border-radius: 5px; }
+.bar.enemy-hp > i { background: var(--blood-red); }
+.mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; font-size: 12px; }
+.mini-stats span { color: var(--ink-muted); }
+.mini-stats b { font-variant-numeric: tabular-nums; font-weight: 600; margin-left: 3px; color: var(--ink-warm); }
+
+.tag { font-size: 11px; padding: 1px 7px; border-radius: var(--r-xs); font-weight: 500; border: 1px solid; }
+.tag.elite { color: var(--candle-gold); border-color: var(--candle-gold); }
+.tag.boss { color: var(--blood-red); border-color: var(--blood-red); background: var(--blood-soft); }
+.tag.trait { color: var(--sword-cyan); border-color: var(--sword-cyan); background: var(--cyan-soft); }
+.tag.route-tag-tangmen { color: var(--poison-green); border-color: var(--poison-green); }
+.tag.route-tag-huashan { color: var(--crit-ember); border-color: var(--crit-ember); }
+.tag.route-tag-shaolin { color: var(--shield-blue); border-color: var(--shield-blue); }
+
+.battle-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.auto-advance { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); cursor: pointer; margin-top: 4px; }
+.auto-advance input { accent-color: var(--candle-gold); }
+
+.log { border-top: 1px solid var(--line); padding: 12px 18px; max-height: 300px; overflow-y: auto; }
+.log-title { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.08em; margin-bottom: 8px; }
+.log-line { font-size: 13px; padding: 2.5px 0; font-variant-numeric: tabular-nums; color: var(--ink-muted); }
+.log-line .turn { display: inline-block; width: 56px; color: var(--ink-faint); font-size: 12px; }
+.log-line .crit-t { color: var(--crit-ember); font-weight: 600; }
+.log-line .poison-t { color: var(--poison-green); }
+.log-line .info-t { color: var(--sword-cyan); }
+.log-line .shield-t { color: var(--shield-blue); }
+.log-line .lose-t { color: var(--blood-red); font-weight: 700; }
+.log-line .win-t { color: var(--candle-gold); font-weight: 700; }
+
+/* ===== 弹窗 ===== */
+.modal-backdrop {
+  position: fixed; inset: 0; background: oklch(0.08 0.01 262 / 0.72);
+  display: none; align-items: center; justify-content: center;
+  z-index: var(--z-modal-backdrop); padding: 24px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--night-surface); border: 1px solid var(--line-strong); border-radius: var(--r-xl);
+  max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+  animation: modal-in 0.25s var(--ease-sharp);
+}
+@keyframes modal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.modal-head { padding: 16px 22px 12px; border-bottom: 1px solid var(--line); font-size: 17px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 18px 22px 22px; }
+.modal-actions { display: flex; gap: 12px; margin-top: 18px; }
+.modal-actions .btn { margin-top: 0; }
+
+.fail-title { color: var(--blood-red); font-size: 18px; font-weight: 700; }
+.fail-diag { margin: 14px 0; }
+.fail-diag .fd-main { padding: 12px 14px; background: var(--blood-soft); border-radius: var(--r-md); font-size: 14.5px; line-height: 1.7; }
+.fail-diag .fd-main b { color: var(--blood-red); }
+.fail-diag .fd-extra { padding: 9px 14px; margin-top: 8px; background: var(--night-surface-raised); border-radius: var(--r-md); font-size: 13px; color: var(--ink-muted); }
+.fail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+.fail-stats .fs { background: var(--night-surface-raised); border-radius: var(--r-md); padding: 10px 12px; }
+.fail-stats .fs .k { font-size: 11px; color: var(--ink-faint); }
+.fail-stats .fs .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
 

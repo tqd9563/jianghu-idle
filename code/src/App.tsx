@@ -5,9 +5,11 @@
 import { useEffect, useState } from 'react';
 import { computeAttributes } from './engine/attributes';
 import { REALMS } from './engine/content';
+import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress } from './engine/formulas';
-import { useGameStore } from './store/gameStore';
+import { nextStageOf, useGameStore } from './store/gameStore';
 import { applyDebugHash } from './debug';
+import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
 import { SkillPane } from './panes/SkillPane';
 import { RouteSelect } from './overlays/RouteSelect';
@@ -22,9 +24,14 @@ export default function App() {
   const [tab, setTab] = useState<TabId>('cultivate');
 
   useEffect(() => {
-    const { tab: debugTab } = applyDebugHash();
+    const { tab: debugTab, fight: autoFight } = applyDebugHash();
     if (debugTab) setTab(debugTab as TabId);
     s.init();
+    if (autoFight) {
+      const st = useGameStore.getState();
+      const next = nextStageOf(st.selectedMap, st.clearedStages);
+      if (next !== null) st.challengeStage(st.selectedMap, next);
+    }
     const t = setInterval(() => useGameStore.getState().tick(Date.now()), 250);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,6 +82,23 @@ export default function App() {
         )}
         <button className="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
         <div className="tab-pulse">
+          {(() => {
+            const m = s.selectedMap;
+            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
+              .filter((i) => s.clearedStages.includes(`m${m}s${i}`)).length;
+            const lastTurn = s.battle?.result.turns[s.battle.revealed - 1];
+            return (
+              <span className="strip-item" onClick={() => setTab('battle')}>
+                {mapName(m)} <b>{clearedCount}/{MAP_STAGE_COUNT[m]}</b>
+                {s.battle && !s.battle.resolved && (
+                  <>
+                    {' '}· 对战 {s.battle.enemy.name}{' '}
+                    <span className="mini-bar fight"><i style={{ width: `${(lastTurn?.ehpPct ?? 1) * 100}%` }} /></span>
+                  </>
+                )}
+              </span>
+            );
+          })()}
           {progress && (
             <span className="strip-item" onClick={() => setTab('cultivate')}>
               运转周天{' '}
@@ -91,18 +115,7 @@ export default function App() {
 
       <main>
         {tab === 'cultivate' && <CultivatePane />}
-        {tab === 'battle' && (
-          <div className="pane-wrap">
-            <section className="panel">
-              <div className="panel-head">战斗</div>
-              <div className="panel-body">
-                <p className="cap-note" style={{ margin: 0, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>
-                  战斗模块实现中（下一实现步：三地图 28 关 + 自动结算 + 失败诊断）
-                </p>
-              </div>
-            </section>
-          </div>
-        )}
+        {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'skill' && s.route && <SkillPane />}
       </main>
 

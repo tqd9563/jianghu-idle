@@ -1,0 +1,419 @@
+{
+  "source": "mvp0_sim.py",
+  "cases": [
+    {
+      "route": "huashan",
+      "realm": 3,
+      "lv": 5,
+      "nodes": 0,
+      "map": "map1",
+      "stage": 8,
+      "enemy": {
+        "hp": 550,
+        "atk": 15,
+        "dfs": 10,
+        "hit": 112,
+        "dodge": 8,
+        "tags": [
+          "高血"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 13,
+        "hpPct": 0.52773613
+      }
+    },
+    {
+      "route": "shaolin",
+      "realm": 3,
+      "lv": 5,
+      "nodes": 0,
+      "map": "map1",
+      "stage": 8,
+      "enemy": {
+        "hp": 550,
+        "atk": 15,
+        "dfs": 10,
+        "hit": 112,
+        "dodge": 8,
+        "tags": [
+          "高血"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 19,
+        "hpPct": 0.78844259
+      }
+    },
+    {
+      "route": "tangmen",
+      "realm": 3,
+      "lv": 5,
+      "nodes": 0,
+      "map": "map1",
+      "stage": 8,
+      "enemy": {
+        "hp": 550,
+        "atk": 15,
+        "dfs": 10,
+        "hit": 112,
+        "dodge": 8,
+        "tags": [
+          "高血"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 10,
+        "hpPct": 0.6458021
+      }
+    },
+    {
+      "route": "huashan",
+      "realm": 3,
+      "lv": 6,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 4,
+      "enemy": {
+        "hp": 245,
+        "atk": 14.6,
+        "dfs": 12.6,
+        "hit": 113,
+        "dodge": 50,
+        "tags": [
+          "高闪"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 7,
+        "hpPct": 0.76991039
+      }
+    },
+    {
+      "route": "shaolin",
+      "realm": 3,
+      "lv": 6,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 7,
+      "enemy": {
+        "hp": 372,
+        "atk": 19.5,
+        "dfs": 17.8,
+        "hit": 119,
+        "dodge": 12,
+        "tags": [
+          "破甲"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 13,
+        "hpPct": 0.99417945
+      }
+    },
+    {
+      "route": "tangmen",
+      "realm": 3,
+      "lv": 6,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 4,
+      "enemy": {
+        "hp": 245,
+        "atk": 14.6,
+        "dfs": 12.6,
+        "hit": 113,
+        "dodge": 50,
+        "tags": [
+          "高闪"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 6,
+        "hpPct": 0.80825866
+      }
+    },
+    {
+      "route": "huashan",
+      "realm": 4,
+      "lv": 7,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 10,
+      "enemy": {
+        "hp": 950,
+        "atk": 34,
+        "dfs": 55,
+        "hit": 132,
+        "dodge": 14,
+        "tags": [
+          "高防",
+          "高攻"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 13,
+        "hpPct": 0.42815095
+      }
+    },
+    {
+      "route": "shaolin",
+      "realm": 4,
+      "lv": 7,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 10,
+      "enemy": {
+        "hp": 950,
+        "atk": 34,
+        "dfs": 55,
+        "hit": 132,
+        "dodge": 14,
+        "tags": [
+          "高防",
+          "高攻"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 25,
+        "hpPct": 0.73593392
+      }
+    },
+    {
+      "route": "tangmen",
+      "realm": 4,
+      "lv": 7,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 10,
+      "enemy": {
+        "hp": 950,
+        "atk": 34,
+        "dfs": 55,
+        "hit": 132,
+        "dodge": 14,
+        "tags": [
+          "高防",
+          "高攻"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 10,
+        "hpPct": 0.52345913
+      }
+    },
+    {
+      "route": "huashan",
+      "realm": 4,
+      "lv": 8,
+      "nodes": 2,
+      "map": "map3",
+      "stage": 3,
+      "enemy": {
+        "hp": 619,
+        "atk": 27.5,
+        "dfs": 24.2,
+        "hit": 136,
+        "dodge": 16,
+        "tags": [
+          "反伤"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 8,
+        "hpPct": 0.32951364
+      }
+    },
+    {
+      "route": "shaolin",
+      "realm": 4,
+      "lv": 8,
+      "nodes": 2,
+      "map": "map3",
+      "stage": 5,
+      "enemy": {
+        "hp": 746,
+        "atk": 31.5,
+        "dfs": 29.3,
+        "hit": 140,
+        "dodge": 16,
+        "tags": [
+          "毒"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 16,
+        "hpPct": 0.78257846
+      }
+    },
+    {
+      "route": "tangmen",
+      "realm": 4,
+      "lv": 8,
+      "nodes": 2,
+      "map": "map3",
+      "stage": 7,
+      "enemy": {
+        "hp": 1044,
+        "atk": 36.0,
+        "dfs": 35.4,
+        "hit": 144,
+        "dodge": 16,
+        "tags": [
+          "净化"
+        ]
+      },
+      "expect": {
+        "win": false,
+        "rounds": 20,
+        "hpPct": 0.0
+      }
+    },
+    {
+      "route": "huashan",
+      "realm": 5,
+      "lv": 8,
+      "nodes": 2,
+      "map": "map3",
+      "stage": 10,
+      "enemy": {
+        "hp": 2500,
+        "atk": 46,
+        "dfs": 35,
+        "hit": 152,
+        "dodge": 18,
+        "tags": [
+          "高血",
+          "狂暴"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 16,
+        "hpPct": 0.48574165
+      }
+    },
+    {
+      "route": "shaolin",
+      "realm": 5,
+      "lv": 8,
+      "nodes": 2,
+      "map": "map3",
+      "stage": 10,
+      "enemy": {
+        "hp": 2500,
+        "atk": 46,
+        "dfs": 35,
+        "hit": 152,
+        "dodge": 18,
+        "tags": [
+          "高血",
+          "狂暴"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 32,
+        "hpPct": 0.59137482
+      }
+    },
+    {
+      "route": "tangmen",
+      "realm": 5,
+      "lv": 10,
+      "nodes": 3,
+      "map": "map3",
+      "stage": 10,
+      "enemy": {
+        "hp": 2500,
+        "atk": 46,
+        "dfs": 35,
+        "hit": 152,
+        "dodge": 18,
+        "tags": [
+          "高血",
+          "狂暴"
+        ]
+      },
+      "expect": {
+        "win": true,
+        "rounds": 8,
+        "hpPct": 0.73423341
+      }
+    },
+    {
+      "route": "tangmen",
+      "realm": 2,
+      "lv": 4,
+      "nodes": 0,
+      "map": "map1",
+      "stage": 5,
+      "enemy": {
+        "hp": 67,
+        "atk": 7.5,
+        "dfs": 3.5,
+        "hit": 100,
+        "dodge": 8,
+        "tags": []
+      },
+      "expect": {
+        "win": true,
+        "rounds": 4,
+        "hpPct": 0.8925445
+      }
+    },
+    {
+      "route": "huashan",
+      "realm": 2,
+      "lv": 4,
+      "nodes": 0,
+      "map": "map1",
+      "stage": 5,
+      "enemy": {
+        "hp": 67,
+        "atk": 7.5,
+        "dfs": 3.5,
+        "hit": 100,
+        "dodge": 8,
+        "tags": []
+      },
+      "expect": {
+        "win": true,
+        "rounds": 3,
+        "hpPct": 0.928363
+      }
+    },
+    {
+      "route": "shaolin",
+      "realm": 3,
+      "lv": 4,
+      "nodes": 1,
+      "map": "map2",
+      "stage": 2,
+      "enemy": {
+        "hp": 132,
+        "atk": 12.1,
+        "dfs": 10.1,
+        "hit": 109,
+        "dodge": 12,
+        "tags": []
+      },
+      "expect": {
+        "win": true,
+        "rounds": 5,
+        "hpPct": 1.0
+      }
+    }
+  ]
+}

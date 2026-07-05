@@ -443,7 +443,7 @@
     <div class="game-title serif">江湖无尽录<span class="round">第 1 轮</span></div>
     <div class="realm-chip"><span class="name serif">江湖新丁</span><span class="lv">境界 1 / 5</span></div>
     <div class="res-group">
-      <div class="res"><div class="label">内力</div><div class="value">340</div><div class="rate">+9.0 / 秒</div></div>
+      <div class="res"><div class="label">内力</div><div class="value">896</div><div class="rate">+9.0 / 秒</div></div>
       <div class="res"><div class="label">银两</div><div class="value">20</div></div>
       <div class="res"><div class="label">阅历</div><div class="value">6</div></div>
       <div class="res rep"><div class="label">声望</div><div class="value">0</div></div>
@@ -469,9 +469,8 @@
           <div class="panel-body">
             <div class="kv"><span class="k">总消耗</span><span class="v">2,800 内力（每周天 560 × 5）</span></div>
             <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg part"><i style="width:60%"></i></div><div class="charge-seg"></div><div class="charge-seg"></div><div class="charge-seg"></div></div>
-            <div class="charge-label"><span>已凝内力 896 / 2,800</span><span>第二周天 60%</span></div>
-            <button class="btn">运功行气</button>
-            <div class="cap-note">突破至境界 2 后，选择你的武学路线</div>
+            <div class="charge-label"><span>丹田内力 896 / 2,800</span><span>第二周天 60%</span></div>
+            <div class="cap-note" style="margin-top:10px">内力自归丹田，五周天圆满后可突破；突破至境界 2 后，选择你的武学路线</div>
           </div>
         </section>
         <section class="panel">
@@ -586,7 +585,7 @@
     <div class="game-title serif">江湖无尽录<span class="round">第 2 轮</span></div>
     <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
     <div class="res-group">
-      <div class="res"><div class="label">内力</div><div class="value">12,480</div><div class="rate">+16.9 / 秒</div></div>
+      <div class="res"><div class="label">内力</div><div class="value">6,900</div><div class="rate">+16.9 / 秒</div></div>
       <div class="res"><div class="label">银两</div><div class="value">530</div></div>
       <div class="res"><div class="label">阅历</div><div class="value">189</div></div>
       <div class="res rep"><div class="label">声望</div><div class="value">40</div><div class="rate" style="color:var(--faint)">累计 130</div></div>
@@ -612,9 +611,8 @@
           <div class="panel-body">
             <div class="kv"><span class="k">总消耗</span><span class="v">10,000 内力（每周天 2,000 × 5）</span></div>
             <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg part"><i></i></div><div class="charge-seg"></div></div>
-            <div class="charge-label"><span>已凝内力 6,900 / 10,000</span><span>第四周天 45%</span></div>
-            <button class="btn">运功行气</button>
-            <div class="cap-note">第五周天圆满后，需手动点击「突破」完成晋升</div>
+            <div class="charge-label"><span>丹田内力 6,900 / 10,000</span><span>第四周天 45%</span></div>
+            <div class="cap-note" style="margin-top:10px">内力自归丹田，第五周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）</div>
           </div>
         </section>
         <div>
@@ -831,7 +829,7 @@
 
 <!-- ============ S5 突破时刻 ============ -->
 <section class="scene" id="s5">
-  <div class="scene-note"><b>场景 5 / 突破时刻</b>周天运转的末段（「充能式突破」为规格书 §6.1 内部机制代号）：五个周天圆满后按钮变为「突破」，必须手动点击——突破是玩家的主动仪式，不是后台自动事件。可点：「突破 · 一流高手」按钮触发演出。</div>
+  <div class="scene-note"><b>场景 5 / 突破时刻</b>周天运转的末段（「充能式突破」为规格书 §6.1 内部机制代号）：五个周天圆满后按钮变为「突破」，必须手动点击——突破是玩家的主动仪式，不是后台自动事件。周天进度 = 丹田内力对突破消耗的派生显示（单钱包，规格书 §6.1 v0.9），动用内力升武学会使进度如实回落。可点：「突破 · 一流高手」按钮触发演出。</div>
   <div class="focus-wrap">
     <h1 class="serif">突破 · 境界 4 → 5</h1>
     <section class="panel" style="max-width:520px">
@@ -839,7 +837,7 @@
       <div class="panel-body">
         <div class="kv"><span class="k">总消耗</span><span class="v">21,000 内力（每周天 4,200 × 5）</span></div>
         <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div></div>
-        <div class="charge-label"><span>已凝内力 21,000 / 21,000</span><span style="color:var(--primary)">五周天圆满</span></div>
+        <div class="charge-label"><span>丹田内力 21,000 / 21,000</span><span style="color:var(--primary)">五周天圆满</span></div>
         <button class="btn pulse" onclick="openCeremony('bt-flash')">突破 · 一流高手</button>
         <div class="cap-note">这是首轮最大单笔投资（约占全轮内力收入 40%）；运转周天期间推图、精英、武学升级并行，不是干等</div>
       </div>
@@ -1009,7 +1007,7 @@
         <div class="fs"><div class="k">你的实际命中率</div><div class="v">89%</div></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" onclick="closeModal('modal-fail')">回去修炼（周天进度 69%）</button>
+        <button class="btn" onclick="closeModal('modal-fail')">回去修炼（周天进度 32%）</button>
         <button class="btn ghost" onclick="closeModal('modal-fail')">立即重试（免费 · 战斗约 25 秒）</button>
       </div>
       <div class="cap-note">重试免费无惩罚；战斗演出 15–30 秒不可跳过——重试节奏由演出时长自然限速</div>

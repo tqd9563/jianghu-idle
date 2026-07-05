@@ -244,6 +244,20 @@
   .zone-legend .perm { color: var(--gold); }
   .zone-legend .temp { color: var(--accent); }
 
+  /* ===== 人物属性面板（修炼页 · 权威源） ===== */
+  .attr-table { font-variant-numeric: tabular-nums; }
+  .attr-head, .attr-row { display: grid; grid-template-columns: 1fr 6em 7.5em; gap: 8px; align-items: baseline; }
+  .attr-head { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .attr-head span:nth-child(n+2), .attr-row .cur, .attr-row .next { text-align: right; }
+  .attr-row { padding: 4.5px 0; font-size: 13.5px; }
+  .attr-row .aname { color: var(--muted); }
+  .attr-row .cur { font-weight: 600; }
+  .attr-row .next { font-weight: 600; color: var(--poison); }
+  .attr-sub { font-size: 11.5px; color: var(--faint); margin: -2px 0 3px; }
+  .attr-note { font-size: 11.5px; color: var(--faint); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); line-height: 1.7; }
+  .attr-note a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .attr-note a:hover { text-decoration: underline; }
+
   /* ===== 武学 / 节点 ===== */
   .skill-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .skill-row:last-child { border-bottom: none; }
@@ -475,17 +489,33 @@
             <div class="cap-note" style="margin-top:10px">内力自归丹田，五周天圆满后可突破；突破至境界 2 后，选择你的武学路线</div>
           </div>
         </section>
-        <section class="panel">
-          <div class="panel-head">挂机产出</div>
-          <div class="panel-body">
-            <div class="zone-box">
-              <div class="zt">内力 / 秒 · 资源产出域</div>
-              <div class="zone-line"><span class="base">9.0 × 1.25<sup>0</sup> = 9.0</span> = <span class="result">9.0</span></div>
-              <div class="zone-legend"><span class="perm">永久（无）</span><span class="temp">本轮（无）</span></div>
+        <div>
+          <section class="panel">
+            <div class="panel-head">挂机产出</div>
+            <div class="panel-body">
+              <div class="zone-box">
+                <div class="zt">内力 / 秒 · 资源产出域</div>
+                <div class="zone-line"><span class="base">9.0 × 1.25<sup>0</sup> = 9.0</span> = <span class="result">9.0</span></div>
+                <div class="zone-legend"><span class="perm">永久（无）</span><span class="temp">本轮（无）</span></div>
+              </div>
+              <div class="cap-note">归隐后可用声望购买永久加成，下一轮产出更快</div>
             </div>
-            <div class="cap-note">归隐后可用声望购买永久加成，下一轮产出更快</div>
-          </div>
-        </section>
+          </section>
+          <section class="panel">
+            <div class="panel-head">人物属性 <span class="sub">当前 → 突破后</span></div>
+            <div class="panel-body attr-table">
+              <div class="attr-head"><span>属性（共 7 项）</span><span>当前</span><span>初窥门径</span></div>
+              <div class="attr-row"><span class="aname">气血</span><span class="cur">100</span><span class="next">170</span></div>
+              <div class="attr-row"><span class="aname">攻击</span><span class="cur">10</span><span class="next">17</span></div>
+              <div class="attr-row"><span class="aname">防御</span><span class="cur">5</span><span class="next">9</span></div>
+              <div class="attr-row"><span class="aname">命中</span><span class="cur">100</span><span class="next">112</span></div>
+              <div class="attr-row"><span class="aname">闪避</span><span class="cur">10</span><span class="next">13</span></div>
+              <div class="attr-row"><span class="aname">暴击率</span><span class="cur">5%</span><span class="next">5%</span></div>
+              <div class="attr-row"><span class="aname">暴击伤害</span><span class="cur">150%</span><span class="next">150%</span></div>
+              <div class="attr-note">突破另得：挂机产出 9.0 → 11.3 / 秒 · 武学上限 2 → 4 · 解锁三大路线</div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   </div>
@@ -629,12 +659,18 @@
             </div>
           </section>
           <section class="panel">
-            <div class="panel-head">突破后变化预览 <span class="sub">境界 4 · 炉火纯青</span></div>
-            <div class="panel-body">
-              <div class="kv"><span class="k">气血</span><span class="v">290 → <b style="color:var(--poison)">495</b></span></div>
-              <div class="kv"><span class="k">攻击</span><span class="v">29 → <b style="color:var(--poison)">49</b></span></div>
-              <div class="kv"><span class="k">挂机产出</span><span class="v">16.9 → <b style="color:var(--poison)">21.1</b> / 秒</span></div>
-              <div class="kv"><span class="k">武学等级上限</span><span class="v">6 → <b style="color:var(--poison)">8</b></span></div>
+            <div class="panel-head">人物属性 <span class="sub">当前 → 突破后</span></div>
+            <div class="panel-body attr-table">
+              <div class="attr-head"><span>属性（共 7 项）</span><span>当前</span><span>炉火纯青</span></div>
+              <div class="attr-row"><span class="aname">气血</span><span class="cur">290</span><span class="next">495</span></div>
+              <div class="attr-row"><span class="aname">攻击</span><span class="cur">30.5</span><span class="next">51.5</span></div>
+              <div class="attr-sub">基础 29 × 本轮 +5%（淬毒心法 Lv5）· 普攻系数 ×0.60（轻手暗器）</div>
+              <div class="attr-row"><span class="aname">防御</span><span class="cur">15</span><span class="next">26</span></div>
+              <div class="attr-row"><span class="aname">命中</span><span class="cur">124</span><span class="next">136</span></div>
+              <div class="attr-row"><span class="aname">闪避</span><span class="cur">16</span><span class="next">19</span></div>
+              <div class="attr-row"><span class="aname">暴击率</span><span class="cur">5%</span><span class="next">5%</span></div>
+              <div class="attr-row"><span class="aname">暴击伤害</span><span class="cur">150%</span><span class="next">150%</span></div>
+              <div class="attr-note">突破另得：挂机产出 16.9 → 21.1 / 秒 · 武学上限 6 → 8<br>路线机制参数（毒系数/层数/毒爆）→ <a onclick="jumpPane('s3','s3-skill')">武学页</a></div>
             </div>
           </section>
         </div>

@@ -55,7 +55,7 @@
 
 | 事件名 | 触发时机 | 专有字段 |
 |---|---|---|
-| `charge_segment_full` | 突破充能某一段注满（规格书 §6.1 充能式突破） | `realm_target`、`segment`（1–5） |
+| `charge_segment_full` | 丹田内力越过新一段阈值（本境界新高水位首次越过才触发，回落后再越不重复；规格书 §6.1 v0.9 单钱包模型） | `realm_target`、`segment`（1–5） |
 | `realm_breakthrough` | 玩家手动点击突破成功 | `realm_to` |
 | `route_selected` | 首次选择路线（境界 2 弹层确认） | `route_to` |
 | `route_changed` | 换路线结算完成 | `route_from`、`route_to`、`xp_refunded`、`fee_paid`（0 = 轻装上路生效） |

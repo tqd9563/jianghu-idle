@@ -9,6 +9,9 @@
 
 ### 新增
 
+- **工程骨架**：技术栈定稿 Vite + TypeScript + React（用户批准），`code/` 落地前端工程——`src/engine/` 纯函数数值引擎（`formulas.ts` 实现公式表 §2/§3 双曲防御、命中率下限 30%、挂机产出、周天派生显示；`content.ts` 搬运内容表 §1 境界表与武学消耗公式，标注禁止调参）；`src/save/` localStorage 存档（规格书 §12 前置：持久化/恢复/一键重置/关闭页面不结算）；`src/telemetry/` 埋点公共信封 + JSON 一键导出骨架；`src/styles/tokens.css` 为 DESIGN.md token 的 CSS 落地；vitest 10 个 golden 种子用例全过（铁臂僧减免系数/游侠儿命中率/境界五档产出/周天 6,900→3 段 45% 等），`npm run build` 通过；`code/README.md` 记录实现纪律与 rolldown 原生绑定环境坑（node arm64 × Rosetta shell 的 npm 平台过滤问题及手动解包方案）。
+- **根目录 README**：扩写为项目主页——技术栈、上手命令（dev/test/sim 复现）、目录树（docs 文档链/wiki 原型/DESIGN/PRODUCT）、三条实现约定（文档链唯一输入源/分支与 commit 规范/测试期双冻结）。
+
 - **设计规范定稿**：原型获用户审批后，经 impeccable document（scan 模式扫描获批 `prototype.html`）产出根目录 `DESIGN.md`（YAML token frontmatter + 六段式正文，设计规范唯一权威）与 `.impeccable/design.json`（tonal ramp/阴影/动效/断点/8 个组件快照 sidecar）——北极星「夜雨客栈的账台」（用户选定）：武侠的夜（夜幕蓝黑/烛火暖金/剑气冷青/宋体专名）× 账台的秤（tabular-nums/来源分解/数值可查）；五条命名规则（Candlelight/Semantic Ink/Serif-Is-Sacred/Tabular/Midnight）；PRODUCT.md 三条反参考逐条落为 Don't。
 
 - **经脉/窍穴方向记录**：新增 `docs/overview/meridian-direction-note.md`（完整版方向记录，未规格化；用户认可记录方向，未立项）——独立乘区路径因违反初案 §四全局规则（每最终量乘区 ≤2、禁以新增乘区做成长感）被显式排除；三方案比较（突破前置层/加法成长盘/机制解锁层）与推荐组合（方案一主干 + 方案三补跃迁，方案二以产生构筑决策为前提的条件性延伸）；确立「窍穴 = 一次性的门、周天 = 重复的路」叙事分层（消解行气冲窍方案当年的虚构矛盾）；三方案均不进 MVP-0/MVP-1（防稀释卡点归因）；唯一当前动作为零成本呈现层种子（周天可视化用环形经脉窍点形态）；附完整版立项时的规格化前置检查清单。初案 §三 加交叉引用。

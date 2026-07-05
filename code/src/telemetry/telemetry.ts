@@ -1,45 +1,61 @@
 /**
  * 埋点 —— 权威来源：docs/core-loop/mvp-0-telemetry-spec.md v1.0
- * 事件名/字段/口径以规格为准，实现不得自创事件。纯本地，JSON 一键导出。
+ * 公共信封 { e, ts, run, realm, route, ...专有字段 }；事件名以规格 §1.1–1.4 为准，实现不得自创。
+ * 纯本地持久化（与存档同级），JSON 一键导出。
  */
+import type { RouteId } from '../engine/content';
 
-/** 公共信封（埋点规格 §1.0） */
-export interface EventEnvelope {
-  /** epoch 毫秒 */
+export interface EventBase {
+  e: string;
   ts: number;
-  /** 轮次编号，从 1 起 */
   run: number;
   realm: number;
-  route: 'huashan' | 'shaolin' | 'tangmen' | null;
-  name: string;
-  payload: Record<string, unknown>;
+  route: RouteId | null;
 }
+export type TelemetryEvent = EventBase & Record<string, unknown>;
 
 const TELEMETRY_KEY = 'jianghu-idle:telemetry:v1';
-let buffer: EventEnvelope[] = loadPersisted();
 
-function loadPersisted(): EventEnvelope[] {
+/** node 测试环境无 localStorage 时退化为内存实现 */
+const mem = new Map<string, string>();
+const store: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> =
+  typeof localStorage !== 'undefined'
+    ? localStorage
+    : {
+        getItem: (k) => mem.get(k) ?? null,
+        setItem: (k, v) => void mem.set(k, v),
+        removeItem: (k) => void mem.delete(k),
+      };
+let buffer: TelemetryEvent[] = loadPersisted();
+
+function loadPersisted(): TelemetryEvent[] {
   try {
-    return JSON.parse(localStorage.getItem(TELEMETRY_KEY) ?? '[]');
+    return JSON.parse(store.getItem(TELEMETRY_KEY) ?? '[]');
   } catch {
     return [];
   }
 }
 
-export function track(event: Omit<EventEnvelope, 'ts'>): void {
-  buffer.push({ ts: Date.now(), ...event });
-  localStorage.setItem(TELEMETRY_KEY, JSON.stringify(buffer));
+/** 上下文由调用方（store）注入，保证信封字段与游戏状态一致 */
+export function track(
+  e: string,
+  ctx: { run: number; realm: number; route: RouteId | null },
+  fields: Record<string, unknown> = {},
+): void {
+  buffer.push({ e, ts: Date.now(), run: ctx.run, realm: ctx.realm, route: ctx.route, ...fields });
+  store.setItem(TELEMETRY_KEY, JSON.stringify(buffer));
 }
 
 /** 一键导出（埋点规格 §3）：单文件 JSON，含全部事件流 */
 export function exportTelemetryJSON(): string {
-  return JSON.stringify({ exportedAt: Date.now(), events: buffer }, null, 2);
+  return JSON.stringify({ exportedAt: Date.now(), telemetry_spec: 1, events: buffer }, null, 2);
+}
+
+export function getEvents(): readonly TelemetryEvent[] {
+  return buffer;
 }
 
 export function resetTelemetry(): void {
   buffer = [];
-  localStorage.removeItem(TELEMETRY_KEY);
+  store.removeItem(TELEMETRY_KEY);
 }
-
-// TODO(埋点规格 §1.1–1.4)：18 个事件的类型化封装（breakthrough / route_selected /
-// charge_segment_full / key_battle_end / seclusion_* / node_bought / test_session_* …）

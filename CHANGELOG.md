@@ -9,6 +9,8 @@
 
 ### 新增
 
+- **修炼核心循环可玩**：实现游戏状态 store（zustand，单钱包丹田模型 §6.1 v0.9）+ 挂机 tick（250ms，页面关闭不结算）+ 修炼页/武学页/路线选择/突破演出四块 UI（对照获批原型 1:1 还原）——运转周天五段派生显示（新高水位越段发 `charge_segment_full`，回落再越不重复）、突破手动点击扣全额 + 轻量演出、境界 2 突破后全屏择路（三卡）、武学升级（上限=境界×2、消耗 200×1.4^n）、机制节点购买（阅历）、人物属性面板（7 项白名单双列 + 来源分解，单一数据源出自 engine/attributes）、乘区透视；埋点对齐规格信封 `{e,ts,run,realm,route}` 并落地 run_start/charge_segment_full/realm_breakthrough/route_selected/wugong_upgraded/mech_node_bought 六事件；新增 `engine/routes.ts`（三路线赠予/每级效果/机制节点，内容表 §3 定稿数据）与 `engine/attributes.ts`（乘区规则计算）；`#seed=`/`#tab=` 观察员调试通道；storage/telemetry 支持无 localStorage 环境（内存兜底）；vitest 15 用例全过（含 store 行为：段事件防重复、突破门槛、武学上限、节点扣费），真实页面三态截图核对通过。战斗/归隐/声望阁为下一实现步。
+
 - **工程骨架**：技术栈定稿 Vite + TypeScript + React（用户批准），`code/` 落地前端工程——`src/engine/` 纯函数数值引擎（`formulas.ts` 实现公式表 §2/§3 双曲防御、命中率下限 30%、挂机产出、周天派生显示；`content.ts` 搬运内容表 §1 境界表与武学消耗公式，标注禁止调参）；`src/save/` localStorage 存档（规格书 §12 前置：持久化/恢复/一键重置/关闭页面不结算）；`src/telemetry/` 埋点公共信封 + JSON 一键导出骨架；`src/styles/tokens.css` 为 DESIGN.md token 的 CSS 落地；vitest 10 个 golden 种子用例全过（铁臂僧减免系数/游侠儿命中率/境界五档产出/周天 6,900→3 段 45% 等），`npm run build` 通过；`code/README.md` 记录实现纪律与 rolldown 原生绑定环境坑（node arm64 × Rosetta shell 的 npm 平台过滤问题及手动解包方案）。
 - **根目录 README**：扩写为项目主页——技术栈、上手命令（dev/test/sim 复现）、目录树（docs 文档链/wiki 原型/DESIGN/PRODUCT）、三条实现约定（文档链唯一输入源/分支与 commit 规范/测试期双冻结）。
 

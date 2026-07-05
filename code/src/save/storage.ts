@@ -6,12 +6,23 @@
 
 const SAVE_KEY = 'jianghu-idle:save:v1';
 
+/** node 测试环境无 localStorage 时退化为内存实现（行为一致，不持久） */
+const mem = new Map<string, string>();
+const store: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> =
+  typeof localStorage !== 'undefined'
+    ? localStorage
+    : {
+        getItem: (k) => mem.get(k) ?? null,
+        setItem: (k, v) => void mem.set(k, v),
+        removeItem: (k) => void mem.delete(k),
+      };
+
 export function saveGame(state: unknown): void {
-  localStorage.setItem(SAVE_KEY, JSON.stringify({ savedAt: Date.now(), state }));
+  store.setItem(SAVE_KEY, JSON.stringify({ savedAt: Date.now(), state }));
 }
 
 export function loadGame<T>(): T | null {
-  const raw = localStorage.getItem(SAVE_KEY);
+  const raw = store.getItem(SAVE_KEY);
   if (!raw) return null;
   try {
     return (JSON.parse(raw) as { state: T }).state;
@@ -21,5 +32,5 @@ export function loadGame<T>(): T | null {
 }
 
 export function resetGame(): void {
-  localStorage.removeItem(SAVE_KEY);
+  store.removeItem(SAVE_KEY);
 }

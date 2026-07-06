@@ -19,9 +19,11 @@ python3 docs/core-loop/sim/mvp0_sim.py  # 复现设计侧模拟（无依赖）
 ```
 code/                 前端源码（Vite + TS + React）
 docs/
-  overview/           设计初案（长线 GDD）、经脉方向记录
+  overview/           设计初案（长线 GDD）等全局权威文档
   core-loop/          MVP-0 文档链：规格书 / 公式表 / 内容表 / 声望经济表 /
                       模拟报告 / 量级边界 / 埋点规格 / 测试执行方案 / sim 模拟器
+  directions/         未立项的设计方向记录（经脉/窍穴、周天充能数值方向），
+                      MVP-1 数值重推或完整版立项时重审
   reviews/            历史评审记录（只读，不修改）
 wiki/design/          获批交互原型 prototype.html、风格对比页
 DESIGN.md             设计规范唯一权威（token frontmatter + 六段式）

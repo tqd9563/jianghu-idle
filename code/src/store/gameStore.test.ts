@@ -231,6 +231,44 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(names()).toContain('test_resumed');
   });
 
+  it('胜利收益快照（收益行同源同值）：首通全额、回刷内力两成阅历为零、江湖熟路仅乘内力', () => {
+    useGameStore.setState({
+      realm: 5, route: 'tangmen', skillLevel: 10, ownedRepNodes: ['jianghu_shulu'],
+      autoAdvance: false,
+    });
+    const play = () => {
+      const t0 = Date.now();
+      for (let i = 1; i <= 80 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+        useGameStore.getState().tick(t0 + i * 700);
+      }
+      return useGameStore.getState().battle!;
+    };
+    useGameStore.getState().challengeStage(1, 1);
+    const first = play();
+    expect(first.result.win).toBe(true);
+    const base = first.enemy.reward;
+    expect(first.reward).toEqual({
+      neili: base.neili * 1.2, silver: base.silver, xp: base.xp, refarm: false,
+    });
+
+    useGameStore.getState().challengeStage(1, 1); // 回刷同一关
+    const second = play();
+    expect(second.reward!.refarm).toBe(true);
+    expect(second.reward!.neili).toBeCloseTo(Math.round(base.neili * 0.2) * 1.2, 6);
+    expect(second.reward!.xp).toBe(0);
+
+    useGameStore.getState().challengeStage(1, 1); // 连续第 2 次回刷：×0.8 衰减（公式表 §6）
+    const third = play();
+    expect(third.reward!.neili).toBeCloseTo(Math.round(Math.round(base.neili * 0.2) * 0.8) * 1.2, 6);
+    expect(third.reward!.silver).toBe(Math.round(Math.round(base.silver * 0.5) * 0.8));
+
+    // 间隔 10 分钟重置衰减
+    useGameStore.setState({ runPlaySec: useGameStore.getState().runPlaySec + 601 });
+    useGameStore.getState().challengeStage(1, 1);
+    const fourth = play();
+    expect(fourth.reward!.neili).toBeCloseTo(Math.round(base.neili * 0.2) * 1.2, 6);
+  });
+
   it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；快速入门折减境界 2 消耗', () => {
     useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin', 'kuaisu_rumen'] });
     expect(effBreakCost(useGameStore.getState())).toBe(Math.round(5000 * 0.7)); // 境界 3 目标

@@ -5,7 +5,7 @@
  * 归隐：标准 = 境界 5 + Boss 3；保底 = 境界 5 后连败/停滞触发低收益归隐（§6.6）。
  */
 import { create } from 'zustand';
-import { diagnose, fight, makeBuild, type Build, type FightResult } from '../engine/combat';
+import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
 import { getStage, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress } from '../engine/formulas';
@@ -51,6 +51,11 @@ interface PersistedState {
   mechXpInvested: number;
   /** 本轮换线次数（轻装上路：每轮第一次免摩擦费） */
   switchCount: number;
+  /** 连续回刷衰减（公式表 §6 防原地刷爆）：同一关连续第 n 次回刷 ×0.8^(n−1)，间隔 10 分钟重置 */
+  refarmKey: string | null;
+  refarmCount: number;
+  /** 上次回刷时的 runPlaySec（活跃净时间口径） */
+  refarmAt: number;
 }
 
 export interface BattleState {
@@ -63,6 +68,8 @@ export interface BattleState {
   intervalMs: number;
   resolved: boolean;
   chainAt: number | null;
+  /** 胜利实际入账（含江湖熟路加成后的实发值，收益行同源同值） */
+  reward: { neili: number; silver: number; xp: number; refarm: boolean } | null;
 }
 
 export interface FailureInfo {
@@ -71,8 +78,13 @@ export interface FailureInfo {
   enemyName: string;
   diagCodes: number[];
   rounds: number;
+  playerHpPct: number;
   enemyHpPct: number;
   hitRate: number;
+  /** 战报（战斗文案冻结件）：引擎统计裸露 */
+  stats: FightStats;
+  route: RouteId | null;
+  tags: readonly string[];
 }
 
 export type RetireKind = 'standard' | 'fallback';
@@ -133,6 +145,7 @@ const FRESH: PersistedState = {
   runPlaySec: 0, b3Fails: 0, lastProgressSec: 0,
   fallbackUnlocked: false, standardNotified: false,
   mechXpInvested: 0, switchCount: 0,
+  refarmKey: null, refarmCount: 0, refarmAt: 0,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -154,6 +167,7 @@ const persist = (s: PersistedState) =>
     lastProgressSec: s.lastProgressSec,
     fallbackUnlocked: s.fallbackUnlocked, standardNotified: s.standardNotified,
     mechXpInvested: s.mechXpInvested, switchCount: s.switchCount,
+    refarmKey: s.refarmKey, refarmCount: s.refarmCount, refarmAt: s.refarmAt,
   });
 
 /** 地图解锁：图 2 需通关图 1 末关，图 3 需通关图 2 末关 */
@@ -391,7 +405,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   selectMap: (m) => {
-    if (mapUnlocked(m, get().clearedStages)) set({ selectedMap: m });
+    const s = get();
+    if (!mapUnlocked(m, s.clearedStages)) return;
+    // 切图即面向该图下一关：已结算的旧图战斗残留一并清掉（含未触发的自动连战）
+    const battle = s.battle && s.battle.resolved && s.battle.map !== m ? null : s.battle;
+    set({ selectedMap: m, battle });
   },
 
   challengeStage: (map, stage) => {
@@ -417,7 +435,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       battle: {
         map, stage, enemy, result,
         revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
-        resolved: false, chainAt: null,
+        resolved: false, chainAt: null, reward: null,
       },
     });
   },
@@ -579,16 +597,31 @@ function resolveBattle(
   const isKeyBattle = enemy.kind !== 'normal';
   const isBoss3 = key === BOSS3_KEY;
 
-  let { dantian, silver, xp, b3Fails, lastProgressSec } = s;
+  let { dantian, silver, xp, b3Fails, lastProgressSec, refarmKey, refarmCount, refarmAt } = s;
   let clearedStages = s.clearedStages;
   let failure: FailureInfo | null = null;
+  let rewardApplied: BattleState['reward'] = null;
 
   if (result.win) {
-    const reward = firstClear ? enemy.reward : refarmReward(enemy);
+    let reward = firstClear ? enemy.reward : refarmReward(enemy);
+    if (!firstClear) {
+      // 连续回刷衰减（公式表 §6）：同一关连续第 n 次 ×0.8^(n−1)，间隔 10 分钟重置
+      refarmCount = refarmKey === key && s.runPlaySec - refarmAt < 600 ? refarmCount + 1 : 1;
+      refarmKey = key;
+      refarmAt = s.runPlaySec;
+      const decay = Math.pow(0.8, refarmCount - 1);
+      reward = {
+        neili: Math.round(reward.neili * decay),
+        silver: Math.round(reward.silver * decay),
+        xp: 0,
+      };
+    }
     // 江湖熟路：战斗内力奖励 +20%（sim 口径：仅内力；银两/阅历不乘）
-    dantian += reward.neili * battleNeiliMult(s.ownedRepNodes);
+    const neili = reward.neili * battleNeiliMult(s.ownedRepNodes);
+    dantian += neili;
     silver += reward.silver;
     xp += reward.xp;
+    rewardApplied = { neili, silver: reward.silver, xp: reward.xp, refarm: !firstClear };
     if (isBoss3) b3Fails = 0;
     if (firstClear) {
       clearedStages = [...clearedStages, key];
@@ -604,7 +637,9 @@ function resolveBattle(
     failure = {
       map: b.map, stage: b.stage, enemyName: enemy.name,
       diagCodes, rounds: result.rounds,
-      enemyHpPct: result.enemyHpPct, hitRate: result.stats.pHitRate,
+      playerHpPct: result.playerHpPct, enemyHpPct: result.enemyHpPct,
+      hitRate: result.stats.pHitRate,
+      stats: result.stats, route: s.route, tags: enemy.tags,
     };
   }
 
@@ -625,7 +660,8 @@ function resolveBattle(
   const canChain = result.win && s.autoAdvance && nextStageOf(b.map, clearedStages) !== null;
   set({
     dantian, silver, xp, clearedStages, attempts, failure, b3Fails, lastProgressSec,
-    battle: { ...b, resolved: true, chainAt: canChain ? now + 900 : null },
+    refarmKey, refarmCount, refarmAt,
+    battle: { ...b, resolved: true, chainAt: canChain ? now + 900 : null, reward: rewardApplied },
   });
   persist(get());
 }

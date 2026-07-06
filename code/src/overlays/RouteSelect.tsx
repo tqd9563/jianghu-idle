@@ -18,7 +18,7 @@ export function RouteSelect() {
         <div className="route-cards">
           <RouteCard id="huashan" picked={picked} onPick={setPicked}
             name="华山 · 剑" style_="快剑爆发 · 短战最强，看脸不稳"
-            items={[<>暴击率 <b>+10pp</b>，暴击伤害 <b>+20pp</b></>, <><b>开战首击必定暴击</b></>, <>剑意满 5 层自动施展爆发剑招</>]}
+            items={[<>暴击率 <b>+10pp</b>，暴击伤害 <b>+20pp</b></>, <><b>开战首击必定暴击</b>（并积 1 层剑意）</>, <>每次暴击积 <b>1 层剑意</b>；满 5 层自动施展<b>爆发剑招</b></>]}
             cost="短板：面对高闪敌人命中不稳" />
           <RouteCard id="shaolin" picked={picked} onPick={setPicked}
             name="少林 · 金钟" style_="铁壁反伤 · 打不死你，磨死对手"

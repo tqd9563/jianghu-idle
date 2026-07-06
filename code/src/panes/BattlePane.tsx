@@ -1,4 +1,5 @@
 /** 战斗页 —— 原型场景 3 战斗页签 / 场景 4 失败提示的 1:1 实现（对阵单职责） */
+import { useEffect, useRef } from 'react';
 import { DIAG_TEXTS } from '../engine/combat';
 import { REALMS } from '../engine/content';
 import { getStage, mapName, MAP_STAGE_COUNT, type EnemyTag } from '../engine/enemies';
@@ -13,8 +14,9 @@ const f0 = (n: number) => Math.round(n).toLocaleString('en-US');
 export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const s = useGameStore();
   const cleared = s.clearedStages;
-  const battle = s.battle;
   const viewMap = s.selectedMap;
+  // 只展示当前页签地图上的战斗；其它图的战斗不占对阵位（切图即面向该图下一关）
+  const battle = s.battle && s.battle.map === viewMap ? s.battle : null;
   const next = nextStageOf(viewMap, cleared);
   const build = playerBuild(s);
 
@@ -26,6 +28,14 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const idleEnemy = next !== null ? getStage(viewMap, next) : null;
   const enemy = battle ? battleEnemy : idleEnemy;
   const battleDone = battle ? battle.revealed >= battle.result.turns.length : false;
+  const victory = battle !== null && battleDone && battle.result.win;
+
+  // 战斗日志跟随最新行滚动
+  const logRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = logRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [battle?.revealed, victory]);
 
   return (
     <div className="pane-wrap wide">
@@ -66,6 +76,13 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   <div className="frealm">{REALMS[s.realm - 1].name} · 境界 {s.realm}</div>
                   <div className="hp-num"><span>气血</span><span>{f0(build.hp * phpPct)} / {f0(build.hp)}</span></div>
                   <div className="bar hp"><i style={{ width: `${phpPct * 100}%` }} /></div>
+                  {battle && !battleDone && last && (
+                    <div className="status-chips">
+                      {build.sqNeed < 99 && <span className="chip sq">剑意 {Math.floor(last.pSq)}/{build.sqNeed}</span>}
+                      {build.shieldPct > 0 && <span className="chip shield">护盾 {f0(last.pShield)}</span>}
+                      {build.poison.cap > 0 && <span className="chip poison">敌方毒层 {Math.round(last.ePoison)}/{build.poison.cap}</span>}
+                    </div>
+                  )}
                   <div className="mini-stats">
                     <span>攻<b>{Math.round(build.atk * 10) / 10}</b></span>
                     <span>防<b>{Math.round(build.def * 10) / 10}</b></span>
@@ -132,7 +149,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
           )}
         </div>
 
-        <div className="log">
+        <div className="log" ref={logRef}>
           <div className="log-title">战斗记录 · 自动结算</div>
           {revealedTurns.length === 0 && <div className="log-line">等待开战…</div>}
           {revealedTurns.map((t, i) => (
@@ -141,6 +158,14 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               <span className={logCls(t.kind)}>{t.text}</span>
             </div>
           ))}
+          {victory && battle.reward && (
+            <div className="log-line">
+              <span className="turn" />
+              <span className="win-t">
+                {battle.reward.refarm ? '回刷收获' : '收获'}　内力 +{f0(battle.reward.neili)}　银两 +{f0(battle.reward.silver)}　阅历 +{f0(battle.reward.xp)}
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -169,8 +194,10 @@ function logCls(kind: string): string {
 function FailureModal({ goCultivate }: { goCultivate: () => void }) {
   const s = useGameStore();
   const f = s.failure!;
+  const st = f.stats;
   const breakCost = effBreakCost(s);
   const chargePct = breakCost !== null ? Math.min(100, Math.round((s.dantian / breakCost) * 100)) : 100;
+  const outPct = (v: number) => (st.dmgDealt > 0 ? Math.round((v / st.dmgDealt) * 100) : 0);
 
   return (
     <div className="modal-backdrop open">
@@ -181,10 +208,23 @@ function FailureModal({ goCultivate }: { goCultivate: () => void }) {
             <div className="fd-main"><b>{DIAG_TEXTS[f.diagCodes[0]]}</b></div>
             {f.diagCodes[1] && <div className="fd-extra">另：{DIAG_TEXTS[f.diagCodes[1]]}</div>}
           </div>
-          <div className="fail-stats">
-            <div className="fs"><div className="k">战斗回合</div><div className="v">{f.rounds} / 50</div></div>
-            <div className="fs"><div className="k">敌方剩余气血</div><div className="v">{Math.round(f.enemyHpPct * 100)}%</div></div>
-            <div className="fs"><div className="k">你的实际命中率</div><div className="v">{Math.round(f.hitRate * 100)}%</div></div>
+          <div className="battle-report">
+            <div className="br-title">战报</div>
+            <div className="br-line">历时 {f.rounds} / 50 回合</div>
+            <div className="br-line">我方输出 {f0(st.dmgDealt)}（敌余 {Math.round(f.enemyHpPct * 100)}%）</div>
+            <div className="br-line">我方承伤 {f0(st.dmgTaken)}（余 {Math.round(f.playerHpPct * 100)}%）</div>
+            <div className="br-line">实际命中 {Math.round(f.hitRate * 100)}%</div>
+            {f.route === 'huashan' && (
+              <div className="br-line route">暴击 {st.critCount} 次 · 爆发剑招 {st.burstCount} 次（占输出 {outPct(st.burstDmg)}%）</div>
+            )}
+            {f.route === 'shaolin' && (
+              <div className="br-line route">护盾吸收 {f0(st.shieldAbsorbed)} · 反伤输出 {f0(st.thornsOut)}（占输出 {outPct(st.thornsOut)}%）</div>
+            )}
+            {f.route === 'tangmen' && (
+              <div className="br-line route">毒伤占输出 {outPct(st.poisonDmg)}% · 毒爆 {st.poisonBurstCount} 次 · 毒层被清 {st.purgeCount} 次</div>
+            )}
+            {st.abStacksMax > 0 && <div className="br-line enemy">身中破甲 {st.abStacksMax} 层</div>}
+            {st.thornsTaken > 0 && <div className="br-line enemy">承受反伤 {f0(st.thornsTaken)}</div>}
           </div>
           <div className="modal-actions">
             <button className="btn" onClick={() => { s.dismissFailure(); goCultivate(); }}>

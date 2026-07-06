@@ -89,13 +89,27 @@ export interface TurnEvent {
   text: string;
   phpPct: number;
   ehpPct: number;
+  /** 状态快照（§7.1 触发状态可见性）：剑意层 / 我方护盾余量 / 敌方毒层 */
+  pSq: number;
+  pShield: number;
+  ePoison: number;
 }
 
+/** 战斗统计 —— 纯累加器，不参与结算；失败战报（战斗文案冻结件）与诊断规则消费 */
 export interface FightStats {
   pHitRate: number;        // 实际命中率（EV 模式即命中概率）
   abStacksMax: number;     // 敌方施加的破甲层数峰值
   purgeCount: number;      // 净化清除毒层的次数（清空非零层才计）
-  thornsTaken: number;     // 反伤敌反弹给玩家的总伤害
+  thornsTaken: number;     // 反伤敌反弹给玩家的总伤害（护盾吸收前）
+  dmgDealt: number;        // 我方总输出（普攻+爆发+毒伤+毒爆+反伤）
+  dmgTaken: number;        // 我方总承伤（减免后，含护盾吸收部分：敌攻+反噬+毒）
+  critCount: number;       // 暴击次数（RNG 模式）
+  burstCount: number;      // 爆发剑招次数
+  burstDmg: number;        // 爆发剑招总伤害
+  shieldAbsorbed: number;  // 护盾吸收总量
+  thornsOut: number;       // 金钟反震总输出
+  poisonDmg: number;       // 毒伤总量（含毒爆）
+  poisonBurstCount: number; // 毒爆次数
 }
 
 export interface FightResult {
@@ -135,9 +149,16 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   const eHit = hitChance(enemy.hit, build.dodge);
 
   const turns: TurnEvent[] = [];
-  const stats: FightStats = { pHitRate: pHit, abStacksMax: 0, purgeCount: 0, thornsTaken: 0 };
+  const stats: FightStats = {
+    pHitRate: pHit, abStacksMax: 0, purgeCount: 0, thornsTaken: 0,
+    dmgDealt: 0, dmgTaken: 0, critCount: 0, burstCount: 0, burstDmg: 0,
+    shieldAbsorbed: 0, thornsOut: 0, poisonDmg: 0, poisonBurstCount: 0,
+  };
   let pAttempts = 0, pHits = 0;
-  const pct = () => ({ phpPct: Math.max(php, 0) / build.hp, ehpPct: Math.max(ehp, 0) / enemy.hp });
+  const pct = () => ({
+    phpPct: Math.max(php, 0) / build.hp, ehpPct: Math.max(ehp, 0) / enemy.hp,
+    pSq: sq, pShield: Math.max(pshield, 0), ePoison: elayers,
+  });
   const push = (rd: number, side: TurnEvent['side'], kind: TurnEvent['kind'], text: string, dmg?: number) =>
     turns.push({ rd, side, kind, text, dmg, ...pct() });
 
@@ -174,6 +195,8 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         sq -= build.sqNeed;
         const burst = build.atk * build.burstMult * mitigationMultiplier(enemy.def) * dmgMult;
         dealt += burst;
+        stats.burstCount += 1;
+        stats.burstDmg += burst;
         push(rd, 'player', 'burst', `剑意迸发！爆发剑招造成 ${f1(burst)} 伤害`, f1(burst));
       }
     }
@@ -181,12 +204,14 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       elayers = Math.min(build.poison.cap, elayers + hitRoll * build.poison.perHit);
     }
     ehp -= dealt;
+    stats.dmgDealt += dealt;
     if (!ev && hitRoll === 0) {
       push(rd, 'player', 'miss', '你的攻击被闪避');
     } else if (dealt > 0) {
       const critMark = (forced || critRoll === 1) && !ev;
+      if (critMark) stats.critCount += 1;
       push(rd, 'player', critMark ? 'crit' : 'attack',
-        `你${build.plainMult !== 1 ? '普攻（×0.60）' : '普攻'}${critMark ? '暴击！' : '命中，'}造成 ${f1(dealt)} 伤害${build.poison.perHit && hitRoll ? `，毒 +1 层（${Math.round(elayers)}/${build.poison.cap}）` : ''}`,
+        `你${build.plainMult !== 1 ? '普攻（×0.60）' : '普攻'}${critMark ? '暴击！' : '命中，'}造成 ${f1(dealt)} 伤害${build.poison.perHit && hitRoll ? `，毒 +1 层（${Math.round(elayers)}/${build.poison.cap}）` : ''}${critMark && build.sqNeed < 99 ? `，剑意 ${sq}/${build.sqNeed}` : ''}`,
         f1(dealt));
     }
     if (tags.includes('反伤') && dealt > 0) {
@@ -195,6 +220,8 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       pshield -= absorb;
       php -= refl - absorb;
       stats.thornsTaken += refl;
+      stats.dmgTaken += refl;
+      stats.shieldAbsorbed += absorb;
       push(rd, 'enemy', 'thorns_to_player', `${enemy.name}反弹了你的攻势，你受到 ${f1(refl - absorb)} 反伤`, f1(refl - absorb));
     }
     if (ehp <= 0) return finish(true, rd);
@@ -212,6 +239,8 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     const absorb = Math.min(pshield, edmg);
     pshield -= absorb;
     php -= edmg - absorb;
+    stats.dmgTaken += edmg;
+    stats.shieldAbsorbed += absorb;
     if (!ev && eHitRoll === 0) {
       push(rd, 'enemy', 'miss', `${enemy.name}的攻击被闪避`);
     } else if (edmg > 0) {
@@ -223,6 +252,8 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (build.thorns && edmg > 0) {
       const t = edmg * build.thorns;
       ehp -= t;
+      stats.dmgDealt += t;
+      stats.thornsOut += t;
       push(rd, 'player', 'thorns_to_enemy', `金钟反震，${enemy.name}受到 ${f1(t)} 反伤`, f1(t));
     }
     if (tags.includes('破甲')) {
@@ -238,11 +269,16 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (elayers > 0) {
       const tick = elayers * build.atk * build.poison.coef * dmgMult;
       ehp -= tick;
+      stats.dmgDealt += tick;
+      stats.poisonDmg += tick;
       push(rd, 'player', 'poison_tick', `毒发：${Math.round(elayers)} 层 → ${f1(tick)} 毒伤（无视防御）`, f1(tick));
       if (elayers >= build.poison.cap - 1e-9) {
         const burst = build.poison.cap * build.atk * build.poison.burst * dmgMult;
         ehp -= burst;
         elayers = 0;
+        stats.dmgDealt += burst;
+        stats.poisonDmg += burst;
+        stats.poisonBurstCount += 1;
         push(rd, 'player', 'poison_burst', `毒层满溢，毒爆！造成 ${f1(burst)} 伤害`, f1(burst));
       }
       if (ehp <= 0) return finish(true, rd);
@@ -250,6 +286,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (playerPoison > 0) {
       const tick = playerPoison * enemy.atk * ENEMY_POISON_COEF;
       php -= tick; // 毒绕过护盾直扣气血
+      stats.dmgTaken += tick;
       push(rd, 'enemy', 'enemy_poison_tick', `毒入肌理（${Math.round(playerPoison)} 层），你受到 ${f1(tick)} 毒伤（绕过护盾）`, f1(tick));
     }
     if (tags.includes('净化') && rd % PURIFY_EVERY === 0) {

@@ -26,7 +26,7 @@ export const REP_NODES: RepNodeDef[] = [
   { id: 'jianghu_shulu',      name: '江湖熟路', price: 50, type: '效率', desc: '地图战斗获得的内力提高 20%' },
   { id: 'jiumeng_chongwen',   name: '旧梦重温', price: 60, type: '效率', desc: '挂机修炼的内力产出提高 20%' },
   { id: 'poguan_xinde',       name: '破关心得', price: 70, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
-  { id: 'shimen_zhiyin',      name: '师门指引', price: 80, type: '策略', desc: '每轮开局免费获得当前路线的第 1 个机制节点，更换路线后跟随新路线' },
+  { id: 'shimen_zhiyin',      name: '师门指引', price: 80, type: '策略', desc: '每轮开局免费获得当前路线的一重参悟，更换路线后跟随新路线' },
 ];
 
 export const REP_NODE_MAP: Record<RepNodeId, RepNodeDef> = Object.fromEntries(

@@ -1,15 +1,17 @@
 /** 武学页 —— 构筑决策归拢处：武学升级 / 机制节点 / 路线机制 / 乘区透视 / 换路线 */
 import { useState } from 'react';
 import { computeAttributes } from '../engine/attributes';
+import type { Build } from '../engine/combat';
 import { REALMS, skillUpgradeCost, type RouteId } from '../engine/content';
 import { bossDmgBonus } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
 import { RouteSwitch } from '../overlays/RouteSwitch';
-import { useGameStore } from '../store/gameStore';
+import { playerBuild, useGameStore } from '../store/gameStore';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const pp = (v: number) => `${(v * 100).toFixed(1)}pp`;
+const CN_CHONG = ['', '一', '二', '三'];
 
 export function SkillPane() {
   const s = useGameStore();
@@ -26,6 +28,7 @@ export function SkillPane() {
   const affordable = cost !== null && s.dantian >= cost;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
   const nextNode = route.mechNodes.find((n) => !s.ownedMechNodes.includes(n.id));
+  const build = playerBuild(s);
 
   return (
     <div className="pane-wrap">
@@ -48,12 +51,12 @@ export function SkillPane() {
                 </button>
               </div>
               <div className="skill-row">
-                <span className="sname">机制节点</span>
+                <span className="sname">武学参悟</span>
                 <span className="slv">{s.ownedMechNodes.length} / {route.mechNodes.length}</span>
                 <span className="seff">
                   {s.ownedMechNodes.length > 0
-                    ? route.mechNodes.filter((n) => s.ownedMechNodes.includes(n.id)).map((n) => n.label).join('；') + '（已购）'
-                    : '尚未购买'}
+                    ? route.mechNodes.filter((n) => s.ownedMechNodes.includes(n.id)).map((n) => n.label).join('；') + '（已参悟）'
+                    : '尚未参悟'}
                 </span>
                 {nextNode && (
                   <button
@@ -61,7 +64,7 @@ export function SkillPane() {
                     disabled={s.xp < nextNode.cost}
                     onClick={() => s.buyMechNode(nextNode.id)}
                   >
-                    {nextNode.label} · {nextNode.cost} 阅历
+                    {CN_CHONG[s.ownedMechNodes.length + 1]}重参悟 · {nextNode.label}（{nextNode.cost} 阅历）
                   </button>
                 )}
               </div>
@@ -105,7 +108,7 @@ export function SkillPane() {
           <div className="panel-head"><span className={`route-name serif route-${s.route}`}>{route.name}</span></div>
           <div className="panel-body">
             <ul className="route-mech">
-              <RouteMechList routeId={s.route!} level={s.skillLevel} />
+              <RouteMechList routeId={s.route!} level={s.skillLevel} build={build} />
             </ul>
             <button
               className="btn ghost"
@@ -139,36 +142,40 @@ function SkillEffects({ routeId, level }: { routeId: keyof typeof ROUTES; level:
   return <>{parts.join(' · ')}</>;
 }
 
-function RouteMechList({ routeId, level }: { routeId: keyof typeof ROUTES; level: number }) {
+/**
+ * 路线机制参数一律显示**当前生效值**（含参悟修改；battle-copy §3.2 通用规则）——
+ * 已参悟玩家读到过期基线值即文案撒谎；基线值只允许出现在路线选择卡。
+ */
+function RouteMechList({ routeId, level, build }: { routeId: keyof typeof ROUTES; level: number; build: Build }) {
   const g = ROUTES[routeId].grant;
   const p = ROUTES[routeId].perLevel;
   switch (routeId) {
-    case 'tangmen': {
-      const coef = (g.poisonCoef ?? 0) + (p.poisonCoefPP ?? 0) * level;
+    case 'tangmen':
       return (
         <>
-          <li>第 0 回合自动<b>施毒 {g.poisonInit} 层</b>，每次命中 <b>+{g.poisonPerHit} 层</b></li>
-          <li>毒伤 = 攻击 × <b>{Math.round(coef * 1000) / 10}%</b>（基础 12% + 武学 {pp((p.poisonCoefPP ?? 0) * level)}）× 层数</li>
+          <li>第 0 回合自动<b>施毒 {build.poison.init} 层</b>，每次命中 <b>+{build.poison.perHit} 层</b></li>
+          <li>毒伤 = 攻击 × <b>{Math.round(build.poison.coef * 1000) / 10}%</b>（基础 12% + 武学 {pp((p.poisonCoefPP ?? 0) * level)}）× 层数</li>
           <li>毒<b>无视防御、绕过护盾</b>，不可暴击</li>
-          <li>层数上限 <b>{g.poisonCap}</b>，满层触发<b>毒爆 {pct(g.poisonBurstPct!)}</b></li>
-          <li>代价：普攻伤害 <b>×{g.basicAtkMult!.toFixed(2)}</b></li>
+          <li>层数上限 <b>{build.poison.cap}</b>，满层触发<b>毒爆 {pct(build.poison.burst)}</b></li>
+          <li>代价：普攻伤害 <b>×{build.plainMult.toFixed(2)}</b></li>
         </>
       );
-    }
     case 'huashan':
       return (
         <>
           <li>暴击率 <b>+{pp(g.critRatePP!)}</b>，暴击伤害 <b>+{pp(g.critDmgPP!)}</b></li>
-          <li><b>开战首击必定暴击</b></li>
-          <li>剑意满 5 层自动施展<b>爆发剑招（400%）</b></li>
+          <li><b>开战首击必定暴击</b>（并积 1 层剑意）</li>
+          <li>每次暴击积 <b>1 层剑意</b></li>
+          <li>剑意满 <b>{build.sqNeed} 层</b>自动施展<b>爆发剑招（{Math.round(build.burstMult * 100)}%）</b></li>
         </>
       );
     case 'shaolin':
       return (
         <>
-          <li>开战自动获得 <b>{pct(g.shieldPctHP!)} 气血护盾</b></li>
-          <li>受击自动反伤 <b>{pct(g.thornsPct!)}</b>（减免后、护盾吸收前）</li>
-          <li>防御 <b>+{pct(g.defPct!)}</b></li>
+          <li>开战自动获得 <b>{pct(build.shieldPct)} 气血护盾</b></li>
+          <li>受击自动反伤 <b>{pct(build.thorns)}</b>（减免后、护盾吸收前）</li>
+          <li>防御 <b>+{pct((g.defPct ?? 0) + (p.defPct ?? 0) * level)}</b></li>
+          {build.lowhpDr > 0 && <li>气血低于 30% 时受到伤害 <b>−{pct(build.lowhpDr)}</b></li>}
         </>
       );
   }

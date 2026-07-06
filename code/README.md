@@ -38,7 +38,7 @@ src/
 ## 实现纪律
 
 - UI 实现基准：`wiki/design/prototype.html`（获批原型）+ 根目录 `DESIGN.md`，1:1 还原。
-- 数值/文案不得在代码里调参或改写：数值出自内容表/公式表，文案（失败提示、归隐流程）测试期冻结。
+- 数值/文案不得在代码里调参或改写：数值出自内容表/公式表且改动必过 sim golden 对照；玩家可见文案以 `mvp-0-retire-copy.md`/`mvp-0-battle-copy.md` 为唯一权威，变更先改文档发版再实现。（测试期冻结未启用、已随 MVP-0 收口解除，见 `docs/core-loop/mvp-0-closure-note.md` §5——单源纪律不随冻结解除。）
 - 同一数值多处渲染必须单一数据源（修炼页/战斗页/武学页三处一致，golden 对照覆盖）。
 
 ## 已知环境坑：rolldown 原生绑定

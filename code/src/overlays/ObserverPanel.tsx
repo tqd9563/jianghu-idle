@@ -29,21 +29,18 @@ type Reason = 'completed' | 'external_dropout' | 'design_dropout';
 export function ObserverPanel({ onClose }: { onClose: () => void }) {
   const s = useGameStore();
   const [testerId, setTesterId] = useState(() => localStorage.getItem(TESTER_KEY) ?? '');
-  const [sessionOn, setSessionOn] = useState(false);
   const [reason, setReason] = useState<Reason>('completed');
+  // 会话开关以 store 持久化状态为准：面板关开/页面刷新不得回到「未开始」假象
+  const sessionOn = s.sessionActive;
 
   const start = () => {
     const id = testerId.trim();
     if (!id) return;
     localStorage.setItem(TESTER_KEY, id);
     s.startSession(id);
-    setSessionOn(true);
   };
 
-  const end = () => {
-    s.endSession(reason);
-    setSessionOn(false);
-  };
+  const end = () => s.endSession(reason);
 
   const exportTelemetry = () => {
     const id = testerId.trim() || 'T00';

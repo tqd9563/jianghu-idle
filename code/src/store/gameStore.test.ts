@@ -3,6 +3,7 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { skillUpgradeCost } from '../engine/content';
+import { loadGame } from '../save/storage';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { effBreakCost, retireKind, useGameStore } from './gameStore';
 
@@ -229,6 +230,26 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(getEvents().find((e) => e.e === 'test_session_end')!.reason).toBe('completed');
     expect(names()).toContain('test_paused');
     expect(names()).toContain('test_resumed');
+  });
+
+  it('会话状态持久化：重复开始不重发事件；暂停中结束自动补发 test_resumed 闭合配对', () => {
+    useGameStore.getState().startSession('T02');
+    let s = useGameStore.getState();
+    expect(s.sessionActive).toBe(true);
+    expect(loadGame<{ sessionActive: boolean }>()!.sessionActive).toBe(true); // 面板重开/刷新不丢
+
+    useGameStore.getState().startSession('T02'); // 面板状态错乱时的双击保护
+    expect(names().filter((n) => n === 'test_session_start')).toHaveLength(1);
+
+    useGameStore.getState().pauseSession();
+    expect(loadGame<{ paused: boolean }>()!.paused).toBe(true); // 刷新不静默解冻
+    useGameStore.getState().endSession('completed');
+    const evs = names();
+    expect(evs.indexOf('test_resumed')).toBeGreaterThan(evs.indexOf('test_paused'));
+    expect(evs.indexOf('test_session_end')).toBeGreaterThan(evs.indexOf('test_resumed'));
+    s = useGameStore.getState();
+    expect(s.sessionActive).toBe(false);
+    expect(s.paused).toBe(false);
   });
 
   it('胜利收益快照（收益行同源同值）：首通全额、回刷内力两成阅历为零、江湖熟路仅乘内力', () => {

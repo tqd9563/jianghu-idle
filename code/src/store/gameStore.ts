@@ -56,6 +56,11 @@ interface PersistedState {
   refarmCount: number;
   /** 上次回刷时的 runPlaySec（活跃净时间口径） */
   refarmAt: number;
+  /** 观察员会话进行中 —— 持久化：面板重开/页面刷新不得回到「未开始」假象 */
+  sessionActive: boolean;
+  /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结。
+   *  持久化：刷新页面不得静默解冻——test_paused 无配对 test_resumed 时，离线口径会把后续游玩全算进暂停 */
+  paused: boolean;
 }
 
 export interface BattleState {
@@ -104,8 +109,6 @@ interface GameState extends PersistedState {
   selectedMap: MapNo;
   battle: BattleState | null;
   failure: FailureInfo | null;
-  /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结 */
-  paused: boolean;
   retireStep: 'preview' | 'confirm' | null;
   retireCeremony: RetireCeremonyData | null;
   /** 保底开放一次性提示（retire-copy §6 toast；非持久化） */
@@ -146,6 +149,7 @@ const FRESH: PersistedState = {
   fallbackUnlocked: false, standardNotified: false,
   mechXpInvested: 0, switchCount: 0,
   refarmKey: null, refarmCount: 0, refarmAt: 0,
+  sessionActive: false, paused: false,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -168,6 +172,7 @@ const persist = (s: PersistedState) =>
     fallbackUnlocked: s.fallbackUnlocked, standardNotified: s.standardNotified,
     mechXpInvested: s.mechXpInvested, switchCount: s.switchCount,
     refarmKey: s.refarmKey, refarmCount: s.refarmCount, refarmAt: s.refarmAt,
+    sessionActive: s.sessionActive, paused: s.paused,
   });
 
 /** 地图解锁：图 2 需通关图 1 末关，图 3 需通关图 2 末关 */
@@ -231,7 +236,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   selectedMap: 1,
   battle: null,
   failure: null,
-  paused: false,
   retireStep: null,
   retireCeremony: null,
   retireToast: null,
@@ -532,14 +536,21 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   startSession: (testerId) => {
     const s = get();
+    if (s.sessionActive) return; // 防面板状态错乱导致重复 test_session_start
     track('test_session_start', { run: s.run, realm: s.realm, route: s.route }, {
       tester_id: testerId, build: BUILD, tables_version: TABLES_VERSION, telemetry_spec: TELEMETRY_SPEC,
     });
+    set({ sessionActive: true });
+    persist(get());
   },
 
   endSession: (reason) => {
+    // 暂停中直接结束：先补发 test_resumed 闭合暂停配对，并解冻游戏
+    if (get().paused) get().resumeSession();
     const s = get();
     track('test_session_end', { run: s.run, realm: s.realm, route: s.route }, { reason });
+    set({ sessionActive: false });
+    persist(get());
   },
 
   pauseSession: () => {
@@ -547,6 +558,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.paused) return;
     track('test_paused', { run: s.run, realm: s.realm, route: s.route });
     set({ paused: true });
+    persist(get());
   },
 
   resumeSession: () => {
@@ -564,6 +576,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         chainAt: b.chainAt !== null ? Math.max(b.chainAt, now + 900) : null,
       } : null,
     });
+    persist(get());
   },
 
   hardReset: () => {

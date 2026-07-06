@@ -15,6 +15,7 @@ import { RepPane } from './panes/RepPane';
 import { SkillPane } from './panes/SkillPane';
 import { RouteSelect } from './overlays/RouteSelect';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
+import { ObserverPanel } from './overlays/ObserverPanel';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
 
@@ -25,10 +26,12 @@ const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 export default function App() {
   const s = useGameStore();
   const [tab, setTab] = useState<TabId>('cultivate');
+  const [observerOpen, setObserverOpen] = useState(false);
 
   useEffect(() => {
-    const { tab: debugTab, fight: autoFight, retire: debugRetire } = applyDebugHash();
+    const { tab: debugTab, fight: autoFight, retire: debugRetire, observer } = applyDebugHash();
     if (debugTab) setTab(debugTab as TabId);
+    if (observer) setObserverOpen(true);
     s.init();
     if (autoFight) {
       const st = useGameStore.getState();
@@ -41,7 +44,11 @@ export default function App() {
       if (debugRetire === 'ceremony') { st.proceedRetire(); st.confirmRetire(); }
     }
     const t = setInterval(() => useGameStore.getState().tick(Date.now()), 250);
-    return () => clearInterval(t);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.code === 'KeyO') setObserverOpen((v) => !v);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { clearInterval(t); window.removeEventListener('keydown', onKey); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -150,6 +157,8 @@ export default function App() {
       {s.retireCeremony && (
         <RetireCeremony onDone={() => { s.closeRetireCeremony(); setTab('rep'); }} />
       )}
+      {s.paused && <div className="paused-chip">测试暂停中 · 计时与产出已冻结</div>}
+      {observerOpen && <ObserverPanel onClose={() => setObserverOpen(false)} />}
       {s.retireToast && (
         <div className="toast" role="status">
           <span>

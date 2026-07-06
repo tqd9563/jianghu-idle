@@ -15,7 +15,7 @@ const PRESETS: Record<string, object> = {
     run: 1, realm: 3, route: 'tangmen', skillLevel: 5,
     dantian: 6900, silver: 530, xp: 189,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1'], chargeHighWater: 3,
+    ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
   },
   // 突破就绪态：境界 4 · 丹田 21,000 · 图3 推进到第 8 关
@@ -23,7 +23,7 @@ const PRESETS: Record<string, object> = {
     run: 1, realm: 4, route: 'tangmen', skillLevel: 7,
     dantian: 21000, silver: 830, xp: 250,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1', 'tm2'], chargeHighWater: 5,
+    ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 5,
     clearedStages: [...m1all, ...m2upto(10), ...m3upto(7)], attempts: {}, autoAdvance: true,
   },
   // Boss 2 卡点态：境界 3 打推荐境界 4 的铁掌恶僧（复现失败诊断规则 1）
@@ -31,7 +31,7 @@ const PRESETS: Record<string, object> = {
     run: 1, realm: 3, route: 'tangmen', skillLevel: 6,
     dantian: 3210, silver: 490, xp: 96,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1'], chargeHighWater: 1,
+    ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 1,
     clearedStages: [...m1all, ...m2upto(9)], attempts: {}, autoAdvance: false,
   },
   // 标准归隐就绪态：境界 5 + 三图全通（46 分钟轮长 → 130 声望）
@@ -39,7 +39,7 @@ const PRESETS: Record<string, object> = {
     run: 1, realm: 5, route: 'tangmen', skillLevel: 10,
     dantian: 3400, silver: 830, xp: 59,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1', 'tm2', 'tm3'], chargeHighWater: 0,
+    ownedMechNodes: ['tm1', 'tm2', 'tm3'], mechXpInvested: 270, chargeHighWater: 0,
     clearedStages: [...m1all, ...m2upto(10), ...m3upto(10)],
     attempts: { boss3: 2 }, autoAdvance: true,
     runPlaySec: 2760, b3Fails: 0, lastProgressSec: 2700, fallbackUnlocked: false, standardNotified: false,
@@ -49,7 +49,7 @@ const PRESETS: Record<string, object> = {
     run: 1, realm: 5, route: 'shaolin', skillLevel: 10,
     dantian: 5200, silver: 610, xp: 12,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['sl1', 'sl2', 'sl3'], chargeHighWater: 0,
+    ownedMechNodes: ['sl1', 'sl2', 'sl3'], mechXpInvested: 270, chargeHighWater: 0,
     clearedStages: [...m1all, ...m2upto(10), ...m3upto(9)],
     attempts: { boss3: 4 }, autoAdvance: false,
     runPlaySec: 2940, b3Fails: 4, lastProgressSec: 2760, fallbackUnlocked: false, standardNotified: false,
@@ -65,9 +65,16 @@ const PRESETS: Record<string, object> = {
   },
 };
 
-export function applyDebugHash(): { tab: string | null; fight: boolean; retire: string | null } {
+export function applyDebugHash(): {
+  tab: string | null; fight: boolean; retire: string | null; observer: boolean;
+} {
   const params = new URLSearchParams(window.location.hash.slice(1));
   const seed = params.get('seed');
   if (seed && PRESETS[seed]) saveGame(PRESETS[seed]);
-  return { tab: params.get('tab'), fight: params.get('fight') === '1', retire: params.get('retire') };
+  return {
+    tab: params.get('tab'),
+    fight: params.get('fight') === '1',
+    retire: params.get('retire'),
+    observer: params.get('observer') === '1',
+  };
 }

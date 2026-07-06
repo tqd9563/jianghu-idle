@@ -46,9 +46,14 @@ export function track(
   store.setItem(TELEMETRY_KEY, JSON.stringify(buffer));
 }
 
-/** 一键导出（埋点规格 §3）：单文件 JSON，含全部事件流 */
-export function exportTelemetryJSON(): string {
-  return JSON.stringify({ exportedAt: Date.now(), telemetry_spec: 1, events: buffer }, null, 2);
+/** 一键导出（埋点规格 §3 最低格式）：meta + 全部事件流 */
+export function exportTelemetryJSON(meta: {
+  tester_id: string;
+  build: string;
+  tables_version: string;
+  telemetry_spec: number;
+}): string {
+  return JSON.stringify({ meta: { ...meta, exported_at: Date.now() }, events: buffer }, null, 2);
 }
 
 export function getEvents(): readonly TelemetryEvent[] {

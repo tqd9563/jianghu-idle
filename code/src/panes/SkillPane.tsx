@@ -1,7 +1,10 @@
-/** 武学页 —— 构筑决策归拢处：武学升级 / 机制节点 / 路线机制 / 乘区透视 */
+/** 武学页 —— 构筑决策归拢处：武学升级 / 机制节点 / 路线机制 / 乘区透视 / 换路线 */
+import { useState } from 'react';
 import { computeAttributes } from '../engine/attributes';
-import { REALMS, skillUpgradeCost } from '../engine/content';
+import { REALMS, skillUpgradeCost, type RouteId } from '../engine/content';
+import { bossDmgBonus } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
+import { RouteSwitch } from '../overlays/RouteSwitch';
 import { useGameStore } from '../store/gameStore';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
@@ -11,6 +14,11 @@ const pp = (v: number) => `${(v * 100).toFixed(1)}pp`;
 export function SkillPane() {
   const s = useGameStore();
   const route = ROUTES[s.route!];
+  const otherRoutes = (Object.keys(ROUTES) as RouteId[]).filter((r) => r !== s.route);
+  // `#switch=1` 调试直达：截图/自检用
+  const [switchTo, setSwitchTo] = useState<RouteId | null>(() =>
+    new URLSearchParams(window.location.hash.slice(1)).get('switch') === '1' ? otherRoutes[0] : null);
+  const bossBonus = bossDmgBonus(s.ownedRepNodes);
   const cap = REALMS[s.realm - 1].skillCap;
   const next = s.skillLevel + 1;
   const atCap = next > cap;
@@ -83,9 +91,11 @@ export function SkillPane() {
               <div className="zone-box">
                 <div className="zt">对 Boss 伤害 · 战斗域</div>
                 <div className="zone-line">
-                  <span className="base">结算伤害</span> × <span className="perm">(1 + 0%)</span> = <span className="result">×1.00</span>
+                  <span className="base">结算伤害</span> × <span className="perm">(1 + {pct(bossBonus)})</span> = <span className="result">×{(1 + bossBonus).toFixed(2)}</span>
                 </div>
-                <div className="zone-legend"><span className="perm">「破关心得」购买后 +10%</span></div>
+                <div className="zone-legend">
+                  <span className="perm">{bossBonus > 0 ? '永久（破关心得 +10%）' : '「破关心得」购买后 +10%'}</span>
+                </div>
               </div>
             </div>
           </section>
@@ -97,12 +107,20 @@ export function SkillPane() {
             <ul className="route-mech">
               <RouteMechList routeId={s.route!} level={s.skillLevel} />
             </ul>
-            <button className="btn ghost" disabled title="换路线随战斗模块交付（阅历全返 + 200 银两）">
-              换路线（随战斗模块交付）
+            <button
+              className="btn ghost"
+              onClick={() => setSwitchTo(otherRoutes[0])}
+              title="已投入阅历全额返还，仅收 200 银两盘缠"
+            >
+              换路线
             </button>
           </div>
         </section>
       </div>
+
+      {switchTo && (
+        <RouteSwitch to={switchTo} onPick={setSwitchTo} onClose={() => setSwitchTo(null)} />
+      )}
     </div>
   );
 }

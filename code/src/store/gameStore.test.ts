@@ -163,6 +163,74 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(ev[0].balance_after).toBe(70);
   });
 
+  it('换路线：阅历 100% 返还（仅已投入）、200 银两摩擦费、武学清零、发 route_changed', () => {
+    useGameStore.setState({
+      realm: 3, route: 'tangmen', skillLevel: 5, silver: 530, xp: 189,
+      ownedMechNodes: ['tm1'], mechXpInvested: 40,
+    });
+    useGameStore.getState().switchRoute('shaolin');
+    const s = useGameStore.getState();
+    expect(s.route).toBe('shaolin');
+    expect(s.skillLevel).toBe(0);
+    expect(s.silver).toBe(330);
+    expect(s.xp).toBe(229);
+    expect(s.ownedMechNodes).toEqual([]);
+    expect(s.mechXpInvested).toBe(0);
+    const ev = getEvents().find((e) => e.e === 'route_changed')!;
+    expect(ev.route_from).toBe('tangmen');
+    expect(ev.route_to).toBe('shaolin');
+    expect(ev.xp_refunded).toBe(40);
+    expect(ev.fee_paid).toBe(200);
+  });
+
+  it('轻装上路：每轮第一次换线免费；第二次收费且银两不足拒绝', () => {
+    useGameStore.setState({
+      realm: 3, route: 'tangmen', skillLevel: 2, silver: 0, xp: 0,
+      ownedRepNodes: ['qingzhuang_shanglu'],
+    });
+    useGameStore.getState().switchRoute('huashan'); // 免费成功
+    expect(useGameStore.getState().route).toBe('huashan');
+    expect(getEvents().find((e) => e.e === 'route_changed')!.fee_paid).toBe(0);
+    useGameStore.getState().switchRoute('shaolin'); // 第二次要 200，银两 0 → 拒绝
+    expect(useGameStore.getState().route).toBe('huashan');
+  });
+
+  it('师门指引跟随换线：新路线节点一免费重赠，免费赠予不计入返还', () => {
+    useGameStore.setState({
+      realm: 3, route: 'tangmen', skillLevel: 0, silver: 400, xp: 0,
+      ownedRepNodes: ['shimen_zhiyin'], ownedMechNodes: ['tm1'], mechXpInvested: 0,
+    });
+    useGameStore.getState().switchRoute('shaolin');
+    const s = useGameStore.getState();
+    expect(s.ownedMechNodes).toEqual(['sl1']);
+    expect(s.xp).toBe(0); // 赠予节点无投入，无返还
+  });
+
+  it('观察员暂停冻结产出与活跃时长；恢复后继续；会话事件字段齐全', () => {
+    const t0 = Date.now();
+    useGameStore.getState().startSession('T03');
+    const start = getEvents().find((e) => e.e === 'test_session_start')!;
+    expect(start.tester_id).toBe('T03');
+    expect(start.telemetry_spec).toBe(1);
+
+    useGameStore.getState().pauseSession();
+    useGameStore.getState().tick(t0 + 50_000);
+    let s = useGameStore.getState();
+    expect(s.dantian).toBe(0);
+    expect(s.runPlaySec).toBe(0);
+
+    useGameStore.getState().resumeSession();
+    useGameStore.getState().tick(t0 + 60_000);
+    s = useGameStore.getState();
+    expect(s.runPlaySec).toBeCloseTo(10, 0);
+    expect(s.dantian).toBeCloseTo(90, 0);
+
+    useGameStore.getState().endSession('completed');
+    expect(getEvents().find((e) => e.e === 'test_session_end')!.reason).toBe('completed');
+    expect(names()).toContain('test_paused');
+    expect(names()).toContain('test_resumed');
+  });
+
   it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；快速入门折减境界 2 消耗', () => {
     useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin', 'kuaisu_rumen'] });
     expect(effBreakCost(useGameStore.getState())).toBe(Math.round(5000 * 0.7)); // 境界 3 目标

@@ -36,6 +36,9 @@ export function skillUpgradeCost(level: number): number {
 
 export type RouteId = 'huashan' | 'shaolin' | 'tangmen';
 
+/** 换路线银两摩擦成本（内容表 §4；银两唯一核心 sink，阅历 100% 返还见规格书 §6.4） */
+export const ROUTE_SWITCH_SILVER = 200;
+
 // TODO(内容表 §2)：三地图 28 关敌人表 —— 实现战斗模块时搬运
 // TODO(内容表 §3)：三路线赠予参数与机制节点表
 // TODO(声望经济表)：8 节点定稿与里程碑声望

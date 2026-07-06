@@ -362,6 +362,56 @@ body {
 .toast-close { background: none; border: none; color: var(--ink-faint); font-size: 16px; cursor: pointer; padding: 0 2px; font-family: inherit; }
 .toast-close:hover { color: var(--ink-warm); }
 
+/* ===== 换路线弹窗 ===== */
+.switch-picker { display: flex; gap: 10px; margin-bottom: 14px; }
+.switch-target {
+  flex: 1; padding: 9px 10px; font-size: 14px; font-family: inherit; font-weight: 600;
+  background: var(--night-surface-raised); border: 1px solid var(--line); border-radius: var(--r-sm);
+  color: var(--ink-muted); cursor: pointer;
+}
+.switch-target.route-huashan { --rc: var(--crit-ember); }
+.switch-target.route-shaolin { --rc: var(--shield-blue); }
+.switch-target.route-tangmen { --rc: var(--poison-green); }
+.switch-target:hover { color: var(--rc); }
+.switch-target.active { color: var(--rc); border-color: var(--rc); }
+.rline-note.plain { color: var(--ink-faint); }
+
+/* ===== 观察员面板（非玩家界面，工具风格） ===== */
+.observer-panel {
+  position: fixed; right: 16px; bottom: 16px; width: 440px; max-width: calc(100vw - 32px);
+  background: var(--night-chrome); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  box-shadow: var(--shadow-modal); padding: 12px 14px; z-index: var(--z-modal-backdrop);
+  font-size: 12.5px;
+}
+.op-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.op-head .op-meta { font-weight: 400; font-size: 11px; color: var(--ink-faint); flex: 1; }
+.op-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.op-label { width: 34px; color: var(--ink-faint); font-size: 11.5px; flex-shrink: 0; }
+.op-val { color: var(--ink-muted); }
+.op-paused { color: var(--crit-ember); }
+.op-input {
+  background: var(--night-surface); border: 1px solid var(--line-strong); border-radius: var(--r-xs);
+  color: var(--ink-warm); font-family: inherit; font-size: 12.5px; padding: 5px 8px; width: 76px;
+}
+select.op-input { width: auto; }
+.op-btn {
+  padding: 5px 12px; font-size: 12.5px; font-family: inherit; cursor: pointer;
+  background: var(--night-surface); border: 1px solid var(--line-strong); border-radius: var(--r-xs);
+  color: var(--ink-warm);
+}
+.op-btn:hover { border-color: var(--sword-cyan); color: var(--sword-cyan); }
+.op-btn:disabled { color: var(--ink-faint); cursor: not-allowed; border-color: var(--line); }
+.op-btn.warn { border-color: var(--crit-ember); color: var(--crit-ember); }
+.op-btn.danger:hover { border-color: var(--blood-red); color: var(--blood-red); }
+.op-note { font-size: 11px; color: var(--ink-faint); margin-top: 8px; line-height: 1.6; }
+.op-row .op-note { margin-top: 0; flex-basis: 100%; padding-left: 42px; }
+
+.paused-chip {
+  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+  background: var(--blood-soft); border: 1px solid var(--crit-ember); color: var(--crit-ember);
+  border-radius: var(--r-sm); padding: 5px 14px; font-size: 12.5px; z-index: var(--z-modal-backdrop);
+}
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
 

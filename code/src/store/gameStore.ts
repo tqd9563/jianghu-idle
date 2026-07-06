@@ -6,7 +6,7 @@
  */
 import { create } from 'zustand';
 import { diagnose, fight, makeBuild, type Build, type FightResult } from '../engine/combat';
-import { REALMS, skillUpgradeCost, type RouteId } from '../engine/content';
+import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
 import { getStage, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress } from '../engine/formulas';
 import {
@@ -15,6 +15,7 @@ import {
   settleRetire, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
+import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import { loadGame, resetGame, saveGame } from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 
@@ -46,6 +47,10 @@ interface PersistedState {
   fallbackUnlocked: boolean;
   /** retire_unlocked(kind=standard) 是否已上报 */
   standardNotified: boolean;
+  /** 本轮已购机制节点实际投入的阅历（换线 100% 返还的口径 =「已投入」，师门指引免费赠予不计入） */
+  mechXpInvested: number;
+  /** 本轮换线次数（轻装上路：每轮第一次免摩擦费） */
+  switchCount: number;
 }
 
 export interface BattleState {
@@ -87,6 +92,8 @@ interface GameState extends PersistedState {
   selectedMap: MapNo;
   battle: BattleState | null;
   failure: FailureInfo | null;
+  /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结 */
+  paused: boolean;
   retireStep: 'preview' | 'confirm' | null;
   retireCeremony: RetireCeremonyData | null;
   /** 保底开放一次性提示（retire-copy §6 toast；非持久化） */
@@ -96,6 +103,7 @@ interface GameState extends PersistedState {
   breakthrough: () => void;
   dismissCeremony: () => void;
   selectRoute: (r: RouteId) => void;
+  switchRoute: (to: RouteId) => void;
   upgradeSkill: () => void;
   buyMechNode: (nodeId: string) => void;
   selectMap: (m: MapNo) => void;
@@ -109,6 +117,10 @@ interface GameState extends PersistedState {
   closeRetireCeremony: () => void;
   dismissRetireToast: () => void;
   buyRepNode: (id: RepNodeId) => void;
+  startSession: (testerId: string) => void;
+  endSession: (reason: 'completed' | 'external_dropout' | 'design_dropout') => void;
+  pauseSession: () => void;
+  resumeSession: () => void;
   hardReset: () => void;
 }
 
@@ -120,6 +132,7 @@ const FRESH: PersistedState = {
   clearedStages: [], attempts: {}, autoAdvance: true,
   runPlaySec: 0, b3Fails: 0, lastProgressSec: 0,
   fallbackUnlocked: false, standardNotified: false,
+  mechXpInvested: 0, switchCount: 0,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -140,6 +153,7 @@ const persist = (s: PersistedState) =>
     runPlaySec: s.runPlaySec, b3Fails: s.b3Fails,
     lastProgressSec: s.lastProgressSec,
     fallbackUnlocked: s.fallbackUnlocked, standardNotified: s.standardNotified,
+    mechXpInvested: s.mechXpInvested, switchCount: s.switchCount,
   });
 
 /** 地图解锁：图 2 需通关图 1 末关，图 3 需通关图 2 末关 */
@@ -203,6 +217,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   selectedMap: 1,
   battle: null,
   failure: null,
+  paused: false,
   retireStep: null,
   retireCeremony: null,
   retireToast: null,
@@ -228,6 +243,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   tick: (now) => {
     const s = get();
     if (!s.started) return;
+    // 观察员暂停：一切结算冻结（挂机/活跃时长/战斗回放），净时间口径由此天然扣除暂停区间
+    if (s.paused) { lastTick = now; return; }
     const dt = Math.min(Math.max((now - lastTick) / 1000, 0), 300);
     lastTick = now;
 
@@ -314,6 +331,35 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
+  /**
+   * 换路线（规格书 §6.4 + 内容表 §4）：已投入阅历 100% 返还（等额交换，免费赠予节点不计入）、
+   * 银两摩擦费 200（轻装上路：每轮第一次免费）、武学清零重练；师门指引跟随新路线重新赠予。
+   */
+  switchRoute: (to) => {
+    const s = get();
+    if (!s.route || s.route === to) return;
+    const free = hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') && s.switchCount === 0;
+    const fee = free ? 0 : ROUTE_SWITCH_SILVER;
+    if (s.silver < fee) return;
+    const refund = s.mechXpInvested;
+    const granted = hasNode(s.ownedRepNodes, 'shimen_zhiyin')
+      ? [ROUTES[to].mechNodes[0].id] : [];
+    set({
+      route: to,
+      skillLevel: 0,
+      silver: s.silver - fee,
+      xp: s.xp + refund,
+      mechXpInvested: 0,
+      ownedMechNodes: granted,
+      switchCount: s.switchCount + 1,
+      lastProgressSec: s.runPlaySec,
+    });
+    track('route_changed', { run: s.run, realm: s.realm, route: to }, {
+      route_from: s.route, route_to: to, xp_refunded: refund, fee_paid: fee,
+    });
+    persist(get());
+  },
+
   upgradeSkill: () => {
     const s = get();
     if (!s.route) return;
@@ -335,6 +381,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!node || s.xp < node.cost) return;
     set({
       xp: s.xp - node.cost, ownedMechNodes: [...s.ownedMechNodes, nodeId],
+      mechXpInvested: s.mechXpInvested + node.cost,
       lastProgressSec: s.runPlaySec,
     });
     track('mech_node_bought', { run: s.run, realm: s.realm, route: s.route }, {
@@ -461,6 +508,44 @@ export const useGameStore = create<GameState>((set, get) => ({
       node_id: id, price: node.price, balance_after: reputation,
     });
     persist(get());
+  },
+
+  // ---- 观察员会话（埋点规格 §1.1；tick 活跃秒口径天然扣除暂停区间） ----
+
+  startSession: (testerId) => {
+    const s = get();
+    track('test_session_start', { run: s.run, realm: s.realm, route: s.route }, {
+      tester_id: testerId, build: BUILD, tables_version: TABLES_VERSION, telemetry_spec: TELEMETRY_SPEC,
+    });
+  },
+
+  endSession: (reason) => {
+    const s = get();
+    track('test_session_end', { run: s.run, realm: s.realm, route: s.route }, { reason });
+  },
+
+  pauseSession: () => {
+    const s = get();
+    if (s.paused) return;
+    track('test_paused', { run: s.run, realm: s.realm, route: s.route });
+    set({ paused: true });
+  },
+
+  resumeSession: () => {
+    const s = get();
+    if (!s.paused) return;
+    track('test_resumed', { run: s.run, realm: s.realm, route: s.route });
+    // 战斗回放的绝对时间戳随暂停顺延，防止恢复后连环补揭
+    const now = Date.now();
+    const b = s.battle;
+    set({
+      paused: false,
+      battle: b ? {
+        ...b,
+        nextRevealAt: Math.max(b.nextRevealAt, now + b.intervalMs),
+        chainAt: b.chainAt !== null ? Math.max(b.chainAt, now + 900) : null,
+      } : null,
+    });
   },
 
   hardReset: () => {

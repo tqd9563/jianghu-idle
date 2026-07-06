@@ -20,6 +20,21 @@ src/
   styles/      tokens.css —— 唯一权威是根目录 DESIGN.md，此处为其 CSS 落地
 ```
 
+## 观察员/调试通道（URL hash）
+
+正式测试会话**不要携带 seed**（会覆盖存档，且 `run_start` 不触发，污染完成率分母）。
+
+```
+#seed=<preset>       预置状态：realm3 / ready / boss2 / retire / fallback / run2
+#tab=<id>            直达页签：cultivate / battle / skill / rep
+#fight=1             载入后自动挑战下一关
+#retire=preview      直接打开归隐盘点（ceremony = 直接执行归隐看结算演出）
+#switch=1            直接打开换路线弹窗（需 tab=skill 且已择路的 seed）
+#observer=1          打开观察员面板（会话编号/暂停恢复/导出测试数据与存档/重置）
+```
+
+观察员面板也可随时用 `Ctrl+Shift+O` 开关；测试者不应看到该面板。
+
 ## 实现纪律
 
 - UI 实现基准：`wiki/design/prototype.html`（获批原型）+ 根目录 `DESIGN.md`，1:1 还原。

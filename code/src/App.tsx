@@ -6,14 +6,17 @@ import { useEffect, useState } from 'react';
 import { computeAttributes } from './engine/attributes';
 import { REALMS } from './engine/content';
 import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
-import { idleNeiliPerSec, zhoutianProgress } from './engine/formulas';
-import { nextStageOf, useGameStore } from './store/gameStore';
+import { zhoutianProgress } from './engine/formulas';
+import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore } from './store/gameStore';
 import { applyDebugHash } from './debug';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
+import { RepPane } from './panes/RepPane';
 import { SkillPane } from './panes/SkillPane';
 import { RouteSelect } from './overlays/RouteSelect';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
+import { RetireCeremony } from './overlays/RetireCeremony';
+import { RetireFlow } from './overlays/RetireFlow';
 
 type TabId = 'cultivate' | 'battle' | 'skill' | 'rep';
 
@@ -24,13 +27,18 @@ export default function App() {
   const [tab, setTab] = useState<TabId>('cultivate');
 
   useEffect(() => {
-    const { tab: debugTab, fight: autoFight } = applyDebugHash();
+    const { tab: debugTab, fight: autoFight, retire: debugRetire } = applyDebugHash();
     if (debugTab) setTab(debugTab as TabId);
     s.init();
     if (autoFight) {
       const st = useGameStore.getState();
       const next = nextStageOf(st.selectedMap, st.clearedStages);
       if (next !== null) st.challengeStage(st.selectedMap, next);
+    }
+    if (debugRetire) {
+      const st = useGameStore.getState();
+      st.openRetire();
+      if (debugRetire === 'ceremony') { st.proceedRetire(); st.confirmRetire(); }
     }
     const t = setInterval(() => useGameStore.getState().tick(Date.now()), 250);
     return () => clearInterval(t);
@@ -40,11 +48,13 @@ export default function App() {
   if (!s.started) return null;
 
   const realmDef = REALMS[s.realm - 1];
-  const nextRealm = s.realm < REALMS.length ? REALMS[s.realm] : null;
-  const rate = idleNeiliPerSec(s.realm);
-  const progress = nextRealm ? zhoutianProgress(s.dantian, nextRealm.breakthroughCost!) : null;
+  const rate = effIdleRate(s);
+  const breakCost = effBreakCost(s);
+  const progress = breakCost !== null ? zhoutianProgress(s.dantian, breakCost) : null;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
-  const routeSelectOpen = s.realm >= 2 && s.route === null;
+  const routeSelectOpen = s.realm >= 2 && s.route === null && s.retireCeremony === null;
+  const retire = retireKind(s);
+  const repUnlocked = s.repTotal > 0 || s.run > 1;
 
   return (
     <div className="app">
@@ -56,6 +66,17 @@ export default function App() {
           <span className="name serif">{realmDef.name}</span>
           <span className="lv">境界 {s.realm} / {REALMS.length}</span>
         </div>
+        {retire && (
+          <button
+            className={`retire-btn${retire === 'standard' ? ' ready' : ''}`}
+            onClick={s.openRetire}
+            title={retire === 'standard'
+              ? '挂剑归隐 · 本轮圆满 · 声望全额'
+              : '挂剑归隐 · 未竟之轮 · 声望六成\n黑风寨主仍未被击败。现在归隐，声望按六成结算；击败黑风寨主可获得全额声望。'}
+          >
+            归隐<span className={`retire-dot ${retire}`} />
+          </button>
+        )}
         <div className="res-group">
           <div className="res">
             <span className="label">内力</span>
@@ -80,7 +101,11 @@ export default function App() {
         ) : (
           <button className="game-tab" disabled title="突破至境界 2 后解锁">武学 · 境界 2 解锁</button>
         )}
-        <button className="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
+        {repUnlocked ? (
+          <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>声望阁</button>
+        ) : (
+          <button className="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
+        )}
         <div className="tab-pulse">
           {(() => {
             const m = s.selectedMap;
@@ -103,7 +128,7 @@ export default function App() {
             <span className="strip-item" onClick={() => setTab('cultivate')}>
               运转周天{' '}
               <span className="mini-bar">
-                <i style={{ width: `${Math.min(100, (s.dantian / nextRealm!.breakthroughCost!) * 100)}%` }} />
+                <i style={{ width: `${Math.min(100, (s.dantian / breakCost!) * 100)}%` }} />
               </span>{' '}
               <b>{progress.segmentsFull}/5</b>
               {!progress.ready && <> · 第{CN[progress.segmentsFull + 1]}周天 {Math.floor(progress.currentSegmentPct * 100)}%</>}
@@ -117,9 +142,24 @@ export default function App() {
         {tab === 'cultivate' && <CultivatePane />}
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'skill' && s.route && <SkillPane />}
+        {tab === 'rep' && <RepPane />}
       </main>
 
       {routeSelectOpen && <RouteSelect />}
+      <RetireFlow />
+      {s.retireCeremony && (
+        <RetireCeremony onDone={() => { s.closeRetireCeremony(); setTab('rep'); }} />
+      )}
+      {s.retireToast && (
+        <div className="toast" role="status">
+          <span>
+            {s.retireToast === 'fail_streak'
+              ? '四战黑风寨主未果。可就此归隐（声望六成），也可再作调整——击败他可获全额声望。'
+              : '许久没有新的进展了。可就此归隐（声望六成）——击败黑风寨主可获得全额声望。'}
+          </span>
+          <button className="toast-close" onClick={s.dismissRetireToast} aria-label="关闭">×</button>
+        </div>
+      )}
       {s.ceremony !== null && (
         <BreakthroughCeremony
           realmTo={s.ceremony}

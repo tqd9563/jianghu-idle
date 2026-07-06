@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { skillUpgradeCost } from '../engine/content';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
-import { useGameStore } from './gameStore';
+import { effBreakCost, retireKind, useGameStore } from './gameStore';
 
 function names() {
   return getEvents().map((e) => e.e);
@@ -69,5 +69,109 @@ describe('gameStore · 单钱包丹田模型', () => {
     expect(s.xp).toBe(60);
     useGameStore.getState().buyMechNode('tm2'); // 80 阅历 > 60，拒绝
     expect(useGameStore.getState().ownedMechNodes).toEqual(['tm1']);
+  });
+});
+
+const m1all = Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`);
+const m2all = Array.from({ length: 10 }, (_, i) => `m2s${i + 1}`);
+const m3all = Array.from({ length: 10 }, (_, i) => `m3s${i + 1}`);
+
+describe('gameStore · 归隐与声望阁', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+
+  it('归隐门槛：境界 5 前不可用；境界 5 + Boss 3 = 标准；保底一经开放持续存在', () => {
+    expect(retireKind(useGameStore.getState())).toBeNull();
+
+    useGameStore.setState({ realm: 5, clearedStages: [...m1all, ...m2all, ...m3all] });
+    expect(retireKind(useGameStore.getState())).toBe('standard');
+
+    // 保底：累计 4 败触发；后续调整（b3Fails 不清）也不收回
+    useGameStore.setState({ clearedStages: [...m1all, ...m2all, ...m3all.slice(0, 9)], b3Fails: 4 });
+    expect(retireKind(useGameStore.getState())).toBe('fallback');
+    useGameStore.setState({ b3Fails: 0, fallbackUnlocked: true, lastProgressSec: 0, runPlaySec: 0 });
+    expect(retireKind(useGameStore.getState())).toBe('fallback');
+  });
+
+  it('保底触发 tick 上报 retire_unlocked(fallback) 并弹一次性提示', () => {
+    useGameStore.setState({
+      realm: 5, clearedStages: [...m1all, ...m2all, ...m3all.slice(0, 9)],
+      b3Fails: 4, runPlaySec: 2400, lastProgressSec: 2300,
+    });
+    useGameStore.getState().tick(Date.now() + 500);
+    const s = useGameStore.getState();
+    expect(s.fallbackUnlocked).toBe(true);
+    expect(s.retireToast).toBe('fail_streak');
+    const ev = getEvents().find((e) => e.e === 'retire_unlocked')!;
+    expect(ev.kind).toBe('fallback');
+    expect(ev.trigger).toBe('fail_streak');
+  });
+
+  it('归隐执行：三事件链、声望入账（130）、状态重置、节点继承生效', () => {
+    useGameStore.setState({
+      realm: 5, route: 'tangmen', skillLevel: 10,
+      dantian: 3400, silver: 830, xp: 59,
+      clearedStages: [...m1all, ...m2all, ...m3all],
+      runPlaySec: 2760, ownedRepNodes: ['wudao_biji'],
+    });
+    useGameStore.getState().openRetire();
+    useGameStore.getState().proceedRetire();
+    useGameStore.getState().confirmRetire();
+    const s = useGameStore.getState();
+    expect(s.run).toBe(2);
+    expect(s.realm).toBe(1);
+    expect(s.route).toBeNull();
+    expect(s.dantian).toBe(0);
+    expect(s.silver).toBe(0);
+    expect(s.xp).toBe(40); // 武道笔记
+    expect(s.reputation).toBe(130);
+    expect(s.clearedStages).toEqual([]);
+    expect(s.retireCeremony!.settle.total).toBe(130);
+    const ns = names();
+    expect(ns).toContain('retire_preview_opened');
+    expect(ns).toContain('retire_confirmed');
+    const runStart = getEvents().find((e) => e.e === 'run_start' && e.run === 2)!;
+    expect(runStart.carry_xp).toBe(40);
+    expect(runStart.owned_nodes).toEqual(['wudao_biji']);
+  });
+
+  it('预览/确认中退出发 retire_cancelled 且不结算', () => {
+    useGameStore.setState({ realm: 5, clearedStages: [...m1all, ...m2all, ...m3all], runPlaySec: 2760 });
+    useGameStore.getState().openRetire();
+    useGameStore.getState().proceedRetire();
+    useGameStore.getState().cancelRetire();
+    expect(useGameStore.getState().run).toBe(1);
+    const ev = getEvents().find((e) => e.e === 'retire_cancelled')!;
+    expect(ev.step).toBe('confirm');
+  });
+
+  it('声望节点购买：扣声望、发 prestige_node_bought；不足拒绝', () => {
+    useGameStore.setState({ reputation: 130 });
+    useGameStore.getState().buyRepNode('jiumeng_chongwen'); // 60
+    let s = useGameStore.getState();
+    expect(s.reputation).toBe(70);
+    expect(s.ownedRepNodes).toEqual(['jiumeng_chongwen']);
+    useGameStore.getState().buyRepNode('poguan_xinde'); // 70 → 0
+    useGameStore.getState().buyRepNode('shimen_zhiyin'); // 80 > 0，拒绝
+    s = useGameStore.getState();
+    expect(s.reputation).toBe(0);
+    expect(s.ownedRepNodes).toEqual(['jiumeng_chongwen', 'poguan_xinde']);
+    const ev = getEvents().filter((e) => e.e === 'prestige_node_bought');
+    expect(ev).toHaveLength(2);
+    expect(ev[0].balance_after).toBe(70);
+  });
+
+  it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；快速入门折减境界 2 消耗', () => {
+    useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin', 'kuaisu_rumen'] });
+    expect(effBreakCost(useGameStore.getState())).toBe(Math.round(5000 * 0.7)); // 境界 3 目标
+    useGameStore.setState({ realm: 1 });
+    expect(effBreakCost(useGameStore.getState())).toBe(Math.round(2800 * 0.7));
+
+    useGameStore.setState({ realm: 2 });
+    useGameStore.getState().selectRoute('tangmen');
+    expect(useGameStore.getState().ownedMechNodes).toEqual(['tm1']);
+    expect(names().filter((n) => n === 'mech_node_bought')).toHaveLength(0);
   });
 });

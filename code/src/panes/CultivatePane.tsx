@@ -2,8 +2,9 @@
 import { computeAttributes } from '../engine/attributes';
 import { REALMS } from '../engine/content';
 import { CHARGE_SEGMENTS, idleNeiliPerSec, zhoutianProgress } from '../engine/formulas';
+import { hasNode } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
-import { useGameStore } from '../store/gameStore';
+import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/gameStore';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const CN = ['零', '一', '二', '三', '四', '五'];
@@ -12,7 +13,10 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 export function CultivatePane() {
   const s = useGameStore();
   const nextRealm = s.realm < REALMS.length ? REALMS[s.realm] : null;
-  const rate = idleNeiliPerSec(s.realm);
+  const breakCost = effBreakCost(s);
+  const rate = effIdleRate(s);
+  const baseRate = idleNeiliPerSec(s.realm);
+  const idlePermPct = hasNode(s.ownedRepNodes, 'jiumeng_chongwen') ? 20 : 0;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
   const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel) : null;
   const routeDef = s.route ? ROUTES[s.route] : null;
@@ -27,7 +31,11 @@ export function CultivatePane() {
                 运转周天 <span className="sub">境界 {s.realm} → {s.realm + 1} · {nextRealm.name}</span>
               </div>
               <div className="panel-body">
-                <ChargeTrack dantian={s.dantian} cost={nextRealm.breakthroughCost!} />
+                <ChargeTrack
+                  dantian={s.dantian}
+                  cost={breakCost!}
+                  discounted={breakCost! < nextRealm.breakthroughCost!}
+                />
                 <BreakthroughButton />
                 <div className="cap-note">
                   内力自归丹田，第五周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）
@@ -38,9 +46,25 @@ export function CultivatePane() {
             <>
               <div className="panel-head">运转周天 <span className="sub">境界圆满</span></div>
               <div className="panel-body">
-                <p className="cap-note" style={{ margin: 0 }}>
-                  一流高手已是本轮武学之极——江湖路尽处，便是归隐之时（归隐流程随战斗模块交付）
-                </p>
+                {retireKind(s) !== null ? (
+                  <>
+                    <button className={retireKind(s) === 'standard' ? 'btn pulse' : 'btn'} onClick={s.openRetire}>
+                      挂剑归隐
+                      <span className="btn-sub">
+                        {retireKind(s) === 'standard' ? '本轮圆满 · 声望全额' : '未竟之轮 · 声望六成'}
+                      </span>
+                    </button>
+                    {retireKind(s) === 'fallback' && (
+                      <div className="cap-note">
+                        黑风寨主仍未被击败。现在归隐，声望按六成结算；击败黑风寨主可获得全额声望。
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="cap-note" style={{ margin: 0 }}>
+                    一流高手已是本轮武学之极——击败黑风寨主可获得全额声望
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -53,11 +77,11 @@ export function CultivatePane() {
               <div className="zone-box">
                 <div className="zt">内力 / 秒 · 资源产出域</div>
                 <div className="zone-line">
-                  <span className="base">9.0 × 1.25<sup>{s.realm - 1}</sup> = {rate.toFixed(1)}</span>
-                  {' '}× <span className="perm">(1 + 0%)</span> = <span className="result">{rate.toFixed(1)}</span>
+                  <span className="base">9.0 × 1.25<sup>{s.realm - 1}</sup> = {baseRate.toFixed(1)}</span>
+                  {' '}× <span className="perm">(1 + {idlePermPct}%)</span> = <span className="result">{rate.toFixed(1)}</span>
                 </div>
                 <div className="zone-legend">
-                  <span className="perm">永久（无）</span>
+                  <span className="perm">永久（{idlePermPct > 0 ? '旧梦重温 +20%' : '无'}）</span>
                   <span className="temp">本轮（无）</span>
                 </div>
               </div>
@@ -95,7 +119,7 @@ export function CultivatePane() {
               <AttrRow name="暴击伤害" cur={pct(attrs.critDmg)} next={nextAttrs ? pct(nextAttrs.critDmg) : null} />
               <div className="attr-note">
                 {nextRealm && (
-                  <>突破另得：挂机产出 {rate.toFixed(1)} → {idleNeiliPerSec(s.realm + 1).toFixed(1)} / 秒 · 武学上限 {REALMS[s.realm - 1].skillCap} → {nextRealm.skillCap}
+                  <>突破另得：挂机产出 {rate.toFixed(1)} → {effIdleRate({ realm: s.realm + 1, ownedRepNodes: s.ownedRepNodes }).toFixed(1)} / 秒 · 武学上限 {REALMS[s.realm - 1].skillCap} → {nextRealm.skillCap}
                     {s.realm === 1 && ' · 解锁三大路线'}
                   </>
                 )}
@@ -121,13 +145,16 @@ function AttrRow({ name, cur, next }: { name: string; cur: string; next: string 
   );
 }
 
-function ChargeTrack({ dantian, cost }: { dantian: number; cost: number }) {
+function ChargeTrack({ dantian, cost, discounted }: { dantian: number; cost: number; discounted: boolean }) {
   const p = zhoutianProgress(dantian, cost);
   return (
     <>
       <div className="kv">
         <span className="k">总消耗</span>
-        <span className="v">{fmt(cost)} 内力（每周天 {fmt(cost / CHARGE_SEGMENTS)} × {CHARGE_SEGMENTS}）</span>
+        <span className="v">
+          {fmt(cost)} 内力（每周天 {fmt(cost / CHARGE_SEGMENTS)} × {CHARGE_SEGMENTS}）
+          {discounted && <span className="perm"> · 快速入门 −30%</span>}
+        </span>
       </div>
       <div className="charge-track" aria-label={`周天进度 ${p.segmentsFull} / ${CHARGE_SEGMENTS}`}>
         {Array.from({ length: CHARGE_SEGMENTS }, (_, i) => {
@@ -156,7 +183,7 @@ function ChargeTrack({ dantian, cost }: { dantian: number; cost: number }) {
 function BreakthroughButton() {
   const s = useGameStore();
   const nextRealm = REALMS[s.realm];
-  const ready = s.dantian >= nextRealm.breakthroughCost!;
+  const ready = s.dantian >= effBreakCost(s)!;
   return (
     <button className={ready ? 'btn pulse' : 'btn'} disabled={!ready} onClick={s.breakthrough}>
       {ready ? `突破 · ${nextRealm.name}` : '运转周天中…'}

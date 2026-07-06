@@ -2,3 +2,5 @@
 .opencode/
 .codegraph/
 .claude/agents/
+*.DS_Store
+__pycache__

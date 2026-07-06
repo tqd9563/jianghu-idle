@@ -1,10 +1,11 @@
 /** 战斗页 —— 原型场景 3 战斗页签 / 场景 4 失败提示的 1:1 实现（对阵单职责） */
 import { DIAG_TEXTS } from '../engine/combat';
 import { REALMS } from '../engine/content';
-import { getStage, mapName, MAP_STAGE_COUNT } from '../engine/enemies';
+import { getStage, mapName, MAP_STAGE_COUNT, type EnemyTag } from '../engine/enemies';
+import { COUNTER_HINTS, hasNode } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
 import {
-  mapUnlocked, nextStageOf, playerBuild, useGameStore, type MapNo,
+  effBreakCost, mapUnlocked, nextStageOf, playerBuild, useGameStore, type MapNo,
 } from '../store/gameStore';
 
 const f0 = (n: number) => Math.round(n).toLocaleString('en-US');
@@ -78,9 +79,16 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     {enemy.name}
                     {enemy.kind === 'elite' && <span className="tag elite">精英</span>}
                     {enemy.kind === 'boss' && <span className="tag boss">Boss {enemy.map}</span>}
-                    {enemy.tags.map((t) => <span key={t} className="tag trait">{t}</span>)}
+                    {enemy.tags.map((t) => <span key={t} className="tag trait">{tagLabel(t)}</span>)}
                   </div>
                   <div className="frealm">{mapName(enemy.map)} · 第 {enemy.stage} 关 · 推荐境界 {enemy.recommendedRealm}</div>
+                  {hasNode(s.ownedRepNodes, 'zairu_jianghu') && enemy.tags.length > 0 && (
+                    <ul className="tag-hints">
+                      {enemy.tags.map((t) => (
+                        <li key={t}><b>{tagLabel(t)}</b> · {COUNTER_HINTS[t]}</li>
+                      ))}
+                    </ul>
+                  )}
                   <div className="hp-num"><span>气血</span><span>{f0(enemy.hp * (battle ? ehpPct : 1))} / {f0(enemy.hp)}</span></div>
                   <div className="bar enemy-hp"><i style={{ width: `${(battle ? ehpPct : 1) * 100}%` }} /></div>
                   <div className="mini-stats">
@@ -141,6 +149,11 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   );
 }
 
+/** 标签展示名：内部值「毒」UI 显示「剧毒」（retire-copy §7） */
+function tagLabel(t: EnemyTag): string {
+  return t === '毒' ? '剧毒' : t;
+}
+
 function logCls(kind: string): string {
   switch (kind) {
     case 'crit': case 'burst': return 'crit-t';
@@ -156,8 +169,8 @@ function logCls(kind: string): string {
 function FailureModal({ goCultivate }: { goCultivate: () => void }) {
   const s = useGameStore();
   const f = s.failure!;
-  const nextRealm = s.realm < REALMS.length ? REALMS[s.realm] : null;
-  const chargePct = nextRealm ? Math.min(100, Math.round((s.dantian / nextRealm.breakthroughCost!) * 100)) : 100;
+  const breakCost = effBreakCost(s);
+  const chargePct = breakCost !== null ? Math.min(100, Math.round((s.dantian / breakCost) * 100)) : 100;
 
   return (
     <div className="modal-backdrop open">

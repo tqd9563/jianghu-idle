@@ -276,6 +276,92 @@ body {
 .fail-stats .fs .k { font-size: 11px; color: var(--ink-faint); }
 .fail-stats .fs .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
+/* ===== 归隐流程 ===== */
+.retire-btn {
+  margin-left: 14px; padding: 6px 16px; font-size: 13px; font-family: inherit;
+  border-radius: var(--r-sm); cursor: pointer;
+  background: transparent; border: 1px solid var(--line-strong); color: var(--ink-warm);
+}
+.retire-btn:hover { border-color: var(--candle-gold); color: var(--candle-gold); }
+.retire-btn.ready {
+  border-color: var(--candle-gold); color: var(--candle-gold);
+  animation: pulse 1.6s var(--ease-sharp) infinite;
+}
+
+.retire-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 7px; vertical-align: 1px; }
+.retire-dot.standard { background: var(--candle-gold); }
+.retire-dot.fallback { background: var(--crit-ember); }
+
+.modal.wide { max-width: 880px; }
+.modal-sub { font-size: 12.5px; font-weight: 400; color: var(--ink-muted); }
+.retire-cols { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .retire-cols { grid-template-columns: 1fr; } }
+.rcol { background: var(--night-surface-raised); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; }
+.rcol-head { font-size: 12px; letter-spacing: 0.1em; color: var(--ink-faint); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.rcol.gain .rcol-head { color: var(--candle-gold); }
+.rcol.lose .rcol-head { color: var(--blood-red); }
+.rline { display: flex; justify-content: space-between; gap: 10px; padding: 3.5px 0; font-size: 13px; color: var(--ink-muted); }
+.rline .v { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--ink-warm); text-align: right; }
+.rline.na, .rline.na .v { color: var(--ink-faint); font-weight: 400; }
+.rline.subtotal { padding-top: 6px; margin-top: 3px; border-top: 1px dashed var(--line); font-weight: 600; color: var(--ink-warm); }
+.rline.penalty, .rline.penalty .v { color: var(--crit-ember); }
+.rline-note { font-size: 11.5px; color: var(--crit-ember); padding: 0 0 4px; }
+.rline.total { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); font-weight: 600; color: var(--ink-warm); }
+.rline.total .v.gold { color: var(--candle-gold); font-size: 15px; font-weight: 700; }
+.retire-confirm-text { font-size: 14px; line-height: 1.9; color: var(--ink-warm); }
+
+/* 归隐结算演出：峰终仪式，允许辉光 */
+.modal-backdrop.ceremony { background: oklch(0.08 0.01 262 / 0.9); }
+.ceremony-card { max-width: 520px; text-align: center; padding: 36px 32px 28px; }
+.ceremony-title { font-size: 26px; letter-spacing: 0.14em; color: var(--candle-gold); text-shadow: 0 0 32px oklch(0.76 0.13 78 / 0.5); }
+.ceremony-sum { margin-top: 12px; font-size: 13.5px; color: var(--ink-muted); line-height: 1.8; }
+.ceremony-rep { margin: 22px 0 6px; display: flex; flex-direction: column; gap: 4px; }
+.ceremony-rep .label { font-size: 12px; letter-spacing: 0.24em; color: var(--ink-faint); }
+.ceremony-rep .value { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 0 40px oklch(0.76 0.13 78 / 0.55); }
+.ceremony-card .btn { max-width: 320px; margin: 24px auto 0; }
+
+/* ===== 声望阁 ===== */
+.rep-balance { font-size: 13px; color: var(--ink-muted); font-weight: 400; }
+.rep-balance b { color: var(--candle-gold); font-variant-numeric: tabular-nums; font-size: 15px; }
+.rep-guide {
+  padding: 10px 14px; margin-bottom: 12px; border-radius: var(--r-md);
+  border: 1px solid var(--candle-gold); background: var(--night-surface-raised);
+  font-size: 13px; color: var(--candle-gold);
+}
+.rep-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 980px) { .rep-grid { grid-template-columns: repeat(2, 1fr); } }
+.rep-node {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--night-surface-raised); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 12px 14px;
+}
+.rep-node.owned { border-color: var(--candle-gold); }
+.rn-head { display: flex; justify-content: space-between; align-items: baseline; }
+.rn-name { font-size: 15px; font-weight: 700; }
+.rep-node.owned .rn-name { color: var(--candle-gold); }
+.rn-type { font-size: 11px; color: var(--ink-faint); border: 1px solid var(--line); border-radius: var(--r-xs); padding: 0 6px; }
+.rn-desc { font-size: 12.5px; color: var(--ink-muted); line-height: 1.7; flex: 1; }
+.rn-foot { margin-top: 2px; }
+.rn-owned { font-size: 12px; color: var(--candle-gold); letter-spacing: 0.1em; }
+.rn-lack { font-size: 11px; color: var(--ink-faint); text-align: right; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.btn.small { margin-top: 0; padding: 6px 12px; font-size: 12.5px; width: 100%; }
+
+/* 修炼页归隐按钮副文案 / 再入江湖克制提示 / 保底 toast */
+.btn .btn-sub { display: block; font-size: 11.5px; font-weight: 500; opacity: 0.82; margin-top: 1px; letter-spacing: 0.04em; }
+.tag-hints { list-style: none; margin: 2px 0 8px; font-size: 11.5px; color: var(--ink-muted); line-height: 1.8; }
+.tag-hints b { color: var(--sword-cyan); font-weight: 600; }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px; max-width: 640px;
+  background: var(--night-chrome); border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--crit-ember);
+  border-radius: var(--r-md); box-shadow: var(--shadow-modal);
+  padding: 12px 16px; font-size: 13px; line-height: 1.7; z-index: var(--z-modal-backdrop);
+  animation: modal-in 0.25s var(--ease-sharp);
+}
+.toast-close { background: none; border: none; color: var(--ink-faint); font-size: 16px; cursor: pointer; padding: 0 2px; font-family: inherit; }
+.toast-close:hover { color: var(--ink-warm); }
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
 

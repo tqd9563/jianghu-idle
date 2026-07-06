@@ -34,11 +34,40 @@ const PRESETS: Record<string, object> = {
     ownedMechNodes: ['tm1'], chargeHighWater: 1,
     clearedStages: [...m1all, ...m2upto(9)], attempts: {}, autoAdvance: false,
   },
+  // 标准归隐就绪态：境界 5 + 三图全通（46 分钟轮长 → 130 声望）
+  retire: {
+    run: 1, realm: 5, route: 'tangmen', skillLevel: 10,
+    dantian: 3400, silver: 830, xp: 59,
+    reputation: 0, repTotal: 0,
+    ownedMechNodes: ['tm1', 'tm2', 'tm3'], chargeHighWater: 0,
+    clearedStages: [...m1all, ...m2upto(10), ...m3upto(10)],
+    attempts: { boss3: 2 }, autoAdvance: true,
+    runPlaySec: 2760, b3Fails: 0, lastProgressSec: 2700, fallbackUnlocked: false, standardNotified: false,
+  },
+  // 保底归隐触发态：境界 5、Boss 3 连败 4 次（低收益归隐 ×60%）
+  fallback: {
+    run: 1, realm: 5, route: 'shaolin', skillLevel: 10,
+    dantian: 5200, silver: 610, xp: 12,
+    reputation: 0, repTotal: 0,
+    ownedMechNodes: ['sl1', 'sl2', 'sl3'], chargeHighWater: 0,
+    clearedStages: [...m1all, ...m2upto(10), ...m3upto(9)],
+    attempts: { boss3: 4 }, autoAdvance: false,
+    runPlaySec: 2940, b3Fails: 4, lastProgressSec: 2760, fallbackUnlocked: false, standardNotified: false,
+  },
+  // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证声望阁与节点购买
+  run2: {
+    run: 2, realm: 1, route: null, skillLevel: 0,
+    dantian: 0, silver: 0, xp: 0,
+    reputation: 130, repTotal: 130,
+    ownedMechNodes: [], ownedRepNodes: [], chargeHighWater: 0,
+    clearedStages: [], attempts: {}, autoAdvance: true,
+    runPlaySec: 0, b3Fails: 0, lastProgressSec: 0, fallbackUnlocked: false, standardNotified: false,
+  },
 };
 
-export function applyDebugHash(): { tab: string | null; fight: boolean } {
+export function applyDebugHash(): { tab: string | null; fight: boolean; retire: string | null } {
   const params = new URLSearchParams(window.location.hash.slice(1));
   const seed = params.get('seed');
   if (seed && PRESETS[seed]) saveGame(PRESETS[seed]);
-  return { tab: params.get('tab'), fight: params.get('fight') === '1' };
+  return { tab: params.get('tab'), fight: params.get('fight') === '1', retire: params.get('retire') };
 }

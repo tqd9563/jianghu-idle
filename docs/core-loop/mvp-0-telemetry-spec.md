@@ -1,6 +1,6 @@
 # 《江湖无尽录》MVP-0 埋点与度量规格
 
-> **版本**：v1.0
+> **版本**：v1.1（2026-07-06：净时间/`run_duration_s` 的实现权威口径定稿为 tick 累计活跃秒，见 §1.4/§2 与《声望经济表》§6.4）
 > **日期**：2026-07-05
 > **上游文档**：`mvp-0-core-loop-spec.md`（v0.7）§10——本文只定义「怎么采集与计算」，测什么、多少算过以规格书 §10 为准。
 > **配套文档**：`mvp-0-playtest-plan.md`（测试执行方案，消费本文导出的数据）、`mvp-0-formula-tables.md` §5（诊断规则编号的定义源）、`mvp-0-content-tables.md` §2（地图/关卡/精英编号的定义源）、`mvp-0-reputation-economy.md`（声望结算字段与节点 ID 的定义源）。
@@ -76,7 +76,7 @@
 | `retire_unlocked` | 归隐首次可用 | `kind`：`standard`（境界 5 + Boss 3）/ `fallback`（保底，即「保底归隐触发」）、`trigger`：`boss3_kill` / `fail_streak` / `stall_timeout`（后两者为规格书 §6.6 保底的两个触发器，记录连败次数/停滞分钟于 `detail`） |
 | `retire_preview_opened` | 三栏损益预览打开（§8.6-1） | `kind` |
 | `retire_cancelled` | 预览或二次确认中退出 | `step`：`preview` / `confirm` |
-| `retire_confirmed` | 二次确认通过，归隐执行 | `kind`、`prestige_base`、`perf_bonus_pct`、`time_penalty`（正常为 1.0）、`fallback_discount`（正常为 1.0）、`prestige_total`、`run_duration_s`（已扣暂停） |
+| `retire_confirmed` | 二次确认通过，归隐执行 | `kind`、`prestige_base`、`perf_bonus_pct`、`time_penalty`（正常为 1.0）、`fallback_discount`（正常为 1.0）、`prestige_total`、`run_duration_s`（**tick 累计活跃秒**：页面关闭与暂停期间不累计，定稿见《声望经济表》§6.4） |
 | `prestige_node_bought` | 声望节点购买 | `node_id`（声望经济表 §2 的 8 节点）、`price`、`balance_after` |
 
 ### 1.5 自查：§10.1 逐条覆盖对照
@@ -95,7 +95,7 @@
 
 ## 2. 派生指标口径
 
-所有时间均为**轮内净时间**：`事件.ts − 该轮 run_start.ts − 区间内累计暂停时长`。
+所有时间均为**轮内净时间**：`事件.ts − 该轮 run_start.ts − 区间内累计暂停时长`。**实现权威口径为 tick 累计活跃秒**（页面关闭期间同样剔除——对齐「页面关闭不结算」红线；受控测试环境下页面常开，两口径等价），定稿见《声望经济表》§6.4；离线分析脚本按 ts 差扣暂停计算时，须用导出数据中的 `run_duration_s` 交叉校验。
 
 ### 2.1 首次归隐完成率（标准 1）
 

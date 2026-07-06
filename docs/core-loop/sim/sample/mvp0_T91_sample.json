@@ -1,0 +1,581 @@
+{
+  "meta": {
+    "tester_id": "T91",
+    "build": "mvp0-0.1.0",
+    "tables_version": "formula-v1.3/content-v1.1/economy-v1.1",
+    "telemetry_spec": 1,
+    "exported_at": 1783334013580
+  },
+  "events": [
+    {
+      "e": "run_start",
+      "ts": 1783332530086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "owned_nodes": [],
+      "carry_xp": 0
+    },
+    {
+      "e": "test_session_start",
+      "ts": 1783332530086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "tester_id": "T91",
+      "build": "mvp0-0.1.0",
+      "tables_version": "formula-v1.3/content-v1.1/economy-v1.1",
+      "telemetry_spec": 1
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332760086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "realm_target": 2,
+      "segment": 1
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332760086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "realm_target": 2,
+      "segment": 2
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332760086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "realm_target": 2,
+      "segment": 3
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332960086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "realm_target": 2,
+      "segment": 4
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332960086,
+      "run": 1,
+      "realm": 1,
+      "route": null,
+      "realm_target": 2,
+      "segment": 5
+    },
+    {
+      "e": "realm_breakthrough",
+      "ts": 1783332960086,
+      "run": 1,
+      "realm": 2,
+      "route": null,
+      "realm_to": 2
+    },
+    {
+      "e": "route_selected",
+      "ts": 1783332960086,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "route_to": "tangmen"
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332970086,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "realm_target": 3,
+      "segment": 1
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783332975286,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 1,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333001136,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 2,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333028936,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 3,
+      "kind": "normal"
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333048936,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "realm_target": 3,
+      "segment": 2
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333058686,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 4,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333089736,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 5,
+      "kind": "normal"
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333109736,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "realm_target": 3,
+      "segment": 3
+    },
+    {
+      "e": "wugong_upgraded",
+      "ts": 1783333109736,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "level_to": 1,
+      "cost_neili": 200
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333120786,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 6,
+      "kind": "normal"
+    },
+    {
+      "e": "wugong_upgraded",
+      "ts": 1783333140786,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "level_to": 2,
+      "cost_neili": 280
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333152486,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 7,
+      "kind": "normal"
+    },
+    {
+      "e": "wugong_upgraded",
+      "ts": 1783333172486,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "level_to": 3,
+      "cost_neili": 392
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333232462,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "target": "boss1",
+      "tags": [
+        "高血"
+      ],
+      "result": "lose",
+      "attempt": 1,
+      "rounds": 15,
+      "player_hp_pct": 0,
+      "enemy_hp_pct": 0.092,
+      "diag": [
+        1
+      ]
+    },
+    {
+      "e": "wugong_upgraded",
+      "ts": 1783333232462,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "level_to": 4,
+      "cost_neili": 549
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333300434,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "target": "boss1",
+      "tags": [
+        "高血"
+      ],
+      "result": "lose",
+      "attempt": 2,
+      "rounds": 15,
+      "player_hp_pct": 0,
+      "enemy_hp_pct": 0.228,
+      "diag": [
+        1
+      ]
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333420434,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "realm_target": 3,
+      "segment": 4
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333420434,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "realm_target": 3,
+      "segment": 5
+    },
+    {
+      "e": "realm_breakthrough",
+      "ts": 1783333420434,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "realm_to": 3
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333488416,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 8,
+      "kind": "boss"
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333488416,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "boss1",
+      "tags": [
+        "高血"
+      ],
+      "result": "win",
+      "attempt": 3,
+      "rounds": 13,
+      "player_hp_pct": 0.505,
+      "enemy_hp_pct": 0
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333516216,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 1,
+      "kind": "normal"
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333536216,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "realm_target": 4,
+      "segment": 1
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333545316,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 2,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333574416,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 3,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333613316,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 4,
+      "kind": "elite"
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333613316,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "elite_m2s4",
+      "tags": [
+        "高闪"
+      ],
+      "result": "win",
+      "attempt": 1,
+      "rounds": 7,
+      "player_hp_pct": 0.781,
+      "enemy_hp_pct": 0
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333633316,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "realm_target": 4,
+      "segment": 2
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333645016,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 5,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333678016,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 6,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333725016,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 7,
+      "kind": "elite"
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333725016,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "elite_m2s7",
+      "tags": [
+        "破甲"
+      ],
+      "result": "win",
+      "attempt": 1,
+      "rounds": 9,
+      "player_hp_pct": 0.573,
+      "enemy_hp_pct": 0
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333745016,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "realm_target": 4,
+      "segment": 3
+    },
+    {
+      "e": "wugong_upgraded",
+      "ts": 1783333745016,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "level_to": 5,
+      "cost_neili": 768
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333760616,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 8,
+      "kind": "normal"
+    },
+    {
+      "e": "wugong_upgraded",
+      "ts": 1783333780616,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "level_to": 6,
+      "cost_neili": 1076
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333796216,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "map": 2,
+      "stage": 9,
+      "kind": "normal"
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333845916,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "boss2",
+      "tags": [
+        "高防",
+        "高攻"
+      ],
+      "result": "lose",
+      "attempt": 1,
+      "rounds": 10,
+      "player_hp_pct": 0,
+      "enemy_hp_pct": 0.462,
+      "diag": [
+        1,
+        6
+      ]
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333875616,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "boss2",
+      "tags": [
+        "高防",
+        "高攻"
+      ],
+      "result": "lose",
+      "attempt": 2,
+      "rounds": 10,
+      "player_hp_pct": 0,
+      "enemy_hp_pct": 0.443,
+      "diag": [
+        1,
+        6
+      ]
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783333941598,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "boss2",
+      "tags": [
+        "高防",
+        "高攻"
+      ],
+      "result": "lose",
+      "attempt": 3,
+      "rounds": 12,
+      "player_hp_pct": 0,
+      "enemy_hp_pct": 0.351,
+      "diag": [
+        1
+      ]
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333968361,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "realm_target": 4,
+      "segment": 4
+    },
+    {
+      "e": "key_battle_end",
+      "ts": 1783334007580,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "target": "boss2",
+      "tags": [
+        "高防",
+        "高攻"
+      ],
+      "result": "lose",
+      "attempt": 4,
+      "rounds": 12,
+      "player_hp_pct": 0,
+      "enemy_hp_pct": 0.345,
+      "diag": [
+        1
+      ]
+    },
+    {
+      "e": "test_session_end",
+      "ts": 1783334013580,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "reason": "design_dropout"
+    }
+  ]
+}

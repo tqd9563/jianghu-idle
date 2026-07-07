@@ -424,6 +424,53 @@ select.op-input { width: auto; }
   border-radius: var(--r-sm); padding: 5px 14px; font-size: 12.5px; z-index: var(--z-modal-backdrop);
 }
 
+/* ===== 出关结算（MVP-1 场景 11：账台进账） ===== */
+.settle-overlay {
+  position: fixed; inset: 0; z-index: var(--z-ceremony);
+  background: oklch(0.08 0.01 262 / 0.9);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; overflow-y: auto;
+}
+.settle-card { width: 100%; max-width: 520px; animation: modal-in 0.3s var(--ease-sharp); }
+.settle-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; }
+.settle-row + .settle-row { border-top: 1px solid var(--line); }
+.settle-row .k { font-size: 13px; color: var(--ink-muted); }
+.settle-row .v { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-warm); }
+.settle-row.dur .v { font-size: 14px; }
+.settle-row.info .v { font-size: 14px; font-weight: 500; }
+.settle-row.info .v b { font-weight: 600; }
+.settle-row.info .v b.gold { color: var(--candle-gold); }
+.settle-row.neili .v { color: var(--candle-gold); text-shadow: var(--glow-num); }
+.settle-row .v.counting { animation: settle-count-glow 0.45s ease-in-out infinite alternate; }
+@keyframes settle-count-glow {
+  from { text-shadow: 0 0 4px oklch(0.76 0.13 78 / 0.12); }
+  to   { text-shadow: 0 0 14px oklch(0.76 0.13 78 / 0.5); }
+}
+.settle-cap-tag {
+  font-size: 11px; font-weight: 500; color: var(--candle-gold);
+  border: 1px solid oklch(0.76 0.13 78 / 0.45); border-radius: var(--r-xs);
+  padding: 0 6px; margin-left: 8px; vertical-align: 1px; white-space: nowrap;
+}
+.settle-cap-tag.debug { color: var(--sword-cyan); border-color: var(--sword-cyan); }
+.settle-cap-line {
+  font-size: 12.5px; color: var(--candle-gold); background: var(--gold-soft);
+  border-radius: var(--r-sm); padding: 8px 12px; margin-top: 10px; line-height: 1.6;
+}
+.settle-keep { font-size: 12px; color: var(--ink-muted); line-height: 1.7; margin-top: 10px; }
+.settle-keep.gold { color: var(--candle-gold); margin-top: 6px; }
+.settle-observer {
+  margin-top: 10px; background: var(--night-surface-raised); border-radius: var(--r-sm);
+  padding: 7px 10px; font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums;
+}
+.settle-observer .ob-tag {
+  font-size: 10px; color: var(--sword-cyan); border: 1px solid var(--sword-cyan);
+  border-radius: var(--r-xs); padding: 0 5px; margin-right: 6px;
+}
+.settle-sec {
+  font-size: 11px; letter-spacing: 0.08em; color: var(--ink-faint);
+  border-top: 1px solid var(--line-strong); margin-top: 14px; padding-top: 12px;
+}
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
 

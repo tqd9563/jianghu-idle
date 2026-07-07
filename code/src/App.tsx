@@ -16,6 +16,7 @@ import { SkillPane } from './panes/SkillPane';
 import { RouteSelect } from './overlays/RouteSelect';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
 import { ObserverPanel } from './overlays/ObserverPanel';
+import { OfflineSettlement } from './overlays/OfflineSettlement';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
 
@@ -175,6 +176,13 @@ export default function App() {
           prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.skillLevel)}
           nextAttrs={attrs}
           onClose={s.dismissCeremony}
+        />
+      )}
+      {s.offlineSettlement && (
+        <OfflineSettlement
+          result={s.offlineSettlement}
+          observer={observerOpen}
+          onClose={s.dismissOfflineSettlement}
         />
       )}
     </div>

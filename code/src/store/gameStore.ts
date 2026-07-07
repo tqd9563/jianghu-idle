@@ -14,9 +14,12 @@ import {
   battleNeiliMult, bossDmgBonus, breakthroughDiscount, carryXp, hasNode, idleMult,
   settleRetire, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
+import {
+  calculateOfflineRewards, maxIdleStage, type OfflineSettleResult,
+} from '../engine/offlineRewards';
 import { ROUTES } from '../engine/routes';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
-import { loadGame, resetGame, saveGame } from '../save/storage';
+import { getDebugOfflineCap, loadGame, loadSavedAt, resetGame, saveGame } from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 
 export type MapNo = 1 | 2 | 3;
@@ -113,7 +116,10 @@ interface GameState extends PersistedState {
   retireCeremony: RetireCeremonyData | null;
   /** 保底开放一次性提示（retire-copy §6 toast；非持久化） */
   retireToast: 'fail_streak' | 'stall_timeout' | null;
+  /** 出关结算待呈现数据（MVP-1 §6；资源已在 init 入账，此处只驱动结算屏；非持久化） */
+  offlineSettlement: OfflineSettleResult | null;
   init: () => void;
+  dismissOfflineSettlement: () => void;
   tick: (now: number) => void;
   breakthrough: () => void;
   dismissCeremony: () => void;
@@ -239,23 +245,68 @@ export const useGameStore = create<GameState>((set, get) => ({
   retireStep: null,
   retireCeremony: null,
   retireToast: null,
+  offlineSettlement: null,
 
   init: () => {
     if (get().started) return;
     const saved = loadGame<PersistedState>();
-    lastTick = Date.now();
+    const savedAt = loadSavedAt();
+    const now = Date.now();
+    lastTick = now;
     if (saved) {
       const merged = { ...FRESH, ...saved };
       let selectedMap: MapNo = 1;
       for (const m of [3, 2, 1] as MapNo[]) {
         if (mapUnlocked(m, merged.clearedStages)) { selectedMap = m; break; }
       }
-      set({ ...merged, started: true, selectedMap });
+
+      // 出关结算（MVP-1 §5：回归上线一次性结算；A5：存档恢复之后、玩家可操作之前）。
+      // 观察员暂停中的存档不结算（暂停冻结一切结算，与 tick 口径一致），时间戳照常消费。
+      // 离线只发三资源（A2 决策保留）：不触碰 runPlaySec / lastProgressSec / 战斗 / 归隐 / 关卡。
+      let offlineSettlement: OfflineSettleResult | null = null;
+      if (savedAt !== null && !merged.paused) {
+        const r = calculateOfflineRewards({
+          currentMaxIdleStage: maxIdleStage(merged.clearedStages),
+          lastSeenAt: savedAt,
+          now,
+          capOverrideMin: getDebugOfflineCap(),
+        });
+        // <5 秒视为无离线时段（会话内热刷新），不入账不上报——A5 在线连续处理的实现下界
+        if (r.rawSec >= 5) {
+          merged.dantian += r.neili;
+          merged.silver += r.silver;
+          merged.xp += r.xp;
+          track('offline_settled', { run: merged.run, realm: merged.realm, route: merged.route }, {
+            raw_offline_s: Math.round(r.rawSec),
+            effective_min: Math.round(r.effectiveMin * 100) / 100,
+            cap_min: r.capMin,
+            capped: r.capped,
+            stage_basis: r.stageBasis,
+            tier_id: r.tier.id,
+            efficiency: r.efficiency,
+            neili: r.neili, silver: r.silver, xp: r.xp,
+            silent: r.silent,
+            debug_cap: r.debugCap,
+          });
+          if (!r.silent) offlineSettlement = r;
+        }
+      }
+      set({ ...merged, started: true, selectedMap, offlineSettlement });
+      // consume_timestamp_once（表 C）：结算后立即持久化刷新 savedAt，关页→重开恰好一次结算
+      persist(get());
     } else {
       set({ ...FRESH, started: true });
       track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
       persist(get());
     }
+  },
+
+  /** 关闭出关结算屏（§6-4 衔接决策的时延锚点：settlement_closed 与 offline_settled 的 ts 差） */
+  dismissOfflineSettlement: () => {
+    const s = get();
+    if (s.offlineSettlement === null) return;
+    track('offline_settlement_closed', { run: s.run, realm: s.realm, route: s.route });
+    set({ offlineSettlement: null });
   },
 
   tick: (now) => {
@@ -586,6 +637,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       ...FRESH, started: true, ceremony: null, battle: null, failure: null,
       selectedMap: 1, retireStep: null, retireCeremony: null, retireToast: null,
+      offlineSettlement: null,
     });
     track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
     persist(get());

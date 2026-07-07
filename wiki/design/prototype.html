@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>《江湖无尽录》MVP-0 交互原型 · 夜色江湖</title>
+<title>《江湖无尽录》MVP-0/1 交互原型 · 夜色江湖</title>
 <style>
   :root {
     /* 夜色江湖 · 夜雨烛火剑气 */
@@ -406,6 +406,31 @@
   .shop-node.rec { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px oklch(0.76 0.13 78 / 0.15); }
   .shop-node .sn-rec-tag { font-size: 11px; color: var(--gold); }
 
+  /* 出关结算场景（MVP-1 场景 11）：账台进账——数值从零滚动入账，烛火微光呼吸 */
+  .settle-wrap { max-width: 560px; margin: 0 auto; padding: 36px 24px 60px; width: 100%; }
+  .settle-wrap h1 { font-size: 22px; letter-spacing: 0.1em; margin-bottom: 14px; }
+  .settle-toggle { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .settle-toggle .st-label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; }
+  .settle-toggle button { font: inherit; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  .settle-toggle button.active { color: var(--ink); border-color: var(--line-strong); background: var(--surface-2); }
+  .settle-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; }
+  .settle-row + .settle-row { border-top: 1px solid var(--line); }
+  .settle-row .k { font-size: 13px; color: var(--muted); }
+  .settle-row .v { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .settle-row.dur .v { font-size: 14px; }
+  .settle-row.neili .v { color: var(--gold); text-shadow: 0 0 12px oklch(0.76 0.13 78 / 0.35); }
+  .settle-row .v.counting { animation: settle-count-glow 0.45s ease-in-out infinite alternate; }
+  @keyframes settle-count-glow {
+    from { text-shadow: 0 0 4px oklch(0.76 0.13 78 / 0.12); }
+    to   { text-shadow: 0 0 14px oklch(0.76 0.13 78 / 0.5); }
+  }
+  .settle-cap-tag { font-size: 11px; font-weight: 500; color: var(--gold); border: 1px solid oklch(0.76 0.13 78 / 0.45); border-radius: 4px; padding: 0 6px; margin-left: 8px; vertical-align: 1px; }
+  .settle-cap-line { font-size: 12.5px; color: var(--gold); background: var(--gold-soft); border-radius: 6px; padding: 8px 12px; margin-top: 10px; line-height: 1.6; }
+  .settle-keep { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 10px; }
+  .settle-sec { font-size: 11px; letter-spacing: 0.08em; color: var(--faint); border-top: 1px solid var(--line-strong); margin-top: 14px; padding-top: 12px; }
+  .settle-observer { margin-top: 10px; }
+  .settle-observer .ob-tag { font-size: 10px; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 5px; margin-right: 6px; }
+
   /* 保底/门槛横幅 */
   .banner { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; border: 1px solid; }
   .banner.gold { background: var(--gold-soft); border-color: oklch(0.76 0.13 78 / 0.45); }
@@ -432,7 +457,7 @@
 
 <!-- ============ 审阅导航 ============ -->
 <nav class="proto-nav" aria-label="原型场景导航">
-  <div class="pn-title">MVP-0 交互原型</div>
+  <div class="pn-title">MVP-0/1 交互原型</div>
   <div class="pn-sub">夜色江湖 · 审阅导航（← → 键切换）</div>
   <div class="pn-group">首轮 · 开局</div>
   <button data-scene="s1">1 开局第一分钟</button>
@@ -448,6 +473,8 @@
   <div class="pn-group">分支状态</div>
   <button data-scene="s9">9 保底归隐</button>
   <button data-scene="s10">10 换路线</button>
+  <div class="pn-group">MVP-1 · 闭关节拍</div>
+  <button data-scene="s11">11 出关结算</button>
 </nav>
 
 <div class="stage-area">
@@ -1028,6 +1055,40 @@
   </div>
 </section>
 
+<!-- ============ S11 出关结算（MVP-1，合并一屏） ============ -->
+<section class="scene" id="s11">
+  <div class="scene-note"><b>场景 11 / 出关结算（合并一屏）</b>MVP-1 新增视图，2026-07-07 三裁决已落地：① 结算 + 回归检查合并一屏；② 构成公式仅观察员/测试通道显示（玩家侧隐藏，下方蓝标行即观察员视角，数值可信红线由该通道满足）；③ 按钮回归主界面。数值从零滚动入账、烛火微光呼吸至到账为止（reduced-motion 降级为直接显示）。数据对账：档位 1005（华山古道段）230 内力/分 × 有效分钟 × 33%。可点：审阅切换两态、「出关 · 回归江湖」。</div>
+  <div class="settle-wrap">
+    <h1 class="serif">出关</h1>
+    <div class="settle-toggle">
+      <span class="st-label">审阅切换（重放动画）</span>
+      <button class="active" onclick="setSettleState('capped', this)">隔夜 · 触顶态</button>
+      <button onclick="setSettleState('normal', this)">18 分钟 · 未触顶</button>
+    </div>
+    <section class="panel">
+      <div class="panel-head">出关结算 <span class="sub" id="settle-sub">离开 8 小时 21 分</span></div>
+      <div class="panel-body">
+        <div class="settle-row dur">
+          <span class="k">有效闭关</span>
+          <span><span class="v" id="settle-dur">24.0 分钟</span><span class="settle-cap-tag" id="settle-cap-tag">已达上限 24 分钟</span></span>
+        </div>
+        <div class="settle-row neili"><span class="k">内力（入丹田）</span><span class="v" id="settle-neili">+1,821</span></div>
+        <div class="settle-row"><span class="k">银两</span><span class="v" id="settle-silver">+95</span></div>
+        <div class="settle-row"><span class="k">阅历</span><span class="v" id="settle-xp">+13</span></div>
+        <div class="settle-cap-line" id="settle-cap-line">丹田盈满，闭关收益已达上限——早些回来，莫让修为白流。</div>
+        <div class="settle-keep">闭关期间：未突破 · 未挑战 · 未归隐——一切如你离开时。</div>
+        <div class="formula settle-observer"><span class="ob-tag">观察员</span><span id="settle-formula-text">24.0 分（上限截断）× 230 内力/分 × 33% 闭关折算 = 1,821</span></div>
+        <div class="settle-sec">回归检查 · 你不在的这段江湖</div>
+        <div class="settle-row"><span class="k">境界</span><span class="v" style="font-size:14px">大侠 · 丹田 <b style="color:var(--gold)">21,000 / 21,000</b></span></div>
+        <div class="settle-row"><span class="k">推进</span><span class="v" style="font-size:14px">华山古道 第 21 关</span></div>
+        <div class="settle-row"><span class="k">下一强敌</span><span class="v" style="font-size:14px">黑风寨主（推荐境界 5）</span></div>
+        <div class="settle-keep" style="margin-top:6px">五周天圆满，突破就绪——闭关不会替你突破，这一下要你亲手来。</div>
+        <button class="btn pulse" style="margin-top:14px" onclick="showScene('s3')">出关 · 回归江湖</button>
+      </div>
+    </section>
+  </div>
+</section>
+
 </div><!-- /stage-area -->
 
 <!-- ============ 弹窗：失败提示 ============ -->
@@ -1183,11 +1244,59 @@
 
 <script>
   /* ===== 场景切换 ===== */
-  const SCENES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'];
+  const SCENES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11'];
   function showScene(id) {
     document.querySelectorAll('.scene').forEach(s => s.classList.toggle('active', s.id === id));
     document.querySelectorAll('.proto-nav button').forEach(b => b.classList.toggle('active', b.dataset.scene === id));
     window.scrollTo(0, 0);
+    if (id === 's11') runSettle();
+  }
+
+  /* ===== 出关结算（场景 11）：账台进账 count-up ===== */
+  const SETTLE_STATES = {
+    capped: { sub: '离开 8 小时 21 分', dur: 24.0, capped: true, neili: 1821, silver: 95, xp: 13,
+      formula: '24.0 分（上限截断）× 230 内力/分 × 33% 闭关折算 = 1,821' },
+    normal: { sub: '离开 18 分钟', dur: 18.0, capped: false, neili: 1366, silver: 71, xp: 10,
+      formula: '18.0 分 × 230 内力/分 × 33% 闭关折算 = 1,366' },
+  };
+  let settleState = 'capped';
+  let settleRaf = 0;
+  function setSettleState(st, btn) {
+    settleState = st;
+    document.querySelectorAll('.settle-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    runSettle();
+  }
+  function runSettle() {
+    const d = SETTLE_STATES[settleState];
+    document.getElementById('settle-sub').textContent = d.sub;
+    document.getElementById('settle-cap-tag').style.display = d.capped ? '' : 'none';
+    document.getElementById('settle-cap-line').style.display = d.capped ? '' : 'none';
+    document.getElementById('settle-formula-text').textContent = d.formula;
+    cancelAnimationFrame(settleRaf);
+    const items = [
+      { el: document.getElementById('settle-dur'), to: d.dur, fmt: v => v.toFixed(1) + ' 分钟', delay: 0 },
+      { el: document.getElementById('settle-neili'), to: d.neili, fmt: v => '+' + Math.round(v).toLocaleString('en-US'), delay: 150 },
+      { el: document.getElementById('settle-silver'), to: d.silver, fmt: v => '+' + Math.round(v), delay: 280 },
+      { el: document.getElementById('settle-xp'), to: d.xp, fmt: v => '+' + Math.round(v), delay: 410 },
+    ];
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      items.forEach(i => { i.el.textContent = i.fmt(i.to); i.el.classList.remove('counting'); });
+      return;
+    }
+    const DUR = 850;
+    const t0 = performance.now();
+    items.forEach(i => { i.el.textContent = i.fmt(0); i.el.classList.add('counting'); });
+    function frame(t) {
+      let live = false;
+      for (const i of items) {
+        const p = Math.min(Math.max((t - t0 - i.delay) / DUR, 0), 1);
+        const e = 1 - Math.pow(1 - p, 4); /* ease-out-quart */
+        i.el.textContent = i.fmt(i.to * e);
+        if (p < 1) live = true; else i.el.classList.remove('counting');
+      }
+      if (live) settleRaf = requestAnimationFrame(frame);
+    }
+    settleRaf = requestAnimationFrame(frame);
   }
   document.querySelectorAll('.proto-nav button').forEach(b => b.addEventListener('click', () => showScene(b.dataset.scene)));
   document.addEventListener('keydown', (e) => {

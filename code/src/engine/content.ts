@@ -1,5 +1,5 @@
 /**
- * 内容数据 —— 权威来源：docs/core-loop/mvp-0-content-tables.md v1.1
+ * 内容数据 —— 权威来源：docs/mvp0/content.md v1.1
  * 只搬运定稿数值，禁止在此调参；改数值先改内容表并重跑 sim 校验。
  */
 

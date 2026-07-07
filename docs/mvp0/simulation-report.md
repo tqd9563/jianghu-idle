@@ -2,7 +2,7 @@
 
 > **版本**：v1.0
 > **日期**：2026-07-05
-> **上游文档**：`mvp-0-core-loop-spec.md`（v0.6）§10 成功标准；数值来源 `mvp-0-formula-tables.md`（v1.2）、`mvp-0-content-tables.md`（v1.1）、`mvp-0-reputation-economy.md`（v1.0）。
+> **上游文档**：`spec.md`（v0.6）§10 成功标准；数值来源 `formulas.md`（v1.2）、`content.md`（v1.1）、`economy.md`（v1.0）。
 > **复现**：`python3 sim/mvp0_sim.py`（无第三方依赖）。本文所有表格均为该脚本 2026-07-05 运行输出。
 > **与公式表附录 A 的关系**：附录 A 是产表时的首轮自洽校验（贪心 × 2 轮）；本文是正式模拟表——三路线 × 3 轮 × 7 玩家画像 × 声望经济接入，并对照 §10.1 逐项判定。
 

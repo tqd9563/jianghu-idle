@@ -8,7 +8,7 @@
 >
 > **范围**：MVP-2 的阶段定位、内容准备、自然回流验证前提与后续版本节奏
 >
-> **上游**：`mvp-1-core-loop-spec.md` v0.3 §7.3 / §8.2 / §8.3 / §9 / §10、`mvp-0-closure-note.md` R7、`docs/overview/game-design-proposal.md` §十四
+> **上游**：`../mvp1/spec.md` v0.3 §7.3 / §8.2 / §8.3 / §9 / §10、`../mvp0/closure.md` R7、`docs/overview/game-design-proposal.md` §十四
 
 ---
 

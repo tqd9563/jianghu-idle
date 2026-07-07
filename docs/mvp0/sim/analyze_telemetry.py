@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """MVP-0 派生指标离线计算 —— 消费观察员面板导出的测试数据 JSON。
 
-权威口径：mvp-0-telemetry-spec.md v1.1 §2（逐节对齐，节号见各函数 docstring）。
+权威口径：../telemetry.md v1.1 §2（逐节对齐，节号见各函数 docstring）。
 用法：
     python3 analyze_telemetry.py mvp0_T01_20260706.json [mvp0_T02_*.json ...]
 每个文件 = 一名测试者的完整会话导出（meta + events）。python3 无第三方依赖。

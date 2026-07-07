@@ -16,7 +16,7 @@
 
 ## 2. 推荐目录结构
 
-当前仓库仍保留早期 `docs/core-loop/` 布局。后续整理时，优先收敛到以下结构：
+仓库已于 2026-07-07 完成从早期 `docs/core-loop/` 平铺布局到以下结构的迁移：
 
 ```text
 docs/
@@ -47,15 +47,14 @@ docs/
   reviews/                  历史评审记录，只读
 ```
 
-### 2.1 现阶段兼容规则
+### 2.1 迁移后规则
 
-在完成目录迁移前，仍可在 `docs/core-loop/` 下新增 MVP 文档，但应满足：
+`docs/core-loop/` 已不存在，不得再向该路径新增文件。新增 MVP 文档直接放入对应 `docs/mvp*/` 目录：
 
-- MVP-0 文件使用 `mvp-0-` 前缀。
-- MVP-1 文件使用 `mvp-1-` 前缀。
-- MVP-2 文件使用 `mvp-2-` 前缀。
-- 新文件名尽量短，优先使用 `offline-rewards.md` 这类主题名；若必须留在 `core-loop/`，可使用 `mvp-1-offline-rewards.md`，避免 `mvp-1-offline-reward-tables.md` 这类过长名称继续扩散。
+- 目录已表达 MVP 归属，文件名不再带 `mvp-N-` 前缀。
+- 新文件名尽量短，优先使用 `offline-rewards.md` 这类主题名。
 - 新增后若发现同类文档已超过 3 个，应优先提出目录整理，而不是继续堆平铺文件。
+- 历史例外：`docs/reviews/` 与 `CHANGELOG.md` 历史条目中的旧路径（`docs/core-loop/...`、`mvp-N-*.md`）作为历史记录保留原文，不回溯改写。
 
 ---
 
@@ -130,20 +129,26 @@ docs/
 - 目录已经表达 MVP 时，文件名不要再重复 `mvp-0` / `mvp-1`。
 - 文件名控制在 2–4 个词以内。
 - 避免 `-note`、`-tables`、`-spec` 泛化后缀，除非它能区分同目录多个同名概念。
-- 迁移前在 `docs/core-loop/` 平铺时，可暂时保留 MVP 前缀以免命名冲突。
 
-示例：
+历史迁移映射（2026-07-07 已执行，旧路径已全部失效）：
 
-| 当前长名 | 迁移后 |
+| 迁移前（core-loop 平铺） | 迁移后 |
 |---|---|
-| `docs/core-loop/mvp-0-formula-tables.md` | `docs/mvp0/formulas.md` |
-| `docs/core-loop/mvp-0-content-tables.md` | `docs/mvp0/content.md` |
-| `docs/core-loop/mvp-0-battle-copy.md` | `docs/mvp0/copy/battle.md` |
-| `docs/core-loop/mvp-0-retire-copy.md` | `docs/mvp0/copy/retire.md` |
-| `docs/core-loop/mvp-0-closure-note.md` | `docs/mvp0/closure.md` |
-| `docs/core-loop/mvp-1-core-loop-spec.md` | `docs/mvp1/spec.md` |
-| `docs/core-loop/mvp-1-offline-reward-tables.md` | `docs/mvp1/offline-rewards.md` |
-| `docs/core-loop/mvp-2-cadence.md` | `docs/mvp2/cadence.md` |
+| `mvp-0-core-loop-spec.md` | `docs/mvp0/spec.md` |
+| `mvp-0-formula-tables.md` | `docs/mvp0/formulas.md` |
+| `mvp-0-content-tables.md` | `docs/mvp0/content.md` |
+| `mvp-0-reputation-economy.md` | `docs/mvp0/economy.md` |
+| `mvp-0-telemetry-spec.md` | `docs/mvp0/telemetry.md` |
+| `mvp-0-scope-boundary.md` | `docs/mvp0/scope.md` |
+| `mvp-0-playtest-plan.md` | `docs/mvp0/playtest-plan.md` |
+| `mvp-0-simulation-report.md` | `docs/mvp0/simulation-report.md` |
+| `mvp-0-closure-note.md` | `docs/mvp0/closure.md` |
+| `mvp-0-battle-copy.md` | `docs/mvp0/copy/battle.md` |
+| `mvp-0-retire-copy.md` | `docs/mvp0/copy/retire.md` |
+| `sim/`（整目录） | `docs/mvp0/sim/` |
+| `mvp-1-core-loop-spec.md` | `docs/mvp1/spec.md` |
+| `mvp-1-offline-reward-tables.md` | `docs/mvp1/offline-rewards.md` |
+| `mvp-2-cadence.md` | `docs/mvp2/cadence.md` |
 
 ---
 

@@ -11,7 +11,7 @@ import { REALMS } from '../engine/content';
 import { effBreakCost, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
 import { exportTelemetryJSON, getEvents } from './telemetry';
 
-const OUT_DIR = resolve(process.cwd(), '../docs/core-loop/sim/sample');
+const OUT_DIR = resolve(process.cwd(), '../docs/mvp0/sim/sample');
 const T0 = Date.UTC(2026, 6, 6, 9, 0, 0);
 
 const st = () => useGameStore.getState();

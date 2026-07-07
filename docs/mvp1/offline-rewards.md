@@ -2,7 +2,7 @@
 
 > **版本**：v0.2（按所有者确认：资源口径为内力 / 银两 / 阅历；按当前最大可挂机关卡驱动；当前无在线挂机收益表；首发不接 VIP / 月卡 / 广告 / 特权）
 > **日期**：2026-07-06
-> **上游文档**：`mvp-1-core-loop-spec.md`（v0.3 草案）§4.1 / §5 / §8.1；`mvp-0-formula-tables.md`、`mvp-0-content-tables.md`。
+> **上游文档**：`spec.md`（v0.3 草案）§4.1 / §5 / §8.1；`../mvp0/formulas.md`、`../mvp0/content.md`。
 > **范围**：MVP-1 基础离线收益。本文只补「离线收益」所需的上限、效率、产出比、刷新阈值与反作弊 / 时钟边界口径；不重推 MVP-0 既有公式表 / 内容表，不引入商业化加成，不新增装备、奇遇、秘境、炼丹等系统。
 > **数值纪律**：全部为首版可实现值；`[待测试]` 表示测试敏感项，实测后优先调整，但当前值即为实现 / 模拟起点。
 
@@ -19,7 +19,7 @@
 
 ## 1. 推导锚点
 
-本文继承 `mvp-1-core-loop-spec.md` v0.3 的裁决：MVP-1 当期只交付离线功能，不验证放置节拍假设；MVP-0 的 60 分钟压缩锚点不动，全量换锚点重推后置。
+本文继承 `spec.md` v0.3 的裁决：MVP-1 当期只交付离线功能，不验证放置节拍假设；MVP-0 的 60 分钟压缩锚点不动，全量换锚点重推后置。
 
 | 锚点 | 本表处理 |
 |---|---|
@@ -58,7 +58,7 @@ current_max_idle_stage = 玩家当前已解锁、且系统允许作为挂机收�
 
 ### 2.3 离线期间绝不自动执行
 
-以下规则来自 `mvp-1-core-loop-spec.md` §5 / §8.1-A2，本文仅落数值表口径：
+以下规则来自 `spec.md` §5 / §8.1-A2，本文仅落数值表口径：
 
 - 不自动突破：丹田内力达到突破消耗时，只点亮按钮，不自动扣款。
 - 不自动归隐：保底触发器不计离线时长。
@@ -172,7 +172,7 @@ current_max_idle_stage = 玩家当前已解锁、且系统允许作为挂机收�
 
 | rule_id | min_settle_sec | silent_grant_below_min | max_single_offline_min | debug_cap_min | negative_time_policy | forward_time_policy | settle_once_policy | daily_cap_enabled | 备注 |
 |---|---:|---|---:|---:|---|---|---|---|---|
-| default | 180 | true | 26 | 10 | zero_reward | clamp_to_cap | consume_timestamp_once | false | 对齐 `mvp-1-core-loop-spec.md` §8.1 A3/A5/A6：不负、不超限、不重复结算。 |
+| default | 180 | true | 26 | 10 | zero_reward | clamp_to_cap | consume_timestamp_once | false | 对齐 `spec.md` §8.1 A3/A5/A6：不负、不超限、不重复结算。 |
 
 ---
 
@@ -236,7 +236,7 @@ type OfflineRewardStage = {
 | `calculateOfflineRewards(input)` | 输出内力 / 银两 / 阅历、是否触顶、构成因子。 |
 | `shouldShowOfflineSettlement(effectiveMinutes, minSettleMin)` | 判断是否弹出出关结算。 |
 
-测试至少覆盖 `mvp-1-core-loop-spec.md` §8.1 A1 / A3 / A5 / A6。
+测试至少覆盖 `spec.md` §8.1 A1 / A3 / A5 / A6。
 
 ---
 

@@ -1,5 +1,5 @@
 /**
- * 三地图 28 关敌人表 —— 权威来源：docs/core-loop/mvp-0-content-tables.md §2
+ * 三地图 28 关敌人表 —— 权威来源：docs/mvp0/content.md §2
  * 生成公式与 sim/mvp0_sim.py build_stages() 逐行对齐（含 Python banker's rounding），
  * golden 测试会对照 fixture 中的敌人属性逐数校验。禁止在此调参。
  */

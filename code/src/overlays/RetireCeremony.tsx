@@ -1,6 +1,6 @@
 /**
  * 归隐结算演出（规格书 §8.6-3）：声望入账的峰终庆典 + 本轮总结；关闭后落地声望阁（§8.6-4）。
- * 文案模板逐字取自 mvp-0-retire-copy.md §4（冻结）。
+ * 文案模板逐字取自 docs/mvp0/copy/retire.md §4（冻结）。
  */
 import { useGameStore } from '../store/gameStore';
 

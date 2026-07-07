@@ -1,6 +1,6 @@
 /**
- * 三路线定义 —— 权威来源：docs/core-loop/mvp-0-content-tables.md §3（v1.1，C6 平衡修复后）
- * 与 docs/core-loop/mvp-0-formula-tables.md 路线参数一致。禁止在此调参。
+ * 三路线定义 —— 权威来源：docs/mvp0/content.md §3（v1.1，C6 平衡修复后）
+ * 与 docs/mvp0/formulas.md 路线参数一致。禁止在此调参。
  */
 import type { RouteId } from './content';
 

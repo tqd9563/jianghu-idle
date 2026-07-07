@@ -1,6 +1,6 @@
 /**
- * 声望与归隐 —— 权威来源：docs/core-loop/mvp-0-reputation-economy.md v1.1（§6 实现口径定稿）
- * + 规格书 §6.6/§8（v0.10）；玩家可见文案唯一冻结源：mvp-0-retire-copy.md v1.0。
+ * 声望与归隐 —— 权威来源：docs/mvp0/economy.md v1.1（§6 实现口径定稿）
+ * + 规格书 §6.6/§8（v0.10）；玩家可见文案唯一冻结源：docs/mvp0/copy/retire.md v1.0。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
 import { pyRound, STAGES, type EnemyTag } from './enemies';

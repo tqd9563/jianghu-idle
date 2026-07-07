@@ -24,6 +24,10 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const last = revealedTurns[revealedTurns.length - 1];
   const phpPct = last ? last.phpPct : 1;
   const ehpPct = last ? last.ehpPct : 1;
+  // 少林金钟护盾：气血条上的浅蓝护盾段（所有者 2026-07-07 UI 裁决，07-07 二裁：
+  // 自血条左端向右伸展、覆盖在气血层之上；扣盾时右缘向左削减）。
+  const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
+  const hpNow = build.hp * phpPct;
   const battleEnemy = battle?.enemy ?? null;
   const idleEnemy = next !== null ? getStage(viewMap, next) : null;
   const enemy = battle ? battleEnemy : idleEnemy;
@@ -74,12 +78,20 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     你 {s.route && <span className={`tag route-tag-${s.route}`}>{ROUTES[s.route].name.slice(0, 2)}</span>}
                   </div>
                   <div className="frealm">{REALMS[s.realm - 1].name} · 境界 {s.realm}</div>
-                  <div className="hp-num"><span>气血</span><span>{f0(build.hp * phpPct)} / {f0(build.hp)}</span></div>
-                  <div className="bar hp"><i style={{ width: `${phpPct * 100}%` }} /></div>
-                  {battle && !battleDone && last && (
+                  <div className="hp-num">
+                    <span>气血</span>
+                    <span>
+                      {f0(hpNow)} / {f0(build.hp)}
+                      {shieldNow > 0 && <b className="shield-num">盾 {f0(shieldNow)}</b>}
+                    </span>
+                  </div>
+                  <div className="bar hp">
+                    <i style={{ width: `${phpPct * 100}%` }} />
+                    {shieldNow > 0 && <em className="shield-fill" style={{ width: `${Math.min(shieldNow / build.hp, 1) * 100}%` }} />}
+                  </div>
+                  {battle && !battleDone && last && (build.sqNeed < 99 || build.poison.cap > 0) && (
                     <div className="status-chips">
                       {build.sqNeed < 99 && <span className="chip sq">剑意 {Math.floor(last.pSq)}/{build.sqNeed}</span>}
-                      {build.shieldPct > 0 && <span className="chip shield">护盾 {f0(last.pShield)}</span>}
                       {build.poison.cap > 0 && <span className="chip poison">敌方毒层 {Math.round(last.ePoison)}/{build.poison.cap}</span>}
                     </div>
                   )}

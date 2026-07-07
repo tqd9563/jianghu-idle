@@ -2,8 +2,9 @@
  * 观察员/开发调试通道：URL hash 预置状态与页签。
  * 例：#seed=realm3&tab=battle&fight=1 —— 仅用于开发自检与陪同测试的观察员操作，
  * 正式测试会话请勿携带 seed（会覆盖存档；埋点 run_start 不触发，避免污染完成率分母）。
+ * MVP-1 验收 A4：#offlinecap=10 压低离线上限（分钟，持久生效）；#offlinecap=0 清除。
  */
-import { saveGame } from './save/storage';
+import { saveGame, setDebugOfflineCap } from './save/storage';
 
 const m1all = Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`);
 const m2upto = (n: number) => Array.from({ length: n }, (_, i) => `m2s${i + 1}`);
@@ -71,6 +72,9 @@ export function applyDebugHash(): {
   const params = new URLSearchParams(window.location.hash.slice(1));
   const seed = params.get('seed');
   if (seed && PRESETS[seed]) saveGame(PRESETS[seed]);
+  // MVP-1 验收 A4：#offlinecap=10 压低离线上限（分钟），持久生效；#offlinecap=0 清除
+  const offlineCap = params.get('offlinecap');
+  if (offlineCap !== null) setDebugOfflineCap(Number(offlineCap) > 0 ? Number(offlineCap) : null);
   return {
     tab: params.get('tab'),
     fight: params.get('fight') === '1',

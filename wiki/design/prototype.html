@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>《江湖无尽录》MVP-0 交互原型 · 夜色江湖</title>
+<title>《江湖无尽录》MVP-0/1 交互原型 · 夜色江湖</title>
 <style>
   :root {
     /* 夜色江湖 · 夜雨烛火剑气 */
@@ -432,7 +432,7 @@
 
 <!-- ============ 审阅导航 ============ -->
 <nav class="proto-nav" aria-label="原型场景导航">
-  <div class="pn-title">MVP-0 交互原型</div>
+  <div class="pn-title">MVP-0/1 交互原型</div>
   <div class="pn-sub">夜色江湖 · 审阅导航（← → 键切换）</div>
   <div class="pn-group">首轮 · 开局</div>
   <button data-scene="s1">1 开局第一分钟</button>
@@ -448,6 +448,9 @@
   <div class="pn-group">分支状态</div>
   <button data-scene="s9">9 保底归隐</button>
   <button data-scene="s10">10 换路线</button>
+  <div class="pn-group">MVP-1 · 闭关节拍</div>
+  <button data-scene="s11">11 出关结算</button>
+  <button data-scene="s12">12 触顶与回归检查</button>
 </nav>
 
 <div class="stage-area">
@@ -1028,6 +1031,54 @@
   </div>
 </section>
 
+<!-- ============ S11 出关结算（MVP-1） ============ -->
+<section class="scene" id="s11">
+  <div class="scene-note"><b>场景 11 / 出关结算</b>MVP-1 新增视图（规格 §6 五条硬性要求）：回归上线的第一屏——闭关时长、三资源明细、构成可查（时长 × 速率 × 效率，规格 §6-2 数值可信）、不越权确认（§6-3）一屏内呈现。术语纪律：玩家侧只说「闭关 / 出关结算」。「机缘」掉落区首发隐藏（增补表表 B 不启用）。数据对账：华山古道段（档位 1005）230 内力/分 × 18 分 × 33% = 1,366。可点：「出关」。</div>
+  <div class="focus-wrap">
+    <h1 class="serif">出关 · 闭关归来</h1>
+    <section class="panel" style="max-width:520px">
+      <div class="panel-head">出关结算 <span class="sub">闭关 18 分钟</span></div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">内力（入丹田）</span><span class="v" style="color:var(--gold); font-weight:700">+1,366</span></div>
+        <div class="kv"><span class="k">银两</span><span class="v">+71</span></div>
+        <div class="kv"><span class="k">阅历</span><span class="v">+10</span></div>
+        <div class="formula" style="margin-top:10px">构成：18.0 分 × 230 内力/分（华山古道段）× 33% 闭关折算 = 1,366</div>
+        <div class="kv" style="margin-top:8px"><span class="k">闭关上限</span><span class="v">24 分钟 · 未触顶</span></div>
+        <div class="cap-note">闭关期间：未突破 · 未挑战 · 未归隐 · 未消耗——一切如你离开时（结算只入三资源，不替你做任何决定）</div>
+        <button class="btn pulse" onclick="showScene('s12')">出关</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ S12 触顶与回归检查（MVP-1） ============ -->
+<section class="scene" id="s12">
+  <div class="scene-note"><b>场景 12 / 触顶态与回归检查</b>隔夜回归：原始离开 8 小时 21 分，按上限截断为 24 分钟（触顶提示明确、不惩罚，规格 §6-1/§3.1）。结算屏之下是回归检查——进度 / 资源 / 卡点现状 + 一个直接可行动的决策入口（§6-4：关屏后 30 秒内有事可做；本例结算后丹田恰满，突破就绪）。可点：「运转周天 · 突破」。</div>
+  <div class="focus-wrap">
+    <section class="panel" style="max-width:520px">
+      <div class="panel-head">出关结算 <span class="sub">离开 8 小时 21 分</span></div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">有效闭关</span><span class="v">24 分钟（已达上限）</span></div>
+        <div class="kv"><span class="k">内力（入丹田）</span><span class="v" style="color:var(--gold); font-weight:700">+1,821</span></div>
+        <div class="kv"><span class="k">银两</span><span class="v">+95</span></div>
+        <div class="kv"><span class="k">阅历</span><span class="v">+13</span></div>
+        <div class="formula" style="margin-top:10px">构成：24.0 分（上限截断）× 230 内力/分 × 33% 闭关折算 = 1,821</div>
+        <div class="banner gold" style="margin-top:12px; padding:12px 16px"><p style="margin:0">丹田盈满，闭关收益已达上限——早些回来，莫让修为白流。</p></div>
+      </div>
+    </section>
+    <section class="panel" style="max-width:520px">
+      <div class="panel-head">回归检查 <span class="sub">你不在的这段江湖</span></div>
+      <div class="panel-body">
+        <div class="kv"><span class="k">境界</span><span class="v">大侠（境界 4）· 丹田 <b style="color:var(--gold)">21,000 / 21,000</b></span></div>
+        <div class="kv"><span class="k">推进</span><span class="v">华山古道 第 21 关（黑风寨主前 7 关）</span></div>
+        <div class="kv"><span class="k">卡点</span><span class="v">铁掌恶僧已过 · 下一强敌黑风寨主（推荐境界 5）</span></div>
+        <div class="cap-note">五周天圆满，突破就绪——闭关不会替你突破，这一下必须你亲手来</div>
+        <button class="btn pulse" onclick="showScene('s5')">运转周天 · 突破一流高手</button>
+      </div>
+    </section>
+  </div>
+</section>
+
 </div><!-- /stage-area -->
 
 <!-- ============ 弹窗：失败提示 ============ -->
@@ -1183,7 +1234,7 @@
 
 <script>
   /* ===== 场景切换 ===== */
-  const SCENES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'];
+  const SCENES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12'];
   function showScene(id) {
     document.querySelectorAll('.scene').forEach(s => s.classList.toggle('active', s.id === id));
     document.querySelectorAll('.proto-nav button').forEach(b => b.classList.toggle('active', b.dataset.scene === id));

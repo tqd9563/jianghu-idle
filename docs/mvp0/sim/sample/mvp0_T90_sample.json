@@ -2,7 +2,7 @@
   "meta": {
     "tester_id": "T90",
     "build": "mvp0-0.1.0",
-    "tables_version": "formula-v1.3/content-v1.1/economy-v1.1",
+    "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2",
     "telemetry_spec": 1,
     "exported_at": 1783332530086
   },
@@ -24,7 +24,7 @@
       "route": null,
       "tester_id": "T90",
       "build": "mvp0-0.1.0",
-      "tables_version": "formula-v1.3/content-v1.1/economy-v1.1",
+      "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2",
       "telemetry_spec": 1
     },
     {

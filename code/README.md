@@ -34,6 +34,7 @@ src/
 #switch=1            直接打开换路线弹窗（需 tab=skill 且已择路的 seed）
 #observer=1          打开观察员面板（会话编号/暂停恢复/导出测试数据与存档/重置）
 #offlinecap=10       MVP-1 验收 A4：压低离线上限（分钟，持久生效）；#offlinecap=0 清除
+#offlinesim=1800     MVP-1 验收：存档时间戳回拨 N 秒，载入即触发出关结算（可与 seed 组合）
 ```
 
 观察员面板也可随时用 `Ctrl+Shift+O` 开关；测试者不应看到该面板。

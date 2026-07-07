@@ -49,6 +49,18 @@ export function loadSavedAt(): number | null {
   }
 }
 
+/** 验收调试：把当前存档时间戳回拨 N 秒（#offlinesim），模拟离线时段；无存档时不动 */
+export function backdateSavedAt(seconds: number): void {
+  const raw = store.getItem(SAVE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as { savedAt?: number };
+    if (typeof parsed.savedAt !== 'number') return;
+    parsed.savedAt -= seconds * 1000;
+    store.setItem(SAVE_KEY, JSON.stringify(parsed));
+  } catch { /* 存档损坏时保持原样，交给 loadGame 的兜底 */ }
+}
+
 /**
  * A4 验收调试通道：临时压低离线上限（分钟），跨关页/重开持久生效；null 清除。
  * 非正式配置——正式验收记录中 debug_cap 位必须裸露（offline_settled 事件同名字段）。

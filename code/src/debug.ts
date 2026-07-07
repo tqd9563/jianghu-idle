@@ -4,7 +4,7 @@
  * 正式测试会话请勿携带 seed（会覆盖存档；埋点 run_start 不触发，避免污染完成率分母）。
  * MVP-1 验收 A4：#offlinecap=10 压低离线上限（分钟，持久生效）；#offlinecap=0 清除。
  */
-import { saveGame, setDebugOfflineCap } from './save/storage';
+import { backdateSavedAt, saveGame, setDebugOfflineCap } from './save/storage';
 
 const m1all = Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`);
 const m2upto = (n: number) => Array.from({ length: n }, (_, i) => `m2s${i + 1}`);
@@ -75,6 +75,9 @@ export function applyDebugHash(): {
   // MVP-1 验收 A4：#offlinecap=10 压低离线上限（分钟），持久生效；#offlinecap=0 清除
   const offlineCap = params.get('offlinecap');
   if (offlineCap !== null) setDebugOfflineCap(Number(offlineCap) > 0 ? Number(offlineCap) : null);
+  // MVP-1 验收：#offlinesim=1800 把存档时间戳回拨 N 秒，载入即触发出关结算（与 seed 可组合）
+  const offlineSim = Number(params.get('offlinesim'));
+  if (offlineSim > 0) backdateSavedAt(offlineSim);
   return {
     tab: params.get('tab'),
     fight: params.get('fight') === '1',

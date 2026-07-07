@@ -1,10 +1,16 @@
 # 《江湖无尽录》MVP-1 离线收益数值增补表
 
-> **版本**：v0.2（按所有者确认：资源口径为内力 / 银两 / 阅历；按当前最大可挂机关卡驱动；当前无在线挂机收益表；首发不接 VIP / 月卡 / 广告 / 特权）
+> **版本**：v0.2
+>
 > **日期**：2026-07-06
-> **上游文档**：`spec.md`（v0.3 草案）§4.1 / §5 / §8.1；`../mvp0/formulas.md`、`../mvp0/content.md`。
-> **范围**：MVP-1 基础离线收益。本文只补「离线收益」所需的上限、效率、产出比、刷新阈值与反作弊 / 时钟边界口径；不重推 MVP-0 既有公式表 / 内容表，不引入商业化加成，不新增装备、奇遇、秘境、炼丹等系统。
-> **数值纪律**：全部为首版可实现值；`[待测试]` 表示测试敏感项，实测后优先调整，但当前值即为实现 / 模拟起点。
+>
+> **状态**：已落地（`code/src/engine/offlineRewards.ts` 按表 A / 表 C 1:1 实现）
+>
+> **范围**：MVP-1 基础离线收益的上限、效率、产出比、刷新阈值与时钟边界口径；不重推 MVP-0 既有表，不引入商业化加成与新系统
+>
+> **上游**：`spec.md` §4.1 / §5 / §8.1；`../mvp0/formulas.md`、`../mvp0/content.md`
+>
+> **数值纪律**：全部为首版可实现值，实测后按 §10 优先级调参
 
 ---
 
@@ -12,8 +18,8 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
-| v0.1 | 2026-07-06 | 通用离线收益表提案：包含离线效率、上限、追赶倍率、资源拆分、概率掉落、VIP/特权钩子与反作弊字段。 |
-| v0.2 | 2026-07-06 | 项目口径收敛：核心资源改为内力 / 银两 / 阅历；主驱动改为当前最大可挂机关卡；因当前无在线挂机收益表，本文直接给首发基础离线收益；删除 VIP / 月卡 / 广告 / 特权表；稀有掉落仅保留为空扩展，不进首发核心验收。 |
+| v0.1 | 2026-07-06 | 通用离线收益表提案。 |
+| v0.2 | 2026-07-06 | 收敛项目口径：资源三件套、按最大可挂机关卡驱动、删商业化字段、掉落只留空扩展。 |
 
 ---
 
@@ -197,46 +203,11 @@ current_max_idle_stage = 玩家当前已解锁、且系统允许作为挂机收�
 
 ---
 
-## 7. 程序配置落地建议
+## 7. 程序落地
 
-本文为设计表，不是运行时配置。待本表通过评审后，再落到代码：
+已实现：`code/src/engine/offlineRewards.ts`（表 A / 表 C 数据 + 四个纯函数，字段名与本表一致）+ `offlineRewards.test.ts`（覆盖 A1 / A3 / A4 / A5 / A6，含满额八档逐格对账）。
 
-```text
-code/src/engine/offlineRewards.ts
-code/src/engine/offlineRewards.test.ts
-```
-
-建议导出结构：
-
-```ts
-type OfflineRewardStage = {
-  id: number;
-  idleStageMin: number;
-  idleStageMax: number;
-  jianghuPhase: string;
-  neiliPerMin: number;
-  silverPerMin: number;
-  experiencePerMin: number;
-  offlineEfficiency: number;
-  offlineCapMin: number;
-  debugCapMin: number;
-  minSettleMin: number;
-  catchupPerStage: number;
-  catchupMax: number;
-  dropGroup: "none";
-};
-```
-
-实现侧至少需要以下纯函数：
-
-| 函数 | 职责 |
-|---|---|
-| `findOfflineRewardStage(currentMaxIdleStage)` | 按最大可挂机关卡匹配表 A。 |
-| `getEffectiveOfflineMinutes(lastSeenAt, now, capMin)` | 计算有效闭关分钟，负时间归 0，超时截断。 |
-| `calculateOfflineRewards(input)` | 输出内力 / 银两 / 阅历、是否触顶、构成因子。 |
-| `shouldShowOfflineSettlement(effectiveMinutes, minSettleMin)` | 判断是否弹出出关结算。 |
-
-测试至少覆盖 `spec.md` §8.1 A1 / A3 / A5 / A6。
+> 对账口径：满额发放以 §2.1 主公式 `floor` 为权威；§3.3 校验表为四舍五入粗算，4 格与 floor 差 1（`acceptance.md` 口径注记 1）。
 
 ---
 
@@ -256,13 +227,13 @@ type OfflineRewardStage = {
 
 ## 9. 开放问题
 
-以下问题不阻塞首发表落地，但会影响后续实现与调参：
-
-1. `current_max_idle_stage` 在存档中的权威来源是哪一个字段？若当前没有，需要实现时补显式字段。
-2. 短离线低于 3 分钟时是「静默入账」还是「完全不结算」？本文首发取静默入账，避免玩家刷新损失资源。
-3. 表 A 的基础速率未来是否反向成为在线挂机收益表的原型？如果是，后续需拆 `base_per_min` 与 `offline_efficiency` 的语义。
-4. 出关结算是否展示小数阅历构成？本文建议最终发放 floor，构成明细可显示精确到 1 位小数。
-5. 首发是否需要把 `debug_cap_min` 做成开发开关，而不是配置常量？验收 A4 需要能临时压低上限。
+| # | 问题 | 状态 |
+|---|---|---|
+| 1 | `current_max_idle_stage` 权威来源 | **已裁决**：= 已通关最高关全局序号，不新增存档字段（`acceptance.md` 口径注记 5） |
+| 2 | 短离线是静默入账还是不结算 | **已裁决**：<180s 静默入账，<5s 完全跳过（`acceptance.md` 口径注记 2） |
+| 3 | 表 A 基础速率未来是否反向成为在线挂机收益表原型 | 开放；若是，需拆 `base_per_min` 与 `offline_efficiency` 语义 |
+| 4 | 构成明细的小数展示 | **已裁决**：发放 floor；构成公式仅观察员通道显示（规格 §6 裁决 ②） |
+| 5 | `debug_cap_min` 是否做成开关 | **已裁决**：`#offlinecap=N` 调试通道，持久生效可清除 |
 
 ---
 

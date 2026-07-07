@@ -217,7 +217,15 @@ body {
 .hp-num { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; margin: 8px 0 3px; }
 .bar { height: 8px; border-radius: var(--r-xs); background: var(--bar-track); overflow: hidden; }
 .bar > i { display: block; height: 100%; border-radius: var(--r-xs); background: var(--candle-gold); transition: width 0.3s var(--ease-sharp); }
-.bar.hp > i { background: var(--hp, var(--blood-red)); background: var(--blood-red); }
+.bar.hp { display: flex; }
+.bar.hp > i { background: var(--hp, var(--blood-red)); background: var(--blood-red); border-radius: 0; }
+/* 少林金钟护盾段：紧贴气血右侧的浅蓝条（The Semantic Ink Rule：盾青只随护盾语义出现） */
+.bar.hp > .shield-fill {
+  display: block; height: 100%; background: var(--shield-blue);
+  box-shadow: inset 1px 0 0 oklch(0.16 0.014 262 / 0.9);
+  transition: width 0.3s var(--ease-sharp);
+}
+.hp-num .shield-num { color: var(--shield-blue); font-weight: 600; margin-left: 8px; }
 .bar.enemy-hp { height: 14px; border-radius: 5px; }
 .bar.enemy-hp > i { background: var(--blood-red); }
 .mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; font-size: 12px; }

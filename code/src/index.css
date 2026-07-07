@@ -215,6 +215,25 @@ body {
 .fighter .frealm { font-size: 12px; color: var(--ink-muted); margin-bottom: 8px; }
 .vs { align-self: center; font-size: 15px; font-weight: 700; color: var(--ink-faint); letter-spacing: 0.1em; padding-top: 30px; }
 .hp-num { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; margin: 8px 0 3px; }
+/* ===== 选关条（回刷/回退挂机入口） ===== */
+.stage-strip { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 0; }
+.stage-pill {
+  min-width: 36px; padding: 4px 6px; text-align: center;
+  font-size: 12.5px; font-family: inherit; font-variant-numeric: tabular-nums;
+  background: var(--night-surface); color: var(--ink-muted);
+  border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer;
+}
+.stage-pill:hover:not(:disabled) { border-color: var(--line-strong); color: var(--ink-warm); }
+.stage-pill.next { color: var(--candle-gold); border-color: oklch(0.76 0.13 78 / 0.5); }
+.stage-pill.active { background: var(--night-surface-raised); border-color: var(--line-strong); color: var(--ink-warm); }
+.stage-pill.next.active { color: var(--candle-gold); border-color: var(--candle-gold); }
+.stage-pill:disabled { color: var(--ink-faint); background: transparent; cursor: not-allowed; }
+/* 要点关（精英/Boss）：数字后缀圆点标记，颜色随状态 */
+.stage-pill.key::after {
+  content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; margin-left: 4px; vertical-align: 2px; opacity: 0.7;
+}
+
 .bar { height: 8px; border-radius: var(--r-xs); background: var(--bar-track); overflow: hidden; }
 .bar > i { display: block; height: 100%; border-radius: var(--r-xs); background: var(--candle-gold); transition: width 0.3s var(--ease-sharp); }
 .bar.hp { position: relative; }

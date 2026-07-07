@@ -1,5 +1,5 @@
 /** 战斗页 —— 原型场景 3 战斗页签 / 场景 4 失败提示的 1:1 实现（对阵单职责） */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DIAG_TEXTS } from '../engine/combat';
 import { REALMS } from '../engine/content';
 import { getStage, mapName, MAP_STAGE_COUNT, type EnemyTag } from '../engine/enemies';
@@ -20,6 +20,12 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const next = nextStageOf(viewMap, cleared);
   const build = playerBuild(s);
 
+  // 选关（已通关卡可回刷；默认跟随推进关卡，全通图默认末关）
+  const [viewStage, setViewStage] = useState<number | null>(null);
+  useEffect(() => setViewStage(null), [viewMap]);
+  const idleStage = viewStage ?? next ?? MAP_STAGE_COUNT[viewMap];
+  const isRefarmTarget = cleared.includes(`m${viewMap}s${idleStage}`);
+
   const revealedTurns = battle ? battle.result.turns.slice(0, battle.revealed) : [];
   const last = revealedTurns[revealedTurns.length - 1];
   const phpPct = last ? last.phpPct : 1;
@@ -29,7 +35,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
   const hpNow = build.hp * phpPct;
   const battleEnemy = battle?.enemy ?? null;
-  const idleEnemy = next !== null ? getStage(viewMap, next) : null;
+  const idleEnemy = getStage(viewMap, idleStage);
   const enemy = battle ? battleEnemy : idleEnemy;
   const battleDone = battle ? battle.revealed >= battle.result.turns.length : false;
   const victory = battle !== null && battleDone && battle.result.win;
@@ -65,6 +71,28 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                       : `${clearedCount} / ${MAP_STAGE_COUNT[m]}`}
                 </span>
               </div>
+            );
+          })}
+        </div>
+
+        {/* 选关条：已通关卡可点选回刷（回退挂机），当前推进关金色，未解锁灰置 */}
+        <div className="stage-strip">
+          {Array.from({ length: MAP_STAGE_COUNT[viewMap] }, (_, i) => i + 1).map((st) => {
+            const done = cleared.includes(`m${viewMap}s${st}`);
+            const isNext = st === next;
+            const locked = !done && !isNext;
+            const def = getStage(viewMap, st);
+            const active = st === (battle ? battle.stage : idleStage);
+            return (
+              <button
+                key={st}
+                disabled={locked || (battle !== null && !battleDone)}
+                className={`stage-pill${isNext ? ' next' : ''}${active ? ' active' : ''}${def.kind !== 'normal' ? ' key' : ''}`}
+                title={`第 ${st} 关 · ${def.name}${done ? '（已通关 · 可回刷）' : isNext ? '（当前推进）' : '（未解锁）'}`}
+                onClick={() => setViewStage(st)}
+              >
+                {st}
+              </button>
             );
           })}
         </div>
@@ -132,18 +160,22 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               <div className="battle-controls">
                 {!battle || battleDone ? (
                   <>
-                    {next !== null && (
-                      <button
-                        className="btn"
-                        style={{ maxWidth: 320, marginTop: 12 }}
-                        onClick={() => s.challengeStage(viewMap, next)}
-                      >
-                        {battle && battleDone && !battle.result.win && battle.stage === next
-                          ? '立即重试（免费）'
-                          : `挑战 第 ${next} 关 · ${idleEnemy!.name}`}
-                      </button>
+                    <button
+                      className={isRefarmTarget ? 'btn ghost' : 'btn'}
+                      style={{ maxWidth: 320, marginTop: 12 }}
+                      onClick={() => s.challengeStage(viewMap, idleStage)}
+                    >
+                      {battle && battleDone && !battle.result.win && battle.stage === idleStage
+                        ? '立即重试（免费）'
+                        : isRefarmTarget
+                          ? `回刷 第 ${idleStage} 关 · ${idleEnemy.name}`
+                          : `挑战 第 ${idleStage} 关 · ${idleEnemy.name}`}
+                    </button>
+                    {isRefarmTarget && (
+                      <div className="cap-note" style={{ marginTop: 8 }}>
+                        回刷收益低于首通，连续回刷同一关逐次递减（间隔 10 分钟重置）；开自动连战即回刷循环
+                      </div>
                     )}
-                    {next === null && <div className="cap-note" style={{ marginTop: 12 }}>本图已全通关</div>}
                   </>
                 ) : (
                   <div className="cap-note" style={{ marginTop: 12 }}>

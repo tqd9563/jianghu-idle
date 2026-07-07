@@ -1,7 +1,7 @@
 /**
  * store 行为测试：单钱包丹田模型 + 埋点事件发射（对齐规格书 §6.1 v0.9 / 埋点规格 §1.2）
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { skillUpgradeCost } from '../engine/content';
 import { loadGame } from '../save/storage';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
@@ -300,5 +300,34 @@ describe('gameStore · 归隐与声望阁', () => {
     useGameStore.getState().selectRoute('tangmen');
     expect(useGameStore.getState().ownedMechNodes).toEqual(['tm1']);
     expect(names().filter((n) => n === 'mech_node_bought')).toHaveLength(0);
+  });
+
+  it('回刷胜利后自动连战回到同一关（回退挂机）；收益标记 refarm', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    useGameStore.setState({ realm: 5, route: 'shaolin', skillLevel: 10, clearedStages: ['m1s1'], autoAdvance: true });
+    useGameStore.getState().challengeStage(1, 1); // 已通关 → 回刷
+
+    // 推进回放至结算（境界 5 打第 1 关必胜，普通关 650ms/回合）
+    for (let i = 0; i < 300; i++) {
+      const b = useGameStore.getState().battle;
+      if (!b || b.resolved) break;
+      vi.setSystemTime(Date.now() + 700);
+      useGameStore.getState().tick(Date.now());
+    }
+    const b1 = useGameStore.getState().battle!;
+    expect(b1.resolved).toBe(true);
+    expect(b1.result.win).toBe(true);
+    expect(b1.reward!.refarm).toBe(true);
+    expect(b1.chainStage).toBe(1); // 回刷 → 原关，不是下一关
+
+    // 越过 chainAt：自动开下一场，仍是第 1 关
+    vi.setSystemTime(Date.now() + 1_000);
+    useGameStore.getState().tick(Date.now());
+    const b2 = useGameStore.getState().battle!;
+    expect(b2).not.toBeNull();
+    expect(b2.stage).toBe(1);
+    expect(b2.resolved).toBe(false);
+    vi.useRealTimers();
   });
 });

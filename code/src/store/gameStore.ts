@@ -76,6 +76,8 @@ export interface BattleState {
   intervalMs: number;
   resolved: boolean;
   chainAt: number | null;
+  /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
+  chainStage: number | null;
   /** 胜利实际入账（含江湖熟路加成后的实发值，收益行同源同值） */
   reward: { neili: number; silver: number; xp: number; refarm: boolean } | null;
 }
@@ -362,9 +364,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         const nb = get().battle!;
         if (nb.revealed >= nb.result.turns.length) resolveBattle(set, get, now);
       } else if (b.resolved && b.chainAt !== null && now >= b.chainAt) {
-        const next = nextStageOf(b.map, get().clearedStages);
+        const target = b.chainStage;
         set({ battle: null });
-        if (next !== null && get().autoAdvance) get().challengeStage(b.map, next);
+        if (target !== null && get().autoAdvance) get().challengeStage(b.map, target);
       }
     }
 
@@ -490,7 +492,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       battle: {
         map, stage, enemy, result,
         revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
-        resolved: false, chainAt: null, reward: null,
+        resolved: false, chainAt: null, chainStage: null, reward: null,
       },
     });
   },
@@ -722,11 +724,14 @@ function resolveBattle(
     });
   }
 
-  const canChain = result.win && s.autoAdvance && nextStageOf(b.map, clearedStages) !== null;
+  // 自动连战：首通胜利推进下一关；回刷胜利回到原关（回退挂机）
+  const chainStage = result.win && s.autoAdvance
+    ? (firstClear ? nextStageOf(b.map, clearedStages) : b.stage)
+    : null;
   set({
     dantian, silver, xp, clearedStages, attempts, failure, b3Fails, lastProgressSec,
     refarmKey, refarmCount, refarmAt,
-    battle: { ...b, resolved: true, chainAt: canChain ? now + 900 : null, reward: rewardApplied },
+    battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
   });
   persist(get());
 }

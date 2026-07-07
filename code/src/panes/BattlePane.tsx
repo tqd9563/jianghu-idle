@@ -24,11 +24,10 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const last = revealedTurns[revealedTurns.length - 1];
   const phpPct = last ? last.phpPct : 1;
   const ehpPct = last ? last.ehpPct : 1;
-  // 少林金钟护盾：气血条上的浅蓝护盾段（所有者 2026-07-07 UI 裁决）。
-  // 条总刻度 = max(气血上限, 当前气血 + 护盾)——开战满血满盾时护盾段依然可见。
+  // 少林金钟护盾：气血条上的浅蓝护盾段（所有者 2026-07-07 UI 裁决，07-07 二裁：
+  // 自血条左端向右伸展、覆盖在气血层之上；扣盾时右缘向左削减）。
   const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
   const hpNow = build.hp * phpPct;
-  const barTotal = Math.max(build.hp, hpNow + shieldNow);
   const battleEnemy = battle?.enemy ?? null;
   const idleEnemy = next !== null ? getStage(viewMap, next) : null;
   const enemy = battle ? battleEnemy : idleEnemy;
@@ -87,8 +86,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     </span>
                   </div>
                   <div className="bar hp">
-                    <i style={{ width: `${(hpNow / barTotal) * 100}%` }} />
-                    {shieldNow > 0 && <em className="shield-fill" style={{ width: `${(shieldNow / barTotal) * 100}%` }} />}
+                    <i style={{ width: `${phpPct * 100}%` }} />
+                    {shieldNow > 0 && <em className="shield-fill" style={{ width: `${Math.min(shieldNow / build.hp, 1) * 100}%` }} />}
                   </div>
                   {battle && !battleDone && last && (build.sqNeed < 99 || build.poison.cap > 0) && (
                     <div className="status-chips">

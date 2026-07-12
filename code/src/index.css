@@ -197,6 +197,99 @@ body {
 .fade-item:nth-child(5) { animation-delay: 1.3s; }
 @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
+/* ===== 场景 3: 主界面最终版布局 (Mix A+B Hybrid) ===== */
+.app {
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  grid-template-rows: auto auto 1fr;
+  gap: 6px;
+  background: var(--night-bg);
+  min-height: 100vh;
+}
+
+.app .topbar {
+  grid-column: 2; grid-row: 2;
+  background: var(--night-surface);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 12px 24px;
+  margin: 0;
+  justify-content: flex-end;
+}
+
+.app .res-group { background: transparent; border: none; border-radius: 0; padding: 0; box-shadow: none; }
+.app .res { padding: 0 16px; }
+.app .res + .res { border-left: none; }
+
+.app .game-rail {
+  grid-column: 1; grid-row: 2 / 4;
+  background: var(--night-surface);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app .rail-identity { padding: 20px 20px 16px; white-space: nowrap; }
+.app .rail-identity .game-title { font-size: 19px; letter-spacing: 0.04em; font-weight: 700; }
+.app .rail-identity .realm-chip { margin-top: 6px; }
+.app .rail-identity .realm-chip .name { font-size: 15px; color: var(--candle-gold); }
+
+.app .nav-group { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.app .game-rail .game-tab {
+  padding: 10px 16px; border-radius: var(--r-md); color: var(--ink-muted);
+  transition: background-color 0.2s, color 0.2s;
+  text-align: left; justify-content: flex-start; border: none; margin: 0;
+}
+.app .game-rail .game-tab.active { background: var(--night-surface-raised); color: var(--ink-warm); font-weight: 600; border-bottom-color: transparent; }
+.app .game-rail .game-tab.active::before {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  background: var(--candle-gold); border-radius: 50%; margin-right: 8px; vertical-align: 2px;
+}
+
+.app .s3-main {
+  grid-column: 2; grid-row: 3;
+  background: var(--night-surface);
+  border-radius: var(--r-lg);
+  display: flex; flex-direction: column; min-width: 0;
+}
+
+.app .pulse-bar { background: transparent; border-bottom: 1px solid var(--night-bg); padding: 12px 24px; display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; }
+.app .pulse-bar::-webkit-scrollbar { display: none; }
+.app .pulse-bar .strip-item { flex-shrink: 0; }
+.app .strip-item { background: var(--night-surface-raised); border-color: transparent; }
+
+/* 基础内容排版 (Mix A+B 混合)：无框内容 + 有框交互 */
+.app .panel { background: transparent; border: none; box-shadow: none; margin-bottom: 32px; }
+.app .panel-head { padding: 0 0 12px 4px; border-bottom: none; font-size: 16px; }
+.app .panel-head::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--candle-gold); border-radius: 50%; margin-right: 10px; vertical-align: 2px; }
+.app .panel-body { padding: 0 4px; }
+.app .zone-box { background: var(--night-surface); border: 1px solid var(--line); box-shadow: var(--shadow-panel); }
+.app .fighter { background: var(--night-surface); border: 1px solid var(--line); box-shadow: var(--shadow-panel); }
+.app .log { background: var(--night-chrome); border: 1px solid var(--line); border-radius: var(--r-md); margin-top: 20px; box-shadow: none; }
+.app .skill-row { background: var(--night-surface); border: 1px solid var(--line); margin-bottom: 8px; padding: 12px 16px; border-radius: var(--r-md); box-shadow: var(--shadow-panel); }
+.app .map-tabs { border-bottom: none; margin-bottom: 16px; gap: 8px; }
+.app .map-tab { background: var(--night-surface); border: 1px solid var(--line); border-radius: var(--r-sm); border-bottom: 1px solid var(--line) !important; transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.app .map-tab.active { background: var(--night-surface-raised); border-color: var(--candle-gold) !important; box-shadow: 0 0 0 1px var(--candle-gold); }
+
+@media (max-width: 900px) {
+  .app { display: flex; flex-direction: column; gap: 8px; }
+  .app .topbar { padding: 12px 16px; justify-content: flex-start; }
+  .app .res-group { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 0; }
+  .app .res { padding: 6px 8px; }
+  .app .game-rail { width: 100%; flex-direction: column; gap: 8px; background: var(--night-surface); grid-column: 1 / -1; grid-row: auto; padding: 0 16px; }
+  .app .rail-identity { display: flex; align-items: baseline; gap: 12px; padding: 12px 0px; background: var(--night-surface); white-space: nowrap; overflow: hidden; }
+  .app .rail-identity .realm-chip { margin-top: 0; }
+  .app .rail-identity .game-title { font-size: 17px; }
+  .app .nav-group { flex-direction: row; overflow-x: auto; padding: 8px 0px; gap: 6px; background: var(--night-surface); scrollbar-width: none; }
+  .app .nav-group::-webkit-scrollbar { display: none; }
+  .app .game-rail .game-tab { padding: 8px 14px; flex-shrink: 0; text-align: center; justify-content: center; }
+  .app .s3-main { grid-column: 1 / -1; grid-row: auto; }
+  .app .pulse-bar { padding: 10px 16px; }
+}
+
 /* ===== 战斗页 ===== */
 .pane-wrap.wide { max-width: 1080px; }
 .strip-item .mini-bar.fight > i { background: var(--blood-red); }

@@ -1,0 +1,45 @@
+{
+  "assumptions_id": "mvp2b-normalized-candidate-v0",
+  "status": "synthetic_non_final",
+  "unit_system": "normalized_indices",
+  "offline_cap_hours": "8",
+  "run_multipliers": {
+    "first_run": "1.00",
+    "second_run": "1.28",
+    "later_run": "1.34"
+  },
+  "checkpoints": [
+    {
+      "checkpoint": "before_boss_2",
+      "hourly_rate": {"neili": "100", "silver": "10", "experience": "2"},
+      "bank": {"neili": "30", "silver": "3", "experience": "0.6"},
+      "meaningful_investment": {"neili": "210", "silver": "21", "experience": "4.2"},
+      "checkpoint_gate_total": {"neili": "450", "silver": "45", "experience": "9"},
+      "remaining_run_total": {"neili": "800", "silver": "80", "experience": "16"}
+    },
+    {
+      "checkpoint": "before_boss_3",
+      "hourly_rate": {"neili": "135", "silver": "13.5", "experience": "2.7"},
+      "bank": {"neili": "40.5", "silver": "4.05", "experience": "0.81"},
+      "meaningful_investment": {"neili": "283.5", "silver": "28.35", "experience": "5.67"},
+      "checkpoint_gate_total": {"neili": "607.5", "silver": "60.75", "experience": "12.15"},
+      "remaining_run_total": {"neili": "1080", "silver": "108", "experience": "21.6"}
+    },
+    {
+      "checkpoint": "before_boss_4",
+      "hourly_rate": {"neili": "180", "silver": "18", "experience": "3.6"},
+      "bank": {"neili": "54", "silver": "5.4", "experience": "1.08"},
+      "meaningful_investment": {"neili": "378", "silver": "37.8", "experience": "7.56"},
+      "checkpoint_gate_total": {"neili": "810", "silver": "81", "experience": "16.2"},
+      "remaining_run_total": {"neili": "1440", "silver": "144", "experience": "28.8"}
+    },
+    {
+      "checkpoint": "before_boss_5",
+      "hourly_rate": {"neili": "240", "silver": "24", "experience": "4.8"},
+      "bank": {"neili": "72", "silver": "7.2", "experience": "1.44"},
+      "meaningful_investment": {"neili": "504", "silver": "50.4", "experience": "10.08"},
+      "checkpoint_gate_total": {"neili": "1080", "silver": "108", "experience": "21.6"},
+      "remaining_run_total": {"neili": "1920", "silver": "192", "experience": "38.4"}
+    }
+  ]
+}

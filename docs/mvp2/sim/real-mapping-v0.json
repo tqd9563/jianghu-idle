@@ -1,0 +1,251 @@
+{
+  "mapping_id": "mvp2b-real-mapping-v0",
+  "status": "authoritative_combat_with_open_production_inputs",
+  "offline_rate": {
+    "base_neili_per_hour": "2066",
+    "calibration": "4132 / 4 / 0.50",
+    "settlement_formula": "floor(base_neili_per_hour * min(hours, 8) * efficiency)",
+    "silver_per_hour": "0",
+    "yueli_per_hour": "0"
+  },
+  "checkpoints": [
+    {
+      "checkpoint": "before_boss_2",
+      "status": "audited_mvp0_baseline",
+      "previous_state": "r3l6",
+      "target_state": "r4l7",
+      "realm_neili": "10000",
+      "martial_neili": "1506",
+      "full_preparation_neili": "11506",
+      "adjustment_silver": "200",
+      "yueli_liquidity": "minimum_refundable_40",
+      "yueli_net_cost": "0",
+      "remaining_neili": "23108",
+      "provenance": [
+        "docs/mvp0/content.md §1/§3/§4",
+        "docs/mvp0/formulas.md §3.3/§3.4/§3.6/附录A"
+      ],
+      "idle_curve": {
+        "realm": 3,
+        "neili_per_second": "14.0625",
+        "neili_per_hour": "50625",
+        "provenance": "docs/mvp0/content.md §1 (9*1.25^(realm-1)/s, realm 3)"
+      },
+      "event_curve": {
+        "map_id": 2,
+        "stage_range": [
+          1,
+          9
+        ],
+        "segments": [
+          {
+            "stage_start": 1,
+            "stage_end": 3,
+            "category": "normal",
+            "per_stage": {
+              "neili": "150",
+              "silver": "20",
+              "yueli": "5"
+            }
+          },
+          {
+            "stage_start": 4,
+            "stage_end": 4,
+            "category": "elite",
+            "per_stage": {
+              "neili": "300",
+              "silver": "40",
+              "yueli": "10"
+            }
+          },
+          {
+            "stage_start": 5,
+            "stage_end": 6,
+            "category": "normal",
+            "per_stage": {
+              "neili": "150",
+              "silver": "20",
+              "yueli": "5"
+            }
+          },
+          {
+            "stage_start": 7,
+            "stage_end": 7,
+            "category": "elite",
+            "per_stage": {
+              "neili": "300",
+              "silver": "40",
+              "yueli": "10"
+            }
+          },
+          {
+            "stage_start": 8,
+            "stage_end": 9,
+            "category": "normal",
+            "per_stage": {
+              "neili": "150",
+              "silver": "20",
+              "yueli": "5"
+            }
+          }
+        ],
+        "cumulative": {
+          "neili": "1650",
+          "silver": "220",
+          "yueli": "55"
+        },
+        "provenance": "docs/mvp0/content.md §2 map 2 stages 1-9 (Boss 2 @stage 10 excluded)"
+      },
+      "local_idle_hours_neili_only": "0.2272790123456790123456790123"
+    },
+    {
+      "checkpoint": "before_boss_3",
+      "status": "audited_mvp0_baseline",
+      "previous_state": "r4l7",
+      "target_state": "r5l8",
+      "realm_neili": "21000",
+      "martial_neili": "2108",
+      "full_preparation_neili": "23108",
+      "adjustment_silver": "200",
+      "yueli_liquidity": "current_refundable_nodes",
+      "yueli_net_cost": "0",
+      "remaining_neili": "0",
+      "remaining_online_requirements": [
+        "defeat_boss_3",
+        "confirm_retirement"
+      ],
+      "provenance": [
+        "docs/mvp0/content.md §1/§2/§3/§4",
+        "docs/mvp0/formulas.md §2/§3.3/§3.4/§3.6/附录A"
+      ],
+      "idle_curve": {
+        "realm": 4,
+        "neili_per_second": "17.578125",
+        "neili_per_hour": "63281.25",
+        "provenance": "docs/mvp0/content.md §1 (9*1.25^(realm-1)/s, realm 4)"
+      },
+      "event_curve": {
+        "map_id": 3,
+        "stage_range": [
+          1,
+          9
+        ],
+        "segments": [
+          {
+            "stage_start": 1,
+            "stage_end": 2,
+            "category": "normal",
+            "per_stage": {
+              "neili": "300",
+              "silver": "30",
+              "yueli": "8"
+            }
+          },
+          {
+            "stage_start": 3,
+            "stage_end": 3,
+            "category": "elite",
+            "per_stage": {
+              "neili": "500",
+              "silver": "60",
+              "yueli": "15"
+            }
+          },
+          {
+            "stage_start": 4,
+            "stage_end": 4,
+            "category": "normal",
+            "per_stage": {
+              "neili": "300",
+              "silver": "30",
+              "yueli": "8"
+            }
+          },
+          {
+            "stage_start": 5,
+            "stage_end": 5,
+            "category": "elite",
+            "per_stage": {
+              "neili": "500",
+              "silver": "60",
+              "yueli": "15"
+            }
+          },
+          {
+            "stage_start": 6,
+            "stage_end": 6,
+            "category": "normal",
+            "per_stage": {
+              "neili": "300",
+              "silver": "30",
+              "yueli": "8"
+            }
+          },
+          {
+            "stage_start": 7,
+            "stage_end": 7,
+            "category": "elite",
+            "per_stage": {
+              "neili": "500",
+              "silver": "60",
+              "yueli": "15"
+            }
+          },
+          {
+            "stage_start": 8,
+            "stage_end": 9,
+            "category": "normal",
+            "per_stage": {
+              "neili": "300",
+              "silver": "30",
+              "yueli": "8"
+            }
+          }
+        ],
+        "cumulative": {
+          "neili": "3300",
+          "silver": "360",
+          "yueli": "93"
+        },
+        "provenance": "docs/mvp0/content.md §2 map 3 stages 1-9 (Boss 3 @stage 10 excluded)"
+      },
+      "local_idle_hours_neili_only": "0.3651634567901234567901234568"
+    },
+    {
+      "checkpoint": "before_boss_4",
+      "status": "authoritative",
+      "wall_clock_target": "day_1",
+      "previous_state": "r5l8",
+      "target_state": "r6l9",
+      "first_attempt_baseline": "r6l8",
+      "realm_neili": "48000",
+      "martial_neili": "2952",
+      "full_preparation_neili": "50952",
+      "remaining_neili": "112132",
+      "full_preparation_status": "complete",
+      "first_fail_adjust_pass_matrix": "pass",
+      "allowed_single_adjustments": ["zhoutian_segment", "martial_upgrade", "route_switch"],
+      "route_switch": {"silver": "200", "policy": "optional_non_cumulative"},
+      "combat_verdict": "pass",
+      "open_inputs": ["event_curve", "bank_snapshot", "active_production_curve"]
+    },
+    {
+      "checkpoint": "before_boss_5",
+      "status": "authoritative",
+      "wall_clock_target": "day_3",
+      "previous_state": "r6l9",
+      "target_state": "r7l10",
+      "first_attempt_baseline": "r7l9",
+      "realm_neili": "108000",
+      "martial_neili": "4132",
+      "full_preparation_neili": "112132",
+      "remaining_neili": "0",
+      "full_preparation_status": "complete",
+      "first_fail_adjust_pass_matrix": "pass",
+      "allowed_single_adjustments": ["zhoutian_segment", "martial_upgrade", "route_switch"],
+      "route_switch": {"silver": "200", "policy": "optional_non_cumulative"},
+      "combat_verdict": "pass",
+      "open_inputs": ["event_curve", "bank_snapshot", "active_production_curve"]
+    }
+  ]
+}

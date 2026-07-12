@@ -45,6 +45,13 @@ docs/
     telemetry.md
     prototypes/
       settlement-return-check.md
+  mvp2/                     MVP-2 权威文档链
+    cadence.md
+    content-depth.md
+    content.md
+    manual-fragments.md
+    resource-mapping.md
+    sim/
   directions/               未立项方向记录
   reviews/                  历史评审记录，只读
 ```

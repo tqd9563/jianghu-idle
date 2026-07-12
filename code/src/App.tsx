@@ -66,14 +66,33 @@ export default function App() {
 
   return (
     <div className="app">
+      <nav className="game-rail">
+        <div className="rail-identity">
+          <div className="game-title serif">
+            江湖无尽录<span className="round">第 {s.run} 轮</span>
+          </div>
+          <div className="realm-chip">
+            <span className="name serif">{realmDef.name}</span>
+            <span className="lv">境界 {s.realm} / {REALMS.length}</span>
+          </div>
+        </div>
+        <div className="nav-group">
+          <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
+          <button className={tabCls(tab, 'battle')} onClick={() => setTab('battle')}>战斗</button>
+          {s.route ? (
+            <button className={tabCls(tab, 'skill')} onClick={() => setTab('skill')}>武学</button>
+          ) : (
+            <button className="game-tab" disabled title="突破至境界 2 后解锁">武学</button>
+          )}
+          {repUnlocked ? (
+            <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>声望阁</button>
+          ) : (
+            <button className="game-tab" disabled title="首次归隐后解锁">声望阁</button>
+          )}
+        </div>
+      </nav>
+
       <header className="topbar">
-        <div className="game-title serif">
-          江湖无尽录<span className="round">第 {s.run} 轮</span>
-        </div>
-        <div className="realm-chip">
-          <span className="name serif">{realmDef.name}</span>
-          <span className="lv">境界 {s.realm} / {REALMS.length}</span>
-        </div>
         {retire && (
           <button
             className={`retire-btn${retire === 'standard' ? ' ready' : ''}`}
@@ -101,39 +120,10 @@ export default function App() {
         </div>
       </header>
 
-      <nav className="game-tabs">
-        <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
-        <button className={tabCls(tab, 'battle')} onClick={() => setTab('battle')}>战斗</button>
-        {s.route ? (
-          <button className={tabCls(tab, 'skill')} onClick={() => setTab('skill')}>武学</button>
-        ) : (
-          <button className="game-tab" disabled title="突破至境界 2 后解锁">武学 · 境界 2 解锁</button>
-        )}
-        {repUnlocked ? (
-          <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>声望阁</button>
-        ) : (
-          <button className="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
-        )}
-        <div className="tab-pulse">
-          {(() => {
-            const m = s.selectedMap;
-            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
-              .filter((i) => s.clearedStages.includes(`m${m}s${i}`)).length;
-            const lastTurn = s.battle?.result.turns[s.battle.revealed - 1];
-            return (
-              <span className="strip-item" onClick={() => setTab('battle')}>
-                {mapName(m)} <b>{clearedCount}/{MAP_STAGE_COUNT[m]}</b>
-                {s.battle && !s.battle.resolved && (
-                  <>
-                    {' '}· 对战 {s.battle.enemy.name}{' '}
-                    <span className="mini-bar fight"><i style={{ width: `${(lastTurn?.ehpPct ?? 1) * 100}%` }} /></span>
-                  </>
-                )}
-              </span>
-            );
-          })()}
+      <main className="s3-main">
+        <div className="pulse-bar">
           {progress && (
-            <span className="strip-item" onClick={() => setTab('cultivate')}>
+            <button className="strip-item" onClick={() => setTab('cultivate')}>
               运转周天{' '}
               <span className="mini-bar">
                 <i style={{ width: `${Math.min(100, (s.dantian / breakCost!) * 100)}%` }} />
@@ -141,12 +131,27 @@ export default function App() {
               <b>{progress.segmentsFull}/5</b>
               {!progress.ready && <> · 第{CN[progress.segmentsFull + 1]}周天 {Math.floor(progress.currentSegmentPct * 100)}%</>}
               {progress.ready && <> · 圆满</>}
-            </span>
+            </button>
           )}
+          {(() => {
+            const m = s.selectedMap;
+            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
+              .filter((i) => s.clearedStages.includes(`m${m}s${i}`)).length;
+            const lastTurn = s.battle?.result.turns[s.battle.revealed - 1];
+            return (
+              <button className="strip-item" onClick={() => setTab('battle')}>
+                {mapName(m)} <b>{clearedCount}/{MAP_STAGE_COUNT[m]}</b>
+                {s.battle && !s.battle.resolved && (
+                  <>
+                    {' '}· 对战 {s.battle.enemy.name}{' '}
+                    <span className="mini-bar fight"><i style={{ width: `${(lastTurn?.ehpPct ?? 1) * 100}%` }} /></span>
+                  </>
+                )}
+              </button>
+            );
+          })()}
         </div>
-      </nav>
 
-      <main>
         {tab === 'cultivate' && <CultivatePane />}
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'skill' && s.route && <SkillPane />}

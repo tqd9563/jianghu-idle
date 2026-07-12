@@ -26,7 +26,9 @@ docs/
                       closure.md（单人口径收口 + 敞口台账）/ copy/（冻结文案）/ sim/ 模拟器
   mvp1/               MVP-1 权威文档链（当前：spec.md v0.3：离线功能交付口径，
                       验收主体为 §8.1 功能清单 A1–A7；offline-rewards.md 离线数值增补表）
-  mvp2/               MVP-2 方向记录 cadence.md（多会话内容准备、自然回流验证前提与后续版本节奏）
+  mvp2/               MVP-2 权威文档链：cadence.md（节奏与验证口径）/
+                      content-depth.md（内容纵深方案）/ content.md（内容结构表）/
+                      manual-fragments.md（秘籍残页方案）/ resource-mapping.md（卡点资源映射）/ sim/
   directions/         未立项的设计方向记录（经脉/窍穴、周天充能、武学收集与星级、
                       归隐打字机演出、推荐境界呈现），MVP-1 数值重推或完整版立项时重审
   reviews/            历史评审记录（只读，不修改）

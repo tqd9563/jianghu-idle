@@ -62,6 +62,20 @@
 
   .stage-area { margin-left: 208px; min-height: 100vh; display: flex; flex-direction: column; }
 
+  @media (max-width: 900px) {
+    .proto-nav {
+      position: static; width: 100%; height: auto;
+      display: flex; flex-wrap: nowrap; overflow-x: auto;
+      padding: 8px 12px; border-right: none; border-bottom: 1px solid var(--line);
+      scrollbar-width: none;
+    }
+    .proto-nav::-webkit-scrollbar { display: none; }
+    .proto-nav .pn-title, .proto-nav .pn-sub, .proto-nav .pn-group { display: none; }
+    .proto-nav button { flex: 0 0 auto; width: auto; white-space: nowrap; margin: 0 2px; padding: 7px 10px; }
+    .proto-nav .pn-key { display: none; }
+    .stage-area { margin-left: 0; min-height: auto; }
+  }
+
   /* 场景说明条 */
   .scene-note {
     display: flex; gap: 10px; align-items: baseline;
@@ -148,7 +162,7 @@
 
   .cap-note { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
 
-  /* ===== 游戏主页签（内容分层）：页签居左，进度脉搏居右，共占一行 ===== */
+  /* ===== 游戏主页签（通用基础样式；场景 3 在下方扩展为纵向账册索引） ===== */
   .game-tabs { display: flex; gap: 4px; align-items: center; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
   .tab-pulse { display: flex; gap: 10px; margin-left: auto; padding: 6px 0; }
   .game-tab {
@@ -162,15 +176,17 @@
   .game-tab .tab-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); margin-left: 6px; vertical-align: 2px; }
   .game-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-  /* 常驻进度脉搏胶囊（位于页签行右侧） */
+  /* 常驻进度脉搏胶囊 */
   .strip-item {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 3px 12px; border-radius: 6px;
     background: var(--surface); border: 1px solid var(--line);
     font-size: 12.5px; color: var(--muted); cursor: pointer;
+    font-family: inherit;
     font-variant-numeric: tabular-nums;
   }
   .strip-item:hover { border-color: var(--line-strong); color: var(--ink); }
+  .strip-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .strip-item b { color: var(--ink); font-weight: 600; }
   .strip-item .mini-bar { width: 72px; height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
   .strip-item .mini-bar > i { display: block; height: 100%; background: var(--primary); }
@@ -182,6 +198,69 @@
   .pane-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 900px) { .pane-grid { grid-template-columns: 1fr; } }
   .pane-grid .panel + .panel { margin-top: 16px; }
+
+  /* ===== 场景 3：纵向导航与主工作区 ===== */
+  #s3.active { display: grid; flex: 1; }
+  .s3-workspace { flex: 1; display: flex; align-items: stretch; min-height: 0; }
+
+  .game-rail {
+    flex-shrink: 0; width: 140px;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 20px 0;
+  }
+  .game-rail .game-tab {
+    display: flex; justify-content: flex-end; align-items: center;
+    text-align: right;
+    padding: 10px 24px 10px 16px;
+    border-bottom: none;
+    border-right: 2px solid transparent;
+    margin-bottom: 0; margin-right: -1px;
+    font-size: 14.5px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .game-rail .game-tab.active {
+    border-bottom-color: transparent;
+    border-right-color: var(--primary);
+  }
+
+  .s3-main {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+  }
+
+  .pulse-bar {
+    display: flex; gap: 12px;
+    padding: 10px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .pulse-bar::-webkit-scrollbar { display: none; }
+  .pulse-bar .strip-item { flex-shrink: 0; }
+
+  @media (max-width: 900px) {
+    .s3-workspace { flex-direction: column; }
+    .game-rail {
+      width: 100%; flex-direction: row;
+      padding: 0 16px; border-right: none; border-bottom: 1px solid var(--line);
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .game-rail::-webkit-scrollbar { display: none; }
+    .game-rail .game-tab {
+      justify-content: center;
+      padding: 12px 20px;
+      border-right: none; border-bottom: 2px solid transparent;
+      margin-right: 0; margin-bottom: -1px;
+    }
+    .game-rail .game-tab.active {
+      border-right-color: transparent;
+      border-bottom-color: var(--primary);
+    }
+    .pulse-bar { padding: 10px 16px; }
+  }
 
   /* ===== 战斗区 ===== */
   .map-tabs { display: flex; border-bottom: 1px solid var(--line); }
@@ -451,6 +530,104 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   }
+
+  /* ===== 场景 3: 主界面 (Island + I+V Hybrid 最终版) ===== */
+  /* 基础内容排版 (恒定为 Mix A+B 混合)：无框内容 + 有框交互 */
+  #s3 .panel { background: transparent; border: none; box-shadow: none; margin-bottom: 32px; }
+  #s3 .panel-head { padding: 0 0 12px 4px; border-bottom: none; font-size: 16px; }
+  #s3 .panel-head::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--primary); border-radius: 50%; margin-right: 10px; vertical-align: 2px; }
+  #s3 .panel-body { padding: 0 4px; }
+  #s3 .zone-box { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  #s3 .fighter { background: var(--surface); border: 1px solid var(--line); box-shadow: 0 4px 16px oklch(0 0 0 / 0.25); }
+  #s3 .log { background: oklch(0.15 0.01 262); border: 1px solid var(--line); border-radius: 8px; margin-top: 20px; box-shadow: inset 0 2px 8px oklch(0 0 0 / 0.1); }
+  #s3 .skill-row { background: var(--surface); border: 1px solid var(--line); margin-bottom: 8px; padding: 12px 16px; border-radius: 8px; box-shadow: var(--shadow); }
+  #s3 .map-tabs { border-bottom: none; margin-bottom: 16px; gap: 8px; }
+  #s3 .map-tab { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; border-bottom: 1px solid var(--line) !important; transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+  #s3 .map-tab.active { background: var(--surface-2); border-color: var(--primary) !important; box-shadow: 0 0 0 1px var(--primary); }
+
+  /* 统一外壳：Grid 布局，低对比 Gutter 区隔 */
+  #s3 {
+    display: grid;
+    grid-template-columns: 216px 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 6px;
+    background: var(--bg);
+    min-height: 100vh;
+  }
+  #s3 .scene-note { grid-column: 1 / -1; grid-row: 1; margin-bottom: 0; }
+  #s3 .s3-workspace { display: contents; }
+
+  /* 顶栏 */
+  #s3 .topbar {
+    grid-column: 2; grid-row: 2;
+    background: var(--surface);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    margin: 0;
+    justify-content: flex-end;
+  }
+  #s3 .topbar .game-title, #s3 .topbar .realm-chip { display: none; }
+
+  /* 资源区融入背景 */
+  #s3 .res-group { background: transparent; border: none; border-radius: 0; padding: 0; box-shadow: none; }
+  #s3 .res { padding: 0 16px; }
+  #s3 .res + .res { border-left: none; }
+
+  /* 左侧导航栏 */
+  #s3 .game-rail {
+    grid-column: 1; grid-row: 2 / 4;
+    background: var(--surface);
+    border: none;
+    border-radius: 10px;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #s3 .rail-identity { padding: 20px 20px 16px; white-space: nowrap; }
+  #s3 .rail-identity .game-title { font-size: 19px; letter-spacing: 0.04em; font-weight: 700; }
+  #s3 .rail-identity .realm-chip { margin-top: 6px; }
+  #s3 .rail-identity .realm-chip .name { font-size: 15px; color: var(--primary); }
+
+  #s3 .nav-group { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+  #s3 .game-rail .game-tab {
+    padding: 10px 16px; border-radius: 8px; color: var(--muted);
+    transition: background-color 0.2s, color 0.2s;
+    text-align: left; justify-content: flex-start; border: none; margin: 0;
+  }
+  #s3 .game-rail .game-tab.active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+  #s3 .game-rail .game-tab.active::before {
+    content: ""; display: inline-block; width: 6px; height: 6px;
+    background: var(--gold); border-radius: 50%; margin-right: 8px; vertical-align: 2px;
+  }
+
+  /* 主工作区 */
+  #s3 .s3-main {
+    grid-column: 2; grid-row: 3;
+    background: var(--surface);
+    border-radius: 10px;
+    display: flex; flex-direction: column; min-width: 0;
+  }
+
+  #s3 .pulse-bar { background: transparent; border-bottom: 1px solid var(--bg); padding: 12px 24px; }
+  #s3 .strip-item { background: var(--surface-2); border-color: transparent; }
+
+  @media (max-width: 900px) {
+    #s3.active { display: flex; flex-direction: column; gap: 8px; }
+    #s3 .topbar { padding: 12px 16px; justify-content: flex-start; }
+    #s3 .res-group { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 0; }
+    #s3 .res { padding: 6px 8px; }
+    #s3 .game-rail { width: 100%; flex-direction: column; gap: 8px; background: var(--surface); grid-column: 1 / -1; grid-row: auto; }
+    #s3 .rail-identity { display: flex; align-items: baseline; gap: 12px; padding: 12px 16px; background: var(--surface); white-space: nowrap; overflow: hidden; }
+    #s3 .rail-identity .realm-chip { margin-top: 0; }
+    #s3 .rail-identity .game-title { font-size: 17px; }
+    #s3 .nav-group { flex-direction: row; overflow-x: auto; padding: 8px 16px; gap: 6px; background: var(--surface); scrollbar-width: none; }
+    #s3 .nav-group::-webkit-scrollbar { display: none; }
+    #s3 .game-rail .game-tab { padding: 8px 14px; flex-shrink: 0; text-align: center; justify-content: center; }
+    #s3 .s3-main { grid-column: 1 / -1; grid-row: auto; }
+  }
 </style>
 </head>
 <body>
@@ -639,7 +816,7 @@
 
 <!-- ============ S3 主界面 · 推图中 ============ -->
 <section class="scene" id="s3">
-  <div class="scene-note"><b>场景 3 / 主界面</b>第 2 轮中期：境界 3、唐门、洛阳近郊第 7 关。主界面按内容分四个页签（修炼/战斗/武学/声望阁）；页签行右侧的常驻进度胶囊保证切走页签也能看到周天与战斗脉搏，点击可跳转。可点：四个页签、进度胶囊、「换路线」。</div>
+  <div class="scene-note"><b>场景 3 / 主界面</b>统一的背景材质与深色低对比暗缝（gutter）区隔。左侧固定门派身份与导航，全高贯通；右侧为资源顶栏与核心工作区。</div>
   <header class="topbar">
     <div class="game-title serif">江湖无尽录<span class="round">第 2 轮</span></div>
     <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
@@ -650,58 +827,52 @@
       <div class="res rep"><div class="label">声望</div><div class="value">40</div><div class="rate" style="color:var(--faint)">累计 130</div></div>
     </div>
   </header>
-  <div class="game-tabs">
-    <button class="game-tab" data-pane="s3-cultivate" onclick="switchPane(this)">修炼</button>
-    <button class="game-tab active" data-pane="s3-battle" onclick="switchPane(this)">战斗</button>
-    <button class="game-tab" data-pane="s3-skill" onclick="switchPane(this)">武学<span class="tab-dot" title="可升级"></span></button>
-    <button class="game-tab" data-pane="s3-rep" onclick="switchPane(this)">声望阁</button>
-    <div class="tab-pulse">
-      <span class="strip-item" onclick="jumpPane('s3','s3-cultivate')">运转周天 <span class="mini-bar"><i style="width:69%"></i></span> <b>3/5</b> · 第四周天 45%</span>
-      <span class="strip-item" onclick="jumpPane('s3','s3-battle')">洛阳近郊 <b>7/10</b> · 对战 铁臂僧 <span class="mini-bar fight"><i style="width:57.5%"></i></span></span>
-    </div>
-  </div>
+  <div class="s3-workspace">
+    <nav class="game-rail">
+      <div class="rail-identity">
+        <div class="game-title serif">江湖无尽录<span class="round">第 2 轮</span></div>
+        <div class="realm-chip"><span class="name serif">小有所成</span><span class="lv">境界 3 / 5</span></div>
+      </div>
+      <div class="nav-group">
+        <button class="game-tab" data-pane="s3-cultivate" onclick="switchPane(this)">修炼</button>
+        <button class="game-tab active" data-pane="s3-battle" onclick="switchPane(this)">战斗</button>
+        <button class="game-tab" data-pane="s3-skill" onclick="switchPane(this)">武学<span class="tab-dot" title="可升级"></span></button>
+        <button class="game-tab" data-pane="s3-rep" onclick="switchPane(this)">声望阁</button>
+      </div>
+    </nav>
+    <main class="s3-main">
+      <div class="pulse-bar" aria-label="当前进度">
+        <button class="strip-item" type="button" onclick="jumpPane('s3','s3-cultivate')">运转周天 <span class="mini-bar"><i style="width:69%"></i></span> <b>3/5</b> · 第四周天 45%</button>
+        <button class="strip-item" type="button" onclick="jumpPane('s3','s3-battle')">洛阳近郊 <b>7/10</b> · 对战 铁臂僧 <span class="mini-bar fight"><i style="width:57.5%"></i></span></button>
+      </div>
 
   <!-- 页签 · 修炼 -->
   <div class="game-pane" id="s3-cultivate">
     <div class="pane-wrap">
-      <div class="pane-grid">
-        <section class="panel">
-          <div class="panel-head">运转周天 <span class="sub">境界 3 → 4 · 炉火纯青</span></div>
-          <div class="panel-body">
-            <div class="kv"><span class="k">总消耗</span><span class="v">10,000 内力（每周天 2,000 × 5）</span></div>
-            <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg part"><i></i></div><div class="charge-seg"></div></div>
-            <div class="charge-label"><span>丹田内力 6,900 / 10,000</span><span>第四周天 45%</span></div>
-            <div class="cap-note" style="margin-top:10px">内力自归丹田，第五周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）</div>
-          </div>
-        </section>
-        <div>
-          <section class="panel">
-            <div class="panel-head">挂机产出</div>
-            <div class="panel-body">
-              <div class="zone-box">
-                <div class="zt">内力 / 秒 · 资源产出域</div>
-                <div class="zone-line"><span class="base">9.0 × 1.25<sup>2</sup> = 14.1</span> × <span class="perm">(1 + 20%)</span> = <span class="result">16.9</span></div>
-                <div class="zone-legend"><span class="perm">永久（旧梦重温 +20%）</span><span class="temp">本轮（无）</span></div>
-              </div>
-            </div>
-          </section>
-          <section class="panel">
-            <div class="panel-head">人物属性 <span class="sub">当前 → 突破后</span></div>
-            <div class="panel-body attr-table">
-              <div class="attr-head"><span>属性（共 7 项）</span><span>当前</span><span>炉火纯青</span></div>
-              <div class="attr-row"><span class="aname">气血</span><span class="cur">290</span><span class="next">495</span></div>
-              <div class="attr-row"><span class="aname">攻击</span><span class="cur">30.5</span><span class="next">51.5</span></div>
-              <div class="attr-sub">基础 29 × 本轮 +5%（淬毒心法 Lv5）· 普攻系数 ×0.60（轻手暗器）</div>
-              <div class="attr-row"><span class="aname">防御</span><span class="cur">15</span><span class="next">26</span></div>
-              <div class="attr-row"><span class="aname">命中</span><span class="cur">124</span><span class="next">136</span></div>
-              <div class="attr-row"><span class="aname">闪避</span><span class="cur">16</span><span class="next">19</span></div>
-              <div class="attr-row"><span class="aname">暴击率</span><span class="cur">5%</span><span class="next">5%</span></div>
-              <div class="attr-row"><span class="aname">暴击伤害</span><span class="cur">150%</span><span class="next">150%</span></div>
-              <div class="attr-note">突破另得：挂机产出 16.9 → 21.1 / 秒 · 武学上限 6 → 8<br>路线机制参数（毒系数/层数/毒爆）→ <a onclick="jumpPane('s3','s3-skill')">武学页</a></div>
-            </div>
-          </section>
+      <section class="panel" style="margin-bottom:24px">
+        <div class="panel-head">运转周天 <span class="sub">境界 3 → 4 · 炉火纯青</span></div>
+        <div class="panel-body">
+          <div class="kv"><span class="k">总消耗</span><span class="v">10,000 内力（每周天 2,000 × 5）</span></div>
+          <div class="charge-track"><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg full"></div><div class="charge-seg part"><i></i></div><div class="charge-seg"></div></div>
+          <div class="charge-label"><span>丹田内力 6,900 / 10,000</span><span>第四周天 45%</span></div>
+          <div class="cap-note" style="margin-top:10px">内力自归丹田，第五周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）</div>
         </div>
-      </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head">人物属性 <span class="sub">当前 → 突破后</span></div>
+        <div class="panel-body attr-table">
+          <div class="attr-head"><span>属性（共 7 项）</span><span>当前</span><span>炉火纯青</span></div>
+          <div class="attr-row"><span class="aname">气血</span><span class="cur">290</span><span class="next">495</span></div>
+          <div class="attr-row"><span class="aname">攻击</span><span class="cur">30.5</span><span class="next">51.5</span></div>
+          <div class="attr-sub">基础 29 × 本轮 +5%（淬毒心法 Lv5）· 普攻系数 ×0.60（轻手暗器）</div>
+          <div class="attr-row"><span class="aname">防御</span><span class="cur">15</span><span class="next">26</span></div>
+          <div class="attr-row"><span class="aname">命中</span><span class="cur">124</span><span class="next">136</span></div>
+          <div class="attr-row"><span class="aname">闪避</span><span class="cur">16</span><span class="next">19</span></div>
+          <div class="attr-row"><span class="aname">暴击率</span><span class="cur">5%</span><span class="next">5%</span></div>
+          <div class="attr-row"><span class="aname">暴击伤害</span><span class="cur">150%</span><span class="next">150%</span></div>
+          <div class="attr-note">突破另得：挂机产出 16.9 → 21.1 / 秒 · 武学上限 6 → 8<br>路线机制参数（毒系数/层数/毒爆）→ <a onclick="jumpPane('s3','s3-skill')">武学页</a></div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -833,6 +1004,8 @@
         </section>
       </div>
     </div>
+  </div>
+  </main>
   </div>
 </section>
 
@@ -1386,6 +1559,7 @@
       if (parseInt(n.dataset.price, 10) > repBalance) { b.disabled = true; b.textContent = '声望不足'; }
     });
   }
-</script>
+
+</script>>
 </body>
 </html>

@@ -11,7 +11,7 @@
     "offline_block_cap_hours": "8",
     "milestones": [
       {"checkpoint": "before_boss_4", "deadline_hour": "24", "cumulative_active_hours": "3", "cumulative_offline_blocks": 1},
-      {"checkpoint": "before_boss_5", "deadline_hour": "72", "cumulative_active_hours": "7", "cumulative_offline_blocks": 2}
+      {"checkpoint": "before_boss_5", "deadline_hour": "72", "cumulative_active_hours": "10.5", "cumulative_offline_blocks": 2}
     ]
   },
   "boss_rewards": {"neili": "0", "silver": "0", "yueli": "0", "provenance": "unauthorized_values_remain_explicit_zero_in_forecast"},
@@ -20,5 +20,7 @@
     {"map_id": 5, "stages": 10, "elite_stages": [2, 5, 7, 9], "boss_stage": 10, "neili_target_14_percent": "15698", "normal": {"neili": "1206", "silver": "16", "yueli": "4"}, "elite": {"neili": "2417", "silver": "30", "yueli": "5"}, "pre_boss_total": {"neili": "15698", "silver": "200", "yueli": "40"}}
   ],
   "efficiencies": ["0.35", "0.50", "0.65"],
-  "recommendation_policy": "forecast evidence cannot prove observed production; require one uniquely qualifying tier"
+  "recommendation_policy": "owner_selected_conservative_floor: choose lowest efficiency satisfying every forecast gate",
+  "production_finalization": "requires_observed_natural_window_playtest"
+  ,"open_limitations": ["whole_run_collapse_unverified_missing_remaining_run_threshold"]
 }

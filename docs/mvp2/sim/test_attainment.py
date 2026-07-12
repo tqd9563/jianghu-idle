@@ -8,7 +8,7 @@ from pathlib import Path
 
 from attainment_inputs import load_forecast, validate_reward_parity
 from attainment_timeline import ACTIVE_HOURLY_NEILI, EventKind, build_timeline, snapshot_events
-from evaluation import evaluate_attainment
+from evaluation import derive_candidate_recommendation, evaluate_attainment
 from map_rewards import MAP_REWARDS, derive_stage_rewards
 
 
@@ -89,7 +89,7 @@ def test_all_routes_emit_equal_independent_resource_snapshots() -> None:
     for checkpoint in ("before_boss_4", "before_boss_5"):
         rows = [row for row in result.route_snapshots if row.checkpoint == checkpoint and row.efficiency == Decimal("0.50")]
         assert len({(row.neili, row.silver, row.yueli) for row in rows}) == 1
-    assert result.recommendation == "no_recommendation"
+    assert result.recommendation == "candidate_recommendation"
     assert result.evidence == "evidence_forecast"
 
 
@@ -100,12 +100,52 @@ def test_corrected_balances_and_gate_outcomes_are_exact() -> None:
     # Then
     boss4 = next(row for row in result.route_snapshots if row.route == "huashan" and row.efficiency == Decimal("0.50") and row.checkpoint == "before_boss_4")
     boss5 = next(row for row in result.route_snapshots if row.route == "huashan" and row.efficiency == Decimal("0.50") and row.checkpoint == "before_boss_5")
-    assert (boss4.neili, boss5.neili) == (Decimal(50952), Decimal(71367))
+    assert (boss4.neili, boss5.neili) == (Decimal(50952), Decimal(112847))
     assert [(row.efficiency, row.day1_forecast, row.day3_forecast) for row in result.gates] == [
         (Decimal("0.35"), False, False),
-        (Decimal("0.50"), True, False),
-        (Decimal("0.65"), True, False),
+        (Decimal("0.50"), True, True),
+        (Decimal("0.65"), True, True),
     ]
+
+
+def test_all_tier_gates_and_blocked_progression_are_table_driven() -> None:
+    # Given / When
+    result = evaluate_attainment()
+
+    # Then
+    expected = {
+        Decimal("0.35"): (False, True, True, False, False, True),
+        Decimal("0.50"): (True, True, True, True, True, True),
+        Decimal("0.65"): (True, True, True, True, True, True),
+    }
+    for row in result.gates:
+        assert (row.meaningful_4h, row.boss4_full_preparation_8h_safe, row.boss5_full_preparation_8h_safe, row.day1_forecast, row.day3_forecast, row.combat_matrix) == expected[row.efficiency]
+    blocked = [row for row in result.route_snapshots if row.efficiency == Decimal("0.35") and row.checkpoint == "before_boss_5"]
+    assert all(not row.available and row.neili is None for row in blocked)
+    assert result.qualifying_tiers == (Decimal("0.50"), Decimal("0.65"))
+    assert result.production_finalization == "requires_observed_natural_window_playtest"
+    assert result.open_limitations == ("whole_run_collapse_unverified_missing_remaining_run_threshold",)
+
+
+def test_owner_policy_selects_lowest_qualifying_forecast_tier() -> None:
+    # Given / When / Then
+    assert derive_candidate_recommendation(()).outcome == "no_recommendation"
+    assert derive_candidate_recommendation((Decimal("0.65"),)).tier == Decimal("0.65")
+    multiple = derive_candidate_recommendation((Decimal("0.65"), Decimal("0.50")))
+    assert multiple.outcome == "candidate_recommendation"
+    assert multiple.reason == "lowest_qualifying_efficiency"
+    assert multiple.tier == Decimal("0.50")
+
+
+def test_evaluation_derives_fifty_percent_candidate_from_all_gates() -> None:
+    # Given / When
+    result = evaluate_attainment()
+
+    # Then
+    assert result.qualifying_tiers == (Decimal("0.50"), Decimal("0.65"))
+    assert result.recommendation == "candidate_recommendation"
+    assert result.recommended_efficiency == Decimal("0.50")
+    assert result.evidence == "evidence_forecast"
 
 
 def test_attainment_cli_renders_json() -> None:
@@ -122,6 +162,7 @@ def test_attainment_cli_renders_json() -> None:
     payload = json.loads(completed.stdout)
 
     # Then
-    assert payload["recommendation"] == "no_recommendation"
+    assert payload["recommendation"] == "candidate_recommendation"
+    assert payload["recommended_efficiency"] == "0.50"
     assert payload["evidence"] == "evidence_forecast"
     assert {row["efficiency"] for row in payload["gates"]} == {"0.35", "0.50", "0.65"}

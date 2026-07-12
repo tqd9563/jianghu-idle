@@ -1,10 +1,10 @@
 # MVP-2B 离线效率模拟框架
 
-> **版本**：v0.7
+> **版本**：v0.8
 >
 > **日期**：2026-07-12
 >
-> **状态**：Realm 6/7 与 Boss 4/5 战斗批已验证；生产率仍无唯一推荐
+> **状态**：已有 50% 预测候选；尚无实测或生产最终推荐
 >
 > **上游**：`../cadence.md` §4.1、`../content.md` §4 / §8、`../manual-fragments.md` §3 / §6
 
@@ -69,7 +69,7 @@ python docs/mvp2/sim/offline_sim.py --assumptions docs/mvp2/sim/normalized-candi
 
 `--real-evaluation` 不读取归一化候选。`2066/h` 的 50% 通过仍是构造结果；战斗完整性由 `combat_tuning.py` 的可复现搜索与矩阵参与门禁。当前 50%/65% 同时满足资源敏感性，但事件、bank、主动产出和 Day 1/Day 3 达成证据未闭合，输出 `no_recommendation: evidence_incomplete`。
 
-`--attainment-evaluation` 只读取 `attainment-input-v1.json` 的累计主动小时、累计离线块、8h 块封顶和 24h/72h 截止点。主动率 `35,554÷3` 是 50% Day1 恰达的构造预测；Boss 奖励因未授权显式为 0。修正后的 Day3 三档均未达，结论保持 `no_recommendation: evidence_forecast`。
+`--attainment-evaluation` 只读取 `attainment-input-v1.json` 的累计主动小时、累计离线块、8h 块封顶和 24h/72h 截止点。Day1/Day3 累计主动为 3h/10.5h；主动率 `35,554÷3` 是 50% Day1 恰达的构造预测；Boss 奖励因未授权显式为 0。门禁为 4h 有意义投入、Boss4/Boss5 各自 8h 防直越、Day1/Day3 与战斗矩阵；50%/65% 合格时按所有者政策选择最低档 50%。整轮坍缩因缺少 remaining-run threshold 尚未验证；输出仅为 `candidate_recommendation / evidence_forecast`，生产最终定档仍需自然窗口实测。
 
 地图奖励的唯一计算权威是 `map_rewards.py::MAP_REWARDS`；JSON 仅为机器可读镜像。每次加载预测输入都会严格核对地图关卡布局、14% 目标、普通/精英分档及三资源累计，任一差异立即拒绝运行。
 
@@ -84,3 +84,4 @@ python docs/mvp2/sim/offline_sim.py --assumptions docs/mvp2/sim/normalized-candi
 | v0.5 | 2026-07-12 | 新增所有者政策校准敏感性、Boss 4/5 单次调整结构门禁与证据完整性推荐政策。 |
 | v0.6 | 2026-07-12 | 新增 Realm 6/7、Boss 4/5 确定性搜索、战斗矩阵与完整成本推荐门禁。 |
 | v0.7 | 2026-07-12 | 新增地图奖励搜索、墙钟事件时间线、路线快照与 35/50/65 达成预测。 |
+| v0.8 | 2026-07-12 | 采用 Day3 10.5h 主动方案及最低合格效率候选政策。 |

@@ -1,6 +1,6 @@
 # 《江湖无尽录》MVP-2B 离线效率比较报告
 
-> **版本**：v0.3
+> **版本**：v0.4
 >
 > **日期**：2026-07-12
 >
@@ -11,6 +11,12 @@
 > **上游**：`resource-mapping.md` §2–§5
 
 ---
+
+## 0. 变更日志
+
+| 版本 | 日期 | 变更内容 |
+|---|---|---|
+| v0.4 | 2026-07-12 | 采用 Day3 累计主动 10.5h 与最低合格效率候选政策。 |
 
 ## 1. 方法
 
@@ -45,14 +51,14 @@ Boss 4/5 完整准备分别为 50,952 / 112,132；8h 三档离线新增均低于
 
 ## 4. 35% / 50% / 65% 完整门禁
 
-三档使用相同主动率、首通事件与主动时段，仅离线效率不同。4h 门禁要求覆盖 2,952 内力；8h 防直越要求低于 50,952，防整轮坍缩要求低于 112,132；Day1/Day3 使用 `resource-mapping.md` §5 声明场景，战斗门禁沿用 §3。
+三档使用相同主动率、首通事件与主动时段，仅离线效率不同。4h 门禁要求覆盖 2,952 内力；Boss4 / Boss5 的 8h 完整准备防直越门禁分别要求低于 50,952 / 112,132；Day1/Day3 使用 `resource-mapping.md` §5 声明场景，战斗门禁沿用 §3。整轮防坍缩仍因缺少 remaining-run threshold 未验证。
 
-| 效率 | 4h 有意义投入 | 8h 防直越 | 8h 防坍缩 | Day1 预测 | Day3 预测 | 战斗 |
+| 效率 | 4h 有意义投入 | Boss4 8h 防直越 | Boss5 8h 防直越 | Day1 预测 | Day3 预测 | 战斗 |
 |---:|---|---|---|---|---|---|
 | 35% | fail | pass | pass | fail | fail | pass |
-| 50% | pass | pass | pass | pass | fail | pass |
-| 65% | pass | pass | pass | pass | fail | pass |
+| 50% | pass | pass | pass | pass | pass | pass |
+| 65% | pass | pass | pass | pass | pass | pass |
 
 ## 5. 结论
 
-修正累计离线块后，三档 Day3 均未达完整准备。推荐函数要求证据足以支持设计裁决且恰好一档通过；当前只有参数化预测而非 observed production proof，故输出：**no_recommendation**（`evidence_forecast`）。
+所有六项门禁共同参与筛选：35% 不合格，50% 与 65% 合格。两项 8h 门禁仅分别证明不会单块离线直越 Boss4/Boss5 完整准备，不证明整轮防坍缩；后者因缺少 remaining-run threshold 保持开放。所有者政策规定多档合格时选择最低效率作为保守下限，因此输出 **candidate_recommendation=0.50**（`evidence_forecast`）。这不是 observed production validation；生产最终定档前仍须完成自然窗口实测 playtest。

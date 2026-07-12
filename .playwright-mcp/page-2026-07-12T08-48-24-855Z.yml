@@ -1,0 +1,104 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - text: 江湖无尽录
+        - generic [ref=e7]: 第 1 轮
+      - generic [ref=e8]:
+        - generic [ref=e9]: 江湖新丁
+        - generic [ref=e10]: 境界 1 / 5
+    - group "界面风格" [ref=e11]:
+      - generic [ref=e13] [cursor=pointer]:
+        - radio "夜雨账台" [checked] [ref=e14]
+        - generic [ref=e15]: 夜雨账台
+      - generic [ref=e16] [cursor=pointer]:
+        - radio "宣纸武谱" [ref=e17]
+        - generic [ref=e18]: 宣纸武谱
+      - generic [ref=e19] [cursor=pointer]:
+        - radio "山门铜刻" [ref=e20]
+        - generic [ref=e21]: 山门铜刻
+      - generic [ref=e22] [cursor=pointer]:
+        - radio "雾江行旅" [ref=e23]
+        - generic [ref=e24]: 雾江行旅
+    - generic [ref=e25]:
+      - button "修炼" [ref=e26] [cursor=pointer]
+      - button "战斗" [ref=e27] [cursor=pointer]
+      - button "武学" [disabled] [ref=e28]
+      - button "声望阁" [disabled] [ref=e29]
+  - banner [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]: 内力
+        - generic [ref=e34]: "0"
+        - generic [ref=e35]: +9.0 / 秒
+      - generic [ref=e36]:
+        - generic [ref=e37]: 银两
+        - generic [ref=e38]: "0"
+      - generic [ref=e39]:
+        - generic [ref=e40]: 阅历
+        - generic [ref=e41]: "0"
+      - generic [ref=e42]:
+        - generic [ref=e43]: 声望
+        - generic [ref=e44]: "0"
+  - main [ref=e45]:
+    - generic [ref=e46]:
+      - button "运转周天 0/5 · 第一周天 0%" [ref=e47] [cursor=pointer]:
+        - text: 运转周天
+        - generic [ref=e49]: 0/5
+        - text: · 第一周天 0%
+      - button "村外小径 0/8" [ref=e50] [cursor=pointer]:
+        - text: 村外小径
+        - generic [ref=e51]: 0/8
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - generic [ref=e54]:
+          - text: 运转周天
+          - generic [ref=e55]: 境界 1 → 2 · 初窥门径
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]: 总消耗
+            - generic [ref=e59]: 2,800 内力（每周天 560 × 5）
+          - generic "周天进度 0 / 5" [ref=e60]
+          - generic [ref=e66]:
+            - generic [ref=e67]: 丹田内力 0 / 2,800
+            - generic [ref=e68]: 第一周天 0%
+          - button "运转周天中…" [disabled] [ref=e69]
+          - generic [ref=e70]: 内力自归丹田，第五周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - text: 人物属性
+          - generic [ref=e73]: 当前 → 突破后
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e76]: 属性（共 7 项）
+            - generic [ref=e77]: 当前
+            - generic [ref=e78]: 初窥门径
+          - generic [ref=e79]:
+            - generic [ref=e80]: 气血
+            - generic [ref=e81]: "100"
+            - generic [ref=e82]: "170"
+          - generic [ref=e83]:
+            - generic [ref=e84]: 攻击
+            - generic [ref=e85]: "10"
+            - generic [ref=e86]: "17"
+          - generic [ref=e87]:
+            - generic [ref=e88]: 防御
+            - generic [ref=e89]: "5"
+            - generic [ref=e90]: "9"
+          - generic [ref=e91]:
+            - generic [ref=e92]: 命中
+            - generic [ref=e93]: "100"
+            - generic [ref=e94]: "112"
+          - generic [ref=e95]:
+            - generic [ref=e96]: 闪避
+            - generic [ref=e97]: "10"
+            - generic [ref=e98]: "13"
+          - generic [ref=e99]:
+            - generic [ref=e100]: 暴击率
+            - generic [ref=e101]: 5%
+            - generic [ref=e102]: 5%
+          - generic [ref=e103]:
+            - generic [ref=e104]: 暴击伤害
+            - generic [ref=e105]: 150%
+            - generic [ref=e106]: 150%
+          - generic [ref=e107]: 突破另得：挂机产出 9.0 → 11.3 / 秒 · 武学上限 2 → 4 · 解锁三大路线

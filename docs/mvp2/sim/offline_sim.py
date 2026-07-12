@@ -175,6 +175,10 @@ def main() -> None:
     from sensitivity import analyze_sensitivity, render_sensitivity_markdown
     from summary import render_summary_markdown, summarize_efficiencies
 
+    if "--attainment-evaluation" in sys.argv:
+        from evaluation import render_attainment_json, render_attainment_markdown
+        print(render_attainment_json() if "--json" in sys.argv else render_attainment_markdown(), end="")
+        return
     if "--checkpoint-snapshots" in sys.argv:
         from checkpoint_snapshot import render_snapshot_json
         print(render_snapshot_json(), end="")

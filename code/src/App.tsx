@@ -8,6 +8,7 @@ import { REALMS } from './engine/content';
 import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
 import { zhoutianProgress } from './engine/formulas';
 import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore } from './store/gameStore';
+import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { applyDebugHash } from './debug';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
@@ -76,6 +77,7 @@ export default function App() {
             <span className="lv">境界 {s.realm} / {REALMS.length}</span>
           </div>
         </div>
+        <ThemeSwitcher />
         <div className="nav-group">
           <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
           <button className={tabCls(tab, 'battle')} onClick={() => setTab('battle')}>战斗</button>

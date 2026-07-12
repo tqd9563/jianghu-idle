@@ -1,45 +1,95 @@
 /**
- * 设计 token —— 唯一权威来源：根目录 DESIGN.md（YAML frontmatter）
- * 北极星「夜雨客栈的账台」。改动 token 先改 DESIGN.md，再同步此处。
+ * 设计 token
+ * 北极星「夜雨客栈的账台」。夜雨账台 (night) 从 DESIGN.md 落地。
+ * 宣纸武谱、山门铜刻、雾江行旅为运行时主题，从 wiki/design/style-compare.html 衍生。
  */
 :root {
-  /* 中性色 · 深夜低照度分层 */
-  --night-bg: oklch(0.165 0.014 262);
-  --night-surface: oklch(0.215 0.016 262);
-  --night-surface-raised: oklch(0.26 0.018 262);
-  --night-chrome: oklch(0.19 0.015 262);
-  --night-nav: oklch(0.13 0.012 262);
-  --ink-warm: oklch(0.90 0.012 85);
-  --ink-muted: oklch(0.70 0.015 85);
-  --ink-faint: oklch(0.56 0.015 262);
+  /* ============ 夜雨账台 (Night - Default) ============ */
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --chrome: oklch(0.19 0.015 262); /* custom surface for elements like chrome */
+  --nav: oklch(0.13 0.012 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.75 0.015 85);
+  --faint: oklch(0.65 0.015 262);
   --line: oklch(0.32 0.02 262);
   --line-strong: oklch(0.48 0.03 262);
-  --bar-track: oklch(0.28 0.018 262);
+  --primary: oklch(0.76 0.13 78);
+  --primary-ink: oklch(0.18 0.03 78);
+  --primary-soft: oklch(0.76 0.13 78 / 0.12);
+  --accent: oklch(0.74 0.10 215);
+  --accent-soft: oklch(0.74 0.10 215 / 0.14);
+  --gold: oklch(0.76 0.13 78);
+  --poison: oklch(0.72 0.14 145);
+  --hp: oklch(0.64 0.17 25);
+  --hp-soft: oklch(0.64 0.17 25 / 0.15);
+  --shield: oklch(0.70 0.10 240);
+  --crit: oklch(0.70 0.16 45);
+  --bar-track-color: oklch(0.28 0.018 262);
 
-  /* 主色 · The Candlelight Rule：金色只照进展与主行动 */
-  --candle-gold: oklch(0.76 0.13 78);
-  --candle-ink: oklch(0.18 0.03 78);
-  --gold-soft: oklch(0.76 0.13 78 / 0.12);
+  --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+  --glow-num-val: 0 0 12px oklch(0.76 0.13 78 / 0.35);
 
-  /* 次色 · 信息与教学 */
-  --sword-cyan: oklch(0.74 0.10 215);
-  --cyan-soft: oklch(0.74 0.10 215 / 0.14);
+  --radius-panel: 8px;
+  --radius-btn: 6px;
+  --radius-tag: 4px;
+  --radius-pill: 10px;
+  --border-panel: 1px solid var(--line);
+  --panel-shadow: var(--shadow);
 
-  /* 战斗语义色 · The Semantic Ink Rule：只随语义出现 */
-  --poison-green: oklch(0.72 0.14 145);
-  --blood-red: oklch(0.64 0.17 25);
-  --blood-soft: oklch(0.64 0.17 25 / 0.15);
-  --shield-blue: oklch(0.70 0.10 240);
-  --crit-ember: oklch(0.70 0.16 45);
+  /* 阴影 */
+  --shadow-modal-val: 0 12px 48px oklch(0.05 0.01 262 / 0.7);
+  --modal-backdrop-bg: oklch(0.08 0.01 262 / 0.72);
+  --ceremony-backdrop-bg: oklch(0.08 0.01 262 / 0.9);
+  --ceremony-flash-bg: radial-gradient(ellipse at 50% 45%, oklch(0.30 0.05 78 / 0.95), oklch(0.10 0.012 262 / 0.98) 75%);
+
+  /* ============ Legacy aliases for index.css compatibility ============ */
+  --night-bg: var(--bg);
+  --night-surface: var(--surface);
+  --night-surface-raised: var(--surface-2);
+  --night-chrome: var(--chrome);
+  --night-nav: var(--nav);
+  --ink-warm: var(--ink);
+  --ink-muted: var(--muted);
+  --ink-faint: var(--faint);
+  --bar-track: var(--bar-track-color);
+
+  --candle-gold: var(--primary);
+  --candle-ink: var(--primary-ink);
+  --gold-soft: var(--primary-soft);
+
+  --sword-cyan: var(--accent);
+  --cyan-soft: var(--accent-soft);
+
+  --poison-green: var(--poison);
+  --blood-red: var(--hp);
+  --blood-soft: var(--hp-soft);
+  --shield-blue: var(--shield);
+  --crit-ember: var(--crit);
+
+  --shadow-panel: var(--panel-shadow);
+  --shadow-modal: var(--shadow-modal-val);
+  --glow-num: var(--glow-num-val);
+
+  /* Helper vars to fix hardcoded leaks in index.css */
+  --pulse-shadow-0: 0 0 0 0 oklch(0.76 0.13 78 / 0.45);
+  --pulse-shadow-100: 0 0 0 10px oklch(0.76 0.13 78 / 0);
+  --breakthrough-text-shadow: 0 0 40px oklch(0.76 0.13 78 / 0.6);
+  --ceremony-text-shadow: 0 0 40px oklch(0.76 0.13 78 / 0.55);
+  --stage-next-border: oklch(0.76 0.13 78 / 0.5);
+  --shield-inner-shadow: inset -1px 0 0 oklch(0.16 0.014 262 / 0.9);
+  --settle-count-glow-0: 0 0 4px oklch(0.76 0.13 78 / 0.12);
+  --settle-count-glow-100: 0 0 14px oklch(0.76 0.13 78 / 0.5);
+  --settle-cap-border: oklch(0.76 0.13 78 / 0.45);
 
   /* 圆角 / 间距 */
-  --r-xs: 4px; --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px;
+  --r-xs: var(--radius-tag);
+  --r-sm: var(--radius-btn);
+  --r-md: var(--radius-panel);
+  --r-lg: var(--radius-pill);
+  --r-xl: 12px;
   --s-xs: 4px; --s-sm: 8px; --s-md: 12px; --s-lg: 16px; --s-xl: 24px;
-
-  /* 阴影 · The Midnight Rule：平面为常态，辉光是仪式 */
-  --shadow-panel: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
-  --shadow-modal: 0 12px 48px oklch(0.05 0.01 262 / 0.7);
-  --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
 
   /* 动效 */
   --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
@@ -50,4 +100,157 @@
   /* 字体 */
   --font-body: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-display: "Songti SC", "STSong", "SimSun", serif; /* The Serif-Is-Sacred Rule：仅限江湖专名 */
+}
+
+/* ============ 宣纸武谱 (Xuan) ============ */
+html[data-theme='xuan'] {
+  --bg: oklch(0.965 0.003 100);
+  --surface: oklch(0.935 0.004 100);
+  --surface-2: oklch(0.905 0.005 100);
+  --chrome: oklch(0.95 0.004 100);
+  --nav: oklch(0.965 0.003 100);
+  --ink: oklch(0.22 0.01 90);
+  --muted: oklch(0.40 0.012 90);
+  --faint: oklch(0.50 0.01 90);
+  --line: oklch(0.80 0.008 90);
+  --line-strong: oklch(0.65 0.01 90);
+  --primary: oklch(0.50 0.185 29);
+  --primary-ink: oklch(0.99 0.005 29);
+  --primary-soft: oklch(0.50 0.185 29 / 0.12);
+  --accent: oklch(0.42 0.07 230);
+  --accent-soft: oklch(0.42 0.07 230 / 0.12);
+  --gold: oklch(0.52 0.11 80);
+  --poison: oklch(0.45 0.11 145);
+  --hp: oklch(0.50 0.16 25);
+  --hp-soft: oklch(0.50 0.16 25 / 0.15);
+  --shield: oklch(0.50 0.09 240);
+  --crit: oklch(0.50 0.185 29);
+  --bar-track-color: oklch(0.87 0.006 100);
+
+  --shadow: 0 1px 3px oklch(0.22 0.01 90 / 0.10);
+  --glow-num-val: none;
+
+  --radius-panel: 0;
+  --radius-btn: 0;
+  --radius-tag: 0;
+  --radius-pill: 0;
+  --border-panel: 1px solid var(--line-strong);
+  --panel-shadow: none;
+
+  --shadow-modal-val: 0 12px 48px oklch(0.22 0.01 90 / 0.2);
+  --modal-backdrop-bg: oklch(0.22 0.01 90 / 0.3);
+  --ceremony-backdrop-bg: oklch(0.965 0.003 100 / 0.95);
+  --ceremony-flash-bg: radial-gradient(ellipse at 50% 45%, oklch(0.90 0.02 29 / 0.95), oklch(0.965 0.003 100 / 0.98) 75%);
+
+  --pulse-shadow-0: 0 0 0 0 oklch(0.50 0.185 29 / 0.45);
+  --pulse-shadow-100: 0 0 0 10px oklch(0.50 0.185 29 / 0);
+  --breakthrough-text-shadow: none;
+  --ceremony-text-shadow: none;
+  --stage-next-border: oklch(0.50 0.185 29 / 0.5);
+  --shield-inner-shadow: inset -1px 0 0 oklch(0.935 0.004 100 / 0.9);
+  --settle-count-glow-0: none;
+  --settle-count-glow-100: none;
+  --settle-cap-border: oklch(0.50 0.185 29 / 0.45);
+}
+
+/* ============ 山门铜刻 (Bronze) ============ */
+html[data-theme='bronze'] {
+  --bg: oklch(0.28 0.015 100);
+  --surface: oklch(0.33 0.015 100);
+  --surface-2: oklch(0.38 0.02 100);
+  --chrome: oklch(0.30 0.015 100);
+  --nav: oklch(0.25 0.015 100);
+  --ink: oklch(0.88 0.02 90);
+  --muted: oklch(0.78 0.02 90);
+  --faint: oklch(0.65 0.02 90);
+  --line: oklch(0.44 0.02 100);
+  --line-strong: oklch(0.55 0.03 90);
+  --primary: oklch(0.68 0.14 65);
+  --primary-ink: oklch(0.20 0.02 100);
+  --primary-soft: oklch(0.68 0.14 65 / 0.15);
+  --accent: oklch(0.58 0.10 160);
+  --accent-soft: oklch(0.58 0.10 160 / 0.20);
+  --gold: oklch(0.75 0.14 70);
+  --poison: oklch(0.58 0.14 145);
+  --hp: oklch(0.62 0.16 25);
+  --hp-soft: oklch(0.62 0.16 25 / 0.15);
+  --shield: oklch(0.62 0.10 240);
+  --crit: oklch(0.68 0.16 45);
+  --bar-track-color: oklch(0.40 0.02 100);
+
+  --shadow: 0 3px 8px oklch(0.12 0.01 100 / 0.6);
+  --glow-num-val: none;
+
+  --radius-panel: 2px;
+  --radius-btn: 2px;
+  --radius-tag: 2px;
+  --radius-pill: 2px;
+  --border-panel: 2px solid var(--line-strong);
+  --panel-shadow: inset 0 0 0 1px var(--surface-2), var(--shadow);
+
+  --shadow-modal-val: 0 12px 48px oklch(0.12 0.01 100 / 0.8);
+  --modal-backdrop-bg: oklch(0.12 0.01 100 / 0.72);
+  --ceremony-backdrop-bg: oklch(0.12 0.01 100 / 0.9);
+  --ceremony-flash-bg: radial-gradient(ellipse at 50% 45%, oklch(0.40 0.08 65 / 0.95), oklch(0.20 0.015 100 / 0.98) 75%);
+
+  --pulse-shadow-0: 0 0 0 0 oklch(0.68 0.14 65 / 0.45);
+  --pulse-shadow-100: 0 0 0 10px oklch(0.68 0.14 65 / 0);
+  --breakthrough-text-shadow: none;
+  --ceremony-text-shadow: none;
+  --stage-next-border: oklch(0.68 0.14 65 / 0.5);
+  --shield-inner-shadow: inset -1px 0 0 oklch(0.33 0.015 100 / 0.9);
+  --settle-count-glow-0: none;
+  --settle-count-glow-100: none;
+  --settle-cap-border: oklch(0.68 0.14 65 / 0.45);
+}
+
+/* ============ 雾江行旅 (Mist) ============ */
+html[data-theme='mist'] {
+  --bg: oklch(0.88 0.02 215);
+  --surface: oklch(0.93 0.015 215);
+  --surface-2: oklch(0.97 0.01 215);
+  --chrome: oklch(0.90 0.018 215);
+  --nav: oklch(0.86 0.02 215);
+  --ink: oklch(0.28 0.03 235);
+  --muted: oklch(0.38 0.03 235);
+  --faint: oklch(0.48 0.02 235);
+  --line: oklch(0.80 0.02 215);
+  --line-strong: oklch(0.68 0.03 225);
+  --primary: oklch(0.42 0.12 250);
+  --primary-ink: oklch(0.98 0.01 215);
+  --primary-soft: oklch(0.42 0.12 250 / 0.12);
+  --accent: oklch(0.52 0.08 190);
+  --accent-soft: oklch(0.52 0.08 190 / 0.15);
+  --gold: oklch(0.60 0.14 70);
+  --poison: oklch(0.50 0.14 145);
+  --hp: oklch(0.52 0.16 25);
+  --hp-soft: oklch(0.52 0.16 25 / 0.15);
+  --shield: oklch(0.50 0.10 240);
+  --crit: oklch(0.52 0.18 45);
+  --bar-track-color: oklch(0.82 0.02 215);
+
+  --shadow: 0 4px 12px oklch(0.25 0.03 235 / 0.10);
+  --glow-num-val: none;
+
+  --radius-panel: 12px;
+  --radius-btn: 8px;
+  --radius-tag: 6px;
+  --radius-pill: 12px;
+  --border-panel: 1px solid var(--line);
+  --panel-shadow: 0 4px 16px oklch(0.25 0.03 235 / 0.06), inset 0 1px 0 oklch(1 1 1 / 0.4);
+
+  --shadow-modal-val: 0 12px 48px oklch(0.25 0.03 235 / 0.2);
+  --modal-backdrop-bg: oklch(0.25 0.03 235 / 0.3);
+  --ceremony-backdrop-bg: oklch(0.88 0.02 215 / 0.95);
+  --ceremony-flash-bg: radial-gradient(ellipse at 50% 45%, oklch(0.80 0.08 250 / 0.95), oklch(0.88 0.02 215 / 0.98) 75%);
+
+  --pulse-shadow-0: 0 0 0 0 oklch(0.42 0.12 250 / 0.45);
+  --pulse-shadow-100: 0 0 0 10px oklch(0.42 0.12 250 / 0);
+  --breakthrough-text-shadow: none;
+  --ceremony-text-shadow: none;
+  --stage-next-border: oklch(0.42 0.12 250 / 0.5);
+  --shield-inner-shadow: inset -1px 0 0 oklch(0.93 0.015 215 / 0.9);
+  --settle-count-glow-0: none;
+  --settle-count-glow-100: none;
+  --settle-cap-border: oklch(0.42 0.12 250 / 0.45);
 }

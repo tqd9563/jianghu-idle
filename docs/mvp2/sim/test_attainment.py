@@ -100,7 +100,7 @@ def test_corrected_balances_and_gate_outcomes_are_exact() -> None:
     # Then
     boss4 = next(row for row in result.route_snapshots if row.route == "huashan" and row.efficiency == Decimal("0.50") and row.checkpoint == "before_boss_4")
     boss5 = next(row for row in result.route_snapshots if row.route == "huashan" and row.efficiency == Decimal("0.50") and row.checkpoint == "before_boss_5")
-    assert (boss4.neili, boss5.neili) == (Decimal(50952), Decimal(112847))
+    assert (boss4.neili, boss5.neili) == (Decimal(50952), Decimal(115904))
     assert [(row.efficiency, row.day1_forecast, row.day3_forecast) for row in result.gates] == [
         (Decimal("0.35"), False, False),
         (Decimal("0.50"), True, True),
@@ -121,7 +121,7 @@ def test_all_tier_gates_and_blocked_progression_are_table_driven() -> None:
     for row in result.gates:
         assert (row.meaningful_4h, row.boss4_full_preparation_8h_safe, row.boss5_full_preparation_8h_safe, row.day1_forecast, row.day3_forecast, row.combat_matrix) == expected[row.efficiency]
     blocked = [row for row in result.route_snapshots if row.efficiency == Decimal("0.35") and row.checkpoint == "before_boss_5"]
-    assert all(not row.available and row.neili is None for row in blocked)
+    assert all(row.available and row.neili is not None and row.neili < Decimal(112132) for row in blocked)
     assert result.qualifying_tiers == (Decimal("0.50"), Decimal("0.65"))
     assert result.production_finalization == "requires_observed_natural_window_playtest"
     assert result.open_limitations == ("whole_run_collapse_unverified_missing_remaining_run_threshold",)

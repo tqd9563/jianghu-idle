@@ -28,9 +28,12 @@ class AttainmentForecast:
     active_rate_denominator_hours: Decimal
     offline_neili_per_hour: Decimal
     offline_block_cap_hours: Decimal
-    boss_reward_neili: Decimal
-    boss_reward_silver: Decimal
-    boss_reward_yueli: Decimal
+    boss_4_reward_neili: Decimal
+    boss_4_reward_silver: Decimal
+    boss_4_reward_yueli: Decimal
+    boss_5_reward_neili: Decimal
+    boss_5_reward_silver: Decimal
+    boss_5_reward_yueli: Decimal
     milestones: tuple[ForecastMilestone, ...]
     reward_parity_validated: bool
 
@@ -70,7 +73,8 @@ def load_forecast() -> AttainmentForecast:
     with INPUT_PATH.open(encoding="utf-8") as stream:
         raw = json.load(stream)
     schedule = raw["forecast_schedule"]
-    boss_reward = raw["boss_rewards"]
+    boss4_reward = raw["boss_4_reward"]
+    boss5_reward = raw["boss_5_reward"]
     milestones = tuple(
         ForecastMilestone(item["checkpoint"], Decimal(item["deadline_hour"]), Decimal(item["cumulative_active_hours"]), item["cumulative_offline_blocks"])
         for item in schedule["milestones"]
@@ -78,6 +82,8 @@ def load_forecast() -> AttainmentForecast:
     return AttainmentForecast(
         Decimal(raw["active_rate_numerator"]) / Decimal(raw["active_rate_denominator_hours"]),
         Decimal(raw["active_rate_numerator"]), Decimal(raw["active_rate_denominator_hours"]), Decimal(raw["offline_base_neili_per_hour"]),
-        Decimal(schedule["offline_block_cap_hours"]), Decimal(boss_reward["neili"]),
-        Decimal(boss_reward["silver"]), Decimal(boss_reward["yueli"]), milestones, True,
+        Decimal(schedule["offline_block_cap_hours"]),
+        Decimal(boss4_reward["neili"]), Decimal(boss4_reward["silver"]), Decimal(boss4_reward["yueli"]),
+        Decimal(boss5_reward["neili"]), Decimal(boss5_reward["silver"]), Decimal(boss5_reward["yueli"]),
+        milestones, True,
     )

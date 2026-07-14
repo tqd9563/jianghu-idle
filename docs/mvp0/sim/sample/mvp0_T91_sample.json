@@ -4,12 +4,12 @@
     "build": "mvp0-0.1.0",
     "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
     "telemetry_spec": 2,
-    "exported_at": 1783334013580
+    "exported_at": 1783334012850
   },
   "events": [
     {
       "e": "run_start",
-      "ts": 1783332530086,
+      "ts": 1783332557226,
       "run": 1,
       "realm": 1,
       "route": null,
@@ -18,18 +18,110 @@
     },
     {
       "e": "test_session_start",
-      "ts": 1783332530086,
+      "ts": 1783332557226,
       "run": 1,
       "realm": 1,
       "route": null,
       "tester_id": "T91",
       "build": "mvp0-0.1.0",
       "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
-      "telemetry_spec": 2
+      "telemetry_spec": 2,
+      "missing_pages_snapshot": [
+        {
+          "pageId": "legacy_intro_page_1",
+          "bookId": "legacy_intro",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_intro_page_2",
+          "bookId": "legacy_intro",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_intro_page_3",
+          "bookId": "legacy_intro",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_advanced_page_1",
+          "bookId": "legacy_advanced",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_advanced_page_2",
+          "bookId": "legacy_advanced",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_advanced_page_3",
+          "bookId": "legacy_advanced",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_finale_page_1",
+          "bookId": "legacy_finale",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_finale_page_2",
+          "bookId": "legacy_finale",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_finale_page_3",
+          "bookId": "legacy_finale",
+          "nextSource": "指名寻访"
+        },
+        {
+          "pageId": "true_jinglei_page_1",
+          "bookId": "true_jinglei",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_jinglei_page_2",
+          "bookId": "true_jinglei",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_jinglei_page_3",
+          "bookId": "true_jinglei",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_zhenyue_page_1",
+          "bookId": "true_zhenyue",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_zhenyue_page_2",
+          "bookId": "true_zhenyue",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_zhenyue_page_3",
+          "bookId": "true_zhenyue",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_shigu_page_1",
+          "bookId": "true_shigu",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_shigu_page_2",
+          "bookId": "true_shigu",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_shigu_page_3",
+          "bookId": "true_shigu",
+          "nextSource": "真传试炼"
+        }
+      ]
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332760086,
+      "ts": 1783332787226,
       "run": 1,
       "realm": 1,
       "route": null,
@@ -38,7 +130,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332760086,
+      "ts": 1783332787226,
       "run": 1,
       "realm": 1,
       "route": null,
@@ -47,7 +139,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332760086,
+      "ts": 1783332787226,
       "run": 1,
       "realm": 1,
       "route": null,
@@ -56,7 +148,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332960086,
+      "ts": 1783332987226,
       "run": 1,
       "realm": 1,
       "route": null,
@@ -65,7 +157,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332960086,
+      "ts": 1783332987226,
       "run": 1,
       "realm": 1,
       "route": null,
@@ -74,7 +166,7 @@
     },
     {
       "e": "realm_breakthrough",
-      "ts": 1783332960086,
+      "ts": 1783332987226,
       "run": 1,
       "realm": 2,
       "route": null,
@@ -82,7 +174,7 @@
     },
     {
       "e": "route_selected",
-      "ts": 1783332960086,
+      "ts": 1783332987226,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -90,7 +182,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332970086,
+      "ts": 1783332997226,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -99,7 +191,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332975286,
+      "ts": 1783333005026,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -109,7 +201,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333001136,
+      "ts": 1783333032176,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -118,18 +210,8 @@
       "kind": "normal"
     },
     {
-      "e": "stage_first_clear",
-      "ts": 1783333028936,
-      "run": 1,
-      "realm": 2,
-      "route": "tangmen",
-      "map": 1,
-      "stage": 3,
-      "kind": "normal"
-    },
-    {
       "e": "charge_segment_full",
-      "ts": 1783333048936,
+      "ts": 1783333059326,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -138,7 +220,17 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333058686,
+      "ts": 1783333059326,
+      "run": 1,
+      "realm": 2,
+      "route": "tangmen",
+      "map": 1,
+      "stage": 3,
+      "kind": "normal"
+    },
+    {
+      "e": "stage_first_clear",
+      "ts": 1783333088426,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -148,7 +240,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333089736,
+      "ts": 1783333117526,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -158,7 +250,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333109736,
+      "ts": 1783333137526,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -167,7 +259,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783333109736,
+      "ts": 1783333137526,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -176,7 +268,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333120786,
+      "ts": 1783333148576,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -186,7 +278,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783333140786,
+      "ts": 1783333168576,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -195,7 +287,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333152486,
+      "ts": 1783333180276,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -205,7 +297,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783333172486,
+      "ts": 1783333200276,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -214,7 +306,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333232462,
+      "ts": 1783333260252,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -224,16 +316,16 @@
       ],
       "result": "lose",
       "attempt": 1,
-      "rounds": 15,
+      "rounds": 13,
       "player_hp_pct": 0,
-      "enemy_hp_pct": 0.092,
+      "enemy_hp_pct": 0.337,
       "diag": [
         1
       ]
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783333232462,
+      "ts": 1783333260252,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -242,7 +334,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333300434,
+      "ts": 1783333328192,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -252,16 +344,16 @@
       ],
       "result": "lose",
       "attempt": 2,
-      "rounds": 15,
+      "rounds": 14,
       "player_hp_pct": 0,
-      "enemy_hp_pct": 0.228,
+      "enemy_hp_pct": 0.237,
       "diag": [
         1
       ]
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333420434,
+      "ts": 1783333448192,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -270,7 +362,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333420434,
+      "ts": 1783333448192,
       "run": 1,
       "realm": 2,
       "route": "tangmen",
@@ -279,7 +371,7 @@
     },
     {
       "e": "realm_breakthrough",
-      "ts": 1783333420434,
+      "ts": 1783333448192,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -287,7 +379,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333488416,
+      "ts": 1783333516168,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -297,7 +389,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333488416,
+      "ts": 1783333516168,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -307,13 +399,24 @@
       ],
       "result": "win",
       "attempt": 3,
-      "rounds": 13,
-      "player_hp_pct": 0.505,
+      "rounds": 11,
+      "player_hp_pct": 0.64,
       "enemy_hp_pct": 0
     },
     {
+      "e": "page_acquired",
+      "ts": 1783333516168,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "page_id": "legacy_intro_page_1",
+      "book_id": "legacy_intro",
+      "channel": "boss_kill",
+      "sequence": 1
+    },
+    {
       "e": "stage_first_clear",
-      "ts": 1783333516216,
+      "ts": 1783333543968,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -323,7 +426,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333536216,
+      "ts": 1783333563968,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -332,7 +435,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333545316,
+      "ts": 1783333573068,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -342,7 +445,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333574416,
+      "ts": 1783333602818,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -352,7 +455,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333613316,
+      "ts": 1783333643518,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -362,7 +465,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333613316,
+      "ts": 1783333643518,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -373,12 +476,12 @@
       "result": "win",
       "attempt": 1,
       "rounds": 7,
-      "player_hp_pct": 0.781,
+      "player_hp_pct": 0.737,
       "enemy_hp_pct": 0
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333633316,
+      "ts": 1783333663518,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -387,7 +490,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333645016,
+      "ts": 1783333674568,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -397,7 +500,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333678016,
+      "ts": 1783333707568,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -407,7 +510,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333725016,
+      "ts": 1783333754568,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -417,7 +520,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333725016,
+      "ts": 1783333754568,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -428,12 +531,12 @@
       "result": "win",
       "attempt": 1,
       "rounds": 9,
-      "player_hp_pct": 0.573,
+      "player_hp_pct": 0.635,
       "enemy_hp_pct": 0
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333745016,
+      "ts": 1783333774568,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -442,7 +545,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783333745016,
+      "ts": 1783333774568,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -451,7 +554,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333760616,
+      "ts": 1783333790168,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -461,7 +564,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783333780616,
+      "ts": 1783333810168,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -470,7 +573,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783333796216,
+      "ts": 1783333825768,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -480,7 +583,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333845916,
+      "ts": 1783333875468,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -493,7 +596,7 @@
       "attempt": 1,
       "rounds": 10,
       "player_hp_pct": 0,
-      "enemy_hp_pct": 0.462,
+      "enemy_hp_pct": 0.427,
       "diag": [
         1,
         6
@@ -501,7 +604,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333875616,
+      "ts": 1783333905168,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -514,7 +617,7 @@
       "attempt": 2,
       "rounds": 10,
       "player_hp_pct": 0,
-      "enemy_hp_pct": 0.443,
+      "enemy_hp_pct": 0.463,
       "diag": [
         1,
         6
@@ -522,7 +625,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783333941598,
+      "ts": 1783333971150,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -542,7 +645,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783333968361,
+      "ts": 1783333995150,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -551,7 +654,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783334007580,
+      "ts": 1783334006850,
       "run": 1,
       "realm": 3,
       "route": "tangmen",
@@ -562,16 +665,17 @@
       ],
       "result": "lose",
       "attempt": 4,
-      "rounds": 12,
+      "rounds": 10,
       "player_hp_pct": 0,
-      "enemy_hp_pct": 0.345,
+      "enemy_hp_pct": 0.437,
       "diag": [
-        1
+        1,
+        6
       ]
     },
     {
       "e": "test_session_end",
-      "ts": 1783334013580,
+      "ts": 1783334012850,
       "run": 1,
       "realm": 3,
       "route": "tangmen",

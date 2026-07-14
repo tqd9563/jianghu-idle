@@ -98,7 +98,7 @@ export interface BattleState {
   /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
   chainStage: number | null;
   /** 胜利实际入账（含江湖熟路加成后的实发值，收益行同源同值） */
-  reward: { neili: number; silver: number; xp: number; refarm: boolean } | null;
+  reward: { neili: number; silver: number; xp: number; refarm: boolean; grantedPageId?: string } | null;
 }
 
 export interface FailureInfo {
@@ -175,7 +175,7 @@ interface GameState extends PersistedState {
   dismissRetireToast: () => void;
   buyRepNode: (id: RepNodeId) => void;
   grantPage: (pageId: string, channel: CollectionChannel) => void;
-  challengeTrial: (trialId: TrialId) => void;
+  challengeTrial: (trialId: TrialId) => { win: boolean; grantedPage: string | null; };
   buyShopPage: (pageId: string) => void;
   getFragmentEffects: () => FragmentEffects;
   getMissingPages: () => MissingPage[];
@@ -762,7 +762,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   challengeTrial: (trialId) => {
     const s = get();
     const trial = TRIAL_TABLE.find((entry) => entry.trial_id === trialId);
-    if (!trial || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return;
+    if (!trial || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return { win: false, grantedPage: null };
     const enemy: EnemyDef = {
       ...trial.enemy_ref,
       map: 3,
@@ -776,11 +776,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       trial_id: trialId,
       result: result.win ? 'win' : 'loss',
     });
-    if (!result.win || (s.trialWinsThisRun?.[trialId] ?? 0) > 0) return;
+    if (!result.win || (s.trialWinsThisRun?.[trialId] ?? 0) > 0) return { win: result.win, grantedPage: null };
     const pageId = nextTrialPage(trialId, (s.collectedPages ?? []).filter(isPageId));
     set({ trialWinsThisRun: { ...(s.trialWinsThisRun ?? {}), [trialId]: 1 } });
     if (pageId) get().grantPage(pageId, 'B');
     else persist(get());
+    return { win: true, grantedPage: pageId };
   },
 
   buyShopPage: (pageId) => {
@@ -973,7 +974,13 @@ function resolveBattle(
     if (boss && (s.bossKillsThisRun?.[boss] ?? 0) === 0) {
       const pageId = nextBossPage(boss, (s.collectedPages ?? []).filter(isPageId));
       set({ bossKillsThisRun: { ...(s.bossKillsThisRun ?? {}), [boss]: 1 } });
-      if (pageId) get().grantPage(pageId, 'A');
+      if (pageId) {
+        get().grantPage(pageId, 'A');
+        const bAfter = get().battle!;
+        if (bAfter && bAfter.reward) {
+          set({ battle: { ...bAfter, reward: { ...bAfter.reward, grantedPageId: pageId } } });
+        }
+      }
     }
   }
   persist(get());

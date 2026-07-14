@@ -11,6 +11,8 @@ import {
 
 const f0 = (n: number) => Math.round(n).toLocaleString('en-US');
 
+import { BattleVictoryRow } from '../components/BattleVictoryRow';
+
 export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const s = useGameStore();
   const cleared = s.clearedStages;
@@ -203,12 +205,15 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             </div>
           ))}
           {victory && battle.reward && (
-            <div className="log-line">
-              <span className="turn" />
-              <span className="win-t">
-                {battle.reward.refarm ? '回刷收获' : '收获'}　内力 +{f0(battle.reward.neili)}　银两 +{f0(battle.reward.silver)}　阅历 +{f0(battle.reward.xp)}
-              </span>
-            </div>
+            <>
+              <div className="log-line">
+                <span className="turn" />
+                <span className="win-t">
+                  {battle.reward.refarm ? '回刷收获' : '收获'}　内力 +{f0(battle.reward.neili)}　银两 +{f0(battle.reward.silver)}　阅历 +{f0(battle.reward.xp)}
+                </span>
+              </div>
+              <BattleVictoryRow pageId={battle.reward.grantedPageId} />
+            </>
           )}
         </div>
       </section>

@@ -4,7 +4,7 @@
     "build": "mvp0-0.1.0",
     "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
     "telemetry_spec": 2,
-    "exported_at": 1783332530086
+    "exported_at": 1783332557226
   },
   "events": [
     {
@@ -25,7 +25,99 @@
       "tester_id": "T90",
       "build": "mvp0-0.1.0",
       "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
-      "telemetry_spec": 2
+      "telemetry_spec": 2,
+      "missing_pages_snapshot": [
+        {
+          "pageId": "legacy_intro_page_1",
+          "bookId": "legacy_intro",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_intro_page_2",
+          "bookId": "legacy_intro",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_intro_page_3",
+          "bookId": "legacy_intro",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_advanced_page_1",
+          "bookId": "legacy_advanced",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_advanced_page_2",
+          "bookId": "legacy_advanced",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_advanced_page_3",
+          "bookId": "legacy_advanced",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_finale_page_1",
+          "bookId": "legacy_finale",
+          "nextSource": "Boss 1"
+        },
+        {
+          "pageId": "legacy_finale_page_2",
+          "bookId": "legacy_finale",
+          "nextSource": "Boss 2"
+        },
+        {
+          "pageId": "legacy_finale_page_3",
+          "bookId": "legacy_finale",
+          "nextSource": "指名寻访"
+        },
+        {
+          "pageId": "true_jinglei_page_1",
+          "bookId": "true_jinglei",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_jinglei_page_2",
+          "bookId": "true_jinglei",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_jinglei_page_3",
+          "bookId": "true_jinglei",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_zhenyue_page_1",
+          "bookId": "true_zhenyue",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_zhenyue_page_2",
+          "bookId": "true_zhenyue",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_zhenyue_page_3",
+          "bookId": "true_zhenyue",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_shigu_page_1",
+          "bookId": "true_shigu",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_shigu_page_2",
+          "bookId": "true_shigu",
+          "nextSource": "真传试炼"
+        },
+        {
+          "pageId": "true_shigu_page_3",
+          "bookId": "true_shigu",
+          "nextSource": "真传试炼"
+        }
+      ]
     },
     {
       "e": "charge_segment_full",
@@ -312,6 +404,17 @@
       "enemy_hp_pct": 0
     },
     {
+      "e": "page_acquired",
+      "ts": 1783329357606,
+      "run": 1,
+      "realm": 3,
+      "route": "tangmen",
+      "page_id": "legacy_intro_page_1",
+      "book_id": "legacy_intro",
+      "channel": "boss_kill",
+      "sequence": 1
+    },
+    {
       "e": "test_paused",
       "ts": 1783329377606,
       "run": 1,
@@ -594,6 +697,17 @@
       "rounds": 11,
       "player_hp_pct": 0.509,
       "enemy_hp_pct": 0
+    },
+    {
+      "e": "page_acquired",
+      "ts": 1783330240334,
+      "run": 1,
+      "realm": 4,
+      "route": "tangmen",
+      "page_id": "legacy_intro_page_2",
+      "book_id": "legacy_intro",
+      "channel": "boss_kill",
+      "sequence": 2
     },
     {
       "e": "stage_first_clear",
@@ -955,7 +1069,8 @@
       "time_penalty": 1,
       "fallback_discount": 1,
       "prestige_total": 130,
-      "run_duration_s": 2965
+      "run_duration_s": 2965,
+      "pages_gained_run": 2
     },
     {
       "e": "run_start",
@@ -1261,6 +1376,27 @@
       "enemy_hp_pct": 0
     },
     {
+      "e": "page_acquired",
+      "ts": 1783332169486,
+      "run": 2,
+      "realm": 3,
+      "route": "tangmen",
+      "page_id": "legacy_intro_page_3",
+      "book_id": "legacy_intro",
+      "channel": "boss_kill",
+      "sequence": 3
+    },
+    {
+      "e": "book_completed",
+      "ts": 1783332169486,
+      "run": 2,
+      "realm": 3,
+      "route": "tangmen",
+      "book_id": "legacy_intro",
+      "type": "遗篇",
+      "effect_summary": "全属性永久 +5%"
+    },
+    {
       "e": "stage_first_clear",
       "ts": 1783332197286,
       "run": 2,
@@ -1322,7 +1458,7 @@
       "result": "win",
       "attempt": 1,
       "rounds": 9,
-      "player_hp_pct": 0.65,
+      "player_hp_pct": 0.669,
       "enemy_hp_pct": 0
     },
     {
@@ -1355,7 +1491,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332365786,
+      "ts": 1783332364486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1365,7 +1501,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783332385786,
+      "ts": 1783332384486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1374,7 +1510,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332410086,
+      "ts": 1783332406086,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1384,7 +1520,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783332410086,
+      "ts": 1783332406086,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1394,13 +1530,13 @@
       ],
       "result": "win",
       "attempt": 1,
-      "rounds": 8,
-      "player_hp_pct": 0.573,
+      "rounds": 7,
+      "player_hp_pct": 0.654,
       "enemy_hp_pct": 0
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332445686,
+      "ts": 1783332441686,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1410,7 +1546,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332481286,
+      "ts": 1783332477286,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1420,7 +1556,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332501286,
+      "ts": 1783332499950,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1429,7 +1565,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783332530086,
+      "ts": 1783332557226,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1440,17 +1576,16 @@
       ],
       "result": "lose",
       "attempt": 1,
-      "rounds": 10,
+      "rounds": 14,
       "player_hp_pct": 0,
-      "enemy_hp_pct": 0.491,
+      "enemy_hp_pct": 0.213,
       "diag": [
-        1,
-        6
+        1
       ]
     },
     {
       "e": "test_session_end",
-      "ts": 1783332530086,
+      "ts": 1783332557226,
       "run": 2,
       "realm": 3,
       "route": "tangmen",

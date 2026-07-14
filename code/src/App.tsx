@@ -20,8 +20,9 @@ import { ObserverPanel } from './overlays/ObserverPanel';
 import { OfflineSettlement } from './overlays/OfflineSettlement';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
+import { FragmentShelf } from './panes/FragmentShelf';
 
-type TabId = 'cultivate' | 'battle' | 'skill' | 'rep';
+type TabId = 'cultivate' | 'battle' | 'skill' | 'rep' | 'fragments';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 
@@ -92,6 +93,15 @@ export default function App() {
           ) : (
             <button className="game-tab" disabled title="首次归隐后解锁">声望阁</button>
           )}
+          <button 
+            className={tabCls(tab, 'fragments')} 
+            onClick={() => { setTab('fragments'); s.openManualShelf(); }}
+          >
+            秘籍阁
+            <span style={{ fontSize: '11px', opacity: 0.6, marginLeft: '6px', fontVariantNumeric: 'tabular-nums' }}>
+              {(s.collectedPages ?? []).length}/18
+            </span>
+          </button>
         </div>
       </nav>
 
@@ -159,6 +169,7 @@ export default function App() {
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'skill' && s.route && <SkillPane />}
         {tab === 'rep' && <RepPane />}
+        {tab === 'fragments' && <FragmentShelf />}
       </main>
 
       {routeSelectOpen && <RouteSelect />}

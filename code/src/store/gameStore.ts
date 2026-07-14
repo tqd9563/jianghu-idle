@@ -67,6 +67,16 @@ interface PersistedState {
   /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结。
    *  持久化：刷新页面不得静默解冻——test_paused 无配对 test_resumed 时，离线口径会把后续游玩全算进暂停 */
   paused: boolean;
+  /** 秘籍残页跨归隐保留；可选字段由 FRESH 为旧存档迁移补默认值。 */
+  collectedPages?: string[];
+  /** 已集齐秘籍跨归隐保留；效果应用由后续任务实现。 */
+  completedBooks?: string[];
+  /** 本轮试炼首胜计数，归隐重置。 */
+  trialWinsThisRun?: Record<string, number>;
+  /** 本轮 Boss 首杀计数，归隐重置。 */
+  bossKillsThisRun?: Record<string, number>;
+  /** 本轮指名寻访购买次数，归隐重置。 */
+  shopPurchasesThisRun?: number;
 }
 
 export interface BattleState {
@@ -176,6 +186,8 @@ const FRESH: PersistedState = {
   mechXpInvested: 0, switchCount: 0,
   refarmKey: null, refarmCount: 0, refarmAt: 0,
   sessionActive: false, paused: false,
+  collectedPages: [], completedBooks: [],
+  trialWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -200,6 +212,9 @@ const persist = (s: PersistedState) =>
     mechXpInvested: s.mechXpInvested, switchCount: s.switchCount,
     refarmKey: s.refarmKey, refarmCount: s.refarmCount, refarmAt: s.refarmAt,
     sessionActive: s.sessionActive, paused: s.paused,
+    collectedPages: s.collectedPages ?? [], completedBooks: s.completedBooks ?? [],
+    trialWinsThisRun: s.trialWinsThisRun ?? {}, bossKillsThisRun: s.bossKillsThisRun ?? {},
+    shopPurchasesThisRun: s.shopPurchasesThisRun ?? 0,
   });
 
 /** 地图解锁：图 2 需通关图 1 末关，图 3 需通关图 2 末关 */
@@ -672,6 +687,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       reputation: s.reputation + settle.total,
       repTotal: s.repTotal + settle.total,
       ownedRepNodes: s.ownedRepNodes,
+      collectedPages: s.collectedPages ?? [],
+      completedBooks: s.completedBooks ?? [],
       autoAdvance: s.autoAdvance,
       retireStep: null,
       retireCeremony: ceremonyData,

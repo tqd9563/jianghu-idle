@@ -141,6 +141,44 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(runStart.owned_nodes).toEqual(['wudao_biji']);
   });
 
+  it('秘籍收集跨归隐保留，本轮渠道计数重置并全部持久化', () => {
+    useGameStore.setState({
+      realm: 5,
+      clearedStages: [...m1all, ...m2all, ...m3all],
+      runPlaySec: 2760,
+      collectedPages: ['legacy_intro_page_1'],
+      completedBooks: ['legacy_intro'],
+      trialWinsThisRun: { trial_jinglei: 1 },
+      bossKillsThisRun: { boss_1: 1, boss_2: 1 },
+      shopPurchasesThisRun: 1,
+    });
+    useGameStore.getState().openRetire();
+    useGameStore.getState().proceedRetire();
+    useGameStore.getState().confirmRetire();
+
+    const state = useGameStore.getState();
+    expect(state.collectedPages).toEqual(['legacy_intro_page_1']);
+    expect(state.completedBooks).toEqual(['legacy_intro']);
+    expect(state.trialWinsThisRun).toEqual({});
+    expect(state.bossKillsThisRun).toEqual({});
+    expect(state.shopPurchasesThisRun).toBe(0);
+
+    const saved = loadGame<{
+      collectedPages: string[];
+      completedBooks: string[];
+      trialWinsThisRun: Record<string, number>;
+      bossKillsThisRun: Record<string, number>;
+      shopPurchasesThisRun: number;
+    }>();
+    expect(saved).toMatchObject({
+      collectedPages: ['legacy_intro_page_1'],
+      completedBooks: ['legacy_intro'],
+      trialWinsThisRun: {},
+      bossKillsThisRun: {},
+      shopPurchasesThisRun: 0,
+    });
+  });
+
   it('预览/确认中退出发 retire_cancelled 且不结算', () => {
     useGameStore.setState({ realm: 5, clearedStages: [...m1all, ...m2all, ...m3all], runPlaySec: 2760 });
     useGameStore.getState().openRetire();

@@ -19,7 +19,10 @@ import {
 } from '../engine/offlineRewards';
 import { ROUTES } from '../engine/routes';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
-import { getDebugOfflineCap, loadGame, loadSavedAt, resetGame, saveGame } from '../save/storage';
+import {
+  endLiveTestWindow, getDebugOfflineCap, loadGame, loadLiveTestWindow, loadSavedAt,
+  resetGame, saveGame, startLiveTestWindow, type LiveTestWindowRecord,
+} from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 
 export type MapNo = 1 | 2 | 3;
@@ -99,6 +102,15 @@ export interface FailureInfo {
 
 export type RetireKind = 'standard' | 'fallback';
 
+export interface NaturalWindowNote {
+  readonly natural_open: boolean;
+  readonly open_reason: string;
+  readonly settlement_understood: boolean | null;
+  readonly decision: string;
+  readonly next_goal: string;
+  readonly feeling: string;
+}
+
 /** 归隐结算演出数据（§8.6-3）：确认后展示，关闭后落地声望阁 */
 export interface RetireCeremonyData {
   runEnded: number;
@@ -120,8 +132,14 @@ interface GameState extends PersistedState {
   retireToast: 'fail_streak' | 'stall_timeout' | null;
   /** 出关结算待呈现数据（MVP-1 §6；资源已在 init 入账，此处只驱动结算屏；非持久化） */
   offlineSettlement: OfflineSettleResult | null;
+  /** 独立持久化的自然测试窗口；不进入游戏存档。 */
+  liveTestWindow: LiveTestWindowRecord | null;
   init: () => void;
   dismissOfflineSettlement: () => void;
+  startLiveTestWindow: () => void;
+  endLiveTestWindow: () => void;
+  applyLiveTestSwitch: (command: 1 | 0 | null) => void;
+  recordNaturalWindowNote: (note: NaturalWindowNote) => void;
   tick: (now: number) => void;
   breakthrough: () => void;
   dismissCeremony: () => void;
@@ -163,6 +181,7 @@ const FRESH: PersistedState = {
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
 let lastTick = 0;
 let lastSave = 0;
+let visitedLiveTestWindowId: string | null = null;
 
 const stageKey = (m: MapNo, s: number) => `m${m}s${s}`;
 const BOSS3_KEY = stageKey(3, MAP_STAGE_COUNT[3]);
@@ -237,6 +256,60 @@ export function retireKind(
   return null;
 }
 
+function liveTestFields(record: LiveTestWindowRecord) {
+  return {
+    window_id: record.windowId,
+    started_at: record.startedAt,
+    tables_version_started: record.tablesVersionStarted,
+    tables_version_current: TABLES_VERSION,
+    tables_version_changed: record.tablesVersionStarted !== TABLES_VERSION,
+  };
+}
+
+function maxClearedStage(clearedStages: readonly string[]): string | null {
+  let best: { key: string; order: number } | null = null;
+  for (const key of clearedStages) {
+    const match = /^m([1-3])s(\d+)$/.exec(key);
+    if (!match) continue;
+    const order = (Number(match[1]) - 1) * 10 + Number(match[2]);
+    if (!best || order > best.order) best = { key, order };
+  }
+  return best?.key ?? null;
+}
+
+function visitSnapshot(s: GameState) {
+  const breakCost = effBreakCost(s);
+  const nextSkillLevel = s.skillLevel + 1;
+  const decisionBattle = ([1, 2, 3] as const).some(
+    (map) => mapUnlocked(map, s.clearedStages) && nextStageOf(map, s.clearedStages) !== null,
+  );
+  return {
+    max_cleared_stage: maxClearedStage(s.clearedStages),
+    cleared_stage_count: s.clearedStages.length,
+    offline_settlement_present: s.offlineSettlement !== null,
+    offline_settlement_capped: s.offlineSettlement?.capped ?? null,
+    decision_breakthrough: breakCost !== null && s.dantian >= breakCost,
+    decision_skill: s.route !== null
+      && nextSkillLevel <= REALMS[s.realm - 1].skillCap
+      && s.dantian >= skillUpgradeCost(nextSkillLevel),
+    decision_battle: decisionBattle,
+    decision_retire: retireKind(s) !== null,
+  };
+}
+
+function emitNaturalWindowVisit(s: GameState, record: LiveTestWindowRecord): void {
+  if (visitedLiveTestWindowId === record.windowId) return;
+  track('natural_window_visit', { run: s.run, realm: s.realm, route: s.route }, {
+    ...liveTestFields(record), ...visitSnapshot(s),
+  });
+  visitedLiveTestWindowId = record.windowId;
+}
+
+/** Simulates a new page for focused store tests; production page lifecycle resets module state naturally. */
+export function resetLiveTestVisitForTests(): void {
+  visitedLiveTestWindowId = null;
+}
+
 export const useGameStore = create<GameState>((set, get) => ({
   ...FRESH,
   started: false,
@@ -248,6 +321,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   retireCeremony: null,
   retireToast: null,
   offlineSettlement: null,
+  liveTestWindow: null,
 
   init: () => {
     if (get().started) return;
@@ -301,6 +375,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
       persist(get());
     }
+    const activeWindow = loadLiveTestWindow();
+    if (activeWindow) {
+      set({ liveTestWindow: activeWindow });
+      emitNaturalWindowVisit(get(), activeWindow);
+    }
   },
 
   /** 关闭出关结算屏（§6-4 衔接决策的时延锚点：settlement_closed 与 offline_settled 的 ts 差） */
@@ -309,6 +388,42 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.offlineSettlement === null) return;
     track('offline_settlement_closed', { run: s.run, realm: s.realm, route: s.route });
     set({ offlineSettlement: null });
+  },
+
+  startLiveTestWindow: () => {
+    const s = get();
+    if (!s.started || s.liveTestWindow) return;
+    const record = startLiveTestWindow(TABLES_VERSION);
+    set({ liveTestWindow: record });
+    track('natural_window_started', { run: s.run, realm: s.realm, route: s.route }, liveTestFields(record));
+    emitNaturalWindowVisit(get(), record);
+  },
+
+  endLiveTestWindow: () => {
+    const s = get();
+    if (!s.liveTestWindow) return;
+    track('natural_window_ended', { run: s.run, realm: s.realm, route: s.route }, liveTestFields(s.liveTestWindow));
+    endLiveTestWindow();
+    set({ liveTestWindow: null });
+  },
+
+  applyLiveTestSwitch: (command) => {
+    if (command === 1) get().startLiveTestWindow();
+    else if (command === 0) get().endLiveTestWindow();
+  },
+
+  recordNaturalWindowNote: (note) => {
+    const s = get();
+    if (!s.liveTestWindow) return;
+    track('natural_window_note', { run: s.run, realm: s.realm, route: s.route }, {
+      ...liveTestFields(s.liveTestWindow),
+      natural_open: note.natural_open,
+      open_reason: note.open_reason.trim(),
+      settlement_understood: note.settlement_understood,
+      decision: note.decision.trim(),
+      next_goal: note.next_goal.trim(),
+      feeling: note.feeling.trim(),
+    });
   },
 
   tick: (now) => {

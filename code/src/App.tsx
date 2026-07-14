@@ -31,10 +31,11 @@ export default function App() {
   const [observerOpen, setObserverOpen] = useState(false);
 
   useEffect(() => {
-    const { tab: debugTab, fight: autoFight, retire: debugRetire, observer } = applyDebugHash();
+    const { tab: debugTab, fight: autoFight, retire: debugRetire, observer, livetest } = applyDebugHash();
     if (debugTab) setTab(debugTab as TabId);
     if (observer) setObserverOpen(true);
     s.init();
+    useGameStore.getState().applyLiveTestSwitch(livetest);
     if (autoFight) {
       const st = useGameStore.getState();
       const next = nextStageOf(st.selectedMap, st.clearedStages);

@@ -3,9 +3,12 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { skillUpgradeCost } from '../engine/content';
-import { loadGame } from '../save/storage';
+import {
+  resetLiveTestWindowForTests, startLiveTestWindow as persistLiveTestWindow, loadGame,
+} from '../save/storage';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
-import { effBreakCost, retireKind, useGameStore } from './gameStore';
+import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
+import { effBreakCost, resetLiveTestVisitForTests, retireKind, useGameStore } from './gameStore';
 
 function names() {
   return getEvents().map((e) => e.e);
@@ -212,7 +215,7 @@ describe('gameStore · 归隐与声望阁', () => {
     useGameStore.getState().startSession('T03');
     const start = getEvents().find((e) => e.e === 'test_session_start')!;
     expect(start.tester_id).toBe('T03');
-    expect(start.telemetry_spec).toBe(1);
+    expect(start.telemetry_spec).toBe(TELEMETRY_SPEC);
 
     useGameStore.getState().pauseSession();
     useGameStore.getState().tick(t0 + 50_000);
@@ -329,5 +332,81 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(b2.stage).toBe(1);
     expect(b2.resolved).toBe(false);
     vi.useRealTimers();
+  });
+});
+
+describe('gameStore · MVP-2 natural live-test window', () => {
+  beforeEach(() => {
+    resetLiveTestWindowForTests();
+    resetLiveTestVisitForTests();
+    useGameStore.getState().hardReset();
+    useGameStore.setState({ liveTestWindow: null });
+    resetTelemetry();
+  });
+
+  it('starts after init in start → visit order and suppresses duplicate start/visit on this page', () => {
+    useGameStore.getState().applyLiveTestSwitch(1);
+    useGameStore.getState().applyLiveTestSwitch(1);
+    const events = getEvents();
+    expect(events.map((event) => event.e)).toEqual(['natural_window_started', 'natural_window_visit']);
+    expect(events[0].window_id).toBe(events[1].window_id);
+    expect(events[0].tables_version_started).toBe(TABLES_VERSION);
+    expect(events[0].tables_version_current).toBe(TABLES_VERSION);
+    expect(events[0].tables_version_changed).toBe(false);
+  });
+
+  it('reloads a persisted window with exactly one visit and reports table-version drift', () => {
+    const record = persistLiveTestWindow('older-tables', 1234);
+    resetLiveTestVisitForTests();
+    useGameStore.setState({ started: false, liveTestWindow: null, offlineSettlement: null });
+    useGameStore.getState().init();
+    useGameStore.getState().init();
+    const visits = getEvents().filter((event) => event.e === 'natural_window_visit');
+    expect(visits).toHaveLength(1);
+    expect(visits[0]).toMatchObject({
+      window_id: record.windowId,
+      started_at: 1234,
+      tables_version_started: 'older-tables',
+      tables_version_current: TABLES_VERSION,
+      tables_version_changed: true,
+    });
+  });
+
+  it('captures only existing objective snapshot decisions and stops in ended order', () => {
+    useGameStore.setState({
+      realm: 2, route: 'tangmen', skillLevel: 3, dantian: 10_000,
+      clearedStages: [...m1all, 'm2s1'],
+    });
+    useGameStore.getState().applyLiveTestSwitch(1);
+    const visit = getEvents().find((event) => event.e === 'natural_window_visit')!;
+    expect(visit).toMatchObject({
+      run: 1, realm: 2, route: 'tangmen', max_cleared_stage: 'm2s1', cleared_stage_count: 9,
+      offline_settlement_present: false, offline_settlement_capped: null,
+      decision_breakthrough: true, decision_skill: true, decision_battle: true, decision_retire: false,
+    });
+    useGameStore.getState().applyLiveTestSwitch(0);
+    useGameStore.getState().applyLiveTestSwitch(0);
+    expect(names()).toEqual(['natural_window_started', 'natural_window_visit', 'natural_window_ended']);
+    expect(useGameStore.getState().liveTestWindow).toBeNull();
+  });
+
+  it('trims subjective note fields and emits nothing without an active window', () => {
+    const note = {
+      natural_open: true,
+      open_reason: '  想起突破  ',
+      settlement_understood: null,
+      decision: '  升武学  ',
+      next_goal: '  打 Boss  ',
+      feeling: '  目标清楚  ',
+    } as const;
+    useGameStore.getState().recordNaturalWindowNote(note);
+    expect(getEvents()).toHaveLength(0);
+    useGameStore.getState().applyLiveTestSwitch(1);
+    useGameStore.getState().recordNaturalWindowNote(note);
+    const event = getEvents().find((item) => item.e === 'natural_window_note')!;
+    expect(event).toMatchObject({
+      natural_open: true, open_reason: '想起突破', settlement_understood: null,
+      decision: '升武学', next_goal: '打 Boss', feeling: '目标清楚',
+    });
   });
 });

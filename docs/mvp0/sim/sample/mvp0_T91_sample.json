@@ -2,8 +2,8 @@
   "meta": {
     "tester_id": "T91",
     "build": "mvp0-0.1.0",
-    "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2",
-    "telemetry_spec": 1,
+    "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
+    "telemetry_spec": 2,
     "exported_at": 1783334013580
   },
   "events": [
@@ -24,8 +24,8 @@
       "route": null,
       "tester_id": "T91",
       "build": "mvp0-0.1.0",
-      "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2",
-      "telemetry_spec": 1
+      "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
+      "telemetry_spec": 2
     },
     {
       "e": "charge_segment_full",

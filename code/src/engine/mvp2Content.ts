@@ -1,5 +1,7 @@
-/** MVP-2 finalized, non-playable value integration — docs/mvp2/content.md §8.1/§8.2/§9.1. */
+/** MVP-2 finalized, non-playable value integration — docs/mvp2/content.md §8.1/§8.2/§9.1/§9.2/§9.4. */
 import type { EnemyTag } from './enemies';
+import { pyRound } from './enemies';
+import type { RouteId } from './content';
 
 export interface Mvp2RealmValue {
   readonly realm: 6 | 7;
@@ -33,6 +35,53 @@ export const MVP2_BOSS_VALUES = [
   { boss: 4, name: '[待命名]', hp: 3024, atk: 470, def: 422, hit: 160, dodge: 25, tags: ['高防', '高攻'] },
   { boss: 5, name: '[待命名]', hp: 5376, atk: 504, def: 722, hit: 172, dodge: 28, tags: ['高攻', '净化', '高防'] },
 ] as const satisfies readonly Mvp2BossValue[];
+
+export interface Mvp2TrialEnemy {
+  readonly id: 'trial_jinglei' | 'trial_zhenyue' | 'trial_shigu';
+  readonly name: '惊雷试炼' | '镇岳试炼' | '蚀骨试炼';
+  readonly route: RouteId;
+  readonly hp: number;
+  readonly atk: number;
+  readonly def: number;
+  readonly hit: number;
+  readonly dodge: number;
+  readonly tags: readonly EnemyTag[];
+  readonly recommendedRealm: 5;
+}
+
+export const MVP2_TRIAL_ENEMIES = [
+  { id: 'trial_jinglei', name: '惊雷试炼', route: 'huashan', hp: 2352, atk: 4, def: 211, hit: 148, dodge: 50, tags: ['高闪', '反伤'], recommendedRealm: 5 },
+  { id: 'trial_zhenyue', name: '镇岳试炼', route: 'shaolin', hp: 1596, atk: 34, def: 216, hit: 148, dodge: 22, tags: ['毒', '破甲'], recommendedRealm: 5 },
+  { id: 'trial_shigu', name: '蚀骨试炼', route: 'tangmen', hp: 840, atk: 101, def: 167, hit: 148, dodge: 22, tags: ['净化', '高攻'], recommendedRealm: 5 },
+] as const satisfies readonly Mvp2TrialEnemy[];
+
+export const MVP2_BOSS_REWARDS = [
+  { boss: 4, neili: 3057, silver: 300, xp: 120 },
+  { boss: 5, neili: 6728, silver: 400, xp: 168 },
+] as const;
+
+/** Elite challenge node rewards — docs/mvp2/content.md §5 / §9.3 derivation. */
+export interface Mvp2EliteChallengeReward {
+  readonly challenge: 4 | 5;
+  readonly neili: number;
+  readonly silver: number;
+  readonly xp: number;
+}
+
+export const MVP2_ELITE_CHALLENGE_REWARDS = [
+  {
+    challenge: 4,
+    neili: 1529,   // ROUND_HALF_UP(0.30×3566/0.70), pre-challenge = stages 1-5 cumulative
+    silver: 150,   // half of Boss 4 silver
+    xp: 60,        // half of Boss 4 xp
+  },
+  {
+    challenge: 5,
+    neili: 4139,   // ROUND_HALF_UP(0.30×9658/0.70), pre-challenge = stages 1-5 cumulative
+    silver: 200,   // half of Boss 5 silver
+    xp: 84,        // half of Boss 5 xp
+  },
+] as const satisfies readonly Mvp2EliteChallengeReward[];
 
 export interface ResourcePlan {
   readonly neili: number;
@@ -77,3 +126,94 @@ export function calculatePreBossTotal(plan: Mvp2MapRewardPlan): ResourcePlan {
     xp: normalCount * plan.normal.xp + eliteCount * plan.elite.xp,
   };
 }
+
+export interface Mvp2StageEnemy {
+  readonly map: 4 | 5;
+  readonly stage: number;
+  readonly name: '[待命名]';
+  readonly hp: number;
+  readonly atk: number;
+  readonly def: number;
+  readonly hit: number;
+  readonly dodge: number;
+  readonly tags: readonly EnemyTag[];
+  readonly kind: 'normal' | 'elite';
+  readonly recommendedRealm: number;
+}
+
+interface Mvp2CurveParams {
+  hpBase: number;
+  hpGrowth: number;
+  atkBase: number;
+  atkGrowth: number;
+  defBase: number;
+  defGrowth: number;
+  hitBase: number;
+  dodge: number;
+}
+
+const MAP4_CURVE: Mvp2CurveParams = { hpBase: 300, hpGrowth: 1.16, atkBase: 50, atkGrowth: 1.05, defBase: 40, defGrowth: 1.08, hitBase: 150, dodge: 20 };
+const MAP5_CURVE: Mvp2CurveParams = { hpBase: 800, hpGrowth: 1.14, atkBase: 100, atkGrowth: 1.04, defBase: 80, defGrowth: 1.06, hitBase: 165, dodge: 25 };
+
+const MAP4_LAYOUT: readonly { stage: number; kind: 'normal' | 'elite'; tags: readonly EnemyTag[] }[] = [
+  { stage: 1, kind: 'normal', tags: [] },
+  { stage: 2, kind: 'normal', tags: ['高闪'] },
+  { stage: 3, kind: 'elite', tags: ['毒'] },
+  { stage: 4, kind: 'normal', tags: [] },
+  { stage: 5, kind: 'normal', tags: ['高防'] },
+  { stage: 6, kind: 'elite', tags: ['毒'] },
+  { stage: 7, kind: 'normal', tags: [] },
+  { stage: 8, kind: 'elite', tags: ['毒'] },
+  { stage: 9, kind: 'normal', tags: ['高防'] },
+];
+
+const MAP5_LAYOUT: readonly { stage: number; kind: 'normal' | 'elite'; tags: readonly EnemyTag[] }[] = [
+  { stage: 1, kind: 'normal', tags: [] },
+  { stage: 2, kind: 'elite', tags: ['反伤'] },
+  { stage: 3, kind: 'normal', tags: ['净化'] },
+  { stage: 4, kind: 'normal', tags: ['高攻'] },
+  { stage: 5, kind: 'elite', tags: ['反伤'] },
+  { stage: 6, kind: 'normal', tags: [] },
+  { stage: 7, kind: 'elite', tags: ['反伤'] },
+  { stage: 8, kind: 'normal', tags: ['高攻'] },
+  { stage: 9, kind: 'elite', tags: ['反伤'] },
+];
+
+function buildMvp2StageEnemy(
+  map: 4 | 5,
+  entry: { stage: number; kind: 'normal' | 'elite'; tags: readonly EnemyTag[] },
+  curve: Mvp2CurveParams,
+  recommendedRealm: number,
+): Mvp2StageEnemy {
+  const i = entry.stage;
+  let hp = pyRound(curve.hpBase * curve.hpGrowth ** (i - 1));
+  let atk = pyRound(curve.atkBase * curve.atkGrowth ** (i - 1), 1);
+  let def = pyRound(curve.defBase * curve.defGrowth ** (i - 1), 1);
+  let dodge = curve.dodge;
+  const hit = curve.hitBase + 2 * i;
+  const tags = entry.tags;
+
+  if (entry.kind === 'elite') {
+    hp = pyRound(hp * (tags.includes('毒' as EnemyTag) ? 1.3 : 1.4));
+  }
+  for (const tag of tags) {
+    if (tag === '高闪') dodge = 50;
+    if (tag === '高防') def = pyRound(def * 1.5);
+    if (tag === '高攻') atk = pyRound(atk * 1.3, 1);
+  }
+
+  return { map, stage: i, name: '[待命名]', hp, atk, def, hit, dodge, tags, kind: entry.kind, recommendedRealm };
+}
+
+export function buildMvp2StageEnemies(): readonly Mvp2StageEnemy[] {
+  const out: Mvp2StageEnemy[] = [];
+  for (const entry of MAP4_LAYOUT) {
+    out.push(buildMvp2StageEnemy(4, entry, MAP4_CURVE, 5));
+  }
+  for (const entry of MAP5_LAYOUT) {
+    out.push(buildMvp2StageEnemy(5, entry, MAP5_CURVE, 6));
+  }
+  return out;
+}
+
+export const MVP2_STAGE_ENEMIES: readonly Mvp2StageEnemy[] = buildMvp2StageEnemies();

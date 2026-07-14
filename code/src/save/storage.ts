@@ -7,6 +7,13 @@
 
 const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
+const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
+
+export interface LiveTestWindowRecord {
+  readonly windowId: string;
+  readonly startedAt: number;
+  readonly tablesVersionStarted: string;
+}
 
 /** node 测试环境无 localStorage 时退化为内存实现（行为一致，不持久） */
 const mem = new Map<string, string>();
@@ -74,4 +81,41 @@ export function getDebugOfflineCap(): number | null {
   const raw = store.getItem(DEBUG_OFFLINE_CAP_KEY);
   const n = raw === null ? NaN : Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function loadLiveTestWindow(): LiveTestWindowRecord | null {
+  const raw = store.getItem(LIVE_TEST_WINDOW_KEY);
+  if (!raw) return null;
+  try {
+    const value = JSON.parse(raw) as Partial<LiveTestWindowRecord>;
+    if (typeof value.windowId !== 'string' || value.windowId.length === 0) return null;
+    if (typeof value.startedAt !== 'number' || !Number.isFinite(value.startedAt)) return null;
+    if (typeof value.tablesVersionStarted !== 'string' || value.tablesVersionStarted.length === 0) return null;
+    return { windowId: value.windowId, startedAt: value.startedAt, tablesVersionStarted: value.tablesVersionStarted };
+  } catch {
+    return null;
+  }
+}
+
+export function startLiveTestWindow(tablesVersion: string, now = Date.now()): LiveTestWindowRecord {
+  const active = loadLiveTestWindow();
+  if (active) return active;
+  const record: LiveTestWindowRecord = {
+    windowId: `nw-${now}-${Math.random().toString(36).slice(2, 10)}`,
+    startedAt: now,
+    tablesVersionStarted: tablesVersion,
+  };
+  store.setItem(LIVE_TEST_WINDOW_KEY, JSON.stringify(record));
+  return record;
+}
+
+export function endLiveTestWindow(): LiveTestWindowRecord | null {
+  const active = loadLiveTestWindow();
+  if (active) store.removeItem(LIVE_TEST_WINDOW_KEY);
+  return active;
+}
+
+/** Focused test seam; live-test state is intentionally independent from game reset. */
+export function resetLiveTestWindowForTests(): void {
+  store.removeItem(LIVE_TEST_WINDOW_KEY);
 }

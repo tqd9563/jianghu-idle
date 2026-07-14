@@ -18,12 +18,18 @@ import {
   calculateOfflineRewards, maxIdleStage, type OfflineSettleResult,
 } from '../engine/offlineRewards';
 import { ROUTES } from '../engine/routes';
+import {
+  applyFragmentEffectsToBuild, computeFragmentEffects, emitPageGrant, getMissingPages,
+  grantPage as grantFragmentPage, isPageId, nextBossPage, nextTrialPage, offlinePages, shopPrice,
+  type CollectionChannel, type FragmentEffects, type MissingPage,
+} from '../engine/fragmentLogic';
+import { PAGE_SOURCE_TABLE, TRIAL_TABLE, type BookId, type TrialId } from '../engine/fragments';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
   endLiveTestWindow, getDebugOfflineCap, loadGame, loadLiveTestWindow, loadSavedAt,
   resetGame, saveGame, startLiveTestWindow, type LiveTestWindowRecord,
 } from '../save/storage';
-import { resetTelemetry, track } from '../telemetry/telemetry';
+import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
 
 export type MapNo = 1 | 2 | 3;
 
@@ -168,6 +174,12 @@ interface GameState extends PersistedState {
   closeRetireCeremony: () => void;
   dismissRetireToast: () => void;
   buyRepNode: (id: RepNodeId) => void;
+  grantPage: (pageId: string, channel: CollectionChannel) => void;
+  challengeTrial: (trialId: TrialId) => void;
+  buyShopPage: (pageId: string) => void;
+  getFragmentEffects: () => FragmentEffects;
+  getMissingPages: () => MissingPage[];
+  openManualShelf: () => void;
   startSession: (testerId: string) => void;
   endSession: (reason: 'completed' | 'external_dropout' | 'design_dropout') => void;
   pauseSession: () => void;
@@ -232,16 +244,23 @@ export function nextStageOf(map: MapNo, cleared: string[]): number | null {
   return null;
 }
 
-export function playerBuild(s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes'>): Build {
-  if (s.route) return makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length);
+export function playerBuild(s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes' | 'completedBooks'>): Build {
+  const effects = computeFragmentEffects((s.completedBooks ?? []).filter(isBookId));
+  if (s.route) return applyFragmentEffectsToBuild(
+    makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length), effects,
+  );
   // 未择路（境界 1）：纯基础属性
   const b = REALMS[s.realm - 1];
-  return {
+  return applyFragmentEffectsToBuild({
     hp: b.hp, atk: b.atk, plainMult: 1, def: b.def, hit: b.accuracy, dodge: b.evasion,
     crit: 0.05, cd: 1.5, firstCrit: false, shieldPct: 0, thorns: 0,
     poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
     sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan',
-  };
+  }, effects);
+}
+
+function isBookId(value: string): value is BookId {
+  return ['legacy_intro', 'legacy_advanced', 'legacy_finale', 'true_jinglei', 'true_zhenyue', 'true_shigu'].includes(value);
 }
 
 /** 下一境界的有效突破消耗（快速入门：境界 2/3 −30%）；已满境界返回 null */
@@ -669,6 +688,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       fallback_discount: settle.discount,
       prestige_total: settle.total,
       run_duration_s: Math.round(s.runPlaySec),
+      pages_gained_run: getEvents().filter((event) => event.e === 'page_acquired' && event.run === s.run).length,
     });
 
     const maxMap: MapNo = mapUnlocked(3, s.clearedStages) ? 3 : mapUnlocked(2, s.clearedStages) ? 2 : 1;
@@ -717,6 +737,88 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
+  grantPage: (pageId, channel) => {
+    const s = get();
+    if (channel === 'D') {
+      offlinePages();
+      return;
+    }
+    if (!isPageId(pageId)) return;
+    const source = PAGE_SOURCE_TABLE.find((page) => page.page_id === pageId);
+    if (!source) return;
+    if (channel === 'A' && source.channel !== 'Boss_kill') return;
+    if (channel === 'B' && source.channel !== 'trial_victory') return;
+    const collection = {
+      collectedPages: (s.collectedPages ?? []).filter(isPageId),
+      completedBooks: (s.completedBooks ?? []).filter(isBookId),
+    };
+    const result = grantFragmentPage(collection, pageId);
+    if (!result.grantedPage) return;
+    set({ collectedPages: [...result.collectedPages], completedBooks: [...result.completedBooks] });
+    emitPageGrant({ run: s.run, realm: s.realm, route: s.route }, result, channel);
+    persist(get());
+  },
+
+  challengeTrial: (trialId) => {
+    const s = get();
+    const trial = TRIAL_TABLE.find((entry) => entry.trial_id === trialId);
+    if (!trial || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return;
+    const enemy: EnemyDef = {
+      ...trial.enemy_ref,
+      map: 3,
+      stage: 0,
+      tags: [...trial.enemy_ref.tags],
+      kind: 'boss',
+      reward: { neili: 0, silver: 0, xp: 0 },
+    };
+    const result = fight(playerBuild(s), enemy, { mode: 'rng' });
+    track('trial_challenged', { run: s.run, realm: s.realm, route: s.route }, {
+      trial_id: trialId,
+      result: result.win ? 'win' : 'loss',
+    });
+    if (!result.win || (s.trialWinsThisRun?.[trialId] ?? 0) > 0) return;
+    const pageId = nextTrialPage(trialId, (s.collectedPages ?? []).filter(isPageId));
+    set({ trialWinsThisRun: { ...(s.trialWinsThisRun ?? {}), [trialId]: 1 } });
+    if (pageId) get().grantPage(pageId, 'B');
+    else persist(get());
+  },
+
+  buyShopPage: (pageId) => {
+    const s = get();
+    if (!isPageId(pageId) || (s.shopPurchasesThisRun ?? 0) >= 1) return;
+    if ((s.collectedPages ?? []).includes(pageId)) return;
+    const price = shopPrice(pageId);
+    if (price === null || s.reputation < price) return;
+    const source = PAGE_SOURCE_TABLE.find((page) => page.page_id === pageId);
+    if (!source) return;
+    const purchases = (s.shopPurchasesThisRun ?? 0) + 1;
+    set({ reputation: s.reputation - price, shopPurchasesThisRun: purchases });
+    get().grantPage(pageId, 'C');
+    track('shop_page_exchanged', { run: s.run, realm: s.realm, route: s.route }, {
+      page_id: pageId,
+      price_paid: price,
+      shop_purchases_this_run: purchases,
+    });
+    persist(get());
+  },
+
+  getFragmentEffects: () => computeFragmentEffects(
+    (get().completedBooks ?? []).filter(isBookId),
+  ),
+
+  getMissingPages: () => getMissingPages((get().collectedPages ?? []).filter(isPageId)),
+
+  openManualShelf: () => {
+    const s = get();
+    const collectedCount = (s.collectedPages ?? []).filter(isPageId).length;
+    const completedCount = (s.completedBooks ?? []).filter(isBookId).length;
+    track('manual_shelf_opened', { run: s.run, realm: s.realm, route: s.route }, {
+      collected_count: collectedCount,
+      completed_count: completedCount,
+      missing_count: PAGE_SOURCE_TABLE.length - collectedCount,
+    });
+  },
+
   // ---- 观察员会话（埋点规格 §1.1；tick 活跃秒口径天然扣除暂停区间） ----
 
   startSession: (testerId) => {
@@ -724,6 +826,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.sessionActive) return; // 防面板状态错乱导致重复 test_session_start
     track('test_session_start', { run: s.run, realm: s.realm, route: s.route }, {
       tester_id: testerId, build: BUILD, tables_version: TABLES_VERSION, telemetry_spec: TELEMETRY_SPEC,
+      missing_pages_snapshot: getMissingPages((s.collectedPages ?? []).filter(isPageId)),
     });
     set({ sessionActive: true });
     persist(get());
@@ -865,5 +968,13 @@ function resolveBattle(
     refarmKey, refarmCount, refarmAt,
     battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
   });
+  if (result.win && enemy.kind === 'boss') {
+    const boss = tid === 'boss1' ? 'boss_1' : tid === 'boss2' ? 'boss_2' : null;
+    if (boss && (s.bossKillsThisRun?.[boss] ?? 0) === 0) {
+      const pageId = nextBossPage(boss, (s.collectedPages ?? []).filter(isPageId));
+      set({ bossKillsThisRun: { ...(s.bossKillsThisRun ?? {}), [boss]: 1 } });
+      if (pageId) get().grantPage(pageId, 'A');
+    }
+  }
   persist(get());
 }

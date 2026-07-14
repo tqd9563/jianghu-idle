@@ -2,7 +2,7 @@
  * 观察员面板（非玩家界面）—— 埋点规格 §1.1 会话事件 + §3 导出。
  * 开启方式：URL hash `observer=1` 或 Ctrl+Shift+O；测试者不应看到本面板。
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import { loadGame } from '../save/storage';
 import { exportTelemetryJSON } from '../telemetry/telemetry';
@@ -52,6 +52,39 @@ export function ObserverPanel({ onClose }: { onClose: () => void }) {
   const exportSave = () => {
     const id = testerId.trim() || 'T00';
     download(`mvp0_save_${id}_${ymd()}.json`, JSON.stringify(loadGame() ?? {}, null, 2));
+  };
+
+  const [naturalOpen, setNaturalOpen] = useState<'yes' | 'no' | ''>('');
+  const [openReason, setOpenReason] = useState('');
+  const [settlementUnderstood, setSettlementUnderstood] = useState<'yes' | 'no' | 'not observed' | ''>('');
+  const [decision, setDecision] = useState('');
+  const [nextGoal, setNextGoal] = useState('');
+  const [feeling, setFeeling] = useState('');
+  const [submitStatus, setSubmitStatus] = useState('');
+
+  useEffect(() => {
+    if (!submitStatus) return;
+    const timer = window.setTimeout(() => setSubmitStatus(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [submitStatus]);
+
+  const submitNote = () => {
+    if (naturalOpen === '' || settlementUnderstood === '') return;
+    s.recordNaturalWindowNote({
+      natural_open: naturalOpen === 'yes',
+      open_reason: openReason,
+      settlement_understood: settlementUnderstood === 'not observed' ? null : settlementUnderstood === 'yes',
+      decision,
+      next_goal: nextGoal,
+      feeling,
+    });
+    setNaturalOpen('');
+    setOpenReason('');
+    setSettlementUnderstood('');
+    setDecision('');
+    setNextGoal('');
+    setFeeling('');
+    setSubmitStatus('记录成功');
   };
 
   return (
@@ -115,6 +148,74 @@ export function ObserverPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="op-note">数值表 {TABLES_VERSION}；导出文件为纯本地 JSON，tester_id 为匿名编号</div>
+
+      <div className="op-section-divider">
+        <div className="op-row op-row-first">
+          <span className="op-label">窗口</span>
+          <span className={`op-val ${s.liveTestWindow ? 'op-window-active' : ''}`}>
+            {s.liveTestWindow ? '自然窗口进行中' : '未开启'}
+          </span>
+          {s.liveTestWindow && (
+            <span className="op-note op-window-id">
+              {new Date(s.liveTestWindow.startedAt).toLocaleTimeString()} ({s.liveTestWindow.windowId.split('-')[2]})
+            </span>
+          )}
+        </div>
+
+        {s.liveTestWindow && s.liveTestWindow.tablesVersionStarted !== TABLES_VERSION && (
+          <div className="op-row op-row-tight">
+            <span className="op-note op-window-warning">
+              警告：数值表发生漂移 ({s.liveTestWindow.tablesVersionStarted} → {TABLES_VERSION})
+            </span>
+          </div>
+        )}
+
+        <div className="op-row">
+          {!s.liveTestWindow ? (
+            <button className="op-btn" onClick={() => s.startLiveTestWindow()}>开始自然窗口</button>
+          ) : (
+            <button className="op-btn warn" onClick={() => { if (window.confirm('结束当前自然窗口？此操作不可逆')) s.endLiveTestWindow(); }}>结束自然窗口</button>
+          )}
+        </div>
+
+        <div className="op-row">
+          <label className="op-label" htmlFor="op-nw-open">打开</label>
+          <select id="op-nw-open" className="op-input" style={{ width: 60 }} value={naturalOpen} onChange={e => setNaturalOpen(e.target.value as 'yes' | 'no' | '')} disabled={!s.liveTestWindow} aria-label="自然打开">
+            <option value="" disabled>-</option>
+            <option value="yes">yes</option>
+            <option value="no">no</option>
+          </select>
+          <label className="op-label" htmlFor="op-nw-understood" style={{ marginLeft: 8 }}>理解</label>
+          <select id="op-nw-understood" className="op-input" style={{ width: 104 }} value={settlementUnderstood} onChange={e => setSettlementUnderstood(e.target.value as 'yes' | 'no' | 'not observed' | '')} disabled={!s.liveTestWindow} aria-label="结算理解">
+            <option value="" disabled>-</option>
+            <option value="yes">yes</option>
+            <option value="no">no</option>
+            <option value="not observed">not observed</option>
+          </select>
+        </div>
+        
+        <div className="op-row op-row-top">
+          <label className="op-label" htmlFor="op-nw-reason">原因</label>
+          <textarea id="op-nw-reason" className="op-input op-textarea" placeholder="open_reason" value={openReason} onChange={e => setOpenReason(e.target.value)} disabled={!s.liveTestWindow} aria-label="打开原因" />
+        </div>
+        <div className="op-row op-row-top">
+          <label className="op-label" htmlFor="op-nw-decision">决策</label>
+          <textarea id="op-nw-decision" className="op-input op-textarea" placeholder="decision" value={decision} onChange={e => setDecision(e.target.value)} disabled={!s.liveTestWindow} aria-label="决策" />
+        </div>
+        <div className="op-row op-row-top">
+          <label className="op-label" htmlFor="op-nw-goal">目标</label>
+          <textarea id="op-nw-goal" className="op-input op-textarea" placeholder="next_goal" value={nextGoal} onChange={e => setNextGoal(e.target.value)} disabled={!s.liveTestWindow} aria-label="下一步目标" />
+        </div>
+        <div className="op-row op-row-top">
+          <label className="op-label" htmlFor="op-nw-feeling">情感</label>
+          <textarea id="op-nw-feeling" className="op-input op-textarea" placeholder="feeling" value={feeling} onChange={e => setFeeling(e.target.value)} disabled={!s.liveTestWindow} aria-label="情感" />
+        </div>
+        
+        <div className="op-row">
+          <button className="op-btn" disabled={!s.liveTestWindow || naturalOpen === '' || settlementUnderstood === ''} onClick={submitNote}>提交笔记</button>
+          {submitStatus && <span className="op-note op-submit-status" role="status">{submitStatus}</span>}
+        </div>
+      </div>
     </div>
   );
 }

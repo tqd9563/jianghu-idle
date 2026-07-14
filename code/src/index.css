@@ -519,6 +519,7 @@ body {
 /* ===== 观察员面板（非玩家界面，工具风格） ===== */
 .observer-panel {
   position: fixed; right: 16px; bottom: 16px; width: 440px; max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px); overflow-y: auto;
   background: var(--night-chrome); border: 1px solid var(--line-strong); border-radius: var(--r-md);
   box-shadow: var(--shadow-modal); padding: 12px 14px; z-index: var(--z-modal-backdrop);
   font-size: 12.5px;
@@ -545,6 +546,16 @@ select.op-input { width: auto; }
 .op-btn.danger:hover { border-color: var(--blood-red); color: var(--blood-red); }
 .op-note { font-size: 11px; color: var(--ink-faint); margin-top: 8px; line-height: 1.6; }
 .op-row .op-note { margin-top: 0; flex-basis: 100%; padding-left: 42px; }
+
+.op-section-divider { border-top: 1px solid var(--line-strong); margin-top: 14px; padding-top: 10px; }
+.op-row-first { margin-top: 0; }
+.op-row-tight { margin-top: 4px; }
+.op-row-top { align-items: flex-start; }
+.op-window-active { color: var(--candle-gold); }
+.op-window-id { margin: 0 0 0 auto; padding-left: 0; flex-basis: auto; }
+.op-window-warning { color: var(--crit-ember); padding-left: 42px; }
+.op-submit-status { color: var(--poison-green); margin: 0 0 0 8px; padding: 0; flex-basis: auto; }
+textarea.op-input.op-textarea { width: 100%; resize: vertical; min-height: 44px; line-height: 1.4; }
 
 .paused-chip {
   position: fixed; top: 64px; left: 50%; transform: translateX(-50%);

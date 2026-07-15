@@ -63,8 +63,8 @@
 | map_id | display_name_status | position | purpose | boss_gate | numeric_status |
 |---|---|---|---|---|---|
 | `map_01`-`map_03` | 既有 | MVP-0 主线 | 作为前半程与回归对照 | Boss 1-3 | 沿用 MVP-0；MVP-2B 复核 |
-| `map_04_candidate` | `[待命名]` | MVP-2A 新增主线前段 | 承接 MVP-0 末端，教学新敌人组合，提供中段 Boss 锚点 | `boss_04_candidate` | MVP-2B 定 |
-| `map_05_candidate` | `[待命名]` | MVP-2A 新增主线后段 | 作为 3-5 天窗口末端可见目标，承接末端 Boss 与高压挑战 | `boss_05_candidate` | MVP-2B 定 |
+| `map_04_candidate` | 蜀道险关 | MVP-2A 新增主线前段 | 承接 MVP-0 末端，教学新敌人组合，提供中段 Boss 锚点 | `boss_04_candidate` | MVP-2B 定 |
+| `map_05_candidate` | 铁壁绝谷 | MVP-2A 新增主线后段 | 作为 3-5 天窗口末端可见目标，承接末端 Boss 与高压挑战 | `boss_05_candidate` | MVP-2B 定 |
 
 字段定义：
 

@@ -5,7 +5,7 @@ import type { RouteId } from './content';
 
 export interface Mvp2RealmValue {
   readonly realm: 6 | 7;
-  readonly name: '[待命名]';
+  readonly name: string;
   readonly hp: number;
   readonly atk: number;
   readonly def: number;
@@ -16,13 +16,13 @@ export interface Mvp2RealmValue {
 }
 
 export const MVP2_REALM_VALUES = [
-  { realm: 6, name: '[待命名]', hp: 1680, atk: 168, def: 88, accuracy: 160, evasion: 25, breakthroughCost: 48000, skillCap: 10 },
-  { realm: 7, name: '[待命名]', hp: 3360, atk: 336, def: 176, accuracy: 172, evasion: 28, breakthroughCost: 108000, skillCap: 10 },
+  { realm: 6, name: '一代宗师', hp: 1680, atk: 168, def: 88, accuracy: 160, evasion: 25, breakthroughCost: 48000, skillCap: 10 },
+  { realm: 7, name: '登峰造极', hp: 3360, atk: 336, def: 176, accuracy: 172, evasion: 28, breakthroughCost: 108000, skillCap: 10 },
 ] as const satisfies readonly Mvp2RealmValue[];
 
 export interface Mvp2BossValue {
   readonly boss: 4 | 5;
-  readonly name: '[待命名]';
+  readonly name: string;
   readonly hp: number;
   readonly atk: number;
   readonly def: number;
@@ -32,13 +32,13 @@ export interface Mvp2BossValue {
 }
 
 export const MVP2_BOSS_VALUES = [
-  { boss: 4, name: '[待命名]', hp: 3024, atk: 470, def: 422, hit: 160, dodge: 25, tags: ['高防', '高攻'] },
-  { boss: 5, name: '[待命名]', hp: 5376, atk: 504, def: 722, hit: 172, dodge: 28, tags: ['高攻', '净化', '高防'] },
+  { boss: 4, name: '镇关都督', hp: 3024, atk: 470, def: 422, hit: 160, dodge: 25, tags: ['高防', '高攻'] },
+  { boss: 5, name: '无相居士', hp: 5376, atk: 504, def: 722, hit: 172, dodge: 28, tags: ['高攻', '净化', '高防'] },
 ] as const satisfies readonly Mvp2BossValue[];
 
 export interface Mvp2TrialEnemy {
   readonly id: 'trial_jinglei' | 'trial_zhenyue' | 'trial_shigu';
-  readonly name: '惊雷试炼' | '镇岳试炼' | '蚀骨试炼';
+  readonly name: string;
   readonly route: RouteId;
   readonly hp: number;
   readonly atk: number;
@@ -50,9 +50,9 @@ export interface Mvp2TrialEnemy {
 }
 
 export const MVP2_TRIAL_ENEMIES = [
-  { id: 'trial_jinglei', name: '惊雷试炼', route: 'huashan', hp: 2352, atk: 4, def: 211, hit: 148, dodge: 50, tags: ['高闪', '反伤'], recommendedRealm: 5 },
-  { id: 'trial_zhenyue', name: '镇岳试炼', route: 'shaolin', hp: 1596, atk: 34, def: 216, hit: 148, dodge: 22, tags: ['毒', '破甲'], recommendedRealm: 5 },
-  { id: 'trial_shigu', name: '蚀骨试炼', route: 'tangmen', hp: 840, atk: 101, def: 167, hit: 148, dodge: 22, tags: ['净化', '高攻'], recommendedRealm: 5 },
+  { id: 'trial_jinglei', name: '雷隐散人', route: 'huashan', hp: 2352, atk: 4, def: 211, hit: 148, dodge: 50, tags: ['高闪', '反伤'], recommendedRealm: 5 },
+  { id: 'trial_zhenyue', name: '岳镇居士', route: 'shaolin', hp: 1596, atk: 34, def: 216, hit: 148, dodge: 22, tags: ['毒', '破甲'], recommendedRealm: 5 },
+  { id: 'trial_shigu', name: '蚀骨叟', route: 'tangmen', hp: 840, atk: 101, def: 167, hit: 148, dodge: 22, tags: ['净化', '高攻'], recommendedRealm: 5 },
 ] as const satisfies readonly Mvp2TrialEnemy[];
 
 export const MVP2_BOSS_REWARDS = [
@@ -91,7 +91,7 @@ export interface ResourcePlan {
 
 export interface Mvp2MapRewardPlan {
   readonly map: 4 | 5;
-  readonly name: '[待命名]';
+  readonly name: string;
   readonly stageCount: 10;
   readonly bossStage: 10;
   readonly eliteStages: readonly number[];
@@ -103,13 +103,13 @@ export interface Mvp2MapRewardPlan {
 
 export const MVP2_MAP_REWARD_PLANS = [
   {
-    map: 4, name: '[待命名]', stageCount: 10, bossStage: 10, eliteStages: [3, 6, 8],
+    map: 4, name: '蜀道险关', stageCount: 10, bossStage: 10, eliteStages: [3, 6, 8],
     normal: { neili: 594, silver: 17, xp: 3 },
     elite: { neili: 1190, silver: 33, xp: 8 },
     preBossTotal: { neili: 7134, silver: 201, xp: 42 }, preparationRatio: 0.14,
   },
   {
-    map: 5, name: '[待命名]', stageCount: 10, bossStage: 10, eliteStages: [2, 5, 7, 9],
+    map: 5, name: '铁壁绝谷', stageCount: 10, bossStage: 10, eliteStages: [2, 5, 7, 9],
     normal: { neili: 1206, silver: 16, xp: 4 },
     elite: { neili: 2417, silver: 30, xp: 5 },
     preBossTotal: { neili: 15698, silver: 200, xp: 40 }, preparationRatio: 0.14,
@@ -130,7 +130,7 @@ export function calculatePreBossTotal(plan: Mvp2MapRewardPlan): ResourcePlan {
 export interface Mvp2StageEnemy {
   readonly map: 4 | 5;
   readonly stage: number;
-  readonly name: '[待命名]';
+  readonly name: string;
   readonly hp: number;
   readonly atk: number;
   readonly def: number;
@@ -154,6 +154,9 @@ interface Mvp2CurveParams {
 
 const MAP4_CURVE: Mvp2CurveParams = { hpBase: 300, hpGrowth: 1.16, atkBase: 50, atkGrowth: 1.05, defBase: 40, defGrowth: 1.08, hitBase: 150, dodge: 20 };
 const MAP5_CURVE: Mvp2CurveParams = { hpBase: 800, hpGrowth: 1.14, atkBase: 100, atkGrowth: 1.04, defBase: 80, defGrowth: 1.06, hitBase: 165, dodge: 25 };
+
+const MAP4_NAMES = ['蜀道游匪', '飞檐夜盗', '五毒教徒', '落草刀客', '铁壁甲士', '毒蛊婆', '蜀道游匪', '五毒长老', '铁壁甲士'];
+const MAP5_NAMES = ['绝谷游魂', '铁布衫客', '净心武者', '狂刀客', '金钟罩僧', '绝谷游魂', '铁布衫客', '狂刀客', '金钟罩僧'];
 
 const MAP4_LAYOUT: readonly { stage: number; kind: 'normal' | 'elite'; tags: readonly EnemyTag[] }[] = [
   { stage: 1, kind: 'normal', tags: [] },
@@ -202,7 +205,7 @@ function buildMvp2StageEnemy(
     if (tag === '高攻') atk = pyRound(atk * 1.3, 1);
   }
 
-  return { map, stage: i, name: '[待命名]', hp, atk, def, hit, dodge, tags, kind: entry.kind, recommendedRealm };
+  return { map, stage: i, name: map === 4 ? MAP4_NAMES[entry.stage - 1] : MAP5_NAMES[entry.stage - 1], hp, atk, def, hit, dodge, tags, kind: entry.kind, recommendedRealm };
 }
 
 export function buildMvp2StageEnemies(): readonly Mvp2StageEnemy[] {

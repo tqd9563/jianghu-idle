@@ -29,7 +29,7 @@ export interface FragmentCollection {
 
 export interface BookDef {
   readonly book_id: BookId;
-  readonly name: '[待命名]';
+  readonly name: string;
   readonly type: BookType;
   readonly route: BookRoute;
   readonly pages: readonly [PageId, PageId, PageId];
@@ -94,12 +94,12 @@ const pages = <T extends BookId>(bookId: T): readonly [
 ] => [`${bookId}_page_1`, `${bookId}_page_2`, `${bookId}_page_3`];
 
 export const BOOK_TABLE = [
-  { book_id: 'legacy_intro', name: '[待命名]', type: '遗篇', route: 'none', pages: pages('legacy_intro'), effect_pointer: 'legacy_perm_5' },
-  { book_id: 'legacy_advanced', name: '[待命名]', type: '遗篇', route: 'none', pages: pages('legacy_advanced'), effect_pointer: 'legacy_perm_7' },
-  { book_id: 'legacy_finale', name: '[待命名]', type: '遗篇', route: 'none', pages: pages('legacy_finale'), effect_pointer: 'legacy_perm_8' },
-  { book_id: 'true_jinglei', name: '[待命名]', type: '真传', route: 'huashan', pages: pages('true_jinglei'), effect_pointer: 'jinglei_fourth_insight' },
-  { book_id: 'true_zhenyue', name: '[待命名]', type: '真传', route: 'shaolin', pages: pages('true_zhenyue'), effect_pointer: 'zhenyue_fourth_insight' },
-  { book_id: 'true_shigu', name: '[待命名]', type: '真传', route: 'tangmen', pages: pages('true_shigu'), effect_pointer: 'shigu_fourth_insight' },
+  { book_id: 'legacy_intro', name: '江湖残卷', type: '遗篇', route: 'none', pages: pages('legacy_intro'), effect_pointer: 'legacy_perm_5' },
+  { book_id: 'legacy_advanced', name: '武林旧闻', type: '遗篇', route: 'none', pages: pages('legacy_advanced'), effect_pointer: 'legacy_perm_7' },
+  { book_id: 'legacy_finale', name: '侠骨遗篇', type: '遗篇', route: 'none', pages: pages('legacy_finale'), effect_pointer: 'legacy_perm_8' },
+  { book_id: 'true_jinglei', name: '惊雷剑意录', type: '真传', route: 'huashan', pages: pages('true_jinglei'), effect_pointer: 'jinglei_fourth_insight' },
+  { book_id: 'true_zhenyue', name: '镇岳护体诀', type: '真传', route: 'shaolin', pages: pages('true_zhenyue'), effect_pointer: 'zhenyue_fourth_insight' },
+  { book_id: 'true_shigu', name: '蚀骨毒经', type: '真传', route: 'tangmen', pages: pages('true_shigu'), effect_pointer: 'shigu_fourth_insight' },
 ] as const satisfies readonly BookDef[];
 
 export const PAGE_SOURCE_TABLE = [

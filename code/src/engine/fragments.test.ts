@@ -12,7 +12,7 @@ import {
 describe('manual fragments data layer', () => {
   it('defines six placeholder books and exactly three unique pages per book', () => {
     expect(BOOK_TABLE).toHaveLength(6);
-    expect(BOOK_TABLE.map((book) => book.name)).toEqual(Array(6).fill('[待命名]'));
+    expect(BOOK_TABLE.map((book) => book.name)).toEqual(['江湖残卷', '武林旧闻', '侠骨遗篇', '惊雷剑意录', '镇岳护体诀', '蚀骨毒经']);
     expect(BOOK_TABLE.map((book) => book.type)).toEqual(['遗篇', '遗篇', '遗篇', '真传', '真传', '真传']);
     expect(BOOK_TABLE.map((book) => book.route)).toEqual(['none', 'none', 'none', 'huashan', 'shaolin', 'tangmen']);
     expect(new Set(BOOK_TABLE.flatMap((book) => book.pages)).size).toBe(18);

@@ -62,6 +62,14 @@ describe('manual fragment engine', () => {
 });
 
 describe('manual fragments store integration', () => {
+  const resolveCurrentBattle = () => {
+    const battle = useGameStore.getState().battle!;
+    useGameStore.setState({
+      battle: { ...battle, revealed: battle.result.turns.length - 1, nextRevealAt: 0 },
+    });
+    useGameStore.getState().tick(Date.now());
+  };
+
   beforeEach(() => {
     useGameStore.getState().hardReset();
     resetTelemetry();
@@ -82,19 +90,29 @@ describe('manual fragments store integration', () => {
     });
   });
 
-  it('records a trial loss without granting and first trial win only once', () => {
+  it('requires all trial prerequisites and grants the first animated trial win only once', () => {
     useGameStore.setState({
       route: 'huashan', realm: 1, clearedStages: ['m2s10'], ownedMechNodes: [], completedBooks: [],
     });
     useGameStore.getState().challengeTrial('trial_jinglei');
-    expect(getEvents().find((event) => event.e === 'trial_challenged')?.result).toBe('loss');
-    expect(useGameStore.getState().collectedPages).toEqual([]);
+    expect(useGameStore.getState().battle).toBeNull();
+
+    useGameStore.setState({ realm: 5, route: 'shaolin' });
+    useGameStore.getState().challengeTrial('trial_jinglei');
+    expect(useGameStore.getState().battle).toBeNull();
+
+    useGameStore.setState({ route: 'huashan', clearedStages: [] });
+    useGameStore.getState().challengeTrial('trial_jinglei');
+    expect(useGameStore.getState().battle).toBeNull();
 
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    useGameStore.setState({ realm: 5, skillLevel: 10, ownedMechNodes: ['hs1', 'hs2', 'hs3'] });
+    useGameStore.setState({ clearedStages: ['m2s10'], skillLevel: 10, ownedMechNodes: ['hs1', 'hs2', 'hs3'] });
     useGameStore.getState().challengeTrial('trial_jinglei');
+    expect(useGameStore.getState()).toMatchObject({ pendingTab: 'battle', battle: { mode: 'trial', trialId: 'trial_jinglei', resolved: false } });
+    resolveCurrentBattle();
     const pagesAfterWin = useGameStore.getState().collectedPages;
     useGameStore.getState().challengeTrial('trial_jinglei');
+    resolveCurrentBattle();
     expect(pagesAfterWin).toEqual(['true_jinglei_page_1']);
     expect(useGameStore.getState().collectedPages).toEqual(pagesAfterWin);
     expect(useGameStore.getState().trialWinsThisRun).toEqual({ trial_jinglei: 1 });

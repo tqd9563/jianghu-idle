@@ -209,7 +209,9 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               <div className="log-line">
                 <span className="turn" />
                 <span className="win-t">
-                  {battle.reward.refarm ? '回刷收获' : '收获'}　内力 +{f0(battle.reward.neili)}　银两 +{f0(battle.reward.silver)}　阅历 +{f0(battle.reward.xp)}
+                  {battle.mode === 'trial'
+                    ? '试炼通过'
+                    : `${battle.reward.refarm ? '回刷收获' : '收获'}　内力 +${f0(battle.reward.neili)}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
                 </span>
               </div>
               <BattleVictoryRow pageId={battle.reward.grantedPageId} />

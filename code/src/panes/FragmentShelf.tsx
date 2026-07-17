@@ -116,7 +116,7 @@ export function FragmentShelf() {
             <div className="panel-body">
               <p style={{ fontSize: '13px', color: 'var(--ink-muted)', lineHeight: 1.6, margin: '0 0 12px' }}>
                 天下真传皆在世外隐士手中。每位隐士怀揣一部绝世真传，其功法卓绝，非等闲之辈可敌。<br/><br/>
-                集齐散落残页后，方能探听隐士行踪。战而胜之，方可夺其真传。
+                击败本轮 Boss 2 后，对应门径隐士行踪显现。战而胜之，方可夺其真传。
               </p>
               {TRIAL_TABLE.map(trial => (
                 <TrialEntry key={trial.trial_id} trial={trial} />

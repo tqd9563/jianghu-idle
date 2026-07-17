@@ -99,6 +99,8 @@ export interface BattleState {
   chainStage: number | null;
   /** 胜利实际入账（含江湖熟路加成后的实发值，收益行同源同值） */
   reward: { neili: number; silver: number; xp: number; refarm: boolean; grantedPageId?: string } | null;
+  mode?: 'mainline' | 'trial';
+  trialId?: string;
 }
 
 export interface FailureInfo {
@@ -141,6 +143,7 @@ interface GameState extends PersistedState {
   ceremony: number | null;
   selectedMap: MapNo;
   battle: BattleState | null;
+  pendingTab: string | null;
   failure: FailureInfo | null;
   retireStep: 'preview' | 'confirm' | null;
   retireCeremony: RetireCeremonyData | null;
@@ -175,7 +178,7 @@ interface GameState extends PersistedState {
   dismissRetireToast: () => void;
   buyRepNode: (id: RepNodeId) => void;
   grantPage: (pageId: string, channel: CollectionChannel) => void;
-  challengeTrial: (trialId: TrialId) => { win: boolean; grantedPage: string | null; };
+  challengeTrial: (trialId: TrialId) => void;
   buyShopPage: (pageId: string) => void;
   getFragmentEffects: () => FragmentEffects;
   getMissingPages: () => MissingPage[];
@@ -350,6 +353,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   ceremony: null,
   selectedMap: 1,
   battle: null,
+  pendingTab: null,
   failure: null,
   retireStep: null,
   retireCeremony: null,
@@ -713,7 +717,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       retireStep: null,
       retireCeremony: ceremonyData,
       retireToast: null,
-      battle: null, failure: null, ceremony: null, selectedMap: 1,
+      battle: null, failure: null, ceremony: null, selectedMap: 1, pendingTab: null,
     });
     track('run_start', { run: newRun, realm: 1, route: null }, {
       owned_nodes: s.ownedRepNodes, carry_xp: xp,
@@ -761,27 +765,30 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   challengeTrial: (trialId) => {
     const s = get();
+    if (s.battle && !s.battle.resolved) return;
     const trial = TRIAL_TABLE.find((entry) => entry.trial_id === trialId);
-    if (!trial || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return { win: false, grantedPage: null };
+    if (!trial || s.realm < 5 || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return;
     const enemy: EnemyDef = {
       ...trial.enemy_ref,
-      map: 3,
-      stage: 0,
+      map: 3, stage: 0,
       tags: [...trial.enemy_ref.tags],
       kind: 'boss',
       reward: { neili: 0, silver: 0, xp: 0 },
     };
-    const result = fight(playerBuild(s), enemy, { mode: 'rng' });
-    track('trial_challenged', { run: s.run, realm: s.realm, route: s.route }, {
-      trial_id: trialId,
-      result: result.win ? 'win' : 'loss',
+    const build = playerBuild(s);
+    const result = fight(build, enemy, { mode: 'rng' });
+    const turnCount = result.turns.length;
+    const intervalMs = Math.min(Math.max(15000 / turnCount, 900), 30000 / turnCount);
+    set({
+      selectedMap: 3,
+      battle: {
+        map: 3, stage: 0, enemy, result,
+        revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
+        resolved: false, chainAt: null, chainStage: null, reward: null,
+        mode: 'trial', trialId,
+      },
+      pendingTab: 'battle',
     });
-    if (!result.win || (s.trialWinsThisRun?.[trialId] ?? 0) > 0) return { win: result.win, grantedPage: null };
-    const pageId = nextTrialPage(trialId, (s.collectedPages ?? []).filter(isPageId));
-    set({ trialWinsThisRun: { ...(s.trialWinsThisRun ?? {}), [trialId]: 1 } });
-    if (pageId) get().grantPage(pageId, 'B');
-    else persist(get());
-    return { win: true, grantedPage: pageId };
   },
 
   buyShopPage: (pageId) => {
@@ -875,7 +882,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       ...FRESH, started: true, ceremony: null, battle: null, failure: null,
       selectedMap: 1, retireStep: null, retireCeremony: null, retireToast: null,
-      offlineSettlement: null,
+      offlineSettlement: null, pendingTab: null,
     });
     track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
     persist(get());
@@ -892,6 +899,26 @@ function resolveBattle(
   const b = s.battle!;
   if (b.resolved) return;
   const { enemy, result } = b;
+  if (b.mode === 'trial' && b.trialId) {
+    track('trial_challenged', { run: s.run, realm: s.realm, route: s.route }, {
+      trial_id: b.trialId,
+      result: result.win ? 'win' : 'loss',
+    });
+    let rewardApplied: BattleState['reward'] = null;
+    if (result.win && (s.trialWinsThisRun?.[b.trialId] ?? 0) === 0) {
+      const pageId = nextTrialPage(b.trialId as TrialId, (s.collectedPages ?? []).filter(isPageId));
+      set({ trialWinsThisRun: { ...(s.trialWinsThisRun ?? {}), [b.trialId]: 1 } });
+      if (pageId) {
+        get().grantPage(pageId, 'B');
+        rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false, grantedPageId: pageId };
+      }
+    } else {
+      rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false };
+    }
+    set({ battle: { ...b, resolved: true, chainAt: null, chainStage: null, reward: rewardApplied } });
+    persist(get());
+    return;
+  }
   const key = stageKey(b.map, b.stage);
   const firstClear = !s.clearedStages.includes(key);
   const tid = targetId(enemy);

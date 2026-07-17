@@ -56,6 +56,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (s.pendingTab) {
+      setTab(s.pendingTab as TabId);
+      useGameStore.setState({ pendingTab: null });
+    }
+  }, [s.pendingTab]);
+
   if (!s.started) return null;
 
   const realmDef = REALMS[s.realm - 1];

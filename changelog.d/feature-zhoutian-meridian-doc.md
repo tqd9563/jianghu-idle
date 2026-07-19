@@ -7,3 +7,4 @@
 - **方向笔记移交**：`meridian-direction-note.md` 与 `zhoutian-direction-note.md` 加注 2026-07-19 状态更新，降为历史方向记录，权威口径移交 `docs/systems/zhoutian-meridian.md`；周天笔记「问题 1 自动属性加成」被冲穴机制取代、锁定点 3 适用范围收窄。
 - **文档规范**：`docs/README.md` 目录结构与类型表新增 `systems/`（完整版主题模块设定层），并定义方向记录经裁决后的移交路径。
 - **初案指针**：`game-design-proposal.md` §三的经脉方向指针改指新设定文档。
+- **可读性**：`zhoutian-meridian.md` 新增 §1 通俗导读（境界 2–5 具体数字走一遍丹田/周天/冲穴/经脉/玄关的运作方式），原 §1–§10 顺延为 §2–§11 并同步全部内部交叉引用，正文口径零变更。

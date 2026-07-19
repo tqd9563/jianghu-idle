@@ -31,7 +31,7 @@ export function OfflineSettlement(props: {
   const breakCost = effBreakCost(s);
   const breakReady = breakCost !== null && s.dantian >= breakCost;
   let curMap: MapNo = 1;
-  for (const m of [3, 2, 1] as MapNo[]) {
+  for (const m of [5, 4, 3, 2, 1] as MapNo[]) {
     if (mapUnlocked(m, s.clearedStages)) { curMap = m; break; }
   }
   const nextStage = nextStageOf(curMap, s.clearedStages);

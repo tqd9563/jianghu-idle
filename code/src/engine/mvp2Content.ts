@@ -220,3 +220,60 @@ export function buildMvp2StageEnemies(): readonly Mvp2StageEnemy[] {
 }
 
 export const MVP2_STAGE_ENEMIES: readonly Mvp2StageEnemy[] = buildMvp2StageEnemies();
+
+/**
+ * 精英挑战节点 + 敌人属性 —— docs/mvp2/content.md §5 / §6 / §5.2 v0.9。
+ * 数值由 sim/elite_challenge_search.py 调用 combat_tuning.fight() 机械搜索（单解法约束：基线败 + 武学+1胜），
+ * 首个满足项即唯一 tie-break。HIT/DODGE 沿用推荐境界冻结值；标签仅取 enemies.ts 既有白名单。
+ */
+export interface Mvp2EliteChallengeEnemy {
+  readonly id: 'elite_challenge_04_candidate' | 'elite_challenge_05_candidate';
+  readonly challenge: 4 | 5;
+  readonly map: 4 | 5;
+  /** 解锁位置：所属地图 stage 5 之后、stage 6 之前（§5.1 v0.7 pre_challenge_neili 推导） */
+  readonly unlockAfterStage: 5;
+  /** 名字待文案冻结批次定名（§5.2 v0.9 数值已定，名字独立走文案批次） */
+  readonly name: string;
+  readonly hp: number;
+  readonly atk: number;
+  readonly def: number;
+  readonly hit: number;
+  readonly dodge: number;
+  readonly tags: readonly EnemyTag[];
+  readonly recommendedRealm: number;
+  /** 首通奖励指针（§5.1 v0.7 已冻结，引用 MVP2_ELITE_CHALLENGE_REWARDS） */
+  readonly rewardRef: 4 | 5;
+}
+
+export const MVP2_ELITE_CHALLENGE_ENEMIES = [
+  {
+    id: 'elite_challenge_04_candidate',
+    challenge: 4,
+    map: 4,
+    unlockAfterStage: 5,
+    name: '待文案冻结',
+    hp: 1428,
+    atk: 244,
+    def: 216,
+    hit: 148,
+    dodge: 22,
+    tags: ['反伤'],
+    recommendedRealm: 5,
+    rewardRef: 4,
+  },
+  {
+    id: 'elite_challenge_05_candidate',
+    challenge: 5,
+    map: 5,
+    unlockAfterStage: 5,
+    name: '待文案冻结',
+    hp: 3024,
+    atk: 143,
+    def: 431,
+    hit: 160,
+    dodge: 25,
+    tags: ['净化', '高攻'],
+    recommendedRealm: 6,
+    rewardRef: 5,
+  },
+] as const satisfies readonly Mvp2EliteChallengeEnemy[];

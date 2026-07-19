@@ -4,7 +4,7 @@
     "build": "mvp0-0.1.0",
     "tables_version": "formula-v1.3/content-v1.1/economy-v1.1/offline-v0.2/mvp2-content-v0.4",
     "telemetry_spec": 2,
-    "exported_at": 1783332557226
+    "exported_at": 1783338577226
   },
   "events": [
     {
@@ -1041,27 +1041,124 @@
       "trigger": "boss3_kill"
     },
     {
-      "e": "wugong_upgraded",
-      "ts": 1783331431988,
+      "e": "charge_segment_full",
+      "ts": 1783331831988,
       "run": 1,
       "realm": 5,
       "route": "tangmen",
-      "level_to": 9,
-      "cost_neili": 2952
+      "realm_target": 6,
+      "segment": 1
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332231988,
+      "run": 1,
+      "realm": 5,
+      "route": "tangmen",
+      "realm_target": 6,
+      "segment": 2
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783332631988,
+      "run": 1,
+      "realm": 5,
+      "route": "tangmen",
+      "realm_target": 6,
+      "segment": 3
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333031988,
+      "run": 1,
+      "realm": 5,
+      "route": "tangmen",
+      "realm_target": 6,
+      "segment": 4
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783333431988,
+      "run": 1,
+      "realm": 5,
+      "route": "tangmen",
+      "realm_target": 6,
+      "segment": 5
+    },
+    {
+      "e": "realm_breakthrough",
+      "ts": 1783333431988,
+      "run": 1,
+      "realm": 6,
+      "route": "tangmen",
+      "realm_to": 6
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783334241988,
+      "run": 1,
+      "realm": 6,
+      "route": "tangmen",
+      "realm_target": 7,
+      "segment": 1
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783335041988,
+      "run": 1,
+      "realm": 6,
+      "route": "tangmen",
+      "realm_target": 7,
+      "segment": 2
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783335841988,
+      "run": 1,
+      "realm": 6,
+      "route": "tangmen",
+      "realm_target": 7,
+      "segment": 3
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783336641988,
+      "run": 1,
+      "realm": 6,
+      "route": "tangmen",
+      "realm_target": 7,
+      "segment": 4
+    },
+    {
+      "e": "charge_segment_full",
+      "ts": 1783337441988,
+      "run": 1,
+      "realm": 6,
+      "route": "tangmen",
+      "realm_target": 7,
+      "segment": 5
+    },
+    {
+      "e": "realm_breakthrough",
+      "ts": 1783337441988,
+      "run": 1,
+      "realm": 7,
+      "route": "tangmen",
+      "realm_to": 7
     },
     {
       "e": "retire_preview_opened",
-      "ts": 1783331471988,
+      "ts": 1783337491988,
       "run": 1,
-      "realm": 5,
+      "realm": 7,
       "route": "tangmen",
       "kind": "standard"
     },
     {
       "e": "retire_confirmed",
-      "ts": 1783331484988,
+      "ts": 1783337504988,
       "run": 1,
-      "realm": 5,
+      "realm": 7,
       "route": "tangmen",
       "kind": "standard",
       "prestige_base": 100,
@@ -1069,12 +1166,12 @@
       "time_penalty": 1,
       "fallback_discount": 1,
       "prestige_total": 130,
-      "run_duration_s": 2965,
+      "run_duration_s": 8985,
       "pages_gained_run": 2
     },
     {
       "e": "run_start",
-      "ts": 1783331484988,
+      "ts": 1783337504988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1083,7 +1180,7 @@
     },
     {
       "e": "prestige_node_bought",
-      "ts": 1783331494988,
+      "ts": 1783337514988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1093,7 +1190,7 @@
     },
     {
       "e": "prestige_node_bought",
-      "ts": 1783331499988,
+      "ts": 1783337519988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1103,7 +1200,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1112,7 +1209,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1121,7 +1218,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1130,7 +1227,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1139,7 +1236,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 1,
       "route": null,
@@ -1148,7 +1245,7 @@
     },
     {
       "e": "realm_breakthrough",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 2,
       "route": null,
@@ -1156,7 +1253,7 @@
     },
     {
       "e": "route_selected",
-      "ts": 1783331714988,
+      "ts": 1783337734988,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1164,7 +1261,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331729538,
+      "ts": 1783337749538,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1173,7 +1270,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331730188,
+      "ts": 1783337750188,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1183,7 +1280,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331756038,
+      "ts": 1783337776038,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1193,7 +1290,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331776038,
+      "ts": 1783337796038,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1202,7 +1299,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331783838,
+      "ts": 1783337803838,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1212,7 +1309,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331811638,
+      "ts": 1783337831638,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1222,7 +1319,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331831638,
+      "ts": 1783337851638,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1231,7 +1328,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783331831638,
+      "ts": 1783337851638,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1240,7 +1337,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331840738,
+      "ts": 1783337860738,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1250,7 +1347,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783331860738,
+      "ts": 1783337880738,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1259,7 +1356,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331870488,
+      "ts": 1783337890488,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1269,7 +1366,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783331890488,
+      "ts": 1783337910488,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1278,7 +1375,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783331901538,
+      "ts": 1783337921538,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1288,7 +1385,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783331921538,
+      "ts": 1783337941538,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1297,7 +1394,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783331921538,
+      "ts": 1783337941538,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1306,7 +1403,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783331981510,
+      "ts": 1783338001510,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1325,7 +1422,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332101510,
+      "ts": 1783338121510,
       "run": 2,
       "realm": 2,
       "route": "tangmen",
@@ -1334,7 +1431,7 @@
     },
     {
       "e": "realm_breakthrough",
-      "ts": 1783332101510,
+      "ts": 1783338121510,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1342,7 +1439,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332147828,
+      "ts": 1783338167828,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1351,7 +1448,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332169486,
+      "ts": 1783338189486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1361,7 +1458,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783332169486,
+      "ts": 1783338189486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1377,7 +1474,7 @@
     },
     {
       "e": "page_acquired",
-      "ts": 1783332169486,
+      "ts": 1783338189486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1388,7 +1485,7 @@
     },
     {
       "e": "book_completed",
-      "ts": 1783332169486,
+      "ts": 1783338189486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1398,7 +1495,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332197286,
+      "ts": 1783338217286,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1408,7 +1505,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332226386,
+      "ts": 1783338246386,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1418,7 +1515,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332246386,
+      "ts": 1783338266386,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1427,7 +1524,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332255486,
+      "ts": 1783338275486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1437,7 +1534,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332299786,
+      "ts": 1783338319786,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1447,7 +1544,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783332299786,
+      "ts": 1783338319786,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1463,7 +1560,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332325636,
+      "ts": 1783338345636,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1472,7 +1569,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332332786,
+      "ts": 1783338352786,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1482,7 +1579,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783332352786,
+      "ts": 1783338372786,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1491,7 +1588,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332364486,
+      "ts": 1783338384486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1501,7 +1598,7 @@
     },
     {
       "e": "wugong_upgraded",
-      "ts": 1783332384486,
+      "ts": 1783338404486,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1510,7 +1607,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332406086,
+      "ts": 1783338426086,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1520,7 +1617,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783332406086,
+      "ts": 1783338426086,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1536,7 +1633,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332441686,
+      "ts": 1783338461686,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1546,7 +1643,7 @@
     },
     {
       "e": "stage_first_clear",
-      "ts": 1783332477286,
+      "ts": 1783338497286,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1556,7 +1653,7 @@
     },
     {
       "e": "charge_segment_full",
-      "ts": 1783332499950,
+      "ts": 1783338519950,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1565,7 +1662,7 @@
     },
     {
       "e": "key_battle_end",
-      "ts": 1783332557226,
+      "ts": 1783338577226,
       "run": 2,
       "realm": 3,
       "route": "tangmen",
@@ -1585,7 +1682,7 @@
     },
     {
       "e": "test_session_end",
-      "ts": 1783332557226,
+      "ts": 1783338577226,
       "run": 2,
       "realm": 3,
       "route": "tangmen",

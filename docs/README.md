@@ -24,6 +24,7 @@
 docs/
   README.md                 文档规范
   overview/                 全局设计初案、长线 GDD
+  systems/                  完整版主题模块设定（已裁决、未规格化）
   mvp0/                     MVP-0 权威文档链
     spec.md                 核心循环规格
     formulas.md             公式表
@@ -77,7 +78,8 @@ docs/
 | 文案规格 | `docs/mvp*/copy/*.md` | 如战斗文案、归隐文案，不与公式表平级。 |
 | 阶段收口 | `docs/mvp*/closure.md` | 记录阶段结论、敞口、门禁。 |
 | 模拟 / 报告 | `docs/mvp*/simulation-report.md`、`docs/mvp*/sim/` | 报告与脚本分开。 |
-| 方向记录 | `docs/directions/*.md` | 未立项、不进当前 MVP 的设计方向。 |
+| 模块设定 | `docs/systems/*.md` | 完整版单一主题模块的设定定稿：结构与裁决已定、数值未规格化；是该主题规格化前的唯一权威口径。 |
+| 方向记录 | `docs/directions/*.md` | 未立项、不进当前 MVP 的设计方向；经裁决落地后移交 `docs/systems/`，本目录保留历史记录。 |
 | 评审记录 | `docs/reviews/*.md` | 历史记录，只读。 |
 
 `battle-copy`、`retire-copy` 这类文件属于文案规格，应迁入 `copy/`。`closure-note` 属于阶段收口，应迁为 `closure.md`。

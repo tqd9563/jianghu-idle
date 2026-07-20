@@ -11,6 +11,9 @@ import {
 
 const f0 = (n: number) => Math.round(n).toLocaleString('en-US');
 
+import { BattleVictoryRow } from '../components/BattleVictoryRow';
+import { MVP2_ELITE_CHALLENGE_ENEMIES } from '../engine/mvp2Content';
+
 export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const s = useGameStore();
   const cleared = s.clearedStages;
@@ -51,7 +54,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
     <div className="pane-wrap wide">
       <section className="panel">
         <div className="map-tabs">
-          {([1, 2, 3] as MapNo[]).map((m) => {
+          {([1, 2, 3, 4, 5] as MapNo[]).map((m) => {
             const unlocked = mapUnlocked(m, cleared);
             const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
               .filter((i) => cleared.includes(`m${m}s${i}`)).length;
@@ -96,6 +99,52 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             );
           })}
         </div>
+
+        {/* 精英挑战入口（§5.2 v0.9）：所属地图 stages 1-5 全通 + 推荐境界达标时显示；本轮首胜后不可重复 */}
+        {MVP2_ELITE_CHALLENGE_ENEMIES.filter((e) => e.map === viewMap).map((e) => {
+          const stagesCleared = Array.from({ length: e.unlockAfterStage }, (_, i) => i + 1)
+            .every((i) => cleared.includes(`m${viewMap}s${i}`));
+          const realmReady = s.realm >= e.recommendedRealm;
+          const completed = (s.eliteChallengeWinsThisRun?.[e.id] ?? 0) > 0;
+          const inProgress = battle?.mode === 'elite' && battle?.eliteChallengeId === e.id;
+          const canChallenge = stagesCleared && realmReady && !completed && !inProgress;
+          const disabledReason = !stagesCleared
+            ? `需通关本图 stages 1-${e.unlockAfterStage}`
+            : !realmReady
+              ? `需达到境界 ${e.recommendedRealm}`
+              : completed
+                ? '本轮已击败'
+                : null;
+          return (
+            <div key={e.id} className="elite-challenge-entry" style={{
+              margin: '8px 0 4px', padding: '8px 12px',
+              background: 'var(--night-surface-raised)', borderRadius: '6px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              opacity: stagesCleared ? 1 : 0.5,
+            }}>
+              <div>
+                <div className="serif" style={{ fontSize: '13.5px', fontWeight: 600 }}>
+                  精英挑战
+                  {e.tags.map((t) => <span key={t} className="tag trait" style={{ marginLeft: 6 }}>{t === '毒' ? '剧毒' : t}</span>)}
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)' }}>推荐境界 {e.recommendedRealm}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <button
+                  className="btn"
+                  style={{ width: 'auto', marginTop: 0, padding: '6px 14px', fontSize: '12.5px' }}
+                  disabled={!canChallenge}
+                  onClick={() => s.challengeElite(e.id)}
+                >
+                  {inProgress ? '战斗中…' : completed ? '✓ 已击败' : '挑战'}
+                </button>
+                {!canChallenge && disabledReason && !inProgress && (
+                  <div className="cap-note" style={{ marginTop: 4, fontSize: '11px' }}>{disabledReason}</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
         <div className="battle-stage">
           {enemy ? (
@@ -203,12 +252,17 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             </div>
           ))}
           {victory && battle.reward && (
-            <div className="log-line">
-              <span className="turn" />
-              <span className="win-t">
-                {battle.reward.refarm ? '回刷收获' : '收获'}　内力 +{f0(battle.reward.neili)}　银两 +{f0(battle.reward.silver)}　阅历 +{f0(battle.reward.xp)}
-              </span>
-            </div>
+            <>
+              <div className="log-line">
+                <span className="turn" />
+                <span className="win-t">
+                  {battle.mode === 'trial'
+                    ? '试炼通过'
+                    : `${battle.reward.refarm ? '回刷收获' : '收获'}　内力 +${f0(battle.reward.neili)}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
+                </span>
+              </div>
+              <BattleVictoryRow pageId={battle.reward.grantedPageId} />
+            </>
           )}
         </div>
       </section>

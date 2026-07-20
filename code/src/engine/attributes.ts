@@ -35,6 +35,7 @@ export function computeAttributes(
   realm: number,
   route: RouteId | null,
   skillLevel: number,
+  permPct = 0,
 ): FinalAttributes {
   const base = REALMS[realm - 1];
   const def = route ? ROUTES[route] : null;
@@ -43,7 +44,6 @@ export function computeAttributes(
   const L = route ? skillLevel : 0;
 
   // 本轮临时乘区（路线赠予 + 武学，加法合并）；永久乘区首轮为 0
-  const permPct = 0;
   const atkTempPct = (p.atkPct ?? 0) * L;
   const defTempPct = (g.defPct ?? 0) + (p.defPct ?? 0) * L;
   const hpTempPct = (p.hpPct ?? 0) * L;
@@ -52,10 +52,10 @@ export function computeAttributes(
     hp: Math.round(base.hp * (1 + permPct) * (1 + hpTempPct)),
     atk: round1(base.atk * (1 + permPct) * (1 + atkTempPct)),
     def: round1(base.def * (1 + permPct) * (1 + defTempPct)),
-    accuracy: base.accuracy,
-    evasion: base.evasion,
-    critRate: BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L,
-    critDmg: BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L,
+    accuracy: round1(base.accuracy * (1 + permPct)),
+    evasion: round1(base.evasion * (1 + permPct)),
+    critRate: (BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L) * (1 + permPct),
+    critDmg: (BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L) * (1 + permPct),
     basicAtkMult: g.basicAtkMult ?? 1,
     poisonCoef: g.poisonCoef ? g.poisonCoef + (p.poisonCoefPP ?? 0) * L : 0,
     zones: { atkBase: base.atk, atkPermPct: permPct, atkTempPct, defTempPct, hpTempPct },

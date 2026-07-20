@@ -4,6 +4,7 @@
  */
 import { REP_NODES } from '../engine/prestige';
 import { useGameStore } from '../store/gameStore';
+import { ShopCategory } from '../components/ShopCategory';
 
 export function RepPane() {
   const s = useGameStore();
@@ -48,6 +49,7 @@ export function RepPane() {
               );
             })}
           </div>
+          <ShopCategory />
         </div>
       </section>
     </div>

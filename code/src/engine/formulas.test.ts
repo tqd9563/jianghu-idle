@@ -32,12 +32,15 @@ describe('挂机产出（公式表 §3.2）', () => {
   });
 });
 
-describe('境界表（内容表 §1）', () => {
+describe('境界表（内容表 §1 MVP-0 r1-r5）', () => {
   it('突破消耗 2,800 / 5,000 / 10,000 / 21,000', () => {
-    expect(REALMS.slice(1).map((r) => r.breakthroughCost)).toEqual([2800, 5000, 10000, 21000]);
+    expect(REALMS.slice(1, 5).map((r) => r.breakthroughCost)).toEqual([2800, 5000, 10000, 21000]);
   });
-  it('武学上限 = 境界 × 2', () => {
-    for (const r of REALMS) expect(r.skillCap).toBe(r.realm * 2);
+  it('武学上限 = 境界 × 2（MVP-0 §1 r1-r5；MVP-2 §8.1 r6/r7 固定 10 不开放 lv11）', () => {
+    for (const r of REALMS.slice(0, 5)) expect(r.skillCap).toBe(r.realm * 2);
+    // MVP-2 §8.1：r6/r7 skillCap=10，不开放 lv11
+    expect(REALMS[5]?.skillCap).toBe(10);
+    expect(REALMS[6]?.skillCap).toBe(10);
   });
 });
 

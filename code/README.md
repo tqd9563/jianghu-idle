@@ -1,4 +1,4 @@
-# 江湖无尽录 · MVP-0/1 前端
+# 江湖无尽录 · MVP-0/1 前端与 MVP-2 验证核心
 
 Vite + TypeScript + React。数值引擎为纯 TS 模块（`src/engine/`），与 UI 解耦，同 `docs/mvp0/sim/mvp0_sim.py` 做 golden 对照。
 
@@ -15,10 +15,11 @@ npm run build    # 产物纯静态，分发即测试
 ```
 src/
   engine/      纯函数数值引擎：formulas（公式表 §2/§3）、content（内容表定稿数据）、
-               offlineRewards（MVP-1 离线收益，docs/mvp1/offline-rewards.md 表 A/C）
+               offlineRewards（MVP-1 离线收益，docs/mvp1/offline-rewards.md 表 A/C）、
+               mvp2Content（MVP-2 已定数值常量；未接入可玩进度）
   save/        localStorage 存档（持久化/恢复/一键重置；savedAt 即离线时长权威来源，
                MVP-0「关闭页面不结算」条款已随 MVP-1 解除）
-  telemetry/   埋点（mvp0/telemetry.md v1.1 + mvp1/telemetry.md：公共信封 + JSON 一键导出）
+  telemetry/   埋点（MVP-0/1 + mvp2/telemetry.md：公共信封、本地持久化、JSON 一键导出）
   styles/      tokens.css —— 唯一权威是根目录 DESIGN.md，此处为其 CSS 落地
 ```
 
@@ -35,7 +36,11 @@ src/
 #observer=1          打开观察员面板（会话编号/暂停恢复/导出测试数据与存档/重置）
 #offlinecap=10       MVP-1 验收 A4：压低离线上限（分钟，持久生效）；#offlinecap=0 清除
 #offlinesim=1800     MVP-1 验收：存档时间戳回拨 N 秒，载入即触发出关结算（可与 seed 组合）
+#livetest=1           开始/恢复持久化的 MVP-2 自然窗口；同页重复执行幂等
+#livetest=0           结束自然窗口并清除活动记录
 ```
+
+自然窗口不显示玩家侧提示，也不设置提醒；页面初始化时写入一次客观回访快照，观察者主观记录由 store API 支持，后续 ObserverPanel UI 单独交付。窗口冻结开窗时表版本，并在事件中标记当前版本漂移。
 
 观察员面板也可随时用 `Ctrl+Shift+O` 开关；测试者不应看到该面板。
 

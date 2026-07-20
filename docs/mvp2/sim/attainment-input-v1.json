@@ -1,0 +1,27 @@
+{
+  "input_id": "mvp2-attainment-owner-v1",
+  "evidence": "forecast",
+  "active_neili_per_hour": "11851.33333333333333333333333",
+  "active_rate_numerator": "35554",
+  "active_rate_denominator_hours": "3",
+  "active_rate_derivation": "(50952-7134-8264)/3",
+  "active_rate_status": "owner_policy_constructed_forecast_not_independent_evidence",
+  "offline_base_neili_per_hour": "2066",
+  "forecast_schedule": {
+    "offline_block_cap_hours": "8",
+    "milestones": [
+      {"checkpoint": "before_boss_4", "deadline_hour": "24", "cumulative_active_hours": "3", "cumulative_offline_blocks": 1},
+      {"checkpoint": "before_boss_5", "deadline_hour": "72", "cumulative_active_hours": "10.5", "cumulative_offline_blocks": 2}
+    ]
+  },
+  "boss_4_reward": {"neili": "3057", "silver": "300", "yueli": "120", "provenance": "ROUND_HALF_UP(0.30×map4_pre_boss/0.70); silver/yueli follow MVP-0 Boss 3→4 ×1.5"},
+  "boss_5_reward": {"neili": "6728", "silver": "400", "yueli": "168", "provenance": "ROUND_HALF_UP(0.30×map5_pre_boss/0.70); silver/yueli follow MVP-0 Boss 4→5 ×1.33/×1.4"},
+  "maps": [
+    {"map_id": 4, "stages": 10, "elite_stages": [3, 6, 8], "boss_stage": 10, "neili_target_14_percent": "7133", "normal": {"neili": "594", "silver": "17", "yueli": "3"}, "elite": {"neili": "1190", "silver": "33", "yueli": "8"}, "pre_boss_total": {"neili": "7134", "silver": "201", "yueli": "42"}},
+    {"map_id": 5, "stages": 10, "elite_stages": [2, 5, 7, 9], "boss_stage": 10, "neili_target_14_percent": "15698", "normal": {"neili": "1206", "silver": "16", "yueli": "4"}, "elite": {"neili": "2417", "silver": "30", "yueli": "5"}, "pre_boss_total": {"neili": "15698", "silver": "200", "yueli": "40"}}
+  ],
+  "efficiencies": ["0.35", "0.50", "0.65"],
+  "recommendation_policy": "owner_selected_conservative_floor: choose lowest efficiency satisfying every forecast gate",
+  "production_finalization": "requires_observed_natural_window_playtest"
+  ,"open_limitations": ["whole_run_collapse_unverified_missing_remaining_run_threshold"]
+}

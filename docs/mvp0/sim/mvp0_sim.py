@@ -247,12 +247,15 @@ def fight(build, enemy, boss_dmg_bonus=0.0):
 # ============================================================
 
 def run_playthrough(route, neili_mult=1.0, boss_dmg_bonus=0.0,
-                    early_realm_discount=0.0, verbose=False):
+                    early_realm_discount=0.0, verbose=False, snapshot_sink=None):
     """early_realm_discount: 快速入门节点——境界 2/3 突破消耗折减"""
     stages = build_stages()
     t = neili = yueli = silver = 0.0
     realm, lv, nodes, idx = 1, 0, 0, 0
+    earned_neili = spent_neili = spent_yueli = 0.0
+    event_neili = event_silver = event_yueli = 0.0
     events = []       # (时间min, 消息, 是否里程碑)
+    captured_checkpoints = set()
 
     def realm_cost(r):
         c = REALMS[r]["cost"]
@@ -264,9 +267,11 @@ def run_playthrough(route, neili_mult=1.0, boss_dmg_bonus=0.0,
             print(f"  [{t/60:5.1f} min] {msg}")
 
     def elapse(dt):
-        nonlocal t, neili
+        nonlocal t, neili, earned_neili
         t += dt
-        neili += idle_rate(realm, neili_mult) * dt
+        produced = idle_rate(realm, neili_mult) * dt
+        neili += produced
+        earned_neili += produced
 
     def wait_for(amount):
         # 充能式突破/储蓄：缺口按 1/5 分段注入，每段为一次可见进展
@@ -278,17 +283,30 @@ def run_playthrough(route, neili_mult=1.0, boss_dmg_bonus=0.0,
     log("开局：境界 1")
     while idx < len(stages) and t < 5400:
         while nodes < 3 and yueli >= MECH_NODE_COST[nodes]:
-            yueli -= MECH_NODE_COST[nodes]; nodes += 1
+            node_cost = MECH_NODE_COST[nodes]
+            yueli -= node_cost; spent_yueli += node_cost; nodes += 1
             log(f"购买机制节点 {nodes}（阅历）")
         build = make_build(route, realm, lv, nodes) if realm >= 2 else \
             dict(**REALMS[1], crit=BASE_CRIT, cd=BASE_CD, shield_pct=0, thorns=0,
                  poison=dict(init=0, per_hit=0, coef=0, cap=0, burst=0),
                  sq_need=99, burst_mult=0, lowhp_dr=0, route="none")
         m, i, enemy, reward = stages[idx]
+        if snapshot_sink is not None and idx in (17, 27) and idx not in captured_checkpoints:
+            snapshot_sink(dict(
+                route=route, checkpoint="before_boss_2" if idx == 17 else "before_boss_3",
+                wallet_neili=neili, wallet_silver=silver, wallet_yueli=yueli,
+                realm=realm, level=lv, nodes=nodes, completed_stage_index=idx,
+                gross_earned_neili=earned_neili, spent_neili=spent_neili,
+                event_earned_neili=event_neili, event_earned_silver=event_silver,
+                event_earned_yueli=event_yueli, spent_yueli=spent_yueli,
+            ))
+            captured_checkpoints.add(idx)
         win, rounds, _ = fight(build, enemy, boss_dmg_bonus)
         elapse(BATTLE_OVERHEAD_S)
         if win:
             neili += reward["neili"]; silver += reward["silver"]; yueli += reward["yueli"]
+            earned_neili += reward["neili"]; event_neili += reward["neili"]
+            event_silver += reward["silver"]; event_yueli += reward["yueli"]
             boss = i in (8, 10) and any(tg in enemy["tags"] for tg in ("高血", "高防"))
             log(f"通过 {m}-{i}" + (f"（Boss，{rounds} 回合）" if boss else ""), mile=boss)
             idx += 1
@@ -307,6 +325,7 @@ def run_playthrough(route, neili_mult=1.0, boss_dmg_bonus=0.0,
                       else min(opts, key=lambda o: o[1]))
         wait_for(cost)
         neili -= cost
+        spent_neili += cost
         if kind == "skill":
             lv += 1
             log(f"武学升至 {lv} 级", mile=False)
@@ -316,6 +335,7 @@ def run_playthrough(route, neili_mult=1.0, boss_dmg_bonus=0.0,
     while realm < 5 and t < 5400:
         wait_for(realm_cost(realm + 1))
         neili -= realm_cost(realm + 1); realm += 1
+        spent_neili += realm_cost(realm)
         log(f"突破境界 {realm}")
     done = idx >= len(stages) and realm == 5
     log("达成归隐条件（境界5+Boss3）" if done else "!!! 未在时限内完成")

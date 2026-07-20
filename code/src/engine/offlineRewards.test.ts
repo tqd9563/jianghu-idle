@@ -23,9 +23,18 @@ describe('offlineRewards · 档位匹配与驱动字段（表 A §2.2）', () =>
     expect(findOfflineRewardStage(28).id).toBe(1008);
   });
 
-  it('越界 clamp：0 → 首档；>28 → 末档', () => {
+  it('地图 4/5 的全局关卡 29–48 分别匹配扩展档', () => {
+    for (let stage = 29; stage <= 38; stage++) {
+      expect(findOfflineRewardStage(stage).id).toBe(1009);
+    }
+    for (let stage = 39; stage <= 48; stage++) {
+      expect(findOfflineRewardStage(stage).id).toBe(1010);
+    }
+  });
+
+  it('越界 clamp：0 → 首档；>48 → 末档', () => {
     expect(findOfflineRewardStage(0).id).toBe(1001);
-    expect(findOfflineRewardStage(99).id).toBe(1008);
+    expect(findOfflineRewardStage(99).id).toBe(1010);
   });
 
   it('maxIdleStage：全局 1–28 序号（图 1 有 8 关、图 2 有 10 关偏移）', () => {
@@ -34,6 +43,33 @@ describe('offlineRewards · 档位匹配与驱动字段（表 A §2.2）', () =>
     expect(maxIdleStage(Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`))).toBe(8);
     expect(maxIdleStage(['m1s8', 'm2s3'])).toBe(11);
     expect(maxIdleStage(['m2s10', 'm3s10'])).toBe(28);
+  });
+
+  it('maxIdleStage：地图 4/5 键映射为全局 29–48，忽略越界关卡', () => {
+    expect(maxIdleStage(['m4s1'])).toBe(29);
+    expect(maxIdleStage(['m4s10'])).toBe(38);
+    expect(maxIdleStage(['m5s1'])).toBe(39);
+    expect(maxIdleStage(['m5s10'])).toBe(48);
+    expect(maxIdleStage(['m5s11', 'm4s0'])).toBe(1);
+  });
+});
+
+describe('offlineRewards · MVP-2 地图 4/5 扩展', () => {
+  it.each([[29, 826.8], [38, 826.8], [39, 1033.7], [48, 1033.7]])(
+    '关卡 %i 的 50%%效率产出为 %f 内力/分',
+    (stage, expectedOfflineNeiliPerMin) => {
+      const tier = findOfflineRewardStage(stage);
+      expect(tier.offlineEfficiency).toBe(0.50);
+      expect(tier.neiliPerMin * tier.offlineEfficiency).toBeCloseTo(expectedOfflineNeiliPerMin, 10);
+    },
+  );
+
+  it.each([29, 38, 39, 48])('关卡 %i 的正式离线上限保持 8 小时', (stage) => {
+    const r = calculateOfflineRewards({ currentMaxIdleStage: stage, lastSeenAt: 0, now: 10 * 60 * MIN });
+    expect(r.capMin).toBe(480);
+    expect(r.effectiveMin).toBe(480);
+    expect(r.capped).toBe(true);
+    expect(r.neili).toBe(Math.floor(r.tier.neiliPerMin * 480 * 0.50));
   });
 });
 
@@ -63,8 +99,8 @@ describe('offlineRewards · A1 结算链路对账（满额校验表 §3.3 逐格
     expect(r.capped).toBe(false);
   });
 
-  it('红线：任一档满额内力 ≤ 4,200（境界 5 单段周天充能，§3.3 预算线）', () => {
-    for (const t of OFFLINE_REWARD_STAGES) {
+  it('红线：既有 8 档满额内力 ≤ 4,200（境界 5 单段周天充能，§3.3 预算线）', () => {
+    for (const t of OFFLINE_REWARD_STAGES.slice(0, 8)) {
       expect(Math.floor(t.neiliPerMin * t.offlineCapMin * t.offlineEfficiency)).toBeLessThanOrEqual(4200);
     }
   });

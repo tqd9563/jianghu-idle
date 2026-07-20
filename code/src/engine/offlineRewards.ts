@@ -24,7 +24,7 @@ export interface OfflineRewardStage {
   dropGroup: 'none';
 }
 
-/** 表 A：离线收益关卡档位（offline_reward_stage v0.2 起始配置，8 档全量） */
+/** 表 A：离线收益关卡档位（MVP-1 既有 8 档 + MVP-2 地图 4/5 扩展档） */
 export const OFFLINE_REWARD_STAGES: readonly OfflineRewardStage[] = [
   { id: 1001, idleStageMin: 1, idleStageMax: 4, jianghuPhase: '村外小径·试手', neiliPerMin: 90, silverPerMin: 4, experiencePerMin: 0.6, offlineEfficiency: 0.35, offlineCapMin: 20, debugCapMin: 10, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
   { id: 1002, idleStageMin: 5, idleStageMax: 8, jianghuPhase: '村外小径·破寨', neiliPerMin: 120, silverPerMin: 6, experiencePerMin: 0.9, offlineEfficiency: 0.35, offlineCapMin: 20, debugCapMin: 10, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
@@ -34,6 +34,8 @@ export const OFFLINE_REWARD_STAGES: readonly OfflineRewardStage[] = [
   { id: 1006, idleStageMin: 23, idleStageMax: 25, jianghuPhase: '华山古道·遇险', neiliPerMin: 270, silverPerMin: 14, experiencePerMin: 2.0, offlineEfficiency: 0.33, offlineCapMin: 24, debugCapMin: 12, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
   { id: 1007, idleStageMin: 26, idleStageMax: 27, jianghuPhase: '华山古道·临寨', neiliPerMin: 315, silverPerMin: 16, experiencePerMin: 2.3, offlineEfficiency: 0.32, offlineCapMin: 26, debugCapMin: 12, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
   { id: 1008, idleStageMin: 28, idleStageMax: 28, jianghuPhase: '黑风寨主前', neiliPerMin: 360, silverPerMin: 20, experiencePerMin: 2.8, offlineEfficiency: 0.32, offlineCapMin: 26, debugCapMin: 12, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
+  { id: 1009, idleStageMin: 29, idleStageMax: 38, jianghuPhase: '地图四·待命名', neiliPerMin: 1653.6, silverPerMin: 25, experiencePerMin: 3.5, offlineEfficiency: 0.50, offlineCapMin: 480, debugCapMin: 12, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
+  { id: 1010, idleStageMin: 39, idleStageMax: 48, jianghuPhase: '地图五·待命名', neiliPerMin: 2067.4, silverPerMin: 30, experiencePerMin: 4.2, offlineEfficiency: 0.50, offlineCapMin: 480, debugCapMin: 12, minSettleMin: 3, catchupPerStage: 0, catchupMax: 0, dropGroup: 'none' },
 ];
 
 /** 表 C：离线结算约束（offline_settlement_rule = default 首发配置） */
@@ -51,17 +53,31 @@ export const OFFLINE_SETTLEMENT_RULE = {
 } as const;
 
 /**
- * 当前最大可挂机关卡（全局 1–28 序号；offline-rewards.md §2.2 驱动字段）。
+ * 当前最大可挂机关卡（全局 1–48 序号；offline-rewards.md §2.2 驱动字段）。
  * 首发实现口径 = 已通关的最高关卡（关卡在图内严格顺序通关、图间顺序解锁，故为前缀）；
  * 未通任何关时取 1（关卡 1 已解锁即为收益来源）。
  */
 export function maxIdleStage(clearedStages: readonly string[]): number {
   let best = 1;
-  const offsets: Record<1 | 2 | 3, number> = { 1: 0, 2: MAP_STAGE_COUNT[1], 3: MAP_STAGE_COUNT[1] + MAP_STAGE_COUNT[2] };
+  const stageCounts: Record<1 | 2 | 3 | 4 | 5, number> = {
+    ...MAP_STAGE_COUNT,
+    4: 10,
+    5: 10,
+  };
+  const offsets: Record<1 | 2 | 3 | 4 | 5, number> = {
+    1: 0,
+    2: stageCounts[1],
+    3: stageCounts[1] + stageCounts[2],
+    4: stageCounts[1] + stageCounts[2] + stageCounts[3],
+    5: stageCounts[1] + stageCounts[2] + stageCounts[3] + stageCounts[4],
+  };
   for (const key of clearedStages) {
-    const m = /^m([123])s(\d+)$/.exec(key);
+    const m = /^m([1-5])s(\d+)$/.exec(key);
     if (!m) continue;
-    const g = offsets[Number(m[1]) as 1 | 2 | 3] + Number(m[2]);
+    const map = Number(m[1]) as 1 | 2 | 3 | 4 | 5;
+    const stage = Number(m[2]);
+    if (stage < 1 || stage > stageCounts[map]) continue;
+    const g = offsets[map] + stage;
     if (g > best) best = g;
   }
   return best;
@@ -69,7 +85,7 @@ export function maxIdleStage(clearedStages: readonly string[]): number {
 
 /** 按最大可挂机关卡匹配表 A（越界 clamp 到首/末档） */
 export function findOfflineRewardStage(currentMaxIdleStage: number): OfflineRewardStage {
-  const s = Math.max(1, Math.min(28, Math.floor(currentMaxIdleStage)));
+  const s = Math.max(1, Math.min(48, Math.floor(currentMaxIdleStage)));
   return OFFLINE_REWARD_STAGES.find((t) => s >= t.idleStageMin && s <= t.idleStageMax)
     ?? OFFLINE_REWARD_STAGES[OFFLINE_REWARD_STAGES.length - 1];
 }
@@ -130,7 +146,7 @@ export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettl
   const catchup = 1; // 首发 catchup_per_stage = catchup_max = 0（表 A §6）
   const grant = (perMin: number) => Math.floor(perMin * effectiveMin * tier.offlineEfficiency * catchup);
   return {
-    stageBasis: Math.max(1, Math.min(28, Math.floor(input.currentMaxIdleStage))),
+    stageBasis: Math.max(1, Math.min(48, Math.floor(input.currentMaxIdleStage))),
     tier,
     rawSec,
     effectiveMin,

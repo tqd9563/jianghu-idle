@@ -4,6 +4,7 @@
  */
 import { settleRetire } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';
+import { RetireHint } from '../components/RetireHint';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 
@@ -94,6 +95,7 @@ export function RetireFlow() {
               <div className="rline"><span>声望</span><span className="v">现有 {fmt(s.reputation)} + 本次 {settle.total}</span></div>
               <div className="rline"><span>声望节点</span><span className="v">已购 {s.ownedRepNodes.length} 个，永久生效</span></div>
               <div className="rline"><span>江湖记录</span><span className="v">Boss 首破与通关印记</span></div>
+              <RetireHint />
             </div>
           </div>
           <div className="modal-actions">

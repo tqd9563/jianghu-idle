@@ -1,13 +1,15 @@
 /**
- * 三地图 28 关敌人表 —— 权威来源：docs/mvp0/content.md §2
+ * 五地图 48 关敌人表 —— MVP-0 §1-3 地图 1-3 权威来源：docs/mvp0/content.md §2；
+ * MVP-2A 地图 4-5 stages 1-9 权威来源：docs/mvp2/content.md §9.2（数据由 mvp2Content.ts 导出）。
  * 生成公式与 sim/mvp0_sim.py build_stages() 逐行对齐（含 Python banker's rounding），
  * golden 测试会对照 fixture 中的敌人属性逐数校验。禁止在此调参。
  */
+import { MVP2_STAGE_ENEMIES, MVP2_MAP_REWARD_PLANS, MVP2_BOSS_VALUES, MVP2_BOSS_REWARDS } from './mvp2Content';
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
 export interface EnemyDef {
-  map: 1 | 2 | 3;
+  map: 1 | 2 | 3 | 4 | 5;
   stage: number;
   name: string;
   hp: number;
@@ -35,11 +37,11 @@ export function pyRound(x: number, digits = 0): number {
   return r / m;
 }
 
-const MAP_NAMES = ['村外小径', '洛阳近郊', '华山古道'] as const;
-export function mapName(map: 1 | 2 | 3): string {
+const MAP_NAMES = ['村外小径', '洛阳近郊', '华山古道', '蜀道险关', '铁壁绝谷'] as const;
+export function mapName(map: 1 | 2 | 3 | 4 | 5): string {
   return MAP_NAMES[map - 1];
 }
-export const MAP_STAGE_COUNT: Record<1 | 2 | 3, number> = { 1: 8, 2: 10, 3: 10 };
+export const MAP_STAGE_COUNT: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
 
 const NAMES_1 = ['拦路泼皮', '拦路泼皮', '山野猎户', '山野猎户', '山贼喽啰', '山贼喽啰', '山贼小头目', '山贼头目'];
 const NAMES_2 = ['城郊恶棍', '城郊恶棍', '镖局逃卒', '游侠儿', '镖局逃卒', '恶寺武僧', '铁臂僧', '恶寺武僧', '恶寺护法', '铁掌恶僧'];
@@ -104,10 +106,61 @@ function buildStages(): EnemyDef[] {
   return out;
 }
 
+/** MVP-2A 地图 4/5 stages 1-9 + Boss 4/5 stage 10：从 mvp2Content.ts 导出的 Mvp2StageEnemy 与 MVP2_BOSS_VALUES 转为 EnemyDef。 */
+let _mvp2Stages: EnemyDef[] | null = null;
+function getMvp2Stages(): EnemyDef[] {
+  if (_mvp2Stages !== null) return _mvp2Stages;
+  const stages: EnemyDef[] = MVP2_STAGE_ENEMIES.map((entry) => {
+    const plan = MVP2_MAP_REWARD_PLANS.find((p) => p.map === entry.map)!;
+    const reward = entry.kind === 'elite' ? plan.elite : plan.normal;
+    return {
+      map: entry.map,
+      stage: entry.stage,
+      name: entry.name,
+      hp: entry.hp,
+      atk: entry.atk,
+      def: entry.def,
+      hit: entry.hit,
+      dodge: entry.dodge,
+      tags: [...entry.tags],
+      kind: entry.kind,
+      recommendedRealm: entry.recommendedRealm,
+      reward,
+    };
+  });
+  // Boss 4/5 stage 10（content.md §8.2 战斗值 + §9.3 击杀奖励）
+  for (const boss of MVP2_BOSS_VALUES) {
+    const reward = MVP2_BOSS_REWARDS.find((r) => r.boss === boss.boss)!;
+    stages.push({
+      map: boss.boss,
+      stage: 10,
+      name: boss.name,
+      hp: boss.hp,
+      atk: boss.atk,
+      def: boss.def,
+      hit: boss.hit,
+      dodge: boss.dodge,
+      tags: [...boss.tags],
+      kind: 'boss',
+      recommendedRealm: boss.boss === 4 ? 6 : 7,
+      reward: { neili: reward.neili, silver: reward.silver, xp: reward.xp },
+    });
+  }
+  _mvp2Stages = stages;
+  return _mvp2Stages;
+}
+
+/**
+ * STAGES 只含 MVP-0 三地图 28 关——prestige.ts 既有 ELITE_KEYS/TOTAL_STAGES 计算依赖此口径
+ * （`docs/mvp0/economy.md §1.2` 三图全通 +30% 表现加成）。MVP-2 地图 4/5 stages 1-9 通过
+ * `getStage()` lazy 合并查询，避免循环依赖初始化与 MVP-0 既有声望判据破坏。
+ */
 export const STAGES: readonly EnemyDef[] = buildStages();
 
-export function getStage(map: 1 | 2 | 3, stage: number): EnemyDef {
-  const s = STAGES.find((x) => x.map === map && x.stage === stage);
+export function getStage(map: 1 | 2 | 3 | 4 | 5, stage: number): EnemyDef {
+  const s = (map === 4 || map === 5)
+    ? getMvp2Stages().find((x) => x.map === map && x.stage === stage)
+    : STAGES.find((x) => x.map === map && x.stage === stage);
   if (!s) throw new Error(`no stage m${map}s${stage}`);
   return s;
 }

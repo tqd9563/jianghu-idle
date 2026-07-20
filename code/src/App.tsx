@@ -8,6 +8,7 @@ import { REALMS } from './engine/content';
 import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
 import { zhoutianProgress } from './engine/formulas';
 import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore } from './store/gameStore';
+import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { applyDebugHash } from './debug';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
@@ -19,8 +20,9 @@ import { ObserverPanel } from './overlays/ObserverPanel';
 import { OfflineSettlement } from './overlays/OfflineSettlement';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
+import { FragmentShelf } from './panes/FragmentShelf';
 
-type TabId = 'cultivate' | 'battle' | 'skill' | 'rep';
+type TabId = 'cultivate' | 'battle' | 'skill' | 'rep' | 'fragments';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 
@@ -30,10 +32,11 @@ export default function App() {
   const [observerOpen, setObserverOpen] = useState(false);
 
   useEffect(() => {
-    const { tab: debugTab, fight: autoFight, retire: debugRetire, observer } = applyDebugHash();
+    const { tab: debugTab, fight: autoFight, retire: debugRetire, observer, livetest } = applyDebugHash();
     if (debugTab) setTab(debugTab as TabId);
     if (observer) setObserverOpen(true);
     s.init();
+    useGameStore.getState().applyLiveTestSwitch(livetest);
     if (autoFight) {
       const st = useGameStore.getState();
       const next = nextStageOf(st.selectedMap, st.clearedStages);
@@ -53,6 +56,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (s.pendingTab) {
+      setTab(s.pendingTab as TabId);
+      useGameStore.setState({ pendingTab: null });
+    }
+  }, [s.pendingTab]);
+
   if (!s.started) return null;
 
   const realmDef = REALMS[s.realm - 1];
@@ -66,14 +76,43 @@ export default function App() {
 
   return (
     <div className="app">
+      <nav className="game-rail">
+        <div className="rail-identity">
+          <div className="game-title serif">
+            江湖无尽录<span className="round">第 {s.run} 轮</span>
+          </div>
+          <div className="realm-chip">
+            <span className="name serif">{realmDef.name}</span>
+            <span className="lv">境界 {s.realm} / {REALMS.length}</span>
+          </div>
+        </div>
+        <ThemeSwitcher />
+        <div className="nav-group">
+          <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
+          <button className={tabCls(tab, 'battle')} onClick={() => setTab('battle')}>战斗</button>
+          {s.route ? (
+            <button className={tabCls(tab, 'skill')} onClick={() => setTab('skill')}>武学</button>
+          ) : (
+            <button className="game-tab" disabled title="突破至境界 2 后解锁">武学</button>
+          )}
+          {repUnlocked ? (
+            <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>声望阁</button>
+          ) : (
+            <button className="game-tab" disabled title="首次归隐后解锁">声望阁</button>
+          )}
+          <button 
+            className={tabCls(tab, 'fragments')} 
+            onClick={() => { setTab('fragments'); s.openManualShelf(); }}
+          >
+            秘籍阁
+            <span style={{ fontSize: '11px', opacity: 0.6, marginLeft: '6px', fontVariantNumeric: 'tabular-nums' }}>
+              {(s.collectedPages ?? []).length}/18
+            </span>
+          </button>
+        </div>
+      </nav>
+
       <header className="topbar">
-        <div className="game-title serif">
-          江湖无尽录<span className="round">第 {s.run} 轮</span>
-        </div>
-        <div className="realm-chip">
-          <span className="name serif">{realmDef.name}</span>
-          <span className="lv">境界 {s.realm} / {REALMS.length}</span>
-        </div>
         {retire && (
           <button
             className={`retire-btn${retire === 'standard' ? ' ready' : ''}`}
@@ -101,39 +140,10 @@ export default function App() {
         </div>
       </header>
 
-      <nav className="game-tabs">
-        <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
-        <button className={tabCls(tab, 'battle')} onClick={() => setTab('battle')}>战斗</button>
-        {s.route ? (
-          <button className={tabCls(tab, 'skill')} onClick={() => setTab('skill')}>武学</button>
-        ) : (
-          <button className="game-tab" disabled title="突破至境界 2 后解锁">武学 · 境界 2 解锁</button>
-        )}
-        {repUnlocked ? (
-          <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>声望阁</button>
-        ) : (
-          <button className="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
-        )}
-        <div className="tab-pulse">
-          {(() => {
-            const m = s.selectedMap;
-            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
-              .filter((i) => s.clearedStages.includes(`m${m}s${i}`)).length;
-            const lastTurn = s.battle?.result.turns[s.battle.revealed - 1];
-            return (
-              <span className="strip-item" onClick={() => setTab('battle')}>
-                {mapName(m)} <b>{clearedCount}/{MAP_STAGE_COUNT[m]}</b>
-                {s.battle && !s.battle.resolved && (
-                  <>
-                    {' '}· 对战 {s.battle.enemy.name}{' '}
-                    <span className="mini-bar fight"><i style={{ width: `${(lastTurn?.ehpPct ?? 1) * 100}%` }} /></span>
-                  </>
-                )}
-              </span>
-            );
-          })()}
+      <main className="s3-main">
+        <div className="pulse-bar">
           {progress && (
-            <span className="strip-item" onClick={() => setTab('cultivate')}>
+            <button className="strip-item" onClick={() => setTab('cultivate')}>
               运转周天{' '}
               <span className="mini-bar">
                 <i style={{ width: `${Math.min(100, (s.dantian / breakCost!) * 100)}%` }} />
@@ -141,16 +151,32 @@ export default function App() {
               <b>{progress.segmentsFull}/5</b>
               {!progress.ready && <> · 第{CN[progress.segmentsFull + 1]}周天 {Math.floor(progress.currentSegmentPct * 100)}%</>}
               {progress.ready && <> · 圆满</>}
-            </span>
+            </button>
           )}
+          {(() => {
+            const m = s.selectedMap;
+            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
+              .filter((i) => s.clearedStages.includes(`m${m}s${i}`)).length;
+            const lastTurn = s.battle?.result.turns[s.battle.revealed - 1];
+            return (
+              <button className="strip-item" onClick={() => setTab('battle')}>
+                {mapName(m)} <b>{clearedCount}/{MAP_STAGE_COUNT[m]}</b>
+                {s.battle && !s.battle.resolved && (
+                  <>
+                    {' '}· 对战 {s.battle.enemy.name}{' '}
+                    <span className="mini-bar fight"><i style={{ width: `${(lastTurn?.ehpPct ?? 1) * 100}%` }} /></span>
+                  </>
+                )}
+              </button>
+            );
+          })()}
         </div>
-      </nav>
 
-      <main>
         {tab === 'cultivate' && <CultivatePane />}
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'skill' && s.route && <SkillPane />}
         {tab === 'rep' && <RepPane />}
+        {tab === 'fragments' && <FragmentShelf />}
       </main>
 
       {routeSelectOpen && <RouteSelect />}

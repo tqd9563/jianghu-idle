@@ -68,7 +68,9 @@ const PRESETS: Record<string, object> = {
 
 export function applyDebugHash(): {
   tab: string | null; fight: boolean; retire: string | null; observer: boolean;
+  livetest: 1 | 0 | null;
 } {
+  const result = parseDebugHash(window.location.hash);
   const params = new URLSearchParams(window.location.hash.slice(1));
   const seed = params.get('seed');
   if (seed && PRESETS[seed]) saveGame(PRESETS[seed]);
@@ -78,10 +80,19 @@ export function applyDebugHash(): {
   // MVP-1 验收：#offlinesim=1800 把存档时间戳回拨 N 秒，载入即触发出关结算（与 seed 可组合）
   const offlineSim = Number(params.get('offlinesim'));
   if (offlineSim > 0) backdateSavedAt(offlineSim);
+  return result;
+}
+
+export function parseDebugHash(hash: string): {
+  tab: string | null; fight: boolean; retire: string | null; observer: boolean;
+  livetest: 1 | 0 | null;
+} {
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
   return {
     tab: params.get('tab'),
     fight: params.get('fight') === '1',
     retire: params.get('retire'),
     observer: params.get('observer') === '1',
+    livetest: params.get('livetest') === '1' ? 1 : params.get('livetest') === '0' ? 0 : null,
   };
 }

@@ -18,11 +18,21 @@ import {
   calculateOfflineRewards, maxIdleStage, type OfflineSettleResult,
 } from '../engine/offlineRewards';
 import { ROUTES } from '../engine/routes';
+import {
+  applyFragmentEffectsToBuild, computeFragmentEffects, emitPageGrant, getMissingPages,
+  grantPage as grantFragmentPage, isPageId, nextBossPage, nextTrialPage, offlinePages, shopPrice,
+  type CollectionChannel, type FragmentEffects, type MissingPage,
+} from '../engine/fragmentLogic';
+import { PAGE_SOURCE_TABLE, TRIAL_TABLE, type BookId, type TrialId } from '../engine/fragments';
+import { MVP2_ELITE_CHALLENGE_ENEMIES, MVP2_ELITE_CHALLENGE_REWARDS, type Mvp2EliteChallengeEnemy } from '../engine/mvp2Content';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
-import { getDebugOfflineCap, loadGame, loadSavedAt, resetGame, saveGame } from '../save/storage';
-import { resetTelemetry, track } from '../telemetry/telemetry';
+import {
+  endLiveTestWindow, getDebugOfflineCap, loadGame, loadLiveTestWindow, loadSavedAt,
+  resetGame, saveGame, startLiveTestWindow, type LiveTestWindowRecord,
+} from '../save/storage';
+import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
 
-export type MapNo = 1 | 2 | 3;
+export type MapNo = 1 | 2 | 3 | 4 | 5;
 
 interface PersistedState {
   run: number;
@@ -64,6 +74,18 @@ interface PersistedState {
   /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结。
    *  持久化：刷新页面不得静默解冻——test_paused 无配对 test_resumed 时，离线口径会把后续游玩全算进暂停 */
   paused: boolean;
+  /** 秘籍残页跨归隐保留；可选字段由 FRESH 为旧存档迁移补默认值。 */
+  collectedPages?: string[];
+  /** 已集齐秘籍跨归隐保留；效果应用由后续任务实现。 */
+  completedBooks?: string[];
+  /** 本轮试炼首胜计数，归隐重置。 */
+  trialWinsThisRun?: Record<string, number>;
+  /** 本轮精英挑战首胜计数，归隐重置（content.md §5.2 / §7：每轮限一次首通奖励）。 */
+  eliteChallengeWinsThisRun?: Record<string, number>;
+  /** 本轮 Boss 首杀计数，归隐重置。 */
+  bossKillsThisRun?: Record<string, number>;
+  /** 本轮指名寻访购买次数，归隐重置。 */
+  shopPurchasesThisRun?: number;
 }
 
 export interface BattleState {
@@ -79,7 +101,10 @@ export interface BattleState {
   /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
   chainStage: number | null;
   /** 胜利实际入账（含江湖熟路加成后的实发值，收益行同源同值） */
-  reward: { neili: number; silver: number; xp: number; refarm: boolean } | null;
+  reward: { neili: number; silver: number; xp: number; refarm: boolean; grantedPageId?: string } | null;
+  mode?: 'mainline' | 'trial' | 'elite';
+  trialId?: string;
+  eliteChallengeId?: Mvp2EliteChallengeEnemy['id'];
 }
 
 export interface FailureInfo {
@@ -99,6 +124,15 @@ export interface FailureInfo {
 
 export type RetireKind = 'standard' | 'fallback';
 
+export interface NaturalWindowNote {
+  readonly natural_open: boolean;
+  readonly open_reason: string;
+  readonly settlement_understood: boolean | null;
+  readonly decision: string;
+  readonly next_goal: string;
+  readonly feeling: string;
+}
+
 /** 归隐结算演出数据（§8.6-3）：确认后展示，关闭后落地声望阁 */
 export interface RetireCeremonyData {
   runEnded: number;
@@ -113,6 +147,7 @@ interface GameState extends PersistedState {
   ceremony: number | null;
   selectedMap: MapNo;
   battle: BattleState | null;
+  pendingTab: string | null;
   failure: FailureInfo | null;
   retireStep: 'preview' | 'confirm' | null;
   retireCeremony: RetireCeremonyData | null;
@@ -120,8 +155,14 @@ interface GameState extends PersistedState {
   retireToast: 'fail_streak' | 'stall_timeout' | null;
   /** 出关结算待呈现数据（MVP-1 §6；资源已在 init 入账，此处只驱动结算屏；非持久化） */
   offlineSettlement: OfflineSettleResult | null;
+  /** 独立持久化的自然测试窗口；不进入游戏存档。 */
+  liveTestWindow: LiveTestWindowRecord | null;
   init: () => void;
   dismissOfflineSettlement: () => void;
+  startLiveTestWindow: () => void;
+  endLiveTestWindow: () => void;
+  applyLiveTestSwitch: (command: 1 | 0 | null) => void;
+  recordNaturalWindowNote: (note: NaturalWindowNote) => void;
   tick: (now: number) => void;
   breakthrough: () => void;
   dismissCeremony: () => void;
@@ -140,6 +181,13 @@ interface GameState extends PersistedState {
   closeRetireCeremony: () => void;
   dismissRetireToast: () => void;
   buyRepNode: (id: RepNodeId) => void;
+  grantPage: (pageId: string, channel: CollectionChannel) => void;
+  challengeTrial: (trialId: TrialId) => void;
+  challengeElite: (challengeId: Mvp2EliteChallengeEnemy['id']) => void;
+  buyShopPage: (pageId: string) => void;
+  getFragmentEffects: () => FragmentEffects;
+  getMissingPages: () => MissingPage[];
+  openManualShelf: () => void;
   startSession: (testerId: string) => void;
   endSession: (reason: 'completed' | 'external_dropout' | 'design_dropout') => void;
   pauseSession: () => void;
@@ -158,14 +206,19 @@ const FRESH: PersistedState = {
   mechXpInvested: 0, switchCount: 0,
   refarmKey: null, refarmCount: 0, refarmAt: 0,
   sessionActive: false, paused: false,
+  collectedPages: [], completedBooks: [],
+  trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
 let lastTick = 0;
 let lastSave = 0;
+let visitedLiveTestWindowId: string | null = null;
 
 const stageKey = (m: MapNo, s: number) => `m${m}s${s}`;
 const BOSS3_KEY = stageKey(3, MAP_STAGE_COUNT[3]);
+const BOSS4_KEY = stageKey(4, MAP_STAGE_COUNT[4]);
+const BOSS5_KEY = stageKey(5, MAP_STAGE_COUNT[5]);
 
 const persist = (s: PersistedState) =>
   saveGame({
@@ -181,13 +234,19 @@ const persist = (s: PersistedState) =>
     mechXpInvested: s.mechXpInvested, switchCount: s.switchCount,
     refarmKey: s.refarmKey, refarmCount: s.refarmCount, refarmAt: s.refarmAt,
     sessionActive: s.sessionActive, paused: s.paused,
+    collectedPages: s.collectedPages ?? [], completedBooks: s.completedBooks ?? [],
+    trialWinsThisRun: s.trialWinsThisRun ?? {}, eliteChallengeWinsThisRun: s.eliteChallengeWinsThisRun ?? {},
+    bossKillsThisRun: s.bossKillsThisRun ?? {},
+    shopPurchasesThisRun: s.shopPurchasesThisRun ?? 0,
   });
 
 /** 地图解锁：图 2 需通关图 1 末关，图 3 需通关图 2 末关 */
 export function mapUnlocked(map: MapNo, cleared: string[]): boolean {
   if (map === 1) return true;
   if (map === 2) return cleared.includes(stageKey(1, MAP_STAGE_COUNT[1]));
-  return cleared.includes(stageKey(2, MAP_STAGE_COUNT[2]));
+  if (map === 3) return cleared.includes(stageKey(2, MAP_STAGE_COUNT[2]));
+  if (map === 4) return cleared.includes(stageKey(3, MAP_STAGE_COUNT[3]));
+  return cleared.includes(stageKey(4, MAP_STAGE_COUNT[4]));
 }
 
 /** 本图下一待通关关卡；全通返回 null */
@@ -198,16 +257,23 @@ export function nextStageOf(map: MapNo, cleared: string[]): number | null {
   return null;
 }
 
-export function playerBuild(s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes'>): Build {
-  if (s.route) return makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length);
+export function playerBuild(s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes' | 'completedBooks'>): Build {
+  const effects = computeFragmentEffects((s.completedBooks ?? []).filter(isBookId));
+  if (s.route) return applyFragmentEffectsToBuild(
+    makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length), effects,
+  );
   // 未择路（境界 1）：纯基础属性
   const b = REALMS[s.realm - 1];
-  return {
+  return applyFragmentEffectsToBuild({
     hp: b.hp, atk: b.atk, plainMult: 1, def: b.def, hit: b.accuracy, dodge: b.evasion,
     crit: 0.05, cd: 1.5, firstCrit: false, shieldPct: 0, thorns: 0,
     poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
     sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan',
-  };
+  }, effects);
+}
+
+function isBookId(value: string): value is BookId {
+  return ['legacy_intro', 'legacy_advanced', 'legacy_finale', 'true_jinglei', 'true_zhenyue', 'true_shigu'].includes(value);
 }
 
 /** 下一境界的有效突破消耗（快速入门：境界 2/3 −30%）；已满境界返回 null */
@@ -225,16 +291,72 @@ export function effIdleRate(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>):
 /**
  * 归隐当前可用形态：标准 / 保底 / 不可用。
  * 保底一经开放持续存在；后续击败 Boss 3 升格为标准（经济表 §6.2 触发后状态）。
+ * 境界门槛固定 5（MVP-0 §6.6 + cadence.md §4.1 首轮归隐锚点），不随 REALMS 扩展漂移。
  */
+const RETIRE_REALM_GATE = 5;
 export function retireKind(
   s: Pick<PersistedState, 'realm' | 'clearedStages' | 'b3Fails' | 'runPlaySec' | 'lastProgressSec' | 'fallbackUnlocked'>,
 ): RetireKind | null {
-  if (s.realm < REALMS.length) return null;
+  if (s.realm < RETIRE_REALM_GATE) return null;
   if (s.clearedStages.includes(BOSS3_KEY)) return 'standard';
   if (s.fallbackUnlocked) return 'fallback';
   if (s.b3Fails >= FALLBACK_FAIL_STREAK) return 'fallback';
   if (s.runPlaySec - s.lastProgressSec >= FALLBACK_STALL_MIN * 60) return 'fallback';
   return null;
+}
+
+function liveTestFields(record: LiveTestWindowRecord) {
+  return {
+    window_id: record.windowId,
+    started_at: record.startedAt,
+    tables_version_started: record.tablesVersionStarted,
+    tables_version_current: TABLES_VERSION,
+    tables_version_changed: record.tablesVersionStarted !== TABLES_VERSION,
+  };
+}
+
+function maxClearedStage(clearedStages: readonly string[]): string | null {
+  let best: { key: string; order: number } | null = null;
+  for (const key of clearedStages) {
+    const match = /^m([1-3])s(\d+)$/.exec(key);
+    if (!match) continue;
+    const order = (Number(match[1]) - 1) * 10 + Number(match[2]);
+    if (!best || order > best.order) best = { key, order };
+  }
+  return best?.key ?? null;
+}
+
+function visitSnapshot(s: GameState) {
+  const breakCost = effBreakCost(s);
+  const nextSkillLevel = s.skillLevel + 1;
+  const decisionBattle = ([1, 2, 3] as const).some(
+    (map) => mapUnlocked(map, s.clearedStages) && nextStageOf(map, s.clearedStages) !== null,
+  );
+  return {
+    max_cleared_stage: maxClearedStage(s.clearedStages),
+    cleared_stage_count: s.clearedStages.length,
+    offline_settlement_present: s.offlineSettlement !== null,
+    offline_settlement_capped: s.offlineSettlement?.capped ?? null,
+    decision_breakthrough: breakCost !== null && s.dantian >= breakCost,
+    decision_skill: s.route !== null
+      && nextSkillLevel <= REALMS[s.realm - 1].skillCap
+      && s.dantian >= skillUpgradeCost(nextSkillLevel),
+    decision_battle: decisionBattle,
+    decision_retire: retireKind(s) !== null,
+  };
+}
+
+function emitNaturalWindowVisit(s: GameState, record: LiveTestWindowRecord): void {
+  if (visitedLiveTestWindowId === record.windowId) return;
+  track('natural_window_visit', { run: s.run, realm: s.realm, route: s.route }, {
+    ...liveTestFields(record), ...visitSnapshot(s),
+  });
+  visitedLiveTestWindowId = record.windowId;
+}
+
+/** Simulates a new page for focused store tests; production page lifecycle resets module state naturally. */
+export function resetLiveTestVisitForTests(): void {
+  visitedLiveTestWindowId = null;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -243,11 +365,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   ceremony: null,
   selectedMap: 1,
   battle: null,
+  pendingTab: null,
   failure: null,
   retireStep: null,
   retireCeremony: null,
   retireToast: null,
   offlineSettlement: null,
+  liveTestWindow: null,
 
   init: () => {
     if (get().started) return;
@@ -301,6 +425,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
       persist(get());
     }
+    const activeWindow = loadLiveTestWindow();
+    if (activeWindow) {
+      set({ liveTestWindow: activeWindow });
+      emitNaturalWindowVisit(get(), activeWindow);
+    }
   },
 
   /** 关闭出关结算屏（§6-4 衔接决策的时延锚点：settlement_closed 与 offline_settled 的 ts 差） */
@@ -309,6 +438,42 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.offlineSettlement === null) return;
     track('offline_settlement_closed', { run: s.run, realm: s.realm, route: s.route });
     set({ offlineSettlement: null });
+  },
+
+  startLiveTestWindow: () => {
+    const s = get();
+    if (!s.started || s.liveTestWindow) return;
+    const record = startLiveTestWindow(TABLES_VERSION);
+    set({ liveTestWindow: record });
+    track('natural_window_started', { run: s.run, realm: s.realm, route: s.route }, liveTestFields(record));
+    emitNaturalWindowVisit(get(), record);
+  },
+
+  endLiveTestWindow: () => {
+    const s = get();
+    if (!s.liveTestWindow) return;
+    track('natural_window_ended', { run: s.run, realm: s.realm, route: s.route }, liveTestFields(s.liveTestWindow));
+    endLiveTestWindow();
+    set({ liveTestWindow: null });
+  },
+
+  applyLiveTestSwitch: (command) => {
+    if (command === 1) get().startLiveTestWindow();
+    else if (command === 0) get().endLiveTestWindow();
+  },
+
+  recordNaturalWindowNote: (note) => {
+    const s = get();
+    if (!s.liveTestWindow) return;
+    track('natural_window_note', { run: s.run, realm: s.realm, route: s.route }, {
+      ...liveTestFields(s.liveTestWindow),
+      natural_open: note.natural_open,
+      open_reason: note.open_reason.trim(),
+      settlement_understood: note.settlement_understood,
+      decision: note.decision.trim(),
+      next_goal: note.next_goal.trim(),
+      feeling: note.feeling.trim(),
+    });
   },
 
   tick: (now) => {
@@ -539,6 +704,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       fallback_discount: settle.discount,
       prestige_total: settle.total,
       run_duration_s: Math.round(s.runPlaySec),
+      pages_gained_run: getEvents().filter((event) => event.e === 'page_acquired' && event.run === s.run).length,
     });
 
     const maxMap: MapNo = mapUnlocked(3, s.clearedStages) ? 3 : mapUnlocked(2, s.clearedStages) ? 2 : 1;
@@ -557,11 +723,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       reputation: s.reputation + settle.total,
       repTotal: s.repTotal + settle.total,
       ownedRepNodes: s.ownedRepNodes,
+      collectedPages: s.collectedPages ?? [],
+      completedBooks: s.completedBooks ?? [],
       autoAdvance: s.autoAdvance,
       retireStep: null,
       retireCeremony: ceremonyData,
       retireToast: null,
-      battle: null, failure: null, ceremony: null, selectedMap: 1,
+      battle: null, failure: null, ceremony: null, selectedMap: 1, pendingTab: null,
     });
     track('run_start', { run: newRun, realm: 1, route: null }, {
       owned_nodes: s.ownedRepNodes, carry_xp: xp,
@@ -585,6 +753,132 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
+  grantPage: (pageId, channel) => {
+    const s = get();
+    if (channel === 'D') {
+      offlinePages();
+      return;
+    }
+    if (!isPageId(pageId)) return;
+    const source = PAGE_SOURCE_TABLE.find((page) => page.page_id === pageId);
+    if (!source) return;
+    if (channel === 'A' && source.channel !== 'Boss_kill') return;
+    if (channel === 'B' && source.channel !== 'trial_victory') return;
+    const collection = {
+      collectedPages: (s.collectedPages ?? []).filter(isPageId),
+      completedBooks: (s.completedBooks ?? []).filter(isBookId),
+    };
+    const result = grantFragmentPage(collection, pageId);
+    if (!result.grantedPage) return;
+    set({ collectedPages: [...result.collectedPages], completedBooks: [...result.completedBooks] });
+    emitPageGrant({ run: s.run, realm: s.realm, route: s.route }, result, channel);
+    persist(get());
+  },
+
+  challengeTrial: (trialId) => {
+    const s = get();
+    if (s.battle && !s.battle.resolved) return;
+    const trial = TRIAL_TABLE.find((entry) => entry.trial_id === trialId);
+    if (!trial || s.realm < 5 || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return;
+    const enemy: EnemyDef = {
+      ...trial.enemy_ref,
+      map: 3, stage: 0,
+      tags: [...trial.enemy_ref.tags],
+      kind: 'boss',
+      reward: { neili: 0, silver: 0, xp: 0 },
+    };
+    const build = playerBuild(s);
+    const result = fight(build, enemy, { mode: 'rng' });
+    const turnCount = result.turns.length;
+    const intervalMs = Math.min(Math.max(15000 / turnCount, 900), 30000 / turnCount);
+    set({
+      selectedMap: 3,
+      battle: {
+        map: 3, stage: 0, enemy, result,
+        revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
+        resolved: false, chainAt: null, chainStage: null, reward: null,
+        mode: 'trial', trialId,
+      },
+      pendingTab: 'battle',
+    });
+  },
+
+  challengeElite: (challengeId) => {
+    const s = get();
+    if (s.battle && !s.battle.resolved) return;
+    const enemyDef = MVP2_ELITE_CHALLENGE_ENEMIES.find((e) => e.id === challengeId);
+    if (!enemyDef) return;
+    // 解锁：所属地图 stages 1-5 全通（§5.1 v0.7 pre_challenge_neili 推导）+ 推荐境界达标
+    const map = enemyDef.map;
+    for (let i = 1; i <= enemyDef.unlockAfterStage; i++) {
+      if (!s.clearedStages.includes(stageKey(map, i))) return;
+    }
+    if (s.realm < enemyDef.recommendedRealm) return;
+    // 本轮已首胜不可重复（§5.2 v0.9 单解法约束 + 每轮限一次首通奖励）
+    if ((s.eliteChallengeWinsThisRun?.[challengeId] ?? 0) > 0) return;
+    const rewardRef = MVP2_ELITE_CHALLENGE_REWARDS.find((r) => r.challenge === enemyDef.rewardRef)!;
+    const enemy: EnemyDef = {
+      map, stage: 0,
+      name: enemyDef.name,
+      hp: enemyDef.hp, atk: enemyDef.atk, def: enemyDef.def,
+      hit: enemyDef.hit, dodge: enemyDef.dodge,
+      tags: [...enemyDef.tags],
+      kind: 'boss',
+      recommendedRealm: enemyDef.recommendedRealm,
+      reward: { neili: rewardRef.neili, silver: rewardRef.silver, xp: rewardRef.xp },
+    };
+    const build = playerBuild(s);
+    const result = fight(build, enemy, { mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes) });
+    const turnCount = result.turns.length;
+    const intervalMs = Math.min(Math.max(15000 / turnCount, 900), 30000 / turnCount);
+    set({
+      selectedMap: map,
+      battle: {
+        map, stage: 0, enemy, result,
+        revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
+        resolved: false, chainAt: null, chainStage: null, reward: null,
+        mode: 'elite', eliteChallengeId: challengeId,
+      },
+      pendingTab: 'battle',
+    });
+  },
+
+  buyShopPage: (pageId) => {
+    const s = get();
+    if (!isPageId(pageId) || (s.shopPurchasesThisRun ?? 0) >= 1) return;
+    if ((s.collectedPages ?? []).includes(pageId)) return;
+    const price = shopPrice(pageId);
+    if (price === null || s.reputation < price) return;
+    const source = PAGE_SOURCE_TABLE.find((page) => page.page_id === pageId);
+    if (!source) return;
+    const purchases = (s.shopPurchasesThisRun ?? 0) + 1;
+    set({ reputation: s.reputation - price, shopPurchasesThisRun: purchases });
+    get().grantPage(pageId, 'C');
+    track('shop_page_exchanged', { run: s.run, realm: s.realm, route: s.route }, {
+      page_id: pageId,
+      price_paid: price,
+      shop_purchases_this_run: purchases,
+    });
+    persist(get());
+  },
+
+  getFragmentEffects: () => computeFragmentEffects(
+    (get().completedBooks ?? []).filter(isBookId),
+  ),
+
+  getMissingPages: () => getMissingPages((get().collectedPages ?? []).filter(isPageId)),
+
+  openManualShelf: () => {
+    const s = get();
+    const collectedCount = (s.collectedPages ?? []).filter(isPageId).length;
+    const completedCount = (s.completedBooks ?? []).filter(isBookId).length;
+    track('manual_shelf_opened', { run: s.run, realm: s.realm, route: s.route }, {
+      collected_count: collectedCount,
+      completed_count: completedCount,
+      missing_count: PAGE_SOURCE_TABLE.length - collectedCount,
+    });
+  },
+
   // ---- 观察员会话（埋点规格 §1.1；tick 活跃秒口径天然扣除暂停区间） ----
 
   startSession: (testerId) => {
@@ -592,6 +886,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.sessionActive) return; // 防面板状态错乱导致重复 test_session_start
     track('test_session_start', { run: s.run, realm: s.realm, route: s.route }, {
       tester_id: testerId, build: BUILD, tables_version: TABLES_VERSION, telemetry_spec: TELEMETRY_SPEC,
+      missing_pages_snapshot: getMissingPages((s.collectedPages ?? []).filter(isPageId)),
     });
     set({ sessionActive: true });
     persist(get());
@@ -639,7 +934,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       ...FRESH, started: true, ceremony: null, battle: null, failure: null,
       selectedMap: 1, retireStep: null, retireCeremony: null, retireToast: null,
-      offlineSettlement: null,
+      offlineSettlement: null, pendingTab: null,
     });
     track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
     persist(get());
@@ -656,6 +951,54 @@ function resolveBattle(
   const b = s.battle!;
   if (b.resolved) return;
   const { enemy, result } = b;
+  if (b.mode === 'elite' && b.eliteChallengeId) {
+    track('elite_challenge_challenged', { run: s.run, realm: s.realm, route: s.route }, {
+      elite_challenge_id: b.eliteChallengeId,
+      result: result.win ? 'win' : 'loss',
+    });
+    let rewardApplied: BattleState['reward'] = null;
+    if (result.win && (s.eliteChallengeWinsThisRun?.[b.eliteChallengeId] ?? 0) === 0) {
+      const enemyReward = enemy.reward;
+      const neili = enemyReward.neili * battleNeiliMult(s.ownedRepNodes);
+      set({
+        dantian: s.dantian + neili,
+        silver: s.silver + enemyReward.silver,
+        xp: s.xp + enemyReward.xp,
+        eliteChallengeWinsThisRun: { ...(s.eliteChallengeWinsThisRun ?? {}), [b.eliteChallengeId]: 1 },
+        lastProgressSec: s.runPlaySec,
+      });
+      rewardApplied = { neili, silver: enemyReward.silver, xp: enemyReward.xp, refarm: false };
+      track('elite_challenge_first_clear', { run: s.run, realm: s.realm, route: s.route }, {
+        elite_challenge_id: b.eliteChallengeId,
+        neili_gained: neili, silver_gained: enemyReward.silver, xp_gained: enemyReward.xp,
+      });
+    } else {
+      rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false };
+    }
+    set({ battle: { ...b, resolved: true, chainAt: null, chainStage: null, reward: rewardApplied } });
+    persist(get());
+    return;
+  }
+  if (b.mode === 'trial' && b.trialId) {
+    track('trial_challenged', { run: s.run, realm: s.realm, route: s.route }, {
+      trial_id: b.trialId,
+      result: result.win ? 'win' : 'loss',
+    });
+    let rewardApplied: BattleState['reward'] = null;
+    if (result.win && (s.trialWinsThisRun?.[b.trialId] ?? 0) === 0) {
+      const pageId = nextTrialPage(b.trialId as TrialId, (s.collectedPages ?? []).filter(isPageId));
+      set({ trialWinsThisRun: { ...(s.trialWinsThisRun ?? {}), [b.trialId]: 1 } });
+      if (pageId) {
+        get().grantPage(pageId, 'B');
+        rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false, grantedPageId: pageId };
+      }
+    } else {
+      rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false };
+    }
+    set({ battle: { ...b, resolved: true, chainAt: null, chainStage: null, reward: rewardApplied } });
+    persist(get());
+    return;
+  }
   const key = stageKey(b.map, b.stage);
   const firstClear = !s.clearedStages.includes(key);
   const tid = targetId(enemy);
@@ -698,7 +1041,7 @@ function resolveBattle(
       });
     }
   } else {
-    if (isBoss3 && s.realm >= REALMS.length) b3Fails += 1;
+    if (isBoss3 && s.realm >= RETIRE_REALM_GATE) b3Fails += 1;
     const build = playerBuild(s);
     const diagCodes = diagnose(build, enemy, result, s.realm);
     failure = {
@@ -733,5 +1076,19 @@ function resolveBattle(
     refarmKey, refarmCount, refarmAt,
     battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
   });
+  if (result.win && enemy.kind === 'boss') {
+    const boss = tid === 'boss1' ? 'boss_1' : tid === 'boss2' ? 'boss_2' : null;
+    if (boss && (s.bossKillsThisRun?.[boss] ?? 0) === 0) {
+      const pageId = nextBossPage(boss, (s.collectedPages ?? []).filter(isPageId));
+      set({ bossKillsThisRun: { ...(s.bossKillsThisRun ?? {}), [boss]: 1 } });
+      if (pageId) {
+        get().grantPage(pageId, 'A');
+        const bAfter = get().battle!;
+        if (bAfter && bAfter.reward) {
+          set({ battle: { ...bAfter, reward: { ...bAfter.reward, grantedPageId: pageId } } });
+        }
+      }
+    }
+  }
   persist(get());
 }

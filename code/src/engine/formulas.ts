@@ -19,20 +19,33 @@ export function idleNeiliPerSec(realm: number): number {
   return 9 * Math.pow(1.25, realm - 1);
 }
 
-/** 周天进度派生显示（规格书 §6.1 v0.9 单钱包模型）：丹田内力对突破消耗的 5 段阈值 */
+/** 周天进度派生显示（规格书 §6.1 v0.9 单钱包模型 + 主题版本 spec §2 N 段推广）：
+ *  丹田内力对突破消耗的 N 段阈值；segments 默认 5（MVP-0 固定 5 段 fallback，维持 golden 用例） */
 export const CHARGE_SEGMENTS = 5;
-export function zhoutianProgress(dantianNeili: number, breakthroughCost: number): {
-  segmentsFull: number;      // 已圆满周天数 0–5
+export function zhoutianProgress(
+  dantianNeili: number,
+  breakthroughCost: number,
+  segments?: number
+): {
+  segmentsFull: number;      // 已圆满周天数 0–N
   currentSegmentPct: number; // 进行中周天的百分比 0–1
   ready: boolean;            // 丹田 ≥ 全额，可点「突破」
 } {
+  const N = segments ?? CHARGE_SEGMENTS;
   const clamped = Math.max(0, Math.min(dantianNeili, breakthroughCost));
-  const perSegment = breakthroughCost / CHARGE_SEGMENTS;
-  const segmentsFull = Math.min(CHARGE_SEGMENTS, Math.floor(clamped / perSegment));
+  const perSegment = breakthroughCost / N;
+  const segmentsFull = Math.min(N, Math.floor(clamped / perSegment));
   const remainder = clamped - segmentsFull * perSegment;
   return {
     segmentsFull,
-    currentSegmentPct: segmentsFull >= CHARGE_SEGMENTS ? 0 : remainder / perSegment,
+    currentSegmentPct: segmentsFull >= N ? 0 : remainder / perSegment,
     ready: dantianNeili >= breakthroughCost,
   };
+}
+
+/** 丹田充满后溢出转化（spec §5.3 裁决 D2，Q1 内力衍生临时状态）：
+ *  丹田充满后产出无处可去时转为气势；1 内力 = 1 气势；返回溢出量。
+ *  气势的累积、封顶、衰减由 gameStore 管理（spec §5）。 */
+export function overflowToQishi(dantianNeili: number, breakthroughCost: number): number {
+  return Math.max(0, dantianNeili - breakthroughCost);
 }

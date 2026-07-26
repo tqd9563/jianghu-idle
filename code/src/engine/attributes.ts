@@ -36,6 +36,9 @@ export function computeAttributes(
   route: RouteId | null,
   skillLevel: number,
   permPct = 0,
+  /** 窍穴/贯通加成总和（spec §9：加法合并进临时乘区，作用于 hp/atk/def）。
+   *  由调用方用 acupoints.totalAcupointBonus(realm, openedCount, meridianCount) 计算 */
+  acupointPct = 0,
 ): FinalAttributes {
   const base = REALMS[realm - 1];
   const def = route ? ROUTES[route] : null;
@@ -43,10 +46,10 @@ export function computeAttributes(
   const p = def?.perLevel ?? {};
   const L = route ? skillLevel : 0;
 
-  // 本轮临时乘区（路线赠予 + 武学，加法合并）；永久乘区首轮为 0
-  const atkTempPct = (p.atkPct ?? 0) * L;
-  const defTempPct = (g.defPct ?? 0) + (p.defPct ?? 0) * L;
-  const hpTempPct = (p.hpPct ?? 0) * L;
+  // 本轮临时乘区（路线赠予 + 武学 + 窍穴/贯通，加法合并）；永久乘区首轮为 0
+  const atkTempPct = (p.atkPct ?? 0) * L + acupointPct;
+  const defTempPct = (g.defPct ?? 0) + (p.defPct ?? 0) * L + acupointPct;
+  const hpTempPct = (p.hpPct ?? 0) * L + acupointPct;
 
   return {
     hp: Math.round(base.hp * (1 + permPct) * (1 + hpTempPct)),

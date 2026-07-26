@@ -3,7 +3,7 @@
  * 后续战斗/经济模块的完整 golden 用例由 sim/mvp0_sim.py 导出固定 fixture。
  */
 import { describe, expect, it } from 'vitest';
-import { hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress } from './formulas';
+import { hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, overflowToQishi } from './formulas';
 import { REALMS, skillUpgradeCost } from './content';
 
 describe('双曲防御（公式表 §2）', () => {
@@ -60,5 +60,30 @@ describe('周天派生显示（规格书 §6.1 v0.9 单钱包模型）', () => {
   });
   it('丹田 ≥ 全额 → 可突破', () => {
     expect(zhoutianProgress(21000, 21000).ready).toBe(true);
+  });
+});
+
+describe('周天 N 段推广（spec §2：境界 2-5 = 3/4/6/8）', () => {
+  it('境界 4 N=6：丹田 2,000 / 消耗 10,000 → 1 段圆满 + 20%', () => {
+    const p = zhoutianProgress(2000, 10000, 6);
+    expect(p.segmentsFull).toBe(1);
+    expect(p.currentSegmentPct).toBeCloseTo(0.2, 6);
+  });
+  it('境界 5 N=8：丹田 2,625 / 消耗 21,000 → 1 段圆满', () => {
+    const p = zhoutianProgress(2625, 21000, 8);
+    expect(p.segmentsFull).toBe(1);
+  });
+  it('MVP-0 fallback：不传 N 默认 5 段（维持 golden）', () => {
+    const p = zhoutianProgress(6900, 10000);
+    expect(p.segmentsFull).toBe(3);
+  });
+});
+
+describe('气势溢出转化（spec §5.3 裁决 D2）', () => {
+  it('丹田未满 → 溢出 0', () => {
+    expect(overflowToQishi(5000, 10000)).toBe(0);
+  });
+  it('丹田充满后溢出 500 → 气势 +500', () => {
+    expect(overflowToQishi(10500, 10000)).toBe(500);
   });
 });

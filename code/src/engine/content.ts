@@ -16,18 +16,25 @@ export interface RealmDef {
   breakthroughCost: number | null;
   /** 武学等级上限 = 境界 × 2（规格书 §6.4）；境界 6/7 上限固定 10，不开放 lv11 */
   skillCap: number;
+  /** 本境界周天数 N（spec §2：境界 2-5 = 3/4/6/8）；null = 无突破或本版未接入周天系统（用 MVP-0 固定 5 段 fallback） */
+  zhoutianCount: number | null;
+  /** 突破所需已通窍穴数 M（spec §3）；null = 无双条件突破 */
+  requiredAcupoints: number | null;
+  /** 本境界窍穴池大小（spec §3）；null = 无窍穴池 */
+  acupointPoolSize: number | null;
 }
 
 /** 境界表（内容表 §1 + MVP-2 内容表 §8.1）。基础暴击率 5%、暴击伤害 150% 全境界一致 */
 export const REALMS: RealmDef[] = [
-  { realm: 1, name: '江湖新丁', hp: 100, atk: 10, def: 5,  accuracy: 100, evasion: 10, breakthroughCost: null,   skillCap: 2 },
-  { realm: 2, name: '初窥门径', hp: 170, atk: 17, def: 9,  accuracy: 112, evasion: 13, breakthroughCost: 2800,  skillCap: 4 },
-  { realm: 3, name: '小有所成', hp: 290, atk: 29, def: 15, accuracy: 124, evasion: 16, breakthroughCost: 5000,  skillCap: 6 },
-  { realm: 4, name: '炉火纯青', hp: 495, atk: 49, def: 26, accuracy: 136, evasion: 19, breakthroughCost: 10000, skillCap: 8 },
-  { realm: 5, name: '一流高手', hp: 840, atk: 84, def: 44, accuracy: 148, evasion: 22, breakthroughCost: 21000, skillCap: 10 },
+  { realm: 1, name: '江湖新丁', hp: 100, atk: 10, def: 5,  accuracy: 100, evasion: 10, breakthroughCost: null,   skillCap: 2, zhoutianCount: null, requiredAcupoints: null, acupointPoolSize: null },
+  { realm: 2, name: '初窥门径', hp: 170, atk: 17, def: 9,  accuracy: 112, evasion: 13, breakthroughCost: 2800,  skillCap: 4, zhoutianCount: 3,    requiredAcupoints: 2,     acupointPoolSize: 4 },
+  { realm: 3, name: '小有所成', hp: 290, atk: 29, def: 15, accuracy: 124, evasion: 16, breakthroughCost: 5000,  skillCap: 6, zhoutianCount: 4,    requiredAcupoints: 2,     acupointPoolSize: 5 },
+  { realm: 4, name: '炉火纯青', hp: 495, atk: 49, def: 26, accuracy: 136, evasion: 19, breakthroughCost: 10000, skillCap: 8, zhoutianCount: 6,    requiredAcupoints: 3,     acupointPoolSize: 6 },
+  { realm: 5, name: '一流高手', hp: 840, atk: 84, def: 44, accuracy: 148, evasion: 22, breakthroughCost: 21000, skillCap: 10, zhoutianCount: 8,   requiredAcupoints: 4,     acupointPoolSize: 8 },
   // MVP-2A §8.1：从 Realm 5 冻结值逐境界对 HP/ATK/DEF 乘 2.0；HIT/DODGE +12/+3；技能上限固定 10
-  { realm: 6, name: '一代宗师', hp: 1680, atk: 168, def: 88,  accuracy: 160, evasion: 25, breakthroughCost: 48000,  skillCap: 10 },
-  { realm: 7, name: '登峰造极', hp: 3360, atk: 336, def: 176, accuracy: 172, evasion: 28, breakthroughCost: 108000, skillCap: 10 },
+  // 周天字段 null：本版（Q4a）不接入境界 6-7 周天系统，未来大周天段立项时定稿
+  { realm: 6, name: '一代宗师', hp: 1680, atk: 168, def: 88,  accuracy: 160, evasion: 25, breakthroughCost: 48000,  skillCap: 10, zhoutianCount: null, requiredAcupoints: null, acupointPoolSize: null },
+  { realm: 7, name: '登峰造极', hp: 3360, atk: 336, def: 176, accuracy: 172, evasion: 28, breakthroughCost: 108000, skillCap: 10, zhoutianCount: null, requiredAcupoints: null, acupointPoolSize: null },
 ];
 
 export const BASE_CRIT_RATE = 0.05;

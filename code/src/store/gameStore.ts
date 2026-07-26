@@ -8,7 +8,12 @@ import { create } from 'zustand';
 import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
 import { getStage, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef } from '../engine/enemies';
-import { idleNeiliPerSec, zhoutianProgress } from '../engine/formulas';
+import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
+import {
+  REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
+  consumeQishi, qishiToBonus,
+  type AcupointState,
+} from '../engine/acupoints';
 import {
   FALLBACK_FAIL_STREAK, FALLBACK_STALL_MIN, REP_NODE_MAP,
   battleNeiliMult, bossDmgBonus, breakthroughDiscount, carryXp, hasNode, idleMult,
@@ -86,6 +91,14 @@ interface PersistedState {
   bossKillsThisRun?: Record<string, number>;
   /** 本轮指名寻访购买次数，归隐重置。 */
   shopPurchasesThisRun?: number;
+  /** 窍穴运行时状态（按穴 ID 索引）；突破时不清零（D1 保留到归隐），归隐时重置。可选字段兼容旧存档。 */
+  acupointProgress?: Record<string, AcupointState>;
+  /** 当前气势（内力衍生临时状态，Q1）；突破时清零，归隐时清零。可选字段兼容旧存档。 */
+  qishi?: number;
+  /** 剩余冲穴机会（周天圆满发放，境界内有效）；突破时清零，归隐时清零。可选字段兼容旧存档。 */
+  chongxueChances?: number;
+  /** 窍穴图鉴（已通窍穴 ID 列表，归隐保留为记录）。可选字段兼容旧存档。 */
+  acupointLog?: string[];
 }
 
 export interface BattleState {
@@ -165,6 +178,8 @@ interface GameState extends PersistedState {
   recordNaturalWindowNote: (note: NaturalWindowNote) => void;
   tick: (now: number) => void;
   breakthrough: () => void;
+  /** 冲穴（spec §5.2）：消耗 1 机会，概率判定，保底累积，气势加成应用 */
+  attemptAcupoint: (acupointId: string) => void;
   dismissCeremony: () => void;
   selectRoute: (r: RouteId) => void;
   switchRoute: (to: RouteId) => void;
@@ -208,6 +223,7 @@ const FRESH: PersistedState = {
   sessionActive: false, paused: false,
   collectedPages: [], completedBooks: [],
   trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
+  acupointProgress: {}, qishi: 0, chongxueChances: 0, acupointLog: [],
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -486,20 +502,30 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // 挂机产出入丹田；活跃时长累计（run_duration_s 口径：页面关闭不计）
     if (dt > 0) {
-      const dantian = s.dantian + effIdleRate(s) * dt;
+      const cost = effBreakCost(s);
+      let dantian = s.dantian + effIdleRate(s) * dt;
       const runPlaySec = s.runPlaySec + dt;
       let chargeHighWater = s.chargeHighWater;
-      const cost = effBreakCost(s);
+      let qishi = s.qishi ?? 0;
+      let chongxueChances = s.chongxueChances ?? 0;
       if (cost !== null) {
-        const { segmentsFull } = zhoutianProgress(dantian, cost);
+        // 丹田上限 = 突破消耗（spec §4.1）；溢出转气势（spec §5.3 裁决 D2）
+        if (dantian > cost) {
+          qishi += overflowToQishi(dantian, cost);
+          dantian = cost;
+        }
+        // N 段动态（spec §2：境界 2-5 = 3/4/6/8；旧存档 fallback 5 段）
+        const N = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
+        const { segmentsFull } = zhoutianProgress(dantian, cost, N);
         while (chargeHighWater < segmentsFull) {
           chargeHighWater += 1;
+          chongxueChances += 1;  // 周天圆满发 1 次冲穴机会（spec §5.1）
           track('charge_segment_full', { run: s.run, realm: s.realm, route: s.route }, {
             realm_target: s.realm + 1, segment: chargeHighWater,
           });
         }
       }
-      set({ dantian, chargeHighWater, runPlaySec });
+      set({ dantian, chargeHighWater, runPlaySec, qishi, chongxueChances });
     }
 
     // 归隐可用上报（§6.6 + 埋点规格 §1.4）：保底先触发的，后续击败 Boss 3 补发 standard
@@ -545,12 +571,68 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     const cost = effBreakCost(s);
     if (cost === null || s.dantian < cost) return;
+    // 双条件校验（spec §6）：丹田充满 且 已通窍穴数 ≥ M
+    const requiredAcupoints = REALMS[s.realm - 1].requiredAcupoints;
+    if (requiredAcupoints !== null) {
+      const openedCount = Object.values(s.acupointProgress ?? {}).filter(a => a.opened).length;
+      if (!breakthroughReady(s.dantian, cost, openedCount, requiredAcupoints)) return;
+    }
     const realmTo = s.realm + 1;
+    // 窍穴图鉴更新（归隐保留，spec §8）
+    const newAcupointLog = [...new Set([
+      ...(s.acupointLog ?? []),
+      ...Object.entries(s.acupointProgress ?? {})
+        .filter(([, a]) => a.opened)
+        .map(([id]) => id),
+    ])];
     set({
       dantian: s.dantian - cost, realm: realmTo, chargeHighWater: 0, ceremony: realmTo,
       lastProgressSec: s.runPlaySec,
+      // 突破时清零气势、冲穴机会（spec §5/§5.1）；窍穴进度保留（D1 保留到归隐）
+      qishi: 0, chongxueChances: 0,
+      acupointLog: newAcupointLog,
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, { realm_to: realmTo });
+    persist(get());
+  },
+
+  /** 冲穴（spec §5.2）：消耗 1 机会，概率判定，保底累积，气势加成应用 */
+  attemptAcupoint: (acupointId: string) => {
+    const s = get();
+    const chances = s.chongxueChances ?? 0;
+    if (chances <= 0) return;
+    const realm = s.realm;
+    const acupointData = REALM_ACUPOINTS[realm];
+    if (!acupointData) return;  // 本版境界 1/6/7 不接入
+    const acupointDef = acupointData.acupoints.find(a => a.id === acupointId);
+    if (!acupointDef) return;
+    const current = s.acupointProgress?.[acupointId] ?? { failCount: 0, opened: false };
+    if (current.opened) return;  // 已通不能再冲
+
+    // 气势加成（spec §5：满档 +15pp，消耗 70%）
+    const qishiBonus = qishiToBonus(s.qishi ?? 0);
+    const roll = Math.random();
+    const result = attemptAcupointFn(current, qishiBonus, roll);
+
+    // 更新窍穴状态
+    const newAcupointProgress = {
+      ...s.acupointProgress,
+      [acupointId]: { failCount: result.newFailCount, opened: result.opened },
+    };
+    const newQishi = consumeQishi(s.qishi ?? 0);
+    const newChongxueChances = chances - 1;
+
+    set({
+      acupointProgress: newAcupointProgress,
+      qishi: newQishi,
+      chongxueChances: newChongxueChances,
+    });
+    track('acupoint_attempt', { run: s.run, realm, route: s.route }, {
+      acupoint_id: acupointId,
+      success: result.success,
+      forced: result.forced,
+      qishi_bonus_pp: Math.round(result.qishiBonusApplied * 10000) / 100,
+    });
     persist(get());
   },
 
@@ -726,6 +808,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       collectedPages: s.collectedPages ?? [],
       completedBooks: s.completedBooks ?? [],
       autoAdvance: s.autoAdvance,
+      // 窍穴图鉴归隐保留（spec §8）；窍穴进度/气势/机会由 ...FRESH 重置
+      acupointLog: s.acupointLog ?? [],
       retireStep: null,
       retireCeremony: ceremonyData,
       retireToast: null,

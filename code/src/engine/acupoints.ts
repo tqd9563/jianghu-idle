@@ -1,5 +1,5 @@
 /**
- * 窍穴 / 经脉 / 冲穴 / 气势纯函数引擎 —— 权威来源：docs/systems/zhoutian-meridian-spec.md
+ * 窍穴 / 经脉 / 冲穴 / 气势纯函数引擎 —— 权威来源：docs/systems/zhoutian.md v2.0
  * 本模块为纯函数，禁止引入 UI/存储依赖；与 sim/zhoutian_sim.py 做 golden 对照。
  */
 

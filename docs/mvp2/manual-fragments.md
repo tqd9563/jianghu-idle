@@ -11,6 +11,8 @@
 > **上游**：`cadence.md` §2 / §3 / §5 / §8、`../overview/worldview.md`、`../directions/wuxue-collection-direction-note.md`、`../mvp0/spec.md` §7 / §8、`../mvp0/economy.md`、`../mvp1/spec.md` §5、`../mvp1/offline-rewards.md` 表 B
 >
 > **数值纪律**：本文只给规则形态与调参原则；结构值（本数 / 页数）标 `[待 MVP-2B 复核]`，效果、难度与价格数值一律「MVP-2B 定」
+>
+> **当前权威移至**：`../../rules/manual-fragments.md` v1.4（精简版，去评估推导，规则口径零变更）。本文件 v1.3 仍保留为历史证据，含完整评估过程。
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * 存档最低规格（MVP-0 规格书 §12 实现路线图前置）：
  * 本地自动持久化 + 刷新/崩溃无损恢复 + 测试者一键重置 + 与埋点同级导出。
- * MVP-0「页面关闭期间不结算任何收益」条款已随 MVP-1 开工解除（docs/mvp1/spec.md §5 衔接注记）：
+ * MVP-0「页面关闭期间不结算任何收益」条款已随 MVP-1 开工解除（docs/rules/offline-rewards.md §1.2）：
  * savedAt 时间戳即离线时长的权威来源，出关结算见 engine/offlineRewards.ts + store.init。
  */
 

@@ -1,4 +1,4 @@
-/** 秘籍残页规则层 —— docs/mvp2/manual-fragments.md §3.1–§3.5。 */
+/** 秘籍残页规则层 —— docs/rules/manual-fragments.md v1.4。 */
 import type { Build } from './combat';
 import type { RouteId } from './content';
 import {

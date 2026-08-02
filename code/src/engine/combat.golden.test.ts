@@ -1,6 +1,6 @@
 /**
  * 战斗引擎 golden 对照（规格书 §12 实现路线图前置）：
- * fixture 由 docs/mvp0/sim/export_fixtures.py 从 mvp0_sim.py 导出，
+ * fixture 由 docs/systems/sim/export_fixtures.py 从 mvp0_sim.py 导出，
  * EV 模式结果（胜负/回合数/剩余血量比）与敌人生成属性必须逐数一致。
  * 若本测试失败：先查实现是否偏离 sim，需要改规则时先改 sim 再重导 fixture。
  */

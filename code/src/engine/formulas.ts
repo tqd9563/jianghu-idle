@@ -1,5 +1,5 @@
 /**
- * 核心结算公式 —— 权威来源：docs/mvp0/formulas.md §2 / §3
+ * 核心结算公式 —— 权威来源：docs/rules/formulas.md §2 / §3
  * 本模块为纯函数，禁止引入 UI/存储依赖；与 docs/mvp0/sim/mvp0_sim.py 做 golden 对照。
  */
 

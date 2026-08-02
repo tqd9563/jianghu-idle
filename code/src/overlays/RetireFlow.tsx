@@ -1,6 +1,6 @@
 /**
  * 归隐流程：三栏预览 → 二次确认（规格书 §8.6-1/2 硬性要求）
- * 全部玩家可见文案逐字取自 docs/mvp0/copy/retire.md §2/§3/§6（冻结，不得改写）。
+ * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md §2/§3/§6（冻结，不得改写）。
  */
 import { settleRetire } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';

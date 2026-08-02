@@ -9,6 +9,8 @@
 > **配套**：`playtest-plan.md`（消费导出数据）、`formulas.md` §5（诊断规则编号）、`content.md` §2（关卡编号）、`economy.md`（结算字段与节点 ID）
 >
 > **范围纪律**：只服务一次性设计验证，不是产品分析体系——纯本地、JSON 一键导出、无服务端管线；MVP-1 长期数据体系另立规格（`../mvp1/telemetry.md`），勿在本文上扩建
+>
+> **当前权威移至**：`../../rules/telemetry.md` v2.0（与 mvp1/mvp2 telemetry 合并去重，口径零变更）。本文件仍保留为历史证据。
 
 ## 推导锚点
 

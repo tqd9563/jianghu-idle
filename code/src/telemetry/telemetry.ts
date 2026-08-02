@@ -1,5 +1,5 @@
 /**
- * 埋点 —— 权威来源：docs/mvp0/telemetry.md v1.0
+ * 埋点 —— 权威来源：docs/rules/telemetry.md v2.0
  * 公共信封 { e, ts, run, realm, route, ...专有字段 }；事件名以规格 §1.1–1.4 为准，实现不得自创。
  * 纯本地持久化（与存档同级），JSON 一键导出。
  */

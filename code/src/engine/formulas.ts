@@ -1,6 +1,6 @@
 /**
  * 核心结算公式 —— 权威来源：docs/mvp0/formulas.md §2 / §3
- * 本模块为纯函数，禁止引入 UI/存储依赖；与 docs/mvp0/sim/mvp0_sim.py 做 golden 对照。
+ * 本模块为纯函数，禁止引入 UI/存储依赖；与 docs/systems/sim/mvp0_sim.py 做 golden 对照。
  */
 
 /** 双曲防御减免系数：受到伤害 = 攻击 × 100/(100+DEF)。常数 K=100（调境界底数须联动复查，公式表 §3.1） */

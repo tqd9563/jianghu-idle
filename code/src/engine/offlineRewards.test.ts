@@ -1,6 +1,5 @@
 /**
- * 离线收益测试 —— 覆盖 docs/mvp1/spec.md §8.1 A1（对账）/A3（触顶）/A5（刷新边界）/A6（时钟边界）
- * 期望值出自 docs/mvp1/offline-rewards.md §3.3 满额收益校验表（floor 口径逐格核对）。
+ * 离线收益测试 —— 覆盖 docs/rules/offline-rewards.md §1.3（A1/A3/A5/A6）
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadSavedAt, saveGame, setDebugOfflineCap } from '../save/storage';

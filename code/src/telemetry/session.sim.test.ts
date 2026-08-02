@@ -12,7 +12,7 @@ import { REALM_ACUPOINTS, type AcupointState } from '../engine/acupoints';
 import { effBreakCost, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
 import { exportTelemetryJSON, getEvents } from './telemetry';
 
-const OUT_DIR = resolve(process.cwd(), '../docs/mvp0/sim/sample');
+const OUT_DIR = resolve(process.cwd(), '../code/test-output');
 const T0 = Date.UTC(2026, 6, 6, 9, 0, 0);
 
 const st = () => useGameStore.getState();

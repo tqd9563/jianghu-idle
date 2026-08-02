@@ -1,5 +1,5 @@
 /**
- * 秘籍残页数据层 —— docs/mvp2/manual-fragments.md §3.1–§3.5 / §4.2。
+ * 秘籍残页数据层 —— docs/rules/manual-fragments.md v1.4。
  * 本模块只定义首发内容与数值，不实现发放、集齐、效果应用或商店行为。
  */
 import type { RouteId } from './content';

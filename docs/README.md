@@ -15,10 +15,18 @@
 | `rules/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
+| `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
 | `mvp0/copy/battle.md` + `mvp0/copy/retire.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx |
-| `mvp0/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
-| `mvp2/content.md` | MVP-2 已落地内容数值（境界 6-7/精英挑战/秘籍残页数据） | mvp2Content.ts, enemies.ts |
-| `mvp2/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
+| `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
+
+### 全局设计
+
+### 全局设计
+
+| 文档 | 角色 |
+|---|---|
+| `overview/game-design.md` | 长线 GDD（通俗重写版，框架口径零变更） |
+| `overview/worldview.md` | 世界观宪章 |
 
 ### 当前主题权威（主题版本设定+规格化）
 
@@ -38,7 +46,6 @@
 | `mvp0/scope.md` / `playtest-plan.md` / `simulation-report.md` | 未执行/已归档 | — |
 | `mvp2/closure.md` | 已收口，R7 销账，R8 待填 | — |
 | `mvp2/cadence.md` §7 | 主题版本节奏口径 | — |
-| `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
 | `mvp2/sim/run_all_tests.py` | MVP-2 验证链主入口 | `python3 docs/mvp2/sim/run_all_tests.py` |
 | `mvp2/sim/checkpoint_snapshot.py` | 动态加载 `mvp0/sim/mvp0_sim.py` | — |
 | `directions/*.md` | 已降为历史，被 systems/ 取代 | — |

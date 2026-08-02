@@ -152,7 +152,7 @@ function getMvp2Stages(): EnemyDef[] {
 
 /**
  * STAGES 只含 MVP-0 三地图 28 关——prestige.ts 既有 ELITE_KEYS/TOTAL_STAGES 计算依赖此口径
- * （`docs/mvp0/economy.md §1.2` 三图全通 +30% 表现加成）。MVP-2 地图 4/5 stages 1-9 通过
+ * （`docs/rules/economy.md §1.2` 三图全通 +30% 表现加成）。MVP-2 地图 4/5 stages 1-9 通过
  * `getStage()` lazy 合并查询，避免循环依赖初始化与 MVP-0 既有声望判据破坏。
  */
 export const STAGES: readonly EnemyDef[] = buildStages();

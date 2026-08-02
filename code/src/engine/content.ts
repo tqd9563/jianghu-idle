@@ -1,6 +1,5 @@
 /**
- * 内容数据 —— 权威来源：docs/mvp0/content.md v1.1（MVP-0 §1 境界 1-5）
- * + docs/mvp2/content.md §8.1（MVP-2A 境界 6-7）。
+ * 内容数据 —— 权威来源：docs/rules/content.md §1（境界 1-7）
  * 只搬运定稿数值，禁止在此调参；改数值先改内容表并重跑 sim 校验。
  */
 

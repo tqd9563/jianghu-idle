@@ -11,6 +11,8 @@
 > **上游**：`content-depth.md`、`manual-fragments.md`、`cadence.md` §3、`../overview/worldview.md`、`../mvp0/content.md`
 >
 > **数值纪律**：Realm 6/7 与 Boss 4/5 战斗值为本段权威；收益、事件与 bank 未授权时保持待定
+>
+> **当前权威移至**：`../../rules/content.md` v2.0（与 `../mvp0/content.md` 合并，口径零变更）。本文件 v0.9 仍保留为历史证据，含完整推导过程与字段定义。
 
 ---
 

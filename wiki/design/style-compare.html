@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>《江湖无尽录》视觉风格方向四象限对比</title>
+<title>《江湖无尽录》视觉风格方向五方向对比</title>
 <style>
   /* ============ 全局 ============ */
   :root {
@@ -47,13 +47,13 @@
 
   .board {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
     gap: 24px;
     padding: 24px;
     max-width: 2560px;
     margin: 0 auto;
   }
-  @media (max-width: 1200px) {
+  @media (max-width: 900px) {
     .board { grid-template-columns: 1fr; }
   }
 
@@ -192,6 +192,44 @@
     --radius-pill: 12px;
     --border-panel: 1px solid var(--line);
     --panel-shadow: 0 4px 16px oklch(0.25 0.03 235 / 0.06), inset 0 1px 0 oklch(1 1 1 / 0.4);
+  }
+
+  .theme-ink {
+    /* 水墨武侠 · 焦墨山影朱砂印 */
+    /* 与 night（蓝黑烛金）区隔：暖黑墨底（hue 75 vs 262）；与 xuan（浅纸朱印）区隔：深墨非浅纸 */
+    --bg: oklch(0.16 0.008 75);
+    --surface: oklch(0.22 0.010 75);
+    --surface-2: oklch(0.28 0.012 75);
+    --ink: oklch(0.88 0.008 75);             /* 焦墨 — 提亮以拉满正文对比 */
+    --muted: oklch(0.73 0.012 75);            /* 重墨 — 次级文字 AA 余量 */
+    --faint: oklch(0.66 0.012 75);           /* 淡墨 — 标签贴近 AA，区别 bronze 的 3.08 */
+    --line: oklch(0.34 0.015 75);
+    --line-strong: oklch(0.48 0.020 75);
+    --primary: oklch(0.65 0.18 28);          /* 朱砂印 — 提亮至鲜朱，令文字场景过 AA */
+    --primary-ink: oklch(0.15 0.01 28);      /* 印面阴文墨黑 — 朱底负空间，区别 night 烛墨 */
+    --accent: oklch(0.72 0.04 200);          /* 青锋 — 极淡冷灰青，剑气穿雾 */
+    --accent-soft: oklch(0.72 0.04 200 / 0.12);
+    --gold: oklch(0.70 0.10 75);             /* 落款金褐 — 永久加成（区别 night 烛金） */
+    --poison: oklch(0.62 0.13 145);
+    --hp: oklch(0.60 0.16 25);
+    --shield: oklch(0.62 0.10 240);
+    --crit: oklch(0.66 0.18 28);             /* 暴击 = 朱砂印亮一档 — 印章即「此刃已落」 */
+    --bar-track: oklch(0.30 0.012 75);
+    --shadow: 0 2px 6px oklch(0.10 0.01 75 / 0.45);
+    --glow-num: 0 0 10px oklch(0.65 0.18 28 / 0.25);
+
+    --radius-panel: 4px;                     /* 微弧 — 湿笔非刻刀，区别 xuan 的 0 */
+    --radius-btn: 4px;
+    --radius-tag: 2px;
+    --radius-pill: 6px;
+    --border-panel: 1px solid var(--line);
+    --panel-shadow: var(--shadow);
+
+    /* 水墨雾氛：墨色在卷顶晕开、卷底沉淀，区别于纯色平涂的 dark 主题 */
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.19 0.009 75 / 0.75), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 78% 100%, oklch(0.13 0.008 75 / 0.55), transparent 60%),
+      var(--bg);
   }
 
   /* ============ 顶栏与说明 ============ */
@@ -391,8 +429,8 @@
 <body>
 
 <header class="page-header">
-  <h1 id="page-title">《江湖无尽录》视觉风格方向四象限对比</h1>
-  <p>评估游戏核心界面的四个风格方向，共享同一套内容结构。</p>
+  <h1 id="page-title">《江湖无尽录》视觉风格方向五方向对比</h1>
+  <p>评估游戏核心界面的五个风格方向，共享同一套内容结构。前四项为既有方向，水墨江湖为新提案。</p>
 </header>
 
 <main class="board" id="board" aria-labelledby="page-title"></main>
@@ -642,6 +680,18 @@
         <div><b>色彩</b> 江水沉青、雾白与清冷寒调</div>
         <div><b>材质</b> 湿润冷冽的空间，层叠远近如江雾</div>
         <div><b>字体</b> 清晰素雅，强调旅途路线与抉择感</div>
+      `
+    },
+    {
+      id: 'ink',
+      tag: '新提案',
+      tagClass: 'candidate',
+      title: '水墨江湖',
+      en: 'Ink Wash Wuxia',
+      desc: `
+        <div><b>色彩</b> 焦墨暖黑为底，朱砂印为锋，青锋冷灰为雾</div>
+        <div><b>材质</b> 水墨晕染的山影账卷，墨色五层（焦浓重淡清）叠暗</div>
+        <div><b>字体</b> 宋体如题款落印，朱印落锋处即为暴击</div>
       `
     }
   ];

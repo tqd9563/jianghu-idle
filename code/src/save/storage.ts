@@ -9,6 +9,9 @@ const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
 const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
 
+/** 存档版本号（v1 = MVP-0/1/2 无周天系统；v2 = 主题版本加窍穴/经脉/气势字段） */
+export const SAVE_VERSION = 2;
+
 export interface LiveTestWindowRecord {
   readonly windowId: string;
   readonly startedAt: number;
@@ -27,7 +30,7 @@ const store: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> =
       };
 
 export function saveGame(state: unknown): void {
-  store.setItem(SAVE_KEY, JSON.stringify({ savedAt: Date.now(), state }));
+  store.setItem(SAVE_KEY, JSON.stringify({ savedAt: Date.now(), version: SAVE_VERSION, state }));
 }
 
 export function loadGame<T>(): T | null {
@@ -38,6 +41,28 @@ export function loadGame<T>(): T | null {
   } catch {
     return null;
   }
+}
+
+/** 加载存档并返回版本号（旧存档无 version 字段则视为 v1）；gameStore 用此决定迁移策略 */
+export function loadGameWithVersion<T>(): { state: T; version: number } | null {
+  const raw = store.getItem(SAVE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { state: T; version?: number };
+    return { state: parsed.state, version: parsed.version ?? 1 };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 存档迁移框架：从 fromVer 迁移到 toVer。
+ * 本版 v1→v2 只新增字段（由 gameStore 的 {...FRESH, ...saved} merge 处理），
+ * storage.ts 不做具体迁移逻辑，只提供版本号供 gameStore 决策。
+ * 未来若需字段重命名或删除，在此扩展。
+ */
+export function migrate<T>(state: T, _fromVer: number, _toVer: number): T {
+  return state;
 }
 
 export function resetGame(): void {

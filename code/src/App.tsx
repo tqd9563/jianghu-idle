@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { computeAttributes } from './engine/attributes';
 import { REALMS } from './engine/content';
 import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
-import { zhoutianProgress } from './engine/formulas';
+import { CHARGE_SEGMENTS, zhoutianProgress } from './engine/formulas';
 import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore } from './store/gameStore';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { applyDebugHash } from './debug';
@@ -68,7 +68,8 @@ export default function App() {
   const realmDef = REALMS[s.realm - 1];
   const rate = effIdleRate(s);
   const breakCost = effBreakCost(s);
-  const progress = breakCost !== null ? zhoutianProgress(s.dantian, breakCost) : null;
+  const N = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
+  const progress = breakCost !== null ? zhoutianProgress(s.dantian, breakCost, N) : null;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
   const routeSelectOpen = s.realm >= 2 && s.route === null && s.retireCeremony === null;
   const retire = retireKind(s);
@@ -148,7 +149,7 @@ export default function App() {
               <span className="mini-bar">
                 <i style={{ width: `${Math.min(100, (s.dantian / breakCost!) * 100)}%` }} />
               </span>{' '}
-              <b>{progress.segmentsFull}/5</b>
+              <b>{progress.segmentsFull}/{N}</b>
               {!progress.ready && <> · 第{CN[progress.segmentsFull + 1]}周天 {Math.floor(progress.currentSegmentPct * 100)}%</>}
               {progress.ready && <> · 圆满</>}
             </button>
@@ -215,7 +216,7 @@ export default function App() {
   );
 }
 
-const CN = ['零', '一', '二', '三', '四', '五'];
+const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 function tabCls(cur: TabId, id: TabId) {
   return cur === id ? 'game-tab active' : 'game-tab';
 }

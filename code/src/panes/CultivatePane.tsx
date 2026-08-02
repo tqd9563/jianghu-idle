@@ -4,9 +4,13 @@ import { REALMS } from '../engine/content';
 import { CHARGE_SEGMENTS, zhoutianProgress } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
 import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/gameStore';
+import {
+  REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete,
+} from '../engine/acupoints';
+import { AcupointPanel } from './AcupointPanel';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
-const CN = ['零', '一', '二', '三', '四', '五'];
+const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export function CultivatePane() {
@@ -14,8 +18,20 @@ export function CultivatePane() {
   const nextRealm = s.realm < REALMS.length ? REALMS[s.realm] : null;
   const breakCost = effBreakCost(s);
   const rate = effIdleRate(s);
-  const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
-  const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel) : null;
+  // 窍穴/贯通加成（spec §9：加法合并进临时乘区）
+  const acupointData = REALM_ACUPOINTS[s.realm];
+  const openedIds = new Set(
+    Object.entries(s.acupointProgress ?? {})
+      .filter(([, a]) => a.opened)
+      .map(([id]) => id)
+  );
+  const openedCount = openedIds.size;
+  const meridianCount = acupointData
+    ? acupointData.meridians.filter(m => isMeridianComplete(m, openedIds)).length
+    : 0;
+  const acupointPct = totalAcupointBonus(s.realm, openedCount, meridianCount);
+  const attrs = computeAttributes(s.realm, s.route, s.skillLevel, 0, acupointPct);
+  const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel, 0, acupointPct) : null;
   const routeDef = s.route ? ROUTES[s.route] : null;
 
   return (
@@ -31,6 +47,8 @@ export function CultivatePane() {
                 dantian={s.dantian}
                 cost={breakCost!}
                 discounted={breakCost! < nextRealm.breakthroughCost!}
+                segments={REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS}
+                chargeHighWater={s.chargeHighWater}
               />
               <BreakthroughButton />
               <div className="cap-note">
@@ -65,6 +83,8 @@ export function CultivatePane() {
           </>
         )}
       </section>
+
+      <AcupointPanel />
 
       <section className="panel">
         <div className="panel-head">人物属性 <span className="sub">当前{nextRealm ? ' → 突破后' : ''}</span></div>
@@ -118,20 +138,29 @@ function AttrRow({ name, cur, next }: { name: string; cur: string; next: string 
   );
 }
 
-function ChargeTrack({ dantian, cost, discounted }: { dantian: number; cost: number; discounted: boolean }) {
-  const p = zhoutianProgress(dantian, cost);
+function ChargeTrack({
+  dantian, cost, discounted, segments, chargeHighWater,
+}: {
+  dantian: number; cost: number; discounted: boolean;
+  segments: number; chargeHighWater: number;
+}) {
+  const N = segments;
+  const p = zhoutianProgress(dantian, cost, N);
   return (
     <>
       <div className="kv">
         <span className="k">总消耗</span>
         <span className="v">
-          {fmt(cost)} 内力（每周天 {fmt(cost / CHARGE_SEGMENTS)} × {CHARGE_SEGMENTS}）
+          {fmt(cost)} 内力（每周天 {fmt(cost / N)} × {N}）
           {discounted && <span className="perm"> · 快速入门 −30%</span>}
         </span>
       </div>
-      <div className="charge-track" aria-label={`周天进度 ${p.segmentsFull} / ${CHARGE_SEGMENTS}`}>
-        {Array.from({ length: CHARGE_SEGMENTS }, (_, i) => {
-          if (i < p.segmentsFull) return <div key={i} className="charge-seg full" />;
+      <div className="charge-track" aria-label={`周天进度 ${p.segmentsFull} / ${N}`}>
+        {Array.from({ length: N }, (_, i) => {
+          // 已圆满的周天显示常亮珠点（印记呈现，锁定点 2：新高水位）
+          const isPearl = i < chargeHighWater;
+          if (i < p.segmentsFull)
+            return <div key={i} className={`charge-seg full${isPearl ? ' pearl' : ''}`} />;
           if (i === p.segmentsFull && p.currentSegmentPct > 0)
             return (
               <div key={i} className="charge-seg part">
@@ -144,7 +173,7 @@ function ChargeTrack({ dantian, cost, discounted }: { dantian: number; cost: num
       <div className="charge-label">
         <span>丹田内力 {fmt(Math.min(dantian, cost))} / {fmt(cost)}</span>
         {p.ready ? (
-          <span className="gold">五周天圆满</span>
+          <span className="gold">{CN[N]}周天圆满</span>
         ) : (
           <span>第{CN[p.segmentsFull + 1]}周天 {Math.floor(p.currentSegmentPct * 100)}%</span>
         )}
@@ -156,10 +185,21 @@ function ChargeTrack({ dantian, cost, discounted }: { dantian: number; cost: num
 function BreakthroughButton() {
   const s = useGameStore();
   const nextRealm = REALMS[s.realm];
-  const ready = s.dantian >= effBreakCost(s)!;
+  const cost = effBreakCost(s);
+  const dantianReady = cost !== null && s.dantian >= cost;
+  // 双条件校验（spec §6）：丹田充满 且 已通窍穴数 ≥ M
+  const requiredAcupoints = REALMS[s.realm - 1].requiredAcupoints;
+  const openedCount = Object.values(s.acupointProgress ?? {}).filter(a => a.opened).length;
+  const acupointReady = requiredAcupoints === null || openedCount >= requiredAcupoints;
+  const ready = dantianReady && acupointReady;
+  const label = ready
+    ? `突破 · ${nextRealm.name}`
+    : dantianReady && !acupointReady
+      ? `窍穴未通齐（${openedCount}/${requiredAcupoints}）`
+      : '运转周天中…';
   return (
     <button className={ready ? 'btn pulse' : 'btn'} disabled={!ready} onClick={s.breakthrough}>
-      {ready ? `突破 · ${nextRealm.name}` : '运转周天中…'}
+      {label}
     </button>
   );
 }

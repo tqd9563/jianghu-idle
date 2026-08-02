@@ -1,4 +1,4 @@
-/** MVP-2 finalized, non-playable value integration — docs/mvp2/content.md §8.1/§8.2/§9.1/§9.2/§9.4. */
+/** MVP-2 finalized, non-playable value integration — docs/rules/content.md §1/§2. */
 import type { EnemyTag } from './enemies';
 import { pyRound } from './enemies';
 import type { RouteId } from './content';
@@ -60,7 +60,7 @@ export const MVP2_BOSS_REWARDS = [
   { boss: 5, neili: 6728, silver: 400, xp: 168 },
 ] as const;
 
-/** Elite challenge node rewards — docs/mvp2/content.md §5 / §9.3 derivation. */
+/** Elite challenge node rewards — docs/rules/content.md §2 / `../archive/mvp2/content.md` §9.3 derivation. */
 export interface Mvp2EliteChallengeReward {
   readonly challenge: 4 | 5;
   readonly neili: number;
@@ -222,7 +222,7 @@ export function buildMvp2StageEnemies(): readonly Mvp2StageEnemy[] {
 export const MVP2_STAGE_ENEMIES: readonly Mvp2StageEnemy[] = buildMvp2StageEnemies();
 
 /**
- * 精英挑战节点 + 敌人属性 —— docs/mvp2/content.md §5 / §6 / §5.2 v0.9。
+ * 精英挑战节点 + 敌人属性 —— docs/rules/content.md §2（推导见 `../archive/mvp2/content.md` §5 / §6 / §5.2 v0.9）。
  * 数值由 sim/elite_challenge_search.py 调用 combat_tuning.fight() 机械搜索（单解法约束：基线败 + 武学+1胜），
  * 首个满足项即唯一 tie-break。HIT/DODGE 沿用推荐境界冻结值；标签仅取 enemies.ts 既有白名单。
  */

@@ -8,6 +8,8 @@
 >
 > **范围**：有意义投入、完整卡点准备、剩余跑轮需求的真实资源映射
 >
+> **当前角色**：历史收口文档（见 `../../README.md` §0 权威索引）
+>
 > **上游**：`../mvp0/content.md` §1 / §3 / §4、`../mvp0/formulas.md` §3.3 / §3.4 / §3.6 / 附录 A、`../mvp1/offline-rewards.md` §2、`cadence.md` §4.1、`content.md` §4 / §8
 >
 > **数值纪律**：Boss 2/3 只复录 MVP-0；Realm 6/7 与 Boss 4/5 引用 `content.md` §8

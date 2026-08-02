@@ -11,6 +11,8 @@
 > **上游**：`../mvp0/closure.md`（收口与敞口台账）、`../mvp0/spec.md` v0.10、`../mvp0/scope.md`、`../mvp0/economy.md` §5、初案 `docs/overview/game-design-proposal.md` §十四、`docs/directions/` 五份方向记录
 >
 > **约束**：只定义 MVP-1，不设计商业化。MVP-0 已交付系统全量保留为基底，MVP-1 是加一层离线节拍，不是重做。任何数值改动须过 `../mvp0/sim/mvp0_sim.py` golden 对照。
+>
+> **当前角色**：阶段已收口；§5（离线功能口径）/§8.1（验收判据）仍生效（见 `../../README.md` §0 权威索引）
 
 ---
 

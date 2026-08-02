@@ -6,6 +6,8 @@
 >
 > **状态**：已批准方向——作为 MVP-2A 主线内容纵深的权威口径
 >
+> **当前角色**：历史收口文档（见 `../../README.md` §0 权威索引）
+>
 > **范围**：MVP-2A 主线内容扩容的结构、边界、与秘籍残页分工
 >
 > **上游**：`cadence.md` §3、`manual-fragments.md`、`../overview/worldview.md`、`../mvp0/content.md`

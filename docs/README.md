@@ -4,6 +4,48 @@
 
 ---
 
+## 0. 当前权威索引
+
+### 当前实现权威（代码直接引用的数值/规则/文案）
+
+| 文档 | 角色 | 代码引用 |
+|---|---|---|
+| `mvp0/formulas.md` | 核心公式表（境界曲线/突破消耗/武学/战斗/诊断） | formulas.ts, routes.ts, prestige.ts, enemies.ts |
+| `mvp0/content.md` | 内容表（境界/敌人/关卡数据） | content.ts, enemies.ts, routes.ts |
+| `mvp0/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
+| `mvp0/telemetry.md` + `mvp1/telemetry.md` + `mvp2/telemetry.md` | 埋点规格 | telemetry.ts |
+| `mvp1/offline-rewards.md` | 离线数值表 | offlineRewards.ts |
+| `mvp1/spec.md` §5/§8.1 | 离线功能口径 | offlineRewards.ts, storage.ts |
+| `mvp0/copy/battle.md` + `mvp0/copy/retire.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx |
+| `mvp0/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
+| `mvp2/content.md` | MVP-2 已落地内容数值（境界 6-7/精英挑战/秘籍残页数据） | mvp2Content.ts, enemies.ts |
+| `mvp2/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
+
+### 当前主题权威（主题版本设定+规格化）
+
+| 文档 | 角色 | 代码引用 |
+|---|---|---|
+| `systems/zhoutian-meridian.md` + `zhoutian-meridian-spec.md` | 周天系统设定+规格化 | acupoints.ts, CultivatePane.tsx |
+| `systems/sect-neigong-active-skill.md` | 门派/内功/主动武学设定 | — |
+| `systems/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |
+| `systems/sim/zhoutian_sim.py` | 周天 sim | acupoints.test.ts |
+
+### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）
+
+| 文档 | 状态 | 复现入口 |
+|---|---|---|
+| `mvp0/closure.md` | 已收口，敞口 R1–R7 永久挂账 | — |
+| `mvp0/spec.md` | 已收口历史 | — |
+| `mvp0/scope.md` / `playtest-plan.md` / `simulation-report.md` | 未执行/已归档 | — |
+| `mvp2/closure.md` | 已收口，R7 销账，R8 待填 | — |
+| `mvp2/cadence.md` §7 | 主题版本节奏口径 | — |
+| `mvp2/sim/run_all_tests.py` | MVP-2 验证链主入口 | `python3 docs/mvp2/sim/run_all_tests.py` |
+| `mvp2/sim/checkpoint_snapshot.py` | 动态加载 `mvp0/sim/mvp0_sim.py` | — |
+| `directions/*.md` | 已降为历史，被 systems/ 取代 | — |
+| `reviews/game-design-review.md` | 只读历史评审 | — |
+
+---
+
 ## 1. 基本原则
 
 - 文档链是实现的唯一输入源：数值出自内容表 / 公式表，UI 出自原型 + `DESIGN.md`，代码不得即兴改规则。
@@ -56,15 +98,6 @@ docs/
   directions/               未立项方向记录
   reviews/                  历史评审记录，只读
 ```
-
-### 2.1 迁移后规则
-
-`docs/core-loop/` 已不存在，不得再向该路径新增文件。新增 MVP 文档直接放入对应 `docs/mvp*/` 目录：
-
-- 目录已表达 MVP 归属，文件名不再带 `mvp-N-` 前缀。
-- 新文件名尽量短，优先使用 `offline-rewards.md` 这类主题名。
-- 新增后若发现同类文档已超过 3 个，应优先提出目录整理，而不是继续堆平铺文件。
-- 历史例外：`docs/reviews/` 与 `CHANGELOG.md` 历史条目中的旧路径（`docs/core-loop/...`、`mvp-N-*.md`）作为历史记录保留原文，不回溯改写。
 
 ---
 
@@ -148,26 +181,6 @@ docs/
 - 目录已经表达 MVP 时，文件名不要再重复 `mvp-0` / `mvp-1`。
 - 文件名控制在 2–4 个词以内。
 - 避免 `-note`、`-tables`、`-spec` 泛化后缀，除非它能区分同目录多个同名概念。
-
-历史迁移映射（2026-07-07 已执行，旧路径已全部失效）：
-
-| 迁移前（core-loop 平铺） | 迁移后 |
-|---|---|
-| `mvp-0-core-loop-spec.md` | `docs/mvp0/spec.md` |
-| `mvp-0-formula-tables.md` | `docs/mvp0/formulas.md` |
-| `mvp-0-content-tables.md` | `docs/mvp0/content.md` |
-| `mvp-0-reputation-economy.md` | `docs/mvp0/economy.md` |
-| `mvp-0-telemetry-spec.md` | `docs/mvp0/telemetry.md` |
-| `mvp-0-scope-boundary.md` | `docs/mvp0/scope.md` |
-| `mvp-0-playtest-plan.md` | `docs/mvp0/playtest-plan.md` |
-| `mvp-0-simulation-report.md` | `docs/mvp0/simulation-report.md` |
-| `mvp-0-closure-note.md` | `docs/mvp0/closure.md` |
-| `mvp-0-battle-copy.md` | `docs/mvp0/copy/battle.md` |
-| `mvp-0-retire-copy.md` | `docs/mvp0/copy/retire.md` |
-| `sim/`（整目录） | `docs/mvp0/sim/` |
-| `mvp-1-core-loop-spec.md` | `docs/mvp1/spec.md` |
-| `mvp-1-offline-reward-tables.md` | `docs/mvp1/offline-rewards.md` |
-| `mvp-2-cadence.md` | `docs/mvp2/cadence.md` |
 
 ---
 

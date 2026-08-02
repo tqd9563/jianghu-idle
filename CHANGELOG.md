@@ -9,6 +9,7 @@
 
 ### 变更
 
+- **文档系统性梳理阶段一**：`docs/README.md` 顶部增加三张权威索引表（当前实现权威/当前主题权威/历史收口与复现），删除 §2.1 迁移后规则和 §6 历史迁移映射表；给 20 个已收口/部分生效/方向记录文档加 frontmatter 状态注记（整体历史 11 文件 + 部分生效 4 文件 + directions 5 文件）；清理 `__pycache__`/`.pytest_cache` 入仓缓存，加 `.gitignore` 规则；详见 `docs/directions/doc-restructure-plan.md` v0.7。
 - **MVP-2 阶段收口成立（单人口径）**：MVP-2A 内容量准备 + 2B 数值重锚 + 2C 自然回流验证三阶段全项成立；新增 `docs/mvp2/closure.md` v1.0 作为阶段收口记录；R7「放置节拍假设未验证」按 `docs/mvp2/cadence.md` §5 / §6 协议销账；后续按 `cadence.md` §7 转入主题版本节奏（停止 MVP 编号）。2C 3-5 天窗口含 ≥2 隔夜轻量记录与 §6 判定口径六项证据入账位留 [待填] 占位。
 
 ### 新增

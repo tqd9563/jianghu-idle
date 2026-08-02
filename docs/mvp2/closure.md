@@ -6,6 +6,8 @@
 >
 > **状态**：已收口——MVP-2A / 2B / 2C 三阶段全项成立；R7 按 §3.1 销账
 >
+> **当前角色**：历史收口文档（见 `../../README.md` §0 权威索引）
+>
 > **范围**：MVP-2 三阶段收口结论、证据清单、敞口台账与下一版节奏登记
 >
 > **上游**：`cadence.md` §3 / §4 / §5 / §6 / §7、`../mvp0/closure.md` §3 R7、`../mvp1/spec.md` v0.3 §1.1 / §7.3 / §10-1、`content-depth.md`、`manual-fragments.md` v1.3、`resource-mapping.md` v0.9、`content.md` v0.9

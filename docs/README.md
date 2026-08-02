@@ -16,10 +16,8 @@
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
 | `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
-| `mvp0/copy/battle.md` + `mvp0/copy/retire.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx |
+| `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, AcupointPanel.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
-
-### 全局设计
 
 ### 全局设计
 
@@ -34,22 +32,22 @@
 |---|---|---|
 | `systems/zhoutian.md` | 周天系统（设定+规格化合并） | acupoints.ts, CultivatePane.tsx |
 | `systems/sect-neigong-active-skill.md` | 门派/内功/主动武学设定 | — |
-| `systems/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |
+| `rules/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |
 | `systems/sim/zhoutian_sim.py` | 周天 sim | acupoints.test.ts |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）
 
 | 文档 | 状态 | 复现入口 |
 |---|---|---|
-| `mvp0/closure.md` | 已收口，敞口 R1–R7 永久挂账 | — |
-| `mvp0/spec.md` | 已收口历史 | — |
-| `mvp0/scope.md` / `playtest-plan.md` / `simulation-report.md` | 未执行/已归档 | — |
-| `mvp2/closure.md` | 已收口，R7 销账，R8 待填 | — |
-| `mvp2/cadence.md` §7 | 主题版本节奏口径 | — |
-| `mvp2/sim/run_all_tests.py` | MVP-2 验证链主入口 | `python3 docs/mvp2/sim/run_all_tests.py` |
-| `mvp2/sim/checkpoint_snapshot.py` | 动态加载 `mvp0/sim/mvp0_sim.py` | — |
-| `directions/*.md` | 已降为历史，被 systems/ 取代 | — |
-| `reviews/game-design-review.md` | 只读历史评审 | — |
+| `archive/mvp0/closure.md` | 已收口，敞口 R1–R7 永久挂账 | — |
+| `archive/mvp0/spec.md` | 已收口历史 | — |
+| `archive/mvp0/scope.md` / `playtest-plan.md` / `simulation-report.md` | 未执行/已归档 | — |
+| `archive/mvp2/closure.md` | 已收口，R7 销账，R8 待填 | — |
+| `archive/mvp2/cadence.md` §7 | 主题版本节奏口径 | — |
+| `archive/mvp2/sim/run_all_tests.py` | MVP-2 验证链主入口 | `python3 docs/archive/mvp2/sim/run_all_tests.py` |
+| `archive/mvp2/sim/checkpoint_snapshot.py` | 动态加载 `systems/sim/mvp0_sim.py` | — |
+| `archive/directions/*.md` | 已降为历史，被 systems/ 取代 | — |
+| `archive/reviews/game-design-review.md` | 只读历史评审 | — |
 
 ---
 
@@ -67,43 +65,14 @@
 
 ## 2. 推荐目录结构
 
-仓库已于 2026-07-07 完成从早期 `docs/core-loop/` 平铺布局到以下结构的迁移：
-
 ```text
 docs/
-  README.md                 文档规范
-  overview/                 全局设计初案、长线 GDD
-  systems/                  完整版主题模块设定（已裁决、未规格化）
-  mvp0/                     MVP-0 权威文档链
-    spec.md                 核心循环规格
-    formulas.md             公式表
-    content.md              内容表
-    economy.md              声望 / 经济表
-    telemetry.md            埋点规格
-    scope.md                范围边界
-    playtest-plan.md        测试计划或未执行存档
-    simulation-report.md    模拟报告
-    closure.md              阶段收口记录
-    copy/                   呈现文案规格
-      battle.md
-      retire.md
-    sim/                    模拟脚本、样本、预检数据
-  mvp1/                     MVP-1 权威文档链
-    spec.md
-    offline-rewards.md
-    acceptance.md
-    telemetry.md
-    prototypes/
-      settlement-return-check.md
-  mvp2/                     MVP-2 权威文档链
-    cadence.md
-    content-depth.md
-    content.md
-    manual-fragments.md
-    resource-mapping.md
-    sim/
-  directions/               未立项方向记录
-  reviews/                  历史评审记录，只读
+  README.md                 文档规范 + 权威索引（§0）
+  ISSUES.md                 问题记录
+  overview/                 全局设计：game-design.md（长线 GDD）、worldview.md（世界观）
+  rules/                    当前实现权威：公式表/内容表/经济表/埋点/离线/残页 + copy/（冻结文案）
+  systems/                  当前主题权威：zhoutian.md（周天）、sect-neigong-active-skill.md + sim/
+  archive/                  历史归档（只读）：mvp0/、mvp1/、mvp2/、directions/、reviews/
 ```
 
 ---

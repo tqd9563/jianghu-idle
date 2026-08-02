@@ -1,6 +1,6 @@
 /**
  * 声望阁 —— 8 个永久节点（声望经济表 §2 v1.1）；归隐落地页（§8.6-4：30 秒内兑现首购）。
- * 界面与节点卡文案逐字取自 docs/mvp0/copy/retire.md §5（冻结）。
+ * 界面与节点卡文案逐字取自 docs/rules/copy/retire.md §5（冻结）。
  */
 import { REP_NODES } from '../engine/prestige';
 import { useGameStore } from '../store/gameStore';

@@ -10,12 +10,11 @@
 
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
-| `mvp0/formulas.md` | 核心公式表（境界曲线/突破消耗/武学/战斗/诊断） | formulas.ts, routes.ts, prestige.ts, enemies.ts |
-| `mvp0/content.md` | 内容表（境界/敌人/关卡数据） | content.ts, enemies.ts, routes.ts |
-| `mvp0/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
-| `mvp0/telemetry.md` + `mvp1/telemetry.md` + `mvp2/telemetry.md` | 埋点规格 | telemetry.ts |
-| `mvp1/offline-rewards.md` | 离线数值表 | offlineRewards.ts |
-| `mvp1/spec.md` §5/§8.1 | 离线功能口径 | offlineRewards.ts, storage.ts |
+| `rules/formulas.md` | 核心公式表（境界曲线/突破消耗/武学/战斗/诊断） | formulas.ts, routes.ts, prestige.ts, enemies.ts |
+| `rules/content.md` | 内容表（境界 1–7/5 地图/三路线/资源/秘籍接口） | content.ts, enemies.ts, routes.ts, mvp2Content.ts |
+| `rules/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
+| `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
+| `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
 | `mvp0/copy/battle.md` + `mvp0/copy/retire.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx |
 | `mvp0/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 | `mvp2/content.md` | MVP-2 已落地内容数值（境界 6-7/精英挑战/秘籍残页数据） | mvp2Content.ts, enemies.ts |
@@ -25,7 +24,7 @@
 
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
-| `systems/zhoutian-meridian.md` + `zhoutian-meridian-spec.md` | 周天系统设定+规格化 | acupoints.ts, CultivatePane.tsx |
+| `systems/zhoutian.md` | 周天系统（设定+规格化合并） | acupoints.ts, CultivatePane.tsx |
 | `systems/sect-neigong-active-skill.md` | 门派/内功/主动武学设定 | — |
 | `systems/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |
 | `systems/sim/zhoutian_sim.py` | 周天 sim | acupoints.test.ts |
@@ -39,6 +38,7 @@
 | `mvp0/scope.md` / `playtest-plan.md` / `simulation-report.md` | 未执行/已归档 | — |
 | `mvp2/closure.md` | 已收口，R7 销账，R8 待填 | — |
 | `mvp2/cadence.md` §7 | 主题版本节奏口径 | — |
+| `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
 | `mvp2/sim/run_all_tests.py` | MVP-2 验证链主入口 | `python3 docs/mvp2/sim/run_all_tests.py` |
 | `mvp2/sim/checkpoint_snapshot.py` | 动态加载 `mvp0/sim/mvp0_sim.py` | — |
 | `directions/*.md` | 已降为历史，被 systems/ 取代 | — |

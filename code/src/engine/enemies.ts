@@ -1,6 +1,6 @@
 /**
- * 五地图 48 关敌人表 —— MVP-0 §1-3 地图 1-3 权威来源：docs/mvp0/content.md §2；
- * MVP-2A 地图 4-5 stages 1-9 权威来源：docs/mvp2/content.md §9.2（数据由 mvp2Content.ts 导出）。
+ * 五地图 48 关敌人表 —— 权威来源：docs/rules/content.md §2；
+ * 数据由 content.ts 与 mvp2Content.ts 导出。
  * 生成公式与 sim/mvp0_sim.py build_stages() 逐行对齐（含 Python banker's rounding），
  * golden 测试会对照 fixture 中的敌人属性逐数校验。禁止在此调参。
  */

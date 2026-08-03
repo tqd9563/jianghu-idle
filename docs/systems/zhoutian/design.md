@@ -1,12 +1,14 @@
 # 周天 · 经脉 · 窍穴系统
 
-> **版本**：v2.0（合并 `zhoutian-meridian.md` v1.2 + `zhoutian-meridian-spec.md` v1.0，口径零变更）
+> **版本**：v2.1（合并 `zhoutian-meridian.md` v1.2 + `zhoutian-meridian-spec.md` v1.0）
 >
-> **日期**：2026-07-25
+> **日期**：2026-08-03
 >
 > **状态**：当前主题权威——内功周天主题版本的设定+规格化统一口径
 >
 > **范围**：小周天段（境界 1–5）周天运转、经脉/窍穴、冲穴、气势、突破双条件
+>
+> **配套**：`spec.md`（呈现一致性与敌人曲线锚定；v2.0 合并时遗漏，已取回）
 
 ---
 
@@ -157,6 +159,9 @@
 | 旧文档 | 新 § | 处理 | 核对证据 |
 |---|---|---|---|
 | `zhoutian-meridian.md` §1–§10 | §1–§6 | 设定定稿合并规格化 | `acupoints.ts` 值比对 |
-| `zhoutian-meridian-spec.md` §2–§12 | §3–§7 | 数值表并入 | `acupoints.ts` + `content.ts` 值比对 |
-| 双文档变更日志 | — | 合并保留 | `../archive/mvp0/` 原始文件仍可查阅 |
+| `zhoutian-meridian-spec.md` §2–§9 / §12 | §3–§7 | 数值表并入 | `acupoints.ts` + `content.ts` 值比对 |
+| `zhoutian-meridian-spec.md` §6.4 / §11 | → `spec.md` §2 / §1 | 合并时遗漏，2026-08-03 逐字取回 | `spec.md` 与归档件逐字比对 |
+| `zhoutian-meridian-spec.md` §10 | — | 指针化，权威在 `../../rules/formulas.md` §5 | 优先级 1.5 行逐字在册 |
+| `zhoutian-meridian-spec.md` §13 | — | 一次性收口清单，留档归档件 | — |
+| 双文档变更日志 | — | 合并保留 | `../../archive/systems/` 原始文件仍可查阅 |
 | 裁决 D1–D4 | §5/§6 | 裁决结论嵌入正文 | 四裁决已锁定，零变更 |

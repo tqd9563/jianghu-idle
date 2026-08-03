@@ -1,4 +1,4 @@
-/** 冲穴面板 + 气势条 + 经脉图 —— 权威来源：docs/systems/zhoutian/design.md（原 spec §5/§11，映射见该文口径守恒表） */
+/** 冲穴面板 + 气势条 + 经脉图 —— 权威来源：docs/systems/zhoutian/spec.md §1（呈现一致性三层语义）+ design.md §3（数值） */
 import {
   REALM_ACUPOINTS, QISHI_FULL, currentSuccessRate, qishiToBonus,
   isMeridianComplete,

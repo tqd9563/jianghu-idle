@@ -30,7 +30,8 @@
 
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
-| `systems/zhoutian/design.md` | 周天系统（设定+规格化合并） | acupoints.ts, CultivatePane.tsx |
+| `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx |
+| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定） | AcupointPanel.tsx |
 | `systems/zhoutian/sim.py` | 周天 sim | acupoints.test.ts |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |

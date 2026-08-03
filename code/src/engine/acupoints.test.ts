@@ -1,5 +1,5 @@
 /**
- * 窍穴/经脉/冲穴/气势纯函数测试 —— 权威来源：docs/systems/zhoutian-meridian-spec.md
+ * 窍穴/经脉/冲穴/气势纯函数测试 —— 权威来源：docs/systems/zhoutian/design.md
  */
 import { describe, expect, it } from 'vitest';
 import {

@@ -30,10 +30,10 @@
 
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
-| `systems/zhoutian.md` | 周天系统（设定+规格化合并） | acupoints.ts, CultivatePane.tsx |
-| `systems/sect-neigong-active-skill.md` | 门派/内功/主动武学设定 | — |
+| `systems/zhoutian/design.md` | 周天系统（设定+规格化合并） | acupoints.ts, CultivatePane.tsx |
+| `systems/zhoutian/sim.py` | 周天 sim | acupoints.test.ts |
+| `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |
-| `systems/sim/zhoutian_sim.py` | 周天 sim | acupoints.test.ts |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）
 
@@ -47,6 +47,7 @@
 | `archive/mvp2/sim/run_all_tests.py` | MVP-2 验证链主入口 | `python3 docs/archive/mvp2/sim/run_all_tests.py` |
 | `archive/mvp2/sim/checkpoint_snapshot.py` | 动态加载 `systems/sim/mvp0_sim.py` | — |
 | `archive/directions/*.md` | 已降为历史，被 systems/ 取代 | — |
+| `archive/systems/zhoutian-meridian.md` + `zhoutian-meridian-spec.md` | 已被 `systems/zhoutian/design.md` v2.0 合并取代 | — |
 | `archive/reviews/game-design-review.md` | 只读历史评审 | — |
 
 ---
@@ -71,9 +72,14 @@ docs/
   ISSUES.md                 问题记录
   overview/                 全局设计：game-design.md（长线 GDD）、worldview.md（世界观）
   rules/                    当前实现权威：公式表/内容表/经济表/埋点/离线/残页 + copy/（冻结文案）
-  systems/                  当前主题权威：zhoutian.md（周天）、sect-neigong-active-skill.md + sim/
+  systems/                  当前主题权威，按模块分文件夹（见 §3.1）
+    <模块名>/               如 zhoutian/、sect-neigong/
+      design.md             该模块设定（结构、机制、裁决）
+      spec.md               该模块规格（可实现数值表；与 design 合并时可省）
+      sim.py                该模块专属 sim（可选）
+    sim/                    跨模块全局 sim：mvp0_sim.py、export_fixtures.py
   design/                   获批交互原型 prototype.html、风格对比页
-  archive/                  历史归档（只读）：mvp0/、mvp1/、mvp2/、directions/、reviews/
+  archive/                  历史归档（只读）：mvp0/、mvp1/、mvp2/、systems/、directions/、reviews/
 ```
 
 ---
@@ -85,10 +91,27 @@ docs/
 | 数值 / 公式表 | `docs/rules/formulas.md`、`docs/rules/offline-rewards.md` | 可实现的表与公式。 |
 | 内容表 | `docs/rules/content.md` | 地图、敌人、关卡、路线等内容数据。 |
 | 文案规格 | `docs/rules/copy/*.md` | 如战斗文案、归隐文案，不与公式表平级。 |
-| 模块设定 | `docs/systems/*.md` | 当前主题模块的设定与规格化权威口径。 |
-| 模拟脚本 | `docs/systems/sim/` | 数值 sim 与 fixture 导出脚本。 |
+| 模块设定 / 规格 | `docs/systems/<模块名>/` | 当前主题模块的权威口径，命名见 §3.1。 |
+| 全局模拟脚本 | `docs/systems/sim/` | 跨模块 sim 与 fixture 导出脚本。 |
 | 交互原型 | `docs/design/` | 获批原型 prototype.html、风格对比页。 |
-| 历史归档 | `docs/archive/` | mvp0/ mvp1/ mvp2/ directions/ reviews/，只读；历史核心规格（spec.md）与阶段收口（closure.md）均在此。 |
+| 历史归档 | `docs/archive/` | mvp0/ mvp1/ mvp2/ systems/ directions/ reviews/，只读；历史核心规格（spec.md）与阶段收口（closure.md）均在此。 |
+
+### 3.1 systems/ 模块目录规范
+
+**路径表达模块，文件名表达类型**（§1 命名原则在本目录的落地）。每个系统/模块一个文件夹，文件夹内文件名从固定类型词表中取，不自创后缀：
+
+| 文件 | 内容 | 必需性 |
+|---|---|---|
+| `design.md` | 设定：结构、机制、裁决 | 必需 |
+| `spec.md` | 规格：可实现的数值表 | 规格化后必需；与 design 合并成单文档时省略，并在 design frontmatter 注明含规格 |
+| `sim.py` | 该模块专属 sim 脚本 | 可选；多脚本时改用 `sim/` 子目录 |
+
+配套规则：
+
+- **文件齐备度 = 模块生命周期**：只有 `design.md` = 设定定稿未规格化；含 `spec.md`（或 design 注明含规格）= 可进实现。扫一眼目录即知每个模块的进度。
+- **模块名用 kebab-case**，2–3 个词，表达系统而非文档（`zhoutian/`、`sect-neigong/`）。
+- **被合并或取代的文档立即迁 `archive/systems/`**，不与取代它的文档并存于 `systems/`；合并文档须留「口径守恒表」记录旧 § → 新 § 映射，供旧引用回溯。
+- 玩家可见文案不进本目录，统一归 `rules/copy/`。
 
 ---
 

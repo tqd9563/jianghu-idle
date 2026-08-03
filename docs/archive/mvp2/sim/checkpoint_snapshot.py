@@ -8,7 +8,7 @@ from types import ModuleType
 from typing import Final
 
 ROUTES: Final = ("huashan", "shaolin", "tangmen")
-SIM_PATH: Final = Path(__file__).parents[2] / "systems" / "sim" / "mvp0_sim.py"
+SIM_PATH: Final = Path(__file__).parents[3] / "systems" / "sim" / "mvp0_sim.py"
 
 
 @dataclass(frozen=True, slots=True)

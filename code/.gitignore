@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 测试产物（保留目录，忽略生成文件）
+test-output/*
+!test-output/.gitkeep

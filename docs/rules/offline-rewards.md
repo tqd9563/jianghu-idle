@@ -52,7 +52,7 @@
 
 ## 2. 产出档位表（表 A）
 
-离线收益按玩家当前最大可挂机关卡的最高档位取每分钟产出。完整档位表见 `code/src/engine/offlineRewards.ts`（按 `docs/mvp1/offline-rewards.md` 表 A 1:1 实现）。
+离线收益按玩家当前最大可挂机关卡的最高档位取每分钟产出。完整档位表见 `code/src/engine/offlineRewards.ts`（按本文档表 A 1:1 实现）。
 
 ## 3. 效率系数与上限表（表 C）
 

@@ -1,5 +1,5 @@
 /**
- * 实现基准：wiki/design/prototype.html（获批原型）+ 根目录 DESIGN.md，1:1 还原。
+ * 实现基准：docs/design/prototype.html（获批原型）+ 根目录 DESIGN.md，1:1 还原。
  * 当前覆盖：修炼页 / 武学页 / 路线选择 / 突破演出；战斗与声望阁下一步。
  */
 import { useEffect, useState } from 'react';

@@ -59,7 +59,7 @@
 - 章节号是稳定锚点：代码注释与跨文档引用都锚在 `§x.y` 上——删并章节必须全仓修引用，否则保号不删。
 - 文件路径表达类别，文件名表达主题；不要用超长文件名承担目录职责。
 - 搬迁或改名文档时，必须同步更新所有引用。
-- 历史评审记录默认只读；除非明确要求，不修改 `docs/reviews/`。
+- 历史评审记录默认只读；除非明确要求，不修改 `docs/archive/reviews/`。
 
 ---
 
@@ -72,6 +72,7 @@ docs/
   overview/                 全局设计：game-design.md（长线 GDD）、worldview.md（世界观）
   rules/                    当前实现权威：公式表/内容表/经济表/埋点/离线/残页 + copy/（冻结文案）
   systems/                  当前主题权威：zhoutian.md（周天）、sect-neigong-active-skill.md + sim/
+  design/                   获批交互原型 prototype.html、风格对比页
   archive/                  历史归档（只读）：mvp0/、mvp1/、mvp2/、directions/、reviews/
 ```
 
@@ -81,17 +82,13 @@ docs/
 
 | 类型 | 推荐位置 | 说明 |
 |---|---|---|
-| 核心规格 | `docs/mvp*/spec.md` | 定义范围、规则、验收口径。 |
-| 数值 / 公式表 | `docs/mvp*/formulas.md`、`docs/mvp*/offline-rewards.md` | 可实现的表与公式。 |
-| 内容表 | `docs/mvp*/content.md` | 地图、敌人、关卡、路线等内容数据。 |
-| 文案规格 | `docs/mvp*/copy/*.md` | 如战斗文案、归隐文案，不与公式表平级。 |
-| 阶段收口 | `docs/mvp*/closure.md` | 记录阶段结论、敞口、门禁。 |
-| 模拟 / 报告 | `docs/mvp*/simulation-report.md`、`docs/mvp*/sim/` | 报告与脚本分开。 |
-| 模块设定 | `docs/systems/*.md` | 完整版单一主题模块的设定定稿：结构与裁决已定、数值未规格化；是该主题规格化前的唯一权威口径。 |
-| 方向记录 | `docs/directions/*.md` | 未立项、不进当前 MVP 的设计方向；经裁决落地后移交 `docs/systems/`，本目录保留历史记录。 |
-| 评审记录 | `docs/reviews/*.md` | 历史记录，只读。 |
-
-`battle-copy`、`retire-copy` 这类文件属于文案规格，应迁入 `copy/`。`closure-note` 属于阶段收口，应迁为 `closure.md`。
+| 数值 / 公式表 | `docs/rules/formulas.md`、`docs/rules/offline-rewards.md` | 可实现的表与公式。 |
+| 内容表 | `docs/rules/content.md` | 地图、敌人、关卡、路线等内容数据。 |
+| 文案规格 | `docs/rules/copy/*.md` | 如战斗文案、归隐文案，不与公式表平级。 |
+| 模块设定 | `docs/systems/*.md` | 当前主题模块的设定与规格化权威口径。 |
+| 模拟脚本 | `docs/systems/sim/` | 数值 sim 与 fixture 导出脚本。 |
+| 交互原型 | `docs/design/` | 获批原型 prototype.html、风格对比页。 |
+| 历史归档 | `docs/archive/` | mvp0/ mvp1/ mvp2/ directions/ reviews/，只读；历史核心规格（spec.md）与阶段收口（closure.md）均在此。 |
 
 ---
 

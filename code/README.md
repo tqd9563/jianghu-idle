@@ -1,6 +1,6 @@
 # 江湖无尽录 · MVP-0/1 前端与 MVP-2 验证核心
 
-Vite + TypeScript + React。数值引擎为纯 TS 模块（`src/engine/`），与 UI 解耦，同 `docs/mvp0/sim/mvp0_sim.py` 做 golden 对照。
+Vite + TypeScript + React。数值引擎为纯 TS 模块（`src/engine/`），与 UI 解耦，同 `docs/systems/sim/mvp0_sim.py` 做 golden 对照。
 
 ## 命令
 
@@ -15,7 +15,7 @@ npm run build    # 产物纯静态，分发即测试
 ```
 src/
   engine/      纯函数数值引擎：formulas（公式表 §2/§3）、content（内容表定稿数据）、
-               offlineRewards（MVP-1 离线收益，docs/mvp1/offline-rewards.md 表 A/C）、
+               offlineRewards（MVP-1 离线收益，docs/rules/offline-rewards.md 表 A/C）、
                mvp2Content（MVP-2 已定数值常量；未接入可玩进度）
   save/        localStorage 存档（持久化/恢复/一键重置；savedAt 即离线时长权威来源，
                MVP-0「关闭页面不结算」条款已随 MVP-1 解除）
@@ -46,8 +46,8 @@ src/
 
 ## 实现纪律
 
-- UI 实现基准：`wiki/design/prototype.html`（获批原型）+ 根目录 `DESIGN.md`，1:1 还原。
-- 数值/文案不得在代码里调参或改写：数值出自内容表/公式表（MVP-1 离线数值出自 `docs/mvp1/offline-rewards.md`）且改动必过 sim golden 对照；玩家可见文案以 `docs/mvp0/copy/retire.md`/`docs/mvp0/copy/battle.md` 为唯一权威，变更先改文档发版再实现。（测试期冻结未启用、已随 MVP-0 收口解除，见 `docs/mvp0/closure.md` §5——单源纪律不随冻结解除。）
+- UI 实现基准：`docs/design/prototype.html`（获批原型）+ 根目录 `DESIGN.md`，1:1 还原。
+- 数值/文案不得在代码里调参或改写：数值出自内容表/公式表（MVP-1 离线数值出自 `docs/rules/offline-rewards.md`）且改动必过 sim golden 对照；玩家可见文案以 `docs/rules/copy/retire.md`/`docs/rules/copy/battle.md` 为唯一权威，变更先改文档发版再实现。（测试期冻结未启用、已随 MVP-0 收口解除，见 `docs/archive/mvp0/closure.md` §5——单源纪律不随冻结解除。）
 - 同一数值多处渲染必须单一数据源（修炼页/战斗页/武学页三处一致，golden 对照覆盖）。
 
 ## 已知环境坑：rolldown 原生绑定

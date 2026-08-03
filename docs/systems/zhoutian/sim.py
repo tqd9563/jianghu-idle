@@ -3,11 +3,11 @@
 """
 周天 · 经脉 · 窍穴系统规格化验算模拟器
 
-验算两项（zhoutian-meridian-spec.md §6.1/§5）：
+验算两项（zhoutian/design.md §3/§5（原 spec §6.1/§5））：
 1. 排程不等式：P(成功数 ≥ M | N, p=70%, +10pp/失败, 第5次必成) ≈ 1
 2. 囤积非优势：放弃充能期窍穴加成 vs 满档气势小幅成功率，期望上劣于「圆满即冲」
 
-运行：python3 docs/systems/sim/zhoutian_sim.py
+运行：python3 docs/systems/zhoutian/sim.py
 无依赖，纯标准库。
 """
 
@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 
 
 # ─────────────────────────────────────────────────────────────
-# 规格化数值（zhoutian-meridian-spec.md §2–§5）
+# 规格化数值（zhoutian/design.md §3（原 spec §2–§5））
 # ─────────────────────────────────────────────────────────────
 
 REALMS = [
@@ -183,7 +183,7 @@ def main():
 
     print("=" * 72)
     print("周天 · 经脉 · 窍穴系统规格化验算")
-    print("zhoutian-meridian-spec.md §6.1 排程不等式 + §5 囤积非优势")
+    print("zhoutian/design.md 排程不等式 + §5 囤积非优势")
     print("=" * 72)
 
     all_pass = True

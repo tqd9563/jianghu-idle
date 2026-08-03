@@ -12,7 +12,7 @@
 >
 > **数值纪律**：本文数值为定稿实现值；标 `[tuning]` 者为上线后调参候选，规格化阶段锁定初值
 >
-> **当前权威移至**：`zhoutian.md` v2.0（与 zhoutian-meridian.md 合并，口径零变更）。本文件 v1.0 仍保留为历史证据。
+> **当前权威移至**：`../../systems/zhoutian/design.md` v2.0（与 zhoutian-meridian.md 合并，口径零变更）。本文件 v1.0 仍保留为历史证据。
 
 ## 0. 变更日志
 
@@ -107,7 +107,7 @@
 
 ## 6. 排程不等式与预算比验算（§11-3/§11-4）
 
-### 6.1 排程不等式（sim 验算 PASS，见 `sim/zhoutian_sim.py`）
+### 6.1 排程不等式（sim 验算 PASS，见 `../../systems/zhoutian/sim.py`）
 
 `P(成功数 ≥ M | N 次机会, p=85%, +10pp/失败, 第3次必成) ≈ 1`
 

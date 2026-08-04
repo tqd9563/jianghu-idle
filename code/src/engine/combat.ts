@@ -7,6 +7,7 @@ import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, type RouteId } from './content';
 import type { EnemyDef } from './enemies';
 import { HIT_FLOOR, mitigationMultiplier } from './formulas';
 import { ROUTES } from './routes';
+import { assertNever } from './exhaustive';
 
 // 敌人标签参数（公式表，与 sim 常量一致）
 export const ROUND_CAP = 50;
@@ -54,7 +55,7 @@ export function makeBuild(route: RouteId, realm: number, lv: number, nodes: numb
     if (nodes >= 1) shieldPct += 0.15;
     if (nodes >= 2) thorns += 0.15;
     if (nodes >= 3) lowhpDr = 0.3;
-  } else {
+  } else if (route === 'tangmen') {
     const g = r.grant;
     poison = {
       init: g.poisonInit!, perHit: g.poisonPerHit!,
@@ -65,6 +66,9 @@ export function makeBuild(route: RouteId, realm: number, lv: number, nodes: numb
     if (nodes >= 1) poison.init += 2;
     if (nodes >= 2) poison.cap = 10;
     if (nodes >= 3) poison.burst = 0.8;
+  } else {
+    // 新增路线必须在此补分支，否则编译期报错（不再静默套用毒流参数）
+    assertNever(route, 'makeBuild 未处理的路线');
   }
 
   return {

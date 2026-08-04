@@ -395,9 +395,11 @@ def boss_matrix():
 # 声望经济（与 ../economy.md 保持一致）
 # ============================================================
 
-REP_MILESTONES = {"boss1": 20, "boss2": 30, "boss3": 50}   # 基础声望（每轮按本轮达成结算）
-REP_ELITE_PCT = 0.04          # 每个精英首杀 +4%（最多 5 个 = +20%）
-REP_FULLCLEAR_PCT = 0.10      # 三图 28 关全通 +10%
+REP_MILESTONES = {"boss1": 20, "boss2": 30, "boss3": 50,
+                  "boss4": 40, "boss5": 60}   # 基础声望（每轮按本轮达成结算；economy.md §1.1）
+# 注：本 sim 只建模三图 28 关，boss4/boss5 恒为 False——地图 4/5 的收支为 economy.md §3 推算值
+REP_ELITE_PCT = 0.04          # 每个精英首杀 +4%（全五图共 12 个精英，+30% 封顶前 8 个即触顶）
+REP_FULLCLEAR_PCT = 0.10      # 五图 48 关全通 +10%（三图轮不满足，上限 +20%）
 REP_PERF_CAP = 0.30           # 表现加成封顶 +30%
 REP_SHORT_RUN_MIN = 15.0      # 短轮惩罚门槛（分钟）
 REP_LOWYIELD_FACTOR = 0.60    # 保底归隐折扣
@@ -554,7 +556,8 @@ def run_playthrough2(route, owned=frozenset(), profile="greedy", verbose=False):
     while realm < 5 and t < 5400 and not result["lowyield"]:
         wait_for(realm_cost(realm + 1)); neili -= realm_cost(realm + 1)
         realm += 1; log(f"突破境界 {realm}")
-    result["fullclear"] = idx >= len(stages)
+    # 全通判据 = 五图 48 关（economy.md §1.2）；本 sim 只建模三图 28 关，故恒为 False
+    result["fullclear"] = False
     result["minutes"] = t / 60
     result["done"] = (result["boss3"] and realm == 5) or result["lowyield"]
     gaps = [b - a for (a, _, _), (b, _, _) in zip(events, events[1:])]

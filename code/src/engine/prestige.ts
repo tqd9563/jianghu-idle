@@ -3,7 +3,7 @@
  * + 规格书 §6.6/§8（v0.10）；玩家可见文案唯一冻结源：docs/rules/copy/retire.md v1.0。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
-import { pyRound, STAGES, type EnemyTag } from './enemies';
+import { allStages, pyRound, type EnemyTag } from './enemies';
 
 export type RepNodeId =
   | 'qingzhuang_shanglu' | 'zairu_jianghu' | 'wudao_biji' | 'kuaisu_rumen'
@@ -77,14 +77,18 @@ export const FALLBACK_DISCOUNT = 0.60;
 export const TIME_PENALTY_MIN = 15;
 
 /** 里程碑声望（声望经济表 §1.1）；行文案见 retire-copy §2.1 */
+/** 里程碑 = 各图 Boss（声望经济表 §1.1，五图合计 200） */
 const MILESTONES = [
   { key: 'm1s8', boss: '山贼头目', value: 20 },
   { key: 'm2s10', boss: '铁掌恶僧', value: 30 },
   { key: 'm3s10', boss: '黑风寨主', value: 50 },
+  { key: 'm4s10', boss: '镇关都督', value: 40 },
+  { key: 'm5s10', boss: '无相居士', value: 60 },
 ] as const;
 
-const ELITE_KEYS = STAGES.filter((e) => e.kind === 'elite').map((e) => `m${e.map}s${e.stage}`);
-const TOTAL_STAGES = STAGES.length;
+/** 精英与全通判据覆盖全部五图（§1.2：每精英 +4%、48 关全通 +10%，合计封顶 +30%） */
+const ELITE_KEYS = allStages().filter((e) => e.kind === 'elite').map((e) => `m${e.map}s${e.stage}`);
+const TOTAL_STAGES = allStages().length;
 
 export interface RetireSettle {
   kind: 'standard' | 'fallback';

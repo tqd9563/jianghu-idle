@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 运转周天呈现方案对比 — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.75 0.015 85);
+  --faint: oklch(0.65 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --primary: oklch(0.76 0.13 78);
+  --primary-ink: oklch(0.18 0.03 78);
+  --primary-soft: oklch(0.76 0.13 78 / 0.12);
+  --accent: oklch(0.74 0.10 215);
+  --poison: oklch(0.72 0.14 145);
+  --bar-track: oklch(0.28 0.018 262);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 60px;
+}
+.serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.scene-note {
+  display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+  padding: 8px 24px; background: oklch(0.13 0.012 262);
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; white-space: nowrap; }
+.scene-note .ctl { margin-left: auto; display: flex; gap: 8px; }
+.scene-note .ctl button {
+  padding: 3px 12px; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+}
+.scene-note .ctl button.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 600; }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; align-items: start; }
+
+.variant { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.v-head { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 10px; }
+.v-head .tag { font-size: 11px; color: var(--primary); border: 1px solid currentColor; border-radius: 4px; padding: 0 6px; letter-spacing: 0.08em; }
+.v-head h2 { font-size: 15px; font-weight: 600; }
+.v-head .sub { font-size: 12px; color: var(--faint); margin-left: auto; }
+.v-body { padding: 22px 20px 18px; display: flex; flex-direction: column; align-items: center; }
+.v-note { padding: 10px 16px 14px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); line-height: 1.7; }
+
+.num { font-variant-numeric: tabular-nums; }
+.data-row { display: flex; justify-content: space-between; width: 100%; max-width: 320px; margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+.data-row b { color: var(--ink); font-weight: 600; }
+
+/* ============ 方案 A：周天环 ============ */
+.ring-box { position: relative; width: 240px; height: 240px; }
+.ring-box svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--bar-track); stroke-width: 10; }
+.ring-fill {
+  fill: none; stroke: var(--primary); stroke-width: 10; stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s var(--ease);
+}
+.ring-node { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; }
+.ring-node.lit { fill: var(--primary); stroke: var(--primary); }
+.qi-dot { fill: var(--accent); }
+.qi-dot.d2 { opacity: 0.55; }
+.qi-dot.d3 { opacity: 0.25; }
+.ring-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px; text-align: center;
+}
+.ring-center .label { font-size: 11px; color: var(--faint); letter-spacing: 0.12em; }
+.ring-center .value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ring-center .cap { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ring-center .cycle { font-size: 12px; color: var(--accent); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* ============ 方案 B：小周天经脉图 ============ */
+.loop-box { position: relative; width: 300px; height: 240px; }
+.loop-box svg { width: 100%; height: 100%; }
+.loop-track { fill: none; stroke: var(--bar-track); stroke-width: 7; }
+.loop-flow {
+  fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round;
+  stroke-dasharray: 6 26; opacity: 0.85;
+  animation: flow 2.4s linear infinite;
+}
+@keyframes flow { to { stroke-dashoffset: -128; } }
+.loop-fill { fill: none; stroke: var(--primary); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 0.6s var(--ease); }
+.acu { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; }
+.acu.lit { fill: var(--primary); stroke: var(--primary); }
+.acu-name { font-size: 10px; fill: var(--faint); font-family: inherit; }
+.acu-name.lit { fill: var(--primary); }
+.dantian-core { fill: var(--primary-soft); stroke: var(--primary); stroke-width: 1.5; }
+.loop-center { position: absolute; left: 0; right: 0; top: 96px; text-align: center; pointer-events: none; }
+.loop-center .value { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.loop-center .label { font-size: 10.5px; color: var(--faint); letter-spacing: 0.1em; }
+
+/* ============ 方案 C：丹田气旋 ============ */
+.dan-box { position: relative; width: 240px; height: 240px; display: flex; align-items: center; justify-content: center; }
+.dan-pool {
+  position: relative; width: 190px; height: 190px; border-radius: 50%;
+  background: var(--surface-2); border: 1px solid var(--line);
+  overflow: hidden;
+}
+.dan-liquid {
+  position: absolute; left: -30%; right: -30%; bottom: 0;
+  background: var(--primary); opacity: 0.9;
+  transition: height 0.6s var(--ease);
+}
+.dan-liquid::before, .dan-liquid::after {
+  content: ""; position: absolute; left: 0; right: 0; top: -14px; height: 16px;
+  background: radial-gradient(18px 14px at 25% 100%, transparent 68%, var(--primary) 70%) 0 0 / 64px 16px repeat-x;
+  animation: wave 5s linear infinite;
+}
+.dan-liquid::after { top: -11px; opacity: 0.45; animation-duration: 7.5s; animation-direction: reverse; }
+@keyframes wave { to { transform: translateX(64px); } }
+.dan-orbit { position: absolute; inset: 0; animation: orbit 9s linear infinite; }
+.dan-orbit i {
+  position: absolute; top: 4px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px;
+  border-radius: 50%; background: var(--accent);
+}
+.dan-orbit.o2 { animation-duration: 13s; animation-delay: -4s; }
+.dan-orbit.o2 i { width: 5px; height: 5px; opacity: 0.55; }
+@keyframes orbit { to { transform: rotate(360deg); } }
+.dan-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+.dan-center .value { font-size: 23px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); text-shadow: 0 1px 3px oklch(0.08 0.01 262 / 0.55); }
+.dan-center .label { font-size: 11px; letter-spacing: 0.12em; color: var(--ink); opacity: 0.8; text-shadow: 0 1px 3px oklch(0.08 0.01 262 / 0.55); }
+.dan-ticks { position: absolute; inset: 0; }
+.dan-ticks i {
+  position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; margin: -5px;
+  border-radius: 50%; background: var(--surface-2); border: 1.5px solid var(--line-strong);
+}
+.dan-ticks i.lit { background: var(--primary); border-color: var(--primary); }
+
+/* 圆满态（三方案共用） */
+.ready .ring-fill, .ready .loop-fill { stroke: var(--primary); }
+.ready .ring-center .cycle, .ready .loop-center .label { color: var(--primary); }
+.breath { animation: breath 2.2s var(--ease) infinite; transform-origin: center; }
+@keyframes breath { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .loop-flow, .dan-liquid::before, .dan-liquid::after, .dan-orbit, .breath { animation: none; }
+  .qi-dot animateMotion { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型 / 运转周天</b>三个呈现方向同屏对比（夜雨账台 token）。动效均为「状态传达」：流速与修炼速率挂钩，静止即停摆。
+  <span class="ctl">
+    <button id="stNormal" class="on">运转中 2/5 · 45%</button>
+    <button id="stReady">圆满待突破 5/5</button>
+  </span>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ A 周天环 ============ -->
+  <section class="variant" id="vA">
+    <div class="v-head"><span class="tag">A</span><h2>周天环</h2><span class="sub">DESIGN.md 预留的环形窍点形态</span></div>
+    <div class="v-body">
+      <div class="ring-box">
+        <svg viewBox="0 0 240 240" aria-hidden="true">
+          <circle class="ring-track" cx="120" cy="120" r="100"/>
+          <circle class="ring-fill" id="ringFill" cx="120" cy="120" r="100"
+                  stroke-dasharray="628.3" stroke-dashoffset="345.6"/>
+          <g id="ringNodes"></g>
+          <!-- 循环气点：沿环持续运行，速率=修炼速率的视觉化 -->
+          <g id="qiGroup">
+            <circle class="qi-dot" r="4.5">
+              <animateMotion dur="6s" repeatCount="indefinite" path="M 120 20 A 100 100 0 1 1 119.9 20"/>
+            </circle>
+            <circle class="qi-dot d2" r="3.5">
+              <animateMotion dur="6s" begin="-0.35s" repeatCount="indefinite" path="M 120 20 A 100 100 0 1 1 119.9 20"/>
+            </circle>
+            <circle class="qi-dot d3" r="2.5">
+              <animateMotion dur="6s" begin="-0.7s" repeatCount="indefinite" path="M 120 20 A 100 100 0 1 1 119.9 20"/>
+            </circle>
+          </g>
+        </svg>
+        <div class="ring-center">
+          <span class="label">丹田内力</span>
+          <span class="value" id="ringVal">12,480</span>
+          <span class="cap" id="ringCap">/ 28,000</span>
+          <span class="cycle" id="ringCycle">第三周天 45%</span>
+        </div>
+      </div>
+      <div class="data-row"><span>修炼速率 <b class="num">+16.9 / 秒</b></span><span>周天 <b class="num" id="ringSeg">2/5</b></span></div>
+    </div>
+    <div class="v-note">环 = 一个大周天，5 个窍点均布环上，冲满一段点亮一窍；青色气点沿环循环不息，速度随修炼速率变化——挂机时看得见「气在走」。圆满时环满金、窍点齐亮并缓慢呼吸。数字仍居中主位，账本性不丢。可与窍穴/经脉系统共用视觉语言（窍点=窍穴的远景）。</div>
+  </section>
+
+  <!-- ============ B 小周天经脉图 ============ -->
+  <section class="variant" id="vB">
+    <div class="v-head"><span class="tag">B</span><h2>小周天经脉图</h2><span class="sub">任督环流 · 窍穴具名</span></div>
+    <div class="v-body">
+      <div class="loop-box">
+        <svg viewBox="0 0 300 240" aria-hidden="true">
+          <!-- 任督二脉环流路径（写意侧身轮廓的抽象化） -->
+          <path id="loopPath" class="loop-track" d="M 150 208 C 78 208 52 160 52 120 C 52 62 96 30 150 30 C 204 30 248 62 248 120 C 248 160 222 208 150 208"/>
+          <path class="loop-fill" id="loopFill" d="M 150 208 C 78 208 52 160 52 120 C 52 62 96 30 150 30 C 204 30 248 62 248 120 C 248 160 222 208 150 208"
+                stroke-dasharray="551" stroke-dashoffset="303"/>
+          <path class="loop-flow" d="M 150 208 C 78 208 52 160 52 120 C 52 62 96 30 150 30 C 204 30 248 62 248 120 C 248 160 222 208 150 208"/>
+          <g id="loopNodes"></g>
+          <circle class="dantian-core breath" cx="150" cy="120" r="34"/>
+        </svg>
+        <div class="loop-center">
+          <div class="value" id="loopVal">12,480</div>
+          <div class="label" id="loopLabel">丹田 · 第三周天 45%</div>
+        </div>
+      </div>
+      <div class="data-row"><span>修炼速率 <b class="num">+16.9 / 秒</b></span><span>周天 <b class="num" id="loopSeg">2/5</b></span></div>
+    </div>
+    <div class="v-note">把五段条升维成一条环流经脉：气沿脉络虚线流动（永动），冲满一段点亮一处具名窍穴（尾闾→命门→大椎→百会→膻中），丹田居中缓慢呼吸。武侠母语最浓的方案——玩家看到的不是进度条，是自己的小周天在运转。窍穴名直接为境界 2+ 的冲穴系统做世界观铺垫。</div>
+  </section>
+
+  <!-- ============ C 丹田气旋 ============ -->
+  <section class="variant" id="vC">
+    <div class="v-head"><span class="tag">C</span><h2>丹田气旋</h2><span class="sub">液面蓄满 · 气点环绕</span></div>
+    <div class="v-body">
+      <div class="dan-box">
+        <div class="dan-pool">
+          <div class="dan-liquid" id="danLiquid" style="height: 49%"></div>
+          <div class="dan-center">
+            <span class="value" id="danVal">12,480</span>
+            <span class="label" id="danLabel">第三周天 45%</span>
+          </div>
+        </div>
+        <div class="dan-orbit"><i></i></div>
+        <div class="dan-orbit o2"><i></i></div>
+        <div class="dan-ticks" id="danTicks"></div>
+      </div>
+      <div class="data-row"><span>修炼速率 <b class="num">+16.9 / 秒</b></span><span>周天 <b class="num" id="danSeg">2/5</b></span></div>
+    </div>
+    <div class="v-note">丹田是一口「气池」：内力如液面缓缓上涨（真实映射 内力/突破需求 比值），两粒青色气点绕池环行，外圈 5 个刻点即 5 个周天。最直觉的「蓄满感」，涨水面 + 波纹给出连续的正反馈；实现成本三案最低（纯 CSS）。弱点：世界观信息量少于 B。</div>
+  </section>
+
+</div>
+
+<script>
+const SEGS = 5;
+const STATES = {
+  normal: { val: '12,480', cap: '/ 28,000', pct: 0.45, seg: 2, cyc: '第三周天 45%', ready: false },
+  ready:  { val: '28,000', cap: '/ 28,000', pct: 1,    seg: 5, cyc: '周天圆满 · 可突破', ready: true },
+};
+
+/* A：环上窍点 */
+const ringNodes = document.getElementById('ringNodes');
+for (let i = 0; i < SEGS; i++) {
+  const a = -Math.PI / 2 + (i + 1) * (2 * Math.PI / SEGS);
+  // svg 已整体 -90° 旋转，故此处直接均布
+  const ang = (i + 1) * (2 * Math.PI / SEGS);
+  const x = 120 + 100 * Math.cos(ang), y = 120 + 100 * Math.sin(ang);
+  ringNodes.innerHTML += `<circle class="ring-node" data-i="${i}" cx="${x}" cy="${y}" r="7"/>`;
+}
+
+/* B：脉络上具名窍穴（按路径长度均布取点） */
+const ACU_NAMES = ['尾闾', '命门', '大椎', '百会', '膻中'];
+const loopPath = document.getElementById('loopPath');
+const loopLen = loopPath.getTotalLength();
+const loopNodes = document.getElementById('loopNodes');
+for (let i = 0; i < SEGS; i++) {
+  const p = loopPath.getPointAtLength(loopLen * (i + 1) / SEGS);
+  const labelDy = p.y < 60 ? -14 : (p.y > 180 ? 22 : (p.x < 150 ? 0 : 0));
+  const labelDx = p.y >= 60 && p.y <= 180 ? (p.x < 150 ? -32 : 14) : -10;
+  loopNodes.innerHTML += `
+    <circle class="acu" data-i="${i}" cx="${p.x}" cy="${p.y}" r="6.5"/>
+    <text class="acu-name" data-i="${i}" x="${p.x + labelDx}" y="${p.y + (labelDy || 4)}">${ACU_NAMES[i]}</text>`;
+}
+
+/* C：外圈刻点 */
+const danTicks = document.getElementById('danTicks');
+for (let i = 0; i < SEGS; i++) {
+  const ang = -Math.PI / 2 + (i + 1) * (2 * Math.PI / SEGS);
+  const x = 120 + 108 * Math.cos(ang), y = 120 + 108 * Math.sin(ang);
+  danTicks.innerHTML += `<i data-i="${i}" style="transform: translate(${x - 120}px, ${y - 120}px)"></i>`;
+}
+
+function apply(stateKey) {
+  const st = STATES[stateKey];
+  const totalPct = (st.seg + (st.ready ? 0 : st.pct)) / SEGS;
+  document.querySelectorAll('.variant').forEach(v => v.classList.toggle('ready', st.ready));
+  /* A */
+  document.getElementById('ringFill').style.strokeDashoffset = 628.3 * (1 - totalPct);
+  document.getElementById('ringVal').textContent = st.val;
+  document.getElementById('ringCap').textContent = st.cap;
+  document.getElementById('ringCycle').textContent = st.cyc;
+  document.getElementById('ringSeg').textContent = `${st.seg}/${SEGS}`;
+  document.querySelectorAll('.ring-node').forEach(n => n.classList.toggle('lit', +n.dataset.i < st.seg));
+  document.getElementById('ringCycle').classList.toggle('breath', st.ready);
+  /* B */
+  document.getElementById('loopFill').style.strokeDashoffset = 551 * (1 - totalPct);
+  document.getElementById('loopVal').textContent = st.val;
+  document.getElementById('loopLabel').textContent = st.ready ? '丹田 · 周天圆满 可突破' : `丹田 · ${st.cyc}`;
+  document.getElementById('loopSeg').textContent = `${st.seg}/${SEGS}`;
+  document.querySelectorAll('.acu').forEach(n => n.classList.toggle('lit', +n.dataset.i < st.seg));
+  document.querySelectorAll('.acu-name').forEach(n => n.classList.toggle('lit', +n.dataset.i < st.seg));
+  /* C */
+  document.getElementById('danLiquid').style.height = `${Math.round(totalPct * 100)}%`;
+  document.getElementById('danVal').textContent = st.val;
+  document.getElementById('danLabel').textContent = st.ready ? '周天圆满 · 可突破' : st.cyc;
+  document.getElementById('danSeg').textContent = `${st.seg}/${SEGS}`;
+  document.querySelectorAll('.dan-ticks i').forEach(n => n.classList.toggle('lit', +n.dataset.i < st.seg));
+}
+const bN = document.getElementById('stNormal'), bR = document.getElementById('stReady');
+bN.onclick = () => { apply('normal'); bN.classList.add('on'); bR.classList.remove('on'); };
+bR.onclick = () => { apply('ready'); bR.classList.add('on'); bN.classList.remove('on'); };
+apply('normal');
+</script>
+</body>
+</html>

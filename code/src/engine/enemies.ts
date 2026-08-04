@@ -8,8 +8,15 @@ import { MVP2_STAGE_ENEMIES, MVP2_MAP_REWARD_PLANS, MVP2_BOSS_VALUES, MVP2_BOSS_
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
+/**
+ * 地图 ID 单一数据源 —— 新增地图只改这一处，MapId / MAP_STAGE_COUNT / 关卡键正则
+ * 与 store 的 MapNo 全部由此派生（内容扩充防御，见 exhaustive.ts）。
+ */
+export const MAP_IDS = [1, 2, 3, 4, 5] as const;
+export type MapId = (typeof MAP_IDS)[number];
+
 export interface EnemyDef {
-  map: 1 | 2 | 3 | 4 | 5;
+  map: MapId;
   stage: number;
   name: string;
   hp: number;
@@ -37,11 +44,11 @@ export function pyRound(x: number, digits = 0): number {
   return r / m;
 }
 
-const MAP_NAMES = ['村外小径', '洛阳近郊', '华山古道', '蜀道险关', '铁壁绝谷'] as const;
-export function mapName(map: 1 | 2 | 3 | 4 | 5): string {
-  return MAP_NAMES[map - 1];
+const MAP_NAMES: Record<MapId, string> = { 1: '村外小径', 2: '洛阳近郊', 3: '华山古道', 4: '蜀道险关', 5: '铁壁绝谷' };
+export function mapName(map: MapId): string {
+  return MAP_NAMES[map];
 }
-export const MAP_STAGE_COUNT: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
+export const MAP_STAGE_COUNT: Record<MapId, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
 
 const NAMES_1 = ['拦路泼皮', '拦路泼皮', '山野猎户', '山野猎户', '山贼喽啰', '山贼喽啰', '山贼小头目', '山贼头目'];
 const NAMES_2 = ['城郊恶棍', '城郊恶棍', '镖局逃卒', '游侠儿', '镖局逃卒', '恶寺武僧', '铁臂僧', '恶寺武僧', '恶寺护法', '铁掌恶僧'];
@@ -151,13 +158,20 @@ function getMvp2Stages(): EnemyDef[] {
 }
 
 /**
- * STAGES 只含 MVP-0 三地图 28 关——prestige.ts 既有 ELITE_KEYS/TOTAL_STAGES 计算依赖此口径
- * （`docs/rules/economy.md §1.2` 三图全通 +30% 表现加成）。MVP-2 地图 4/5 stages 1-9 通过
- * `getStage()` lazy 合并查询，避免循环依赖初始化与 MVP-0 既有声望判据破坏。
+ * STAGES 只含 MVP-0 三地图 28 关（地图 1-3 的手写生成结果）。
+ * 需要「全部五图 48 关」口径时用 `allStages()`——声望判据（`docs/rules/economy.md` §1.1/§1.2
+ * 五图里程碑与 48 关全通）走该函数；地图 4/5 仍 lazy 构建，避免模块初始化期循环依赖。
  */
 export const STAGES: readonly EnemyDef[] = buildStages();
 
-export function getStage(map: 1 | 2 | 3 | 4 | 5, stage: number): EnemyDef {
+/** 全部地图关卡（三图手写 + 地图 4/5 曲线生成），按需构建后缓存 */
+let _allStages: readonly EnemyDef[] | null = null;
+export function allStages(): readonly EnemyDef[] {
+  if (_allStages === null) _allStages = [...STAGES, ...getMvp2Stages()];
+  return _allStages;
+}
+
+export function getStage(map: MapId, stage: number): EnemyDef {
   const s = (map === 4 || map === 5)
     ? getMvp2Stages().find((x) => x.map === map && x.stage === stage)
     : STAGES.find((x) => x.map === map && x.stage === stage);

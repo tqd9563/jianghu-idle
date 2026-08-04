@@ -3,7 +3,7 @@
  * 纯函数模块：不引入 UI/存储依赖；结算时点 = 回归上线一次性结算（store.init），离线期间无后台结算。
  * 机制内部称「离线收益」；玩家侧文案一律「闭关 / 出关结算」（术语纪律，表 A 推导锚点）。
  */
-import { MAP_STAGE_COUNT } from './enemies';
+import { MAP_IDS, MAP_STAGE_COUNT, type MapId } from './enemies';
 
 /** 表 A 行结构（offline-rewards.md §7 导出结构定稿） */
 export interface OfflineRewardStage {
@@ -58,33 +58,35 @@ export const OFFLINE_SETTLEMENT_RULE = {
  */
 export function maxIdleStage(clearedStages: readonly string[]): number {
   let best = 1;
-  const stageCounts: Record<1 | 2 | 3 | 4 | 5, number> = {
-    ...MAP_STAGE_COUNT,
-    4: 10,
-    5: 10,
-  };
-  const offsets: Record<1 | 2 | 3 | 4 | 5, number> = {
-    1: 0,
-    2: stageCounts[1],
-    3: stageCounts[1] + stageCounts[2],
-    4: stageCounts[1] + stageCounts[2] + stageCounts[3],
-    5: stageCounts[1] + stageCounts[2] + stageCounts[3] + stageCounts[4],
-  };
   for (const key of clearedStages) {
-    const m = /^m([1-5])s(\d+)$/.exec(key);
+    const m = /^m(\d+)s(\d+)$/.exec(key);
     if (!m) continue;
-    const map = Number(m[1]) as 1 | 2 | 3 | 4 | 5;
+    const map = Number(m[1]) as MapId;
+    if (!(MAP_IDS as readonly number[]).includes(map)) continue;
     const stage = Number(m[2]);
-    if (stage < 1 || stage > stageCounts[map]) continue;
-    const g = offsets[map] + stage;
+    if (stage < 1 || stage > MAP_STAGE_COUNT[map]) continue;
+    const g = globalStageOffset(map) + stage;
     if (g > best) best = g;
   }
   return best;
 }
 
+/** 地图起始全局序号 = 其前所有地图关卡数之和（由 MAP_IDS 派生，新增地图无需改此处） */
+function globalStageOffset(map: MapId): number {
+  let sum = 0;
+  for (const id of MAP_IDS) {
+    if (id >= map) break;
+    sum += MAP_STAGE_COUNT[id];
+  }
+  return sum;
+}
+
+/** 全部地图关卡总数（表 A 的全局序号上界，首发 = 48） */
+export const TOTAL_GLOBAL_STAGES: number = MAP_IDS.reduce((n, id) => n + MAP_STAGE_COUNT[id], 0);
+
 /** 按最大可挂机关卡匹配表 A（越界 clamp 到首/末档） */
 export function findOfflineRewardStage(currentMaxIdleStage: number): OfflineRewardStage {
-  const s = Math.max(1, Math.min(48, Math.floor(currentMaxIdleStage)));
+  const s = Math.max(1, Math.min(TOTAL_GLOBAL_STAGES, Math.floor(currentMaxIdleStage)));
   return OFFLINE_REWARD_STAGES.find((t) => s >= t.idleStageMin && s <= t.idleStageMax)
     ?? OFFLINE_REWARD_STAGES[OFFLINE_REWARD_STAGES.length - 1];
 }
@@ -145,7 +147,7 @@ export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettl
   const catchup = 1; // 首发 catchup_per_stage = catchup_max = 0（表 A §6）
   const grant = (perMin: number) => Math.floor(perMin * effectiveMin * tier.offlineEfficiency * catchup);
   return {
-    stageBasis: Math.max(1, Math.min(48, Math.floor(input.currentMaxIdleStage))),
+    stageBasis: Math.max(1, Math.min(TOTAL_GLOBAL_STAGES, Math.floor(input.currentMaxIdleStage))),
     tier,
     rawSec,
     effectiveMin,

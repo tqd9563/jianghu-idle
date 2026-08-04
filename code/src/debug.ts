@@ -35,7 +35,7 @@ const PRESETS: Record<string, object> = {
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 1,
     clearedStages: [...m1all, ...m2upto(9)], attempts: {}, autoAdvance: false,
   },
-  // 标准归隐就绪态：境界 5 + 三图全通（46 分钟轮长 → 130 声望）
+  // 标准归隐就绪态：境界 5 + 三图全通（46 分钟轮长 → 120 声望）
   retire: {
     run: 1, realm: 5, route: 'tangmen', skillLevel: 10,
     dantian: 3400, silver: 830, xp: 59,

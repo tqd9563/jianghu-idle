@@ -618,25 +618,180 @@ textarea.op-input.op-textarea { width: 100%; resize: vertical; min-height: 44px;
   .fade-item { opacity: 1; }
 }
 
-/* ===== 主题切换器 ===== */
-.theme-switcher {
-  display: flex; gap: 8px; padding: 0 20px 12px; border: none;
-  flex-wrap: wrap; align-items: center;
-  width: 100%; min-width: 0; max-width: 100%;
+
+/* ===== 泼墨山河：整页墨晕远山（仅此皮肤，静态背景，不参与交互） ===== */
+html[data-theme='pomo'] body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--night-bg);
+  background-attachment: fixed;
 }
-.theme-radio {
-  display: inline-flex; align-items: center; cursor: pointer;
-  padding: 8px 12px; border-radius: var(--r-xs);
-  background: var(--surface-2); border: 1px solid var(--line);
-  font-size: 13px; color: var(--muted); transition: all 0.2s var(--ease-sharp);
-  min-height: 44px; white-space: nowrap;
+
+/* ===== 外观 · 皮肤配置入口（菜单栏底部） ===== */
+.rail-foot { margin-top: auto; padding: 10px; border-top: 1px solid var(--line); }
+.appearance-entry {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 9px 12px; border: none; border-radius: var(--r-md);
+  background: none; color: var(--ink-muted); font-size: 13px; font-family: inherit;
+  text-align: left; cursor: pointer; min-height: 40px;
+  transition: background-color 0.2s var(--ease-sharp), color 0.2s var(--ease-sharp);
 }
-.theme-radio:hover { border-color: var(--line-strong); color: var(--ink); }
-.theme-radio.active { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); font-weight: 600; }
-.theme-radio:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.appearance-entry:hover { background: var(--night-surface-raised); color: var(--ink-warm); }
+.appearance-entry:focus-visible { outline: 2px solid var(--sword-cyan); outline-offset: 2px; }
+.appearance-entry .swatch {
+  flex: none; width: 15px; height: 15px; border-radius: var(--r-xs);
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(135deg, var(--primary) 0 50%, var(--night-surface-raised) 50% 100%);
+}
+.appearance-entry .cur-skin { margin-left: auto; font-size: 12px; color: var(--ink-faint); }
+
+/* ===== 皮肤配置弹窗 ===== */
+.skin-modal {
+  background: var(--night-surface); border: var(--border-panel); border-radius: var(--radius-panel);
+  width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
+  box-shadow: var(--shadow-modal); z-index: var(--z-modal);
+  animation: modal-in 0.25s var(--ease-sharp);
+}
+.skin-modal .modal-head { gap: 10px; justify-content: flex-start; align-items: baseline; }
+.skin-modal .modal-head .title { font-size: 17px; font-weight: 700; }
+.skin-modal .modal-head .sub { font-size: 12px; font-weight: 400; color: var(--ink-muted); }
+.skin-modal .modal-close {
+  margin-left: auto; align-self: center; width: 28px; height: 28px;
+  border: none; border-radius: var(--r-sm); background: none;
+  color: var(--ink-faint); font-size: 18px; line-height: 1; cursor: pointer; font-family: inherit;
+}
+.skin-modal .modal-close:hover { background: var(--night-surface-raised); color: var(--ink-warm); }
+.skin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .skin-grid { grid-template-columns: 1fr; } }
+.skin-card {
+  padding: 0; overflow: hidden; cursor: pointer; text-align: left; font-family: inherit;
+  background: var(--night-surface); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); color: var(--ink-warm);
+  transition: border-color 0.15s var(--ease-sharp);
+}
+.skin-card:hover { border-color: var(--line-strong); }
+.skin-card:focus-visible { outline: 2px solid var(--sword-cyan); outline-offset: 2px; }
+.skin-card[aria-checked="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.skin-card .meta { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.skin-card .meta .name { font-size: 14px; font-weight: 600; }
+.skin-card .meta .check { margin-left: auto; font-size: 11px; letter-spacing: 0.05em; color: var(--primary); visibility: hidden; }
+.skin-card[aria-checked="true"] .meta .check { visibility: visible; }
+.modal-foot { font-size: 11.5px; color: var(--ink-faint); margin-top: 14px; }
+
+/* 微缩界面预览：用各皮肤自身的真实色值渲染，独立于当前生效皮肤 */
+.skin-card .sp { display: grid; grid-template-columns: 44px 1fr; gap: 3px; height: 92px; padding: 6px; background: var(--sp-bg); }
+.skin-card .sp-rail { background: var(--sp-surface); border-radius: var(--sp-r); padding: 7px 6px; display: flex; flex-direction: column; gap: 5px; }
+.skin-card .sp-rail i { height: 5px; border-radius: 2px; background: var(--sp-muted); opacity: 0.5; }
+.skin-card .sp-rail i.on { background: var(--sp-primary); opacity: 1; }
+.skin-card .sp-col { display: grid; grid-template-rows: 16px 1fr; gap: 3px; }
+.skin-card .sp-top { background: var(--sp-surface); border-radius: var(--sp-r); }
+.skin-card .sp-main { background: var(--sp-surface); border-radius: var(--sp-r); padding: 8px 9px; display: flex; flex-direction: column; gap: 6px; }
+.skin-card .sp-main .t { height: 6px; width: 55%; border-radius: 2px; background: var(--sp-ink); opacity: 0.85; }
+.skin-card .sp-main .l { height: 5px; width: 80%; border-radius: 2px; background: var(--sp-muted); opacity: 0.5; }
+.skin-card .sp-main .segs { display: flex; gap: 3px; margin-top: auto; }
+.skin-card .sp-main .segs i { flex: 1; height: 7px; border-radius: 2px; background: var(--sp-track); }
+.skin-card .sp-main .segs i.full { background: var(--sp-primary); }
+
+.skin-card[data-skin="night"] .sp {
+  --sp-bg: oklch(0.165 0.014 262); --sp-surface: oklch(0.215 0.016 262);
+  --sp-ink: oklch(0.90 0.012 85); --sp-muted: oklch(0.65 0.015 262);
+  --sp-primary: oklch(0.76 0.13 78); --sp-track: oklch(0.28 0.018 262); --sp-r: 4px;
+}
+.skin-card[data-skin="xuan"] .sp {
+  --sp-bg: oklch(0.965 0.003 100); --sp-surface: oklch(0.905 0.005 100);
+  --sp-ink: oklch(0.22 0.01 90); --sp-muted: oklch(0.50 0.01 90);
+  --sp-primary: oklch(0.50 0.185 29); --sp-track: oklch(0.84 0.006 100); --sp-r: 0;
+}
+.skin-card[data-skin="bronze"] .sp {
+  --sp-bg: oklch(0.28 0.015 100); --sp-surface: oklch(0.33 0.015 100);
+  --sp-ink: oklch(0.88 0.02 90); --sp-muted: oklch(0.65 0.02 90);
+  --sp-primary: oklch(0.68 0.14 65); --sp-track: oklch(0.40 0.02 100); --sp-r: 1px;
+}
+.skin-card[data-skin="mist"] .sp {
+  --sp-bg: oklch(0.88 0.02 215); --sp-surface: oklch(0.97 0.01 215);
+  --sp-ink: oklch(0.28 0.03 235); --sp-muted: oklch(0.48 0.02 235);
+  --sp-primary: oklch(0.42 0.12 250); --sp-track: oklch(0.82 0.02 215); --sp-r: 5px;
+}
+.skin-card[data-skin="pomo"] .sp {
+  --sp-bg: oklch(0.945 0.004 200); --sp-surface: oklch(0.895 0.007 200);
+  --sp-ink: oklch(0.24 0.012 260); --sp-muted: oklch(0.50 0.012 240);
+  --sp-primary: oklch(0.30 0.02 260); --sp-track: oklch(0.845 0.008 200); --sp-r: 3px;
+  background:
+    radial-gradient(120% 90% at 82% -10%, oklch(0.24 0.012 260 / 0.10), transparent 60%),
+    var(--sp-bg);
+}
+
+/* ===== 周天年轮 ===== */
+.zhoutian-mandala { display: flex; flex-direction: column; align-items: center; margin: 6px 0 10px; }
+.mandala-svg { width: 100%; max-width: 600px; height: auto; }
+.mandala-svg text { font-family: var(--font-body); }
+.mandala-svg .serif { font-family: var(--font-display); }
+
+@keyframes qi-flow { to { stroke-dashoffset: -96; } }
+
+/* 内圈：丹田周天环。三层语义分层——外侧粗轨=当前充能（可回落），
+   内侧细金轨=已圆满周天的印记（常亮），圈内青虚线=气在运转 */
+.zt-track { fill: none; stroke: var(--bar-track); stroke-width: 10; }
+.zt-fill {
+  fill: none; stroke: var(--candle-gold); stroke-width: 10; stroke-linecap: round;
+  transition: stroke-dasharray 0.4s var(--ease-sharp);
+}
+.zt-pearl { fill: none; stroke: var(--candle-gold); stroke-width: 2.5; stroke-linecap: round; opacity: 0.85; }
+.zt-flow {
+  fill: none; stroke: var(--sword-cyan); stroke-width: 2;
+  stroke-dasharray: 3 14; opacity: 0.55; animation: qi-flow 3s linear infinite;
+}
+.zt-l { font-size: 10.5px; fill: var(--ink-faint); letter-spacing: 0.1em; }
+.zt-v { font-size: 24px; font-weight: 700; fill: var(--ink-warm); font-variant-numeric: tabular-nums; }
+.zt-c { font-size: 11.5px; fill: var(--sword-cyan); font-variant-numeric: tabular-nums; }
+
+/* 外圈：经脉弧与窍穴 */
+.m-arc { fill: none; stroke: var(--line-strong); stroke-width: 3.5; opacity: 0.5; }
+.m-arc.locked { stroke-dasharray: 4 8; stroke-width: 2.5; opacity: 0.55; }
+.m-slot.through .m-arc { stroke: var(--gold); opacity: 1; }
+.m-flow {
+  fill: none; stroke: var(--sword-cyan); stroke-width: 2.5; stroke-linecap: round;
+  stroke-dasharray: 4 20; opacity: 0.45; animation: qi-flow 3.4s linear infinite;
+}
+.m-slot.through .m-flow { stroke: var(--gold); opacity: 0.85; }
+
+.acu { fill: var(--night-surface-raised); stroke: var(--line-strong); stroke-width: 1.5; transition: fill 0.2s var(--ease-sharp); }
+.acu.opened { fill: var(--candle-gold); stroke: var(--candle-gold); }
+.acu.through { fill: var(--gold); stroke: var(--gold); stroke-width: 3; }
+.acu.actionable { cursor: pointer; }
+.acu.actionable:hover { stroke: var(--sword-cyan); stroke-width: 2.5; }
+.acu:focus-visible { outline: 2px solid var(--sword-cyan); outline-offset: 2px; }
+.acu-t { font-size: 11px; fill: var(--ink-faint); pointer-events: none; }
+.acu-t.opened { fill: var(--ink-muted); }
+.acu-rate { font-size: 10px; fill: var(--sword-cyan); pointer-events: none; font-variant-numeric: tabular-nums; }
+.m-name { font-size: 13px; fill: var(--ink-muted); letter-spacing: 0.06em; }
+.m-name.locked { fill: var(--ink-faint); opacity: 0.8; }
+.m-slot.through .m-name { fill: var(--gold); font-weight: 600; }
+.m-bonus { font-size: 10.5px; fill: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.m-slot.through .m-bonus { fill: var(--gold); }
+
+.mandala-status {
+  min-height: 20px; text-align: center; font-size: 12.5px; color: var(--ink-muted);
+  margin-top: 2px;
+}
+
+/* 气势条（独立于周天充能，spec §1 第三层语义） */
+.qishi-bar { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-muted); padding: 6px 0; }
+.qishi-bar .k { color: var(--ink-faint); letter-spacing: 0.05em; }
+.qishi-bar .mini-bar { flex: 1; max-width: 200px; height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
+.qishi-bar .mini-bar > i { display: block; height: 100%; background: var(--sword-cyan); transition: width 0.3s var(--ease-sharp); }
+.qishi-bar .v { font-variant-numeric: tabular-nums; }
+
+/* 窍穴账目 */
+.acu-ledger {
+  display: flex; flex-wrap: wrap; gap: 6px 20px; justify-content: center;
+  padding: 8px 0 2px; font-size: 12.5px; color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.acu-ledger b { color: var(--ink-warm); font-weight: 600; }
+.acu-ledger b.gold { color: var(--gold); }
 
 @media (max-width: 900px) {
-  .theme-switcher { padding: 4px 16px 8px; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
-  .theme-switcher::-webkit-scrollbar { display: none; }
-  .theme-radio { flex-shrink: 0; }
+  .rail-foot { margin-top: 0; }
 }

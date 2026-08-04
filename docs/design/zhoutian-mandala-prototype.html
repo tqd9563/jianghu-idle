@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="pomo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 周天年轮 — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --surface-2: oklch(0.868 0.008 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);
+  --primary-ink: oklch(0.96 0.003 200);
+  --gold: oklch(0.62 0.12 78);
+  --accent: oklch(0.45 0.065 220);
+  --bar-track: oklch(0.855 0.008 200);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 48px;
+}
+.serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.scene-note {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  padding: 8px 24px; background: oklch(0.90 0.007 200);
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; white-space: nowrap; }
+.ctl { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.ctl .lbl { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; }
+.ctl button {
+  padding: 3px 12px; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+}
+.ctl button.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 600; }
+
+.stage { max-width: 760px; margin: 0 auto; padding: 26px 24px 0; }
+.mandala-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10); overflow: hidden;
+}
+.p-head { padding: 12px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 10px; }
+.p-head h2 { font-size: 16px; font-weight: 600; }
+.p-head .sub { font-size: 12px; color: var(--faint); margin-left: auto; }
+.p-body { display: flex; justify-content: center; padding: 8px 0 0; }
+.legend { display: flex; gap: 16px; justify-content: center; padding: 2px 0 8px; font-size: 11.5px; color: var(--faint); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.legend .l-open i { background: var(--primary); }
+.legend .l-closed i { background: var(--surface-2); border: 1.5px solid var(--line-strong); }
+.legend .l-thru i { background: var(--gold); }
+.legend .l-lock i { background: transparent; border: 1.5px dashed var(--line-strong); }
+.ledger {
+  display: flex; justify-content: center; gap: 24px;
+  padding: 10px 18px 14px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.ledger b { color: var(--ink); font-weight: 600; }
+.ledger .g { color: var(--gold); font-weight: 600; }
+
+svg { display: block; }
+svg text { font-family: -apple-system, "PingFang SC", system-ui, sans-serif; }
+
+.m-arc { fill: none; stroke: var(--line-strong); stroke-width: 3; opacity: 0.55; }
+.m-arc.thru { stroke: var(--gold); opacity: 1; }
+.m-arc.locked { stroke: var(--line-strong); stroke-dasharray: 3 7; opacity: 0.4; }
+.m-flow {
+  fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round;
+  stroke-dasharray: 5 22; opacity: 0.55; pointer-events: none;
+  animation: flow 2.8s linear infinite;
+}
+.m-flow.thru { opacity: 0.95; stroke: var(--gold); }
+@keyframes flow { to { stroke-dashoffset: -108; } }
+/* 经脉与丹田之间的气桥：贯通后金气回灌 */
+.m-bridge { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 6; opacity: 0.6; }
+.m-bridge.thru { stroke: var(--gold); opacity: 0.9; animation: flow 2s linear infinite; stroke-dasharray: 4 10; }
+
+.acu { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; cursor: pointer; transition: fill 0.2s, r 0.2s; }
+.acu:hover { stroke: var(--accent); }
+.acu.open { fill: var(--primary); stroke: var(--primary); }
+.acu.thru { fill: var(--gold); stroke: var(--gold); }
+.acu-t { font-size: 10.5px; fill: var(--faint); pointer-events: none; }
+.acu-t.open { fill: var(--muted); }
+.m-name { font-size: 12.5px; fill: var(--muted); letter-spacing: 0.1em; }
+.m-name.thru { fill: var(--gold); font-weight: 600; }
+.m-name.locked { fill: var(--faint); opacity: 0.75; }
+.m-bonus { font-size: 10px; fill: var(--faint); }
+.m-bonus.thru { fill: var(--gold); }
+
+.zt-track { fill: none; stroke: var(--bar-track); stroke-width: 9; }
+.zt-fill { fill: none; stroke: var(--primary); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 0.5s var(--ease); }
+.zt-flow { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 4 18; opacity: 0.75; animation: flow 2.2s linear infinite; }
+.zt-seg-tick { stroke: var(--surface); stroke-width: 3; }
+.zt-txt-v { font-size: 21px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.zt-txt-l { font-size: 10px; fill: var(--faint); letter-spacing: 0.1em; }
+.zt-txt-c { font-size: 11px; fill: var(--accent); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) { .m-flow, .zt-flow, .m-bridge.thru { animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型 / 周天年轮</b>固定三条经脉位的圆盘：未解锁经脉以虚线占位（锁定文案即目标指引），构图不随境界漂移。可点：窍穴（模拟冲开；整脉冲满即贯通，金流回灌丹田）、境界切换。
+  <span class="ctl"><span class="lbl">境界</span>
+    <button data-r="2" class="on">2</button><button data-r="3">3</button><button data-r="4">4</button><button data-r="5">5</button>
+  </span>
+</div>
+
+<div class="stage">
+  <div class="mandala-panel">
+    <div class="p-head"><h2>运转周天</h2><span class="sub" id="headSub">境界 2 · 初窥门径 · 窍穴池 4</span></div>
+    <div class="legend">
+      <span class="l-closed"><i></i>未冲开</span><span class="l-open"><i></i>已冲开</span>
+      <span class="l-thru"><i></i>贯通</span><span class="l-lock"><i></i>未解锁经脉</span>
+    </div>
+    <div class="p-body">
+      <svg id="mandala" viewBox="0 0 520 470" width="520" height="470" aria-label="周天年轮：丹田充能与经脉窍穴总览"></svg>
+    </div>
+    <div class="ledger" id="ledger"></div>
+  </div>
+</div>
+
+<script>
+/* ===== 真实结构（design.md §3.2 / acupoints.ts） ===== */
+const REALM_DATA = {
+  2: { pool: 4, realmName: '初窥门径', ms: [ { name: '经脉·甲', n: 2 }, { name: '经脉·乙', n: 2 } ] },
+  3: { pool: 5, realmName: '登堂入室', ms: [ { name: '经脉·甲', n: 3 }, { name: '经脉·乙', n: 2 } ] },
+  4: { pool: 6, realmName: '融会贯通', ms: [ { name: '经脉·甲', n: 3 }, { name: '经脉·乙', n: 3 } ] },
+  5: { pool: 8, realmName: '出神入化', ms: [ { name: '经脉·甲', n: 3 }, { name: '经脉·乙', n: 3 }, { name: '经脉·丙', n: 2 } ] },
+};
+const ACU_CN = [['甲一','甲二','甲三'],['乙一','乙二','乙三'],['丙一','丙二','丙三']];
+const SLOT_UNLOCK_REALM = [2, 2, 5];   /* 三条脉位的解锁境界：甲乙自境界2起，丙至境界5 */
+const ZT = { seg: 2, segN: 5, pct: 0.45, val: '12,480', cap: '28,000' };
+const PER_ACU = r => r === 5 ? 1.5 : 2;      /* 单穴加成（design.md §3.3） */
+
+let realm = 2;
+let opened = [];
+function resetOpened() {
+  /* mock：甲脉全开（贯通示例），乙开 1 穴，丙未动 */
+  opened = REALM_DATA[realm].ms.map((m, i) => new Set(i === 0 ? [...Array(m.n).keys()] : (i === 1 ? [0] : [])));
+}
+const isThru = mi => opened[mi] && opened[mi].size === REALM_DATA[realm].ms[mi].n;
+
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('mandala');
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e); return e;
+}
+function txt(x, y, str, cls, anchor) {
+  const t = el('text', { x, y, class: cls, 'text-anchor': anchor || 'middle' }, svg);
+  t.textContent = str; return t;
+}
+function toggleAcu(mi, ai) {
+  opened[mi].has(ai) ? opened[mi].delete(ai) : opened[mi].add(ai);
+  render();
+}
+
+const CX = 260, CY = 240, R_ZT = 78, R_M = 172, R_NAME = 208;
+/* 三条脉位的固定弧心角（上、右下、左下），每弧 96° */
+const SLOT_MID = [-90, 30, 150];
+const SPAN = 96;
+
+function arcPath(r, a0, a1) {
+  const p0 = [CX + r * Math.cos(a0), CY + r * Math.sin(a0)];
+  const p1 = [CX + r * Math.cos(a1), CY + r * Math.sin(a1)];
+  return `M ${p0[0]} ${p0[1]} A ${r} ${r} 0 0 1 ${p1[0]} ${p1[1]}`;
+}
+const rad = d => d * Math.PI / 180;
+
+function render() {
+  svg.innerHTML = '';
+  const data = REALM_DATA[realm];
+
+  /* 年轮暗环：把三段脉位弧的底轨先画全（视觉上是一个完整的盘） */
+  SLOT_MID.forEach((mid, si) => {
+    const a0 = rad(mid - SPAN / 2), a1 = rad(mid + SPAN / 2);
+    const m = data.ms[si];
+    const unlocked = si < data.ms.length;
+    const thru = unlocked && isThru(si);
+
+    /* 气桥：脉弧中点 → 丹田环 */
+    const bx0 = CX + (R_M - 10) * Math.cos(rad(mid)), by0 = CY + (R_M - 10) * Math.sin(rad(mid));
+    const bx1 = CX + (R_ZT + 12) * Math.cos(rad(mid)), by1 = CY + (R_ZT + 12) * Math.sin(rad(mid));
+    if (unlocked) el('path', { d: `M ${bx0} ${by0} L ${bx1} ${by1}`, class: 'm-bridge' + (thru ? ' thru' : '') }, svg);
+
+    el('path', { d: arcPath(R_M, a0, a1), class: 'm-arc' + (unlocked ? (thru ? ' thru' : '') : ' locked') }, svg);
+    if (unlocked) el('path', { d: arcPath(R_M, a0, a1), class: 'm-flow' + (thru ? ' thru' : '') }, svg);
+
+    /* 脉名与状态 */
+    const nx = CX + R_NAME * Math.cos(rad(mid)), ny = CY + R_NAME * Math.sin(rad(mid));
+    if (unlocked) {
+      txt(nx, ny + 4, m.name, 'm-name serif' + (thru ? ' thru' : ''));
+      txt(nx, ny + 19, thru ? `贯通 · 集合 ×1.5` : `${opened[si].size}/${m.n} 穴`, 'm-bonus' + (thru ? ' thru' : ''));
+    } else {
+      txt(nx, ny + 4, '经脉·丙', 'm-name serif locked');
+      txt(nx, ny + 19, '境界 5 解锁', 'm-bonus');
+    }
+
+    /* 窍穴 */
+    if (unlocked) {
+      for (let ai = 0; ai < m.n; ai++) {
+        const a = rad(mid - SPAN / 2 + SPAN * (ai + 0.5) / m.n);
+        const x = CX + R_M * Math.cos(a), y = CY + R_M * Math.sin(a);
+        const open = opened[si].has(ai);
+        const c = el('circle', { cx: x, cy: y, r: 9, class: 'acu' + (thru ? ' thru' : open ? ' open' : ''),
+          tabindex: 0, role: 'button', 'aria-label': `窍穴·${ACU_CN[si][ai]}${open ? '（已冲开）' : '（未冲开）'}` }, svg);
+        c.addEventListener('click', () => toggleAcu(si, ai));
+        c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAcu(si, ai); } });
+        /* 穴名：沿径向外侧 */
+        const tx = CX + (R_M + 22) * Math.cos(a), ty = CY + (R_M + 22) * Math.sin(a);
+        txt(tx, ty + 4, ACU_CN[si][ai], 'acu-t' + (open ? ' open' : ''));
+      }
+    }
+  });
+
+  /* 丹田周天环 */
+  const C = 2 * Math.PI * R_ZT;
+  const total = (ZT.seg + ZT.pct) / ZT.segN;
+  el('circle', { cx: CX, cy: CY, r: R_ZT, class: 'zt-track' }, svg);
+  el('circle', { cx: CX, cy: CY, r: R_ZT, class: 'zt-fill', 'stroke-dasharray': C, 'stroke-dashoffset': C * (1 - total), transform: `rotate(-90 ${CX} ${CY})` }, svg);
+  /* 分段刻线 */
+  for (let i = 0; i < ZT.segN; i++) {
+    const a = rad(-90 + 360 * i / ZT.segN);
+    el('line', { x1: CX + (R_ZT - 6) * Math.cos(a), y1: CY + (R_ZT - 6) * Math.sin(a),
+                 x2: CX + (R_ZT + 6) * Math.cos(a), y2: CY + (R_ZT + 6) * Math.sin(a), class: 'zt-seg-tick' }, svg);
+  }
+  el('circle', { cx: CX, cy: CY, r: R_ZT, class: 'zt-flow', transform: `rotate(-90 ${CX} ${CY})` }, svg);
+  txt(CX, CY - 18, '丹田内力', 'zt-txt-l');
+  txt(CX, CY + 4, ZT.val, 'zt-txt-v');
+  txt(CX, CY + 20, `/ ${ZT.cap}`, 'zt-txt-l');
+  txt(CX, CY + 38, `第三周天 45% · ${ZT.seg}/${ZT.segN}`, 'zt-txt-c');
+
+  /* 头部与账目 */
+  document.getElementById('headSub').textContent = `境界 ${realm} · ${data.realmName} · 窍穴池 ${data.pool}`;
+  const per = PER_ACU(realm);
+  const openN = opened.reduce((s, set) => s + set.size, 0);
+  const thruN = data.ms.filter((_, i) => isThru(i)).length;
+  const base = openN * per;
+  const bonus = data.ms.reduce((s, m, i) => s + (isThru(i) ? m.n * per * 0.5 : 0), 0);
+  document.getElementById('ledger').innerHTML =
+    `<span>已冲开 <b>${openN}/${data.pool}</b> 穴</span>` +
+    `<span>贯通 <b>${thruN}/${data.ms.length}</b> 脉</span>` +
+    `<span>修炼加成 <b>+${base.toFixed(1)}%</b>${bonus ? ` <span class="g">+${bonus.toFixed(1)}% 贯通</span>` : ''}</span>` +
+    `<span>往轮辙印 · 累计 <b class="g">+9%</b></span>`;
+}
+
+document.querySelectorAll('.ctl button').forEach(b => b.addEventListener('click', () => {
+  realm = +b.dataset.r;
+  document.querySelectorAll('.ctl button').forEach(x => x.classList.toggle('on', x === b));
+  resetOpened(); render();
+}));
+resetOpened(); render();
+</script>
+</body>
+</html>

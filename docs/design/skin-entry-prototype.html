@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="night">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 统一皮肤配置入口 — 江湖无尽录</title>
+<style>
+/* ============================================================
+   主题 token — 与 code/src/styles/tokens.css 逐值一致
+   ============================================================ */
+:root, html[data-theme='night'] {
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --chrome: oklch(0.19 0.015 262);
+  --nav: oklch(0.13 0.012 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.75 0.015 85);
+  --faint: oklch(0.65 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --primary: oklch(0.76 0.13 78);
+  --primary-ink: oklch(0.18 0.03 78);
+  --primary-soft: oklch(0.76 0.13 78 / 0.12);
+  --accent: oklch(0.74 0.10 215);
+  --accent-soft: oklch(0.74 0.10 215 / 0.14);
+  --poison: oklch(0.72 0.14 145);
+  --bar-track: oklch(0.28 0.018 262);
+  --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+  --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
+  --radius-panel: 8px; --radius-btn: 6px; --r-lg: 10px;
+  --border-panel: 1px solid var(--line);
+  --panel-shadow: var(--shadow);
+  --shadow-modal: 0 12px 48px oklch(0.05 0.01 262 / 0.7);
+  --modal-backdrop-bg: oklch(0.08 0.01 262 / 0.72);
+}
+html[data-theme='xuan'] {
+  --bg: oklch(0.965 0.003 100);
+  --surface: oklch(0.935 0.004 100);
+  --surface-2: oklch(0.905 0.005 100);
+  --chrome: oklch(0.95 0.004 100);
+  --nav: oklch(0.965 0.003 100);
+  --ink: oklch(0.22 0.01 90);
+  --muted: oklch(0.40 0.012 90);
+  --faint: oklch(0.50 0.01 90);
+  --line: oklch(0.80 0.008 90);
+  --line-strong: oklch(0.65 0.01 90);
+  --primary: oklch(0.50 0.185 29);
+  --primary-ink: oklch(0.99 0.005 29);
+  --primary-soft: oklch(0.50 0.185 29 / 0.12);
+  --accent: oklch(0.42 0.07 230);
+  --accent-soft: oklch(0.42 0.07 230 / 0.12);
+  --poison: oklch(0.45 0.11 145);
+  --bar-track: oklch(0.87 0.006 100);
+  --shadow: 0 1px 3px oklch(0.22 0.01 90 / 0.10);
+  --glow-num: none;
+  --radius-panel: 0; --radius-btn: 0; --r-lg: 0;
+  --border-panel: 1px solid var(--line-strong);
+  --panel-shadow: none;
+  --shadow-modal: 0 12px 48px oklch(0.22 0.01 90 / 0.2);
+  --modal-backdrop-bg: oklch(0.22 0.01 90 / 0.3);
+}
+html[data-theme='bronze'] {
+  --bg: oklch(0.28 0.015 100);
+  --surface: oklch(0.33 0.015 100);
+  --surface-2: oklch(0.38 0.02 100);
+  --chrome: oklch(0.30 0.015 100);
+  --nav: oklch(0.25 0.015 100);
+  --ink: oklch(0.88 0.02 90);
+  --muted: oklch(0.78 0.02 90);
+  --faint: oklch(0.65 0.02 90);
+  --line: oklch(0.44 0.02 100);
+  --line-strong: oklch(0.55 0.03 90);
+  --primary: oklch(0.68 0.14 65);
+  --primary-ink: oklch(0.20 0.02 100);
+  --primary-soft: oklch(0.68 0.14 65 / 0.15);
+  --accent: oklch(0.58 0.10 160);
+  --accent-soft: oklch(0.58 0.10 160 / 0.20);
+  --poison: oklch(0.58 0.14 145);
+  --bar-track: oklch(0.40 0.02 100);
+  --shadow: 0 3px 8px oklch(0.12 0.01 100 / 0.6);
+  --glow-num: none;
+  --radius-panel: 2px; --radius-btn: 2px; --r-lg: 2px;
+  --border-panel: 2px solid var(--line-strong);
+  --panel-shadow: inset 0 0 0 1px var(--surface-2), var(--shadow);
+  --shadow-modal: 0 12px 48px oklch(0.12 0.01 100 / 0.8);
+  --modal-backdrop-bg: oklch(0.12 0.01 100 / 0.72);
+}
+html[data-theme='mist'] {
+  --bg: oklch(0.88 0.02 215);
+  --surface: oklch(0.93 0.015 215);
+  --surface-2: oklch(0.97 0.01 215);
+  --chrome: oklch(0.90 0.018 215);
+  --nav: oklch(0.86 0.02 215);
+  --ink: oklch(0.28 0.03 235);
+  --muted: oklch(0.38 0.03 235);
+  --faint: oklch(0.48 0.02 235);
+  --line: oklch(0.80 0.02 215);
+  --line-strong: oklch(0.68 0.03 225);
+  --primary: oklch(0.42 0.12 250);
+  --primary-ink: oklch(0.98 0.01 215);
+  --primary-soft: oklch(0.42 0.12 250 / 0.12);
+  --accent: oklch(0.52 0.08 190);
+  --accent-soft: oklch(0.52 0.08 190 / 0.15);
+  --poison: oklch(0.50 0.14 145);
+  --bar-track: oklch(0.82 0.02 215);
+  --shadow: 0 2px 10px oklch(0.28 0.03 235 / 0.12);
+  --glow-num: none;
+  --radius-panel: 10px; --radius-btn: 8px; --r-lg: 12px;
+  --border-panel: 1px solid var(--line);
+  --panel-shadow: var(--shadow);
+  --shadow-modal: 0 12px 48px oklch(0.28 0.03 235 / 0.25);
+  --modal-backdrop-bg: oklch(0.28 0.03 235 / 0.35);
+}
+
+html[data-theme='pomo'] {
+  /* 泼墨山河 · 写意水墨：灰白生宣为纸，墨分五色为层，浓墨为笔，黛青为韵 */
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --surface-2: oklch(0.868 0.008 200);
+  --chrome: oklch(0.928 0.005 200);
+  --nav: oklch(0.945 0.004 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);
+  --primary-ink: oklch(0.96 0.003 200);
+  --primary-soft: oklch(0.30 0.02 260 / 0.10);
+  --accent: oklch(0.45 0.065 220);
+  --accent-soft: oklch(0.45 0.065 220 / 0.14);
+  --poison: oklch(0.46 0.10 150);
+  --bar-track: oklch(0.855 0.008 200);
+  --shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10);
+  --glow-num: none;
+  --radius-panel: 6px; --radius-btn: 6px; --r-lg: 8px;
+  --border-panel: 1px solid var(--line);
+  --panel-shadow: var(--shadow);
+  --shadow-modal: 0 14px 52px oklch(0.24 0.012 260 / 0.22);
+  --modal-backdrop-bg: oklch(0.24 0.012 260 / 0.28);
+}
+
+/* ============================================================
+   基础
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --z-modal-backdrop: 60; --z-modal: 61; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh;
+  transition: background-color 0.25s, color 0.25s;
+}
+.serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+/* 泼墨山河：整页铺一层极淡的墨晕远山（仅此皮肤，静态、不参与交互） */
+html[data-theme='pomo'] body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+}
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 原型说明条（审阅用，非游戏 UI） */
+.scene-note {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 8px 24px; background: var(--nav);
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; white-space: nowrap; }
+
+/* ============================================================
+   主界面布局 — 与 code/src/index.css 的 .app 一致
+   ============================================================ */
+.app {
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 6px;
+  min-height: calc(100vh - 38px);
+  padding: 6px;
+}
+
+.game-rail {
+  grid-column: 1; grid-row: 1 / 3;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  display: flex; flex-direction: column;
+  transition: background-color 0.25s;
+}
+.rail-identity { padding: 20px 20px 16px; white-space: nowrap; }
+.game-title { font-size: 19px; font-weight: 700; letter-spacing: 0.04em; }
+.game-title .round {
+  font-size: 12px; color: var(--primary); border: 1px solid currentColor;
+  border-radius: 4px; padding: 1px 8px; margin-left: 10px;
+  vertical-align: 2px; letter-spacing: 0.1em;
+}
+.realm-chip { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.realm-chip .name { font-size: 15px; font-weight: 600; color: var(--primary); }
+.realm-chip .lv { font-size: 12px; color: var(--muted); }
+
+.nav-group { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.game-tab {
+  padding: 10px 16px; border: none; border-radius: var(--radius-panel);
+  background: none; color: var(--muted); font-size: 14px; cursor: pointer;
+  text-align: left; transition: background-color 0.2s, color 0.2s;
+}
+.game-tab:hover { color: var(--ink); }
+.game-tab.active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+.game-tab.active::before {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  background: var(--primary); border-radius: 50%; margin-right: 8px; vertical-align: 2px;
+}
+.game-tab:disabled { color: var(--faint); cursor: not-allowed; }
+.game-tab .tab-count { font-size: 11px; opacity: 0.6; margin-left: 6px; font-variant-numeric: tabular-nums; }
+
+/* —— 新增：菜单栏底部「外观」入口 —— */
+.rail-foot { margin-top: auto; padding: 10px; border-top: 1px solid var(--line); }
+.appearance-entry {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 9px 12px; border: none; border-radius: var(--radius-panel);
+  background: none; color: var(--muted); font-size: 13px; cursor: pointer;
+  text-align: left; transition: background-color 0.2s, color 0.2s;
+}
+.appearance-entry:hover { background: var(--surface-2); color: var(--ink); }
+.appearance-entry .swatch {
+  flex: none; width: 15px; height: 15px; border-radius: 4px;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(135deg, var(--primary) 0 50%, var(--surface-2) 50% 100%);
+}
+.appearance-entry .cur-skin { margin-left: auto; font-size: 12px; color: var(--faint); }
+
+/* 顶栏 */
+.topbar {
+  grid-column: 2; grid-row: 1;
+  display: flex; align-items: center; justify-content: flex-end; gap: 28px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: 12px 24px;
+  transition: background-color 0.25s;
+}
+.res-group { display: flex; }
+.res { display: flex; align-items: baseline; gap: 7px; padding: 0 16px; }
+.res .label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; }
+.res .value { font-size: 15.5px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: var(--glow-num); }
+.res .rate { font-size: 11px; color: var(--poison); font-variant-numeric: tabular-nums; }
+.res.rep .value { color: var(--primary); }
+
+/* 主工作区（示意内容，观察各皮肤观感） */
+.s3-main {
+  grid-column: 2; grid-row: 2;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  display: flex; flex-direction: column; min-width: 0;
+  transition: background-color 0.25s;
+}
+.pulse-bar { display: flex; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--bg); }
+.strip-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 3px 12px; border-radius: var(--radius-btn);
+  background: var(--surface-2); border: 1px solid transparent;
+  font-size: 12.5px; color: var(--muted); cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.strip-item:hover { border-color: var(--line-strong); color: var(--ink); }
+.strip-item b { color: var(--ink); font-weight: 600; }
+.mini-bar { width: 72px; height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
+.mini-bar > i { display: block; height: 100%; background: var(--primary); }
+
+.pane-wrap { max-width: 1000px; margin: 0 auto; padding: 24px; width: 100%; }
+.panel-head { font-size: 16px; font-weight: 600; padding: 0 0 12px 4px; }
+.panel-head::before {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  background: var(--primary); border-radius: 50%; margin-right: 10px; vertical-align: 2px;
+}
+.panel-head .sub { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 8px; }
+.charge-track { display: flex; gap: 5px; margin: 10px 0 6px; max-width: 460px; }
+.charge-seg { flex: 1; height: 14px; border-radius: 4px; background: var(--bar-track); position: relative; overflow: hidden; }
+.charge-seg.full { background: var(--primary); }
+.charge-seg.part > i { position: absolute; inset: 0; width: 45%; background: var(--primary); opacity: 0.65; }
+.charge-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; max-width: 460px; }
+.formula {
+  font-size: 12px; color: var(--muted); background: var(--surface-2);
+  border-radius: var(--radius-btn); padding: 8px 10px; margin-top: 14px;
+  font-variant-numeric: tabular-nums; line-height: 1.7; max-width: 460px;
+}
+.formula .gold { color: var(--primary); }
+.formula .cyan { color: var(--accent); }
+
+/* ============================================================
+   皮肤配置弹窗
+   ============================================================ */
+.modal-backdrop {
+  position: fixed; inset: 0; background: var(--modal-backdrop-bg);
+  display: none; align-items: center; justify-content: center;
+  z-index: var(--z-modal-backdrop); padding: 24px;
+}
+.modal-backdrop.open { display: flex; }
+.skin-modal {
+  width: min(560px, 100%);
+  background: var(--surface); border: var(--border-panel);
+  border-radius: var(--radius-panel); box-shadow: var(--shadow-modal);
+  z-index: var(--z-modal);
+  animation: modal-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes modal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .skin-modal { animation: modal-fade 0.15s ease-out; }
+  @keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+  body, .game-rail, .topbar, .s3-main { transition: none; }
+}
+.modal-head {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 16px 22px 12px; border-bottom: 1px solid var(--line);
+}
+.modal-head h2 { font-size: 17px; font-weight: 700; }
+.modal-head .sub { font-size: 12px; font-weight: 400; color: var(--muted); }
+.modal-close {
+  margin-left: auto; align-self: center;
+  width: 28px; height: 28px; border: none; border-radius: var(--radius-btn);
+  background: none; color: var(--faint); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.modal-close:hover { background: var(--surface-2); color: var(--ink); }
+.modal-body { padding: 18px 22px 22px; }
+
+.skin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .skin-grid { grid-template-columns: 1fr; } }
+
+.skin-card {
+  padding: 0; overflow: hidden; cursor: pointer; text-align: left;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  transition: border-color 0.15s;
+}
+.skin-card:hover { border-color: var(--line-strong); }
+.skin-card[aria-checked="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+
+/* 微缩界面预览：每张卡固定用自己主题的真实颜色（自定义属性作用域） */
+.sp { height: 92px; display: grid; grid-template-columns: 44px 1fr; gap: 3px; padding: 6px; background: var(--sp-bg); }
+.sp-rail { background: var(--sp-surface); border-radius: var(--sp-r); padding: 7px 6px; display: flex; flex-direction: column; gap: 5px; }
+.sp-rail i { height: 5px; border-radius: 2px; background: var(--sp-muted); opacity: 0.5; }
+.sp-rail i.on { background: var(--sp-primary); opacity: 1; }
+.sp-col { display: grid; grid-template-rows: 16px 1fr; gap: 3px; }
+.sp-top { background: var(--sp-surface); border-radius: var(--sp-r); }
+.sp-main { background: var(--sp-surface); border-radius: var(--sp-r); padding: 8px 9px; display: flex; flex-direction: column; gap: 6px; }
+.sp-main .t { height: 6px; width: 55%; border-radius: 2px; background: var(--sp-ink); opacity: 0.85; }
+.sp-main .l { height: 5px; width: 80%; border-radius: 2px; background: var(--sp-muted); opacity: 0.5; }
+.sp-main .segs { display: flex; gap: 3px; margin-top: auto; }
+.sp-main .segs i { flex: 1; height: 7px; border-radius: 2px; background: var(--sp-track); }
+.sp-main .segs i.full { background: var(--sp-primary); }
+
+.skin-card .meta {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-top: 1px solid var(--line);
+}
+.skin-card .meta .name { font-size: 14px; font-weight: 600; }
+.skin-card .meta .check {
+  margin-left: auto; font-size: 11px; letter-spacing: 0.05em;
+  color: var(--primary); visibility: hidden;
+}
+.skin-card[aria-checked="true"] .meta .check { visibility: visible; }
+
+.modal-foot { font-size: 11.5px; color: var(--faint); margin-top: 14px; }
+
+/* 每张预览卡的主题色（真实 oklch 值，独立于全局当前皮肤） */
+.skin-card[data-skin="night"] .sp {
+  --sp-bg: oklch(0.165 0.014 262); --sp-surface: oklch(0.215 0.016 262);
+  --sp-ink: oklch(0.90 0.012 85); --sp-muted: oklch(0.65 0.015 262);
+  --sp-primary: oklch(0.76 0.13 78); --sp-track: oklch(0.28 0.018 262); --sp-r: 4px;
+}
+.skin-card[data-skin="xuan"] .sp {
+  --sp-bg: oklch(0.965 0.003 100); --sp-surface: oklch(0.905 0.005 100);
+  --sp-ink: oklch(0.22 0.01 90); --sp-muted: oklch(0.50 0.01 90);
+  --sp-primary: oklch(0.50 0.185 29); --sp-track: oklch(0.84 0.006 100); --sp-r: 0;
+}
+.skin-card[data-skin="bronze"] .sp {
+  --sp-bg: oklch(0.28 0.015 100); --sp-surface: oklch(0.33 0.015 100);
+  --sp-ink: oklch(0.88 0.02 90); --sp-muted: oklch(0.65 0.02 90);
+  --sp-primary: oklch(0.68 0.14 65); --sp-track: oklch(0.40 0.02 100); --sp-r: 1px;
+}
+.skin-card[data-skin="pomo"] .sp {
+  --sp-bg: oklch(0.945 0.004 200); --sp-surface: oklch(0.895 0.007 200);
+  --sp-ink: oklch(0.24 0.012 260); --sp-muted: oklch(0.50 0.012 240);
+  --sp-primary: oklch(0.30 0.02 260); --sp-track: oklch(0.845 0.008 200); --sp-r: 3px;
+}
+/* 泼墨卡专属：预览底铺一笔淡墨晕染 */
+.skin-card[data-skin="pomo"] .sp {
+  background:
+    radial-gradient(120% 90% at 82% -10%, oklch(0.24 0.012 260 / 0.10), transparent 60%),
+    var(--sp-bg);
+}
+.skin-card[data-skin="mist"] .sp {
+  --sp-bg: oklch(0.88 0.02 215); --sp-surface: oklch(0.97 0.01 215);
+  --sp-ink: oklch(0.28 0.03 235); --sp-muted: oklch(0.48 0.02 235);
+  --sp-primary: oklch(0.42 0.12 250); --sp-track: oklch(0.82 0.02 215); --sp-r: 5px;
+}
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; }
+  .game-rail { grid-column: 1; grid-row: 2; }
+  .topbar { grid-column: 1; grid-row: 1; justify-content: flex-start; overflow-x: auto; }
+  .s3-main { grid-column: 1; grid-row: 3; }
+  .nav-group { flex-direction: row; overflow-x: auto; }
+  .rail-foot { margin-top: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene-note"><b>原型 / 皮肤入口</b>方案：左栏顶部的四个皮肤单选移除，改为菜单栏底部「外观」统一入口 → 弹窗内选皮肤（微缩预览 + 即时生效）。可点：「外观」入口、弹窗内四张皮肤卡（整页真实换肤）、Esc 或遮罩关闭。</div>
+
+<div class="app">
+  <nav class="game-rail">
+    <div class="rail-identity">
+      <div class="game-title serif">江湖无尽录<span class="round">第 1 轮</span></div>
+      <div class="realm-chip"><span class="name serif">初窥门径</span><span class="lv">境界 2 / 5</span></div>
+    </div>
+    <!-- 原 ThemeSwitcher 位置：已移除 -->
+    <div class="nav-group">
+      <button class="game-tab active">修炼</button>
+      <button class="game-tab">战斗</button>
+      <button class="game-tab">武学</button>
+      <button class="game-tab" disabled title="首次归隐后解锁">声望阁 · 归隐后解锁</button>
+      <button class="game-tab">秘籍阁<span class="tab-count">5/18</span></button>
+    </div>
+    <div class="rail-foot">
+      <button class="appearance-entry" id="openSkin" aria-haspopup="dialog">
+        <span class="swatch" aria-hidden="true"></span>外观
+        <span class="cur-skin" id="curSkinName">夜雨账台</span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="topbar">
+    <div class="res-group">
+      <div class="res"><span class="label">内力</span><span class="value">12,480</span><span class="rate">+16.9 / 秒</span></div>
+      <div class="res"><span class="label">银两</span><span class="value">860</span></div>
+      <div class="res"><span class="label">阅历</span><span class="value">1,204</span></div>
+      <div class="res rep"><span class="label">声望</span><span class="value">0</span></div>
+    </div>
+  </header>
+
+  <main class="s3-main">
+    <div class="pulse-bar">
+      <span class="strip-item">运转周天 <span class="mini-bar"><i style="width:52%"></i></span> <b>2/5</b> · 第三周天 45%</span>
+      <span class="strip-item">村外小径 <b>4/8</b> · 对战 黑店伙计</span>
+    </div>
+    <div class="pane-wrap">
+      <div class="panel-head">运转周天 <span class="sub">境界 2 → 3 · 内力自行流转</span></div>
+      <div class="charge-track">
+        <div class="charge-seg full"></div>
+        <div class="charge-seg full"></div>
+        <div class="charge-seg part"><i></i></div>
+        <div class="charge-seg"></div>
+        <div class="charge-seg"></div>
+      </div>
+      <div class="charge-label"><span>丹田内力 12,480 / 28,000</span><span>第三周天 45%</span></div>
+      <div class="formula">修炼速率 = 基础 12.0 × <span class="gold">(1 + 20%)</span> × <span class="cyan">(1 + 17%)</span> = <span class="gold">16.9 / 秒</span></div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ 外观 · 皮肤配置弹窗 ============ -->
+<div class="modal-backdrop" id="skinBackdrop">
+  <div class="skin-modal" role="dialog" aria-modal="true" aria-labelledby="skinTitle">
+    <div class="modal-head">
+      <h2 id="skinTitle">外观</h2>
+      <span class="sub">选定即生效，自动保存</span>
+      <button class="modal-close" id="closeSkin" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="skin-grid" role="radiogroup" aria-label="界面皮肤">
+
+        <button class="skin-card" role="radio" aria-checked="true" data-skin="night">
+          <div class="sp" aria-hidden="true">
+            <div class="sp-rail"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="sp-col">
+              <div class="sp-top"></div>
+              <div class="sp-main">
+                <div class="t"></div><div class="l"></div>
+                <div class="segs"><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="meta"><span class="name serif">夜雨账台</span><span class="check">使用中</span></div>
+        </button>
+
+        <button class="skin-card" role="radio" aria-checked="false" data-skin="xuan">
+          <div class="sp" aria-hidden="true">
+            <div class="sp-rail"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="sp-col">
+              <div class="sp-top"></div>
+              <div class="sp-main">
+                <div class="t"></div><div class="l"></div>
+                <div class="segs"><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="meta"><span class="name serif">宣纸武谱</span><span class="check">使用中</span></div>
+        </button>
+
+        <button class="skin-card" role="radio" aria-checked="false" data-skin="bronze">
+          <div class="sp" aria-hidden="true">
+            <div class="sp-rail"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="sp-col">
+              <div class="sp-top"></div>
+              <div class="sp-main">
+                <div class="t"></div><div class="l"></div>
+                <div class="segs"><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="meta"><span class="name serif">山门铜刻</span><span class="check">使用中</span></div>
+        </button>
+
+        <button class="skin-card" role="radio" aria-checked="false" data-skin="mist">
+          <div class="sp" aria-hidden="true">
+            <div class="sp-rail"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="sp-col">
+              <div class="sp-top"></div>
+              <div class="sp-main">
+                <div class="t"></div><div class="l"></div>
+                <div class="segs"><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="meta"><span class="name serif">雾江行旅</span><span class="check">使用中</span></div>
+        </button>
+
+        <button class="skin-card" role="radio" aria-checked="false" data-skin="pomo">
+          <div class="sp" aria-hidden="true">
+            <div class="sp-rail"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="sp-col">
+              <div class="sp-top"></div>
+              <div class="sp-main">
+                <div class="t"></div><div class="l"></div>
+                <div class="segs"><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="meta"><span class="name serif">泼墨山河</span><span class="check">使用中</span></div>
+        </button>
+
+      </div>
+      <p class="modal-foot">皮肤只改界面观感，不影响任何数值与进度。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const SKIN_NAMES = { night: '夜雨账台', xuan: '宣纸武谱', bronze: '山门铜刻', mist: '雾江行旅', pomo: '泼墨山河' };
+const backdrop = document.getElementById('skinBackdrop');
+const entry = document.getElementById('openSkin');
+const curName = document.getElementById('curSkinName');
+const cards = [...document.querySelectorAll('.skin-card')];
+
+function applySkin(id) {
+  document.documentElement.setAttribute('data-theme', id);
+  curName.textContent = SKIN_NAMES[id];
+  cards.forEach(c => c.setAttribute('aria-checked', String(c.dataset.skin === id)));
+}
+cards.forEach(c => c.addEventListener('click', () => applySkin(c.dataset.skin)));
+
+function openModal() {
+  backdrop.classList.add('open');
+  cards.find(c => c.getAttribute('aria-checked') === 'true').focus();
+}
+function closeModal() { backdrop.classList.remove('open'); entry.focus(); }
+entry.addEventListener('click', openModal);
+document.getElementById('closeSkin').addEventListener('click', closeModal);
+backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (!backdrop.classList.contains('open')) return;
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    const cur = cards.findIndex(c => c.getAttribute('aria-checked') === 'true');
+    const delta = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : -1;
+    const next = cards[(cur + delta + cards.length) % cards.length];
+    applySkin(next.dataset.skin);
+    next.focus();
+    e.preventDefault();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 /** 武学页 —— 构筑决策归拢处：武学升级 / 机制节点 / 路线机制 / 乘区透视 / 换路线 */
 import { useState } from 'react';
+import { assertNever } from '../engine/exhaustive';
 import { computeAttributes } from '../engine/attributes';
 import type { Build } from '../engine/combat';
 import { REALMS, skillUpgradeCost, type RouteId } from '../engine/content';
@@ -178,5 +179,8 @@ function RouteMechList({ routeId, level, build }: { routeId: keyof typeof ROUTES
           {build.lowhpDr > 0 && <li>气血低于 30% 时受到伤害 <b>−{pct(build.lowhpDr)}</b></li>}
         </>
       );
+    default:
+      // 新增路线必须在此补机制说明，否则编译期报错（不再静默渲染空白）
+      return assertNever(routeId, 'RouteMechList 未处理的路线');
   }
 }

@@ -125,7 +125,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               <div>
                 <div className="serif" style={{ fontSize: '13.5px', fontWeight: 600 }}>
                   精英挑战
-                  {e.tags.map((t) => <span key={t} className="tag trait" style={{ marginLeft: 6 }}>{t === '毒' ? '剧毒' : t}</span>)}
+                  {e.tags.map((t) => <span key={t} className="tag trait" style={{ marginLeft: 6 }}>{tagLabel(t)}</span>)}
                 </div>
                 <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)' }}>推荐境界 {e.recommendedRealm}</div>
               </div>

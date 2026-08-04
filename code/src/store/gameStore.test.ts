@@ -113,7 +113,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(ev.trigger).toBe('fail_streak');
   });
 
-  it('归隐执行：三事件链、声望入账（130）、状态重置、节点继承生效', () => {
+  it('归隐执行：三事件链、声望入账（三图轮 120）、状态重置、节点继承生效', () => {
     useGameStore.setState({
       realm: 5, route: 'tangmen', skillLevel: 10,
       dantian: 3400, silver: 830, xp: 59,
@@ -130,9 +130,9 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.dantian).toBe(0);
     expect(s.silver).toBe(0);
     expect(s.xp).toBe(40); // 武道笔记
-    expect(s.reputation).toBe(130);
+    expect(s.reputation).toBe(120);
     expect(s.clearedStages).toEqual([]);
-    expect(s.retireCeremony!.settle.total).toBe(130);
+    expect(s.retireCeremony!.settle.total).toBe(120);
     const ns = names();
     expect(ns).toContain('retire_preview_opened');
     expect(ns).toContain('retire_confirmed');

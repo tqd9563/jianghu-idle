@@ -8,15 +8,40 @@ import { breakthroughDiscount, battleNeiliMult, carryXp, idleMult, settleRetire 
 const m1all = Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`);
 const m2upto = (n: number) => Array.from({ length: n }, (_, i) => `m2s${i + 1}`);
 const m3upto = (n: number) => Array.from({ length: n }, (_, i) => `m3s${i + 1}`);
-const FULL = [...m1all, ...m2upto(10), ...m3upto(10)];
+const m4upto = (n: number) => Array.from({ length: n }, (_, i) => `m4s${i + 1}`);
+const m5upto = (n: number) => Array.from({ length: n }, (_, i) => `m5s${i + 1}`);
+/** 三图 28 关全通（归隐解锁点即在 Boss 3，为常见轮型） */
+const FULL3 = [...m1all, ...m2upto(10), ...m3upto(10)];
+/** 五图 48 关全通（表现加成唯一能拿满 +30% 的轮型） */
+const FULL5 = [...FULL3, ...m4upto(10), ...m5upto(10)];
 
 describe('settleRetire · 对照 sim settle_reputation', () => {
-  it('标准归隐 · 三图全通 46 分钟 → 130（表现加成拿满 +30%）', () => {
-    const r = settleRetire('standard', FULL, 46 * 60);
+  it('三图轮 · 28 关全通 46 分钟 → 120（精英 +20%，不满足 48 关全通）', () => {
+    const r = settleRetire('standard', FULL3, 46 * 60);
     expect(r.base).toBe(100);
-    expect(r.perfPct).toBeCloseTo(0.30, 10);
+    expect(r.fullClear).toBe(false);
+    expect(r.perfPct).toBeCloseTo(0.20, 10);
     expect(r.timePenalty).toBe(1);
-    expect(r.total).toBe(130);
+    expect(r.total).toBe(120);
+  });
+
+  it('五图轮 · 48 关全通 90 分钟 → 260（基础 200 × 表现拿满 +30%）', () => {
+    const r = settleRetire('standard', FULL5, 90 * 60);
+    expect(r.base).toBe(200);
+    expect(r.eliteKills).toBe(12);
+    expect(r.fullClear).toBe(true);
+    expect(r.perfPct).toBeCloseTo(0.30, 10);
+    expect(r.total).toBe(260);
+  });
+
+  it('深推未全通 · 至 Boss 4、8 精英、70 分钟 → 182（加成已触顶 +30%）', () => {
+    const cleared = [...FULL3, ...m4upto(10)];
+    const r = settleRetire('standard', cleared, 70 * 60);
+    expect(r.base).toBe(140);
+    expect(r.eliteKills).toBe(8);
+    expect(r.fullClear).toBe(false);
+    expect(r.perfPct).toBeCloseTo(0.30, 10);
+    expect(r.total).toBe(182);
   });
 
   it('保底归隐 · Boss1+2、3 精英、41 分钟 → 34（(20+30)×1.12×0.6）', () => {
@@ -28,10 +53,10 @@ describe('settleRetire · 对照 sim settle_reputation', () => {
     expect(r.total).toBe(34);
   });
 
-  it('短轮修正 · 全通但仅 10 分钟 → 58（×(10/15)²，纯保险条款）', () => {
-    const r = settleRetire('standard', FULL, 10 * 60);
+  it('短轮修正 · 三图全通但仅 10 分钟 → 53（×(10/15)²，纯保险条款）', () => {
+    const r = settleRetire('standard', FULL3, 10 * 60);
     expect(r.timePenalty).toBeCloseTo((10 / 15) ** 2, 10);
-    expect(r.total).toBe(58);
+    expect(r.total).toBe(53);
   });
 
   it('保底最低档 · 仅 Boss1 + 1 精英、49 分钟 → 12', () => {

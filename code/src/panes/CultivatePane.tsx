@@ -1,13 +1,13 @@
 /** 修炼页 —— 原型场景 1/3 修炼页签的 1:1 实现（资产负债表：权威源） */
 import { computeAttributes } from '../engine/attributes';
 import { REALMS } from '../engine/content';
-import { CHARGE_SEGMENTS, zhoutianProgress } from '../engine/formulas';
+import { CHARGE_SEGMENTS } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
 import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/gameStore';
 import {
   REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete,
 } from '../engine/acupoints';
-import { AcupointPanel } from './AcupointPanel';
+import { QishiBar, ZhoutianMandala } from '../components/ZhoutianMandala';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
@@ -30,6 +30,7 @@ export function CultivatePane() {
     ? acupointData.meridians.filter(m => isMeridianComplete(m, openedIds)).length
     : 0;
   const acupointPct = totalAcupointBonus(s.realm, openedCount, meridianCount);
+  const zhoutianN = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel, 0, acupointPct);
   const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel, 0, acupointPct) : null;
   const routeDef = s.route ? ROUTES[s.route] : null;
@@ -43,16 +44,26 @@ export function CultivatePane() {
               运转周天 <span className="sub">境界 {s.realm} → {s.realm + 1} · {nextRealm.name}</span>
             </div>
             <div className="panel-body">
-              <ChargeTrack
-                dantian={s.dantian}
-                cost={breakCost!}
-                discounted={breakCost! < nextRealm.breakthroughCost!}
-                segments={REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS}
-                chargeHighWater={s.chargeHighWater}
-              />
+              <div className="kv">
+                <span className="k">总消耗</span>
+                <span className="v">
+                  {fmt(breakCost!)} 内力（每周天 {fmt(breakCost! / zhoutianN)} × {zhoutianN}）
+                  {breakCost! < nextRealm.breakthroughCost! && <span className="perm"> · 快速入门 −30%</span>}
+                </span>
+              </div>
+              <ZhoutianMandala />
+              {/* 气势条独立成条（spec §1 第三层语义：与充能进度语义分离） */}
+              <QishiBar />
+              {acupointData && (
+                <div className="acu-ledger">
+                  <span>已冲开 <b>{openedCount}/{REALMS[s.realm - 1].acupointPoolSize}</b> 穴</span>
+                  <span>贯通 <b>{meridianCount}/{acupointData.meridians.length}</b> 脉</span>
+                  <span>修炼加成 <b className="gold">+{pct(acupointPct)}</b></span>
+                </div>
+              )}
               <BreakthroughButton />
               <div className="cap-note">
-                内力自归丹田，第五周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）
+                内力自归丹田，第{CN[zhoutianN]}周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）
               </div>
             </div>
           </>
@@ -84,7 +95,6 @@ export function CultivatePane() {
         )}
       </section>
 
-      <AcupointPanel />
 
       <section className="panel">
         <div className="panel-head">人物属性 <span className="sub">当前{nextRealm ? ' → 突破后' : ''}</span></div>
@@ -135,50 +145,6 @@ function AttrRow({ name, cur, next }: { name: string; cur: string; next: string 
       <span className="cur">{cur}</span>
       {next !== null && <span className="next">{next}</span>}
     </div>
-  );
-}
-
-function ChargeTrack({
-  dantian, cost, discounted, segments, chargeHighWater,
-}: {
-  dantian: number; cost: number; discounted: boolean;
-  segments: number; chargeHighWater: number;
-}) {
-  const N = segments;
-  const p = zhoutianProgress(dantian, cost, N);
-  return (
-    <>
-      <div className="kv">
-        <span className="k">总消耗</span>
-        <span className="v">
-          {fmt(cost)} 内力（每周天 {fmt(cost / N)} × {N}）
-          {discounted && <span className="perm"> · 快速入门 −30%</span>}
-        </span>
-      </div>
-      <div className="charge-track" aria-label={`周天进度 ${p.segmentsFull} / ${N}`}>
-        {Array.from({ length: N }, (_, i) => {
-          // 已圆满的周天显示常亮珠点（印记呈现，锁定点 2：新高水位）
-          const isPearl = i < chargeHighWater;
-          if (i < p.segmentsFull)
-            return <div key={i} className={`charge-seg full${isPearl ? ' pearl' : ''}`} />;
-          if (i === p.segmentsFull && p.currentSegmentPct > 0)
-            return (
-              <div key={i} className="charge-seg part">
-                <i style={{ width: `${p.currentSegmentPct * 100}%` }} />
-              </div>
-            );
-          return <div key={i} className="charge-seg" />;
-        })}
-      </div>
-      <div className="charge-label">
-        <span>丹田内力 {fmt(Math.min(dantian, cost))} / {fmt(cost)}</span>
-        {p.ready ? (
-          <span className="gold">{CN[N]}周天圆满</span>
-        ) : (
-          <span>第{CN[p.segmentsFull + 1]}周天 {Math.floor(p.currentSegmentPct * 100)}%</span>
-        )}
-      </div>
-    </>
   );
 }
 

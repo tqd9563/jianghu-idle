@@ -24,8 +24,8 @@ describe('themePreference', () => {
   });
 
   it('provides readonly theme catalog', () => {
-    expect(THEMES.length).toBe(4);
-    expect(THEMES.map(t => t.id)).toEqual(['night', 'xuan', 'bronze', 'mist']);
+    expect(THEMES.length).toBe(5);
+    expect(THEMES.map(t => t.id)).toEqual(['night', 'xuan', 'bronze', 'mist', 'pomo']);
     expect(DEFAULT_THEME).toBe('night');
   });
 

@@ -254,3 +254,55 @@ html[data-theme='mist'] {
   --settle-count-glow-100: none;
   --settle-cap-border: oklch(0.42 0.12 250 / 0.45);
 }
+
+/* ============ 泼墨山河 (Pomo) ============ */
+/* 写意水墨：灰白生宣为纸，墨分五色为层，浓墨为笔，黛青为韵，贯通金只留给经脉贯通 */
+html[data-theme='pomo'] {
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --surface-2: oklch(0.868 0.008 200);
+  --chrome: oklch(0.928 0.005 200);
+  --nav: oklch(0.945 0.004 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);
+  --primary-ink: oklch(0.96 0.003 200);
+  --primary-soft: oklch(0.30 0.02 260 / 0.10);
+  --accent: oklch(0.45 0.065 220);
+  --accent-soft: oklch(0.45 0.065 220 / 0.14);
+  --gold: oklch(0.62 0.12 78);
+  --poison: oklch(0.46 0.10 150);
+  --hp: oklch(0.48 0.15 25);
+  --hp-soft: oklch(0.48 0.15 25 / 0.14);
+  --shield: oklch(0.48 0.08 240);
+  --crit: oklch(0.50 0.14 45);
+  --bar-track-color: oklch(0.855 0.008 200);
+
+  --shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10);
+  --glow-num-val: none;
+
+  --radius-panel: 6px;
+  --radius-btn: 6px;
+  --radius-tag: 3px;
+  --radius-pill: 8px;
+  --border-panel: 1px solid var(--line);
+  --panel-shadow: var(--shadow);
+
+  --shadow-modal-val: 0 14px 52px oklch(0.24 0.012 260 / 0.22);
+  --modal-backdrop-bg: oklch(0.24 0.012 260 / 0.28);
+  --ceremony-backdrop-bg: oklch(0.945 0.004 200 / 0.94);
+  --ceremony-flash-bg: radial-gradient(ellipse at 50% 45%, oklch(0.62 0.12 78 / 0.20), oklch(0.945 0.004 200 / 0.98) 75%);
+
+  --pulse-shadow-0: 0 0 0 0 oklch(0.30 0.02 260 / 0.35);
+  --pulse-shadow-100: 0 0 0 10px oklch(0.30 0.02 260 / 0);
+  --breakthrough-text-shadow: none;
+  --ceremony-text-shadow: none;
+  --stage-next-border: oklch(0.30 0.02 260 / 0.5);
+  --shield-inner-shadow: inset -1px 0 0 oklch(0.910 0.006 200 / 0.9);
+  --settle-count-glow-0: none;
+  --settle-count-glow-100: none;
+  --settle-cap-border: oklch(0.62 0.12 78 / 0.45);
+}

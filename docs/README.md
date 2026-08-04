@@ -16,7 +16,7 @@
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
 | `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
-| `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, AcupointPanel.tsx |
+| `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, ZhoutianMandala.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 
 ### 全局设计
@@ -30,11 +30,11 @@
 
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
-| `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx |
-| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定） | AcupointPanel.tsx |
+| `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx, zhoutianMandalaModel.ts |
+| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定） | ZhoutianMandala.tsx, zhoutianMandalaModel.ts |
 | `systems/zhoutian/sim.py` | 周天 sim | acupoints.test.ts |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
-| `rules/copy/zhoutian.md` | 周天冻结文案 | AcupointPanel.tsx |
+| `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）
 

@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
-import { getStage, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef } from '../engine/enemies';
+import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef, type MapId } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
 import {
   REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
@@ -37,7 +37,7 @@ import {
 } from '../save/storage';
 import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
 
-export type MapNo = 1 | 2 | 3 | 4 | 5;
+export type MapNo = MapId;
 
 interface PersistedState {
   run: number;
@@ -233,8 +233,6 @@ let visitedLiveTestWindowId: string | null = null;
 
 const stageKey = (m: MapNo, s: number) => `m${m}s${s}`;
 const BOSS3_KEY = stageKey(3, MAP_STAGE_COUNT[3]);
-const BOSS4_KEY = stageKey(4, MAP_STAGE_COUNT[4]);
-const BOSS5_KEY = stageKey(5, MAP_STAGE_COUNT[5]);
 
 const persist = (s: PersistedState) =>
   saveGame({
@@ -256,13 +254,12 @@ const persist = (s: PersistedState) =>
     shopPurchasesThisRun: s.shopPurchasesThisRun ?? 0,
   });
 
-/** 地图解锁：图 2 需通关图 1 末关，图 3 需通关图 2 末关 */
+/** 地图解锁：图 N 需通关图 N−1 末关（由 MAP_IDS 顺序派生，新增地图无需改此处） */
 export function mapUnlocked(map: MapNo, cleared: string[]): boolean {
-  if (map === 1) return true;
-  if (map === 2) return cleared.includes(stageKey(1, MAP_STAGE_COUNT[1]));
-  if (map === 3) return cleared.includes(stageKey(2, MAP_STAGE_COUNT[2]));
-  if (map === 4) return cleared.includes(stageKey(3, MAP_STAGE_COUNT[3]));
-  return cleared.includes(stageKey(4, MAP_STAGE_COUNT[4]));
+  const idx = MAP_IDS.indexOf(map);
+  if (idx <= 0) return true;
+  const prev = MAP_IDS[idx - 1];
+  return cleared.includes(stageKey(prev, MAP_STAGE_COUNT[prev]));
 }
 
 /** 本图下一待通关关卡；全通返回 null */

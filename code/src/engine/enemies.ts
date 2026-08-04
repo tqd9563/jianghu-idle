@@ -8,8 +8,15 @@ import { MVP2_STAGE_ENEMIES, MVP2_MAP_REWARD_PLANS, MVP2_BOSS_VALUES, MVP2_BOSS_
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
+/**
+ * 地图 ID 单一数据源 —— 新增地图只改这一处，MapId / MAP_STAGE_COUNT / 关卡键正则
+ * 与 store 的 MapNo 全部由此派生（内容扩充防御，见 exhaustive.ts）。
+ */
+export const MAP_IDS = [1, 2, 3, 4, 5] as const;
+export type MapId = (typeof MAP_IDS)[number];
+
 export interface EnemyDef {
-  map: 1 | 2 | 3 | 4 | 5;
+  map: MapId;
   stage: number;
   name: string;
   hp: number;
@@ -37,11 +44,11 @@ export function pyRound(x: number, digits = 0): number {
   return r / m;
 }
 
-const MAP_NAMES = ['村外小径', '洛阳近郊', '华山古道', '蜀道险关', '铁壁绝谷'] as const;
-export function mapName(map: 1 | 2 | 3 | 4 | 5): string {
-  return MAP_NAMES[map - 1];
+const MAP_NAMES: Record<MapId, string> = { 1: '村外小径', 2: '洛阳近郊', 3: '华山古道', 4: '蜀道险关', 5: '铁壁绝谷' };
+export function mapName(map: MapId): string {
+  return MAP_NAMES[map];
 }
-export const MAP_STAGE_COUNT: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
+export const MAP_STAGE_COUNT: Record<MapId, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
 
 const NAMES_1 = ['拦路泼皮', '拦路泼皮', '山野猎户', '山野猎户', '山贼喽啰', '山贼喽啰', '山贼小头目', '山贼头目'];
 const NAMES_2 = ['城郊恶棍', '城郊恶棍', '镖局逃卒', '游侠儿', '镖局逃卒', '恶寺武僧', '铁臂僧', '恶寺武僧', '恶寺护法', '铁掌恶僧'];
@@ -157,7 +164,7 @@ function getMvp2Stages(): EnemyDef[] {
  */
 export const STAGES: readonly EnemyDef[] = buildStages();
 
-export function getStage(map: 1 | 2 | 3 | 4 | 5, stage: number): EnemyDef {
+export function getStage(map: MapId, stage: number): EnemyDef {
   const s = (map === 4 || map === 5)
     ? getMvp2Stages().find((x) => x.map === map && x.stage === stage)
     : STAGES.find((x) => x.map === map && x.stage === stage);

@@ -59,9 +59,15 @@ export function RetireFlow() {
                 <span className="v">+{settle.eliteKills * 4}%</span>
               </div>
               <div className={`rline${settle.fullClear ? '' : ' na'}`}>
-                <span>{settle.fullClear ? '三图全通' : '三图未全通'}</span>
+                <span>{settle.fullClear ? '五图全通' : '五图未全通'}</span>
                 <span className="v">+{settle.fullClear ? 10 : 0}%</span>
               </div>
+              {/* 加成触顶时显式说明，避免分项之和（可达 +58%）与实际生效值对不上（retire-copy §7.1） */}
+              {settle.perfPct >= 0.30 && settle.eliteKills * 4 + (settle.fullClear ? 10 : 0) > 30 && (
+                <div className="rline subtotal">
+                  <span>表现加成封顶</span><span className="v">+30%</span>
+                </div>
+              )}
               {settle.discount < 1 && (
                 <>
                   <div className="rline penalty">

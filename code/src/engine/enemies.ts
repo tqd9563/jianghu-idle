@@ -158,11 +158,18 @@ function getMvp2Stages(): EnemyDef[] {
 }
 
 /**
- * STAGES 只含 MVP-0 三地图 28 关——prestige.ts 既有 ELITE_KEYS/TOTAL_STAGES 计算依赖此口径
- * （`docs/rules/economy.md §1.2` 三图全通 +30% 表现加成）。MVP-2 地图 4/5 stages 1-9 通过
- * `getStage()` lazy 合并查询，避免循环依赖初始化与 MVP-0 既有声望判据破坏。
+ * STAGES 只含 MVP-0 三地图 28 关（地图 1-3 的手写生成结果）。
+ * 需要「全部五图 48 关」口径时用 `allStages()`——声望判据（`docs/rules/economy.md` §1.1/§1.2
+ * 五图里程碑与 48 关全通）走该函数；地图 4/5 仍 lazy 构建，避免模块初始化期循环依赖。
  */
 export const STAGES: readonly EnemyDef[] = buildStages();
+
+/** 全部地图关卡（三图手写 + 地图 4/5 曲线生成），按需构建后缓存 */
+let _allStages: readonly EnemyDef[] | null = null;
+export function allStages(): readonly EnemyDef[] {
+  if (_allStages === null) _allStages = [...STAGES, ...getMvp2Stages()];
+  return _allStages;
+}
 
 export function getStage(map: MapId, stage: number): EnemyDef {
   const s = (map === 4 || map === 5)

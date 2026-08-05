@@ -11,7 +11,7 @@ import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyD
 import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
 import {
   REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
-  consumeQishi, qishiToBonus,
+  chongxueChancesLeft, consumeQishi, qishiToBonus,
   type AcupointState,
 } from '../engine/acupoints';
 import {
@@ -96,7 +96,6 @@ interface PersistedState {
   /** 当前气势（内力衍生临时状态，Q1）；突破时清零，归隐时清零。可选字段兼容旧存档。 */
   qishi?: number;
   /** 剩余冲穴机会（周天圆满发放，境界内有效）；突破时清零，归隐时清零。可选字段兼容旧存档。 */
-  chongxueChances?: number;
   /** 窍穴图鉴（已通窍穴 ID 列表，归隐保留为记录）。可选字段兼容旧存档。 */
   acupointLog?: string[];
 }
@@ -223,7 +222,7 @@ const FRESH: PersistedState = {
   sessionActive: false, paused: false,
   collectedPages: [], completedBooks: [],
   trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
-  acupointProgress: {}, qishi: 0, chongxueChances: 0, acupointLog: [],
+  acupointProgress: {}, qishi: 0, acupointLog: [],
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -252,6 +251,11 @@ const persist = (s: PersistedState) =>
     trialWinsThisRun: s.trialWinsThisRun ?? {}, eliteChallengeWinsThisRun: s.eliteChallengeWinsThisRun ?? {},
     bossKillsThisRun: s.bossKillsThisRun ?? {},
     shopPurchasesThisRun: s.shopPurchasesThisRun ?? 0,
+    // 周天系统（存档 v2）：窍穴进度/气势/图鉴。缺了它们，重载即散功，
+    // 且冲穴机会会随 chargeHighWater 已达标而永不再发
+    acupointProgress: s.acupointProgress ?? {},
+    qishi: s.qishi ?? 0,
+    acupointLog: s.acupointLog ?? [],
   });
 
 /** 地图解锁：图 N 需通关图 N−1 末关（由 MAP_IDS 顺序派生，新增地图无需改此处） */
@@ -294,6 +298,18 @@ export function effBreakCost(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>)
   if (s.realm >= REALMS.length) return null;
   const base = REALMS[s.realm].breakthroughCost!;
   return Math.round(base * breakthroughDiscount(s.realm + 1, s.ownedRepNodes));
+}
+
+/**
+ * 剩余冲穴机会（由高水位推导，spec §5.1）。
+ * 老档 / 调试预置档带着既有 chargeHighWater 进来时也能自愈，不会静默丢掉机会。
+ */
+export function effChongxueChances(
+  s: Pick<PersistedState, 'realm' | 'chargeHighWater' | 'acupointProgress'>
+): number {
+  return chongxueChancesLeft(
+    s.realm, s.chargeHighWater, REALMS[s.realm - 1]?.zhoutianCount ?? null, s.acupointProgress ?? {}
+  );
 }
 
 /** 有效挂机产出（旧梦重温：+20%） */
@@ -504,7 +520,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       const runPlaySec = s.runPlaySec + dt;
       let chargeHighWater = s.chargeHighWater;
       let qishi = s.qishi ?? 0;
-      let chongxueChances = s.chongxueChances ?? 0;
       if (cost !== null) {
         // 丹田上限 = 突破消耗（spec §4.1）；溢出转气势（spec §5.3 裁决 D2）
         if (dantian > cost) {
@@ -514,15 +529,15 @@ export const useGameStore = create<GameState>((set, get) => ({
         // N 段动态（spec §2：境界 2-5 = 3/4/6/8；旧存档 fallback 5 段）
         const N = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
         const { segmentsFull } = zhoutianProgress(dantian, cost, N);
+        // 周天圆满推进高水位；冲穴机会由高水位推导（见 chongxueChancesLeft），不另存计数
         while (chargeHighWater < segmentsFull) {
           chargeHighWater += 1;
-          chongxueChances += 1;  // 周天圆满发 1 次冲穴机会（spec §5.1）
           track('charge_segment_full', { run: s.run, realm: s.realm, route: s.route }, {
             realm_target: s.realm + 1, segment: chargeHighWater,
           });
         }
       }
-      set({ dantian, chargeHighWater, runPlaySec, qishi, chongxueChances });
+      set({ dantian, chargeHighWater, runPlaySec, qishi });
     }
 
     // 归隐可用上报（§6.6 + 埋点规格 §1.4）：保底先触发的，后续击败 Boss 3 补发 standard
@@ -585,8 +600,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       dantian: s.dantian - cost, realm: realmTo, chargeHighWater: 0, ceremony: realmTo,
       lastProgressSec: s.runPlaySec,
-      // 突破时清零气势、冲穴机会（spec §5/§5.1）；窍穴进度保留（D1 保留到归隐）
-      qishi: 0, chongxueChances: 0,
+      // 突破时清零气势（spec §5）；冲穴机会随 chargeHighWater 归零而自然归零；
+      // 窍穴进度保留（D1 保留到归隐），且窍穴 id 按境界分命名空间，故不影响下一境界的机会推导
+      qishi: 0,
       acupointLog: newAcupointLog,
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, { realm_to: realmTo });
@@ -596,8 +612,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   /** 冲穴（spec §5.2）：消耗 1 机会，概率判定，保底累积，气势加成应用 */
   attemptAcupoint: (acupointId: string) => {
     const s = get();
-    const chances = s.chongxueChances ?? 0;
-    if (chances <= 0) return;
+    if (effChongxueChances(s) <= 0) return;
     const realm = s.realm;
     const acupointData = REALM_ACUPOINTS[realm];
     if (!acupointData) return;  // 本版境界 1/6/7 不接入
@@ -616,13 +631,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       ...s.acupointProgress,
       [acupointId]: { failCount: result.newFailCount, opened: result.opened },
     };
-    const newQishi = consumeQishi(s.qishi ?? 0);
-    const newChongxueChances = chances - 1;
-
+    // 机会不需要显式扣减：newAcupointProgress 里的 failCount/opened 已记下这一次消耗
     set({
       acupointProgress: newAcupointProgress,
-      qishi: newQishi,
-      chongxueChances: newChongxueChances,
+      qishi: consumeQishi(s.qishi ?? 0),
     });
     track('acupoint_attempt', { run: s.run, realm, route: s.route }, {
       acupoint_id: acupointId,

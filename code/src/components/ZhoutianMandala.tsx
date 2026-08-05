@@ -17,7 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { JSX } from 'react';
 import { QISHI_FULL, qishiToBonus } from '../engine/acupoints';
-import { effBreakCost, useGameStore } from '../store/gameStore';
+import { effBreakCost, effChongxueChances, useGameStore } from '../store/gameStore';
 import {
   buildMandalaModel, fmt, slotGeometry, acuLabelLayout, polar, arcPath, liquidPath, surfaceY,
   VIEW_W, VIEW_H, CX, CY, R_POOL, R_SEG, R_M, R_M_LABEL, SEG_GAP_DEG,
@@ -89,7 +89,7 @@ export function ZhoutianMandala(): JSX.Element | null {
     dantian: s.dantian,
     breakCost: effBreakCost(s),
     chargeHighWater: s.chargeHighWater,
-    chongxueChances: s.chongxueChances ?? 0,
+    chongxueChances: effChongxueChances(s),
     qishi: s.qishi ?? 0,
     acupointProgress: s.acupointProgress ?? {},
   });

@@ -220,3 +220,45 @@ export function totalAcupointBonus(
 export function consumeQishi(qishi: number): number {
   return qishi * (1 - QISHI_CONSUME_RATE);
 }
+
+// ─────────────────────────────────────────────────────────────
+// 纯函数：冲穴机会（spec §5.1 每次周天圆满发 1 次）
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 本境界已消耗的冲穴次数。
+ * 每次冲穴要么失败（failCount +1），要么成功（opened，且 failCount 原样保留），
+ * 故「failCount + (opened ? 1 : 0)」即该穴的尝试次数，可由进度精确反推。
+ */
+export function chongxueUsed(
+  realm: number,
+  progress: Record<string, AcupointState>
+): number {
+  const data = REALM_ACUPOINTS[realm];
+  if (!data) return 0;
+  return data.acupoints.reduce((sum, a) => {
+    const st = progress[a.id];
+    return st ? sum + st.failCount + (st.opened ? 1 : 0) : sum;
+  }, 0);
+}
+
+/**
+ * 剩余冲穴机会 = 本境界已圆满周天数 − 已消耗次数。
+ *
+ * 之所以推导而非累加计数：累加依赖「周天圆满」这一事件被 tick 当场捕捉，
+ * 任何带着既有 chargeHighWater 进来的状态（旧版 5 段制存档、调试预置档）
+ * 都会因 `chargeHighWater >= segmentsFull` 而永不触发发放，静默丢掉全部机会
+ * ——推导式对这些状态自愈，且不存在「漏发」这一类 bug。
+ *
+ * chargeHighWater 可能大于当前境界的 N（旧档 5 段制），故按 N 封顶。
+ */
+export function chongxueChancesLeft(
+  realm: number,
+  chargeHighWater: number,
+  zhoutianCount: number | null,
+  progress: Record<string, AcupointState>
+): number {
+  if (!zhoutianCount) return 0;
+  const granted = Math.min(chargeHighWater, zhoutianCount);
+  return Math.max(0, granted - chongxueUsed(realm, progress));
+}

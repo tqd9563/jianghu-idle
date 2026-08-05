@@ -23,14 +23,13 @@ export const VIEW_W = 480;
 export const VIEW_H = 430;
 export const CX = 240;
 export const CY = 220;
-export const R_ZT = 86;         // 丹田周天环半径
-export const R_PEARL = 76;      // 高水位印记内轨（常亮，不随回落消失）
-export const R_QI = 62;         // 丹田内的气流圈
+export const R_POOL = 80;       // 丹田墨池半径
+export const R_SEG = 88;        // 池沿周天刻度（印记常亮层）
 export const R_M = 158;         // 经脉弧半径
 export const R_ACU_LABEL = 178; // 窍穴名（向外）
-export const R_M_LABEL = 126;   // 经脉名（向内，落在内外环之间的空档）
+export const R_M_LABEL = 126;   // 经脉名（向内，落在池与经脉之间的空档）
 const SLOT_GAP_DEG = 20;        // 脉位之间的留白
-export const ZT_GAP_DEG = 4;    // 周天分段之间的刻痕
+export const SEG_GAP_DEG = 6;   // 池沿刻度之间的缺口
 
 /** 终局脉位数：取各境界经脉条数的最大值（数据驱动，增脉后自动扩位） */
 export const MAX_SLOTS = Math.max(
@@ -78,8 +77,17 @@ export interface MandalaModel {
   n: number;
   cost: number;
   dantianShown: number;
-  /** 每段：filled 为该段填充比例（0–1），pearl 为高水位印记 */
-  segments: { filled: number; pearl: boolean }[];
+  /** 池沿刻度：pearl = 高水位印记（spec §1 第二层，常亮不随回落消失） */
+  segments: { pearl: boolean }[];
+  /**
+   * 段内液面（spec §1 第一层）：丹田内力对「每周天消耗」的取模。
+   * 涨满即翻转归零、已满段数 +1——这是取模的呈现，不是消耗：
+   * 冲穴花掉的是机会而非内力，液面不因冲穴而动。
+   */
+  poolPct: number;
+  /** 已圆满的周天数（随内力支取如实回落，与 pearl 印记分离） */
+  segFull: number;
+  ready: boolean;
   centerText: string;
   slots: MandalaSlot[];
   chances: number;
@@ -98,10 +106,7 @@ export function buildMandalaModel(s: MandalaInput): MandalaModel | null {
   const meridians = REALM_ACUPOINTS[s.realm]?.meridians ?? [];
   const acupoints = REALM_ACUPOINTS[s.realm]?.acupoints ?? [];
 
-  const segments = Array.from({ length: n }, (_, i) => ({
-    filled: i < p.segmentsFull ? 1 : i === p.segmentsFull ? p.currentSegmentPct : 0,
-    pearl: i < s.chargeHighWater,
-  }));
+  const segments = Array.from({ length: n }, (_, i) => ({ pearl: i < s.chargeHighWater }));
 
   const slots: MandalaSlot[] = Array.from({ length: MAX_SLOTS }, (_, si) => {
     const m = meridians[si];
@@ -136,6 +141,9 @@ export function buildMandalaModel(s: MandalaInput): MandalaModel | null {
     cost: s.breakCost,
     dantianShown: Math.min(s.dantian, s.breakCost),
     segments,
+    poolPct: p.ready ? 1 : p.currentSegmentPct,
+    segFull: p.segmentsFull,
+    ready: p.ready,
     centerText: p.ready
       ? `${CN[n]}周天圆满 · 丹田已满`                                   // 冻结文案 §2
       : `第${CN[p.segmentsFull + 1]}周天 ${Math.floor(p.currentSegmentPct * 100)}%`,
@@ -170,6 +178,32 @@ export function acuLabelLayout(deg: number): { r: number; anchor: 'start' | 'end
   if (cos > 0.35) return { r: R_M + 14, anchor: 'start' };
   if (cos < -0.35) return { r: R_M + 14, anchor: 'end' };
   return { r: R_ACU_LABEL, anchor: 'middle' };
+}
+
+/** 液面 y 坐标：pct=0 贴池底，pct=1 没过池顶 */
+export function surfaceY(pct: number): number {
+  return CY + R_POOL - 3 - 2 * R_POOL * Math.max(0, Math.min(1, pct));
+}
+
+/**
+ * 液面 path：正弦顶缘 + 平底。返回水体闭合路径与顶缘折线（后者用于液面高光）。
+ * amp=0 即静止液面（prefers-reduced-motion 降级）。
+ */
+export function liquidPath(
+  baseY: number, amp: number, freq: number, phase: number
+): { body: string; top: string } {
+  const x0 = CX - R_POOL + 3, x1 = CX + R_POOL - 3, w = x1 - x0, step = 2;
+  const bottom = (CY + R_POOL - 2).toFixed(1);
+  let body = `M ${x0} ${bottom} L ${x1} ${bottom}`;
+  let top = '';
+  for (let x = x1; x >= x0; x -= step) {
+    const y = baseY + amp * Math.sin(((x - x0) / w) * freq * Math.PI * 2 + phase);
+    const cy = Math.max(CY - R_POOL + 3, Math.min(CY + R_POOL - 2, y));
+    body += ` L ${x} ${cy.toFixed(1)}`;
+    top += (top ? ' L ' : 'M ') + x + ' ' + cy.toFixed(1);
+  }
+  body += ` L ${x0} ${bottom} Z`;
+  return { body, top };
 }
 
 /** 脉位 i 的中心角与展角（脉位数由 MAX_SLOTS 推导，增脉自动重排） */

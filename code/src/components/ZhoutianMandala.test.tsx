@@ -6,7 +6,7 @@
  * 本图应自行生长，不需要改布局代码。
  */
 import { describe, it, expect } from 'vitest';
-import { buildMandalaModel, slotGeometry, MAX_SLOTS } from './zhoutianMandalaModel';
+import { buildMandalaModel, slotGeometry, liquidPath, surfaceY, MAX_SLOTS, CY, R_POOL } from './zhoutianMandalaModel';
 import type { MandalaInput, MandalaSlot } from './zhoutianMandalaModel';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { REALMS } from '../engine/content';
@@ -34,18 +34,36 @@ describe('周天年轮 · 内圈周天环（spec §1 前两层语义）', () => 
     }
   });
 
-  it('进度回落：内力支取后当前段填充如实回落（第一层语义）', () => {
+  it('进度回落：内力支取后液面如实退落（第一层语义）', () => {
     const cost = REALMS[2].breakthroughCost!;
-    const high = buildMandalaModel(at(2, { dantian: cost * 0.30 }))!;
-    const low = buildMandalaModel(at(2, { dantian: cost * 0.10 }))!;
-    const fillSum = (m: typeof high) => m.segments.reduce((a, s) => a + s.filled, 0);
-    expect(fillSum(high)).toBeGreaterThan(fillSum(low));
+    const total = (m: NonNullable<ReturnType<typeof buildMandalaModel>>) => m.segFull + m.poolPct;
+    const high = buildMandalaModel(at(2, { dantian: cost * 0.60 }))!;
+    const low = buildMandalaModel(at(2, { dantian: cost * 0.20 }))!;
+    expect(total(high)).toBeGreaterThan(total(low));
   });
 
-  it('印记常亮：珠点数等于 chargeHighWater，内力归零也不消失（第二层语义可与第一层区分）', () => {
+  it('周天圆满即潮落：跨过段边界时液面归零、已满段 +1，且内力未减少（取模翻转，非消耗）', () => {
+    const per = REALMS[2].breakthroughCost! / 3;      // 境界 2：N = 3
+    const before = buildMandalaModel(at(2, { dantian: per * 2 - 1 }))!;
+    const after = buildMandalaModel(at(2, { dantian: per * 2 + 1 }))!;
+    expect(before.poolPct).toBeGreaterThan(0.99);
+    expect(after.poolPct).toBeLessThan(0.01);
+    expect(after.segFull).toBe(before.segFull + 1);
+    // 冲穴消耗的是机会不是内力：潮落前后丹田只增不减
+    expect(after.dantianShown).toBeGreaterThan(before.dantianShown);
+  });
+
+  it('印记常亮：池沿刻度数等于 chargeHighWater，内力归零也不消失（第二层语义可与第一层区分）', () => {
     const m = buildMandalaModel(at(3, { dantian: 0, chargeHighWater: 3 }))!;
     expect(m.segments.filter(s => s.pearl)).toHaveLength(3);
-    expect(m.segments.every(s => s.filled === 0)).toBe(true);
+    expect(m.poolPct).toBe(0);
+    expect(m.segFull).toBe(0);
+  });
+
+  it('丹田充满时池满并标记可突破', () => {
+    const m = buildMandalaModel(at(2, { dantian: REALMS[2].breakthroughCost! }))!;
+    expect(m.poolPct).toBe(1);
+    expect(m.ready).toBe(true);
   });
 
   it('圆满态使用冻结文案「{CN[N]}周天圆满 · 丹田已满」', () => {
@@ -120,6 +138,33 @@ describe('周天年轮 · 外圈经脉与窍穴（design.md §3.2）', () => {
     const acus = allAcupoints(m.slots);
     expect(acus.find(a => a.id === a1.id)!.actionable).toBe(false);
     expect(acus.find(a => a.id === a2.id)!.rate).toBeCloseTo(1);   // 第 3 次必成
+  });
+});
+
+describe('周天年轮 · 墨池几何', () => {
+  it('液面 y 随进度单调上移，且 0/1 两端贴合池底与池顶', () => {
+    expect(surfaceY(0)).toBeGreaterThan(surfaceY(0.5));
+    expect(surfaceY(0.5)).toBeGreaterThan(surfaceY(1));
+    expect(surfaceY(0)).toBeCloseTo(CY + R_POOL - 3);
+    expect(surfaceY(1)).toBeCloseTo(CY - R_POOL - 3);
+  });
+
+  it('液面 path 始终闭合且被夹在池内（不溢出池壁）', () => {
+    for (const pct of [0, 0.37, 1]) {
+      const { body, top } = liquidPath(surfaceY(pct), 3.2, 2.3, 1.1);
+      expect(body.startsWith('M ')).toBe(true);
+      expect(body.endsWith('Z')).toBe(true);
+      expect(top.startsWith('M ')).toBe(true);
+      const ys = [...body.matchAll(/[ML] [-\d.]+ ([-\d.]+)/g)].map(m => Number(m[1]));
+      expect(Math.min(...ys)).toBeGreaterThanOrEqual(CY - R_POOL);
+      expect(Math.max(...ys)).toBeLessThanOrEqual(CY + R_POOL);
+    }
+  });
+
+  it('降级（amp=0）时液面为一条平线', () => {
+    const { top } = liquidPath(surfaceY(0.5), 0, 2.3, 0);
+    const ys = [...top.matchAll(/[ML] [-\d.]+ ([-\d.]+)/g)].map(m => Number(m[1]));
+    expect(new Set(ys).size).toBe(1);
   });
 });
 

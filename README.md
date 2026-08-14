@@ -20,7 +20,7 @@ python3 docs/systems/sim/mvp0_sim.py  # 复现设计侧模拟（无依赖）
 code/                 前端源码（Vite + TS + React）
 docs/
   README.md           文档规范 + 权威索引（目录、命名、写作约定）
-  ISSUES.md           问题记录
+  BACKLOG.md          需求池（想法 / 已确认 / 进行中 / 已完成）
   overview/           全局设计：game-design.md（长线 GDD）、worldview.md（世界观）
   rules/              当前实现权威：公式表 / 内容表 / 经济表 / 埋点 / 离线 / 残页 + copy/（冻结文案）
   systems/            当前主题权威：周天、门派/内功/主动武学 + sim/ 模拟器

@@ -70,7 +70,7 @@
 ```text
 docs/
   README.md                 文档规范 + 权威索引（§0）
-  ISSUES.md                 问题记录
+  BACKLOG.md                需求池（想法/已确认/进行中/已完成，取代原 ISSUES.md）
   overview/                 全局设计：game-design.md（长线 GDD）、worldview.md（世界观）
   rules/                    当前实现权威：公式表/内容表/经济表/埋点/离线/残页 + copy/（冻结文案）
   systems/                  当前主题权威，按模块分文件夹（见 §3.1）

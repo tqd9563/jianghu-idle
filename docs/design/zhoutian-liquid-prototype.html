@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="pomo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 周天液面三案 — 江湖无尽录（泼墨山河）</title>
+<style>
+:root {
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --surface-2: oklch(0.868 0.008 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);
+  --primary-ink: oklch(0.96 0.003 200);
+  --accent: oklch(0.45 0.065 220);
+  --gold: oklch(0.62 0.12 78);
+  --bar-track: oklch(0.855 0.008 200);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+*,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 48px;
+}
+.serif { font-family: "Songti SC","STSong","SimSun",serif; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── 场景导航 ── */
+.scene-note {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  padding: 8px 24px; background: oklch(0.90 0.007 200);
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; }
+
+/* ── 版式 ── */
+.stage { max-width: 880px; margin: 0 auto; padding: 26px 24px 0; display: flex; flex-direction: column; gap:26px; }
+.variant-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10); overflow: hidden;
+}
+.v-head {
+  padding: 12px 18px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: baseline; gap: 10px;
+}
+.v-head h2 { font-size: 15px; font-weight: 600; }
+.v-head .sub { font-size: 12px; color: var(--faint); margin-left: auto; }
+.v-body { display: flex; justify-content: center; padding: 12px 0 16px; }
+.v-ledger {
+  display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
+  padding: 10px 18px 14px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.v-ledger b { color: var(--ink); font-weight: 600; }
+
+/* ── 液面预设 ── */
+svg { display: block; }
+svg text { font-family: -apple-system,"PingFang SC",system-ui,sans-serif; }
+
+/* 经脉弧 - 三案共用 */
+.m-arc { fill: none; stroke: var(--line-strong); stroke-width: 2.5; opacity: 0.45; }
+.m-arc.thru { stroke: var(--gold); opacity: 1; }
+.m-arc.locked { stroke: var(--line-strong); stroke-dasharray: 3 7; opacity: 0.3; }
+.m-flow { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 22; opacity: 0.5; }
+.m-flow.thru { opacity: 0.9; stroke: var(--gold); }
+@keyframes flow { to { stroke-dashoffset: -108; } }
+.acu { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; cursor: pointer; transition: fill 0.2s; }
+.acu.open { fill: var(--primary); stroke: var(--primary); }
+.acu.thru { fill: var(--gold); stroke: var(--gold); }
+.acu-t { font-size: 10px; fill: var(--faint); pointer-events: none; }
+.acu-t.open { fill: var(--muted); }
+.m-name { font-size: 12px; fill: var(--muted); letter-spacing: 0.1em; }
+.m-name.thru { fill: var(--gold); font-weight: 600; }
+
+/* ── 案 A：墨潭液面（Ink Pool Surface） ── */
+.pool-well { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 2; opacity: 0.7; }
+.pool-liquid {
+  fill-opacity: 0.85;
+  transition: d 0.6s var(--ease);
+}
+/* 水墨基底渐变 */
+#vA .pool-liquid { fill: url(#inkA); }
+
+/* 液面波纹 */
+.wave-line {
+  fill: none; stroke-opacity: 0.35;
+  animation: wave 3.5s ease-in-out infinite alternate;
+}
+.wave-line.t1 { animation-delay: 0s; }
+.wave-line.t2 { animation-delay: -1.2s; }
+.wave-line.t3 { animation-delay: -2.4s; }
+@keyframes wave {
+  0% { d: path("M 160,180 Q 180,177 200,180 Q 220,183 240,180 Q 260,177 280,180 Q 300,183 320,180"); }
+  100% { d: path("M 160,180 Q 180,173 200,180 Q 220,187 240,180 Q 260,173 280,180 Q 300,187 320,180"); }
+}
+
+/* 案 A 中央文字 */
+.pool-ztv { font-size: 22px; font-weight: 700; fill: var(--ink); }
+.pool-ztl { font-size: 10px; fill: var(--faint); letter-spacing: 0.1em; }
+.pool-ztc { font-size: 11px; fill: var(--accent); }
+
+/* ── 案 B：层染丹田（Layered Wash） ── */
+.layer-bg { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 2; opacity: 0.6; }
+/* 10 层渐变，从淡墨到浓墨（底部浓） */
+.layer-strip {
+  transition: opacity 0.5s var(--ease), fill-opacity 0.5s var(--ease);
+}
+.ltop-ztv { font-size: 21px; font-weight: 700; fill: var(--ink); }
+.ltop-ztl { font-size: 10px; fill: var(--faint); }
+.ltop-ztc { font-size: 11px; fill: var(--accent); }
+
+/* 墨晕光圈：液面高度处一圈微弱漫射 */
+.ink-halo {
+  fill: none; stroke: var(--primary); stroke-width: 1;
+  opacity: 0; transition: opacity 0.5s var(--ease);
+}
+.ink-halo.show { opacity: 0.25; }
+
+/* ── 案 C：气液相生（Vapor above Liquid） ── */
+.liq-base { fill: url(#liqC); fill-opacity: 0.88; transition: d 0.6s var(--ease); }
+/* 液面上方：上升气雾粒子 */
+.vapor-particle {
+  fill: var(--primary);
+  opacity: 0;
+  animation: vaporRise 3s ease-in-out infinite;
+}
+@keyframes vaporRise {
+  0% { opacity: 0; transform: translate(0,0); }
+  20% { opacity: 0.35; }
+  70% { opacity: 0.12; }
+  100% { opacity: 0; transform: translate(0,-60px); }
+}
+
+/* 气雾层：液面以上半透明渐变 */
+.vapor-haze {
+  fill-opacity: 0.08;
+  transition: d 0.6s var(--ease);
+}
+
+.liq-ztv { font-size: 21px; font-weight: 700; fill: var(--ink); }
+.liq-ztl { font-size: 10px; fill: var(--faint); }
+.liq-ztc { font-size: 11px; fill: var(--accent); }
+
+/* ── 进度控制条 ── */
+.progress-ctl {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 18px 12px; font-size: 12px; color: var(--muted);
+}
+.progress-ctl input[type=range] {
+  flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px;
+  background: var(--bar-track); outline: none;
+}
+.progress-ctl input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--primary); border: 2px solid var(--surface); cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-line, .vapor-particle { animation: none; }
+  .vapor-particle { opacity: 0.15; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型 / 丹田液面三案</b>泼墨山河皮肤下三种丹田液面可视化方案。拖动进度条观察液面升降效果。
+</div>
+
+<div class="stage">
+<!-- ═══════════ 案 A：墨潭液面 ═══════════ -->
+<div class="variant-card" id="vA">
+  <div class="v-head">
+    <h2>案 A · 墨潭液面</h2>
+    <span class="sub">砚池蓄墨 · 表面张力波纹</span>
+  </div>
+  <div class="v-body">
+    <svg id="svga" viewBox="0 0 480 440" width="480" height="440">
+      <defs>
+        <radialGradient id="inkA" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="oklch(0.22 0.02 250)" />
+          <stop offset="60%" stop-color="oklch(0.18 0.015 255)" />
+          <stop offset="100%" stop-color="oklch(0.10 0.008 260)" />
+        </radialGradient>
+      </defs>
+    </svg>
+  </div>
+  <div class="progress-ctl">
+    <span>丹田充能</span>
+    <input type="range" min="0" max="100" value="45" class="slider" data-variant="a">
+    <span class="pct-val">45%</span>
+  </div>
+  <div class="v-ledger">
+    <span>墨潭深浅，一望便知。液面随内力注入而抬升，退潮而沉降。</span>
+  </div>
+</div>
+
+<!-- ═══════════ 案 B：层染丹田 ═══════════ -->
+<div class="variant-card" id="vB">
+  <div class="v-head">
+    <h2>案 B · 层染丹田</h2>
+    <span class="sub">墨分五色 · 十层渐染</span>
+  </div>
+  <div class="v-body">
+    <svg id="svgb" viewBox="0 0 480 440" width="480" height="440"></svg>
+  </div>
+  <div class="progress-ctl">
+    <span>丹田充能</span>
+    <input type="range" min="0" max="100" value="45" class="slider" data-variant="b">
+    <span class="pct-val">45%</span>
+  </div>
+  <div class="v-ledger">
+    <span>从淡墨到浓墨十层积染。内力越厚则墨色越重——砚台底部最浓处便是丹田深处。</span>
+  </div>
+</div>
+
+<!-- ═══════════ 案 C：气液相生 ═══════════ -->
+<div class="variant-card" id="vC">
+  <div class="v-head">
+    <h2>案 C · 气液相生</h2>
+    <span class="sub">液底气顶 · 真气蒸腾</span>
+  </div>
+  <div class="v-body">
+    <svg id="svgc" viewBox="0 0 480 440" width="480" height="440"></svg>
+  </div>
+  <div class="progress-ctl">
+    <span>丹田充能</span>
+    <input type="range" min="0" max="100" value="45" class="slider" data-variant="c">
+    <span class="pct-val">45%</span>
+  </div>
+  <div class="v-ledger">
+    <span>液为体、气为用。丹田底部是积蓄的墨液，液面之上真气蒸腾旋升。</span>
+  </div>
+</div>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, p) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (p) p.appendChild(e);
+  return e;
+}
+function txt(x, y, str, cls, p, anchor) {
+  const t = el('text', { x, y, class: cls, 'text-anchor': anchor||'middle' }, p);
+  t.textContent = str; return t;
+}
+
+const CX = 240, CY = 220, R_M = 158, R_M_LABEL = 126, R_ACU_LABEL = 178;
+const SLOT_MID = [-90, 30, 150];
+const SPAN = 96;
+const rad = d => d*Math.PI/180;
+function polar(r,deg){ return [CX+r*Math.cos(rad(deg)), CY+r*Math.sin(rad(deg))]; }
+function arcPath(r,d0,d1){
+  const [x0,y0]=polar(r,d0), [x1,y1]=polar(r,d1);
+  return `M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y1}`;
+}
+
+/* 绘制外圈经脉（三案共用） */
+function drawMeridians(svg) {
+  SLOT_MID.forEach((mid,si) => {
+    const d = arcPath(R_M, mid-SPAN/2, mid+SPAN/2);
+    const name = ['经脉·甲','经脉·乙','经脉·丙'][si];
+    const unlocked = si<2;
+    const thru = si===0;
+    const n = [3,3,2][si];
+
+    el('path', { d, class: 'm-arc'+(unlocked?(thru?' thru':''):' locked') }, svg);
+    if (unlocked) {
+      const f = el('path', { d, class: 'm-flow'+(thru?' thru':'') }, svg);
+      f.style.animation = 'flow 2.8s linear infinite';
+    }
+
+    const [lx,ly] = polar(R_M_LABEL, mid);
+    txt(lx, ly+4, name, 'm-name serif'+(thru?' thru':''), svg);
+    txt(lx, ly+19, unlocked?(thru?'贯通':'1/3'):'境界5解锁', 'acu-t', svg);
+
+    if (unlocked) {
+      for (let ai=0; ai<n; ai++) {
+        const a = rad(mid - SPAN/2 + SPAN*(ai+0.5)/n);
+        const [x,y] = polar(R_M, a);
+        const open = ai<3 && (si===0 || (si===1 && ai===0));
+        el('circle', { cx:x, cy:y, r:8,
+          class:'acu'+(thru?' thru':open?' open':'') }, svg);
+        const [tx,ty] = polar(R_ACU_LABEL, a);
+        txt(tx, ty+4, ['甲','乙','丙'][si]+['一','二','三'][ai],
+          'acu-t'+(open?' open':''), svg);
+      }
+    }
+  });
+}
+
+/* ────────── 案 A：墨潭液面 ────────── */
+{
+  const svg = document.getElementById('svga');
+  drawMeridians(svg);
+
+  const R = 80; // 墨潭半径
+  // 画潭底
+  el('circle', { cx:CX, cy:CY, r:R, class:'pool-well' }, svg);
+
+  // 液面 clipPath（圆形）
+  const clipId = 'pool-clip-a';
+  const defs = svg.querySelector('defs');
+  const clip = el('clipPath', { id:clipId }, defs);
+  el('circle', { cx:CX, cy:CY, r:R-2 }, clip);
+
+  // 液面路径元素（water-like path from bottom up）
+  const liquidP = el('path', { class:'pool-liquid', 'clip-path':`url(#${clipId})` }, svg);
+
+  // 波纹
+  function wavePath(yBase) {
+    const amp = 3, per = 45;
+    let d = '';
+    for (let x = CX-R; x <= CX+R; x+=2) {
+      const y = yBase + amp*Math.sin((x-CX+R)/per*Math.PI*2);
+      d += d ? `L ${x} ${y}` : `M ${x} ${y}`;
+    }
+    return d;
+  }
+
+  const waveEls = [];
+  for (let i=0; i<3; i++) {
+    waveEls.push(el('path', { class:`wave-line t${i+1}`,
+      stroke: 'var(--primary)', fill:'none' }, svg));
+  }
+
+  function drawA(pct) {
+    pct = Math.max(0.02, pct/100);
+    const yBase = CY+R - 2*R*pct;
+    // 液体矩形 + 上半部圆形波顶
+    const rectY = yBase;
+    const rectH = CY+R - rectY + 2;
+    liquidP.setAttribute('d',
+      `M ${CX-R-2} ${rectY} L ${CX+R+2} ${rectY} L ${CX+R+2} ${CY+R+4} L ${CX-R-2} ${CY+R+4} Z`);
+
+    // 波纹在液面高度
+    const wBase = Math.max(CY-R+4, yBase);
+    for (let i=0; i<3; i++) {
+      waveEls[i].setAttribute('d', wavePath(wBase + i*2 - 2));
+    }
+  }
+
+  // 中央文字
+  txt(CX, CY-18, '丹田内力', 'pool-ztl', svg);
+  txt(CX, CY+3, '', 'pool-ztv', svg).id='a-val';
+  txt(CX, CY+19, '/ 10,000', 'pool-ztl', svg);
+  txt(CX, CY+37, '第三周天 45%', 'pool-ztc', svg).id='a-sub';
+
+  drawA(45);
+  document.getElementById('a-val').textContent = Math.floor(45*100).toLocaleString();
+
+  // 存储引用
+  window._drawA = drawA;
+  window._svgA = svg;
+}
+
+/* ────────── 案 B：层染丹田 ────────── */
+{
+  const svg = document.getElementById('svgb');
+  drawMeridians(svg);
+
+  const R = 82;
+  el('circle', { cx:CX, cy:CY, r:R, class:'layer-bg' }, svg);
+
+  // 10 层墨染（从底往上，每层高 16.4px）
+  const layers = [];
+  const totalLayers = 10;
+  const maxH = 2*R;
+  const lh = maxH / totalLayers;
+  const inkRamp = [
+    'oklch(0.88 0.005 240 / 0.35)',
+    'oklch(0.83 0.007 242 / 0.40)',
+    'oklch(0.77 0.01 244 / 0.45)',
+    'oklch(0.70 0.012 248 / 0.50)',
+    'oklch(0.62 0.015 250 / 0.55)',
+    'oklch(0.54 0.018 252 / 0.60)',
+    'oklch(0.45 0.020 254 / 0.65)',
+    'oklch(0.36 0.022 256 / 0.70)',
+    'oklch(0.28 0.020 258 / 0.78)',
+    'oklch(0.20 0.018 260 / 0.85)',
+  ];
+
+  // 每层是一个水平矩形条，clip 在圆内
+  const clipId = 'pool-clip-b';
+  const defs = document.createElementNS(NS, 'defs');
+  svg.prepend(defs);
+  const clip2 = el('clipPath', { id:clipId }, defs);
+  el('circle', { cx:CX, cy:CY, r:R-2 }, clip2);
+
+  for (let i=0; i<totalLayers; i++) {
+    const yBot = CY+R-2;
+    const y = yBot - (i+1)*lh;
+    const rect = el('rect', {
+      x: CX-R-2, y, width: 2*R+4, height: lh,
+      fill: inkRamp[i],
+      'clip-path': `url(#${clipId})`,
+      class: 'layer-strip'
+    }, svg);
+    layers.push(rect);
+  }
+
+  // 墨晕光圈（在液面高度处一圈）
+  const halo = el('circle', { cx:CX, cy:CY, r:R-2, class:'ink-halo' }, svg);
+
+  // 5 段周天刻度弧
+  for (let i=0; i<5; i++) {
+    const d0 = -90 + 72*i + 3, d1 = -90 + 72*(i+1) - 3;
+    el('path', { d: arcPath(R+8, d0, d1),
+      stroke: 'var(--bar-track)', 'stroke-width': 4, fill:'none', opacity: 0.5 }, svg);
+  }
+
+  txt(CX, CY-18, '丹田内力', 'ltop-ztl', svg);
+  txt(CX, CY+3, '', 'ltop-ztv', svg).id='b-val';
+  txt(CX, CY+19, '/ 10,000', 'ltop-ztl', svg);
+  txt(CX, CY+38, '第三周天 45%', 'ltop-ztc', svg).id='b-sub';
+
+  function drawB(pct) {
+    pct = Math.max(0, Math.min(1, pct/100));
+    const filledLayers = Math.floor(pct * totalLayers);
+    for (let i=0; i<totalLayers; i++) {
+      layers[i].style.opacity = i<filledLayers ? '1' : '0';
+    }
+    // 液面位置：从底部往上
+    const yLevel = CY+R-2 - pct*maxH;
+    halo.setAttribute('cy', yLevel);
+    halo.classList.toggle('show', pct>0.05);
+  }
+
+  drawB(45);
+  document.getElementById('b-val').textContent = Math.floor(45*100).toLocaleString();
+  window._drawB = drawB;
+}
+
+/* ────────── 案 C：气液相生 ────────── */
+{
+  const svg = document.getElementById('svgc');
+  drawMeridians(svg);
+
+  const defs = document.createElementNS(NS, 'defs');
+  svg.prepend(defs);
+
+  // 液体渐变
+  const lg = el('linearGradient', { id:'liqC', x1:'0', y1:'0', x2:'0', y2:'1' }, defs);
+  el('stop', { offset:'0%', 'stop-color':'oklch(0.22 0.02 250)', 'stop-opacity':0.6 }, lg);
+  el('stop', { offset:'70%', 'stop-color':'oklch(0.15 0.015 255)', 'stop-opacity':0.85 }, lg);
+  el('stop', { offset:'100%', 'stop-color':'oklch(0.08 0.01 260)', 'stop-opacity':0.95 }, lg);
+
+  // 气雾渐变（液面上方扩散）
+  const vg = el('linearGradient', { id:'vaporGrad', x1:'0', y1:'0', x2:'0', y2:'1' }, defs);
+  el('stop', { offset:'0%', 'stop-color':'oklch(0.30 0.02 260)', 'stop-opacity':0 }, vg);
+  el('stop', { offset:'100%', 'stop-color':'oklch(0.30 0.02 260)', 'stop-opacity':0.12 }, vg);
+
+  const R = 80;
+  const clipId = 'pool-clip-c';
+  const clip = el('clipPath', { id:clipId }, defs);
+  el('circle', { cx:CX, cy:CY, r:R-2 }, clip);
+
+  // 池底环
+  el('circle', { cx:CX, cy:CY, r:R, class:'pool-well' }, svg);
+
+  // 液体路径
+  const liqP = el('path', { class:'liq-base', 'clip-path':`url(#${clipId})` }, svg);
+
+  // 气雾路径（clip 在圆内，从液面到顶部）
+  const hazeP = el('rect', {
+    fill: 'url(#vaporGrad)', 'clip-path':`url(#${clipId})`, class:'vapor-haze'
+  }, svg);
+
+  // 气雾粒子
+  const vapors = [];
+  for (let i=0; i<8; i++) {
+    const v = el('circle', {
+      r: 2+Math.random()*3,
+      class:'vapor-particle',
+      style: `animation-delay:${Math.random()*3}s; animation-duration:${2.5+Math.random()*2}s`
+    }, svg);
+    vapors.push(v);
+  }
+
+  // 周天 5 段外侧刻度
+  for (let i=0; i<5; i++) {
+    const d0 = -90 + 72*i + 3, d1 = -90 + 72*(i+1) - 3;
+    el('path', { d: arcPath(R+8, d0, d1),
+      stroke: 'var(--bar-track)', 'stroke-width': 4, fill:'none', opacity: 0.5 }, svg);
+  }
+
+  // 中央文字
+  txt(CX, CY-18, '丹田内力', 'liq-ztl', svg);
+  txt(CX, CY+3, '', 'liq-ztv', svg).id='c-val';
+  txt(CX, CY+19, '/ 10,000', 'liq-ztl', svg);
+  txt(CX, CY+38, '第三周天 45%', 'liq-ztc', svg).id='c-sub';
+
+  function drawC(pct) {
+    pct = Math.max(0.01, Math.min(1, pct/100));
+    const yBase = CY+R - 2*R*pct;
+    liqP.setAttribute('d',
+      `M ${CX-R-2} ${yBase} L ${CX+R+2} ${yBase} L ${CX+R+2} ${CY+R+4} L ${CX-R-2} ${CY+R+4} Z`);
+
+    // 气雾区域：从液面到顶部
+    const hazeH = yBase - (CY-R+2);
+    hazeP.setAttribute('y', CY-R+2);
+    hazeP.setAttribute('height', Math.max(0, hazeH));
+    hazeP.style.display = pct>0.05 ? '' : 'none';
+
+    // 粒子位置随机分布在液面上方
+    const vaporZone = Math.max(0, hazeH);
+    vapors.forEach(v => {
+      const rx = (Math.random()-0.5)*R*1.5;
+      const cl = R*R - rx*rx;
+      if (cl>0) {
+        const maxY = Math.sqrt(cl);
+        v.setAttribute('cx', CX+rx);
+        v.setAttribute('cy', yBase - Math.random()*vaporZone);
+      }
+      v.style.display = pct>0.03 ? '' : 'none';
+    });
+  }
+
+  drawC(45);
+  document.getElementById('c-val').textContent = Math.floor(45*100).toLocaleString();
+  window._drawC = drawC;
+}
+
+/* ── 全局滑动条 ── */
+document.querySelectorAll('.slider').forEach(sl => {
+  sl.addEventListener('input', () => {
+    const pct = +sl.value;
+    const variant = sl.dataset.variant;
+    const card = sl.closest('.variant-card');
+    card.querySelector('.pct-val').textContent = pct+'%';
+
+    if (variant==='a') {
+      window._drawA(pct);
+      document.getElementById('a-val').textContent = Math.floor(pct*100).toLocaleString();
+      document.getElementById('a-sub').textContent = `第三周天 ${pct}%`;
+    } else if (variant==='b') {
+      window._drawB(pct);
+      document.getElementById('b-val').textContent = Math.floor(pct*100).toLocaleString();
+      document.getElementById('b-sub').textContent = `第三周天 ${pct}%`;
+    } else {
+      window._drawC(pct);
+      document.getElementById('c-val').textContent = Math.floor(pct*100).toLocaleString();
+      document.getElementById('c-sub').textContent = `第三周天 ${pct}%`;
+    }
+  });
+});
+</script>
+</body>
+</html>

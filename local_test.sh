@@ -1,0 +1,1 @@
+cd ~/jianghu-idle/code && npm run dev

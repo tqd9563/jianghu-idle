@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="pomo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 v7 · 冲穴内力消耗三案 — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);
+  --accent: oklch(0.45 0.065 220);
+  --gold: oklch(0.62 0.12 78);
+  --bar-track: oklch(0.855 0.008 200);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+*,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--ink); font-family: -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 48px;
+}
+.serif { font-family: "Songti SC","STSong","SimSun",serif; }
+.scene-note { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 24px; background: oklch(0.90 0.007 200); border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; }
+.stage { max-width: 880px; margin: 0 auto; padding: 26px 24px 0; display: flex; flex-direction: column; gap: 26px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10); overflow: hidden; }
+.chead { padding: 12px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 10px; }
+.chead h2 { font-size: 15px; font-weight: 600; }
+.chead .sub { font-size: 12px; color: var(--faint); margin-left: auto; }
+.cbody { display: flex; justify-content: center; padding: 14px 0 18px; }
+.ledger { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; padding: 10px 18px 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ctl { display: flex; align-items: center; gap: 10px; padding: 0 18px 12px; font-size: 12px; color: var(--muted); }
+.ctl-btns { display: flex; gap: 6px; }
+.ctl-btns button { padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 4px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.ctl-btns button.gold { background: var(--gold); border-color: var(--gold); color: oklch(0.18 0.03 78); font-weight: 600; }
+
+svg { display: block; }
+svg text { font-family: -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+
+.m-arc { fill: none; stroke: var(--line-strong); stroke-width: 2.5; opacity: 0.45; }
+.m-arc.thru { stroke: var(--gold); opacity: 1; }
+.m-arc.locked { stroke: var(--line-strong); stroke-dasharray: 3 7; opacity: 0.3; }
+.m-flow { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 22; opacity: 0.5; animation: flow 2.8s linear infinite; }
+.m-flow.thru { opacity: 0.9; stroke: var(--gold); }
+@keyframes flow { to { stroke-dashoffset: -108; } }
+.acu { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; transition: fill 0.25s, stroke 0.25s, r 0.25s; }
+.acu.open { fill: var(--primary); stroke: var(--primary); }
+.acu.thru { fill: var(--gold); stroke: var(--gold); }
+.acu.actionable { animation: acuPulse 1.6s ease-in-out infinite; }
+@keyframes acuPulse { 0%,100% { r: 8; stroke-width: 1.5; } 50% { r: 11; stroke-width: 2.5; stroke: var(--accent); } }
+.acu-t { font-size: 10px; fill: var(--faint); pointer-events: none; }
+.acu-t.open { fill: var(--muted); }
+.m-name { font-size: 12px; fill: var(--muted); letter-spacing: 0.1em; }
+.m-name.thru { fill: var(--gold); font-weight: 600; }
+
+.pool-rim { fill: none; stroke: var(--line-strong); stroke-width: 2; opacity: 0.55; }
+.zt-seg { fill: none; stroke: var(--bar-track); stroke-width: 4; opacity: 0.45; }
+.zt-seg.pearl { stroke: var(--gold); opacity: 0.48; }
+.l-v { font-size: 21px; font-weight: 700; fill: var(--ink); }
+.l-l { font-size: 10px; fill: var(--faint); letter-spacing: 0.1em; }
+.l-c { font-size: 11px; fill: var(--accent); }
+.l-c.ready { fill: var(--gold); font-weight: 600; }
+
+.liquid-body { }
+.surface-hl { fill: none; stroke: var(--accent); stroke-width: 1.1; opacity: 0.30; }
+
+.b-current { fill: none; stroke-linecap: round; }
+.b-current.outer { animation: bSpin 13s linear infinite; }
+.b-current.inner { animation: bSpin 8s linear infinite reverse; }
+@keyframes bSpin { to { transform: rotate(360deg); } }
+
+.qi-particle {
+  fill: var(--primary);
+  transform-box: fill-box; transform-origin: center;
+  animation: qiRise var(--qdur) ease-out infinite;
+  animation-delay: var(--qdel); opacity: 0;
+}
+@keyframes qiRise {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  15%  { opacity: 0.40; }
+  50%  { opacity: 0.15; transform: translate(0, -40px) scale(1); }
+  100% { opacity: 0; transform: translate(0, -65px) scale(0.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-flow,.b-current,.acu.actionable,.qi-particle{ animation: none; }
+  .qi-particle{ opacity: 0.18; }
+  .acu.actionable{ r: 9; stroke: var(--accent); stroke-width: 2; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene-note"><b>原型 v7 · 冲穴内力消耗三案</b>每种方案展示「当前段充能 → 冲穴触发 → 内力消耗/标识」的完整转换。点击金按钮触发冲穴。</div>
+<div class="stage">
+
+<!-- ═══ A: 潮汐涨退 ═══ -->
+<div class="card">
+  <div class="chead"><h2>A · 潮汐涨退</h2><span class="sub">充至满段 → 冲穴 → 液面退潮 → 金珠记史 → 再涨</span></div>
+  <div class="cbody"><svg id="svgA" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl">
+    <span>操作</span>
+    <span class="ctl-btns">
+      <button class="gold" data-act="charge">充至段满 (90%→100%)</button>
+      <button data-act="chongxue">· 冲穴</button>
+      <button data-act="reset">· 重置</button>
+    </span>
+    <span class="pct" id="fbA">已满 2 段 · 第3段 0%</span>
+  </div>
+  <div class="ledger">液面只显示当前段（=breakCost/N）。满→冲穴→液面「退潮」动画降回底部；外圈金珠+1 记录历史段。退潮后自动开始下一段充能。</div>
+</div>
+
+<!-- ═══ B: 涌泉破层 ═══ -->
+<div class="card">
+  <div class="chead"><h2>B · 涌泉破层</h2><span class="sub">液面不降 · 满段时金珠从丹田"溅出"到外圈</span></div>
+  <div class="cbody"><svg id="svgB" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl">
+    <span>操作</span>
+    <span class="ctl-btns">
+      <button class="gold" data-act="charge">充至段满 (90%→100%)</button>
+      <button data-act="splash">· 金珠溅出</button>
+      <button data-act="reset">· 重置</button>
+    </span>
+    <span class="pct" id="fbB">已满 2 段 · 第3段 0%</span>
+  </div>
+  <div class="ledger">液面连续累积不降（总内力不减）。满一段时，一颗金珠从丹田中央"溅射"到外圈轨道定格——像墨滴飞溅。适合冲穴不消耗内力的设定。</div>
+</div>
+
+<!-- ═══ C: 双环分频 ═══ -->
+<div class="card">
+  <div class="chead"><h2>C · 双环分频</h2><span class="sub">内环=当前段 外环=历史段 · 满→塌缩→重置</span></div>
+  <div class="cbody"><svg id="svgC" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl">
+    <span>操作</span>
+    <span class="ctl-btns">
+      <button class="gold" data-act="charge">充至段满 (90%→100%)</button>
+      <button data-act="collapse">· 塌缩冲穴</button>
+      <button data-act="reset">· 重置</button>
+    </span>
+    <span class="pct" id="fbC">已满 2 段 · 第3段 0%</span>
+  </div>
+  <div class="ledger">内环液面在单段范围内升降（0→perSegment→塌缩→0）。冲穴瞬间内环"塌缩"（液面向心收缩+短暂闪光），外圈金珠+1。塌缩后自动开始下一段。</div>
+</div>
+
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const CX=240,CY=220,R_M=158,R_ML=126,R_AL=178;
+const S_MID=[-90,30,150],SP=96;
+const rad=d=>d*Math.PI/180;
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function txt(x,y,s,cls,p,anch){const t=el('text',{x,y,class:cls,'text-anchor':anch||'middle'},p);t.textContent=s;return t;}
+function polar(r,d){return[CX+r*Math.cos(rad(d)),CY+r*Math.sin(rad(d))];}
+function arc(r,d0,d1){const[x0,y0]=polar(r,d0),[x1,y1]=polar(r,d1);const l=Math.abs(d1-d0)>180?1:0;return`M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 ${l} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;}
+
+let uidC=0;
+function makeCtx(svg,R){
+  const uid='ctx'+(++uidC);
+  const defs=el('defs',{},svg);
+  const cm=el('clipPath',{id:uid+'Clip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},cm);
+  const cs=el('clipPath',{id:uid+'Sub'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},cs);
+  return {uid,defs,clip:uid+'Clip',sub:uid+'Sub'};
+}
+
+function drawMeridians(svg,om){
+  S_MID.forEach((mid,si)=>{
+    const d=arc(R_M,mid-SP/2,mid+SP/2);
+    const unlocked=si<2,thru=si===0,nu=[3,3,2][si];
+    el('path',{d,class:'m-arc'+(unlocked?(thru?' thru':''):' locked')},svg);
+    if(unlocked)el('path',{d,class:'m-flow'+(thru?' thru':'')},svg);
+    const[lx,ly]=polar(R_ML,mid);
+    txt(lx.toFixed(1),ly+4,['经脉·甲','经脉·乙','经脉·丙'][si],'m-name serif'+(thru?' thru':''),svg);
+    txt(lx.toFixed(1),ly+19,unlocked?(thru?'贯通':'1/3'):'境界5解锁','acu-t',svg);
+    if(!unlocked)return;
+    for(let ai=0;ai<nu;ai++){
+      const a=rad(mid-SP/2+SP*(ai+0.5)/nu);
+      const[x,y]=polar(R_M,a);
+      const id=si+'-'+ai;
+      const isOpen=om[id];
+      const isAct=om._actionable&&om._actionable.has(id);
+      el('circle',{cx:x.toFixed(1),cy:y.toFixed(1),r:8,class:'acu'+
+        (thru?' thru':isOpen?' open':'')+(isAct?' actionable':''),
+        id:'ac-'+svg.id+'-'+id},svg);
+      const[tx,ty]=polar(R_AL,a);
+      txt(tx.toFixed(1),ty+4,['甲','乙','丙'][si]+['一','二','三'][ai],'acu-t'+(isOpen?' open':''),svg);
+    }
+  });
+}
+function drawSegRings(svg,R,full){
+  for(let i=0;i<5;i++){
+    const d0=-90+72*i+3,d1=-90+72*(i+1)-3;
+    el('path',{d:arc(R+8,d0,d1),class:'zt-seg'+(i<full?' pearl':'')},svg);
+  }
+}
+function centerText(svg,val,cap,segFull,segTotal,curPct,ready){
+  txt(CX,CY-18,'丹田内力','l-l',svg);
+  const vt=txt(CX,CY+3,Math.floor(val).toLocaleString(),'l-v',svg); vt.id=svg.id+'-val';
+  txt(CX,CY+19,'/ '+Math.floor(cap).toLocaleString(),'l-l',svg);
+  let sub;
+  if(ready) sub='五周天圆满 · 丹田已满';
+  else sub='第'+['零','一','二','三','四','五'][segFull+1]+'周天 '+(curPct*100).toFixed(0)+'%';
+  txt(CX,CY+38,sub,'l-c'+(ready?' ready':''),svg).id=svg.id+'-sub';
+}
+
+function liquidPath(R,baseY,amp,freq,phase,t){
+  const x0=CX-R+3,x1=CX+R-3,w=x1-x0,step=2;
+  let body=`M ${x0} ${(CY+R-2).toFixed(1)} L ${x1} ${(CY+R-2).toFixed(1)}`;
+  let top='';
+  for(let x=x1;x>=x0;x-=step){
+    const y=baseY+amp*Math.sin((x-x0)/w*freq*Math.PI*2+t+phase);
+    const cy=Math.max(CY-R+3,Math.min(CY+R-2,y));
+    body+=` L ${x} ${cy.toFixed(1)}`;
+    top+=(top?' L ':'M ')+x+' '+cy.toFixed(1);
+  }
+  body+=` L ${x0} ${(CY+R-2).toFixed(1)} Z`;
+  return{body,top};
+}
+function mkCurrents(svg,ctx){
+  function mk(radii,cls){
+    let d='';
+    for(let k=0;k<radii.length;k++)for(let seg=0;seg<4;seg++){
+      const a0=rad(-90+seg*95+15),a1=rad(-90+seg*95+75);
+      const p0=polar(radii[k],a0),p1=polar(radii[k],a1);
+      d+=`M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${radii[k]} ${radii[k]} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} `;
+    }
+    el('path',{d,class:cls,stroke:'oklch(0.32 0.026 252 / 0.14)',
+      'clip-path':'url(#'+ctx.sub+')'},svg);
+  }
+  mk([18,28,42],'b-current inner');
+  mk([52,65],'b-current outer');
+}
+
+const perSeg=2000;
+
+// ═══ A: 潮汐涨退 ═══
+{
+  const svg=document.getElementById('svgA'),R=80;
+  const om={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  drawMeridians(svg,om);
+  let segFull=2;
+  drawSegRings(svg,R,segFull);
+  centerText(svg,0,perSeg,segFull,5,0,false);
+
+  const ctx=makeCtx(svg,R);
+  const gId='liqA';
+  const g=el('linearGradient',{id:gId,x1:'0',y1:'1',x2:'0',y2:'0'},ctx.defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.55},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.30},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#'+gId+')',
+    'clip-path':'url(#'+ctx.clip+')'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+  mkCurrents(svg,ctx);
+  const qi=makeQiParticles(svg,R,15);
+
+  let pct=0.90,baseY=CY+R-3-2*R*pct;
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,3.5,2.4,0,t*0.9);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  repositionParticles(qi,R,baseY);
+
+  let draining=false;
+  function drainToZero(cb){
+    if(draining)return;draining=true;
+    let cur=pct;
+    function step(){
+      cur-=0.025;
+      if(cur<0){cur=0;pct=0;baseY=CY+R-3;updateVal(0,segFull,false);draining=false;if(cb)cb();return;}
+      pct=cur;baseY=CY+R-3-2*R*cur;
+      repositionParticles(qi,R,baseY);
+      updateVal(cur*perSeg,segFull,false);
+      requestAnimationFrame(step);
+    }
+    step();
+  }
+  function updateVal(val,sgFull,ready){
+    svg.querySelector('#svgA-val').textContent=Math.floor(val).toLocaleString();
+    svg.querySelector('#svgA-sub').textContent=ready?'当前段圆满':
+      '当前段 '+(val/perSeg*100).toFixed(0)+'%';
+    document.getElementById('fbA').textContent='已满 '+sgFull+' 段 · 第'+(sgFull+1)+'段 '+(val/perSeg*100).toFixed(0)+'%';
+  }
+
+  document.querySelectorAll('#vA [data-act], [data-act]').forEach(btn=>{
+    if(btn.closest('.card')!==document.getElementById('vA')?.closest('.card')&&
+       btn.closest('.card')&&!btn.closest('#fbA'))return;
+  });
+  // Simple card-scoped button handling
+  const cardA=svg.closest('.card');
+  cardA.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const a=btn.dataset.act;
+      if(a==='charge'){
+        // smooth charge to 100%
+        let cur=pct;
+        function step(){
+          cur+=0.02;if(cur>=1){cur=1;pct=1;baseY=CY+R-3-2*R;updateVal(perSeg,segFull,true);return;}
+          pct=cur;baseY=CY+R-3-2*R*cur;
+          repositionParticles(qi,R,baseY);
+          updateVal(cur*perSeg,segFull,false);
+          requestAnimationFrame(step);
+        }
+        step();
+      }else if(a==='chongxue'){
+        drainToZero(()=>{
+          segFull=Math.min(5,segFull+1);
+          svg.querySelectorAll('.zt-seg').forEach((s,i)=>s.classList.toggle('pearl',i<segFull));
+          document.getElementById('fbA').textContent='已满 '+segFull+' 段 · 第'+(segFull+1)+'段 0%';
+          repositionParticles(qi,R,baseY);
+        });
+      }else if(a==='reset'){
+        draining=false;pct=0.9;baseY=CY+R-3-2*R*pct;segFull=2;
+        svg.querySelectorAll('.zt-seg').forEach((s,i)=>s.classList.toggle('pearl',i<segFull));
+        updateVal(0.9*perSeg,segFull,false);
+        repositionParticles(qi,R,baseY);
+      }
+    });
+  });
+  updateVal(0.9*perSeg,segFull,false);
+}
+
+// ═══ B: 涌泉破层 ═══
+{
+  const svg=document.getElementById('svgB'),R=80;
+  const om={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  drawMeridians(svg,om);
+  let segFull=2;
+  drawSegRings(svg,R,segFull);
+  const totalCap=10000;
+  centerText(svg,segFull*perSeg+0.9*perSeg,totalCap,segFull,5,0.9,false);
+
+  const ctx=makeCtx(svg,R);
+  const gId='liqB';
+  const g=el('linearGradient',{id:gId,x1:'0',y1:'1',x2:'0',y2:'0'},ctx.defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.55},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.30},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#'+gId+')',
+    'clip-path':'url(#'+ctx.clip+')'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+  mkCurrents(svg,ctx);
+  const qi=makeQiParticles(svg,R,15);
+
+  // 溅射金珠元素：一个从丹田飞出的金色圆
+  const splashDot=el('circle',{cx:CX,cy:CY,r:0,fill:varStr('gold'),
+    opacity:'0'},svg);
+
+  let pct=0.58,baseY=CY+R-3-2*R*pct;
+  repositionParticles(qi,R,baseY);
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,3.0,2.4,0,t*0.8);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function updateVal(val,curPct){
+    svg.querySelector('#svgB-val').textContent=Math.floor(val).toLocaleString();
+    svg.querySelector('#svgB-sub').textContent='第'+(segFull+1)+'周天 '+(curPct*100).toFixed(0)+'%';
+    document.getElementById('fbB').textContent='已满 '+segFull+' 段 · 第'+(segFull+1)+'段 '+(curPct*100).toFixed(0)+'%';
+  }
+
+  function doSplash(){
+    segFull=Math.min(5,segFull+1);
+    svg.querySelectorAll('.zt-seg').forEach((s,i)=>s.classList.toggle('pearl',i<segFull));
+    // 溅射动画：从丹田中心飞到外圈目标位置
+    const targetDeg=-90+72*(segFull-1)+36;
+    const[tx,ty]=polar(R+10,targetDeg);
+    splashDot.setAttribute('cx',CX);splashDot.setAttribute('cy',CY);
+    splashDot.setAttribute('r','0');splashDot.setAttribute('opacity','0');
+    splashDot.setAttribute('fill',varStr('gold'));
+    let progress=0;
+    function fly(){
+      progress+=0.04;
+      if(progress>=1){progress=1;
+        splashDot.setAttribute('cx',tx.toFixed(1));
+        splashDot.setAttribute('cy',ty.toFixed(1));
+        splashDot.setAttribute('r','5');splashDot.setAttribute('opacity','0.85');
+        return;
+      }
+      const cx=CX+(tx-CX)*progress;
+      const cy=CY+(ty-CY)*progress;
+      const r=3+2*Math.sin(progress*Math.PI)*2;
+      splashDot.setAttribute('cx',cx.toFixed(1));
+      splashDot.setAttribute('cy',cy.toFixed(1));
+      splashDot.setAttribute('r',r.toFixed(1));
+      splashDot.setAttribute('opacity',(0.7*Math.sin(progress*Math.PI)).toFixed(2));
+      requestAnimationFrame(fly);
+    }
+    fly();
+    updateVal(segFull*perSeg+0.9*perSeg,0.9);
+  }
+
+  const cardB=svg.closest('.card');
+  cardB.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(btn.dataset.act==='charge'){
+        pct=0.6;baseY=CY+R-3-2*R*pct;repositionParticles(qi,R,baseY);
+        updateVal(segFull*perSeg+perSeg,1.0);
+        svg.querySelector('#svgB-sub').textContent='当前段圆满';
+      }else if(btn.dataset.act==='splash'){
+        doSplash();
+      }else if(btn.dataset.act==='reset'){
+        pct=0.58;baseY=CY+R-3-2*R*pct;segFull=2;
+        svg.querySelectorAll('.zt-seg').forEach((s,i)=>s.classList.toggle('pearl',i<segFull));
+        splashDot.setAttribute('opacity','0');
+        updateVal(segFull*perSeg+0.9*perSeg,0.9);
+        repositionParticles(qi,R,baseY);
+      }
+    });
+  });
+
+  updateVal(segFull*perSeg+0.9*perSeg,0.9);
+}
+
+// ═══ C: 双环分频 ═══
+{
+  const svg=document.getElementById('svgC'),R=80;
+  const om={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  drawMeridians(svg,om);
+  let segFull=2;
+  drawSegRings(svg,R,segFull);
+  centerText(svg,0.9*perSeg,perSeg,segFull,5,0.9,false);
+
+  const ctx=makeCtx(svg,R);
+  const gId='liqC';
+  const g=el('linearGradient',{id:gId,x1:'0',y1:'1',x2:'0',y2:'0'},ctx.defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.55},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.30},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#'+gId+')',
+    'clip-path':'url(#'+ctx.clip+')'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+  mkCurrents(svg,ctx);
+  const qi=makeQiParticles(svg,R,15);
+
+  let pct=0.90,baseY=CY+R-3-2*R*pct;
+  repositionParticles(qi,R,baseY);
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,3.8,2.4,0,t*0.9);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function updateVal(val,curPct){
+    svg.querySelector('#svgC-val').textContent=Math.floor(val).toLocaleString();
+    svg.querySelector('#svgC-sub').textContent=curPct>=1?'当前段圆满':'当前段 '+(curPct*100).toFixed(0)+'%';
+    document.getElementById('fbC').textContent='已满 '+segFull+' 段 · 第'+(segFull+1)+'段 '+(curPct*100).toFixed(0)+'%';
+  }
+
+  let collapsing=false;
+  function doCollapse(){
+    if(collapsing)return;collapsing=true;
+    // 阶段1：液面快速塌缩（0.4s）
+    let cur=pct;
+    function shrink(){
+      cur-=0.04;
+      if(cur<=0){cur=0;pct=0;baseY=CY+R-3;
+        repositionParticles(qi,R,baseY);
+        updateVal(0,0);
+        // 阶段2：闪现金珠
+        segFull=Math.min(5,segFull+1);
+        svg.querySelectorAll('.zt-seg').forEach((s,i)=>s.classList.toggle('pearl',i<segFull));
+        collapsing=false;
+        document.getElementById('fbC').textContent='已满 '+segFull+' 段 · 第'+(segFull+1)+'段 0%';
+        svg.querySelector('#svgC-sub').textContent='当前段 0%';
+        svg.querySelector('#svgC-val').textContent='0';
+        return;
+      }
+      pct=cur;baseY=CY+R-3-2*R*cur;
+      repositionParticles(qi,R,baseY);
+      updateVal(cur*perSeg,cur);
+      requestAnimationFrame(shrink);
+    }
+    shrink();
+  }
+
+  const cardC=svg.closest('.card');
+  cardC.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(btn.dataset.act==='charge'){
+        let cur=pct;
+        function step(){
+          cur+=0.02;if(cur>=1){cur=1;pct=1;baseY=CY+R-3-2*R;updateVal(perSeg,1);repositionParticles(qi,R,baseY);return;}
+          pct=cur;baseY=CY+R-3-2*R*cur;
+          repositionParticles(qi,R,baseY);
+          updateVal(cur*perSeg,cur);
+          requestAnimationFrame(step);
+        }
+        step();
+      }else if(btn.dataset.act==='collapse'){
+        doCollapse();
+      }else if(btn.dataset.act==='reset'){
+        collapsing=false;pct=0.9;baseY=CY+R-3-2*R*pct;segFull=2;
+        svg.querySelectorAll('.zt-seg').forEach((s,i)=>s.classList.toggle('pearl',i<segFull));
+        updateVal(0.9*perSeg,0.9);repositionParticles(qi,R,baseY);
+      }
+    });
+  });
+  updateVal(0.9*perSeg,0.9);
+}
+
+function varStr(name){
+  const s=getComputedStyle(document.documentElement);
+  return s.getPropertyValue('--'+name).trim();
+}
+function makeQiParticles(svg,R,count){
+  const arr=[];
+  for(let i=0;i<count;i++){
+    arr.push(el('circle',{cx:CX,cy:CY+R,r:1.8+Math.random()*2.5,class:'qi-particle',
+      style:`--qdur:${2.2+Math.random()*2.2}s;--qdel:${Math.random()*4}s`},svg));
+  }
+  return arr;
+}
+function repositionParticles(ps,R,liqY){
+  ps.forEach(p=>{
+    const rx=(Math.random()-0.5)*R*1.2;
+    const cl=R*R-rx*rx;if(cl<=0)return;
+    const mY=Math.sqrt(cl);
+    p.setAttribute('cx',(CX+rx).toFixed(1));
+    p.setAttribute('cy',(liqY-Math.random()*Math.min(35,mY*0.5)).toFixed(1));
+  });
+}
+</script>
+</body>
+</html>

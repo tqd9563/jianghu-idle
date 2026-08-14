@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="pomo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 v5 · 海眼丹田液面 + 冲穴 — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);
+  --accent: oklch(0.45 0.065 220);
+  --gold: oklch(0.62 0.12 78);
+  --bar-track: oklch(0.855 0.008 200);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+*,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--ink); font-family: -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 48px;
+}
+.serif { font-family: "Songti SC","STSong","SimSun",serif; }
+.scene-note { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 24px; background: oklch(0.90 0.007 200); border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; }
+.stage { max-width: 880px; margin: 0 auto; padding: 26px 24px 0; display: flex; flex-direction: column; gap: 26px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10); overflow: hidden; }
+.chead { padding: 12px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 10px; }
+.chead h2 { font-size: 15px; font-weight: 600; }
+.chead .sub { font-size: 12px; color: var(--faint); margin-left: auto; }
+.cbody { display: flex; justify-content: center; padding: 14px 0 18px; }
+.ledger { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; padding: 10px 18px 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ctl { display: flex; align-items: center; gap: 10px; padding: 0 18px 12px; font-size: 12px; color: var(--muted); }
+.ctl input[type=range] { flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--bar-track); outline: none; }
+.ctl input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); cursor: pointer; }
+.ctl-btns { display: flex; gap: 6px; }
+.ctl-btns button { padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 4px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.ctl-btns button.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 600; }
+.ctl-btns button.gold { background: var(--gold); border-color: var(--gold); color: oklch(0.18 0.03 78); font-weight: 600; }
+
+svg { display: block; }
+svg text { font-family: -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+
+.m-arc { fill: none; stroke: var(--line-strong); stroke-width: 2.5; opacity: 0.45; }
+.m-arc.thru { stroke: var(--gold); opacity: 1; }
+.m-arc.locked { stroke: var(--line-strong); stroke-dasharray: 3 7; opacity: 0.3; }
+.m-flow { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 22; opacity: 0.5; animation: flow 2.8s linear infinite; }
+.m-flow.thru { opacity: 0.9; stroke: var(--gold); }
+@keyframes flow { to { stroke-dashoffset: -108; } }
+.acu { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; transition: fill 0.25s, stroke 0.25s, r 0.25s; }
+.acu.open { fill: var(--primary); stroke: var(--primary); }
+.acu.thru { fill: var(--gold); stroke: var(--gold); }
+.acu.actionable { animation: acuPulse 1.6s ease-in-out infinite; cursor: pointer; }
+@keyframes acuPulse { 0%,100% { r: 8; stroke-width: 1.5; } 50% { r: 11; stroke-width: 2.5; stroke: var(--accent); } }
+.acu-t { font-size: 10px; fill: var(--faint); pointer-events: none; }
+.acu-t.open { fill: var(--muted); }
+.m-name { font-size: 12px; fill: var(--muted); letter-spacing: 0.1em; }
+.m-name.thru { fill: var(--gold); font-weight: 600; }
+
+.pool-rim { fill: none; stroke: var(--line-strong); stroke-width: 2; opacity: 0.55; }
+.zt-seg { fill: none; stroke: var(--bar-track); stroke-width: 4; opacity: 0.45; }
+.zt-seg.pearl { stroke: var(--gold); opacity: 0.45; }
+.l-v { font-size: 21px; font-weight: 700; fill: var(--ink); }
+.l-l { font-size: 10px; fill: var(--faint); letter-spacing: 0.1em; }
+.l-c { font-size: 11px; fill: var(--accent); }
+.l-c.ready { fill: var(--gold); font-weight: 600; }
+
+.liquid-body { clip-path: url(#lClip); }
+.surface-hl { fill: none; stroke: var(--accent); stroke-width: 1.1; opacity: 0.30; }
+
+.b-current { fill: none; stroke-linecap: round; clip-path: url(#bSubClip); }
+.b-current.outer { animation: bSpin 13s linear infinite; }
+.b-current.inner { animation: bSpin 8s linear infinite reverse; }
+@keyframes bSpin { to { transform: rotate(360deg); } }
+
+/* 真气粒子：CSS 动画，从液面升起 */
+.qi-particle {
+  fill: var(--primary);
+  animation: qiRise var(--qdur) ease-out infinite;
+  animation-delay: var(--qdel);
+  opacity: 0;
+}
+@keyframes qiRise {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  15%  { opacity: 0.40; }
+  50%  { opacity: 0.15; transform: translate(0, -40px) scale(1); }
+  100% { opacity: 0; transform: translate(0, -65px) scale(0.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-flow,.b-current,.acu.actionable,.qi-particle{ animation: none; }
+  .qi-particle{ opacity: 0.18; }
+  .acu.actionable{ r: 9; stroke: var(--accent); stroke-width: 2; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene-note"><b>原型 v5 · 海眼丹田</b>修复：气泡随液面重定位 + 窍穴布局 + 周天≠丹田的概念区分</div>
+<div class="stage">
+
+<!-- ═══ 1: 修炼运转中 ═══ -->
+<div class="card">
+  <div class="chead"><h2>修炼运转中</h2><span class="sub">第3周天 45% · 丹田 4,500/10,000</span></div>
+  <div class="cbody"><svg id="svg1" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl"><span>丹田充能</span><input type="range" min="0" max="100" value="45" data-id="1"><span class="pct">45%</span></div>
+  <div class="ledger">每个周天段 = 突破耗费/N（此例 N=5，每段 2,000）→ 已满 2 段 + 第 3 段 45%。液面随充能升高。</div>
+</div>
+
+<!-- ═══ 2: 单周天圆满 ═══ -->
+<div class="card">
+  <div class="chead"><h2>单周天圆满</h2><span class="sub">丹田 6,000/10,000 · 第4周天 0% · 冲穴机会+1</span></div>
+  <div class="cbody"><svg id="svg2" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl"><span>丹田充能</span><input type="range" min="100" max="100" value="60" data-id="2" disabled><span class="pct">60%</span></div>
+  <div class="ledger">3段圆满（周天 ×3）→ 获得冲穴机会。可冲窍穴呼吸脉动。中央显示「周天圆满」闪烁片刻后恢复常规进度。</div>
+</div>
+
+<!-- ═══ 3: 丹田已满 · 可突破 ═══ -->
+<div class="card">
+  <div class="chead"><h2>丹田已满 · 可突破</h2><span class="sub">丹田 10,000/10,000 · 五周天圆满</span></div>
+  <div class="cbody"><svg id="svg3" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl"><span>丹田充能</span><input type="range" min="100" max="100" value="100" data-id="3" disabled><span class="pct">100%</span></div>
+  <div class="ledger">全部段数圆满 → 中央文字变金色「丹田已满」。突破按钮出现（修炼页主行动按钮）。未通窍穴持续脉动。</div>
+</div>
+
+<!-- ═══ 4: 冲穴交互 ═══ -->
+<div class="card">
+  <div class="chead"><h2>冲穴演示</h2><span class="sub">点击窍穴 → 闪光 → 成功/松动</span></div>
+  <div class="cbody"><svg id="svg4" viewBox="0 0 480 440" width="480" height="440"></svg></div>
+  <div class="ctl">
+    <span>冲穴操作</span>
+    <span class="ctl-btns">
+      <button data-act="attempt">· 冲穴（乙二）</button>
+      <button data-act="reset">· 重置</button>
+    </span>
+    <span class="pct" id="fb4">冲穴机会 1</span>
+  </div>
+  <div class="ledger">点击可冲穴：脉动 → 点击触发 150ms 闪光膨胀 → 400ms 内显示结果（成功=变亮+文案「已通」/ 失败=闪动+文案「松动几分」）</div>
+</div>
+
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const CX=240,CY=220,R_M=158,R_ML=126,R_AL=178;
+const S_MID=[-90,30,150],SP=96;
+const rad=d=>d*Math.PI/180;
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function txt(x,y,s,cls,p,anch){const t=el('text',{x,y,class:cls,'text-anchor':anch||'middle'},p);t.textContent=s;return t;}
+function polar(r,d){return[CX+r*Math.cos(rad(d)),CY+r*Math.sin(rad(d))];}
+function arc(r,d0,d1){const[x0,y0]=polar(r,d0),[x1,y1]=polar(r,d1);const l=Math.abs(d1-d0)>180?1:0;return`M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 ${l} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;}
+
+function drawMeridians(svg,openMask){
+  S_MID.forEach((mid,si)=>{
+    const d=arc(R_M,mid-SP/2,mid+SP/2);
+    const unlocked=si<2,thru=si===0,nu=[3,3,2][si];
+    el('path',{d,class:'m-arc'+(unlocked?(thru?' thru':''):' locked')},svg);
+    if(unlocked)el('path',{d,class:'m-flow'+(thru?' thru':'')},svg);
+    const[lx,ly]=polar(R_ML,mid);
+    txt(lx,ly+4,['经脉·甲','经脉·乙','经脉·丙'][si],'m-name serif'+(thru?' thru':''),svg);
+    txt(lx,ly+19,unlocked?(thru?'贯通':'1/3'):'境界5解锁','acu-t',svg);
+    if(!unlocked)return;
+    for(let ai=0;ai<nu;ai++){
+      const a=rad(mid-SP/2+SP*(ai+0.5)/nu);
+      const[x,y]=polar(R_M,a);
+      const id=si+'-'+ai;
+      const isOpen=openMask[id];
+      const isActionable=openMask._actionable&&openMask._actionable.has(id);
+      el('circle',{cx:x.toFixed(1),cy:y.toFixed(1),r:8,class:'acu'+
+        (thru?' thru':isOpen?' open':'')+(isActionable?' actionable':''),
+        id:'acu-'+svg.id+'-'+id},svg);
+      const[tx,ty]=polar(R_AL,a);
+      txt(tx.toFixed(1),ty+4,['甲','乙','丙'][si]+['一','二','三'][ai],
+        'acu-t'+(isOpen?' open':''),svg);
+    }
+  });
+}
+function drawSegRings(svg,R,n){
+  const full=n||0;
+  for(let i=0;i<5;i++){
+    const d0=-90+72*i+3,d1=-90+72*(i+1)-3;
+    el('path',{d:arc(R+8,d0,d1),
+      class:'zt-seg'+(i<full?' pearl':'')},svg);
+  }
+}
+function centerText(svg,val,cap,segFull,segTotal,curPct,ready){
+  txt(CX,CY-18,'丹田内力','l-l',svg);
+  const vt=txt(CX,CY+3,Math.floor(val).toLocaleString(),'l-v',svg); vt.id=svg.id+'-val';
+  txt(CX,CY+19,'/ '+Math.floor(cap).toLocaleString(),'l-l',svg);
+  let sub;
+  if(ready) sub='五周天圆满 · 丹田已满';
+  else if(segFull>=segTotal) sub='丹田已满';
+  else sub='第'+['零','一','二','三','四','五'][segFull+1]+'周天 '+(curPct*100).toFixed(0)+'%';
+  const st=txt(CX,CY+38,sub,'l-c'+(ready?' ready':''),svg); st.id=svg.id+'-sub';
+}
+
+function liquidPath(R,baseY,amp,freq,phase,t){
+  const x0=CX-R+3,x1=CX+R-3,w=x1-x0,step=2;
+  let body=`M ${x0} ${(CY+R-2).toFixed(1)} L ${x1} ${(CY+R-2).toFixed(1)}`;
+  let top='';
+  for(let x=x1;x>=x0;x-=step){
+    const y=baseY+amp*Math.sin((x-x0)/w*freq*Math.PI*2+t+phase);
+    const cy=Math.max(CY-R+3,Math.min(CY+R-2,y));
+    body+=` L ${x} ${cy.toFixed(1)}`;
+    top+=(top?' L ':'M ')+x+' '+cy.toFixed(1);
+  }
+  body+=` L ${x0} ${(CY+R-2).toFixed(1)} Z`;
+  return{body,top};
+}
+
+// 真气粒子：参考原始 C 风格，位置随液面更新
+function makeQiParticles(svg,R,count){
+  const g=el('g',{},svg);
+  const arr=[];
+  for(let i=0;i<count;i++){
+    const p=el('circle',{cx:CX,cy:CY+R,r:1.8+Math.random()*2.5,class:'qi-particle',
+      style:`--qdur:${2.2+Math.random()*2.2}s;--qdel:${Math.random()*4}s`},g);
+    arr.push(p);
+  }
+  return arr;
+}
+function repositionParticles(particles,R,liquidY){
+  particles.forEach(p=>{
+    const rx=(Math.random()-0.5)*R*1.2;
+    const cl=R*R-rx*rx;
+    if(cl<=0)return;
+    const maxY=Math.sqrt(cl);
+    p.setAttribute('cx',(CX+rx).toFixed(1));
+    // 粒子放在液面附近：从液面到液面以下 30px 范围
+    p.setAttribute('cy',(liquidY-Math.random()*Math.min(35,maxY*0.5)).toFixed(1));
+  });
+}
+
+// ═══ 1: 修炼运转中 ═══
+{
+  const svg=document.getElementById('svg1'),R=80;
+  const openMask={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  drawMeridians(svg,openMask);
+  drawSegRings(svg,R,2);
+  centerText(svg,4500,10000,2,5,0.25,'');
+
+  const defs=el('defs',{},svg);
+  const clip=el('clipPath',{id:'lClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},clip);
+  const g=el('linearGradient',{id:'liq1',x1:'0',y1:'1',x2:'0',y2:'0'},defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.55},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.22},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#liq1)'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+
+  const subc=el('clipPath',{id:'bSubClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},subc);
+  function mk(radii,cls){
+    let d='';
+    for(let k=0;k<radii.length;k++)for(let seg=0;seg<4;seg++){
+      const a0=rad(-90+seg*95+15),a1=rad(-90+seg*95+75);
+      const p0=polar(radii[k],a0),p1=polar(radii[k],a1);
+      d+=`M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${radii[k]} ${radii[k]} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} `;
+    }
+    el('path',{d,class:cls,stroke:'oklch(0.32 0.026 252 / 0.14)'},svg);
+  }
+  mk([18,28,42],'b-current inner');
+  mk([52,65],'b-current outer');
+  const qi=makeQiParticles(svg,R,12);
+
+  let pct=0.45,baseY=CY+R-3-2*R*pct;
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,3.5,2.4,0,t*0.9);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  window._d1=v=>{
+    pct=Math.max(0.01,Math.min(1,v/100));
+    baseY=CY+R-3-2*R*pct;
+    repositionParticles(qi,R,baseY);
+    const val=pct*10000,segTotal=5,perSeg=2000;
+    const segFull=Math.min(segTotal,Math.floor(val/perSeg));
+    const curPct=(val-segFull*perSeg)/perSeg;
+    svg.querySelector('#svg1-val').textContent=Math.floor(val).toLocaleString();
+    svg.querySelector('#svg1-sub').textContent='第'+['零','一','二','三','四','五'][segFull+1]+'周天 '+(curPct*100).toFixed(0)+'%';
+    // 更新段环珍珠
+    svg.querySelectorAll('.zt-seg').forEach((s,i)=>{s.classList.toggle('pearl',i<segFull);});
+  };
+  repositionParticles(qi,R,baseY);
+  window._d1(45);
+}
+
+// ═══ 2: 单周天圆满 ═══
+{
+  const svg=document.getElementById('svg2'),R=80;
+  const openMask={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  openMask._actionable=new Set(['1-1','1-2']);
+  drawMeridians(svg,openMask);
+  drawSegRings(svg,R,3);
+  centerText(svg,6000,10000,3,5,0,'');
+
+  const defs=el('defs',{},svg);
+  const clip=el('clipPath',{id:'lClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},clip);
+  const g=el('linearGradient',{id:'liq2',x1:'0',y1:'1',x2:'0',y2:'0'},defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.55},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.30},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#liq2)'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+
+  const subc=el('clipPath',{id:'bSubClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},subc);
+  function mk(radii,cls){
+    let d='';
+    for(let k=0;k<radii.length;k++)for(let seg=0;seg<4;seg++){
+      const a0=rad(-90+seg*95+15),a1=rad(-90+seg*95+75);
+      const p0=polar(radii[k],a0),p1=polar(radii[k],a1);
+      d+=`M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${radii[k]} ${radii[k]} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} `;
+    }
+    el('path',{d,class:cls,stroke:'oklch(0.32 0.026 252 / 0.14)'},svg);
+  }
+  mk([18,28,42],'b-current inner');
+  mk([52,65],'b-current outer');
+  const qi=makeQiParticles(svg,R,14);
+
+  let pct=0.60,baseY=CY+R-3-2*R*pct;
+  repositionParticles(qi,R,baseY);
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,3.0,2.2,0,t*0.7);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  svg.querySelector('#svg2-val').textContent='6,000';
+  svg.querySelector('#svg2-sub').textContent='第四周天 0%';
+  window._d2=()=>{};
+}
+
+// ═══ 3: 丹田已满 ═══
+{
+  const svg=document.getElementById('svg3'),R=80;
+  const openMask={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  openMask._actionable=new Set(['1-1','1-2']);
+  drawMeridians(svg,openMask);
+  drawSegRings(svg,R,5);
+  centerText(svg,10000,10000,5,5,0,true);
+
+  const defs=el('defs',{},svg);
+  const clip=el('clipPath',{id:'lClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},clip);
+  const g=el('linearGradient',{id:'liq3',x1:'0',y1:'1',x2:'0',y2:'0'},defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.58},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.35},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#liq3)'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+
+  const subc=el('clipPath',{id:'bSubClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},subc);
+  function mk(radii,cls){
+    let d='';
+    for(let k=0;k<radii.length;k++)for(let seg=0;seg<4;seg++){
+      const a0=rad(-90+seg*95+15),a1=rad(-90+seg*95+75);
+      const p0=polar(radii[k],a0),p1=polar(radii[k],a1);
+      d+=`M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${radii[k]} ${radii[k]} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} `;
+    }
+    el('path',{d,class:cls,stroke:'oklch(0.32 0.026 252 / 0.14)'},svg);
+  }
+  mk([18,28,42],'b-current inner');
+  mk([52,65],'b-current outer');
+  const qi=makeQiParticles(svg,R,16);
+
+  let pct=1.0,baseY=CY+R-3-2*R*pct;
+  repositionParticles(qi,R,baseY);
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,1.5,2.0,0,t*0.5);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  svg.querySelector('#svg3-val').textContent='10,000';
+  svg.querySelector('#svg3-sub').textContent='五周天圆满 · 丹田已满';
+  window._d3=()=>{};
+}
+
+// ═══ 4: 冲穴交互 ═══
+{
+  const svg=document.getElementById('svg4'),R=80;
+  const openMask={'0-0':true,'0-1':true,'0-2':true,'1-0':true};
+  openMask._actionable=new Set(['1-1']);
+  drawMeridians(svg,openMask);
+  drawSegRings(svg,R,5);
+  centerText(svg,10000,10000,5,5,0,true);
+
+  const defs=el('defs',{},svg);
+  const clip=el('clipPath',{id:'lClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},clip);
+  const g=el('linearGradient',{id:'liq4',x1:'0',y1:'1',x2:'0',y2:'0'},defs);
+  el('stop',{offset:'0%','stop-color':'oklch(0.06 0.006 264)','stop-opacity':0.93},g);
+  el('stop',{offset:'35%','stop-color':'oklch(0.09 0.010 258)','stop-opacity':0.80},g);
+  el('stop',{offset:'75%','stop-color':'oklch(0.15 0.016 252)','stop-opacity':0.58},g);
+  el('stop',{offset:'100%','stop-color':'oklch(0.20 0.020 248)','stop-opacity':0.35},g);
+  el('circle',{cx:CX,cy:CY,r:R,class:'pool-rim'},svg);
+  const body=el('path',{class:'liquid-body',fill:'url(#liq4)'},svg);
+  const hl=el('path',{class:'surface-hl'},svg);
+
+  const subc=el('clipPath',{id:'bSubClip'},defs);
+  el('circle',{cx:CX,cy:CY,r:R-3},subc);
+  function mk(radii,cls){
+    let d='';
+    for(let k=0;k<radii.length;k++)for(let seg=0;seg<4;seg++){
+      const a0=rad(-90+seg*95+15),a1=rad(-90+seg*95+75);
+      const p0=polar(radii[k],a0),p1=polar(radii[k],a1);
+      d+=`M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${radii[k]} ${radii[k]} 0 0 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} `;
+    }
+    el('path',{d,class:cls,stroke:'oklch(0.32 0.026 252 / 0.14)'},svg);
+  }
+  mk([18,28,42],'b-current inner');
+  mk([52,65],'b-current outer');
+  const qi=makeQiParticles(svg,R,16);
+
+  let pct=1.0,baseY=CY+R-3-2*R*pct;
+  repositionParticles(qi,R,baseY);
+  function frame(ts){
+    const t=ts/1000;
+    const lp=liquidPath(R,baseY,1.5,2.0,0,t*0.5);
+    body.setAttribute('d',lp.body);hl.setAttribute('d',lp.top);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  svg.querySelector('#svg4-val').textContent='10,000';
+  svg.querySelector('#svg4-sub').textContent='五周天圆满 · 丹田已满';
+  document.getElementById('fb4').textContent='冲穴机会 2';
+
+  let animating=false;
+  function doChongxue(){
+    if(animating)return;
+    const acu=svg.querySelector('#acu-svg4-1-1');
+    if(!acu)return;
+    animating=true;
+    document.getElementById('fb4').textContent='行气冲穴...';
+    acu.style.transition='r 0.12s ease-out, opacity 0.12s';
+    acu.setAttribute('r','14');
+    acu.style.opacity='0.7';
+    setTimeout(()=>{acu.setAttribute('r','8');acu.style.opacity='1';},120);
+    setTimeout(()=>{
+      acu.setAttribute('r','8');
+      acu.classList.remove('actionable');
+      acu.classList.add('open');
+      acu.style.opacity='';acu.style.transition='';
+      document.getElementById('fb4').textContent='行气冲穴 · 乙二 已通';
+      const labels=svg.querySelectorAll('.acu-t');
+      if(labels[5])labels[5].classList.add('open');
+      animating=false;
+    },350);
+  }
+  function reset(){
+    const acu=svg.querySelector('#acu-svg4-1-1');
+    if(!acu)return;
+    acu.classList.remove('open');acu.classList.add('actionable');
+    acu.style.opacity='';acu.style.transition='';acu.setAttribute('r','8');
+    const labels=svg.querySelectorAll('.acu-t');
+    if(labels[5])labels[5].classList.remove('open');
+    document.getElementById('fb4').textContent='冲穴机会 2';
+    animating=false;
+  }
+  document.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(btn.dataset.act==='attempt')doChongxue();
+      else reset();
+    });
+  });
+  window._d4=()=>{};
+}
+
+document.querySelectorAll('.ctl input:not([disabled])').forEach(sl=>{
+  sl.addEventListener('input',()=>{
+    const pct=+sl.value,id=sl.dataset.id;
+    sl.parentElement.querySelector('.pct').textContent=pct+'%';
+    window['_d'+id](pct);
+  });
+});
+</script>
+</body>
+</html>

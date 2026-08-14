@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="pomo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 丹田液面三方案 v2 — 江湖无尽录</title>
+<style>
+/* ===== 泼墨山河 token（与 code/src/styles/tokens.css 一致） ===== */
+:root {
+  --bg: oklch(0.945 0.004 200);
+  --surface: oklch(0.910 0.006 200);
+  --surface-2: oklch(0.868 0.008 200);
+  --ink: oklch(0.24 0.012 260);
+  --muted: oklch(0.40 0.012 250);
+  --faint: oklch(0.50 0.012 240);
+  --line: oklch(0.80 0.01 210);
+  --line-strong: oklch(0.58 0.015 230);
+  --primary: oklch(0.30 0.02 260);      /* 浓墨 */
+  --primary-ink: oklch(0.96 0.003 200);
+  --gold: oklch(0.62 0.12 78);          /* 贯通金 */
+  --accent: oklch(0.45 0.065 220);      /* 黛青 */
+  --bar-track: oklch(0.855 0.008 200);
+  /* 水体：主题墨色系——面为淡墨青，底为浓墨，无纹样 */
+  --liq-hi: oklch(0.47 0.045 228);      /* 液面色（黛青偏墨） */
+  --liq-lo: oklch(0.29 0.02 258);       /* 池底浓墨 */
+  --liq-sed: oklch(0.23 0.015 258);     /* 沉墨 */
+  --bubble: oklch(0.96 0.003 200 / 0.33);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background:
+    radial-gradient(140% 70% at 88% -18%, oklch(0.24 0.012 260 / 0.07), transparent 55%),
+    radial-gradient(120% 55% at -8% 108%, oklch(0.45 0.065 220 / 0.06), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 56px;
+}
+.serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.scene-note {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  padding: 8px 24px; background: oklch(0.90 0.007 200);
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--accent); font-size: 12px; letter-spacing: 0.05em; white-space: nowrap; }
+.ctl { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+.ctl button {
+  padding: 4px 14px; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 12.5px; cursor: pointer;
+}
+.ctl button.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 600; }
+.ctl .stat { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; min-width: 200px; text-align: right; }
+
+.wrap { max-width: 1380px; margin: 0 auto; padding: 26px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; align-items: start; }
+.variant { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: 0 3px 14px oklch(0.24 0.012 260 / 0.10); }
+.v-head { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 10px; }
+.v-head .tag { font-size: 11px; color: var(--accent); border: 1px solid currentColor; border-radius: 4px; padding: 0 6px; letter-spacing: 0.08em; }
+.v-head h2 { font-size: 15px; font-weight: 600; }
+.v-head .sub { font-size: 12px; color: var(--faint); margin-left: auto; }
+.v-body { padding: 22px 16px 12px; display: flex; flex-direction: column; align-items: center; }
+.v-note { padding: 10px 16px 14px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); line-height: 1.7; }
+
+/* ===== 丹田墨池 ===== */
+.pool-stage { position: relative; }
+.pool {
+  position: relative; border-radius: 50%; overflow: hidden;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line-strong);
+  box-shadow: inset 0 4px 18px oklch(0.24 0.012 260 / 0.12);
+}
+.water { position: absolute; inset: 0; }
+
+/* 液面涌动：两枚近圆大圆（顶缘对齐液面）缓慢自转，
+   边缘与正圆 ±1.8% 的偏差扫过液面即是小幅波动——平滑、无纹样 */
+.wave {
+  position: absolute; left: 50%;
+  border-radius: 48.2%;
+  background: var(--liq-hi);
+  transform: translateX(-50%) rotate(0deg);
+  animation: surge 11s linear infinite;
+  transition: top 0.5s var(--ease);
+}
+.wave.w2 {
+  border-radius: 47.4%;
+  opacity: 0.55;
+  animation-duration: 17s;
+  animation-direction: reverse;
+}
+@keyframes surge { to { transform: translateX(-50%) rotate(360deg); } }
+/* 深度：液面之下渐深的墨——不旋转的透明渐变罩，只给深度不给纹样 */
+.depth {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, transparent 0, oklch(0.24 0.015 258 / 0.62) 78%);
+  transition: top 0.5s var(--ease);
+  pointer-events: none;
+}
+
+/* 气泡：自池底缓缓上浮，近液面处消散 */
+.bubble {
+  position: absolute; bottom: 0; border-radius: 50%;
+  background: var(--bubble);
+  animation: rise linear forwards;
+  pointer-events: none;
+}
+@keyframes rise {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 1; }
+  86% { opacity: 0.85; }
+  100% { transform: translateY(var(--rise)); opacity: 0; }
+}
+
+/* 沉墨（方案 B/C：已圆满周天的沉淀层，纯色无条纹） */
+.sediment {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--liq-sed);
+  border-top: 1px solid oklch(0.50 0.03 235 / 0.55);
+  transition: height 0.6s var(--ease);
+  z-index: 1;
+}
+
+.pool-center {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  text-align: center; pointer-events: none;
+}
+.pool-center .l { font-size: 10.5px; letter-spacing: 0.12em; color: var(--ink); opacity: 0.75; }
+.pool-center .v { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.pool-center .c { font-size: 11.5px; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.pool-center.flooded .l, .pool-center.flooded .v {
+  color: var(--primary-ink);
+  text-shadow: 0 1px 4px oklch(0.20 0.015 258 / 0.55);
+  opacity: 1;
+}
+.pool-center.flooded-c .c { color: oklch(0.82 0.04 215); text-shadow: 0 1px 3px oklch(0.20 0.015 258 / 0.5); }
+
+/* 池沿刻度珠（周天印记） */
+.rim { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.rim i {
+  position: absolute; top: 50%; left: 50%;
+  width: 3px; height: 12px; margin: -6px 0 0 -1.5px;
+  background: var(--line-strong); border-radius: 2px; opacity: 0.7;
+}
+.rim i.pearl { background: var(--gold); opacity: 1; box-shadow: 0 0 0 1.5px oklch(0.62 0.12 78 / 0.25); }
+
+/* 水位线（方案 A：细线，无装饰） */
+.marks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.marks i {
+  position: absolute; left: 14%; right: 14%; height: 1px;
+  background: var(--line-strong); opacity: 0.4;
+}
+.marks i.pearl { background: var(--gold); opacity: 0.85; }
+.marks i .tag {
+  position: absolute; right: -3px; top: -7px; font-size: 9px; color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.marks i.pearl .tag { color: var(--gold); }
+
+/* 圆满待突破：金色呼吸圈（唯一演出点） */
+.pool.ready { animation: pool-breath 2.2s var(--ease) infinite; }
+@keyframes pool-breath {
+  0%, 100% { box-shadow: inset 0 4px 18px oklch(0.24 0.012 260 / 0.12), 0 0 0 0 oklch(0.62 0.12 78 / 0.35); }
+  50% { box-shadow: inset 0 4px 18px oklch(0.24 0.012 260 / 0.12), 0 0 0 9px oklch(0.62 0.12 78 / 0); }
+}
+
+/* 方案 C：外围经脉弧 */
+.mandala-svg { display: block; }
+.mandala-svg text { font-family: inherit; }
+.m-arc { fill: none; stroke: var(--line-strong); stroke-width: 3; opacity: 0.5; }
+.m-arc.thru { stroke: var(--gold); opacity: 1; }
+.m-arc.locked { stroke-dasharray: 4 8; stroke-width: 2.5; opacity: 0.55; }
+.m-flow { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 4 20; opacity: 0.45; animation: qi 3.4s linear infinite; }
+.m-flow.thru { stroke: var(--gold); opacity: 0.85; }
+@keyframes qi { to { stroke-dashoffset: -85; } }
+.acu { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; }
+.acu.open { fill: var(--primary); stroke: var(--primary); }
+.acu.thru { fill: var(--gold); stroke: var(--gold); stroke-width: 3; }
+.m-name { font-size: 13px; fill: var(--muted); letter-spacing: 0.06em; }
+.m-name.thru { fill: var(--gold); font-weight: 600; }
+.m-name.locked { fill: var(--faint); opacity: 0.8; }
+.m-bonus { font-size: 10.5px; fill: var(--faint); }
+.m-bonus.thru { fill: var(--gold); }
+
+.data-row { display: flex; justify-content: center; gap: 22px; width: 100%; margin-top: 12px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.data-row b { color: var(--ink); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wave, .m-flow { animation: none; }
+  .pool.ready { animation: none; box-shadow: inset 0 4px 18px oklch(0.24 0.012 260 / 0.12), 0 0 0 3px oklch(0.62 0.12 78 / 0.3); }
+}
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型 / 丹田液面 v2</b>液面小幅涌动 + 气泡上浮 + 墨色系水体（泼墨山河 · 境界 3：4 周天 × 2,500）。可点：「支取内力」看液面回落（印记不消失）、「快进」调速。
+  <span class="ctl">
+    <button id="btnSpend">支取内力 −2,000</button>
+    <button id="btnSpeed">快进 ×8</button>
+    <button id="btnReset">重来</button>
+    <span class="stat" id="statLine"></span>
+  </span>
+</div>
+
+<div class="wrap">
+
+  <!-- ══ A 满池蓄墨 ══ -->
+  <section class="variant">
+    <div class="v-head"><span class="tag">A</span><h2>满池蓄墨</h2><span class="sub">液面 = 突破总进度</span></div>
+    <div class="v-body">
+      <div class="pool-stage" style="width:252px;height:252px">
+        <div class="pool" id="poolA" style="width:252px;height:252px">
+          <div class="water" id="waterA"></div>
+          <div class="marks" id="marksA"></div>
+        </div>
+        <div class="pool-center" id="cenA">
+          <span class="l">丹田内力</span><span class="v" id="valA">0</span>
+          <span class="l" id="capA">/ 10,000</span><span class="c" id="cycA"></span>
+        </div>
+      </div>
+      <div class="data-row"><span>修炼速率 <b>+14.1 / 秒</b></span><span>周天 <b id="segA">0/4</b></span></div>
+    </div>
+    <div class="v-note">液面高度 = 内力 / 突破总量，池壁四道细水位线即四个周天，液面漫过一道便是一次周天圆满、该线转金常亮（印记）。支取内力时液面真实退落，金线不退。目标感最强，离池满一眼可读；弱点是单个周天内液面移动较缓。</div>
+  </section>
+
+  <!-- ══ B 周天潮汐 ══ -->
+  <section class="variant">
+    <div class="v-head"><span class="tag">B</span><h2>周天潮汐</h2><span class="sub">液面 = 当前周天 · 池底沉墨累积</span></div>
+    <div class="v-body">
+      <div class="pool-stage" style="width:252px;height:252px">
+        <div class="pool" id="poolB" style="width:252px;height:252px">
+          <div class="sediment" id="sedB" style="height:0px"></div>
+          <div class="water" id="waterB"></div>
+        </div>
+        <div class="pool-center" id="cenB">
+          <span class="l">丹田内力</span><span class="v" id="valB">0</span>
+          <span class="l" id="capB">/ 10,000</span><span class="c" id="cycB"></span>
+        </div>
+        <div class="rim" id="rimB"></div>
+      </div>
+      <div class="data-row"><span>修炼速率 <b>+14.1 / 秒</b></span><span>周天 <b id="segB">0/4</b></span></div>
+    </div>
+    <div class="v-note">液面只映射<b>当前这个周天</b>：一涨到顶便是一次圆满——液面沉淀为池底一层沉墨，随即重新自底涨起，周而复始即「生生不息」。沉墨厚度 + 池沿金珠双重记录已圆满周天。液面升降最频繁、动感最强；总进度看沉墨厚度或数字。</div>
+  </section>
+
+  <!-- ══ C 墨池年轮 ══ -->
+  <section class="variant">
+    <div class="v-head"><span class="tag">C</span><h2>墨池年轮</h2><span class="sub">潮汐池嵌入经脉年轮的合成效果</span></div>
+    <div class="v-body">
+      <div class="pool-stage" style="width:420px;height:400px">
+        <svg class="mandala-svg" id="svgC" viewBox="0 0 420 400" width="420" height="400" aria-hidden="true"></svg>
+        <div class="pool" id="poolC" style="position:absolute;left:126px;top:116px;width:168px;height:168px">
+          <div class="sediment" id="sedC" style="height:0px"></div>
+          <div class="water" id="waterC"></div>
+        </div>
+        <div class="pool-center" id="cenC" style="left:126px;top:116px;width:168px;height:168px">
+          <span class="l">丹田内力</span><span class="v" id="valC" style="font-size:21px">0</span>
+          <span class="c" id="cycC"></span>
+        </div>
+        <div class="rim" id="rimC" style="position:absolute;left:126px;top:116px;width:168px;height:168px"></div>
+      </div>
+      <div class="data-row"><span>修炼速率 <b>+14.1 / 秒</b></span><span>周天 <b id="segC">0/4</b></span></div>
+    </div>
+    <div class="v-note">方案 B 放回完整年轮的观感验证：外环经脉窍穴不变（含丙脉虚线占位），中心充能环换为潮汐墨池，池沿金珠即周天印记。外环偶动（冲穴/贯通），内池常动（潮汐与气泡），一静一动。定稿 A 亦可同位替换。</div>
+  </section>
+
+</div>
+
+<script>
+/* ===== 境界 3 真实参数（design.md §3.1）===== */
+const COST = 10000, N = 4, RATE = 14.1, SEG = COST / N;
+const CN = ['零','一','二','三','四','五','六','七','八','九'];
+const fmt = n => Math.floor(n).toLocaleString('en-US');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let dantian = 5750;         // 开局示例：已圆满 2 周天 + 第三周天 30%
+let highWater = 2;
+let speed = 1;
+
+/* ── 水体：主体渐变 + 双旋转波 + 气泡 ── */
+class Water {
+  constructor(el, poolH) {
+    this.el = el; this.poolH = poolH;
+    this.surfaceY = poolH;              // 液面距池顶的距离（px）
+    const size = poolH * 2.3;           // 波圆直径：足以覆盖整个池底
+    this.w2 = document.createElement('div');
+    this.w2.className = 'wave w2';
+    this.w1 = document.createElement('div');
+    this.w1.className = 'wave w1';
+    for (const w of [this.w1, this.w2]) { w.style.width = w.style.height = `${size}px`; }
+    this.depth = document.createElement('div');
+    this.depth.className = 'depth';
+    el.append(this.w2, this.w1, this.depth);
+    if (!reduceMotion) this.timer = setInterval(() => this.bubble(), 460);
+  }
+  /* h: 液面高度 px；bottom: 水体底部抬升（沉墨之上） */
+  set(h, bottom = 0) {
+    const top = this.poolH - bottom - h;
+    this.surfaceY = top;
+    this.h = h;
+    this.bottom = bottom;
+    // 波圆顶缘对齐液面：圆心在液面之下，只有上弧越过液面 ±1.8% 起伏
+    this.w1.style.top = `${top}px`;
+    this.w2.style.top = `${top - 3}px`;
+    this.depth.style.top = `${top + 10}px`;
+    const show = h > 3 ? '' : 'none';
+    this.depth.style.display = this.w1.style.display = this.w2.style.display = show;
+  }
+  bubble() {
+    if (!this.h || this.h < 22 || document.hidden) return;
+    const b = document.createElement('i');
+    b.className = 'bubble';
+    const s = 2 + Math.random() * 3.5;
+    b.style.width = b.style.height = `${s}px`;
+    b.style.left = `${18 + Math.random() * 64}%`;
+    b.style.bottom = `${this.bottom + 2}px`;
+    b.style.setProperty('--rise', `-${this.h - 8}px`);
+    b.style.animationDuration = `${2.8 + Math.random() * 2.4}s`;
+    this.el.insertBefore(b, this.depth);   // 波体之上、深度渐变罩之下
+    b.addEventListener('animationend', () => b.remove());
+  }
+}
+
+const waterA = new Water(document.getElementById('waterA'), 252);
+const waterB = new Water(document.getElementById('waterB'), 252);
+const waterC = new Water(document.getElementById('waterC'), 168);
+
+/* ── A：水位线 ── */
+const marksA = document.getElementById('marksA');
+for (let i = 1; i <= N; i++) {
+  const el = document.createElement('i');
+  el.style.bottom = `${(i / N) * 100}%`;
+  el.innerHTML = `<span class="tag">${i}</span>`;
+  marksA.appendChild(el);
+}
+/* ── B/C：池沿刻度珠 ── */
+function buildRim(rim, r) {
+  for (let i = 1; i <= N; i++) {
+    const el = document.createElement('i');
+    el.style.transform = `rotate(${-90 + (360 * i) / N}deg) translateY(-${r}px)`;
+    rim.appendChild(el);
+  }
+}
+buildRim(document.getElementById('rimB'), 119);
+buildRim(document.getElementById('rimC'), 77);
+
+/* ── C：外围经脉（境界 3：甲贯通、乙 1/2、丙锁定） ── */
+(function buildSvgC() {
+  const cx = 210, cy = 200, R = 158, RL = 126;
+  const rad = d => d * Math.PI / 180;
+  const P = (r, d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  const arc = (r, a, b) => { const [x0,y0]=P(r,a),[x1,y1]=P(r,b); return `M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y1}`; };
+  const slots = [
+    { name: '经脉·甲', state: 'thru', acus: [1,1,1] },
+    { name: '经脉·乙', state: '', acus: [1,0] },
+    { name: '经脉·丙', state: 'locked' },
+  ];
+  let html = '';
+  slots.forEach((m, si) => {
+    const mid = -90 + 120 * si, span = 100;
+    const d = arc(R, mid - span/2, mid + span/2);
+    const [lx, ly] = P(RL, mid);
+    if (m.state === 'locked') {
+      html += `<path d="${d}" class="m-arc locked"/>
+        <text x="${lx}" y="${ly}" class="m-name serif locked" text-anchor="middle">${m.name}</text>
+        <text x="${lx}" y="${ly+15}" class="m-bonus" text-anchor="middle">境界 5 解锁</text>`;
+      return;
+    }
+    const thru = m.state === 'thru' ? ' thru' : '';
+    html += `<path d="${d}" class="m-arc${thru}"/><path d="${d}" class="m-flow${thru}"/>`;
+    m.acus.forEach((open, ai) => {
+      const deg = mid - span/2 + span * (ai + 0.5) / m.acus.length;
+      const [x, y] = P(R, deg);
+      html += `<circle cx="${x}" cy="${y}" r="8" class="acu${thru ? ' thru' : open ? ' open' : ''}"/>`;
+    });
+    html += `<text x="${lx}" y="${ly}" class="m-name serif${thru}" text-anchor="middle">${m.name}</text>
+      <text x="${lx}" y="${ly+15}" class="m-bonus${thru}" text-anchor="middle">${thru ? '贯通' : '1/2'}</text>`;
+  });
+  document.getElementById('svgC').innerHTML = html;
+})();
+
+function render() {
+  const segFull = Math.min(N, Math.floor(dantian / SEG));
+  const segPct = dantian >= COST ? 1 : (dantian % SEG) / SEG;
+  const ready = dantian >= COST;
+  highWater = Math.max(highWater, segFull);
+  const cyc = ready ? `${CN[N]}周天圆满 · 丹田已满` : `第${CN[segFull + 1]}周天 ${Math.floor(segPct * 100)}%`;
+
+  /* A：液面 = 总进度 */
+  const totalPct = Math.min(1, dantian / COST);
+  waterA.set(totalPct * 252);
+  document.getElementById('valA').textContent = fmt(Math.min(dantian, COST));
+  document.getElementById('cycA').textContent = cyc;
+  document.getElementById('segA').textContent = `${segFull}/${N}`;
+  [...marksA.children].forEach((el, i) => el.classList.toggle('pearl', i < highWater));
+  document.getElementById('poolA').classList.toggle('ready', ready);
+  const cA = document.getElementById('cenA');
+  cA.classList.toggle('flooded', waterA.surfaceY < 252 * 0.40);
+  cA.classList.toggle('flooded-c', waterA.surfaceY < 252 * 0.60);
+
+  /* B / C：液面 = 当前段，沉墨 = 已圆满段 */
+  for (const [water, sed, val, cycEl, seg, rim, pool, cen, poolH] of [
+    [waterB,'sedB','valB','cycB','segB','rimB','poolB','cenB',252],
+    [waterC,'sedC','valC','cycC','segC','rimC','poolC','cenC',168],
+  ]) {
+    const sedH = segFull * (poolH * 0.075);
+    document.getElementById(sed).style.height = `${sedH}px`;
+    water.set(ready ? poolH - sedH : segPct * (poolH - sedH) * 0.92, sedH);
+    document.getElementById(val).textContent = fmt(Math.min(dantian, COST));
+    document.getElementById(cycEl).textContent = cyc;
+    document.getElementById(seg).textContent = `${segFull}/${N}`;
+    [...document.getElementById(rim).children].forEach((el, i) => el.classList.toggle('pearl', i < highWater));
+    document.getElementById(pool).classList.toggle('ready', ready);
+    const cEl = document.getElementById(cen);
+    cEl.classList.toggle('flooded', water.surfaceY < poolH * 0.40);
+    cEl.classList.toggle('flooded-c', water.surfaceY < poolH * 0.60);
+  }
+
+  document.getElementById('statLine').textContent =
+    `内力 ${fmt(Math.min(dantian, COST))} / ${fmt(COST)} · 印记 ${highWater}/${N}${ready ? ' · 可突破' : ''}`;
+}
+render();
+
+setInterval(() => {
+  if (dantian < COST) { dantian = Math.min(COST, dantian + RATE * 0.1 * speed); render(); }
+}, 100);
+
+document.getElementById('btnSpend').addEventListener('click', () => {
+  dantian = Math.max(0, dantian - 2000); render();
+});
+const btnSpeed = document.getElementById('btnSpeed');
+btnSpeed.addEventListener('click', () => {
+  speed = speed === 1 ? 8 : 1;
+  btnSpeed.classList.toggle('on', speed === 8);
+  btnSpeed.textContent = speed === 8 ? '快进中 ×8' : '快进 ×8';
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  dantian = 0; highWater = 0; render();
+});
+</script>
+</body>
+</html>

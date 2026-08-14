@@ -1,5 +1,24 @@
-# Claude Instructions
+# 本项目开发规范
 
-Before adding, moving, or editing project documentation, read `docs/README.md` and follow it.
+## 文档规范
 
-This file is only a Claude-compatible entrypoint. The canonical documentation rules live in `docs/README.md` so they are visible to humans and other agents as well.
+- 在任何新增/修改文档的行为之前，都先阅读`docs/README.md`。
+
+
+## 开发规范
+
+- 不要过度设计，保持代码的简洁和易读。
+
+
+## 设计规范
+
+- 本游戏是武侠放置网页游戏，一切系统/数值/玩法的设计，都需要从武侠世界观的角度出发。
+
+
+## 需求管理
+
+- `docs/BACKLOG.md` 是需求池的唯一入口：新系统/玩法/数值/UI 的想法一律先记入「想法池」，不直接开写。
+- 需求升级为「已确认」时必须补齐：动机（为什么做）、武侠世界观锚点、验收标准、依赖；复杂系统另建 `docs/systems/<模块>/design.md`，池中只留一行 + 链接。
+- 「进行中」同时不超过 2 条；废弃的需求不删除，改状态并留一句废弃原因。
+- GitHub issue 只用于三类：跨多次会话/多个 PR 的里程碑级功能（子任务用 issue 正文 checklist，不拆子 issue）、bug、需长期追踪的技术债；对应 PR 用 `Closes #N` 关联。
+- 完成一个需求时，同步更新其在 BACKLOG.md 中的状态。

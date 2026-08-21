@@ -198,10 +198,14 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 .scene.inner .ring { opacity: 1; pointer-events: auto; }
 
 /* —— 星图语言：周天=月相串，窍穴=星宿 —— */
-/* 月相：新月细环（未行）→ 上弦半月（当前）→ 满月鎏金（圆满） */
-.moon-new  { fill: none; stroke: oklch(0.48 0.03 262 / 0.7); stroke-width: 1; }
-.moon-half { fill: oklch(0.62 0.08 78 / 0.85); }
-.moon-full { fill: var(--gold); filter: drop-shadow(0 0 6px oklch(0.76 0.13 78 / 0.85)); }
+/* 月相：暗盘打底衬出明暗交界。晦月（未行）→ 上弦（当前，右半鎏金）→ 满月（圆满，通体鎏金+环晕） */
+.moon-base { fill: oklch(0.20 0.016 262); stroke: oklch(0.48 0.03 262 / 0.55); stroke-width: 1; }
+.moon-lit  { fill: oklch(0.72 0.11 78); }
+.moon-full-disc {
+  fill: var(--gold);
+  filter: drop-shadow(0 0 7px oklch(0.76 0.13 78 / 0.9));
+}
+.moon-ring { fill: none; stroke: oklch(0.85 0.15 78 / 0.5); stroke-width: 1; }
 
 /* 星曜：四芒星形。墨星（待机会）/ 朱砂星（可冲）/ 金星（已通） */
 .star {
@@ -372,7 +376,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
     <button class="btn-back" id="btnBack">收 功</button>
     <ul class="legend" aria-label="内视图例">
       <li><span class="sw bead-on"></span>满月 · 已圆满之转</li>
-      <li><span class="sw bead-off"></span>新月 · 未行之转</li>
+      <li><span class="sw bead-off"></span>晦月 · 未行之转（上弦 = 当前）</li>
       <li><span class="sw acu-red"></span>朱砂星 · 窍穴可冲</li>
       <li><span class="sw acu-gold"></span>金星 · 窍穴已通</li>
       <li><span class="sw acu-ink"></span>墨星 · 待冲穴机会</li>
@@ -431,12 +435,18 @@ function starPath(r) {
   const k = r * 0.22;
   return `M 0 ${-r} C ${k} ${-k}, ${k} ${-k}, ${r} 0 C ${k} ${k}, ${k} ${k}, 0 ${r} C ${-k} ${k}, ${-k} ${k}, ${-r} 0 C ${-k} ${-k}, ${-k} ${-k}, 0 ${-r} Z`;
 }
-/** 月相路径：phase 'new'|'half'|'full'，中心 (x,y) 半径 r */
+/** 月相：phase 'new'|'half'|'full'，中心 (x,y) 半径 r。暗盘永远在，亮面叠其上 */
 function moonShape(x, y, r, phase) {
-  if (phase === 'new')  return `<circle class="moon-new"  data-role="moon" cx="${x}" cy="${y}" r="${r}"/>`;
-  if (phase === 'full') return `<circle class="moon-full" data-role="moon" cx="${x}" cy="${y}" r="${r}"/>`;
-  // 上弦：右半月
-  return `<path class="moon-half" data-role="moon" d="M ${x} ${y - r} A ${r} ${r} 0 0 1 ${x} ${y + r} Z"/>`;
+  const base = `<circle class="moon-base" cx="${x}" cy="${y}" r="${r}"/>`;
+  if (phase === 'new')
+    return `<g data-role="moon" data-phase="new">${base}</g>`;
+  if (phase === 'full')
+    return `<g data-role="moon" data-phase="full">${base}
+      <circle class="moon-full-disc" cx="${x}" cy="${y}" r="${r}"/>
+      <circle class="moon-ring" cx="${x}" cy="${y}" r="${+r + 3}"/></g>`;
+  // 上弦：右半鎏金，明暗交界线可读
+  return `<g data-role="moon" data-phase="half">${base}
+    <path class="moon-lit" d="M ${x} ${y - r} A ${r} ${r} 0 0 1 ${x} ${y + r} Z"/></g>`;
 }
 // 星宿散布：角度/半径带确定性抖动，摆脱等距感（伪随机由索引驱动，可复现）
 const JIT_A = [4, -6, 2, -3], JIT_R = [0, 18, 7, 24];
@@ -490,7 +500,7 @@ function renderRing() {
 function paintMoons() {
   const row = $('moonRow'); if (!row) return;
   row.innerHTML = window._moonPos.map((p, i) => moonShape(
-    p.x.toFixed(1), p.y.toFixed(1), 4.5,
+    p.x.toFixed(1), p.y.toFixed(1), 7.5,
     i < state.paidSegs ? 'full' : i === state.paidSegs ? 'half' : 'new'
   )).join('');
 }

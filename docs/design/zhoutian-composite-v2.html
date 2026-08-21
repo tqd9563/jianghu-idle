@@ -70,7 +70,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
   position: absolute; inset: 0; z-index: 1;
   background: url('../art-explore/figure-base-dark.png') center 28% / cover no-repeat;
   filter: brightness(var(--bd-bright, 0.62)) saturate(0.9);
-  transform-origin: 50% 57%;
+  transform-origin: 50% 64%;
   transition: transform 1s var(--ease), opacity 1s var(--ease), filter 1s var(--ease);
 }
 /* 内视：镜头扎进丹田——人影放大穿过、隐去 */
@@ -110,7 +110,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 /* —— 丹田：外视=小光珠（点击入内视），内视=大器皿 —— */
 .vessel {
   position: absolute; z-index: 4;
-  left: 50%; top: 57%; width: 62%; aspect-ratio: 1;
+  left: 50%; top: 64%; width: 62%; aspect-ratio: 1;
   transform: translate(-50%, -50%) scale(0.16);
   border-radius: 50%; overflow: hidden;
   background: radial-gradient(closest-side, oklch(0.10 0.012 262 / 0.6), oklch(0.12 0.013 262 / 0.78) 78%, oklch(0.20 0.017 262 / 0.9) 96%);
@@ -130,6 +130,30 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 /* 外视 hover：光珠微涨，暗示可点 */
 .scene:not(.inner) .vessel:hover { transform: translate(-50%, -50%) scale(0.19); }
+/* 空腔气雾：只在液面以上显影——未满的部分是「氤氲待聚的气」，不是黑洞 */
+.void-qi {
+  position: absolute; inset: 0; pointer-events: none;
+  clip-path: inset(0 0 calc(100% - var(--empty, 60%)) 0);
+  transition: clip-path 0.35s var(--ease);
+}
+.void-qi i {
+  position: absolute; border-radius: 50%; display: block;
+  background: radial-gradient(closest-side, oklch(0.60 0.07 78 / 0.30), transparent 72%);
+  filter: blur(7px); mix-blend-mode: screen;
+}
+.void-qi i:nth-child(1) { width: 62%; height: 40%; left: 4%;  top: 16%; animation: qi-drift-a 11s ease-in-out infinite; }
+.void-qi i:nth-child(2) { width: 50%; height: 34%; left: 42%; top: 34%; animation: qi-drift-b 14s ease-in-out infinite; }
+.void-qi i:nth-child(3) { width: 40%; height: 26%; left: 22%; top: 6%;  animation: qi-drift-a 17s ease-in-out infinite reverse; }
+@keyframes qi-drift-a {
+  0%, 100% { transform: translate(0, 0); opacity: 0.55; }
+  50%      { transform: translate(9%, -7%); opacity: 1; }
+}
+@keyframes qi-drift-b {
+  0%, 100% { transform: translate(0, 0); opacity: 0.9; }
+  50%      { transform: translate(-11%, 6%); opacity: 0.45; }
+}
+.paused .void-qi i { animation-play-state: paused; }
+
 .liquid {
   position: absolute; inset: 0;
   clip-path: inset(var(--empty, 60%) 0 0 0);
@@ -206,6 +230,25 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 .m-grp.through .m-glow { opacity: 0.22; }
 @keyframes acu-pop { 0% { r: 6; } 45% { r: 12; } 100% { r: 6; } }
 .acu-dot.just { animation: acu-pop 0.6s var(--ease); }
+
+/* 内视图例：珠/穴语义自解释 */
+.legend {
+  position: absolute; z-index: 7; left: 14px; bottom: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; color: oklch(0.62 0.015 262); letter-spacing: 0.08em;
+  background: oklch(0.13 0.013 262 / 0.66); padding: 8px 12px; border-radius: 8px;
+  border: 1px solid oklch(0.32 0.02 262 / 0.6);
+  opacity: 0; pointer-events: none; transition: opacity 0.6s var(--ease) 0.55s;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+}
+.scene.inner .legend { opacity: 1; }
+.legend li { display: flex; align-items: center; gap: 7px; list-style: none; }
+.legend .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.legend .sw.bead-on  { background: var(--gold); box-shadow: 0 0 5px oklch(0.76 0.13 78 / 0.8); }
+.legend .sw.bead-off { background: oklch(0.30 0.02 262); border: 1px solid oklch(0.48 0.03 262 / 0.6); }
+.legend .sw.acu-red  { background: var(--cinnabar); }
+.legend .sw.acu-gold { background: var(--gold-hi); box-shadow: 0 0 5px oklch(0.76 0.13 78 / 0.8); }
+.legend .sw.acu-ink  { background: oklch(0.32 0.02 262); }
 
 /* 收功（返回外视） */
 .btn-back {
@@ -301,6 +344,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
     <div class="inkbg"></div>
 
     <div class="vessel" id="vessel" role="button" tabindex="0" aria-label="内视丹田">
+      <div class="void-qi"><i></i><i></i><i></i></div>
       <div class="liquid">
         <video id="vid" src="../art-explore/dantian-liquid-loop-v2.mp4" autoplay muted loop playsinline></video>
       </div>
@@ -315,6 +359,13 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
     <svg class="ring" id="ringSvg" viewBox="0 0 400 500"></svg>
 
     <button class="btn-back" id="btnBack">收 功</button>
+    <ul class="legend" aria-label="内视图例">
+      <li><span class="sw bead-on"></span>金珠 · 已圆满之转</li>
+      <li><span class="sw bead-off"></span>素珠 · 未行之转</li>
+      <li><span class="sw acu-red"></span>朱砂 · 窍穴可冲</li>
+      <li><span class="sw acu-gold"></span>鎏金 · 窍穴已通</li>
+      <li><span class="sw acu-ink"></span>墨点 · 待冲穴机会</li>
+    </ul>
     <div class="outer-hint">点<b>丹田</b>内视 · 冲穴与周天详情</div>
   </div>
 
@@ -373,6 +424,9 @@ function renderRing() {
     const p = polar(R_V + 17, a);
     s += `<circle class="bead" data-seg="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5"/>`;
   }
+  // 珠串题字：说明这一串是周天
+  const tl = polar(R_V + 42, 0);
+  s += `<text class="m-label" x="${tl.x.toFixed(1)}" y="${tl.y.toFixed(1)}" text-anchor="middle">周 天</text>`;
   // 窍穴：左右两簇，围绕器皿下侧散布；名字在点外侧
   const zones = [[196, 256], [104, 164]];
   Rm.meridians.forEach((m, mi) => {

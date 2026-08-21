@@ -36,6 +36,7 @@
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 → 境界成本/宿慧/声望经济，唯一数值源） | design.md §3、economy.md v2 由其生成 |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
 | `systems/reincarnation/design.md` | 转世系统（声望重构：时间线/寿元/死亡/正邪/世内事件，未规格化） | — |
+| `systems/injury/design.md` | 受伤系统（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口，未规格化） | — |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）

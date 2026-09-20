@@ -107,29 +107,69 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 .scene.inner .inkbg { opacity: 1; }
 
-/* —— 丹田：外视=小光珠（点击入内视），内视=大器皿 —— */
+/* —— 丹田：外视=一团透出衣袍的气光（无硬边），内视=器皿 —— */
+/* 外视暗晕：以正片叠底在白袍上压出一圈受光凹陷，给气光一个依托
+   （只靠 screen 叠在浅色衣料上会发灰发白，这层是解药） */
+.dantian-shade {
+  position: absolute; z-index: 3; left: 50%; top: 64%;
+  width: 40%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side,
+    oklch(0.52 0.035 55 / 0.40) 16%,
+    oklch(0.46 0.028 50 / 0.22) 48%,
+    transparent 80%);
+  filter: blur(14px); mix-blend-mode: multiply;
+  transition: opacity 0.8s var(--ease);
+}
+.scene.inner .dantian-shade { opacity: 0; }
+
+/* 外视辉光底：柔光晕开，让光「长」在画里而不是盖在画上 */
+.dantian-bloom {
+  position: absolute; z-index: 3; left: 50%; top: 64%;
+  width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side,
+    oklch(0.80 0.14 62 / calc(var(--vessel-glow, 0.2) * 2.1)) 8%,
+    oklch(0.62 0.13 48 / calc(var(--vessel-glow, 0.2) * 1.1)) 38%,
+    transparent 78%);
+  filter: blur(7px); mix-blend-mode: screen;
+  transition: opacity 0.8s var(--ease), background 0.6s var(--ease);
+}
+.scene.inner .dantian-bloom { opacity: 0; }
+
 .vessel {
   position: absolute; z-index: 4;
   left: 50%; top: 64%; width: 62%; aspect-ratio: 1;
-  transform: translate(-50%, -50%) scale(0.16);
+  transform: translate(-50%, -50%) scale(0.17);
   border-radius: 50%; overflow: hidden;
-  background: radial-gradient(closest-side, oklch(0.10 0.012 262 / 0.6), oklch(0.12 0.013 262 / 0.78) 78%, oklch(0.20 0.017 262 / 0.9) 96%);
-  box-shadow:
-    inset 0 0 40px oklch(0.05 0.01 262 / 0.7),
-    0 0 0 1px oklch(0.48 0.03 262 / 0.5),
-    0 0 90px 30px oklch(0.76 0.13 78 / var(--vessel-glow, 0.2));
   cursor: pointer;
+  /* 外视：屏幕混合吃掉视频的墨底，只留气光；径向遮罩羽化边缘，不留切齐的圆 */
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side, #000 46%, rgba(0,0,0,0.55) 70%, transparent 92%);
+  mask-image: radial-gradient(closest-side, #000 46%, rgba(0,0,0,0.55) 70%, transparent 92%);
+  background: none; box-shadow: none;
   transition: transform 1s var(--ease), top 1s var(--ease), box-shadow 0.6s var(--ease);
 }
 .scene.inner .vessel {
   top: 50%; transform: translate(-50%, -50%) scale(1); cursor: default;
+  mix-blend-mode: normal;
+  -webkit-mask-image: none; mask-image: none;
+  background: radial-gradient(closest-side, oklch(0.075 0.01 262 / 0.88), oklch(0.095 0.011 262 / 0.92) 78%, oklch(0.17 0.015 262 / 0.95) 96%);
   box-shadow:
     inset 0 0 40px oklch(0.05 0.01 262 / 0.7),
-    0 0 0 1px oklch(0.48 0.03 262 / 0.5),
-    0 0 46px 6px oklch(0.76 0.13 78 / var(--vessel-glow, 0.2));
+    0 0 0 1px oklch(0.42 0.02 262 / 0.45),
+    0 0 40px 4px oklch(0.66 0.06 68 / calc(var(--vessel-glow, 0.2) * 0.75));
 }
-/* 外视 hover：光珠微涨，暗示可点 */
-.scene:not(.inner) .vessel:hover { transform: translate(-50%, -50%) scale(0.19); }
+/* 外视不做液位裁切：小尺寸下那条水平切边会暴露成「矩形」，破坏融入感。
+   外视的进度表达交给辉光强弱（--vessel-glow），液位只在内视读 */
+.scene:not(.inner) .liquid { clip-path: none; }
+.scene:not(.inner) .liquid video { transform: scale(1.5); }
+.scene:not(.inner) .wave,
+.scene:not(.inner) .surface-line,
+.scene:not(.inner) .void-qi { opacity: 0; }
+
+/* 外视 hover：气光微涨，暗示可点 */
+.scene:not(.inner) .vessel:hover { transform: translate(-50%, -50%) scale(0.20); }
 /* 空腔气雾：只在液面以上显影——未满的部分是「氤氲待聚的气」，不是黑洞 */
 .void-qi {
   position: absolute; inset: 0; pointer-events: none;
@@ -138,7 +178,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 .void-qi i {
   position: absolute; border-radius: 50%; display: block;
-  background: radial-gradient(closest-side, oklch(0.60 0.07 78 / 0.30), transparent 72%);
+  background: radial-gradient(closest-side, oklch(0.50 0.02 250 / 0.22), transparent 72%);
   filter: blur(7px); mix-blend-mode: screen;
 }
 .void-qi i:nth-child(1) { width: 62%; height: 40%; left: 4%;  top: 16%; animation: qi-drift-a 11s ease-in-out infinite; }
@@ -158,6 +198,8 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
   position: absolute; inset: 0;
   clip-path: inset(var(--empty, 60%) 0 0 0);
   transition: clip-path 0.35s var(--ease);
+  /* 不挂任何运行时 filter：调色已用 ffmpeg 烘进素材。
+     给 <video> 或其祖先套 CSS filter 会打断合成快路径，实测产生矩形假影 */
 }
 .liquid video {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -165,15 +207,27 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
   transform: translateY(calc(var(--empty, 60%) / 2)) scale(1.5);
   transition: transform 0.35s var(--ease);
 }
+/* 液面波：两道错速正弦，摆脱一刀切的直线液面 */
+.wave {
+  position: absolute; left: 0; width: 100%; height: 5%;
+  top: calc(var(--empty, 60%) - 2.5%);
+  overflow: hidden; pointer-events: none;
+  transition: top 0.35s var(--ease);
+}
+.wave svg { position: absolute; left: 0; top: 0; width: 200%; height: 100%; }
+.wave .w1 { fill: oklch(0.58 0.025 250 / 0.8); animation: wave-move 7s linear infinite; }
+.wave .w2 { fill: oklch(0.44 0.02 250 / 0.55); animation: wave-move 11s linear infinite reverse; }
+@keyframes wave-move { to { transform: translateX(-50%); } }
+.paused .wave .w1, .paused .wave .w2 { animation-play-state: paused; }
 .surface-line {
   position: absolute; left: 5%; right: 5%; top: var(--empty, 60%);
-  height: 2px; border-radius: 1px;
-  background: linear-gradient(90deg, transparent, oklch(0.85 0.15 78 / 0.8), transparent);
+  height: 1px; border-radius: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.72 0.03 250 / 0.6), transparent);
   transition: top 0.35s var(--ease); pointer-events: none;
 }
 .vessel .flash {
   position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, oklch(0.85 0.15 78 / 0.75), transparent 72%);
+  background: radial-gradient(closest-side, oklch(0.76 0.10 74 / 0.62), transparent 72%);
   opacity: 0;
 }
 .vessel.seal .flash { animation: seal-flash 0.9s var(--ease); }
@@ -200,48 +254,53 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 /* —— 星图语言：周天=月相串，窍穴=星宿 —— */
 /* 月相：暗盘打底衬出明暗交界。晦月（未行）→ 上弦（当前，右半鎏金）→ 满月（圆满，通体鎏金+环晕） */
 .moon-base { fill: oklch(0.20 0.016 262); stroke: oklch(0.48 0.03 262 / 0.55); stroke-width: 1; }
-.moon-lit  { fill: oklch(0.72 0.11 78); }
+.moon-lit  { fill: oklch(0.67 0.075 74); }
 .moon-full-disc {
-  fill: var(--gold);
-  filter: drop-shadow(0 0 7px oklch(0.76 0.13 78 / 0.9));
+  fill: oklch(0.70 0.08 74);
+  filter: drop-shadow(0 0 7px oklch(0.70 0.08 74 / 0.75));
 }
-.moon-ring { fill: none; stroke: oklch(0.85 0.15 78 / 0.5); stroke-width: 1; }
+.moon-ring { fill: none; stroke: oklch(0.76 0.08 76 / 0.4); stroke-width: 0.8; }
 
-/* 星曜：四芒星形。墨星（待机会）/ 朱砂星（可冲）/ 金星（已通） */
+/* 星曜：按「星等」定大小的圆点 + 常驻柔晕（敦煌星图的画法，非四芒亮片）。
+   墨星（待机会）/ 朱砂星（可冲）/ 旧金星（已通）—— 色相一律压进墨调 */
 .star {
-  fill: oklch(0.50 0.02 262 / 0.75); stroke: none;
-  transition: fill 0.3s var(--ease), transform 0.3s var(--ease);
+  fill: oklch(0.52 0.015 258 / 0.8); stroke: none;
+  transition: fill 0.35s var(--ease), transform 0.3s var(--ease);
   transform-box: fill-box; transform-origin: center;
 }
-.star.opened { fill: var(--gold-hi); }
-.star.actionable { fill: var(--cinnabar); cursor: pointer; animation: star-pulse 1.8s ease-in-out infinite; }
-.star.actionable:hover { animation-play-state: paused; fill: oklch(0.70 0.19 35); }
+.star.opened { fill: oklch(0.74 0.075 76); }
+.star.actionable { fill: oklch(0.55 0.115 34); cursor: pointer; animation: star-pulse 2.4s ease-in-out infinite; }
+.star.actionable:hover { animation-play-state: paused; fill: oklch(0.63 0.13 34); }
 @keyframes star-pulse {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50%      { opacity: 1;   transform: scale(1.18); }
+  0%, 100% { opacity: 0.72; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.1); }
 }
-.star-core { fill: oklch(0.85 0.02 85 / 0.9); pointer-events: none; }
-.star-halo { fill: var(--gold); filter: blur(10px); opacity: 0; transition: opacity 0.5s var(--ease); pointer-events: none; }
-.star-halo.opened { opacity: 0.8; }
-/* 星官连线：同一经脉的星宿相连，细而淡，像古星图 */
+/* 柔晕常驻：星点自带微光，不是贴上去的亮片 */
+.star-halo {
+  fill: oklch(0.58 0.02 258); filter: blur(7px); opacity: 0.30;
+  transition: opacity 0.5s var(--ease), fill 0.5s var(--ease); pointer-events: none;
+}
+.star-halo.actionable { fill: oklch(0.55 0.115 34); opacity: 0.45; }
+.star-halo.opened { fill: oklch(0.72 0.08 76); opacity: 0.65; }
+/* 星官连线：细淡如淡墨勾线 */
 .const-line {
-  fill: none; stroke: oklch(0.55 0.03 262 / 0.4); stroke-width: 1;
-  transition: stroke 0.6s var(--ease);
+  fill: none; stroke: oklch(0.50 0.015 258 / 0.32); stroke-width: 0.8;
+  stroke-linecap: round; transition: stroke 0.6s var(--ease);
 }
-.m-grp.through .const-line { stroke: oklch(0.76 0.13 78 / 0.75); }
+.m-grp.through .const-line { stroke: oklch(0.70 0.07 76 / 0.55); }
 .acu-name {
   font-family: "Songti SC", "STSong", "SimSun", serif;
   font-size: 13px; fill: var(--faint); pointer-events: none; letter-spacing: 0.12em;
 }
-.acu-name.opened { fill: var(--gold); }
-.acu-name.actionable { fill: oklch(0.78 0.10 40); }
+.acu-name.opened { fill: oklch(0.74 0.075 76); }
+.acu-name.actionable { fill: oklch(0.68 0.09 38); }
 .m-label {
   font-family: "Songti SC", "STSong", "SimSun", serif;
   font-size: 12px; fill: oklch(0.55 0.015 262); letter-spacing: 0.3em;
 }
 .m-grp.through .m-label { fill: var(--gold); }
 /* 贯通：不画弧线，给整条经脉的窍穴区一团柔光 */
-.m-glow { fill: var(--gold); filter: blur(26px); opacity: 0; transition: opacity 0.8s var(--ease); pointer-events: none; }
+.m-glow { fill: oklch(0.66 0.07 74); filter: blur(26px); opacity: 0; transition: opacity 0.8s var(--ease); pointer-events: none; }
 .m-grp.through .m-glow { opacity: 0.22; }
 @keyframes star-pop { 0% { transform: scale(1); } 45% { transform: scale(1.7); } 100% { transform: scale(1); } }
 .star.just { animation: star-pop 0.6s var(--ease); }
@@ -358,11 +417,14 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
     </svg>
     <div class="inkbg"></div>
 
+    <div class="dantian-shade"></div>
+    <div class="dantian-bloom"></div>
     <div class="vessel" id="vessel" role="button" tabindex="0" aria-label="内视丹田">
       <div class="void-qi"><i></i><i></i><i></i></div>
       <div class="liquid">
-        <video id="vid" src="../art-explore/dantian-liquid-loop-v2.mp4" autoplay muted loop playsinline></video>
+        <video id="vid" src="../art-explore/dantian-ink-loop-graded.mp4" autoplay muted loop playsinline></video>
       </div>
+      <div class="wave" aria-hidden="true"><svg viewBox="0 0 2400 60" preserveAspectRatio="none"><path class="w1" d="M0 34 Q 75 12 150 34 T 300 34 T 450 34 T 600 34 T 750 34 T 900 34 T 1050 34 T 1200 34 T 1350 34 T 1500 34 T 1650 34 T 1800 34 T 1950 34 T 2100 34 T 2250 34 T 2400 34 L2400 60 L0 60 Z"/><path class="w2" d="M0 30 Q 100 46 200 30 T 400 30 T 600 30 T 800 30 T 1000 30 T 1200 30 T 1400 30 T 1600 30 T 1800 30 T 2000 30 T 2200 30 T 2400 30 L2400 60 L0 60 Z"/></svg></div>
       <div class="surface-line"></div>
       <div class="flash"></div>
     </div>
@@ -430,23 +492,23 @@ function R() { return REALMS[state.realm]; }
 function segCap() { return R().cost / R().zhoutian; }
 
 // ── 内视器物层（星图式）：月相串记周天，星宿记窍穴 ──
-/** 四芒星曜路径（内凹曲线，中心在 0,0） */
-function starPath(r) {
-  const k = r * 0.22;
-  return `M 0 ${-r} C ${k} ${-k}, ${k} ${-k}, ${r} 0 C ${k} ${k}, ${k} ${k}, 0 ${r} C ${-k} ${k}, ${-k} ${k}, ${-r} 0 C ${-k} ${-k}, ${-k} ${-k}, 0 ${-r} Z`;
-}
-/** 月相：phase 'new'|'half'|'full'，中心 (x,y) 半径 r。暗盘永远在，亮面叠其上 */
+/** 星等表：窍穴星点的半径梯度 */
+const MAG = [5.4, 4.0, 6.0, 4.6];
+/** 月相：phase 'new'|'half'|'full'，中心 (x,y) 半径 r。暗盘永远在，亮面叠其上。
+    注意 x/y/r 必须是 number——早期版本传入字符串导致 `y + r` 变成字符串拼接，半月路径损坏 */
 function moonShape(x, y, r, phase) {
-  const base = `<circle class="moon-base" cx="${x}" cy="${y}" r="${r}"/>`;
+  x = Number(x); y = Number(y); r = Number(r);
+  const f = (v) => v.toFixed(1);
+  const base = `<circle class="moon-base" cx="${f(x)}" cy="${f(y)}" r="${f(r)}"/>`;
   if (phase === 'new')
     return `<g data-role="moon" data-phase="new">${base}</g>`;
   if (phase === 'full')
     return `<g data-role="moon" data-phase="full">${base}
-      <circle class="moon-full-disc" cx="${x}" cy="${y}" r="${r}"/>
-      <circle class="moon-ring" cx="${x}" cy="${y}" r="${+r + 3}"/></g>`;
+      <circle class="moon-full-disc" cx="${f(x)}" cy="${f(y)}" r="${f(r)}"/>
+      <circle class="moon-ring" cx="${f(x)}" cy="${f(y)}" r="${f(r + 3)}"/></g>`;
   // 上弦：右半鎏金，明暗交界线可读
   return `<g data-role="moon" data-phase="half">${base}
-    <path class="moon-lit" d="M ${x} ${y - r} A ${r} ${r} 0 0 1 ${x} ${y + r} Z"/></g>`;
+    <path class="moon-lit" d="M ${f(x)} ${f(y - r)} A ${f(r)} ${f(r)} 0 0 1 ${f(x)} ${f(y + r)} Z"/></g>`;
 }
 // 星宿散布：角度/半径带确定性抖动，摆脱等距感（伪随机由索引驱动，可复现）
 const JIT_A = [4, -6, 2, -3], JIT_R = [0, 18, 7, 24];
@@ -474,11 +536,9 @@ function renderRing() {
       const r = R_V + 28 + JIT_R[ai % JIT_R.length];
       const p = polar(r, a), pl = polar(r + 25, a);
       pts.push(p);
-      grp += `<circle class="star-halo" data-m="${mi}" data-a="${ai}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8"/>
-        <g transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})">
-          <path class="star" data-m="${mi}" data-a="${ai}" d="${starPath(9)}" tabindex="0" role="button" aria-label="冲穴 ${name}"/>
-          <circle class="star-core" r="1.6"/>
-        </g>
+      const mag = MAG[ai % MAG.length];   // 星等：大小有差，摆脱整齐划一的贴片感
+      grp += `<circle class="star-halo" data-m="${mi}" data-a="${ai}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(mag * 2.4).toFixed(1)}"/>
+        <circle class="star" data-m="${mi}" data-a="${ai}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${mag}" tabindex="0" role="button" aria-label="冲穴 ${name}"/>
         <text class="acu-name" data-m="${mi}" data-a="${ai}" x="${pl.x.toFixed(1)}" y="${pl.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${name}</text>`;
     });
     // 星官连线：依次相连
@@ -500,7 +560,7 @@ function renderRing() {
 function paintMoons() {
   const row = $('moonRow'); if (!row) return;
   row.innerHTML = window._moonPos.map((p, i) => moonShape(
-    p.x.toFixed(1), p.y.toFixed(1), 7.5,
+    p.x, p.y, 7.5,
     i < state.paidSegs ? 'full' : i === state.paidSegs ? 'half' : 'new'
   )).join('');
 }
@@ -536,6 +596,7 @@ function paint() {
       d?.classList.toggle('opened', opened);
       d?.classList.toggle('actionable', !opened && canAct);
       h?.classList.toggle('opened', opened);
+      h?.classList.toggle('actionable', !opened && canAct);
       t?.classList.toggle('opened', opened);
       t?.classList.toggle('actionable', !opened && canAct);
     });

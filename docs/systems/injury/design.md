@@ -154,6 +154,6 @@
 | 系统 | 接口关系 |
 |---|---|
 | 战斗引擎（`combat.ts` / `formulas.md`） | 受伤在战斗前叠加到 Build，不改 `fight()` 内部与金标准 sim |
-| 挂机产出（`formulas.md` idleNeiliPerSec） | 内伤降低挂机内力产出（§3） |
+| 挂机产出（`formulas.md` idleNeiliPerSec） | 三类伤均降低挂机内力产出，按伤型加权（§3） |
 | 转世系统（`reincarnation/design.md`） | 重度折寿、致死线触发强制转世（§5，对上其 §9 接口行） |
 | 银两经济 | 资源疗伤为银两添新消耗出口（§2.2） |

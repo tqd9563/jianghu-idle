@@ -33,6 +33,12 @@ SEV_LETHAL = 4
 # 各档属性压制幅度（design.md §3：外伤压防/血、内伤压攻/挂机、毒伤压命中闪避）
 PRESS = {1: 0.10, 2: 0.25, 3: 0.45}
 
+# 各伤型对「挂机内力产出」的压制权重（乘在 PRESS 上）。
+# 武侠逻辑：修炼靠经脉运行气血——内伤伤在根子上最狠，毒伤须分心镇压居中，外伤只是痛得难以入定。
+# 内伤保持招牌地位但不致命（裁决：75%，原议 100% 过狠）。
+IDLE_WEIGHT = {"内伤": 0.75, "毒伤": 0.45, "外伤": 0.25}
+IDLE_FLOOR = 0.40   # 多伤并存时挂机产出地板，避免修炼归零
+
 # 各档自愈时长（游戏内分钟，降一档所需）——轻快重慢，差距拉明显（§2.3）
 HEAL_MIN = {1: 3.0, 2: 8.0, 3: 20.0}
 HEAL_REALM_BONUS = 0.05   # 境界次要修正：每境界自愈快 5%
@@ -113,9 +119,12 @@ class Injuries:
         return total
 
     def idle_penalty(self) -> float:
-        """内伤压挂机内力产出（§3）：返回产出乘数。"""
-        s = self.sev["内伤"]
-        return 1.0 - PRESS.get(s, 0.0)
+        """三类伤各按权重压挂机内力产出（§3）：乘法叠加，设地板。"""
+        mult = 1.0
+        for k, s in self.sev.items():
+            if s:
+                mult *= (1.0 - PRESS[s] * IDLE_WEIGHT[k])
+        return max(IDLE_FLOOR, mult)
 
     def label(self) -> str:
         parts = [f"{k}·{SEV_NAME[v]}" for k, v in self.sev.items() if v > 0]
@@ -158,6 +167,8 @@ def run_life(route="huashan", profile="prudent", verbose=False):
     realm, lv, nodes, idx = 1, 0, 0, 0
     yueli = 0.0
     retries = 0
+    heal_minutes = 0.0      # 累计闭关养伤时长（V9 时间税）
+    fought_hurt = 0         # 带伤出战次数（权衡画像的核心指标）
     log_lines = []
 
     def elapse(dt_sec):
@@ -176,6 +187,14 @@ def run_life(route="huashan", profile="prudent", verbose=False):
             elapse(chunk / rate)
             guard += 1
 
+    def rebuild():
+        if realm >= 2:
+            return m.make_build(route, realm, lv, nodes)
+        return dict(**m.REALMS[1], crit=m.BASE_CRIT, cd=m.BASE_CD, shield_pct=0, thorns=0,
+                    poison=dict(init=0, per_hit=0, coef=0, cap=0, burst=0),
+                    sq_need=99, burst_mult=0, lowhp_dr=0, plain_mult=1.0,
+                    first_crit=False, route="none")
+
     def note(msg):
         log_lines.append(f"[{t/60:6.1f}min] {msg}")
         if verbose:
@@ -185,15 +204,30 @@ def run_life(route="huashan", profile="prudent", verbose=False):
         while nodes < 3 and yueli >= m.MECH_NODE_COST[nodes]:
             yueli -= m.MECH_NODE_COST[nodes]; nodes += 1
 
-        base = m.make_build(route, realm, lv, nodes) if realm >= 2 else \
-            dict(**m.REALMS[1], crit=m.BASE_CRIT, cd=m.BASE_CD, shield_pct=0, thorns=0,
-                 poison=dict(init=0, per_hit=0, coef=0, cap=0, burst=0),
-                 sq_need=99, burst_mult=0, lowhp_dr=0, plain_mult=1.0,
-                 first_crit=False, route="none")
+        base = rebuild()
         mp, i, enemy, reward = stages[idx]
         is_boss = (mp, i) in BOSS_STAGES
         kind = "boss" if is_boss else ("elite" if enemy["tags"] else "normal")
         is_key = kind in ("boss", "elite")
+
+        # ---- 开打前：带伤打，还是先养伤？（权衡发生在这里）----
+        if inj.any_hurt() and is_key:
+            if profile == "prudent":
+                need = inj.heal_time_needed(realm)
+                note(f"闭关养伤 {need:.1f} 分钟（{inj.label()}）")
+                elapse(need * 60); heal_minutes += need
+                base = rebuild()
+            elif profile == "pragmatic":
+                # 理性权衡：带现有伤能赢就直接打，省下养伤时间；赢不了才养
+                trial_win, _, _ = m.fight(injured_build(base, inj), enemy, 0.0)
+                if trial_win:
+                    fought_hurt += 1
+                    note(f"带伤出战 {mp}-{i}（{inj.label()}）")
+                else:
+                    need = inj.heal_time_needed(realm)
+                    note(f"带伤必败，闭关养伤 {need:.1f} 分钟（{inj.label()}）")
+                    elapse(need * 60); heal_minutes += need
+                    base = rebuild()
 
         win, rounds, hp_left = m.fight(injured_build(base, inj), enemy, 0.0)
         elapse(m.BATTLE_OVERHEAD_S)
@@ -222,12 +256,6 @@ def run_life(route="huashan", profile="prudent", verbose=False):
             retries += 1
             continue
 
-        # 稳健：先养伤到痊愈，再谈升级
-        if profile == "prudent" and inj.any_hurt():
-            need = inj.heal_time_needed(realm)
-            note(f"闭关养伤 {need:.1f} 分钟（{inj.label()}）")
-            elapse(need * 60)
-
         lv_cap = min(10, realm * m.SKILL_LV_CAP_PER_REALM)
         opts = []
         if lv < lv_cap: opts.append(("skill", m.skill_cost(lv + 1)))
@@ -253,6 +281,7 @@ def run_life(route="huashan", profile="prudent", verbose=False):
         profile=profile, minutes=t / 60, stages_cleared=idx,
         dead=inj.dead, lifespan_lost=inj.lifespan_lost,
         inflicted=inj.inflicted, heavy_events=inj.heavy_events,
+        heal_minutes=heal_minutes, fought_hurt=fought_hurt,
         final=inj.label(), log=log_lines,
     )
 

@@ -21,6 +21,7 @@
   --bar-track: oklch(0.28 0.018 262);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
+:root{--wave-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 24' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 11 Q 15 3 30 11 T 60 11 T 90 11 T 120 11 T 150 11 T 180 11 T 210 11 T 240 11 L240 24 L0 24 Z'/%3E%3C/svg%3E");}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   background: var(--bg); color: var(--ink);
@@ -153,7 +154,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
   top: 50%; transform: translate(-50%, -50%) scale(1); cursor: default;
   mix-blend-mode: normal;
   -webkit-mask-image: none; mask-image: none;
-  background: radial-gradient(closest-side, oklch(0.075 0.01 262 / 0.88), oklch(0.095 0.011 262 / 0.92) 78%, oklch(0.17 0.015 262 / 0.95) 96%);
+  background: radial-gradient(closest-side, oklch(0.175 0.020 256 / 0.92) 12%, oklch(0.135 0.016 258 / 0.94) 58%, oklch(0.10 0.012 260 / 0.96) 96%);
   box-shadow:
     inset 0 0 40px oklch(0.05 0.01 262 / 0.7),
     0 0 0 1px oklch(0.42 0.02 262 / 0.45),
@@ -161,10 +162,11 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 /* 外视不做液位裁切：小尺寸下那条水平切边会暴露成「矩形」，破坏融入感。
    外视的进度表达交给辉光强弱（--vessel-glow），液位只在内视读 */
-.scene:not(.inner) .liquid { clip-path: none; }
-.scene:not(.inner) .liquid video { transform: scale(1.5); }
-.scene:not(.inner) .wave,
-.scene:not(.inner) .surface-line,
+.scene:not(.inner) .liquid {
+  top: 0; animation: none;
+  -webkit-mask-image: none; mask-image: none;
+}
+.scene:not(.inner) .liquid-anchor video { transform: scale(1.5); }
 .scene:not(.inner) .void-qi { opacity: 0; }
 
 /* 外视 hover：气光微涨，暗示可点 */
@@ -177,7 +179,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 .void-qi i {
   position: absolute; border-radius: 50%; display: block;
-  background: radial-gradient(closest-side, oklch(0.50 0.02 250 / 0.22), transparent 72%);
+  background: radial-gradient(closest-side, oklch(0.58 0.028 248 / 0.30), transparent 74%);
   filter: blur(7px); mix-blend-mode: screen;
 }
 .void-qi i:nth-child(1) { width: 62%; height: 40%; left: 4%;  top: 16%; animation: qi-drift-a 11s ease-in-out infinite; }
@@ -193,36 +195,39 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 .paused .void-qi i { animation-play-state: paused; }
 
+/* 液体：盒子本身就是液面以下的区域（top 随修为走），顶边用波形遮罩裁出。
+   关键——波浪不是盖在液体上的色带，而是液体自己的边缘，故颜色与墨色素材天然一致、
+   也不会留下裁切的水平直线。 */
 .liquid {
-  position: absolute; inset: 0;
-  clip-path: inset(var(--empty, 60%) 0 0 0);
-  transition: clip-path 0.35s var(--ease);
-  /* 不挂任何运行时 filter：调色已用 ffmpeg 烘进素材。
-     给 <video> 或其祖先套 CSS filter 会打断合成快路径，实测产生矩形假影 */
+  position: absolute; left: 0; right: 0; bottom: 0;
+  top: var(--empty, 60%);
+  overflow: hidden;
+  transition: top 0.35s var(--ease);
+  /* 第一层=波形（固定 200px 一个循环，便于无缝平移）；第二层=波谷以下全实 */
+  -webkit-mask-image: var(--wave-mask), linear-gradient(#000, #000);
+          mask-image: var(--wave-mask), linear-gradient(#000, #000);
+  -webkit-mask-size: 200px 22px, 100% calc(100% - 22px);
+          mask-size: 200px 22px, 100% calc(100% - 22px);
+  -webkit-mask-position: 0 0, 0 22px;
+          mask-position: 0 0, 0 22px;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+          mask-repeat: repeat-x, no-repeat;
+  animation: wave-drift 9s linear infinite;
 }
-.liquid video {
+@keyframes wave-drift {
+  to {
+    -webkit-mask-position: -200px 0, 0 22px;
+            mask-position: -200px 0, 0 22px;
+  }
+}
+.paused .liquid { animation-play-state: paused; }
+/* 视频锚在器皿底部（与器皿同宽同高），不随液面盒子伸缩，避免液位变化时画面跳动 */
+.liquid-anchor { position: absolute; left: 0; bottom: 0; width: 100%; aspect-ratio: 1; }
+.liquid-anchor video {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; display: block;
   transform: translateY(calc(var(--empty, 60%) / 2)) scale(1.5);
   transition: transform 0.35s var(--ease);
-}
-/* 液面波：两道错速正弦，摆脱一刀切的直线液面 */
-.wave {
-  position: absolute; left: 0; width: 100%; height: 5%;
-  top: calc(var(--empty, 60%) - 2.5%);
-  overflow: hidden; pointer-events: none;
-  transition: top 0.35s var(--ease);
-}
-.wave svg { position: absolute; left: 0; top: 0; width: 200%; height: 100%; }
-.wave .w1 { fill: oklch(0.58 0.025 250 / 0.8); animation: wave-move 7s linear infinite; }
-.wave .w2 { fill: oklch(0.44 0.02 250 / 0.55); animation: wave-move 11s linear infinite reverse; }
-@keyframes wave-move { to { transform: translateX(-50%); } }
-.paused .wave .w1, .paused .wave .w2 { animation-play-state: paused; }
-.surface-line {
-  position: absolute; left: 5%; right: 5%; top: var(--empty, 60%);
-  height: 1px; border-radius: 1px;
-  background: linear-gradient(90deg, transparent, oklch(0.72 0.03 250 / 0.6), transparent);
-  transition: top 0.35s var(--ease); pointer-events: none;
 }
 .vessel .flash {
   position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
@@ -231,7 +236,7 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 }
 .vessel.seal .flash { animation: seal-flash 0.9s var(--ease); }
 @keyframes seal-flash { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
-.vessel.seal .liquid { transition: clip-path 0.8s var(--ease); }
+.vessel.seal .liquid { transition: top 0.8s var(--ease); }
 
 .vessel-read {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -418,10 +423,10 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
     <div class="vessel" id="vessel" role="button" tabindex="0" aria-label="内视丹田">
       <div class="void-qi"><i></i><i></i><i></i></div>
       <div class="liquid">
-        <video id="vid" src="../art-explore/dantian-ink-loop-graded.mp4" autoplay muted loop playsinline></video>
+        <div class="liquid-anchor">
+          <video id="vid" src="../art-explore/dantian-ink-loop-graded.mp4" autoplay muted loop playsinline></video>
+        </div>
       </div>
-      <div class="wave" aria-hidden="true"><svg viewBox="0 0 2400 60" preserveAspectRatio="none"><path class="w1" d="M0 34 Q 75 12 150 34 T 300 34 T 450 34 T 600 34 T 750 34 T 900 34 T 1050 34 T 1200 34 T 1350 34 T 1500 34 T 1650 34 T 1800 34 T 1950 34 T 2100 34 T 2250 34 T 2400 34 L2400 60 L0 60 Z"/><path class="w2" d="M0 30 Q 100 46 200 30 T 400 30 T 600 30 T 800 30 T 1000 30 T 1200 30 T 1400 30 T 1600 30 T 1800 30 T 2000 30 T 2200 30 T 2400 30 L2400 60 L0 60 Z"/></svg></div>
-      <div class="surface-line"></div>
       <div class="flash"></div>
     </div>
     <div class="vessel-read">

@@ -31,7 +31,7 @@
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
 | `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx, zhoutianMandalaModel.ts |
-| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定） | ZhoutianMandala.tsx, zhoutianMandalaModel.ts |
+| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定 / 修炼面板呈现方案） | ZhoutianMandala.tsx, zhoutianMandalaModel.ts |
 | `systems/zhoutian/sim.py` | 周天 sim | acupoints.test.ts |
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 → 境界成本/宿慧/声望经济，唯一数值源） | design.md §3、economy.md v2 由其生成 |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |

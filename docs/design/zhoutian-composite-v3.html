@@ -17,7 +17,8 @@
   --gold-hi: oklch(0.85 0.15 78);
   --gold-ink: oklch(0.18 0.03 78);
   --cyan: oklch(0.74 0.10 215);
-  --cinnabar: oklch(0.62 0.19 32);
+  --cinnabar: oklch(0.68 0.09 38);   /* 朱砂：窍穴「可冲」态 */
+  --ink-gold: oklch(0.74 0.075 76);  /* 墨金：窍穴/周天「已成」态 */
   --bar-track: oklch(0.28 0.018 262);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -293,8 +294,8 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
   font-family: "Songti SC", "STSong", "SimSun", serif;
   font-size: 13px; fill: var(--faint); pointer-events: none; letter-spacing: 0.12em;
 }
-.acu-name.opened { fill: oklch(0.74 0.075 76); }
-.acu-name.actionable { fill: oklch(0.68 0.09 38); }
+.acu-name.opened { fill: var(--ink-gold); }
+.acu-name.actionable { fill: var(--cinnabar); }
 .m-label {
   font-family: "Songti SC", "STSong", "SimSun", serif;
   font-size: 12px; fill: oklch(0.55 0.015 262); letter-spacing: 0.3em;
@@ -321,8 +322,8 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 .legend .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .legend .sw.bead-on  { background: oklch(0.82 0.02 250); box-shadow: 0 0 5px oklch(0.82 0.02 250 / 0.6); }
 .legend .sw.bead-off { background: oklch(0.17 0.014 262); border: 1px solid oklch(0.42 0.025 262 / 0.6); }
-.legend .sw.acu-red  { background: oklch(0.56 0.10 42); }
-.legend .sw.acu-gold { background: oklch(0.74 0.055 78); box-shadow: 0 0 5px oklch(0.74 0.055 78 / 0.6); }
+.legend .sw.acu-red  { background: var(--cinnabar); }
+.legend .sw.acu-gold { background: var(--ink-gold); box-shadow: 0 0 5px oklch(0.74 0.075 76 / 0.6); }
 .legend .sw.acu-ink  { background: oklch(0.40 0.012 258); }
 
 /* 收功（返回外视） */

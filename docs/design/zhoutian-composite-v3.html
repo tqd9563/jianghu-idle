@@ -476,10 +476,10 @@ input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
 
 <script>
 const REALMS = {
-  2: { name:'初窥门径', cost:2800,  zhoutian:3, rate:9,  req:2, meridians:[{name:'手太阴',acus:['中府','太渊']},{name:'足阳明',acus:['气冲','足三里']}] },
-  3: { name:'小有所成', cost:5000,  zhoutian:4, rate:18, req:2, meridians:[{name:'手少阳',acus:['关冲','阳池','天井']},{name:'足太阳',acus:['睛明','昆仑']}] },
-  4: { name:'炉火纯青', cost:10000, zhoutian:6, rate:38, req:3, meridians:[{name:'任脉',acus:['气海','关元','膻中']},{name:'督脉',acus:['命门','灵台','百会']}] },
-  5: { name:'一流高手', cost:21000, zhoutian:8, rate:82, req:4, meridians:[{name:'冲脉',acus:['幽门','肓俞','横骨','大赫']},{name:'带脉',acus:['带脉','五枢','维道','章门']}] },
+  2: { name:'初窥门径', cost:2800,  zhoutian:3, rate:9,  req:2, meridians:[{name:'手阳明',acus:['曲池','合谷']},{name:'手少阴',acus:['少海','神门']}] },
+  3: { name:'小有所成', cost:5000,  zhoutian:4, rate:18, req:2, meridians:[{name:'足阳明',acus:['伏兔','足三里','丰隆']},{name:'足太阴',acus:['血海','三阴交']}] },
+  4: { name:'炉火纯青', cost:10000, zhoutian:6, rate:38, req:3, meridians:[{name:'任脉',acus:['关元','气海','膻中']},{name:'足少阴',acus:['涌泉','太溪','复溜']}] },
+  5: { name:'一流高手', cost:21000, zhoutian:8, rate:82, req:4, meridians:[{name:'督脉',acus:['命门','大椎','百会']},{name:'冲脉',acus:['横骨','大赫','幽门']},{name:'带脉',acus:['五枢','维道']}] },
 };
 const BASE_P = 0.85, FAIL_PP = 0.10, FORCE_K = 3, QISHI_CAP = 0.15, QISHI_CONSUME = 0.7, QISHI_FULL = 100;
 
@@ -531,7 +531,8 @@ function renderRing() {
   const tl = polar(R_V + 44, 0);
   s += `<g id="moonRow"></g><text class="m-label" x="${tl.x.toFixed(1)}" y="${tl.y.toFixed(1)}" text-anchor="middle">周 天</text>`;
   // 星宿：左右两簇星官
-  const zones = [[194, 258], [102, 166]];
+  // 三个星官扇区：左下 / 右下 / 正下。境界 5 有三条经脉，两扇区不够用。
+  const zones = [[196, 250], [110, 164], [166, 194]];
   Rm.meridians.forEach((m, mi) => {
     const [a0, a1] = zones[mi];
     let grp = '';
@@ -552,7 +553,10 @@ function renderRing() {
     const line = pts.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
     const cx = pts.reduce((s2, p) => s2 + p.x, 0) / pts.length;
     const cy = pts.reduce((s2, p) => s2 + p.y, 0) / pts.length;
-    const lp = polar(R_V + 78, (a0 + a1) / 2);
+    // 经脉名必须让开窍穴名：窍穴名最远在 R_V+28+max(JIT_R)+25 ≈ R_V+77，
+    // 与原先的 R_V+78 几乎同半径，底部扇区会叠字。底部有纵向余量，单独外推。
+    const mid = (a0 + a1) / 2;
+    const lp = polar(mid > 160 && mid < 200 ? R_V + 108 : R_V + 78, mid);
     s += `<g class="m-grp" data-m="${mi}">
       <ellipse class="m-glow" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="54" ry="32"/>
       <path class="const-line" d="${line}"/>

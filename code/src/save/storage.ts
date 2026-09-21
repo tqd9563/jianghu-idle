@@ -9,8 +9,29 @@ const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
 const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
 
-/** 存档版本号（v1 = MVP-0/1/2 无周天系统；v2 = 主题版本加窍穴/经脉/气势字段） */
-export const SAVE_VERSION = 2;
+/**
+ * 存档版本号。
+ * v1 = MVP-0/1/2 无周天系统；v2 = 主题版本加窍穴/经脉/气势字段；
+ * v3 = 窍穴 id 由位置编码（r2-a11）改为穴位拼音（quchi），与境界/脉序解耦。
+ */
+export const SAVE_VERSION = 3;
+
+/**
+ * v2 → v3 窍穴 id 映射：旧 id 编码了「境界-脉序-穴序」，一旦调整窍穴所属境界
+ * 就得改 id、就得迁移存档；新 id 取穴位本身，位置怎么挪都不用再动存档。
+ * 本表是一次性的历史包袱，不随后续内容调整增长。
+ */
+const ACUPOINT_ID_V2_TO_V3: Readonly<Record<string, string>> = {
+  'r2-a11': 'quchi',    'r2-a12': 'hegu',
+  'r2-a21': 'shaohai',  'r2-a22': 'shenmen',
+  'r3-a11': 'futu',     'r3-a12': 'zusanli',  'r3-a13': 'fenglong',
+  'r3-a21': 'xuehai',   'r3-a22': 'sanyinjiao',
+  'r4-a11': 'guanyuan', 'r4-a12': 'qihai',    'r4-a13': 'danzhong',
+  'r4-a21': 'yongquan', 'r4-a22': 'taixi',    'r4-a23': 'fuliu',
+  'r5-a11': 'mingmen',  'r5-a12': 'dazhui',   'r5-a13': 'baihui',
+  'r5-a21': 'henggu',   'r5-a22': 'dahe',     'r5-a23': 'youmen',
+  'r5-a31': 'wushu',    'r5-a32': 'weidao',
+};
 
 export interface LiveTestWindowRecord {
   readonly windowId: string;
@@ -56,13 +77,37 @@ export function loadGameWithVersion<T>(): { state: T; version: number } | null {
 }
 
 /**
- * 存档迁移框架：从 fromVer 迁移到 toVer。
- * 本版 v1→v2 只新增字段（由 gameStore 的 {...FRESH, ...saved} merge 处理），
- * storage.ts 不做具体迁移逻辑，只提供版本号供 gameStore 决策。
- * 未来若需字段重命名或删除，在此扩展。
+ * 存档迁移：从 fromVer 迁移到 toVer。
+ * v1→v2 只新增字段（由 gameStore 的 {...FRESH, ...saved} merge 处理），此处无操作。
+ * v2→v3 重写窍穴 id（见 ACUPOINT_ID_V2_TO_V3）：acupointProgress 的键与
+ * acupointLog 的元素都按 id 存，两处都要换；映射不到的键原样保留，不静默丢弃玩家进度。
  */
-export function migrate<T>(state: T, _fromVer: number, _toVer: number): T {
-  return state;
+export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
+  let out = state;
+  if (fromVer < 3) out = migrateAcupointIdsV2ToV3(out);
+  return out;
+}
+
+function migrateAcupointIdsV2ToV3<T>(state: T): T {
+  const s = state as {
+    acupointProgress?: Record<string, unknown>;
+    acupointLog?: string[];
+  };
+  if (!s || typeof s !== 'object') return state;
+
+  const progress = s.acupointProgress;
+  const nextProgress = progress
+    ? Object.fromEntries(
+        Object.entries(progress).map(([id, v]) => [ACUPOINT_ID_V2_TO_V3[id] ?? id, v])
+      )
+    : progress;
+
+  const log = s.acupointLog;
+  const nextLog = Array.isArray(log)
+    ? [...new Set(log.map(id => ACUPOINT_ID_V2_TO_V3[id] ?? id))]
+    : log;
+
+  return { ...s, acupointProgress: nextProgress, acupointLog: nextLog } as T;
 }
 
 export function resetGame(): void {

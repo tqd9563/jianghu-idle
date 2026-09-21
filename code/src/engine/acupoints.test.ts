@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   REALM_ACUPOINTS, currentSuccessRate, attemptAcupoint,
   breakthroughReady, totalAcupointBonus, acupointBonus, meridianBonus,
-  isMeridianComplete, consumeQishi, qishiToBonus,
+  isMeridianComplete, consumeQishi, openedInRealm, qishiToBonus,
   BASE_P, FAIL_BONUS_PP, QISHI_CAP_PP,
   type AcupointState,
 } from './acupoints';
@@ -133,5 +133,54 @@ describe('窍穴池数据完整性（spec §3）', () => {
     expect(REALM_ACUPOINTS[1]).toBeUndefined();
     expect(REALM_ACUPOINTS[6]).toBeUndefined();
     expect(REALM_ACUPOINTS[7]).toBeUndefined();
+  });
+});
+
+describe('openedInRealm · 突破 M 条件按境界计（design.md §4，对齐 sim.py 建模）', () => {
+  it('只数本境界的窍穴，不跨境界累计', () => {
+    const progress: Record<string, AcupointState> = {};
+    // 境界 2 全通（4 穴）
+    for (const a of REALM_ACUPOINTS[2].acupoints) {
+      progress[a.id] = { failCount: 0, opened: true };
+    }
+    expect(openedInRealm(2, progress)).toBe(4);
+    // 境界 3 一个没通 —— 旧的全局累计口径会误判为 4，导致 M 形同虚设
+    expect(openedInRealm(3, progress)).toBe(0);
+  });
+
+  it('未冲/冲失败的窍穴不计入', () => {
+    const [a1, a2] = REALM_ACUPOINTS[3].acupoints;
+    const progress: Record<string, AcupointState> = {
+      [a1.id]: { failCount: 2, opened: false },
+      [a2.id]: { failCount: 1, opened: true },
+    };
+    expect(openedInRealm(3, progress)).toBe(1);
+  });
+
+  it('未接入的境界返回 0，不抛错', () => {
+    expect(openedInRealm(1, {})).toBe(0);
+    expect(openedInRealm(6, {})).toBe(0);
+  });
+
+  it('窍穴 id 与位置解耦：id 不含境界/脉序编码', () => {
+    for (const realm of [2, 3, 4, 5]) {
+      for (const a of REALM_ACUPOINTS[realm].acupoints) {
+        expect(a.id).not.toMatch(/^r\d+-[am]\d+$/);
+      }
+    }
+  });
+
+  it('经脉的 acupointIds 与窍穴的 meridianId 互相自洽', () => {
+    for (const realm of [2, 3, 4, 5]) {
+      const { acupoints, meridians } = REALM_ACUPOINTS[realm];
+      for (const m of meridians) {
+        for (const id of m.acupointIds) {
+          expect(acupoints.find(a => a.id === id)?.meridianId).toBe(m.id);
+        }
+      }
+      // 每个窍穴都被恰好一条经脉收录
+      expect(meridians.flatMap(m => m.acupointIds).sort())
+        .toEqual(acupoints.map(a => a.id).sort());
+    }
   });
 });

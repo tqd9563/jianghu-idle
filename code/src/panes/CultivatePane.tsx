@@ -7,7 +7,8 @@ import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/ga
 import {
   REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete, openedInRealm,
 } from '../engine/acupoints';
-import { QishiBar, ZhoutianMandala } from '../components/ZhoutianMandala';
+import { QishiBar } from '../components/ZhoutianMandala';
+import { CultivationScene } from '../components/CultivationScene';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
@@ -54,7 +55,7 @@ export function CultivatePane() {
                   {breakCost! < nextRealm.breakthroughCost! && <span className="perm"> · 快速入门 −30%</span>}
                 </span>
               </div>
-              <ZhoutianMandala />
+              <CultivationScene />
               {/* 气势条独立成条（spec §1 第三层语义：与充能进度语义分离） */}
               <QishiBar />
               {acupointData && (

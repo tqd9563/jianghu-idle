@@ -18,3 +18,14 @@
 
 - `systems/zhoutian/design.md` v3.1：§3.2 补真实经络表与 id 解耦说明、§4 明确「本境界已通窍穴数 ≥ M」；同时记录一处文档-代码漂移——v3.0 裁决的「境界 1 教学窍穴池」从未落到代码（`content.ts` 仍为 `null`），接入涉及数值须先重跑 `pacing_sim.py`，挂账待办。
 - `rules/copy/zhoutian.md`：`{窍穴名}` 的说明由「占位名称」改为真实穴位名并指向 design.md §3.2。
+
+### 新增（修炼面板落地）
+
+- **修炼面板替换周天年轮内圈**：新增 `CultivationScene` 组件与 `cultivationSceneModel` 纯视图模型，`CultivatePane` 由 `ZhoutianMandala` 切换为新面板。实现基准是获批原型 `docs/design/zhoutian-composite-v3.html`，呈现规格见 `systems/zhoutian/spec.md` §4。外视为人影全景（丹田处一团透出衣袍的气光，强弱随进度），点丹田进入内视——墨渊星空背景 + 液体器皿 + 星图器物层（月相串记周天、星曜记窍穴、星官连线记经脉），「收功」返回。
+- **几何与状态全部出自纯函数模型**：`buildSceneModel()` 对齐既有 `zhoutianMandalaModel` 的架构，组件只画不算；配 14 项单测覆盖月相三态推进、液面单调性与呼吸空间、星曜三态、经脉贯通判定、境界 5 三扇区不重叠、按境界计数、罡气与气流的氛围绑定。
+- **美术素材进构建**：`code/public/zhoutian/`（人影底图、墨渊背景、月轮与星曜精灵、液体循环视频、视频 poster），合计 1.2MB。此前 `src/assets/` 为空目录、`public/` 只有 favicon，本次是项目首次引入位图资产。
+- **语义色进 token**：`--cinnabar`（朱砂，窍穴可冲）与 `--ink-gold`（墨金，已成）写入 `tokens.css`，与 `DESIGN.md` frontmatter 登记值一致。
+
+### 修复（修炼面板落地）
+
+- **reduced-motion 对 `<video>` 无效**：`index.css` 的全局降级只把 animation/transition 压到 0.01ms，视频会照播。组件内显式 `pause()` 并回落到 poster 静帧，另补 CSS 关闭液面波与星曜脉动。Playwright 实测：`no-preference` 下 `paused=false`，`reduce` 下 `paused=true`。

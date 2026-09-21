@@ -11,7 +11,7 @@ import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyD
 import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
 import {
   REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
-  consumeQishi, qishiToBonus,
+  consumeQishi, openedInRealm, qishiToBonus,
   type AcupointState,
 } from '../engine/acupoints';
 import {
@@ -32,7 +32,8 @@ import { PAGE_SOURCE_TABLE, TRIAL_TABLE, type BookId, type TrialId } from '../en
 import { MVP2_ELITE_CHALLENGE_ENEMIES, MVP2_ELITE_CHALLENGE_REWARDS, type Mvp2EliteChallengeEnemy } from '../engine/mvp2Content';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
-  endLiveTestWindow, getDebugOfflineCap, loadGame, loadLiveTestWindow, loadSavedAt,
+  endLiveTestWindow, getDebugOfflineCap, loadGameWithVersion, loadLiveTestWindow, loadSavedAt,
+  migrate, SAVE_VERSION,
   resetGame, saveGame, startLiveTestWindow, type LiveTestWindowRecord,
 } from '../save/storage';
 import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
@@ -388,7 +389,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   init: () => {
     if (get().started) return;
-    const saved = loadGame<PersistedState>();
+    // 按存档版本迁移后再 merge（v2→v3 窍穴 id 重写）。此前直接 loadGame()，
+    // migrate() 是从未被调用的死代码。
+    const loaded = loadGameWithVersion<PersistedState>();
+    const saved = loaded ? migrate(loaded.state, loaded.version, SAVE_VERSION) : null;
     const savedAt = loadSavedAt();
     const now = Date.now();
     lastTick = now;
@@ -571,7 +575,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     // 双条件校验（spec §6）：丹田充满 且 已通窍穴数 ≥ M
     const requiredAcupoints = REALMS[s.realm - 1].requiredAcupoints;
     if (requiredAcupoints !== null) {
-      const openedCount = Object.values(s.acupointProgress ?? {}).filter(a => a.opened).length;
+      // M 条件按境界计，不跨境界累计——sim.py 的 P(≥M) 验算即按「每境界重建 pool」
+      // 建模；此前用全局累计，导致境界 3 起 M 形同虚设（进境界即已达标）。
+      const openedCount = openedInRealm(s.realm, s.acupointProgress ?? {});
       if (!breakthroughReady(s.dantian, cost, openedCount, requiredAcupoints)) return;
     }
     const realmTo = s.realm + 1;

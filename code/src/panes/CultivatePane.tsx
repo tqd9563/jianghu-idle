@@ -5,9 +5,10 @@ import { CHARGE_SEGMENTS } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
 import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/gameStore';
 import {
-  REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete,
+  REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete, openedInRealm,
 } from '../engine/acupoints';
-import { QishiBar, ZhoutianMandala } from '../components/ZhoutianMandala';
+import { QishiBar } from '../components/ZhoutianMandala';
+import { CultivationScene } from '../components/CultivationScene';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
@@ -25,18 +26,21 @@ export function CultivatePane() {
       .filter(([, a]) => a.opened)
       .map(([id]) => id)
   );
-  const openedCount = openedIds.size;
+  // 两套口径不可混用：加成按全局累计（窍穴加成保留至归隐，design.md §5 D1），
+  // 账目与突破条件按本境界（design.md §4，sim.py 亦按境界建模）。
+  const openedTotal = openedIds.size;
+  const openedThisRealm = openedInRealm(s.realm, s.acupointProgress ?? {});
   const meridianCount = acupointData
     ? acupointData.meridians.filter(m => isMeridianComplete(m, openedIds)).length
     : 0;
-  const acupointPct = totalAcupointBonus(s.realm, openedCount, meridianCount);
+  const acupointPct = totalAcupointBonus(s.realm, openedTotal, meridianCount);
   const zhoutianN = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel, 0, acupointPct);
   const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel, 0, acupointPct) : null;
   const routeDef = s.route ? ROUTES[s.route] : null;
 
   return (
-    <div className="pane-wrap">
+    <div className="pane-wrap pane-grid cultivate-grid">
       <section className="panel">
         {nextRealm ? (
           <>
@@ -51,12 +55,12 @@ export function CultivatePane() {
                   {breakCost! < nextRealm.breakthroughCost! && <span className="perm"> · 快速入门 −30%</span>}
                 </span>
               </div>
-              <ZhoutianMandala />
+              <CultivationScene />
               {/* 气势条独立成条（spec §1 第三层语义：与充能进度语义分离） */}
               <QishiBar />
               {acupointData && (
                 <div className="acu-ledger">
-                  <span>已冲开 <b>{openedCount}/{REALMS[s.realm - 1].acupointPoolSize}</b> 穴</span>
+                  <span>已冲开 <b>{openedThisRealm}/{REALMS[s.realm - 1].acupointPoolSize}</b> 穴</span>
                   <span>贯通 <b>{meridianCount}/{acupointData.meridians.length}</b> 脉</span>
                   <span>修炼加成 <b className="gold">+{pct(acupointPct)}</b></span>
                 </div>
@@ -155,7 +159,8 @@ function BreakthroughButton() {
   const dantianReady = cost !== null && s.dantian >= cost;
   // 双条件校验（spec §6）：丹田充满 且 已通窍穴数 ≥ M
   const requiredAcupoints = REALMS[s.realm - 1].requiredAcupoints;
-  const openedCount = Object.values(s.acupointProgress ?? {}).filter(a => a.opened).length;
+  // 与 gameStore.breakthrough 同口径：按境界计，不跨境界累计
+  const openedCount = openedInRealm(s.realm, s.acupointProgress ?? {});
   const acupointReady = requiredAcupoints === null || openedCount >= requiredAcupoints;
   const ready = dantianReady && acupointReady;
   const label = ready

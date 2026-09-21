@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>受伤系统 · 交互原型</title>
+<style>
+:root {
+  /* 与 docs/design/prototype.html 逐值一致，勿改 */
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --chrome: oklch(0.19 0.015 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.70 0.015 85);
+  --faint: oklch(0.56 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --primary: oklch(0.76 0.13 78);
+  --primary-ink: oklch(0.18 0.03 78);
+  --accent: oklch(0.74 0.10 215);
+  --accent-soft: oklch(0.74 0.10 215 / 0.14);
+  --gold: oklch(0.76 0.13 78);
+  --gold-soft: oklch(0.76 0.13 78 / 0.12);
+  --poison: oklch(0.72 0.14 145);
+  --hp: oklch(0.64 0.17 25);
+  --hp-soft: oklch(0.64 0.17 25 / 0.15);
+  --shield: oklch(0.70 0.10 240);
+  --crit: oklch(0.70 0.16 45);
+  --bar-track: oklch(0.28 0.018 262);
+  --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+  --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
+
+  /* ⚠ 新增提案：内伤色。外伤用血褐、毒伤用毒翠（DESIGN.md 已有），内伤无对应 token。
+     取淤紫——经脉气血受损之色，与血褐/毒翠在色相上拉开，不与朱砂/墨金（修炼组）冲突。
+     待本原型获批后由 impeccable 固化进 DESIGN.md。 */
+  --inner: oklch(0.66 0.11 310);
+  --inner-soft: oklch(0.66 0.11 310 / 0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55;
+  padding: 0 0 80px;
+}
+.serif { font-family: "Songti SC", STSong, SimSun, serif; }
+.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ===== 文档框架（仅原型用，非游戏 UI） ===== */
+.doc { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+.doc-head { padding: 36px 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.doc-head h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; }
+.doc-head p { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.sec { margin: 40px 0; }
+.sec > h2 {
+  font-size: 12px; letter-spacing: 0.14em; color: var(--faint);
+  font-weight: 600; text-transform: uppercase; margin-bottom: 6px;
+}
+.sec > .desc { color: var(--muted); font-size: 13px; margin-bottom: 16px; max-width: 76ch; }
+.state-label {
+  font-size: 11px; color: var(--faint); letter-spacing: 0.05em;
+  margin: 18px 0 7px;
+}
+
+/* ===== 顶栏 ===== */
+.topbar {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--chrome); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 14px;
+}
+.realm-chip { display: flex; align-items: baseline; gap: 8px; }
+.realm-chip .name { font-size: 16px; font-weight: 600; color: var(--primary); }
+.realm-chip .lv { font-size: 12px; color: var(--muted); }
+.res-group {
+  display: flex; margin-left: auto; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--chrome); overflow: hidden;
+}
+.res { display: flex; align-items: baseline; gap: 7px; padding: 8px 14px; }
+.res + .res { border-left: 1px solid var(--line); }
+.res .label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; }
+.res .value { font-size: 15.5px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: var(--glow-num); }
+.res .rate { font-size: 11px; color: var(--poison); font-variant-numeric: tabular-nums; }
+.res .rate.down { color: var(--hp); }
+
+/* ===== 伤势指示器（顶栏常驻） ===== */
+.wound-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 11px; cursor: pointer;
+  transition: border-color .15s;
+}
+.wound-chip:hover { border-color: var(--line-strong); }
+.wound-chip.healthy { color: var(--faint); }
+.wound-chip .wlabel { font-size: 11px; letter-spacing: 0.05em; color: var(--faint); }
+.wound-chip .wname { font-size: 13px; font-weight: 600; }
+.wound-chip .wcount { font-size: 11px; color: var(--muted); }
+
+/* 严重度三格条：颜色 + 形状 + 文字三重编码（DESIGN.md 不以颜色为唯一区分） */
+.sev { display: inline-flex; gap: 2px; align-items: center; }
+.sev i {
+  width: 4px; height: 11px; border-radius: 1px;
+  /* 空格须可见——三格编码的前提是能数清「三格里填了几格」 */
+  background: oklch(0.36 0.02 262); display: block;
+}
+.sev.s1 i:nth-child(1), .sev.s2 i:nth-child(-n+2), .sev.s3 i { background: currentColor; }
+.t-wai { color: var(--hp); }
+.t-nei { color: var(--inner); }
+.t-du  { color: var(--poison); }
+
+/* ===== 面板 ===== */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.panel > header {
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px;
+}
+.panel > header h3 { font-size: 14px; font-weight: 600; }
+.panel > header .hint { margin-left: auto; font-size: 11px; color: var(--faint); }
+.panel > .body { padding: 12px 14px; }
+
+/* ===== 伤势详情行 ===== */
+.wrow { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
+.wrow + .wrow { border-top: 1px solid var(--line); }
+.wrow .wtype { display: flex; align-items: center; gap: 8px; min-width: 118px; }
+.wrow .wtype .nm { font-size: 14px; font-weight: 600; }
+.wrow .weff { flex: 1; font-size: 12px; color: var(--muted); }
+.wrow .weff b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wrow .wheal { text-align: right; min-width: 104px; }
+.wrow .wheal .t { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wrow .wheal .l { font-size: 11px; color: var(--faint); }
+.wrow.none .wtype .nm, .wrow.none .weff { color: var(--faint); }
+
+/* 自愈进度细条 */
+.healbar { height: 2px; background: var(--bar-track); border-radius: 1px; margin-top: 5px; overflow: hidden; }
+.healbar i { display: block; height: 100%; background: currentColor; opacity: .7; }
+
+/* ===== 来源分解（账台精神：数值可查） ===== */
+.breakdown { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.breakdown .bt { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; margin-bottom: 6px; }
+.brow { display: flex; font-size: 12px; padding: 3px 0; }
+.brow .k { color: var(--muted); }
+.brow .v { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; }
+.brow .v.neg { color: var(--hp); }
+.brow.total { border-top: 1px solid var(--line); margin-top: 5px; padding-top: 6px; }
+.brow.total .k { color: var(--ink); font-weight: 600; }
+
+/* ===== 战斗页警示条 ===== */
+.warnbar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--hp-soft); border: 1px solid oklch(0.64 0.17 25 / 0.4);
+  border-radius: 6px; padding: 9px 12px; font-size: 13px;
+}
+.warnbar .w-t { font-weight: 600; color: var(--hp); }
+.warnbar .w-d { color: var(--muted); font-size: 12px; }
+.warnbar .spacer { margin-left: auto; }
+
+/* ===== 按钮 ===== */
+.btn { border: 0; border-radius: 6px; padding: 9px 16px; font-size: 13px; font-weight: 600;
+       font-family: inherit; cursor: pointer; }
+.btn-primary { background: var(--primary); color: var(--primary-ink); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line-strong); }
+.btn-ghost:hover { background: var(--accent-soft); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ===== 演出：受伤 / 恶化 / 战死 ===== */
+.stage {
+  border: 1px solid var(--line); border-radius: 8px; padding: 22px;
+  background: linear-gradient(oklch(0.19 0.015 262), var(--surface));
+  text-align: center;
+}
+.stage .big { font-size: 26px; font-weight: 700; letter-spacing: 0.16em; margin-bottom: 8px; }
+.stage .sub { font-size: 13px; color: var(--muted); }
+.stage.grave { border-color: oklch(0.64 0.17 25 / 0.5); }
+.stage.grave .big { color: var(--hp); }
+.stage.lethal .big { color: var(--primary); text-shadow: 0 0 24px oklch(0.76 0.13 78 / 0.45); }
+.stage .cost {
+  display: inline-flex; gap: 20px; margin-top: 16px; padding: 10px 18px;
+  background: var(--chrome); border: 1px solid var(--line); border-radius: 8px;
+}
+.stage .cost > div { text-align: center; }
+.stage .cost .cv { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stage .cost .cl { font-size: 11px; color: var(--faint); margin-top: 2px; }
+
+/* ===== 注记 ===== */
+.note {
+  border-left: 2px solid var(--accent); background: var(--accent-soft);
+  padding: 9px 13px; border-radius: 0 6px 6px 0; font-size: 12px;
+  color: var(--muted); margin-top: 14px;
+}
+.note b { color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<div class="doc-head">
+  <h1 class="serif">受伤系统 · 交互原型</h1>
+  <p>规格来源 <code>docs/systems/injury/spec.md</code> · 视觉语言 <code>DESIGN.md</code>。
+     受伤不设独立页签，而是融进它影响的地方——顶栏常驻概览，战斗页与修炼页各自显示被压制的部分。</p>
+</div>
+
+<!-- ============ 1. 顶栏伤势指示器 ============ -->
+<section class="sec">
+  <h2>1 · 顶栏伤势指示器</h2>
+  <p class="desc">常驻顶栏，回答「我现在伤得重不重」。只显示最重的一处 + 总数，点开看详情。
+     严重度用<b>颜色 + 格数 + 文字</b>三重编码，不依赖颜色单独区分。</p>
+
+  <div class="state-label">无伤</div>
+  <div class="topbar">
+    <div class="realm-chip"><span class="name serif">筑基</span><span class="lv">境界 4</span></div>
+    <div class="wound-chip healthy">
+      <span class="wlabel">身体</span><span class="wname">安好</span>
+    </div>
+    <div class="res-group">
+      <div class="res"><span class="label">内力</span><span class="value">12,480</span><span class="rate">+17.6/秒</span></div>
+      <div class="res"><span class="label">银两</span><span class="value">2,140</span></div>
+    </div>
+  </div>
+
+  <div class="state-label">单处轻伤</div>
+  <div class="topbar">
+    <div class="realm-chip"><span class="name serif">筑基</span><span class="lv">境界 4</span></div>
+    <div class="wound-chip">
+      <span class="wlabel">身体</span>
+      <span class="t-wai" style="display:inline-flex;align-items:center;gap:6px">
+        <span class="sev s1"><i></i><i></i><i></i></span>
+        <span class="wname">外伤 · 轻</span>
+      </span>
+    </div>
+    <div class="res-group">
+      <div class="res"><span class="label">内力</span><span class="value">12,480</span><span class="rate down">+17.2/秒</span></div>
+      <div class="res"><span class="label">银两</span><span class="value">2,140</span></div>
+    </div>
+  </div>
+
+  <div class="state-label">多伤并存 —— 只亮最重的一处，其余折成计数</div>
+  <div class="topbar">
+    <div class="realm-chip"><span class="name serif">筑基</span><span class="lv">境界 4</span></div>
+    <div class="wound-chip">
+      <span class="wlabel">身体</span>
+      <span class="t-nei" style="display:inline-flex;align-items:center;gap:6px">
+        <span class="sev s2"><i></i><i></i><i></i></span>
+        <span class="wname">内伤 · 中</span>
+      </span>
+      <span class="wcount">另 2 处</span>
+    </div>
+    <div class="res-group">
+      <div class="res"><span class="label">内力</span><span class="value">12,480</span><span class="rate down">+12.9/秒</span></div>
+      <div class="res"><span class="label">银两</span><span class="value">2,140</span></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>解掉了 spec §7 的开放问题</b>（多伤并存怎么一眼可读）：顶栏只呈现「最重的一处 + 另 N 处」，
+    完整三行留给详情面板。同时内力速率由 <span class="num">+17.6</span> 变 <span class="num">+12.9</span> 并转血褐色——
+    <b>修炼变慢是玩家第一眼就能看见的代价</b>，不必翻面板。
+  </div>
+</section>
+
+<!-- ============ 2. 伤势详情面板 ============ -->
+<section class="sec">
+  <h2>2 · 伤势详情（点顶栏展开）</h2>
+  <p class="desc">三类伤各一行：压了什么、还要多久养好。账台精神——每一笔压制都写明数值，不含糊。</p>
+
+  <div class="panel">
+    <header>
+      <h3>身体状况</h3>
+      <span class="hint">挂机静养中 · 离线同样恢复</span>
+    </header>
+    <div class="body">
+
+      <div class="wrow">
+        <div class="wtype t-nei">
+          <span class="sev s2"><i></i><i></i><i></i></span>
+          <span class="nm">内伤 · 中</span>
+        </div>
+        <div class="weff">
+          攻击 <b>−25%</b> · 挂机内力 <b>−19%</b>
+          <div class="healbar t-nei"><i style="width:38%"></i></div>
+        </div>
+        <div class="wheal">
+          <div class="t">4分50秒</div>
+          <div class="l">转为轻伤</div>
+        </div>
+      </div>
+
+      <div class="wrow">
+        <div class="wtype t-wai">
+          <span class="sev s1"><i></i><i></i><i></i></span>
+          <span class="nm">外伤 · 轻</span>
+        </div>
+        <div class="weff">
+          防御 <b>−10%</b> · 血上限 <b>−7%</b> · 挂机内力 <b>−2%</b>
+          <div class="healbar t-wai"><i style="width:72%"></i></div>
+        </div>
+        <div class="wheal">
+          <div class="t">51秒</div>
+          <div class="l">痊愈</div>
+        </div>
+      </div>
+
+      <div class="wrow">
+        <div class="wtype t-du">
+          <span class="sev s1"><i></i><i></i><i></i></span>
+          <span class="nm">毒伤 · 轻</span>
+        </div>
+        <div class="weff">
+          命中 <b>−10%</b> · 闪避 <b>−10%</b> · 挂机内力 <b>−4%</b>
+          <div class="healbar t-du"><i style="width:20%"></i></div>
+        </div>
+        <div class="wheal">
+          <div class="t">2分24秒</div>
+          <div class="l">痊愈</div>
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <div class="bt">挂机内力产出 · 来源分解</div>
+        <div class="brow"><span class="k">境界 4 基础产出</span><span class="v">+17.6/秒</span></div>
+        <div class="brow"><span class="k">内伤 · 中</span><span class="v neg">×0.81</span></div>
+        <div class="brow"><span class="k">外伤 · 轻</span><span class="v neg">×0.98</span></div>
+        <div class="brow"><span class="k">毒伤 · 轻</span><span class="v neg">×0.96</span></div>
+        <div class="brow total"><span class="k">当前实得</span><span class="v">+12.9/秒</span></div>
+      </div>
+
+      <div style="display:flex;gap:9px;margin-top:14px;align-items:center">
+        <button class="btn btn-ghost btn-sm">延医问药 · 120 两</button>
+        <span style="font-size:11px;color:var(--faint)">立即痊愈；不点也会自行养好</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>待确认</b>：「延医问药」是 spec §5 的辅路径（资源加速疗伤），具体形态与定价仍是开放问题
+    （<code>design.md</code> §7）。此处只占位，证明入口放得下、不喧宾夺主。
+  </div>
+</section>
+
+<!-- ============ 3. 融进战斗页 ============ -->
+<section class="sec">
+  <h2>3 · 融进战斗页</h2>
+  <p class="desc">带伤出战是玩家的选择，不是系统的阻拦。战前给足信息，让他自己掂量——这正是
+     spec 要保住的那个「带伤打还是先养伤」的权衡。</p>
+
+  <div class="grid2">
+    <div class="panel">
+      <header><h3>第四章 · 蜀道险关</h3><span class="hint">Boss</span></header>
+      <div class="body">
+        <div class="warnbar">
+          <span class="w-t">带伤出战</span>
+          <span class="w-d">战力较健全时低 <span class="num">28%</span></span>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost btn-sm">先养伤</button>
+          <button class="btn btn-primary btn-sm">仍然出战</button>
+        </div>
+        <div class="breakdown">
+          <div class="bt">本场战力 · 来源分解</div>
+          <div class="brow"><span class="k">境界 4 + 武学 7 级</span><span class="v">基准</span></div>
+          <div class="brow"><span class="k">内伤 · 中 → 攻击</span><span class="v neg">−25%</span></div>
+          <div class="brow"><span class="k">外伤 · 轻 → 防御</span><span class="v neg">−10%</span></div>
+          <div class="brow"><span class="k">毒伤 · 轻 → 命中/闪避</span><span class="v neg">−10%</span></div>
+          <div class="brow total"><span class="k">综合战力</span><span class="v neg">−28%</span></div>
+        </div>
+        <div class="note" style="margin-top:12px">
+          再败一场，<b>内伤将恶化至重度</b>——届时开始折损寿元。
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <header><h3>战后 · 惨胜</h3><span class="hint">余血 18%</span></header>
+      <div class="body">
+        <div style="text-align:center;padding:10px 0 16px">
+          <div class="serif" style="font-size:20px;letter-spacing:.12em;color:var(--primary)">险胜</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">
+            蜀道险关 · 第 <span class="num">37</span> 回合
+          </div>
+        </div>
+        <div class="wrow" style="border-top:1px solid var(--line);padding-top:12px">
+          <div class="wtype t-wai">
+            <span class="sev s1"><i></i><i></i><i></i></span>
+            <span class="nm">新添外伤 · 轻</span>
+          </div>
+          <div class="weff">血战余生，皮肉筋骨俱损</div>
+        </div>
+        <div class="note" style="margin-top:6px">
+          惨胜同样留伤（余血低于 <span class="num">25%</span>）——赢了，但不是白赢。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. 融进修炼页 ============ -->
+<section class="sec">
+  <h2>4 · 融进修炼页</h2>
+  <p class="desc">受伤的代价溢出到战斗之外——带着伤打坐，内力涨得慢。这是让伤势「有分量」的那一笔。</p>
+
+  <div class="panel" style="max-width:520px">
+    <header><h3>修炼</h3><span class="hint">丹田 · 周天运转中</span></header>
+    <div class="body">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--faint);letter-spacing:.05em">当前内力产出</span>
+        <span class="num" style="font-size:22px;color:var(--hp)">+12.9</span>
+        <span style="font-size:12px;color:var(--muted)">/秒</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--faint)">
+          健全时 <span class="num">+17.6</span>
+        </span>
+      </div>
+      <div class="healbar" style="height:4px;background:var(--bar-track)">
+        <i style="width:73%;background:var(--hp);opacity:.75"></i>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <b>伤重则修为滞</b>——内伤压经脉、毒伤耗心神、外伤扰入定。三处伤合计拖慢
+        <span class="num">27%</span> 的修炼速度。养好之前，这笔损失一直在走。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. 关键演出 ============ -->
+<section class="sec">
+  <h2>5 · 关键时刻</h2>
+  <p class="desc">日常安静克制，情绪只在两个峰值投放：伤势恶化至重度（开始折寿）、伤重不治（强制转世）。</p>
+
+  <div class="state-label">恶化至重度 —— 开始折损寿元</div>
+  <div class="stage grave">
+    <div class="big serif">伤及根本</div>
+    <div class="sub">内伤恶化至重度。经脉受损，非静养难复。</div>
+    <div class="cost">
+      <div><div class="cv" style="color:var(--hp)">−15 年</div><div class="cl">寿元折损</div></div>
+      <div><div class="cv">105 → 90</div><div class="cl">剩余寿元</div></div>
+      <div><div class="cv">20 分钟</div><div class="cl">静养至中伤</div></div>
+    </div>
+    <div class="note" style="text-align:left;margin-top:18px">
+      重度是分水岭——轻伤中伤只压战力与修炼，<b>重度起才开始折寿</b>。
+      再受一次同样的创，便是致死线。
+    </div>
+  </div>
+
+  <div class="state-label" style="margin-top:26px">越过致死线 —— 强制转世</div>
+  <div class="stage lethal">
+    <div class="big serif">伤重不治</div>
+    <div class="sub">江湖历 <span class="num">163</span> 年 · 享年 <span class="num">64</span> 岁</div>
+    <div class="cost">
+      <div><div class="cv" style="color:var(--hp)">六折</div><div class="cl">声望结算</div></div>
+      <div><div class="cv">412 → 247</div><div class="cl">本世所得</div></div>
+      <div><div class="cv">第 4 世</div><div class="cl">即将转世</div></div>
+    </div>
+    <div class="note" style="text-align:left;margin-top:18px">
+      死亡不是终局，是一次打折的转世——不灭功法保魂魄不灭，仓促离世只是带不走全部感悟。
+      <b>没有读档，游戏永远向前。</b>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 附：设计自查 ============ -->
+<section class="sec">
+  <h2>附 · 规范自查</h2>
+  <div class="panel"><div class="body">
+    <div class="brow"><span class="k">烛火暖金只标进展与主行动</span><span class="v" style="color:var(--poison)">✓ 金色仅用于「仍然出战」与转世演出</span></div>
+    <div class="brow"><span class="k">语义色只携带自身语义</span><span class="v" style="color:var(--poison)">✓ 血褐=外伤/战败，毒翠=毒伤</span></div>
+    <div class="brow"><span class="k">不以颜色为唯一区分</span><span class="v" style="color:var(--poison)">✓ 严重度＝色+格数+文字</span></div>
+    <div class="brow"><span class="k">宋体只给江湖专名</span><span class="v" style="color:var(--poison)">✓ 仅境界名与演出大字</span></div>
+    <div class="brow"><span class="k">数字 tabular-nums</span><span class="v" style="color:var(--poison)">✓ 全部数值等宽</span></div>
+    <div class="brow"><span class="k">日常界面禁止 glow</span><span class="v" style="color:var(--poison)">✓ 仅顶栏资源与转世演出</span></div>
+    <div class="brow"><span class="k">每屏至多一个金色按钮</span><span class="v" style="color:var(--poison)">✓</span></div>
+    <div class="brow total"><span class="k">待批准的新增</span><span class="v" style="color:var(--crit)">内伤色 --inner 淤紫</span></div>
+  </div></div>
+</section>
+
+</div>
+</body>
+</html>

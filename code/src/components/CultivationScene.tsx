@@ -118,8 +118,19 @@ export function CultivationScene(): JSX.Element | null {
         </button>
 
         <div className="cs-read" aria-hidden={!inner}>
-          <div className="n">{pct}%</div>
-          <div className="d">第 {Math.min(model.segmentsFull + 1, model.zhoutianCount)} / {model.zhoutianCount} 转</div>
+          {/* 全数圆满时不能再读作「第 N 转 0%」——那会被误读成刚起步，
+              与顶栏「N/N · 圆满」自相矛盾。圆满态走冻结文案 §2。 */}
+          {model.segmentsFull >= model.zhoutianCount ? (
+            <>
+              <div className="n done">圆满</div>
+              <div className="d">丹田已满 · 可突破</div>
+            </>
+          ) : (
+            <>
+              <div className="n">{pct}%</div>
+              <div className="d">第 {model.segmentsFull + 1} / {model.zhoutianCount} 转</div>
+            </>
+          )}
         </div>
 
         <svg className="cs-ring" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}>

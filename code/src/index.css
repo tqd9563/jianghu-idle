@@ -956,6 +956,12 @@ html[data-theme='pomo'] body {
 .cs-scene.inner .cs-read { opacity: 1; }
 .cs-read .n { font-size: 24px; font-weight: 700; color: var(--ink-warm); font-variant-numeric: tabular-nums; }
 .cs-read .d { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.08em; margin-top: 1px; }
+/* 圆满是「已成」态的状态词，非数值：走宋体 + 墨金（DESIGN.md：墨金标既成，暖金标进展） */
+.cs-read .n.done {
+  font-family: "Songti SC", STSong, SimSun, serif;
+  font-size: 22px; letter-spacing: 0.12em; color: var(--ink-gold, var(--primary));
+  font-variant-numeric: normal;
+}
 
 /* —— 器物层：月相 + 星曜 —— */
 .cs-ring {

@@ -17,6 +17,7 @@ colors:
   sword-cyan: "oklch(0.74 0.10 215)"
   poison-green: "oklch(0.72 0.14 145)"
   blood-red: "oklch(0.64 0.17 25)"
+  bruise-violet: "oklch(0.66 0.11 310)"
   shield-blue: "oklch(0.70 0.10 240)"
   crit-ember: "oklch(0.70 0.16 45)"
   cinnabar: "oklch(0.68 0.09 38)"
@@ -77,6 +78,11 @@ components:
     backgroundColor: "transparent"
     rounded: "{rounded.xs}"
     padding: "1px 7px"
+  severity-meter:
+    backgroundColor: "{colors.bar-track}"
+    rounded: "{rounded.xs}"
+    width: "4px"
+    height: "11px"
   game-tab-active:
     backgroundColor: "transparent"
     textColor: "{colors.ink-warm}"
@@ -123,6 +129,7 @@ components:
 - **血褐 blood-red** (oklch(0.64 0.17 25)): 气血条、战败、危险操作按钮。
 - **盾青 shield-blue** (oklch(0.70 0.10 240)): 护盾/少林。
 - **燎原橙 crit-ember** (oklch(0.70 0.16 45)): 暴击/华山。
+- **淤紫 bruise-violet** (oklch(0.66 0.11 310)): 内伤。经脉气血受损之色，与血褐（外伤）、毒翠（毒伤）三色构成伤势谱——**三者色相拉开，便于在同屏并存时一眼分辨伤型**；不与修炼组的朱砂/墨金混淆。
 
 **修炼组**
 - **朱砂 cinnabar** (oklch(0.68 0.09 38)): 「可下手」态——有冲穴机会时星曜转朱砂并呼吸脉动。朱砂点穴、朱砂入药，武侠语境里本就是「此处可施为」的记号。
@@ -135,7 +142,11 @@ components:
 
 **The Candlelight Rule.** 烛火暖金只照两样东西：进展（充能、声望、周天）与主行动（每屏至多一个金色按钮）。金色一旦泛滥，账台就成了赌场。
 
-**The Semantic Ink Rule.** 语义状态色只允许携带各自的语义出现：战斗状态色禁止拿毒翠做「成功提示」、拿血褐做普通强调；朱砂只表示「可冲穴」，墨金只表示「已成」。状态即颜色，颜色即状态，且永远伴随文字标签或形状差异（不以颜色为唯一区分——月相三态另有形状差异，星曜三态另有明度差异）。
+**The Semantic Ink Rule.** 语义状态色只允许携带各自的语义出现：战斗状态色禁止拿毒翠做「成功提示」、拿血褐做普通强调；朱砂只表示「可冲穴」，墨金只表示「已成」。
+
+状态即颜色，颜色即状态，且永远伴随文字标签或形状差异（不以颜色为唯一区分——月相三态另有形状差异，星曜三态另有明度差异，伤势三档另有格数差异）。
+
+**伤势三色的双重身份**：毒翠与血褐各自承担两层含义——毒翠＝战斗中的毒层 / 角色身上的毒伤，血褐＝气血条与战败 / 角色身上的外伤。两层同属「受损」语义，不构成冲突；淤紫则专表内伤，别无他用。受伤导致的产出下降（如挂机内力速率转血褐）算在血褐的「受损」语义内，是授权用法。
 
 ## 3. Typography
 
@@ -183,6 +194,9 @@ components:
 - **敌人标签 tag:** 1px 语义色描边 + 同色文字，透明或极浅同色底，圆角 4px，11px。精英=金、Boss=血褐、机制=冷青浅底。
 - **状态药丸 status-pill:** 圆角 10px 胶囊，语义色点 + 等宽数字（「中毒 4/8 层」）。
 - **进度胶囊 pulse-capsule:** 页签行右侧常驻，surface 底 + 描线 + 72px 迷你进度条，可点击跳转。
+
+### 严重度指示器 severity-meter
+三格微条（4×11px，间距 2px，圆角 1px），填充格用伤型语义色、空格用 `oklch(0.36 0.02 262)`——**空格必须可见**，否则数不出「三格里填了几格」，三重编码退化成单纯的颜色区分。轻＝1 格、中＝2 格、重＝3 格，始终与文字标签（「外伤 · 中」）同时出现。
 
 ### Cards / Containers
 - **Panel:** night-surface 底、1px 描线、圆角 8px、panel 阴影；头部 10px 14px 带下描线，主体 12px 14px。禁止卡中嵌卡。

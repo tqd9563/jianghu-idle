@@ -8,7 +8,9 @@ import {
 } from '../save/storage';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
-import { effBreakCost, resetLiveTestVisitForTests, retireKind, useGameStore } from './gameStore';
+import { effBreakCost, effIdleRate, playerBuild, resetLiveTestVisitForTests, retireKind, useGameStore } from './gameStore';
+import { freshInjuries, isHurt } from '../engine/injury';
+import { idleNeiliPerSec } from '../engine/formulas';
 
 function names() {
   return getEvents().map((e) => e.e);
@@ -446,5 +448,60 @@ describe('gameStore · MVP-2 natural live-test window', () => {
       natural_open: true, open_reason: '想起突破', settlement_understood: null,
       decision: '升武学', next_goal: '打 Boss', feeling: '目标清楚',
     });
+  });
+});
+
+describe('gameStore · 受伤系统接线（injury/spec.md）', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+
+  it('新存档带空伤势，挂机产出不被压制', () => {
+    const s = useGameStore.getState();
+    expect(isHurt(s.injuries ?? freshInjuries())).toBe(false);
+    expect(effIdleRate(s)).toBeCloseTo(idleNeiliPerSec(s.realm), 6);
+  });
+
+  it('带伤时挂机产出按 spec §3 压制', () => {
+    useGameStore.setState({ injuries: { ...freshInjuries(), nei: { severity: 2, healAccMin: 0 } } });
+    const s = useGameStore.getState();
+    // 内伤·中 → 0.8125（spec §3 精确值表）
+    expect(effIdleRate(s)).toBeCloseTo(idleNeiliPerSec(s.realm) * 0.8125, 6);
+  });
+
+  it('tick 推进游戏内时间会自愈（spec §5：轻伤境界 1 需 3 分钟）', () => {
+    useGameStore.setState({ injuries: { ...freshInjuries(), wai: { severity: 1, healAccMin: 0 } } });
+    const t0 = Date.now();
+    // 分两段推进：tick 单次 dt 上限 300 秒
+    useGameStore.getState().tick(t0 + 120_000);
+    expect(useGameStore.getState().injuries!.wai.severity).toBe(1);  // 2 分钟未愈
+    useGameStore.getState().tick(t0 + 240_000);
+    expect(useGameStore.getState().injuries!.wai.severity).toBe(0);  // 满 3 分钟痊愈
+  });
+
+  it('伤势叠加进 playerBuild，且不污染路线专属字段', () => {
+    const base = playerBuild({
+      realm: 4, route: 'huashan', skillLevel: 7, ownedMechNodes: [], completedBooks: [],
+    });
+    const hurt = playerBuild({
+      realm: 4, route: 'huashan', skillLevel: 7, ownedMechNodes: [], completedBooks: [],
+      injuries: { ...freshInjuries(), nei: { severity: 3, healAccMin: 0 } },
+    });
+    expect(hurt.atk).toBeCloseTo(base.atk * 0.55, 6);   // 重度内伤压攻击 45%
+    expect(hurt.def).toBeCloseTo(base.def, 6);
+    expect(hurt.sqNeed).toBe(base.sqNeed);
+  });
+
+  it('归隐清零伤势与折寿（FRESH 展开重置）', () => {
+    useGameStore.setState({
+      injuries: { ...freshInjuries(), wai: { severity: 3, healAccMin: 0 } },
+      lifespanLost: 15,
+    });
+    expect(isHurt(useGameStore.getState().injuries!)).toBe(true);
+    useGameStore.getState().hardReset();
+    const after = useGameStore.getState();
+    expect(isHurt(after.injuries ?? freshInjuries())).toBe(false);
+    expect(after.lifespanLost ?? 0).toBe(0);
   });
 });

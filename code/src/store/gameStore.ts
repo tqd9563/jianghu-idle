@@ -10,6 +10,11 @@ import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../
 import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef, type MapId } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
 import {
+  freshInjuries, heal as healInjuries, inflict as inflictInjury, injuryFromBattle,
+  idleOutputMultiplier, applyInjuriesToBuild, isHurt,
+  type Injuries,
+} from '../engine/injury';
+import {
   REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
   consumeQishi, qishiToBonus,
   type AcupointState,
@@ -99,6 +104,10 @@ interface PersistedState {
   chongxueChances?: number;
   /** 窍穴图鉴（已通窍穴 ID 列表，归隐保留为记录）。可选字段兼容旧存档。 */
   acupointLog?: string[];
+  /** 伤势（injury/spec.md）：硬仗产生、随游戏内时间自愈；归隐时清零。可选字段兼容旧存档。 */
+  injuries?: Injuries;
+  /** 本轮因重伤累计折损的寿元年数（spec §6）；转世系统消费，归隐时清零。可选字段兼容旧存档。 */
+  lifespanLost?: number;
 }
 
 export interface BattleState {
@@ -224,6 +233,7 @@ const FRESH: PersistedState = {
   collectedPages: [], completedBooks: [],
   trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
   acupointProgress: {}, qishi: 0, chongxueChances: 0, acupointLog: [],
+  injuries: freshInjuries(), lifespanLost: 0,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -270,19 +280,25 @@ export function nextStageOf(map: MapNo, cleared: string[]): number | null {
   return null;
 }
 
-export function playerBuild(s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes' | 'completedBooks'>): Build {
+export function playerBuild(
+  s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes' | 'completedBooks' | 'injuries'>,
+): Build {
   const effects = computeFragmentEffects((s.completedBooks ?? []).filter(isBookId));
-  if (s.route) return applyFragmentEffectsToBuild(
-    makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length), effects,
-  );
-  // 未择路（境界 1）：纯基础属性
-  const b = REALMS[s.realm - 1];
-  return applyFragmentEffectsToBuild({
-    hp: b.hp, atk: b.atk, plainMult: 1, def: b.def, hit: b.accuracy, dodge: b.evasion,
-    crit: 0.05, cd: 1.5, firstCrit: false, shieldPct: 0, thorns: 0,
-    poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
-    sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan',
-  }, effects);
+  const base = s.route
+    ? applyFragmentEffectsToBuild(
+        makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length), effects,
+      )
+    // 未择路（境界 1）：纯基础属性
+    : applyFragmentEffectsToBuild({
+        hp: REALMS[s.realm - 1].hp, atk: REALMS[s.realm - 1].atk, plainMult: 1,
+        def: REALMS[s.realm - 1].def, hit: REALMS[s.realm - 1].accuracy,
+        dodge: REALMS[s.realm - 1].evasion,
+        crit: 0.05, cd: 1.5, firstCrit: false, shieldPct: 0, thorns: 0,
+        poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
+        sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan',
+      }, effects);
+  // 伤势在最后一层叠加（injury/spec.md §0 红线：只改喂进 fight() 的 Build，不碰 fight()）
+  return applyInjuriesToBuild(base, s.injuries ?? freshInjuries());
 }
 
 function isBookId(value: string): value is BookId {
@@ -296,9 +312,10 @@ export function effBreakCost(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>)
   return Math.round(base * breakthroughDiscount(s.realm + 1, s.ownedRepNodes));
 }
 
-/** 有效挂机产出（旧梦重温：+20%） */
-export function effIdleRate(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>): number {
-  return idleNeiliPerSec(s.realm) * idleMult(s.ownedRepNodes);
+/** 有效挂机产出（旧梦重温：+20%；伤势按 injury/spec.md §3 压制） */
+export function effIdleRate(s: Pick<PersistedState, 'realm' | 'ownedRepNodes' | 'injuries'>): number {
+  return idleNeiliPerSec(s.realm) * idleMult(s.ownedRepNodes)
+    * idleOutputMultiplier(s.injuries ?? freshInjuries());
 }
 
 /**
@@ -415,6 +432,11 @@ export const useGameStore = create<GameState>((set, get) => ({
           merged.dantian += r.neili;
           merged.silver += r.silver;
           merged.xp += r.xp;
+          // 离线同样养伤（injury/spec.md §5）：按封顶后的结算时长恢复，
+          // 且离线不打仗、不会新受伤——下线休息即安全静养。
+          merged.injuries = healInjuries(
+            merged.injuries ?? freshInjuries(), r.effectiveMin, merged.realm,
+          );
           track('offline_settled', { run: merged.run, realm: merged.realm, route: merged.route }, {
             raw_offline_s: Math.round(r.rawSec),
             effective_min: Math.round(r.effectiveMin * 100) / 100,
@@ -522,7 +544,10 @@ export const useGameStore = create<GameState>((set, get) => ({
           });
         }
       }
-      set({ dantian, chargeHighWater, runPlaySec, qishi, chongxueChances });
+      // 伤势自愈：与挂机共用同一游戏内时钟（injury/spec.md §5）
+      const prevInj = s.injuries ?? freshInjuries();
+      const injuries = isHurt(prevInj) ? healInjuries(prevInj, dt / 60, s.realm) : prevInj;
+      set({ dantian, chargeHighWater, runPlaySec, qishi, chongxueChances, injuries });
     }
 
     // 归隐可用上报（§6.6 + 埋点规格 §1.4）：保底先触发的，后续击败 Boss 3 补发 standard
@@ -1134,6 +1159,22 @@ function resolveBattle(
     };
   }
 
+  // 伤势判定（injury/spec.md §4）：硬仗失败，或硬仗惨胜（余血 < 25%）留伤。
+  // 普通关不产伤；伤势升入重度折寿，越致死线交由转世系统处理（§6）。
+  let injuries = s.injuries ?? freshInjuries();
+  let lifespanLost = s.lifespanLost ?? 0;
+  const hurtBy = injuryFromBattle(enemy, result.win, result.playerHpPct);
+  if (hurtBy) {
+    const r = inflictInjury(injuries, hurtBy);
+    injuries = r.injuries;
+    lifespanLost += r.lifespanLost;
+    track('injury_inflicted', { run: s.run, realm: s.realm, route: s.route }, {
+      target: tid, injury: hurtBy, severity: r.injuries[hurtBy].severity,
+      win: result.win, player_hp_pct: result.playerHpPct,
+      became_heavy: r.becameHeavy, lethal: r.lethal, lifespan_lost: r.lifespanLost,
+    });
+  }
+
   // key_battle_end：Boss/精英每次挑战（胜负都记）+ 普通关失败（埋点规格 §1.3）
   if (isKeyBattle || !result.win) {
     track('key_battle_end', { run: s.run, realm: s.realm, route: s.route }, {
@@ -1154,7 +1195,7 @@ function resolveBattle(
     : null;
   set({
     dantian, silver, xp, clearedStages, attempts, failure, b3Fails, lastProgressSec,
-    refarmKey, refarmCount, refarmAt,
+    refarmKey, refarmCount, refarmAt, injuries, lifespanLost,
     battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
   });
   if (result.win && enemy.kind === 'boss') {

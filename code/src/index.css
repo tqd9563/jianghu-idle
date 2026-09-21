@@ -796,6 +796,238 @@ html[data-theme='pomo'] body {
   .rail-foot { margin-top: 0; }
 }
 
+/* ═══════ 修炼面板（外视/内视星图式） ═══════
+   实现基准：docs/design/zhoutian-composite-v3.html（获批原型）
+   呈现规格：docs/systems/zhoutian/spec.md §4
+   几何与状态一律来自 cultivationSceneModel，此处只管样式。 */
+
+.cs-wrap { --wave-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 24' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 11 Q 15 3 30 11 T 60 11 T 90 11 T 120 11 T 150 11 T 180 11 T 210 11 T 240 11 L240 24 L0 24 Z'/%3E%3C/svg%3E"); }
+
+.cs-scene {
+  position: relative; width: 100%; max-width: 440px; margin: 2px auto 0;
+  aspect-ratio: 4 / 5; overflow: hidden;
+  /* 不加边框与底色：靠 .cs-backdrop / .cs-inkbg 的四边淡出融进面板，
+     硬框会把人影切成一张贴在面板上的图片 */
+  border: none; background: transparent;
+}
+/* 四边柔化：两道线性遮罩取交集，上下比左右淡得更多（人影顶天立地更自然） */
+.cs-backdrop, .cs-inkbg {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 18%, #000 86%, transparent 100%),
+    linear-gradient(to right,  transparent 0%, #000 16%, #000 84%, transparent 100%);
+          mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 18%, #000 86%, transparent 100%),
+    linear-gradient(to right,  transparent 0%, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-composite: source-in;
+          mask-composite: intersect;
+}
+
+/* —— 外视：人影全景 —— */
+.cs-backdrop {
+  position: absolute; inset: 0; z-index: 1;
+  background: url('/zhoutian/figure-dark.png') center 28% / cover no-repeat;
+  filter: brightness(var(--bd-bright, 0.62)) saturate(0.9);
+  transform-origin: 50% 64%;
+  transition: transform 1s var(--ease-sharp), opacity 1s var(--ease-sharp), filter 1s var(--ease-sharp);
+}
+/* 内视：镜头扎进丹田——人影放大穿过、隐去 */
+.cs-scene.inner .cs-backdrop { transform: scale(2.9); opacity: 0.12; filter: brightness(0.35) blur(5px); }
+
+/* 周身罡气：炉火纯青起显影 */
+.cs-scene::before {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(52% 40% at 50% 46%, oklch(0.76 0.13 78 / 0.24), transparent 72%);
+  opacity: var(--aura, 0); transition: opacity 1s var(--ease-sharp); mix-blend-mode: screen;
+}
+.cs-scene.inner::before { opacity: 0; }
+
+/* —— 内视：墨渊星空 —— */
+.cs-inkbg {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(64% 50% at 50% 46%, oklch(0.10 0.012 262 / 0.72), oklch(0.08 0.01 262 / 0.42) 62%, oklch(0.06 0.008 262 / 0.80) 96%),
+    url('/zhoutian/void-bg.jpg') center / cover no-repeat,
+    oklch(0.085 0.01 262);
+  transition: opacity 1s var(--ease-sharp);
+}
+.cs-scene.inner .cs-inkbg { opacity: 1; }
+
+/* —— 外视丹田：暗晕 + 气光 + 羽化遮罩，光从体内透出而非贴一个圆盘 —— */
+.cs-shade, .cs-bloom {
+  position: absolute; z-index: 3; left: 50%; top: 64%;
+  aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; pointer-events: none;
+  transition: opacity 0.8s var(--ease-sharp);
+}
+.cs-shade {
+  width: 40%;
+  background: radial-gradient(closest-side,
+    oklch(0.52 0.035 55 / 0.40) 16%, oklch(0.46 0.028 50 / 0.22) 48%, transparent 80%);
+  filter: blur(14px); mix-blend-mode: multiply;
+}
+.cs-bloom {
+  width: 30%;
+  background: radial-gradient(closest-side,
+    oklch(0.80 0.14 62 / calc(var(--vessel-glow, 0.2) * 2.1)) 8%,
+    oklch(0.62 0.13 48 / calc(var(--vessel-glow, 0.2) * 1.1)) 38%, transparent 78%);
+  filter: blur(7px); mix-blend-mode: screen;
+}
+.cs-scene.inner .cs-shade, .cs-scene.inner .cs-bloom { opacity: 0; }
+
+/* —— 器皿 —— */
+.cs-vessel {
+  position: absolute; z-index: 4; padding: 0; border: none;
+  left: 50%; top: 64%; width: 62%; aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0.17);
+  border-radius: 50%; overflow: hidden; cursor: pointer;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side, #000 46%, rgba(0,0,0,0.55) 70%, transparent 92%);
+          mask-image: radial-gradient(closest-side, #000 46%, rgba(0,0,0,0.55) 70%, transparent 92%);
+  background: none; box-shadow: none;
+  transition: transform 1s var(--ease-sharp), top 1s var(--ease-sharp), box-shadow 0.6s var(--ease-sharp);
+}
+.cs-scene:not(.inner) .cs-vessel:hover { transform: translate(-50%, -50%) scale(0.20); }
+.cs-scene.inner .cs-vessel {
+  top: 50%; transform: translate(-50%, -50%) scale(1); cursor: default;
+  mix-blend-mode: normal;
+  -webkit-mask-image: none; mask-image: none;
+  background: radial-gradient(closest-side, oklch(0.175 0.020 256 / 0.92) 12%, oklch(0.135 0.016 258 / 0.94) 58%, oklch(0.10 0.012 260 / 0.96) 96%);
+  box-shadow:
+    inset 0 0 40px oklch(0.05 0.01 262 / 0.7),
+    0 0 0 1px oklch(0.42 0.02 262 / 0.45),
+    0 0 40px 4px oklch(0.66 0.06 68 / calc(var(--vessel-glow, 0.2) * 0.75));
+}
+
+/* 空腔氤氲：液面以上是「待聚之气」，不是黑洞 */
+.cs-void-qi {
+  position: absolute; inset: 0; pointer-events: none;
+  clip-path: inset(0 0 calc(100% - var(--empty, 60%)) 0);
+  transition: clip-path 0.35s var(--ease-sharp);
+}
+.cs-void-qi i {
+  position: absolute; border-radius: 50%; display: block;
+  background: radial-gradient(closest-side, oklch(0.58 0.028 248 / 0.30), transparent 74%);
+  filter: blur(7px); mix-blend-mode: screen;
+}
+.cs-void-qi i:nth-child(1) { width: 62%; height: 40%; left: 4%;  top: 16%; animation: cs-drift-a 11s ease-in-out infinite; }
+.cs-void-qi i:nth-child(2) { width: 50%; height: 34%; left: 42%; top: 34%; animation: cs-drift-b 14s ease-in-out infinite; }
+.cs-void-qi i:nth-child(3) { width: 40%; height: 26%; left: 22%; top: 6%;  animation: cs-drift-a 17s ease-in-out infinite reverse; }
+@keyframes cs-drift-a { 0%,100% { transform: translate(0,0); opacity: 0.55; } 50% { transform: translate(9%,-7%); opacity: 1; } }
+@keyframes cs-drift-b { 0%,100% { transform: translate(0,0); opacity: 0.9; }  50% { transform: translate(-11%,6%); opacity: 0.45; } }
+.cs-scene:not(.inner) .cs-void-qi { opacity: 0; }
+
+/* 液体：盒子本身即液面以下区域，顶边由波形 mask 裁出——波浪是液体自己的边缘，
+   不是盖在上面的色带，故与素材同色、也不会露出 clip 的水平直线 */
+.cs-liquid {
+  position: absolute; left: 0; right: 0; bottom: 0; top: var(--empty, 60%);
+  overflow: hidden; transition: top 0.35s var(--ease-sharp);
+  -webkit-mask-image: var(--wave-mask), linear-gradient(#000, #000);
+          mask-image: var(--wave-mask), linear-gradient(#000, #000);
+  -webkit-mask-size: 200px 22px, 100% calc(100% - 22px);
+          mask-size: 200px 22px, 100% calc(100% - 22px);
+  -webkit-mask-position: 0 0, 0 22px;
+          mask-position: 0 0, 0 22px;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+          mask-repeat: repeat-x, no-repeat;
+  animation: cs-wave 9s linear infinite;
+}
+@keyframes cs-wave { to { -webkit-mask-position: -200px 0, 0 22px; mask-position: -200px 0, 0 22px; } }
+.cs-scene:not(.inner) .cs-liquid {
+  top: 0; animation: none;
+  -webkit-mask-image: none; mask-image: none;
+}
+/* 视频锚在器皿底部，不随液面盒子伸缩，避免液位变化时画面跳动 */
+.cs-liquid-anchor { position: absolute; left: 0; bottom: 0; width: 100%; aspect-ratio: 1; }
+.cs-liquid-anchor video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transform: translateY(calc(var(--empty, 60%) / 2)) scale(1.5);
+  transition: transform 0.35s var(--ease-sharp);
+}
+.cs-scene:not(.inner) .cs-liquid-anchor video { transform: scale(1.5); }
+
+/* 器皿中央读数 */
+.cs-read {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 5; text-align: center; pointer-events: none; opacity: 0;
+  text-shadow: 0 1px 8px oklch(0.05 0.01 262 / 0.9);
+  transition: opacity 0.6s var(--ease-sharp) 0.5s;
+}
+.cs-scene.inner .cs-read { opacity: 1; }
+.cs-read .n { font-size: 24px; font-weight: 700; color: var(--ink-warm); font-variant-numeric: tabular-nums; }
+.cs-read .d { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.08em; margin-top: 1px; }
+
+/* —— 器物层：月相 + 星曜 —— */
+.cs-ring {
+  position: absolute; inset: 0; z-index: 6; width: 100%; height: 100%;
+  opacity: 0; pointer-events: none; transition: opacity 0.7s var(--ease-sharp) 0.45s;
+}
+.cs-scene.inner .cs-ring { opacity: 1; pointer-events: auto; }
+
+.cs-moon-base { fill: oklch(0.17 0.014 262 / 0.9); stroke: oklch(0.42 0.025 262 / 0.5); stroke-width: 0.8; }
+.cs-moon.waxing { filter: brightness(0.92) sepia(0.22) saturate(1.3); }
+.cs-moon.full   { filter: brightness(0.95) sepia(0.32) saturate(1.45) drop-shadow(0 0 5px oklch(0.75 0.07 76 / 0.4)); }
+
+.cs-star {
+  transform-box: fill-box; transform-origin: center; cursor: default;
+  transition: opacity 0.4s var(--ease-sharp), filter 0.4s var(--ease-sharp);
+  opacity: 0.30; filter: grayscale(1) brightness(0.55);
+}
+.cs-star.opened { opacity: 0.85; filter: sepia(0.7) saturate(1.45) hue-rotate(-6deg) brightness(0.92); }
+.cs-star.actionable {
+  opacity: 0.8; cursor: pointer;
+  filter: sepia(0.75) saturate(2.1) hue-rotate(-26deg) brightness(0.8);
+  animation: cs-star-pulse 2.6s ease-in-out infinite;
+}
+.cs-star.actionable:hover { animation-play-state: paused; opacity: 1; }
+.cs-star:focus-visible { outline: 2px solid var(--ink-gold); outline-offset: 2px; }
+@keyframes cs-star-pulse {
+  0%,100% { opacity: 0.62; transform: scale(0.95); }
+  50%     { opacity: 0.92; transform: scale(1.05); }
+}
+
+.cs-const { fill: none; stroke: oklch(0.50 0.015 258 / 0.32); stroke-width: 0.8; stroke-linecap: round; transition: stroke 0.6s var(--ease-sharp); }
+.cs-m.through .cs-const { stroke: oklch(0.70 0.07 76 / 0.55); }
+.cs-m-glow { fill: var(--ink-gold); filter: blur(26px); opacity: 0; transition: opacity 0.8s var(--ease-sharp); pointer-events: none; }
+.cs-m.through .cs-m-glow { opacity: 0.2; }
+
+.cs-acu-name { font-family: var(--font-display); font-size: 13px; fill: var(--ink-faint); pointer-events: none; letter-spacing: 0.12em; }
+.cs-acu-name.opened { fill: var(--ink-gold); }
+.cs-acu-name.actionable { fill: var(--cinnabar); }
+.cs-m-label { font-family: var(--font-display); font-size: 12px; fill: oklch(0.55 0.015 262); letter-spacing: 0.3em; }
+.cs-m.through .cs-m-label { fill: var(--ink-gold); }
+
+/* 收功 / 外视提示 */
+.cs-back {
+  position: absolute; z-index: 7; top: 12px; left: 12px;
+  padding: 5px 14px; border-radius: var(--radius-btn);
+  border: 1px solid oklch(0.48 0.03 262 / 0.7);
+  background: oklch(0.14 0.013 262 / 0.7); color: var(--ink-muted);
+  font-family: var(--font-display); font-size: 12.5px; letter-spacing: 0.15em; cursor: pointer;
+  opacity: 0; pointer-events: none; transition: all 0.4s var(--ease-sharp) 0.5s;
+}
+.cs-scene.inner .cs-back { opacity: 1; pointer-events: auto; }
+.cs-back:hover { border-color: var(--candle-gold); color: var(--candle-gold); }
+.cs-hint {
+  position: absolute; z-index: 7; left: 50%; bottom: 12px; transform: translateX(-50%);
+  font-size: 11.5px; color: oklch(0.65 0.015 262 / 0.85); letter-spacing: 0.1em;
+  background: oklch(0.14 0.013 262 / 0.6); padding: 4px 14px; border-radius: 20px;
+  pointer-events: none; transition: opacity 0.4s var(--ease-sharp);
+}
+.cs-scene.inner .cs-hint { opacity: 0; }
+.cs-hint b { color: var(--candle-gold); font-weight: 600; }
+
+.cultivate-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .cultivate-grid { grid-template-columns: 1fr; } }
+
+.cs-feedback { min-height: 20px; text-align: center; font-size: 12.5px; color: var(--ink-muted); margin-top: 6px; }
+
+/* 全局 reduced-motion 降级只作用于 animation/transition，对 <video> 无效，
+   组件内另有 pause；此处补齐视频以外的活动元素。 */
+@media (prefers-reduced-motion: reduce) {
+  .cs-liquid, .cs-void-qi i, .cs-star.actionable { animation: none !important; }
+}
+
 /* ===== 受伤系统 =====
    原型 docs/design/injury-prototype.html；DESIGN.md「严重度指示器 severity-meter」 */
 

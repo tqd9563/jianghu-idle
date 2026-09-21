@@ -67,7 +67,8 @@ describe('周天年轮 · 外圈经脉与窍穴（design.md §3.2）', () => {
     expect(REALM_ACUPOINTS[3].meridians).toHaveLength(MAX_SLOTS - 1);
     const locked = m.slots.filter(s => s.locked);
     expect(locked).toHaveLength(1);
-    expect(locked[0]).toMatchObject({ name: '经脉·丙', unlockRealm: 5 });
+    // 不硬编码脉名：名称属内容，迁移窍穴或改名不应弄挂结构性断言
+    expect(locked[0]).toMatchObject({ name: REALM_ACUPOINTS[5].meridians[2].name, unlockRealm: 5 });
   });
 
   it('境界 5 满配：3 脉全解锁、8 穴全可见、无锁定占位', () => {

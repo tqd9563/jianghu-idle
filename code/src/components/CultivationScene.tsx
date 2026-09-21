@@ -53,7 +53,12 @@ export function CultivationScene(): JSX.Element | null {
 
   const onAttempt = (m: SceneMeridian, star: SceneStar): void => {
     if (star.state !== 'actionable') {
-      if (star.state === 'dim') setFeedback('冲穴机会不足 · 运转周天获取');   // 冻结文案 §1
+      // 文案按周天是否圆满分流：已圆满时再运转无用，须突破（冻结文案 §1 v1.1）
+      if (star.state === 'dim') {
+        setFeedback(model.segmentsFull >= model.zhoutianCount
+          ? '冲穴机会已尽 · 突破后再来'
+          : '冲穴机会不足 · 运转周天获取');
+      }
       return;
     }
     const before = useGameStore.getState().acupointProgress?.[star.id] ?? { failCount: 0, opened: false };

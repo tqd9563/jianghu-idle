@@ -1020,6 +1020,30 @@ html[data-theme='pomo'] body {
 .cultivate-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
 @media (max-width: 900px) { .cultivate-grid { grid-template-columns: 1fr; } }
 
+/* 修炼页三块的落位：底图占左栏（跨两行，视觉主体），右栏自上而下为伤势与属性表。
+   原先按 DOM 顺序自动流，底图被推到右栏、左栏留白、属性表掉到底部。 */
+.cultivate-grid > .cs-panel { grid-column: 1; grid-row: 1 / span 2; }
+.cultivate-grid > .wound-panel { grid-column: 2; grid-row: 1; }
+.cultivate-grid > .attr-panel { grid-column: 2; grid-row: 2; }
+@media (max-width: 900px) {
+  .cultivate-grid > .cs-panel,
+  .cultivate-grid > .wound-panel,
+  .cultivate-grid > .attr-panel { grid-column: 1; grid-row: auto; }
+}
+
+/* 底图周边去重边框：内景本身是演出，硬框会把它切成「控件」（DESIGN.md Midnight Rule
+   已为内景场景整场授权发光，容器则相应收敛） */
+.cultivate-grid > .cs-panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.cultivate-grid > .cs-panel > .panel-head {
+  border-bottom: 0;
+  background: transparent;
+}
+
 .cs-feedback { min-height: 20px; text-align: center; font-size: 12.5px; color: var(--ink-muted); margin-top: 6px; }
 
 /* 全局 reduced-motion 降级只作用于 animation/transition，对 <video> 无效，

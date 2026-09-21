@@ -7,7 +7,7 @@ import {
   breakthroughReady, totalAcupointBonus, acupointBonus, meridianBonus,
   isMeridianComplete, consumeQishi, openedInRealm, qishiToBonus,
   BASE_P, FAIL_BONUS_PP, QISHI_CAP_PP,
-  type AcupointState,
+  type AcupointState, grantQishi, QISHI_FULL
 } from './acupoints';
 
 describe('冲穴成功率（spec §4：p=85% + 失败×10pp + 第3次必成）', () => {
@@ -182,5 +182,23 @@ describe('openedInRealm · 突破 M 条件按境界计（design.md §4，对齐 
       expect(meridians.flatMap(m => m.acupointIds).sort())
         .toEqual(acupoints.map(a => a.id).sort());
     }
+  });
+});
+
+describe('气势来源与封顶（design.md 裁决 D5）', () => {
+  it('周天圆满赠 +40', () => {
+    expect(grantQishi(0)).toBe(40);
+    expect(grantQishi(40)).toBe(80);
+  });
+
+  it('封顶于满档，不再无上限累积', () => {
+    expect(grantQishi(80)).toBe(QISHI_FULL);
+    expect(grantQishi(QISHI_FULL)).toBe(QISHI_FULL);
+  });
+
+  it('封顶后「消耗 70%」才真的降得下来（旧实现的 596 会让消耗形同虚设）', () => {
+    const afterOne = consumeQishi(QISHI_FULL);
+    expect(afterOne).toBeCloseTo(30, 6);
+    expect(qishiToBonus(afterOne)).toBeLessThan(QISHI_CAP_PP);  // 消耗后确实掉出满档加成
   });
 });

@@ -109,6 +109,17 @@ describe('周天年轮 · 外圈经脉与窍穴（design.md §3.2）', () => {
     expect(ready.statusText).toBe('冲穴机会 2 · 点亮窍穴以行气冲穴');
   });
 
+  it('机会耗尽的文案按周天是否圆满分流——圆满时不能再指向「运转周天」（冻结文案 §1 v1.1）', () => {
+    const cost = REALMS[2].breakthroughCost!;
+    // 周天未圆满：继续运转确实能得机会
+    const midway = buildMandalaModel(at(2, { chongxueChances: 0, dantian: cost * 0.4 }))!;
+    expect(midway.statusText).toBe('冲穴机会不足 · 运转周天获取');
+
+    // 周天已全数圆满：再运转也不会有新机会，唯一出路是突破
+    const full = buildMandalaModel(at(2, { chongxueChances: 0, dantian: cost }))!;
+    expect(full.statusText).toBe('冲穴机会已尽 · 突破后再来');
+  });
+
   it('已通窍穴不再可冲；失败累积推高该穴成功率（+10pp/次）', () => {
     const [a1, a2] = REALM_ACUPOINTS[2].acupoints;
     const m = buildMandalaModel(at(2, {

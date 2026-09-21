@@ -143,7 +143,10 @@ export function buildMandalaModel(s: MandalaInput): MandalaModel | null {
     chances: s.chongxueChances,
     statusText: s.chongxueChances > 0
       ? `冲穴机会 ${s.chongxueChances} · 点亮窍穴以行气冲穴`
-      : '冲穴机会不足 · 运转周天获取',                                  // 冻结文案 §1
+      // 周天已圆满时再运转也不会有新机会，唯一出路是突破——文案须分流（冻结文案 §1 v1.1）
+      : p.ready
+        ? '冲穴机会已尽 · 突破后再来'
+        : '冲穴机会不足 · 运转周天获取',
   };
 }
 

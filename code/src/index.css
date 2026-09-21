@@ -1027,3 +1027,77 @@ html[data-theme='pomo'] body {
 @media (prefers-reduced-motion: reduce) {
   .cs-liquid, .cs-void-qi i, .cs-star.actionable { animation: none !important; }
 }
+
+/* ===== 受伤系统 =====
+   原型 docs/design/injury-prototype.html；DESIGN.md「严重度指示器 severity-meter」 */
+
+/* 顶栏伤势指示器 */
+.wound-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 11px;
+  font-family: inherit; color: inherit;
+  /* 顶栏横向排布，不被 res-group 的 margin-left:auto 挤压换行 */
+  white-space: nowrap; flex-shrink: 0;
+}
+button.wound-chip { cursor: pointer; transition: border-color .15s; }
+button.wound-chip:hover { border-color: var(--line-strong); }
+.wound-chip.healthy { color: var(--faint); }
+.wound-chip .wlabel { font-size: 11px; letter-spacing: 0.05em; color: var(--faint); }
+.wound-chip .wname { font-size: 13px; font-weight: 600; }
+.wound-chip .wmain { display: inline-flex; align-items: center; gap: 6px; }
+.wound-chip .wcount { font-size: 11px; color: var(--muted); }
+
+/* 严重度三格条：颜色 + 格数 + 文字三重编码（DESIGN.md 不以颜色为唯一区分）。
+   空格必须可见，否则数不出「三格里填了几格」。 */
+.sev { display: inline-flex; gap: 2px; align-items: center; }
+.sev i { width: 4px; height: 11px; border-radius: 1px; background: oklch(0.36 0.02 262); display: block; }
+.sev.s1 i:nth-child(1),
+.sev.s2 i:nth-child(-n+2),
+.sev.s3 i { background: currentColor; }
+.t-wai { color: var(--hp); }
+.t-nei { color: var(--inner); }
+.t-du  { color: var(--poison); }
+
+/* 带伤时顶栏速率转血褐——修炼变慢是第一眼可见的代价 */
+.res .rate.down { color: var(--hp); }
+
+/* 伤势详情面板 */
+.wound-panel > header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+}
+.wound-panel > header h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.wound-panel > header .hint { margin-left: auto; font-size: 11px; color: var(--ink-faint); }
+.wound-panel > .body { padding: 12px 14px; }
+/* 无伤时收成一行，不占三行空位 */
+.wound-panel.healthy > header { border-bottom: 0; }
+.wound-panel .wrow { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
+.wound-panel .wrow + .wrow { border-top: 1px solid var(--line); }
+.wound-panel .wtype { display: flex; align-items: center; gap: 8px; min-width: 118px; }
+.wound-panel .wtype .nm { font-size: 14px; font-weight: 600; }
+.wound-panel .weff { flex: 1; font-size: 12px; color: var(--muted); }
+.wound-panel .weff b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wound-panel .wheal { text-align: right; min-width: 104px; }
+.wound-panel .wheal .t { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wound-panel .wheal .l { font-size: 11px; color: var(--faint); }
+.wound-panel .wrow.none .wtype .nm,
+.wound-panel .wrow.none .weff { color: var(--faint); }
+
+.wound-panel .healbar {
+  height: 2px; background: var(--bar-track); border-radius: 1px;
+  margin-top: 5px; overflow: hidden;
+}
+.wound-panel .healbar i { display: block; height: 100%; background: currentColor; opacity: .7; }
+
+/* 来源分解（账台精神：每笔压制可核对） */
+.wound-panel .breakdown { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.wound-panel .breakdown .bt {
+  font-size: 11px; color: var(--faint); letter-spacing: 0.05em; margin-bottom: 6px;
+}
+.wound-panel .brow { display: flex; font-size: 12px; padding: 3px 0; }
+.wound-panel .brow .k { color: var(--muted); }
+.wound-panel .brow .v { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; }
+.wound-panel .brow .v.neg { color: var(--hp); }
+.wound-panel .brow.total { border-top: 1px solid var(--line); margin-top: 5px; padding-top: 6px; }
+.wound-panel .brow.total .k { color: var(--ink); font-weight: 600; }

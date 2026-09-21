@@ -1,4 +1,6 @@
 /** 修炼页 —— 原型场景 1/3 修炼页签的 1:1 实现（资产负债表：权威源） */
+import { WoundPanel } from '../components/WoundPanel';
+import { freshInjuries } from '../engine/injury';
 import { computeAttributes } from '../engine/attributes';
 import { REALMS } from '../engine/content';
 import { CHARGE_SEGMENTS } from '../engine/formulas';
@@ -41,6 +43,7 @@ export function CultivatePane() {
 
   return (
     <div className="pane-wrap pane-grid cultivate-grid">
+      <WoundPanel injuries={s.injuries ?? freshInjuries()} realm={s.realm} />
       <section className="panel">
         {nextRealm ? (
           <>

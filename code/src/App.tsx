@@ -8,6 +8,8 @@ import { REALMS } from './engine/content';
 import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
 import { CHARGE_SEGMENTS, zhoutianProgress } from './engine/formulas';
 import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore } from './store/gameStore';
+import { WoundChip } from './components/WoundChip';
+import { freshInjuries, isHurt } from './engine/injury';
 import { SkinPicker } from './components/SkinPicker';
 import { applyDebugHash } from './debug';
 import { BattlePane } from './panes/BattlePane';
@@ -125,11 +127,15 @@ export default function App() {
             归隐<span className={`retire-dot ${retire}`} />
           </button>
         )}
+        <WoundChip injuries={s.injuries ?? freshInjuries()} onClick={() => setTab('cultivate')} />
         <div className="res-group">
           <div className="res">
             <span className="label">内力</span>
             <span className="value">{fmt(s.dantian)}</span>
-            <span className="rate">+{rate.toFixed(1)} / 秒</span>
+            {/* 带伤时速率转血褐——修炼变慢是第一眼就能看见的代价（原型 §1） */}
+            <span className={`rate${isHurt(s.injuries ?? freshInjuries()) ? ' down' : ''}`}>
+              +{rate.toFixed(1)} / 秒
+            </span>
           </div>
           <div className="res"><span className="label">银两</span><span className="value">{fmt(s.silver)}</span></div>
           <div className="res"><span className="label">阅历</span><span className="value">{fmt(s.xp)}</span></div>

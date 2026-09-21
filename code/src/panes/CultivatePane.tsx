@@ -40,7 +40,7 @@ export function CultivatePane() {
   const routeDef = s.route ? ROUTES[s.route] : null;
 
   return (
-    <div className="pane-wrap">
+    <div className="pane-wrap pane-grid cultivate-grid">
       <section className="panel">
         {nextRealm ? (
           <>

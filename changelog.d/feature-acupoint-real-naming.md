@@ -29,3 +29,8 @@
 ### 修复（修炼面板落地）
 
 - **reduced-motion 对 `<video>` 无效**：`index.css` 的全局降级只把 animation/transition 压到 0.01ms，视频会照播。组件内显式 `pause()` 并回落到 poster 静帧，另补 CSS 关闭液面波与星曜脉动。Playwright 实测：`no-preference` 下 `paused=false`，`reduce` 下 `paused=true`。
+
+### 变更（修炼页布局）
+
+- **修炼页改双栏**：左栏运转周天（含修炼面板），右栏人物属性表，沿用既有 `.pane-grid`，窄屏（≤900px）仍回落单栏。
+- **修炼面板去硬框**：移除场景的 1px 边框与底色，改由人影底图与墨渊背景做四边线性淡出（两道遮罩取交集，上下比左右淡得更多），人影从面板底色里浮出而不是贴上去的一张图。

@@ -57,65 +57,79 @@ export interface AttemptResult {
 // 窍穴池与经脉分组数据（spec §3）
 // ─────────────────────────────────────────────────────────────
 
-/** 各境界窍穴池与经脉分组（境界 2–5；境界 1/6/7 不接入本版） */
+/**
+ * 各境界窍穴池与经脉分组（境界 2–5；境界 1/6/7 不接入本版）。
+ *
+ * 名称取真实经络：窍穴的经脉归属、穴位在经上的位置均与中医经络学一致。
+ * 次第为手 → 足 → 任 → 督，境界 5 任督俱通即小周天圆满，与 design.md
+ * 「小周天段止于境界 5」吻合；大周天（境界 6–8）见 design.md §7 敞口。
+ * 手太阴肺经预留给境界 1 教学脉（design.md §3.2 v3.0 已定、代码未接入）。
+ *
+ * 奇经八脉除任督外无专属穴位，冲脉/带脉列出的是其交会穴（分属肾经、胆经），
+ * 这是经络学事实而非简化。
+ *
+ * **id 与位置解耦**：id 取穴位本身的拼音，不编码境界与脉序。调整窍穴所属境界、
+ * 或改动脉内顺序时 id 不变，存档（acupointProgress / acupointLog 皆按 id 存）
+ * 无需迁移；只有真正新增/删除窍穴才需要动存档。
+ */
 export const REALM_ACUPOINTS: Record<number, {
   acupoints: AcupointDef[];
   meridians: MeridianDef[];
 }> = {
   2: {
     acupoints: [
-      { id: 'r2-a11', name: '窍穴·甲一', meridianId: 'r2-m1' },
-      { id: 'r2-a12', name: '窍穴·甲二', meridianId: 'r2-m1' },
-      { id: 'r2-a21', name: '窍穴·乙一', meridianId: 'r2-m2' },
-      { id: 'r2-a22', name: '窍穴·乙二', meridianId: 'r2-m2' },
+      { id: 'quchi',   name: '曲池', meridianId: 'shouyangming' },
+      { id: 'hegu',    name: '合谷', meridianId: 'shouyangming' },
+      { id: 'shaohai', name: '少海', meridianId: 'shoushaoyin' },
+      { id: 'shenmen', name: '神门', meridianId: 'shoushaoyin' },
     ],
     meridians: [
-      { id: 'r2-m1', name: '经脉·甲', acupointIds: ['r2-a11', 'r2-a12'] },
-      { id: 'r2-m2', name: '经脉·乙', acupointIds: ['r2-a21', 'r2-a22'] },
+      { id: 'shouyangming', name: '手阳明', acupointIds: ['quchi', 'hegu'] },
+      { id: 'shoushaoyin',  name: '手少阴', acupointIds: ['shaohai', 'shenmen'] },
     ],
   },
   3: {
     acupoints: [
-      { id: 'r3-a11', name: '窍穴·甲一', meridianId: 'r3-m1' },
-      { id: 'r3-a12', name: '窍穴·甲二', meridianId: 'r3-m1' },
-      { id: 'r3-a13', name: '窍穴·甲三', meridianId: 'r3-m1' },
-      { id: 'r3-a21', name: '窍穴·乙一', meridianId: 'r3-m2' },
-      { id: 'r3-a22', name: '窍穴·乙二', meridianId: 'r3-m2' },
+      { id: 'futu',      name: '伏兔',   meridianId: 'zuyangming' },
+      { id: 'zusanli',   name: '足三里', meridianId: 'zuyangming' },
+      { id: 'fenglong',  name: '丰隆',   meridianId: 'zuyangming' },
+      { id: 'xuehai',    name: '血海',   meridianId: 'zutaiyin' },
+      { id: 'sanyinjiao', name: '三阴交', meridianId: 'zutaiyin' },
     ],
     meridians: [
-      { id: 'r3-m1', name: '经脉·甲', acupointIds: ['r3-a11', 'r3-a12', 'r3-a13'] },
-      { id: 'r3-m2', name: '经脉·乙', acupointIds: ['r3-a21', 'r3-a22'] },
+      { id: 'zuyangming', name: '足阳明', acupointIds: ['futu', 'zusanli', 'fenglong'] },
+      { id: 'zutaiyin',   name: '足太阴', acupointIds: ['xuehai', 'sanyinjiao'] },
     ],
   },
   4: {
     acupoints: [
-      { id: 'r4-a11', name: '窍穴·甲一', meridianId: 'r4-m1' },
-      { id: 'r4-a12', name: '窍穴·甲二', meridianId: 'r4-m1' },
-      { id: 'r4-a13', name: '窍穴·甲三', meridianId: 'r4-m1' },
-      { id: 'r4-a21', name: '窍穴·乙一', meridianId: 'r4-m2' },
-      { id: 'r4-a22', name: '窍穴·乙二', meridianId: 'r4-m2' },
-      { id: 'r4-a23', name: '窍穴·乙三', meridianId: 'r4-m2' },
+      { id: 'guanyuan', name: '关元', meridianId: 'renmai' },
+      { id: 'qihai',    name: '气海', meridianId: 'renmai' },
+      { id: 'danzhong', name: '膻中', meridianId: 'renmai' },
+      { id: 'yongquan', name: '涌泉', meridianId: 'zushaoyin' },
+      { id: 'taixi',    name: '太溪', meridianId: 'zushaoyin' },
+      { id: 'fuliu',    name: '复溜', meridianId: 'zushaoyin' },
     ],
     meridians: [
-      { id: 'r4-m1', name: '经脉·甲', acupointIds: ['r4-a11', 'r4-a12', 'r4-a13'] },
-      { id: 'r4-m2', name: '经脉·乙', acupointIds: ['r4-a21', 'r4-a22', 'r4-a23'] },
+      { id: 'renmai',    name: '任脉',   acupointIds: ['guanyuan', 'qihai', 'danzhong'] },
+      { id: 'zushaoyin', name: '足少阴', acupointIds: ['yongquan', 'taixi', 'fuliu'] },
     ],
   },
   5: {
     acupoints: [
-      { id: 'r5-a11', name: '窍穴·甲一', meridianId: 'r5-m1' },
-      { id: 'r5-a12', name: '窍穴·甲二', meridianId: 'r5-m1' },
-      { id: 'r5-a13', name: '窍穴·甲三', meridianId: 'r5-m1' },
-      { id: 'r5-a21', name: '窍穴·乙一', meridianId: 'r5-m2' },
-      { id: 'r5-a22', name: '窍穴·乙二', meridianId: 'r5-m2' },
-      { id: 'r5-a23', name: '窍穴·乙三', meridianId: 'r5-m2' },
-      { id: 'r5-a31', name: '窍穴·丙一', meridianId: 'r5-m3' },
-      { id: 'r5-a32', name: '窍穴·丙二', meridianId: 'r5-m3' },
+      { id: 'mingmen', name: '命门', meridianId: 'dumai' },
+      { id: 'dazhui',  name: '大椎', meridianId: 'dumai' },
+      { id: 'baihui',  name: '百会', meridianId: 'dumai' },
+      { id: 'henggu',  name: '横骨', meridianId: 'chongmai' },
+      { id: 'dahe',    name: '大赫', meridianId: 'chongmai' },
+      { id: 'youmen',  name: '幽门', meridianId: 'chongmai' },
+      { id: 'wushu',   name: '五枢', meridianId: 'daimai' },
+      { id: 'weidao',  name: '维道', meridianId: 'daimai' },
     ],
     meridians: [
-      { id: 'r5-m1', name: '经脉·甲', acupointIds: ['r5-a11', 'r5-a12', 'r5-a13'] },
-      { id: 'r5-m2', name: '经脉·乙', acupointIds: ['r5-a21', 'r5-a22', 'r5-a23'] },
-      { id: 'r5-m3', name: '经脉·丙', acupointIds: ['r5-a31', 'r5-a32'] },
+      { id: 'dumai',    name: '督脉', acupointIds: ['mingmen', 'dazhui', 'baihui'] },
+      { id: 'chongmai', name: '冲脉', acupointIds: ['henggu', 'dahe', 'youmen'] },
+      { id: 'daimai',   name: '带脉', acupointIds: ['wushu', 'weidao'] },
     ],
   },
 };
@@ -169,6 +183,22 @@ export function attemptAcupoint(
 // ─────────────────────────────────────────────────────────────
 
 /** 突破双条件：丹田充满 且 已通窍穴数 ≥ M */
+/**
+ * 本境界已通窍穴数。
+ *
+ * 突破的 M 条件按**境界**计，不跨境界累计——`sim.py` 的 P(≥M) 验算即按
+ * 「每境界重建 pool、N 次机会、判 successes ≥ M」建模（design.md §3.2/§4）。
+ * 加成口径与此不同：窍穴加成保留至归隐，按全局累计（design.md §5 D1 裁决）。
+ */
+export function openedInRealm(
+  realm: number,
+  progress: Record<string, AcupointState>
+): number {
+  const data = REALM_ACUPOINTS[realm];
+  if (!data) return 0;
+  return data.acupoints.reduce((n, a) => n + (progress[a.id]?.opened ? 1 : 0), 0);
+}
+
 export function breakthroughReady(
   dantianNeili: number,
   breakthroughCost: number,

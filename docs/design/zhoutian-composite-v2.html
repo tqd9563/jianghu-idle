@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 修炼面板 v2（外视/内视跳转式） — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.75 0.015 85);
+  --faint: oklch(0.65 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --gold: oklch(0.76 0.13 78);
+  --gold-hi: oklch(0.85 0.15 78);
+  --gold-ink: oklch(0.18 0.03 78);
+  --cyan: oklch(0.74 0.10 215);
+  --cinnabar: oklch(0.62 0.19 32);
+  --bar-track: oklch(0.28 0.018 262);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 40px;
+}
+.serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+.scene-note {
+  padding: 10px 24px; background: oklch(0.19 0.015 262);
+  border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--cyan); letter-spacing: 0.05em; }
+
+.panelbar {
+  display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+  padding: 10px 24px; border-bottom: 1px solid var(--line); background: var(--surface);
+}
+.grp { display: flex; gap: 6px; align-items: center; }
+.grp .lbl { font-size: 11px; color: var(--faint); letter-spacing: 0.06em; }
+.grp button {
+  padding: 3px 11px; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.grp button.on { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); font-weight: 600; }
+.grp button:hover:not(.on) { border-color: var(--cyan); color: var(--ink); }
+input[type=range] { width: 150px; accent-color: oklch(0.76 0.13 78); }
+
+.stage {
+  max-width: 1060px; margin: 0 auto; padding: 24px 24px 0;
+  display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 24px; align-items: start;
+}
+@media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
+
+/* ═══════ 场景：外视 ⇄ 内视 ═══════ */
+.scene {
+  position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  aspect-ratio: 4 / 5; background: oklch(0.12 0.012 262);
+  box-shadow: 0 4px 24px oklch(0.05 0.01 262 / 0.6);
+}
+
+/* —— 外视：人影全景 —— */
+.backdrop {
+  position: absolute; inset: 0; z-index: 1;
+  background: url('../art-explore/figure-base-dark.png') center 28% / cover no-repeat;
+  filter: brightness(var(--bd-bright, 0.62)) saturate(0.9);
+  transform-origin: 50% 64%;
+  transition: transform 1s var(--ease), opacity 1s var(--ease), filter 1s var(--ease);
+}
+/* 内视：镜头扎进丹田——人影放大穿过、隐去 */
+.scene.inner .backdrop { transform: scale(2.9); opacity: 0.12; filter: brightness(0.35) blur(5px); }
+
+.scene::before { /* 罡气 */
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(52% 40% at 50% 46%, oklch(0.76 0.13 78 / 0.24), transparent 72%);
+  opacity: var(--aura, 0); transition: opacity 1s var(--ease); mix-blend-mode: screen;
+}
+.scene.inner::before { opacity: 0; }
+
+@keyframes qi-flow { to { stroke-dashoffset: -96; } }
+.figure-veins { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; transition: opacity 0.7s var(--ease); }
+.scene.inner .figure-veins { opacity: 0; }
+.vein {
+  fill: none; stroke: var(--gold); stroke-width: 16; stroke-linecap: round;
+  filter: blur(10px); opacity: 0; stroke-dasharray: 30 74;
+  animation: qi-flow var(--qi-speed, 3s) linear infinite;
+  transition: opacity 0.8s var(--ease);
+}
+.vein.lit { opacity: var(--qi-op, 0.4); }
+.paused .vein { animation-play-state: paused; }
+
+/* —— 内视：墨渊背景 —— */
+.inkbg {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(70% 55% at 50% 42%, transparent 30%, oklch(0.08 0.012 262 / 0.85) 85%),
+    radial-gradient(40% 30% at 24% 78%, oklch(0.20 0.02 262 / 0.5), transparent 70%),
+    radial-gradient(36% 26% at 78% 20%, oklch(0.19 0.02 262 / 0.45), transparent 70%),
+    oklch(0.105 0.012 262);
+  transition: opacity 1s var(--ease);
+}
+.scene.inner .inkbg { opacity: 1; }
+
+/* —— 丹田：外视=小光珠（点击入内视），内视=大器皿 —— */
+.vessel {
+  position: absolute; z-index: 4;
+  left: 50%; top: 64%; width: 62%; aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0.16);
+  border-radius: 50%; overflow: hidden;
+  background: radial-gradient(closest-side, oklch(0.10 0.012 262 / 0.6), oklch(0.12 0.013 262 / 0.78) 78%, oklch(0.20 0.017 262 / 0.9) 96%);
+  box-shadow:
+    inset 0 0 40px oklch(0.05 0.01 262 / 0.7),
+    0 0 0 1px oklch(0.48 0.03 262 / 0.5),
+    0 0 90px 30px oklch(0.76 0.13 78 / var(--vessel-glow, 0.2));
+  cursor: pointer;
+  transition: transform 1s var(--ease), top 1s var(--ease), box-shadow 0.6s var(--ease);
+}
+.scene.inner .vessel {
+  top: 50%; transform: translate(-50%, -50%) scale(1); cursor: default;
+  box-shadow:
+    inset 0 0 40px oklch(0.05 0.01 262 / 0.7),
+    0 0 0 1px oklch(0.48 0.03 262 / 0.5),
+    0 0 46px 6px oklch(0.76 0.13 78 / var(--vessel-glow, 0.2));
+}
+/* 外视 hover：光珠微涨，暗示可点 */
+.scene:not(.inner) .vessel:hover { transform: translate(-50%, -50%) scale(0.19); }
+/* 空腔气雾：只在液面以上显影——未满的部分是「氤氲待聚的气」，不是黑洞 */
+.void-qi {
+  position: absolute; inset: 0; pointer-events: none;
+  clip-path: inset(0 0 calc(100% - var(--empty, 60%)) 0);
+  transition: clip-path 0.35s var(--ease);
+}
+.void-qi i {
+  position: absolute; border-radius: 50%; display: block;
+  background: radial-gradient(closest-side, oklch(0.60 0.07 78 / 0.30), transparent 72%);
+  filter: blur(7px); mix-blend-mode: screen;
+}
+.void-qi i:nth-child(1) { width: 62%; height: 40%; left: 4%;  top: 16%; animation: qi-drift-a 11s ease-in-out infinite; }
+.void-qi i:nth-child(2) { width: 50%; height: 34%; left: 42%; top: 34%; animation: qi-drift-b 14s ease-in-out infinite; }
+.void-qi i:nth-child(3) { width: 40%; height: 26%; left: 22%; top: 6%;  animation: qi-drift-a 17s ease-in-out infinite reverse; }
+@keyframes qi-drift-a {
+  0%, 100% { transform: translate(0, 0); opacity: 0.55; }
+  50%      { transform: translate(9%, -7%); opacity: 1; }
+}
+@keyframes qi-drift-b {
+  0%, 100% { transform: translate(0, 0); opacity: 0.9; }
+  50%      { transform: translate(-11%, 6%); opacity: 0.45; }
+}
+.paused .void-qi i { animation-play-state: paused; }
+
+.liquid {
+  position: absolute; inset: 0;
+  clip-path: inset(var(--empty, 60%) 0 0 0);
+  transition: clip-path 0.35s var(--ease);
+}
+.liquid video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transform: translateY(calc(var(--empty, 60%) / 2)) scale(1.5);
+  transition: transform 0.35s var(--ease);
+}
+.surface-line {
+  position: absolute; left: 5%; right: 5%; top: var(--empty, 60%);
+  height: 2px; border-radius: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.85 0.15 78 / 0.8), transparent);
+  transition: top 0.35s var(--ease); pointer-events: none;
+}
+.vessel .flash {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, oklch(0.85 0.15 78 / 0.75), transparent 72%);
+  opacity: 0;
+}
+.vessel.seal .flash { animation: seal-flash 0.9s var(--ease); }
+@keyframes seal-flash { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+.vessel.seal .liquid { transition: clip-path 0.8s var(--ease); }
+
+.vessel-read {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 5; text-align: center; pointer-events: none; opacity: 0;
+  text-shadow: 0 1px 8px oklch(0.05 0.01 262 / 0.9);
+  transition: opacity 0.6s var(--ease) 0.5s;
+}
+.scene.inner .vessel-read { opacity: 1; }
+.vessel-read .n { font-size: 24px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.vessel-read .d { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; margin-top: 1px; }
+
+/* —— 内视器物层：周天珠 + 朱砂窍穴（无几何硬弧） —— */
+.ring {
+  position: absolute; inset: 0; z-index: 6; width: 100%; height: 100%;
+  opacity: 0; pointer-events: none; transition: opacity 0.7s var(--ease) 0.45s;
+}
+.scene.inner .ring { opacity: 1; pointer-events: auto; }
+
+/* 周天珠：一串念珠记段数，无轨道线 */
+.bead { fill: oklch(0.30 0.02 262); stroke: oklch(0.48 0.03 262 / 0.6); stroke-width: 1; transition: all 0.4s var(--ease); }
+.bead.paid { fill: var(--gold); stroke: var(--gold-hi); filter: drop-shadow(0 0 5px oklch(0.76 0.13 78 / 0.8)); }
+.bead.now { stroke: var(--gold); stroke-width: 1.5; }
+
+/* 窍穴：墨点为基，朱砂为可点，金为已通；晕光靠 blur 副本 */
+.acu-halo { fill: var(--gold); filter: blur(9px); opacity: 0; transition: opacity 0.4s var(--ease); pointer-events: none; }
+.acu-dot.opened + .acu-halo, .acu-halo.opened { opacity: 0.75; }
+.acu-dot {
+  fill: oklch(0.32 0.02 262); stroke: none;
+  transition: fill 0.3s var(--ease);
+}
+.acu-dot.opened { fill: var(--gold-hi); }
+.acu-dot.actionable { fill: var(--cinnabar); cursor: pointer; animation: cinnabar-pulse 1.8s ease-in-out infinite; }
+@keyframes cinnabar-pulse {
+  0%, 100% { opacity: 0.75; } 50% { opacity: 1; }
+}
+.acu-name {
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 13px; fill: var(--faint); pointer-events: none; letter-spacing: 0.12em;
+}
+.acu-name.opened { fill: var(--gold); }
+.acu-name.actionable { fill: oklch(0.78 0.10 40); }
+.m-label {
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 12px; fill: oklch(0.55 0.015 262); letter-spacing: 0.3em;
+}
+.m-grp.through .m-label { fill: var(--gold); }
+/* 贯通：不画弧线，给整条经脉的窍穴区一团柔光 */
+.m-glow { fill: var(--gold); filter: blur(26px); opacity: 0; transition: opacity 0.8s var(--ease); pointer-events: none; }
+.m-grp.through .m-glow { opacity: 0.22; }
+@keyframes acu-pop { 0% { r: 6; } 45% { r: 12; } 100% { r: 6; } }
+.acu-dot.just { animation: acu-pop 0.6s var(--ease); }
+
+/* 内视图例：珠/穴语义自解释 */
+.legend {
+  position: absolute; z-index: 7; left: 14px; bottom: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; color: oklch(0.62 0.015 262); letter-spacing: 0.08em;
+  background: oklch(0.13 0.013 262 / 0.66); padding: 8px 12px; border-radius: 8px;
+  border: 1px solid oklch(0.32 0.02 262 / 0.6);
+  opacity: 0; pointer-events: none; transition: opacity 0.6s var(--ease) 0.55s;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+}
+.scene.inner .legend { opacity: 1; }
+.legend li { display: flex; align-items: center; gap: 7px; list-style: none; }
+.legend .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.legend .sw.bead-on  { background: var(--gold); box-shadow: 0 0 5px oklch(0.76 0.13 78 / 0.8); }
+.legend .sw.bead-off { background: oklch(0.30 0.02 262); border: 1px solid oklch(0.48 0.03 262 / 0.6); }
+.legend .sw.acu-red  { background: var(--cinnabar); }
+.legend .sw.acu-gold { background: var(--gold-hi); box-shadow: 0 0 5px oklch(0.76 0.13 78 / 0.8); }
+.legend .sw.acu-ink  { background: oklch(0.32 0.02 262); }
+
+/* 收功（返回外视） */
+.btn-back {
+  position: absolute; z-index: 7; top: 14px; left: 14px;
+  padding: 5px 14px; border-radius: 6px; border: 1px solid oklch(0.48 0.03 262 / 0.7);
+  background: oklch(0.14 0.013 262 / 0.7); color: var(--muted); font-size: 12.5px; cursor: pointer;
+  opacity: 0; pointer-events: none; transition: all 0.4s var(--ease) 0.5s;
+  font-family: "Songti SC", "STSong", "SimSun", serif; letter-spacing: 0.15em;
+}
+.scene.inner .btn-back { opacity: 1; pointer-events: auto; }
+.btn-back:hover { border-color: var(--gold); color: var(--gold); }
+
+/* 外视角标提示 */
+.outer-hint {
+  position: absolute; z-index: 7; left: 50%; bottom: 14px; transform: translateX(-50%);
+  font-size: 11.5px; color: oklch(0.65 0.015 262 / 0.85); letter-spacing: 0.1em;
+  background: oklch(0.14 0.013 262 / 0.6); padding: 4px 14px; border-radius: 20px;
+  pointer-events: none; transition: opacity 0.4s var(--ease);
+}
+.scene.inner .outer-hint { opacity: 0; }
+.outer-hint b { color: var(--gold); font-weight: 600; }
+
+/* ═══════ 右侧 ═══════ */
+.readout { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.card h3 { font-size: 12px; color: var(--faint); font-weight: 600; letter-spacing: 0.1em; margin-bottom: 10px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 13px; }
+.row .k { color: var(--faint); }
+.row .v { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.row .v.gold { color: var(--gold); }
+.row .v.cyan { color: var(--cyan); }
+.mini-bar { height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; margin-top: 4px; }
+.mini-bar > i { display: block; height: 100%; background: var(--cyan); transition: width 0.3s var(--ease); }
+.hint { font-size: 11.5px; color: var(--faint); line-height: 1.6; margin-top: 8px; }
+.act {
+  width: 100%; padding: 9px; border-radius: 6px; border: 1px solid var(--gold);
+  background: transparent; color: var(--gold); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s var(--ease); margin-top: 10px;
+}
+.act:enabled:hover { background: var(--gold); color: var(--gold-ink); }
+.act:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--line-strong); color: var(--faint); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(14px);
+  background: oklch(0.26 0.018 262); border: 1px solid var(--gold); color: var(--gold);
+  padding: 9px 22px; border-radius: 8px; font-size: 13.5px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: all 0.4s var(--ease); z-index: 50;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.fail { border-color: oklch(0.64 0.17 25); color: oklch(0.70 0.15 25); }
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型说明</b> ·
+  v2 改跳转式：默认<b>外视</b>（人影全景，丹田处一颗光珠 = 缩小的液体视频，亮度/液位可感知），
+  点丹田光珠<b>内视</b>——镜头扎进丹田，器皿放大铺开；点「收功」返回。
+  内视器物层去几何化：段进度改<b>周天珠串</b>，窍穴改<b>朱砂点 + 晕光 + 宋体名</b>，贯通用柔光不用硬弧。
+</div>
+
+<div class="panelbar">
+  <div class="grp">
+    <span class="lbl">境界</span>
+    <button class="realm on" data-r="2">初窥门径</button>
+    <button class="realm" data-r="3">小有所成</button>
+    <button class="realm" data-r="4">炉火纯青</button>
+    <button class="realm" data-r="5">一流高手</button>
+  </div>
+  <div class="grp">
+    <span class="lbl">液位</span>
+    <input type="range" id="slider" min="0" max="100" value="0" step="0.5">
+  </div>
+  <div class="grp">
+    <span class="lbl">挂机</span>
+    <button id="btnRun" class="on">运转中</button>
+    <button id="btnSpeed">×1</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="scene" id="scene">
+    <div class="backdrop"></div>
+    <svg class="figure-veins" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path class="vein" data-realm="2" d="M 200 96 C 200 150, 200 195, 200 230"/>
+      <path class="vein" data-realm="2" d="M 200 96 C 132 140, 130 195, 178 242"/>
+      <path class="vein" data-realm="2" d="M 200 96 C 268 140, 270 195, 222 242"/>
+      <path class="vein" data-realm="3" d="M 160 175 C 110 205, 78 243, 62 284"/>
+      <path class="vein" data-realm="3" d="M 240 175 C 290 205, 322 243, 338 284"/>
+      <path class="vein" data-realm="4" d="M 170 302 C 130 332, 105 362, 92 394"/>
+      <path class="vein" data-realm="4" d="M 230 302 C 270 332, 295 362, 308 394"/>
+    </svg>
+    <div class="inkbg"></div>
+
+    <div class="vessel" id="vessel" role="button" tabindex="0" aria-label="内视丹田">
+      <div class="void-qi"><i></i><i></i><i></i></div>
+      <div class="liquid">
+        <video id="vid" src="../art-explore/dantian-ink-loop-graded.mp4" autoplay muted loop playsinline></video>
+      </div>
+      <div class="surface-line"></div>
+      <div class="flash"></div>
+    </div>
+    <div class="vessel-read">
+      <div class="n" id="vSegPct">0%</div>
+      <div class="d">第 <span id="vSeg">1</span> / <span id="vSegMax">3</span> 转</div>
+    </div>
+
+    <svg class="ring" id="ringSvg" viewBox="0 0 400 500"></svg>
+
+    <button class="btn-back" id="btnBack">收 功</button>
+    <ul class="legend" aria-label="内视图例">
+      <li><span class="sw bead-on"></span>金珠 · 已圆满之转</li>
+      <li><span class="sw bead-off"></span>素珠 · 未行之转</li>
+      <li><span class="sw acu-red"></span>朱砂 · 窍穴可冲</li>
+      <li><span class="sw acu-gold"></span>鎏金 · 窍穴已通</li>
+      <li><span class="sw acu-ink"></span>墨点 · 待冲穴机会</li>
+    </ul>
+    <div class="outer-hint">点<b>丹田</b>内视 · 冲穴与周天详情</div>
+  </div>
+
+  <div class="readout">
+    <div class="card">
+      <h3>周天</h3>
+      <div class="row"><span class="k">本段</span><span class="v gold"><span id="vNow">0</span> / <span id="vCap">933</span></span></div>
+      <div class="row"><span class="k">已缴</span><span class="v"><span id="vPaidSeg">0</span> / <span id="vZt">3</span> 段</span></div>
+      <div class="row"><span class="k">挂机速率</span><span class="v cyan"><span id="vRate">9</span> /秒</span></div>
+      <div class="row"><span class="k">冲穴机会</span><span class="v gold" id="vChance">0</span></div>
+      <div class="row"><span class="k">气势</span><span class="v cyan" id="vQishi">0</span></div>
+      <div class="mini-bar"><i id="barQishi" style="width:0%"></i></div>
+      <div class="row" style="margin-top:6px"><span class="k">已通窍穴</span><span class="v"><span id="vAcu">0</span> / 需 <span id="vAcuReq">2</span></span></div>
+      <button class="act" id="btnBreak" disabled>突破</button>
+    </div>
+    <div class="card">
+      <h3>验证点</h3>
+      <p class="hint">
+        1. 外视：人影完整无遮挡，丹田光珠的亮度能否粗读液位；hover 微涨是否足以暗示可点。<br>
+        2. 点丹田 → 镜头扎进去的转场是否顺滑、有「内视」感；收功返回是否利落。<br>
+        3. 内视器物层：周天珠/朱砂点/宋体名/贯通柔光——和水墨底子还打不打架。<br>
+        4. 冲穴只在内视可用；外视时圆满 toast 会提示进来。
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const REALMS = {
+  2: { name:'初窥门径', cost:2800,  zhoutian:3, rate:9,  req:2, meridians:[{name:'手太阴',acus:['中府','太渊']},{name:'足阳明',acus:['气冲','足三里']}] },
+  3: { name:'小有所成', cost:5000,  zhoutian:4, rate:18, req:2, meridians:[{name:'手少阳',acus:['关冲','阳池','天井']},{name:'足太阳',acus:['睛明','昆仑']}] },
+  4: { name:'炉火纯青', cost:10000, zhoutian:6, rate:38, req:3, meridians:[{name:'任脉',acus:['气海','关元','膻中']},{name:'督脉',acus:['命门','灵台','百会']}] },
+  5: { name:'一流高手', cost:21000, zhoutian:8, rate:82, req:4, meridians:[{name:'冲脉',acus:['幽门','肓俞','横骨','大赫']},{name:'带脉',acus:['带脉','五枢','维道','章门']}] },
+};
+const BASE_P = 0.85, FAIL_PP = 0.10, FORCE_K = 3, QISHI_CAP = 0.15, QISHI_CONSUME = 0.7, QISHI_FULL = 100;
+
+const state = { realm:2, segNow:0, paidSegs:0, chances:0, qishi:0, fails:{}, opened:new Set(), running:true, speed:1, inner:false };
+const $ = (id) => document.getElementById(id);
+const scene = $('scene'), vessel = $('vessel'), vid = $('vid');
+// 内视布局：器皿居中 (200,250)，viewBox 半径 124
+const CX = 200, CY = 250, R_V = 124;
+const polar = (r, deg) => ({ x: CX + r * Math.cos((deg - 90) * Math.PI / 180), y: CY + r * Math.sin((deg - 90) * Math.PI / 180) });
+
+function R() { return REALMS[state.realm]; }
+function segCap() { return R().cost / R().zhoutian; }
+
+// ── 内视器物层：周天珠串（顶部）+ 两组朱砂窍穴（左右下方，无轨道弧）──
+function renderRing() {
+  const Rm = R(); let s = '';
+  // 周天珠：顶部 -58°..58° 均布
+  const n = Rm.zhoutian, span = 116;
+  for (let i = 0; i < n; i++) {
+    const a = n === 1 ? 0 : -span / 2 + span * i / (n - 1);
+    const p = polar(R_V + 17, a);
+    s += `<circle class="bead" data-seg="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5"/>`;
+  }
+  // 珠串题字：说明这一串是周天
+  const tl = polar(R_V + 42, 0);
+  s += `<text class="m-label" x="${tl.x.toFixed(1)}" y="${tl.y.toFixed(1)}" text-anchor="middle">周 天</text>`;
+  // 窍穴：左右两簇，围绕器皿下侧散布；名字在点外侧
+  const zones = [[196, 256], [104, 164]];
+  Rm.meridians.forEach((m, mi) => {
+    const [a0, a1] = zones[mi];
+    let grp = '';
+    const pts = [];
+    m.acus.forEach((name, ai) => {
+      const a = a0 + (a1 - a0) * (ai + 0.5) / m.acus.length;
+      const r = R_V + 26 + (ai % 2) * 13;        // 半径交错，摆脱串珠感
+      const p = polar(r, a), pl = polar(r + 24, a);
+      pts.push(p);
+      grp += `<circle class="acu-halo" data-m="${mi}" data-a="${ai}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8"/>
+        <circle class="acu-dot" data-m="${mi}" data-a="${ai}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" tabindex="0" role="button" aria-label="冲穴 ${name}"/>
+        <text class="acu-name" data-m="${mi}" data-a="${ai}" x="${pl.x.toFixed(1)}" y="${pl.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${name}</text>`;
+    });
+    // 贯通柔光：覆盖该簇窍穴的椭圆
+    const cx = pts.reduce((s2, p) => s2 + p.x, 0) / pts.length;
+    const cy = pts.reduce((s2, p) => s2 + p.y, 0) / pts.length;
+    const lp = polar(R_V + 74, (a0 + a1) / 2);
+    s += `<g class="m-grp" data-m="${mi}">
+      <ellipse class="m-glow" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="52" ry="30"/>
+      ${grp}
+      <text class="m-label" x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" text-anchor="middle">${m.name}</text>
+    </g>`;
+  });
+  $('ringSvg').innerHTML = s;
+  document.querySelectorAll('.acu-dot').forEach(c => c.onclick = () => tryChongxue(+c.dataset.m, +c.dataset.a, c));
+}
+
+function paint() {
+  const Rm = R();
+  const pct = Math.min(1, state.segNow / segCap());
+  const totalPct = (state.paidSegs + pct) / Rm.zhoutian;
+
+  const empty = 92 - pct * 86;
+  vessel.style.setProperty('--empty', empty + '%');
+  vessel.style.setProperty('--vessel-glow', (0.14 + pct * 0.5).toFixed(2));
+  const pbr = state.running ? Math.min(4, 0.75 + Math.log2(state.speed + 1) * 0.9) : 0;
+  if (state.running) { vid.playbackRate = pbr; if (vid.paused) vid.play(); } else vid.pause();
+
+  scene.style.setProperty('--qi-speed', (4.0 - state.realm * 0.35 - pct * 0.6).toFixed(2) + 's');
+  scene.style.setProperty('--qi-op', (0.25 + totalPct * 0.35).toFixed(2));
+  scene.style.setProperty('--bd-bright', (0.52 + totalPct * 0.14 + state.realm * 0.02).toFixed(2));
+  scene.style.setProperty('--aura', state.realm >= 4 ? (0.15 + totalPct * 0.4).toFixed(2) : '0');
+  scene.classList.toggle('paused', !state.running);
+  document.querySelectorAll('.vein').forEach(v => v.classList.toggle('lit', state.realm >= +v.dataset.realm));
+
+  document.querySelectorAll('.bead').forEach(b => {
+    const i = +b.dataset.seg;
+    b.classList.toggle('paid', i < state.paidSegs);
+    b.classList.toggle('now', i === state.paidSegs);
+  });
+  const canAct = state.chances > 0;
+  Rm.meridians.forEach((m, mi) => {
+    const through = m.acus.every((_, ai) => state.opened.has(mi + '-' + ai));
+    document.querySelector(`.m-grp[data-m="${mi}"]`)?.classList.toggle('through', through);
+    m.acus.forEach((_, ai) => {
+      const key = mi + '-' + ai, opened = state.opened.has(key);
+      const d = document.querySelector(`.acu-dot[data-m="${mi}"][data-a="${ai}"]`);
+      const h = document.querySelector(`.acu-halo[data-m="${mi}"][data-a="${ai}"]`);
+      const t = document.querySelector(`.acu-name[data-m="${mi}"][data-a="${ai}"]`);
+      d?.classList.toggle('opened', opened);
+      d?.classList.toggle('actionable', !opened && canAct);
+      h?.classList.toggle('opened', opened);
+      t?.classList.toggle('opened', opened);
+      t?.classList.toggle('actionable', !opened && canAct);
+    });
+  });
+
+  $('vSegPct').textContent = (pct * 100).toFixed(0) + '%';
+  $('vSeg').textContent = Math.min(state.paidSegs + 1, Rm.zhoutian);
+  $('vSegMax').textContent = Rm.zhoutian;
+  $('vNow').textContent = Math.floor(state.segNow).toLocaleString();
+  $('vCap').textContent = Math.floor(segCap()).toLocaleString();
+  $('vPaidSeg').textContent = state.paidSegs;
+  $('vZt').textContent = Rm.zhoutian;
+  $('vRate').textContent = (Rm.rate * state.speed).toFixed(0);
+  $('vChance').textContent = state.chances;
+  $('vQishi').textContent = Math.floor(state.qishi);
+  $('barQishi').style.width = Math.min(100, state.qishi) + '%';
+  $('vAcu').textContent = state.opened.size;
+  $('vAcuReq').textContent = Rm.req;
+  $('btnBreak').disabled = !(state.paidSegs >= Rm.zhoutian && state.opened.size >= Rm.req);
+  $('slider').value = pct * 100;
+}
+
+function tryChongxue(mi, ai, el) {
+  if (!state.inner) return;
+  const key = mi + '-' + ai;
+  if (state.chances <= 0 || state.opened.has(key)) return;
+  state.chances--;
+  const fails = state.fails[key] || 0;
+  const qishiBonus = Math.min(QISHI_CAP, (state.qishi / QISHI_FULL) * QISHI_CAP);
+  state.qishi *= (1 - QISHI_CONSUME);
+  const p = Math.min(1, BASE_P + fails * FAIL_PP + qishiBonus);
+  const ok = fails + 1 >= FORCE_K || Math.random() < p;
+  const name = R().meridians[mi].acus[ai];
+  if (ok) {
+    state.opened.add(key);
+    el.classList.add('just'); setTimeout(() => el.classList.remove('just'), 700);
+    toast(`冲开 · ${name}`);
+  } else {
+    state.fails[key] = fails + 1;
+    toast(`冲穴受阻 · ${name}（下次 +10pp）`, true);
+  }
+  paint();
+}
+
+function sealSegment() {
+  state.paidSegs++; state.segNow = 0;
+  state.chances++; state.qishi = Math.min(150, state.qishi + 40);
+  vessel.classList.add('seal');
+  setTimeout(() => vessel.classList.remove('seal'), 950);
+  const done = state.paidSegs >= R().zhoutian;
+  toast(done ? `${R().zhoutian} 段缴清` : `周天圆满 · 得冲穴机会${state.inner ? '' : ' · 点丹田内视冲穴'}`);
+}
+
+setInterval(() => {
+  if (!state.running || state.paidSegs >= R().zhoutian) { paint(); return; }
+  state.segNow += R().rate * state.speed * 0.25;
+  if (state.segNow >= segCap()) sealSegment();
+  paint();
+}, 250);
+
+function toast(msg, fail) {
+  const t = $('toast'); t.textContent = msg;
+  t.classList.toggle('fail', !!fail); t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function setInner(v) {
+  state.inner = v;
+  scene.classList.toggle('inner', v);
+}
+vessel.onclick = () => { if (!state.inner) setInner(true); };
+vessel.onkeydown = (e) => { if (e.key === 'Enter' && !state.inner) setInner(true); };
+$('btnBack').onclick = () => setInner(false);
+
+function resetRealm(r) {
+  state.realm = r; state.segNow = 0; state.paidSegs = 0;
+  state.chances = 0; state.qishi = 0; state.fails = {}; state.opened = new Set();
+  renderRing(); paint();
+}
+$('slider').oninput = (e) => { if (state.paidSegs < R().zhoutian) { state.segNow = segCap() * (e.target.value / 100); paint(); } };
+document.querySelectorAll('.realm').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.realm').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); resetRealm(+b.dataset.r);
+});
+$('btnRun').onclick = function () {
+  state.running = !state.running;
+  this.classList.toggle('on', state.running);
+  this.textContent = state.running ? '运转中' : '已入定';
+  paint();
+};
+$('btnSpeed').onclick = function () {
+  state.speed = state.speed === 1 ? 8 : state.speed === 8 ? 40 : 1;
+  this.textContent = '×' + state.speed;
+  this.classList.toggle('on', state.speed > 1);
+  paint();
+};
+$('btnBreak').onclick = () => {
+  const next = state.realm + 1;
+  toast(REALMS[next] ? `突破 · ${REALMS[next].name}` : '已至一流高手');
+  if (REALMS[next]) setTimeout(() => document.querySelector(`.realm[data-r="${next}"]`)?.click(), 700);
+};
+
+renderRing(); paint();
+</script>
+</body>
+</html>

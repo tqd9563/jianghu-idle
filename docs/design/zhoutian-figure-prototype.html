@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 周天人影底板 — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.75 0.015 85);
+  --faint: oklch(0.65 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --gold: oklch(0.76 0.13 78);
+  --cyan: oklch(0.74 0.10 215);
+  --bar-track: oklch(0.28 0.018 262);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ↓↓↓ 这五个变量就是「修为 → 画面」的全部接口 ↓↓↓ */
+  --qi-speed: 3s;    /* 气流速度：挂速越高越快 */
+  --qi-op: 0.5;      /* 气流显影：修为越满越亮 */
+  --glow: 0.35;      /* 丹田辉光强度 */
+  --aura: 0;         /* 周身罡气（高境界才有） */
+  --hue: var(--gold);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 40px;
+}
+.serif { font-family: "Songti SC", "STSong", "SimSun", serif; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+/* ===== 顶部说明与控制条 ===== */
+.scene-note {
+  padding: 10px 24px; background: oklch(0.19 0.015 262);
+  border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--cyan); letter-spacing: 0.05em; }
+.panelbar {
+  display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+  padding: 10px 24px; border-bottom: 1px solid var(--line); background: var(--surface);
+}
+.grp { display: flex; gap: 6px; align-items: center; }
+.grp .lbl { font-size: 11px; color: var(--faint); letter-spacing: 0.06em; }
+.grp button {
+  padding: 3px 11px; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.grp button.on { background: var(--gold); border-color: var(--gold); color: oklch(0.18 0.03 78); font-weight: 600; }
+.grp button:hover:not(.on) { border-color: var(--cyan); color: var(--ink); }
+input[type=range] { width: 170px; accent-color: oklch(0.76 0.13 78); }
+
+/* ===== 舞台 ===== */
+.stage { max-width: 1080px; margin: 0 auto; padding: 22px 24px 0; display: grid; grid-template-columns: minmax(0,1fr) 260px; gap: 22px; }
+@media (max-width: 880px) { .stage { grid-template-columns: 1fr; } }
+
+.figure-wrap {
+  position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  background: oklch(0.13 0.012 262); aspect-ratio: 1728 / 2304;
+}
+.figure-wrap img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  display: block; user-select: none; -webkit-user-drag: none;
+}
+.figure-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.figure-wrap.hide-overlay svg { display: none; }
+
+/* 周身罡气：高境界时整张图透出一层暖光 */
+.figure-wrap::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(58% 44% at 50% 62%, oklch(0.76 0.13 78 / 0.30), transparent 70%);
+  opacity: var(--aura); transition: opacity 0.8s var(--ease); mix-blend-mode: screen;
+}
+
+/* ===== 经脉层 ===== */
+@keyframes qi-flow { to { stroke-dashoffset: -96; } }
+@keyframes dantian-breathe {
+  0%, 100% { transform: scale(1);    opacity: calc(var(--glow) * 0.85); }
+  50%      { transform: scale(1.14); opacity: var(--glow); }
+}
+@keyframes acu-pulse {
+  0%   { r: 7;  opacity: 1; }
+  100% { r: 34; opacity: 0; }
+}
+
+/* 经脉底轨：暗，永远在（表示「脉在，只是没气」） */
+.ch-track {
+  fill: none; stroke: oklch(0.55 0.03 262); stroke-width: 3;
+  opacity: 0.30; stroke-linecap: round;
+}
+/* 已贯通经脉：金 */
+.ch-lit .ch-track { stroke: var(--hue); opacity: 0.42; }
+
+/* 气流：靠 stroke-dashoffset 位移，与 index.css 的 qi-flow 同一套 */
+.ch-flow {
+  fill: none; stroke: var(--cyan); stroke-width: 3.5; stroke-linecap: round;
+  stroke-dasharray: 5 22; opacity: 0;
+  animation: qi-flow var(--qi-speed) linear infinite;
+  transition: opacity 0.5s var(--ease), stroke 0.6s var(--ease);
+}
+.ch-lit .ch-flow { opacity: var(--qi-op); stroke: var(--hue); }
+.paused .ch-flow { animation-play-state: paused; }
+
+/* 任脉充能：dasharray 从 0 长到满，表示本段周天进度 */
+.ch-fill {
+  fill: none; stroke: var(--hue); stroke-width: 5; stroke-linecap: round;
+  opacity: 0.9; transition: stroke-dasharray 0.35s var(--ease);
+  filter: drop-shadow(0 0 6px oklch(0.76 0.13 78 / 0.55));
+}
+
+/* 窍穴 */
+.acu { fill: oklch(0.26 0.018 262); stroke: oklch(0.55 0.03 262); stroke-width: 2.5; transition: all 0.3s var(--ease); }
+.acu.opened { fill: var(--hue); stroke: var(--hue); filter: drop-shadow(0 0 8px oklch(0.76 0.13 78 / 0.7)); }
+.acu-ring { fill: none; stroke: var(--hue); stroke-width: 3; pointer-events: none; }
+
+/* 丹田 */
+.dantian-glow { fill: url(#dtGrad); transform-origin: center; transform-box: fill-box; animation: dantian-breathe 3.4s ease-in-out infinite; }
+.paused .dantian-glow { animation-play-state: paused; }
+.dantian-core { fill: var(--hue); filter: drop-shadow(0 0 14px oklch(0.76 0.13 78 / 0.9)); }
+
+/* ===== 右侧读数 ===== */
+.readout { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.card h3 { font-size: 12px; color: var(--faint); font-weight: 600; letter-spacing: 0.1em; margin-bottom: 10px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 13px; }
+.row .k { color: var(--faint); }
+.row .v { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.row .v.gold { color: var(--gold); }
+.row .v.cyan { color: var(--cyan); }
+.mini-bar { height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; margin-top: 8px; }
+.mini-bar > i { display: block; height: 100%; background: var(--gold); transition: width 0.3s var(--ease); }
+.big { font-size: 26px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.big small { font-size: 12px; color: var(--faint); font-weight: 400; margin-left: 4px; }
+.hint { font-size: 11.5px; color: var(--faint); line-height: 1.6; margin-top: 8px; }
+.hint code { background: oklch(0.26 0.018 262); padding: 1px 5px; border-radius: 3px; color: var(--muted); font-size: 11px; }
+.act {
+  width: 100%; padding: 9px; border-radius: 6px; border: 1px solid var(--gold);
+  background: transparent; color: var(--gold); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.act:enabled:hover { background: var(--gold); color: oklch(0.18 0.03 78); }
+.act:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--line-strong); color: var(--faint); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(14px);
+  background: oklch(0.26 0.018 262); border: 1px solid var(--gold); color: var(--gold);
+  padding: 9px 22px; border-radius: 8px; font-size: 13.5px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: all 0.4s var(--ease); z-index: 50;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型说明</b> ·
+  这是「AI 生成水墨人影 = 静态底图」+「经脉气流 = 手写 SVG 层」的可行性验证。
+  底图不含任何金线，所有会动的东西都在 SVG 层，由 <code style="color:var(--muted)">修为</code> 驱动。
+  右侧数值与境界表取自 <code style="color:var(--muted)">code/src/engine/content.ts</code> 真实数据。
+</div>
+
+<div class="panelbar">
+  <div class="grp">
+    <span class="lbl">底图</span>
+    <button id="btnDark" class="on">夜色</button>
+    <button id="btnLight">宣纸</button>
+  </div>
+  <div class="grp">
+    <span class="lbl">境界</span>
+    <button class="realm on" data-r="2">初窥门径</button>
+    <button class="realm" data-r="3">小有所成</button>
+    <button class="realm" data-r="4">炉火纯青</button>
+    <button class="realm" data-r="5">一流高手</button>
+  </div>
+  <div class="grp">
+    <span class="lbl">修为</span>
+    <input type="range" id="slider" min="0" max="100" value="34" step="0.5">
+  </div>
+  <div class="grp">
+    <span class="lbl">挂机</span>
+    <button id="btnRun" class="on">运转中</button>
+    <button id="btnSpeed">×1</button>
+  </div>
+  <div class="grp">
+    <button id="btnOverlay">只看底图</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="figure-wrap" id="wrap">
+    <img id="fig" src="../art-explore/figure-base-dark.png" alt="打坐侠客水墨底图">
+    <svg id="ov" viewBox="0 0 1728 2304" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <radialGradient id="dtGrad">
+          <stop offset="0%"   stop-color="oklch(0.85 0.15 78)" stop-opacity="0.95"/>
+          <stop offset="45%"  stop-color="oklch(0.76 0.13 78)" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="oklch(0.70 0.14 60)" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <g id="channels"></g>
+      <g id="dantian"></g>
+      <g id="acupoints"></g>
+      <g id="fx"></g>
+    </svg>
+  </div>
+
+  <div class="readout">
+    <div class="card">
+      <h3>丹田</h3>
+      <div class="big"><span id="vDantian">0</span><small>/ <span id="vCost">2800</span></small></div>
+      <div class="mini-bar"><i id="barTotal" style="width:0%"></i></div>
+      <div class="row"><span class="k">本段周天</span><span class="v cyan"><span id="vSeg">1</span> / <span id="vSegMax">3</span></span></div>
+      <div class="row"><span class="k">段内进度</span><span class="v gold"><span id="vSegPct">0</span>%</span></div>
+      <div class="row"><span class="k">已圆满</span><span class="v"><span id="vHigh">0</span> 转</span></div>
+      <div class="row"><span class="k">挂机速率</span><span class="v cyan"><span id="vRate">0</span> /秒</span></div>
+      <button class="act" id="btnBreak" disabled style="margin-top:10px">突破</button>
+    </div>
+
+    <div class="card">
+      <h3>驱动接口</h3>
+      <div class="row"><span class="k">--qi-speed</span><span class="v" id="vSpeed">3.00s</span></div>
+      <div class="row"><span class="k">--qi-op</span><span class="v" id="vOp">0.50</span></div>
+      <div class="row"><span class="k">--glow</span><span class="v" id="vGlow">0.35</span></div>
+      <div class="row"><span class="k">--aura</span><span class="v" id="vAura">0.00</span></div>
+      <p class="hint">
+        整个动效只吃这 4 个 CSS 变量。接进游戏时，把 <code>gameStore.dantian</code>
+        经 <code>zhoutianProgress()</code> 换算后写到容器 style 上即可，
+        不需要重渲染 SVG，也不需要 JS 逐帧驱动。
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>境界解锁</h3>
+      <div id="unlockList"></div>
+      <p class="hint">境界越高，点亮的经脉越多——人影负责「气象」，精确读数仍交给周天年轮。</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// 1. 几何模型：解剖锚点 → 经脉路径（对应 zhoutianMandalaModel.ts 的角色）
+// ─────────────────────────────────────────────────────────
+const LANDMARKS = {
+  dark: {
+    baihui:{x:864,y:610}, yintang:{x:866,y:841}, lianquan:{x:864,y:985},
+    shanzhong:{x:864,y:1244}, dantian:{x:866,y:1659}, huiyin:{x:866,y:1866},
+    shoulderL:{x:691,y:1106}, shoulderR:{x:1042,y:1106},
+    elbowL:{x:553,y:1440},    elbowR:{x:1186,y:1440},
+    handL:{x:449,y:1659},     handR:{x:1256,y:1659},
+    kneeL:{x:553,y:1843},     kneeR:{x:1186,y:1843},
+    loopW: 500,
+  },
+  light: {
+    baihui:{x:864,y:403}, yintang:{x:866,y:662}, lianquan:{x:862,y:806},
+    shanzhong:{x:864,y:1037}, dantian:{x:864,y:1417}, huiyin:{x:864,y:1636},
+    shoulderL:{x:680,y:922},  shoulderR:{x:1054,y:922},
+    elbowL:{x:518,y:1244},    elbowR:{x:1210,y:1244},
+    handL:{x:357,y:1486},     handR:{x:1377,y:1469},
+    kneeL:{x:461,y:1670},     kneeR:{x:1290,y:1670},
+    loopW: 560,
+  },
+};
+
+/** Catmull-Rom → 三次贝塞尔，把锚点串成一条自然的曲线 */
+function smooth(pts) {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6},`
+      +  ` ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6},`
+      +  ` ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+
+/** 经脉定义：id / 名称 / 路径 / 解锁境界 */
+function buildChannels(L) {
+  const loop = (sign) => {
+    const w = L.loopW * sign;
+    return `M ${L.baihui.x} ${L.baihui.y}`
+      + ` C ${L.baihui.x + w} ${L.baihui.y + 260},`
+      + ` ${L.huiyin.x + w} ${L.huiyin.y - 300},`
+      + ` ${L.huiyin.x} ${L.huiyin.y}`;
+  };
+  return [
+    { id:'ren',  name:'任脉',   realm:2, main:true,
+      d: smooth([L.huiyin, L.dantian, L.shanzhong, L.lianquan, L.yintang, L.baihui]) },
+    { id:'duL',  name:'督脉·左', realm:2, d: loop(-1) },
+    { id:'duR',  name:'督脉·右', realm:2, d: loop(1) },
+    { id:'armL', name:'手三阴·左', realm:3, d: smooth([L.shanzhong, L.shoulderL, L.elbowL, L.handL]) },
+    { id:'armR', name:'手三阴·右', realm:3, d: smooth([L.shanzhong, L.shoulderR, L.elbowR, L.handR]) },
+    { id:'legL', name:'足三阳·左', realm:4, d: smooth([L.dantian, {x:L.kneeL.x+70,y:L.kneeL.y-150}, L.kneeL]) },
+    { id:'legR', name:'足三阳·右', realm:4, d: smooth([L.dantian, {x:L.kneeR.x-70,y:L.kneeR.y-150}, L.kneeR]) },
+  ];
+}
+
+function buildAcupoints(L) {
+  return [
+    { id:'baihui', name:'百会', p:L.baihui,    realm:2 },
+    { id:'yintang',name:'印堂', p:L.yintang,   realm:2 },
+    { id:'lianquan',name:'廉泉',p:L.lianquan,  realm:2 },
+    { id:'shanzhong',name:'膻中',p:L.shanzhong,realm:2 },
+    { id:'huiyin', name:'会阴', p:L.huiyin,    realm:2 },
+    { id:'jianL',  name:'肩井', p:L.shoulderL, realm:3 },
+    { id:'jianR',  name:'肩井', p:L.shoulderR, realm:3 },
+    { id:'quchiL', name:'曲池', p:L.elbowL,    realm:3 },
+    { id:'quchiR', name:'曲池', p:L.elbowR,    realm:3 },
+    { id:'laogongL',name:'劳宫',p:L.handL,     realm:3 },
+    { id:'laogongR',name:'劳宫',p:L.handR,     realm:3 },
+    { id:'xiL',    name:'膝眼', p:L.kneeL,     realm:4 },
+    { id:'xiR',    name:'膝眼', p:L.kneeR,     realm:4 },
+  ];
+}
+
+// ─────────────────────────────────────────────────────────
+// 2. 真实境界数据（content.ts REALMS）
+// ─────────────────────────────────────────────────────────
+const REALMS = {
+  2: { name:'初窥门径', cost:2800,  zhoutian:3, rate:9   },
+  3: { name:'小有所成', cost:5000,  zhoutian:4, rate:18  },
+  4: { name:'炉火纯青', cost:10000, zhoutian:6, rate:38  },
+  5: { name:'一流高手', cost:21000, zhoutian:8, rate:82  },
+};
+
+const state = { realm:2, dantian:0, high:0, running:true, speed:1, skin:'dark' };
+
+// ─────────────────────────────────────────────────────────
+// 3. 渲染
+// ─────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const wrap = $('wrap');
+let channels = [], acupoints = [], pathEls = {}, acuEls = {};
+
+function renderSVG() {
+  const L = LANDMARKS[state.skin];
+  channels = buildChannels(L);
+  acupoints = buildAcupoints(L);
+
+  $('channels').innerHTML = channels.map(c => `
+    <g class="ch" data-id="${c.id}" data-realm="${c.realm}">
+      <path class="ch-track" d="${c.d}"/>
+      <path class="ch-flow"  d="${c.d}"/>
+      ${c.main ? `<path class="ch-fill" d="${c.d}" data-fill="1"/>` : ''}
+    </g>`).join('');
+
+  $('dantian').innerHTML = `
+    <circle class="dantian-glow" cx="${L.dantian.x}" cy="${L.dantian.y}" r="150"/>
+    <circle class="dantian-core" cx="${L.dantian.x}" cy="${L.dantian.y}" r="15"/>`;
+
+  $('acupoints').innerHTML = acupoints.map(a => `
+    <circle class="acu" data-id="${a.id}" data-realm="${a.realm}"
+            cx="${a.p.x}" cy="${a.p.y}" r="7"/>`).join('');
+
+  pathEls = {}; acuEls = {};
+  document.querySelectorAll('.ch').forEach(g => pathEls[g.dataset.id] = g);
+  document.querySelectorAll('.acu').forEach(c => acuEls[c.dataset.id] = c);
+  paint();
+}
+
+function paint() {
+  const R = REALMS[state.realm];
+  const total = R.cost;
+  const pct = Math.min(1, state.dantian / total);
+  const segSize = total / R.zhoutian;
+  const seg = Math.min(R.zhoutian, Math.floor(state.dantian / segSize) + 1);
+  const segPct = (state.dantian % segSize) / segSize;
+
+  // ── 修为 → 4 个 CSS 变量。这就是全部的「驱动」。
+  const qiSpeed = (4.2 - state.realm * 0.35 - segPct * 0.8).toFixed(2);
+  const qiOp    = (0.30 + segPct * 0.45).toFixed(2);
+  const glow    = (0.20 + pct * 0.70).toFixed(2);
+  const aura    = state.realm >= 5 ? (0.25 + pct * 0.45).toFixed(2)
+                : state.realm >= 4 ? (pct * 0.30).toFixed(2) : '0.00';
+  wrap.style.setProperty('--qi-speed', qiSpeed + 's');
+  wrap.style.setProperty('--qi-op', qiOp);
+  wrap.style.setProperty('--glow', glow);
+  wrap.style.setProperty('--aura', aura);
+
+  // ── 经脉点亮：境界门槛
+  channels.forEach(c => pathEls[c.id]?.classList.toggle('ch-lit', state.realm >= c.realm));
+  acupoints.forEach(a => acuEls[a.id]?.classList.toggle('opened', state.realm >= a.realm));
+
+  // ── 任脉充能：段内进度 → dasharray
+  const fill = document.querySelector('[data-fill]');
+  if (fill) {
+    const len = fill.getTotalLength();
+    fill.style.strokeDasharray = `${len * segPct} ${len}`;
+  }
+
+  wrap.classList.toggle('paused', !state.running);
+
+  // ── 读数
+  $('vDantian').textContent = Math.floor(state.dantian).toLocaleString();
+  $('vCost').textContent    = total.toLocaleString();
+  $('barTotal').style.width = (pct * 100) + '%';
+  $('vSeg').textContent     = seg;
+  $('vSegMax').textContent  = R.zhoutian;
+  $('vSegPct').textContent  = (segPct * 100).toFixed(1);
+  $('vHigh').textContent    = state.high;
+  $('vRate').textContent    = (R.rate * state.speed).toFixed(0);
+  $('vSpeed').textContent   = qiSpeed + 's';
+  $('vOp').textContent      = qiOp;
+  $('vGlow').textContent    = glow;
+  $('vAura').textContent    = aura;
+  $('btnBreak').disabled    = state.dantian < total;
+  $('slider').value         = pct * 100;
+
+  $('unlockList').innerHTML = [
+    { r:2, t:'任脉 · 督脉小周天' }, { r:3, t:'手三阴 + 六窍' },
+    { r:4, t:'足三阳 + 周身罡气' }, { r:5, t:'罡气外放' },
+  ].map(u => `<div class="row"><span class="k">${REALMS[u.r].name}</span>
+      <span class="v ${state.realm >= u.r ? 'gold' : ''}" style="${state.realm >= u.r ? '' : 'opacity:.35'}">
+      ${u.t}</span></div>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────
+// 4. 模拟 tick —— 与 App.tsx:50 同为 250ms
+// ─────────────────────────────────────────────────────────
+let lastSeg = 1;
+setInterval(() => {
+  if (!state.running) return;
+  const R = REALMS[state.realm];
+  state.dantian = Math.min(R.cost, state.dantian + R.rate * state.speed * 0.25);
+  const segSize = R.cost / R.zhoutian;
+  const seg = Math.floor(state.dantian / segSize) + 1;
+  if (seg > lastSeg) { state.high++; lastSeg = seg; pulseAll(); }
+  paint();
+}, 250);
+
+/** 一转周天圆满：所有已开窍穴荡开一圈涟漪 */
+function pulseAll() {
+  const fx = $('fx');
+  acupoints.filter(a => state.realm >= a.realm).forEach((a, i) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('class', 'acu-ring');
+    c.setAttribute('cx', a.p.x); c.setAttribute('cy', a.p.y); c.setAttribute('r', 7);
+    c.style.animation = `acu-pulse 0.9s ${i * 0.04}s ease-out forwards`;
+    fx.appendChild(c);
+    setTimeout(() => c.remove(), 1400);
+  });
+}
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ─────────────────────────────────────────────────────────
+// 5. 控制
+// ─────────────────────────────────────────────────────────
+$('slider').oninput = (e) => {
+  state.dantian = REALMS[state.realm].cost * (e.target.value / 100);
+  lastSeg = Math.floor(state.dantian / (REALMS[state.realm].cost / REALMS[state.realm].zhoutian)) + 1;
+  paint();
+};
+document.querySelectorAll('.realm').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.realm').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  state.realm = +b.dataset.r; state.dantian = 0; state.high = 0; lastSeg = 1;
+  paint();
+});
+$('btnRun').onclick = function () {
+  state.running = !state.running;
+  this.classList.toggle('on', state.running);
+  this.textContent = state.running ? '运转中' : '已入定';
+  paint();
+};
+$('btnSpeed').onclick = function () {
+  state.speed = state.speed === 1 ? 8 : state.speed === 8 ? 40 : 1;
+  this.textContent = '×' + state.speed;
+  this.classList.toggle('on', state.speed > 1);
+  paint();
+};
+$('btnOverlay').onclick = function () {
+  wrap.classList.toggle('hide-overlay');
+  const hidden = wrap.classList.contains('hide-overlay');
+  this.textContent = hidden ? '显示经脉' : '只看底图';
+  this.classList.toggle('on', hidden);
+};
+$('btnBreak').onclick = () => {
+  const next = state.realm + 1;
+  pulseAll();
+  toast(REALMS[next] ? `突破 · ${REALMS[next].name}` : '已至一流高手');
+  setTimeout(() => {
+    if (REALMS[next]) {
+      document.querySelector(`.realm[data-r="${next}"]`)?.click();
+    } else { state.dantian = 0; state.high = 0; lastSeg = 1; paint(); }
+  }, 700);
+};
+function setSkin(skin, btnOn, btnOff) {
+  state.skin = skin;
+  $('fig').src = `../art-explore/figure-base-${skin}.png`;
+  btnOn.classList.add('on'); btnOff.classList.remove('on');
+  renderSVG();
+}
+$('btnDark').onclick  = () => setSkin('dark',  $('btnDark'), $('btnLight'));
+$('btnLight').onclick = () => setSkin('light', $('btnLight'), $('btnDark'));
+
+renderSVG();
+</script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 · 丹田液体（AI 视频材质版） — 江湖无尽录</title>
+<style>
+:root {
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.75 0.015 85);
+  --faint: oklch(0.65 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --gold: oklch(0.76 0.13 78);
+  --cyan: oklch(0.74 0.10 215);
+  --bar-track: oklch(0.28 0.018 262);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; min-height: 100vh; padding-bottom: 40px;
+}
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+.scene-note {
+  padding: 10px 24px; background: oklch(0.19 0.015 262);
+  border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted);
+}
+.scene-note b { color: var(--cyan); letter-spacing: 0.05em; }
+.scene-note code { background: oklch(0.26 0.018 262); padding: 1px 5px; border-radius: 3px; font-size: 11.5px; }
+
+.panelbar {
+  display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+  padding: 10px 24px; border-bottom: 1px solid var(--line); background: var(--surface);
+}
+.grp { display: flex; gap: 6px; align-items: center; }
+.grp .lbl { font-size: 11px; color: var(--faint); letter-spacing: 0.06em; }
+.grp button {
+  padding: 3px 11px; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.grp button.on { background: var(--gold); border-color: var(--gold); color: oklch(0.18 0.03 78); font-weight: 600; }
+.grp button:hover:not(.on) { border-color: var(--cyan); color: var(--ink); }
+input[type=range] { width: 160px; accent-color: oklch(0.76 0.13 78); }
+
+.stage {
+  max-width: 980px; margin: 0 auto; padding: 26px 24px 0;
+  display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 24px; align-items: start;
+}
+@media (max-width: 820px) { .stage { grid-template-columns: 1fr; } }
+
+/* ===== 丹田器皿 ===== */
+.vessel-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 30px 20px 22px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.vessel {
+  position: relative; width: min(440px, 82vw); aspect-ratio: 1;
+  border-radius: 50%;
+  /* 器壁：内暗外收的墨色环 */
+  background: radial-gradient(closest-side, oklch(0.10 0.012 262), oklch(0.14 0.014 262) 82%, oklch(0.22 0.018 262) 96%);
+  box-shadow:
+    inset 0 0 60px oklch(0.05 0.01 262 / 0.9),
+    0 0 0 1px oklch(0.48 0.03 262 / 0.5),
+    0 0 34px oklch(0.76 0.13 78 / var(--vessel-glow, 0.12));
+  overflow: hidden;
+  transition: box-shadow 0.6s var(--ease);
+}
+/* 视频层：铺满圆域。液位由外层 .liquid 的 clip-path 控制 */
+.liquid {
+  position: absolute; inset: 0;
+  clip-path: inset(var(--empty, 60%) 0 0 0);
+  transition: clip-path 0.35s var(--ease);
+}
+.liquid video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  /* 放大裁切去掉首帧继承的红印章；随液面下移，让旋涡核心始终泡在液体里 */
+  transform: translateY(calc(var(--empty, 60%) / 2)) scale(1.5);
+  transition: transform 0.35s var(--ease);
+}
+/* 液面线：一条随液位移动的亮边，让"面"可读 */
+.surface-line {
+  position: absolute; left: 4%; right: 4%; top: var(--empty, 60%);
+  height: 2px; border-radius: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.85 0.15 78 / 0.85), transparent);
+  filter: blur(0.5px);
+  transition: top 0.35s var(--ease);
+  pointer-events: none;
+}
+.surface-line::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 2px; height: 22px;
+  background: linear-gradient(180deg, oklch(0.76 0.13 78 / 0.22), transparent);
+}
+/* 空腔上半部：淡淡的墨雾，暗示器皿未满部分 */
+.void-mist {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 42% at 50% 18%, oklch(0.30 0.02 262 / 0.5), transparent 70%);
+  opacity: calc(var(--empty-n, 0.6));
+  transition: opacity 0.35s var(--ease);
+}
+/* 圆满收束时的整体闪光 */
+.vessel .flash {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, oklch(0.85 0.15 78 / 0.75), transparent 72%);
+  opacity: 0;
+}
+.vessel.seal .flash { animation: seal-flash 0.9s var(--ease); }
+@keyframes seal-flash {
+  0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; }
+}
+.vessel.seal .liquid { transition: clip-path 0.8s var(--ease); }
+
+.vessel-cap { font-size: 12.5px; color: var(--faint); text-align: center; line-height: 1.7; }
+.vessel-cap b { color: var(--gold); font-weight: 600; }
+
+/* ===== 读数 ===== */
+.readout { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.card h3 { font-size: 12px; color: var(--faint); font-weight: 600; letter-spacing: 0.1em; margin-bottom: 10px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 13px; }
+.row .k { color: var(--faint); }
+.row .v { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.row .v.gold { color: var(--gold); }
+.row .v.cyan { color: var(--cyan); }
+.big { font-size: 26px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.big small { font-size: 12px; color: var(--faint); font-weight: 400; margin-left: 4px; }
+.mini-bar { height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; margin-top: 8px; }
+.mini-bar > i { display: block; height: 100%; background: var(--gold); transition: width 0.3s var(--ease); }
+.hint { font-size: 11.5px; color: var(--faint); line-height: 1.6; margin-top: 8px; }
+.hint code { background: oklch(0.26 0.018 262); padding: 1px 5px; border-radius: 3px; color: var(--muted); font-size: 11px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(14px);
+  background: oklch(0.26 0.018 262); border: 1px solid var(--gold); color: var(--gold);
+  padding: 9px 22px; border-radius: 8px; font-size: 13.5px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: all 0.4s var(--ease); z-index: 50;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="scene-note">
+  <b>原型说明</b> ·
+  丹田液体动效的混合路线验证：<b>AI 视频循环 = 液体材质</b>（可灵图生视频，首帧为 dantian-closeup.png），
+  <b>代码 = 液位</b>（<code>clip-path: inset()</code> 随修为实时裁切露出高度）与
+  <b>事件</b>（周天圆满 = 液面沉底 + 闪光）。转速经 <code>video.playbackRate</code> 绑挂机倍速。
+</div>
+
+<div class="panelbar">
+  <div class="grp">
+    <span class="lbl">境界</span>
+    <button class="realm on" data-r="2">初窥门径</button>
+    <button class="realm" data-r="3">小有所成</button>
+    <button class="realm" data-r="4">炉火纯青</button>
+    <button class="realm" data-r="5">一流高手</button>
+  </div>
+  <div class="grp">
+    <span class="lbl">液位</span>
+    <input type="range" id="slider" min="0" max="100" value="42" step="0.5">
+  </div>
+  <div class="grp">
+    <span class="lbl">挂机</span>
+    <button id="btnRun" class="on">运转中</button>
+    <button id="btnSpeed">×1</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="vessel-panel">
+    <div class="vessel" id="vessel">
+      <div class="liquid" id="liquid">
+        <video id="vid" src="../art-explore/dantian-ink-loop-graded.mp4"
+               autoplay muted loop playsinline></video>
+      </div>
+      <div class="surface-line" id="surfLine"></div>
+      <div class="void-mist" id="mist"></div>
+      <div class="flash"></div>
+    </div>
+    <p class="vessel-cap">
+      丹田 · 蓄水池心智模型（spec §2）：挂机产出注入，<b>蓄满即周天圆满</b>——
+      这一池沉入根基，容量扩至下一段。
+    </p>
+  </div>
+
+  <div class="readout">
+    <div class="card">
+      <h3>本段周天</h3>
+      <div class="big"><span id="vSegNow">0</span><small>/ <span id="vSegCap">933</span></small></div>
+      <div class="mini-bar"><i id="barSeg" style="width:0%"></i></div>
+      <div class="row"><span class="k">周天</span><span class="v cyan"><span id="vSeg">1</span> / <span id="vSegMax">3</span></span></div>
+      <div class="row"><span class="k">丹田累计</span><span class="v"><span id="vTotal">0</span> / <span id="vCost">2,800</span></span></div>
+      <div class="row"><span class="k">挂机速率</span><span class="v cyan"><span id="vRate">9</span> /秒</span></div>
+      <div class="row"><span class="k">playbackRate</span><span class="v gold" id="vPbr">1.00</span></div>
+    </div>
+    <div class="card">
+      <h3>验证点</h3>
+      <p class="hint">
+        1. 液体质感来自视频，代码只负责一条 <code>clip-path</code> —— 拖液位滑块，液面应即时跟手。<br>
+        2. 切挂机 ×8 / ×40，视频转速应同步加快（<code>playbackRate</code> 上限 4，超出部分表现封顶）。<br>
+        3. 蓄满一段后：闪光 → 液面沉底归零 → 进入下一周天（容量变大，注入显得更慢）。<br>
+        4. 留意 5 秒循环点是否有肉眼可见的接缝跳变——这是本路线最大风险项。
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// 境界数据取自 content.ts REALMS；segCap = breakthroughCost / zhoutianCount（分期缴纳制）
+const REALMS = {
+  2: { name:'初窥门径', cost:2800,  zhoutian:3, rate:9  },
+  3: { name:'小有所成', cost:5000,  zhoutian:4, rate:18 },
+  4: { name:'炉火纯青', cost:10000, zhoutian:6, rate:38 },
+  5: { name:'一流高手', cost:21000, zhoutian:8, rate:82 },
+};
+const state = { realm:2, seg:1, segNow:0, paid:0, running:true, speed:1 };
+const $ = (id) => document.getElementById(id);
+const vessel = $('vessel'), vid = $('vid');
+
+function segCap() { const R = REALMS[state.realm]; return R.cost / R.zhoutian; }
+
+function paint() {
+  const R = REALMS[state.realm];
+  const pct = Math.min(1, state.segNow / segCap());
+  // 液位 → clip-path：留 6% 底、8% 顶的呼吸空间，避免完全贴边
+  const empty = 92 - pct * 86;
+  vessel.style.setProperty('--empty', empty + '%');
+  vessel.style.setProperty('--empty-n', (1 - pct).toFixed(2));
+  vessel.style.setProperty('--vessel-glow', (0.10 + pct * 0.45).toFixed(2));
+  $('surfLine').style.top = empty + '%';
+
+  // 挂机倍速 → 视频转速。playbackRate 实际可用上限约 4~16（浏览器差异），封顶 4 保证平滑
+  const pbr = state.running ? Math.min(4, 0.75 + Math.log2(state.speed + 1) * 0.9) : 0;
+  if (state.running) { vid.playbackRate = pbr; if (vid.paused) vid.play(); }
+  else vid.pause();
+
+  $('vSegNow').textContent = Math.floor(state.segNow).toLocaleString();
+  $('vSegCap').textContent = Math.floor(segCap()).toLocaleString();
+  $('barSeg').style.width = (pct * 100) + '%';
+  $('vSeg').textContent = state.seg;
+  $('vSegMax').textContent = R.zhoutian;
+  $('vTotal').textContent = Math.floor(state.paid + state.segNow).toLocaleString();
+  $('vCost').textContent = R.cost.toLocaleString();
+  $('vRate').textContent = (R.rate * state.speed).toFixed(0);
+  $('vPbr').textContent = pbr.toFixed(2);
+  $('slider').value = pct * 100;
+}
+
+// 周天圆满：闪光 + 液面沉底 + 进入下一段
+function sealSegment() {
+  const R = REALMS[state.realm];
+  state.paid += segCap();
+  state.segNow = 0;
+  vessel.classList.add('seal');
+  toast(state.seg >= R.zhoutian ? `${R.zhoutian} 段缴清 · 可突破` : `周天圆满 · 第 ${state.seg} 转沉入根基`);
+  setTimeout(() => vessel.classList.remove('seal'), 950);
+  if (state.seg >= R.zhoutian) { state.paid = 0; state.seg = 1; }
+  else state.seg++;
+}
+
+setInterval(() => {
+  if (!state.running) return;
+  state.segNow += REALMS[state.realm].rate * state.speed * 0.25;
+  if (state.segNow >= segCap()) sealSegment();
+  paint();
+}, 250);
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+$('slider').oninput = (e) => { state.segNow = segCap() * (e.target.value / 100); paint(); };
+document.querySelectorAll('.realm').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.realm').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  state.realm = +b.dataset.r; state.seg = 1; state.segNow = 0; state.paid = 0;
+  paint();
+});
+$('btnRun').onclick = function () {
+  state.running = !state.running;
+  this.classList.toggle('on', state.running);
+  this.textContent = state.running ? '运转中' : '已入定';
+  paint();
+};
+$('btnSpeed').onclick = function () {
+  state.speed = state.speed === 1 ? 8 : state.speed === 8 ? 40 : 1;
+  this.textContent = '×' + state.speed;
+  this.classList.toggle('on', state.speed > 1);
+  paint();
+};
+
+paint();
+</script>
+</body>
+</html>

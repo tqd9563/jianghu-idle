@@ -25,17 +25,20 @@ import sys
 
 # ─────────────────────────────────────────────────────────────
 # 境界表（design.md §3.1 / §3.2）
-#   N：周天段数；首段配额；总额；突破所需已通窍穴 M；
-#   sequence：本境界窍穴的松动次序（真气行经次序），每项为该穴在其经脉内的位次（1 起）
+#   N：周天段数；首段配额；总额；
+#   meridians：本境界各经脉的穴数，按 §3.2 书写次序（也是松动次序）
+#   突破门槛 = 贯通首条经脉（design.md §4），所需穴数 M = meridians[0]
 # ─────────────────────────────────────────────────────────────
 
 REALMS = [
-    # 境界, N, 首段配额,   总额,        M, 松动次序（脉内位次）
-    (2,     3,   555_714,   3_890_000,  2, [1, 2, 1, 2]),          # 手阳明 2 穴 / 手少阴 2 穴
-    (3,     4,   753_333,  11_300_000,  2, [1, 2, 3, 1, 2]),       # 足阳明 3 穴 / 足太阴 2 穴
-    (4,     6,   466_667,  29_400_000,  3, [1, 2, 3, 1, 2, 3]),    # 任脉 3 穴 / 足少阴 3 穴
-    (5,     8,   248_235,  63_300_000,  4, [1, 2, 3, 1, 2, 3, 1, 2]),  # 督脉 3 / 冲脉 3 / 带脉 2
+    # 境界, N, 首段配额,   总额,        各脉穴数
+    (2,     3,   555_714,   3_890_000,  [2, 2]),      # 手阳明 / 手少阴
+    (3,     4,   753_333,  11_300_000,  [3, 2]),      # 足阳明 / 足太阴
+    (4,     6,   466_667,  29_400_000,  [3, 3]),      # 任脉 / 足少阴
+    (5,     8,   248_235,  63_300_000,  [3, 3, 2]),   # 督脉 / 冲脉 / 带脉
 ]
+
+REQUIRED_MERIDIANS = 1  # 突破须贯通的经脉条数（按次序取前几条）
 
 RATIO = 2  # 段间公比（design.md §3.1）
 
@@ -78,13 +81,19 @@ def loosen_segs(N, M):
     return [min(N - M + k + 1, N) for k in range(1, M + 1)]
 
 
-def simulate_realm(realm, N, first, total, M, sequence, runs=SIM_RUNS):
+def required_sequence(meridians):
+    """突破所需窍穴的脉内位次序列：前 REQUIRED_MERIDIANS 条脉逐穴展开。"""
+    return [k for size in meridians[:REQUIRED_MERIDIANS] for k in range(1, size + 1)]
+
+
+def simulate_realm(realm, N, first, total, sequence, runs=SIM_RUNS):
     """
     返回每次模拟的「冲穴总花费 / 境界总额」列表。
 
-    玩家策略（最省）：只冲突破所需的前 M 个穴；每个穴一松动就攒够即冲，
+    玩家策略（最省）：只冲突破所需的 M 个穴；每个穴一松动就攒够即冲，
     失败继续攒再冲，直到通。所需真气按松动时所在段的配额计。
     """
+    M = len(sequence)
     segs = loosen_segs(N, M)
     results = []
     for _ in range(runs):
@@ -121,8 +130,10 @@ def main():
     medians = []
     all_pass = True
     rows = []
-    for realm, N, first, total, M, seq in REALMS:
-        r = simulate_realm(realm, N, first, total, M, seq)
+    for realm, N, first, total, meridians in REALMS:
+        seq = required_sequence(meridians)
+        M = len(seq)
+        r = simulate_realm(realm, N, first, total, seq)
         med = statistics.median(r)
         p95 = sorted(r)[int(len(r) * 0.95)]
         worst = max(r)

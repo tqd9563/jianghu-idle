@@ -1,227 +1,176 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-周天 · 经脉 · 窍穴系统规格化验算模拟器
+周天 · 经脉 · 窍穴系统 v4 验算模拟器 —— 「冲穴耗内力」制
 
-验算两项（zhoutian/design.md §3/§5（原 spec §6.1/§5））：
-1. 排程不等式：P(成功数 ≥ M | N, p=70%, +10pp/失败, 第5次必成) ≈ 1
-2. 囤积非优势：放弃充能期窍穴加成 vs 满档气势小幅成功率，期望上劣于「圆满即冲」
+设计来源：zhoutian/design.md v4.0 §2（核心循环）/ §3.3（冲穴参数）/ §3.4（判据 W1–W4）。
 
-运行：python3 docs/systems/zhoutian/sim.py
+它回答的问题：
+    冲穴不再靠「机会」，而是从当前周天扣内力。那么在一个境界里，
+    为了通够突破所需的窍穴，玩家平均要多付多少内力（= 多花多少时间）？
+    坏运气的人会不会被拖得太惨？难度是否随境界上升？
+
+时间口径：
+    一切按「基准时长」折算——境界总额 ÷ 基础产出（M=1 口径，design.md §3.1）。
+    冲穴花掉的内力全部从当前段扣，所以附加时间 = 冲穴总花费 ÷ 产出速率，
+    与账期时间（= 总额 ÷ 产出速率）同口径，直接可比。
+
+用法：python3 docs/systems/zhoutian/sim.py
 无依赖，纯标准库。
 """
 
 import random
+import statistics
 import sys
-from dataclasses import dataclass, field
-
 
 # ─────────────────────────────────────────────────────────────
-# 规格化数值（zhoutian/design.md §3（原 spec §2–§5））
+# 境界表（design.md §3.1 / §3.2）
+#   N：周天段数；首段配额；总额；
+#   meridians：本境界各经脉的穴数，按 §3.2 书写次序（也是松动次序）
+#   突破门槛 = 贯通首条经脉（design.md §4），所需穴数 M = meridians[0]
 # ─────────────────────────────────────────────────────────────
 
 REALMS = [
-    # (境界, N, M, 池大小, 单穴加成, 贯通加成)
-    (2, 3, 2, 4, 0.02, 0.03),   # 单穴 +2%, 贯通 +3%
-    (3, 4, 2, 5, 0.02, 0.03),   # M 下调 3→2（P(>=2|n=4,p=0.85)=0.988）
-    (4, 6, 3, 6, 0.02, 0.03),
-    (5, 8, 4, 8, 0.015, 0.0225),  # 境界 5 下调单穴至 +1.5%（§6.3 修订）
+    # 境界, N, 首段配额,   总额,        各脉穴数
+    (2,     3,   555_714,   3_890_000,  [2, 2]),      # 手阳明 / 手少阴
+    (3,     4,   753_333,  11_300_000,  [3, 2]),      # 足阳明 / 足太阴
+    (4,     6,   466_667,  29_400_000,  [3, 3]),      # 任脉 / 足少阴
+    (5,     8,   248_235,  63_300_000,  [3, 3, 2]),   # 督脉 / 冲脉 / 带脉
 ]
 
-BASE_P = 0.85        # 基础成功率（spec §4 调整：70%→85%，让 P(>=M) 达 ≈1）
-FAIL_BONUS_PP = 0.10  # 每次失败 +10pp
-FORCE_SUCCESS_K = 3  # 第 3 次必成（spec §4 调整：5→3，让小 N 也能触发保底）
-QISHI_CAP_PP = 0.15     # 单次气势加成封顶 +15pp（spec §5 调整：20→15，抑制囤积优势）
-QISHI_CONSUME = 0.7     # 每次冲穴消耗 70% 当前气势（spec §5 调整：50%→70%，衰减更快）
+REQUIRED_MERIDIANS = 1  # 突破须贯通的经脉条数（按次序取前几条）
 
-SIM_RUNS = 20000  # 蒙特卡洛次数
-P_THRESHOLD = 0.90  # P(≥M) ≥ 0.90 算 PASS（「≈1」的工程解释，§6.1）
+RATIO = 2  # 段间公比（design.md §3.1）
+
+# ─────────────────────────────────────────────────────────────
+# 冲穴参数（design.md §3.3，候选值——甲的数值待拍板，调这里重跑）
+#   按「脉内位次」定：越靠后的穴，成功率越低、所需真气越多
+#   所需真气 = 当前段配额 × T；T = (T_BASE + T_STEP×(位次−1)) × REALM_MUL^(境界−2)
+#   松动即可冲（T ≤ 100%，永远装得下）；冲即扣，失败白扣
+# ─────────────────────────────────────────────────────────────
+
+P_BASE, P_STEP, P_FLOOR = 0.90, 0.10, 0.50   # 成功率：第 1 穴 90%，每往后一穴 −10pp，最低 50%
+T_BASE, T_STEP = 0.11, 0.05                  # 所需真气基础比例：第 1 穴 11%，每往后一穴 +5%
+REALM_MUL = 1.2                              # 境界乘数：所需真气比例 × 1.2^(境界−2)
+
+FAIL_BONUS_PP = 0.10   # 同穴每失败一次，下次 +10pp（累进保留，必成兜底废止）
 
 
-@dataclass
-class AcupointState:
-    """单个窍穴的冲击状态"""
-    fail_count: int = 0
-    opened: bool = False
+def p_of(pos: int) -> float:
+    return max(P_FLOOR, P_BASE - P_STEP * (pos - 1))
 
-    def current_p(self, qishi_bonus: float) -> float:
-        """本次冲击成功率"""
-        if self.fail_count >= FORCE_SUCCESS_K - 1:
-            return 1.0  # 第 5 次必成
-        return min(1.0, BASE_P + FAIL_BONUS_PP * self.fail_count + qishi_bonus)
+
+def t_of(pos: int, realm: int) -> float:
+    return min(1.0, (T_BASE + T_STEP * (pos - 1)) * REALM_MUL ** (realm - 2))
+
+SIM_RUNS = 20000
 
 
 # ─────────────────────────────────────────────────────────────
-# 排程不等式验算（§6.1）
+# 单境界模拟
 # ─────────────────────────────────────────────────────────────
 
-def simulate_realm(realm: int, N: int, M: int, pool: int, runs: int = SIM_RUNS) -> dict:
-    """
-    模拟单境界 N 次机会冲击，问 P(成功 >= M)。
-    策略：优先开新穴（fail_count 最少的），保底在单穴多次失败时触发。
-    无气势加成（圆满即冲策略）。
-    """
-    success_geq_M = 0
-    total_successes = 0
+def quota(first: int, seg: int) -> int:
+    """第 seg 段（1 起）的配额。"""
+    return first * RATIO ** (seg - 1)
 
+
+def loosen_segs(N, M):
+    """突破所需的 M 个穴各自松动后所在的当前段：最后 M 段依次松动（design.md §2）。
+    第 k 穴（1 起）在第 N−M+k 段圆满后松动，当时的当前段 = N−M+k+1，封顶 N（末段）。"""
+    return [min(N - M + k + 1, N) for k in range(1, M + 1)]
+
+
+def required_sequence(meridians):
+    """突破所需窍穴的脉内位次序列：前 REQUIRED_MERIDIANS 条脉逐穴展开。"""
+    return [k for size in meridians[:REQUIRED_MERIDIANS] for k in range(1, size + 1)]
+
+
+def simulate_realm(realm, N, first, total, sequence, runs=SIM_RUNS):
+    """
+    返回每次模拟的「冲穴总花费 / 境界总额」列表。
+
+    玩家策略（最省）：只冲突破所需的 M 个穴；每个穴一松动就攒够即冲，
+    失败继续攒再冲，直到通。所需真气按松动时所在段的配额计。
+    """
+    M = len(sequence)
+    segs = loosen_segs(N, M)
+    results = []
     for _ in range(runs):
-        states = [AcupointState() for _ in range(pool)]
-        successes = 0
-
-        for _ in range(N):
-            candidates = [s for s in states if not s.opened]
-            if not candidates:
-                break
-            # 优先开新穴（fail_count 最少的），让保底在单穴多次失败时触发
-            target = min(candidates, key=lambda s: s.fail_count)
-
-            # 掷骰
-            p = target.current_p(qishi_bonus=0.0)
-            if random.random() < p:
-                target.opened = True
-                successes += 1
-            else:
-                target.fail_count += 1
-
-        if successes >= M:
-            success_geq_M += 1
-        total_successes += successes
-
-    return {
-        "realm": realm,
-        "N": N,
-        "M": M,
-        "pool": pool,
-        "runs": runs,
-        "P_geq_M": success_geq_M / runs,
-        "mean_successes": total_successes / runs,
-    }
+        spent = 0
+        for j in range(M):
+            pos = sequence[j]
+            p0 = p_of(pos)
+            cost = quota(first, segs[j]) * t_of(pos, realm)
+            fails = 0
+            while True:
+                spent += cost
+                p = min(1.0, p0 + FAIL_BONUS_PP * fails)
+                if random.random() < p:
+                    break
+                fails += 1
+        results.append(spent / total)
+    return results
 
 
 # ─────────────────────────────────────────────────────────────
-# 囤积非优势验算（§5）
-# ─────────────────────────────────────────────────────────────
-
-def simulate_hoard_vs_immediate(realm: int, N: int, M: int, pool: int,
-                                single_bonus: float, runs: int = SIM_RUNS) -> dict:
-    """
-    比较两种策略的期望成功数差额（§5 囤积非优势验算）：
-
-    策略 A「圆满即冲」：每次周天圆满立即冲穴，无气势加成。
-      - 窍穴加成从冲穴成功那一刻起到归隐前一直生效（充能期间享受）
-      - 期望成功数 E_A
-
-    策略 B「囤积满档」：所有机会囤到丹田充满后逐次冲，气势加成满档。
-      - 窍穴加成推迟到突破后才生效（本境界充能期间不享受）
-      - 期望成功数 E_B
-
-    囤积非优势判据：E_B - E_A ≤ 0.5
-    逻辑：气势封顶 +15pp、消耗 70%，带来的额外成功数应 ≤ 0.5；
-          而策略 A 放弃的充能期加成（E_A × 单穴加成 × 充能时间占比 ≈ 0.5 × 单穴加成 × 0.5）
-          必然大于此差额。若 E_B - E_A > 0.5，说明气势加成过强，需调参。
-    """
-    # 策略 A：圆满即冲，无气势加成
-    a_successes_total = 0
-    for _ in range(runs):
-        states = [AcupointState() for _ in range(pool)]
-        successes = 0
-        for _ in range(N):
-            candidates = [s for s in states if not s.opened]
-            if not candidates:
-                break
-            # 优先开新穴（fail_count 最少的），让保底在单穴多次失败时触发
-            target = min(candidates, key=lambda s: s.fail_count)
-            p = target.current_p(qishi_bonus=0.0)
-            if random.random() < p:
-                target.opened = True
-                successes += 1
-            else:
-                target.fail_count += 1
-        a_successes_total += successes
-    a_mean_successes = a_successes_total / runs
-
-    # 策略 B：囤积满档，气势加成衰减
-    # 满档 qishi=1.0 → +15pp；每次消耗 70% → qishi 序列 1.0/0.3/0.09/0.027...
-    b_successes_total = 0
-    for _ in range(runs):
-        states = [AcupointState() for _ in range(pool)]
-        successes = 0
-        qishi = 1.0  # 满档
-        for _ in range(N):
-            candidates = [s for s in states if not s.opened]
-            if not candidates:
-                break
-            target = min(candidates, key=lambda s: s.fail_count)
-            qishi_pp = min(QISHI_CAP_PP, qishi * QISHI_CAP_PP)
-            p = target.current_p(qishi_bonus=qishi_pp)
-            if random.random() < p:
-                target.opened = True
-                successes += 1
-            else:
-                target.fail_count += 1
-            qishi *= (1 - QISHI_CONSUME)  # 消耗 70%
-        b_successes_total += successes
-    b_mean_successes = b_successes_total / runs
-
-    diff = b_mean_successes - a_mean_successes
-
-    return {
-        "realm": realm,
-        "strategy_A_mean_successes": a_mean_successes,
-        "strategy_B_mean_successes": b_mean_successes,
-        "diff": diff,
-        "hoard_non_dominant": diff <= 0.5,
-    }
-
-
-# ─────────────────────────────────────────────────────────────
-# 主程序
+# 判据 W1–W4
 # ─────────────────────────────────────────────────────────────
 
 def main():
-    random.seed(42)  # 可复现
-
+    random.seed(42)
     print("=" * 72)
-    print("周天 · 经脉 · 窍穴系统规格化验算")
-    print("zhoutian/design.md 排程不等式 + §5 囤积非优势")
+    print("周天 v4 · 冲穴耗内力制 验算（design.md §3.4 判据 W1–W4）")
     print("=" * 72)
+    print("\n冲穴参数：成功率 = max(50%, 90% − 10pp×(位次−1))；"
+          "所需真气 = 当前段配额 × (11% + 5%×(位次−1)) × 1.2^(境界−2)")
 
+    print(f"\n{'境界':>4} {'N':>3} {'M':>3} {'附加中位':>8} {'附加P95':>8} {'P95/中位':>8} {'最长':>8} {'松动段':>12} {'各穴所需真气占池':>18}")
+    print("-" * 96)
+    medians = []
     all_pass = True
+    rows = []
+    for realm, N, first, total, meridians in REALMS:
+        seq = required_sequence(meridians)
+        M = len(seq)
+        r = simulate_realm(realm, N, first, total, seq)
+        med = statistics.median(r)
+        p95 = sorted(r)[int(len(r) * 0.95)]
+        worst = max(r)
+        medians.append(med)
+        # 总时长比 = (1 + 附加)；坏运比 = (1+p95)/(1+med)
+        bad_ratio = (1 + p95) / (1 + med)
+        segs = loosen_segs(N, M)
+        ts = [t_of(seq[j], realm) for j in range(M)]
+        fits = all(t <= 1.0 for t in ts)
+        rows.append((realm, med, p95, bad_ratio, worst, fits))
+        print(f"{realm:>4} {N:>3} {M:>3} {med:>8.1%} {p95:>8.1%} {bad_ratio:>8.2f} {worst:>8.1%} "
+              f"{'/'.join(str(N - M + k) for k in range(1, M + 1)):>12} {' '.join(f'{t:.0%}' for t in ts):>18}")
 
-    # ── 排程不等式 ──
-    print("\n## 6.1 排程不等式验算（P(成功 >= M) >= {:.2f} 算 PASS）".format(P_THRESHOLD))
-    print(f"{'境界':>4} {'N':>3} {'M':>3} {'池':>3} {'P(>=M)':>10} {'期望成功':>10} {'判定':>6}")
-    print("-" * 50)
-    for realm, N, M, pool, _, _ in REALMS:
-        r = simulate_realm(realm, N, M, pool)
-        verdict = "PASS" if r["P_geq_M"] >= P_THRESHOLD else "FAIL"
-        if verdict == "FAIL":
-            all_pass = False
-        print(f"{realm:>4} {N:>3} {M:>3} {pool:>3} "
-              f"{r['P_geq_M']:>10.4f} {r['mean_successes']:>10.2f} {verdict:>6}")
+    # W1 无死锁：内力持续产出可无限重试；所需真气 ≤ 当前段配额（松动即可冲）
+    w1 = all(w < float("inf") and fits for _, _, _, _, w, fits in rows)
+    # W2 附加时间占账期比例中位落在 [15%, 50%]
+    w2 = all(0.15 <= med <= 0.50 for _, med, *_ in rows)
+    # W3 坏运不惨：P95 总时长 ≤ 中位总时长 × 1.5
+    w3 = all(br <= 1.5 for _, _, _, br, *_ in rows)
+    # W4 越往上越难：附加占比中位随境界非递减
+    w4 = all(medians[i] <= medians[i + 1] + 1e-9 for i in range(len(medians) - 1))
 
-    # ── 囤积非优势 ──
-    print("\n## §5 囤积非优势验算（E_B - E_A <= 0.5 算 PASS）")
-    print(f"{'境界':>4} {'E_A':>8} {'E_B':>8} {'差额':>8} {'判定':>10}")
-    print("-" * 45)
-    for realm, N, M, pool, single, _ in REALMS:
-        r = simulate_hoard_vs_immediate(realm, N, M, pool, single)
-        verdict = "PASS" if r["hoard_non_dominant"] else "FAIL(囤积优势)"
-        if not r["hoard_non_dominant"]:
-            all_pass = False
-        print(f"{realm:>4} "
-              f"{r['strategy_A_mean_successes']:>8.3f} "
-              f"{r['strategy_B_mean_successes']:>8.3f} "
-              f"{r['diff']:>+8.3f} {verdict:>10}")
+    print("\n----- 判据 -----")
+    for label, ok, note in [
+        ("W1 无死锁（内力持续产出可重试；所需真气 ≤ 当前段配额）", w1,
+         " / ".join(f"境界{r} ok" if fits else f"境界{r} 超池" for r, *_, fits in rows)),
+        ("W2 冲穴附加时间中位 ∈ [15%, 50%] 账期", w2,
+         " / ".join(f"境界{r} {m:.0%}" for r, m, *_ in rows)),
+        ("W3 坏运 P95 总时长 ≤ 中位 × 1.5", w3,
+         " / ".join(f"境界{r} {br:.2f}" for r, _, _, br, *_ in rows)),
+        ("W4 附加占比随境界非递减", w4, ""),
+    ]:
+        print(f"  [{'PASS' if ok else 'FAIL'}] {label}  {note}")
+        all_pass = all_pass and ok
 
-    # ── 总结 ──
     print("\n" + "=" * 72)
-    if all_pass:
-        print("总结：全部验算 PASS")
-        print("  - 排程不等式全部成立（P(≥M) ≥ 0.90）")
-        print("  - 囤积策略非优势（策略 B 期望 ≤ 策略 A 期望 × 1.05）")
-    else:
-        print("总结：存在 FAIL 项，需调整参数")
+    print("总结：全部 PASS" if all_pass else "总结：存在 FAIL 项，调 T_BASE/T_STEP/REALM_MUL 重跑")
     print("=" * 72)
     return 0 if all_pass else 1
 

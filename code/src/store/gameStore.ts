@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
 import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef, type MapId } from '../engine/enemies';
-import { idleNeiliPerSec, zhoutianProgress, CHARGE_SEGMENTS } from '../engine/formulas';
+import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
 import {
   freshInjuries, heal as healInjuries, inflict as inflictInjury, injuryFromBattle,
   idleOutputMultiplier, applyInjuriesToBuild, isHurt,
@@ -16,7 +16,7 @@ import {
 } from '../engine/injury';
 import {
   REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
-  consumeQishi, openedInRealm, qishiToBonus, grantQishi, QISHI_FULL,
+  consumeQishi, openedInRealm, qishiToBonus,
   type AcupointState,
 } from '../engine/acupoints';
 import {
@@ -415,9 +415,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     lastTick = now;
     if (saved) {
       const merged = { ...FRESH, ...saved };
-      // 存档迁移：旧「溢出转气势」无上限累积（D5 前的实现），会让气势远超满档、
-      // 使「每次消耗 70%」永远降不下来。载入时一律夹回满档。
-      if ((merged.qishi ?? 0) > QISHI_FULL) merged.qishi = QISHI_FULL;
       let selectedMap: MapNo = 1;
       for (const m of [3, 2, 1] as MapNo[]) {
         if (mapUnlocked(m, merged.clearedStages)) { selectedMap = m; break; }
@@ -535,16 +532,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       let qishi = s.qishi ?? 0;
       let chongxueChances = s.chongxueChances ?? 0;
       if (cost !== null) {
-        // 丹田上限 = 突破消耗（spec §4.1）。
-        // 旧「溢出转气势」已由 design.md 裁决 D5 废止（分期制下无溢出窗口），此处只做封顶。
-        if (dantian > cost) dantian = cost;
+        // 丹田上限 = 突破消耗（spec §4.1）；溢出转气势（spec §5.3 裁决 D2）
+        if (dantian > cost) {
+          qishi += overflowToQishi(dantian, cost);
+          dantian = cost;
+        }
         // N 段动态（spec §2：境界 2-5 = 3/4/6/8；旧存档 fallback 5 段）
         const N = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
         const { segmentsFull } = zhoutianProgress(dantian, cost, N);
         while (chargeHighWater < segmentsFull) {
           chargeHighWater += 1;
           chongxueChances += 1;  // 周天圆满发 1 次冲穴机会（spec §5.1）
-          qishi = grantQishi(qishi);  // 并赠气势 +40，封顶满档（D5）
           track('charge_segment_full', { run: s.run, realm: s.realm, route: s.route }, {
             realm_target: s.realm + 1, segment: chargeHighWater,
           });

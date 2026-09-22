@@ -19,8 +19,6 @@ export const QISHI_CAP_PP = 0.15;
 export const QISHI_CONSUME_RATE = 0.7;
 /** 气势满档阈值（spec §5：100 气势 = 满档，加成 = +15pp） */
 export const QISHI_FULL = 100;
-/** 周天圆满赠予的气势（design.md §表 D5：气势来源 = 周天圆满 +40） */
-export const QISHI_GRANT_PER_ZHOUTIAN = 40;
 
 // ─────────────────────────────────────────────────────────────
 // 数据结构
@@ -251,9 +249,4 @@ export function totalAcupointBonus(
 /** 冲穴后气势剩余（消耗 70%） */
 export function consumeQishi(qishi: number): number {
   return qishi * (1 - QISHI_CONSUME_RATE);
-}
-
-/** 周天圆满赠气势（D5）：+40 并封顶于满档，防止无上限累积使「消耗 70%」形同虚设 */
-export function grantQishi(qishi: number): number {
-  return Math.min(QISHI_FULL, qishi + QISHI_GRANT_PER_ZHOUTIAN);
 }

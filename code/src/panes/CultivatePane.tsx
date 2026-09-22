@@ -44,7 +44,7 @@ export function CultivatePane() {
   return (
     <div className="pane-wrap pane-grid cultivate-grid">
       <WoundPanel injuries={s.injuries ?? freshInjuries()} realm={s.realm} />
-      <section className="panel">
+      <section className="panel cs-panel">
         {nextRealm ? (
           <>
             <div className="panel-head">
@@ -103,7 +103,7 @@ export function CultivatePane() {
       </section>
 
 
-      <section className="panel">
+      <section className="panel attr-panel">
         <div className="panel-head">人物属性 <span className="sub">当前{nextRealm ? ' → 突破后' : ''}</span></div>
         <div className="panel-body attr-table">
           <div className="attr-head">

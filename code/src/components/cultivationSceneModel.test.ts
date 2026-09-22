@@ -94,6 +94,15 @@ describe('修炼面板模型 · 氛围绑定', () => {
     expect(buildSceneModel(at({ realm: 4, breakCost: 10000 }))!.auraOpacity).toBeGreaterThan(0);
   });
 
+  it('丹田满时 segmentsFull 抵满额、段进度归零——渲染层据此走「圆满」而非「第 N 转 0%」', () => {
+    const full = buildSceneModel(at({ dantian: 2800, chargeHighWater: 3 }))!;
+    expect(full.segmentsFull).toBe(full.zhoutianCount);   // 三周天全满
+    expect(full.currentSegmentPct).toBe(0);               // 段进度为 0，但含义是「已满」不是「刚起步」
+    // 未满时才是真正的「第 N 转 x%」
+    const midway = buildSceneModel(at({ dantian: 2800 * 0.5 }))!;
+    expect(midway.segmentsFull).toBeLessThan(midway.zhoutianCount);
+  });
+
   it('气流随境界与段进度加快（周期变短）', () => {
     const slow = buildSceneModel(at({ realm: 2 }))!.qiSpeedSec;
     const fast = buildSceneModel(at({ realm: 5, breakCost: 21000 }))!.qiSpeedSec;

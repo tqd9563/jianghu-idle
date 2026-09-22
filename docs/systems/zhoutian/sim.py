@@ -42,18 +42,23 @@ RATIO = 2  # 段间公比（design.md §3.1）
 # ─────────────────────────────────────────────────────────────
 # 冲穴参数（design.md §3.3，候选值——甲的数值待拍板，调这里重跑）
 #   按「脉内位次」定：越靠后的穴，成功率越低、所需真气越多
-#   T：所需真气 = 本境界总额 × T；当前段蓄到这个数才能冲，冲即扣，失败白扣
-#   （锚在总额而非当前段：前几段配额只占总额零头，按段计价会让高境界冲穴反而便宜）
+#   所需真气 = 当前段配额 × T；T = (T_BASE + T_STEP×(位次−1)) × REALM_MUL^(境界−2)
+#   松动即可冲（T ≤ 100%，永远装得下）；冲即扣，失败白扣
 # ─────────────────────────────────────────────────────────────
 
-ACUPOINT_BY_POS = {
-    # 位次: (成功率 p, 所需真气占本境界总额 T)
-    1: (0.90, 0.06),
-    2: (0.80, 0.09),
-    3: (0.70, 0.12),
-}
+P_BASE, P_STEP, P_FLOOR = 0.90, 0.10, 0.50   # 成功率：第 1 穴 90%，每往后一穴 −10pp，最低 50%
+T_BASE, T_STEP = 0.11, 0.05                  # 所需真气基础比例：第 1 穴 11%，每往后一穴 +5%
+REALM_MUL = 1.2                              # 境界乘数：所需真气比例 × 1.2^(境界−2)
 
 FAIL_BONUS_PP = 0.10   # 同穴每失败一次，下次 +10pp（累进保留，必成兜底废止）
+
+
+def p_of(pos: int) -> float:
+    return max(P_FLOOR, P_BASE - P_STEP * (pos - 1))
+
+
+def t_of(pos: int, realm: int) -> float:
+    return min(1.0, (T_BASE + T_STEP * (pos - 1)) * REALM_MUL ** (realm - 2))
 
 SIM_RUNS = 20000
 
@@ -67,30 +72,27 @@ def quota(first: int, seg: int) -> int:
     return first * RATIO ** (seg - 1)
 
 
-def affordable_seg(first, N, cost):
-    """最早能装下 cost 的段号（配额 ≥ cost）；末段也装不下返回 None。"""
-    for seg in range(1, N + 1):
-        if quota(first, seg) >= cost:
-            return seg
-    return None
+def loosen_segs(N, M):
+    """突破所需的 M 个穴各自松动后所在的当前段：最后 M 段依次松动（design.md §2）。
+    第 k 穴（1 起）在第 N−M+k 段圆满后松动，当时的当前段 = N−M+k+1，封顶 N（末段）。"""
+    return [min(N - M + k + 1, N) for k in range(1, M + 1)]
 
 
 def simulate_realm(realm, N, first, total, M, sequence, runs=SIM_RUNS):
     """
     返回每次模拟的「冲穴总花费 / 境界总额」列表。
 
-    玩家策略（最省）：只冲突破所需的前 M 个穴；每个穴一松动就开始攒，
-    攒够 T 立刻冲，失败继续攒再冲，直到通。
-    松动规则：第 k 段圆满松动第 k 穴；末段圆满时余下全部松动（design.md §2）。
-    所需真气锚在本境界总额；当前段配额不够装时，要等丹田扩容（见 affordable_seg）。
+    玩家策略（最省）：只冲突破所需的前 M 个穴；每个穴一松动就攒够即冲，
+    失败继续攒再冲，直到通。所需真气按松动时所在段的配额计。
     """
+    segs = loosen_segs(N, M)
     results = []
     for _ in range(runs):
         spent = 0
         for j in range(M):
             pos = sequence[j]
-            p0, T = ACUPOINT_BY_POS[pos]
-            cost = total * T
+            p0 = p_of(pos)
+            cost = quota(first, segs[j]) * t_of(pos, realm)
             fails = 0
             while True:
                 spent += cost
@@ -111,12 +113,11 @@ def main():
     print("=" * 72)
     print("周天 v4 · 冲穴耗内力制 验算（design.md §3.4 判据 W1–W4）")
     print("=" * 72)
-    print("\n冲穴参数（脉内位次 → 成功率 / 所需真气占本境界总额）")
-    for pos, (p, T) in ACUPOINT_BY_POS.items():
-        print(f"  第{pos}穴  p={p:.0%}  T={T:.0%}")
+    print("\n冲穴参数：成功率 = max(50%, 90% − 10pp×(位次−1))；"
+          "所需真气 = 当前段配额 × (11% + 5%×(位次−1)) × 1.2^(境界−2)")
 
-    print(f"\n{'境界':>4} {'N':>3} {'M':>3} {'附加中位':>8} {'附加P95':>8} {'P95/中位':>8} {'最长':>8} {'可冲段':>10}")
-    print("-" * 68)
+    print(f"\n{'境界':>4} {'N':>3} {'M':>3} {'附加中位':>8} {'附加P95':>8} {'P95/中位':>8} {'最长':>8} {'松动段':>12} {'各穴所需真气占池':>18}")
+    print("-" * 96)
     medians = []
     all_pass = True
     rows = []
@@ -128,13 +129,14 @@ def main():
         medians.append(med)
         # 总时长比 = (1 + 附加)；坏运比 = (1+p95)/(1+med)
         bad_ratio = (1 + p95) / (1 + med)
-        segs = [affordable_seg(first, N, total * ACUPOINT_BY_POS[seq[j]][1]) for j in range(M)]
-        fits = all(s is not None for s in segs)
+        segs = loosen_segs(N, M)
+        ts = [t_of(seq[j], realm) for j in range(M)]
+        fits = all(t <= 1.0 for t in ts)
         rows.append((realm, med, p95, bad_ratio, worst, fits))
         print(f"{realm:>4} {N:>3} {M:>3} {med:>8.1%} {p95:>8.1%} {bad_ratio:>8.2f} {worst:>8.1%} "
-              f"{'/'.join(str(s) for s in segs):>10}")
+              f"{'/'.join(str(N - M + k) for k in range(1, M + 1)):>12} {' '.join(f'{t:.0%}' for t in ts):>18}")
 
-    # W1 无死锁：每次模拟都在有限步内通够 M 穴（循环必终止，此处断言最长花费有限）
+    # W1 无死锁：内力持续产出可无限重试；所需真气 ≤ 当前段配额（松动即可冲）
     w1 = all(w < float("inf") and fits for _, _, _, _, w, fits in rows)
     # W2 附加时间占账期比例中位落在 [15%, 50%]
     w2 = all(0.15 <= med <= 0.50 for _, med, *_ in rows)
@@ -145,8 +147,8 @@ def main():
 
     print("\n----- 判据 -----")
     for label, ok, note in [
-        ("W1 无死锁（内力持续产出可重试；所需真气末段装得下）", w1,
-         " / ".join(f"境界{r} 可冲段 ok" if fits else f"境界{r} 装不下" for r, *_, fits in rows)),
+        ("W1 无死锁（内力持续产出可重试；所需真气 ≤ 当前段配额）", w1,
+         " / ".join(f"境界{r} ok" if fits else f"境界{r} 超池" for r, *_, fits in rows)),
         ("W2 冲穴附加时间中位 ∈ [15%, 50%] 账期", w2,
          " / ".join(f"境界{r} {m:.0%}" for r, m, *_ in rows)),
         ("W3 坏运 P95 总时长 ≤ 中位 × 1.5", w3,
@@ -157,7 +159,7 @@ def main():
         all_pass = all_pass and ok
 
     print("\n" + "=" * 72)
-    print("总结：全部 PASS" if all_pass else "总结：存在 FAIL 项，调 ACUPOINT_BY_POS 重跑")
+    print("总结：全部 PASS" if all_pass else "总结：存在 FAIL 项，调 T_BASE/T_STEP/REALM_MUL 重跑")
     print("=" * 72)
     return 0 if all_pass else 1
 

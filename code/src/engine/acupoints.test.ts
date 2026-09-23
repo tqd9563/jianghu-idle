@@ -1,66 +1,172 @@
 /**
- * 窍穴/经脉/冲穴/气势纯函数测试 —— 权威来源：docs/systems/zhoutian/design.md
+ * 窍穴 / 经脉 / 冲穴纯函数测试 —— 权威来源：docs/systems/zhoutian/design.md v4.0
  */
 import { describe, expect, it } from 'vitest';
 import {
-  REALM_ACUPOINTS, currentSuccessRate, attemptAcupoint,
+  REALM_ACUPOINTS, currentSuccessRate, attemptAcupoint, basePForPos,
   breakthroughReady, totalAcupointBonus, acupointBonus, meridianBonus,
-  isMeridianComplete, consumeQishi, openedInRealm, qishiToBonus,
-  BASE_P, FAIL_BONUS_PP, QISHI_CAP_PP,
+  isMeridianComplete, openedInRealm, acupointPos, requiredMeridian,
+  requiredMeridianOpened, isLoosened, chongxueGate, blockingPrevAcupoint,
+  neiliRatioForPos, neiliCostFor,
+  FAIL_BONUS_PP, P_BASE, P_STEP, P_FLOOR, T_BASE, T_STEP, REALM_MUL,
   type AcupointState,
 } from './acupoints';
 
-describe('冲穴成功率（spec §4：p=85% + 失败×10pp + 第3次必成）', () => {
-  it('基础 p=85%', () => {
-    const a: AcupointState = { failCount: 0, opened: false };
-    expect(currentSuccessRate(a, 0)).toBe(BASE_P);
+const fresh = (failCount = 0): AcupointState => ({ failCount, opened: false });
+/** 境界 2 手阳明：曲池（位次 1）→ 合谷（位次 2）；N=3 */
+const R2 = { quchi: 'quchi', hegu: 'hegu', shaohai: 'shaohai' };
+const opened = (...ids: string[]): Record<string, AcupointState> =>
+  Object.fromEntries(ids.map(id => [id, { failCount: 0, opened: true }]));
+
+describe('脉内位次 —— v4.0 一切按穴难度的来源（design.md §3.3）', () => {
+  it('位次按经脉内次序，从 1 起', () => {
+    expect(acupointPos(2, R2.quchi)).toBe(1);
+    expect(acupointPos(2, R2.hegu)).toBe(2);
+    // 另一条脉重新从 1 数，不跨脉累计
+    expect(acupointPos(2, R2.shaohai)).toBe(1);
   });
-  it('失败 1 次 +10pp', () => {
-    const a: AcupointState = { failCount: 1, opened: false };
-    expect(currentSuccessRate(a, 0)).toBe(BASE_P + FAIL_BONUS_PP);
-  });
-  it('第 3 次必成（failCount=2）', () => {
-    const a: AcupointState = { failCount: 2, opened: false };
-    expect(currentSuccessRate(a, 0)).toBe(1.0);
-  });
-  it('气势加成叠加', () => {
-    const a: AcupointState = { failCount: 0, opened: false };
-    expect(currentSuccessRate(a, 0.15)).toBe(BASE_P + 0.15);
+  it('未接入境界或未知穴返回 0，不抛错', () => {
+    expect(acupointPos(1, 'quchi')).toBe(0);
+    expect(acupointPos(2, 'nonexistent')).toBe(0);
   });
 });
 
-describe('冲穴尝试（spec §5.2）', () => {
-  it('roll < p → 成功', () => {
-    const a: AcupointState = { failCount: 0, opened: false };
-    const r = attemptAcupoint(a, 0, 0.5);  // p=0.85, roll=0.5 < 0.85
+describe('冲穴成功率（design.md §3.3：按位次递减 + 失败累进，无气势无必成）', () => {
+  it('第 1/2/3 穴 = 90% / 80% / 70%', () => {
+    expect(basePForPos(1)).toBeCloseTo(P_BASE, 10);
+    expect(basePForPos(2)).toBeCloseTo(P_BASE - P_STEP, 10);
+    expect(basePForPos(3)).toBeCloseTo(P_BASE - P_STEP * 2, 10);
+  });
+  it('再靠后也不低于下限 50%', () => {
+    expect(basePForPos(9)).toBe(P_FLOOR);
+  });
+  it('同穴每失败一次 +10pp', () => {
+    expect(currentSuccessRate(fresh(1), 2)).toBeCloseTo(basePForPos(2) + FAIL_BONUS_PP, 10);
+    expect(currentSuccessRate(fresh(3), 3)).toBeCloseTo(basePForPos(3) + FAIL_BONUS_PP * 3, 10);
+  });
+  it('累进封顶 100%', () => {
+    expect(currentSuccessRate(fresh(20), 3)).toBe(1);
+  });
+  it('v3 的「第 3 次必成」已废止：failCount=2 的第 3 穴仍会失败', () => {
+    // 0.70 + 0.20 = 0.90，roll=0.95 仍落空
+    expect(attemptAcupoint(fresh(2), 3, 0.95).success).toBe(false);
+  });
+});
+
+describe('冲穴尝试（design.md §3.3）', () => {
+  it('roll < p → 成功，failCount 不再累积', () => {
+    const r = attemptAcupoint(fresh(1), 1, 0.5);
     expect(r.success).toBe(true);
     expect(r.opened).toBe(true);
-    expect(r.newFailCount).toBe(0);
+    expect(r.newFailCount).toBe(1);
   });
-  it('roll ≥ p → 失败，failCount+1', () => {
-    const a: AcupointState = { failCount: 0, opened: false };
-    const r = attemptAcupoint(a, 0, 0.9);  // p=0.85, roll=0.9 ≥ 0.85
+  it('roll ≥ p → 失败，failCount+1（使下次 +10pp）', () => {
+    const r = attemptAcupoint(fresh(0), 1, 0.95);   // p=0.90
     expect(r.success).toBe(false);
     expect(r.opened).toBe(false);
     expect(r.newFailCount).toBe(1);
   });
-  it('必成兜底：failCount=2 时 roll 任意都成功', () => {
-    const a: AcupointState = { failCount: 2, opened: false };
-    const r = attemptAcupoint(a, 0, 0.99);  // p=1.0
-    expect(r.success).toBe(true);
-    expect(r.opened).toBe(true);
+});
+
+describe('所需真气（design.md §3.3：当前段配额 × 位次比例 × 境界乘数）', () => {
+  it('境界 2 第 1/2 穴 = 11% / 16% 当前段配额', () => {
+    expect(neiliRatioForPos(1, 2)).toBeCloseTo(T_BASE, 10);
+    expect(neiliRatioForPos(2, 2)).toBeCloseTo(T_BASE + T_STEP, 10);
+  });
+  it('境界乘数 1.2^(境界−2)：同一位次越高境界越贵', () => {
+    expect(neiliRatioForPos(1, 5)).toBeCloseTo(T_BASE * REALM_MUL ** 3, 10);
+    expect(neiliRatioForPos(1, 5)).toBeGreaterThan(neiliRatioForPos(1, 2));
+  });
+  it('比例封顶 100%——松动即装得下，没有等丹田扩容的空窗', () => {
+    expect(neiliRatioForPos(9, 9)).toBe(1);
+  });
+  it('按当前段配额折算成绝对值', () => {
+    expect(neiliCostFor(2, R2.quchi, 1000)).toBeCloseTo(110, 6);
+    expect(neiliCostFor(2, R2.hegu, 1000)).toBeCloseTo(160, 6);
   });
 });
 
-describe('突破双条件（spec §6）', () => {
-  it('丹田满 + 窍穴齐 → ready', () => {
-    expect(breakthroughReady(10000, 10000, 3, 3)).toBe(true);
+describe('松动 —— 周天圆满使真气行至下一穴（design.md §2）', () => {
+  // 境界 2：N=3，须贯通手阳明（2 穴）→ 末 2 段依次松动（第 2、3 段）
+  it('必贯通脉的第 k 穴在第 N−M+k 段圆满后松动', () => {
+    expect(isLoosened(2, R2.quchi, 1, 3)).toBe(false);
+    expect(isLoosened(2, R2.quchi, 2, 3)).toBe(true);
+    expect(isLoosened(2, R2.hegu, 2, 3)).toBe(false);
+    expect(isLoosened(2, R2.hegu, 3, 3)).toBe(true);
   });
-  it('丹田满 + 窍穴未齐 → not ready', () => {
-    expect(breakthroughReady(10000, 10000, 2, 3)).toBe(false);
+  it('其余经脉的穴在末段圆满时一并松动', () => {
+    expect(isLoosened(2, R2.shaohai, 2, 3)).toBe(false);
+    expect(isLoosened(2, R2.shaohai, 3, 3)).toBe(true);
   });
-  it('丹田未满 + 窍穴齐 → not ready', () => {
-    expect(breakthroughReady(5000, 10000, 3, 3)).toBe(false);
+  it('境界 5（N=8，督脉 3 穴）从第 6 段起依次松动', () => {
+    const du = REALM_ACUPOINTS[5].meridians[0].acupointIds;
+    expect(isLoosened(5, du[0], 5, 8)).toBe(false);
+    expect(isLoosened(5, du[0], 6, 8)).toBe(true);
+    expect(isLoosened(5, du[2], 7, 8)).toBe(false);
+    expect(isLoosened(5, du[2], 8, 8)).toBe(true);
+  });
+});
+
+describe('冲穴门槛（design.md §2：松动 / 循序 / 真气够）', () => {
+  const base = { realm: 2, chargeHighWater: 3, zhoutianCount: 3, segmentQuota: 1000 };
+
+  it('三条都满足 → ok', () => {
+    expect(chongxueGate({ ...base, acupointId: R2.quchi, progress: {}, segmentNeili: 200 }))
+      .toBe('ok');
+  });
+  it('真气未至 → not-loosened', () => {
+    expect(chongxueGate({ ...base, chargeHighWater: 1, acupointId: R2.quchi, progress: {}, segmentNeili: 900 }))
+      .toBe('not-loosened');
+  });
+  it('同脉前穴未通 → prev-unopened（不同脉不互相阻塞）', () => {
+    expect(chongxueGate({ ...base, acupointId: R2.hegu, progress: {}, segmentNeili: 900 }))
+      .toBe('prev-unopened');
+    expect(chongxueGate({ ...base, acupointId: R2.shaohai, progress: {}, segmentNeili: 900 }))
+      .toBe('ok');
+  });
+  it('当前段真气不足 → insufficient', () => {
+    // 曲池要 110，只蓄了 100
+    expect(chongxueGate({ ...base, acupointId: R2.quchi, progress: {}, segmentNeili: 100 }))
+      .toBe('insufficient');
+  });
+  it('已通 → opened', () => {
+    expect(chongxueGate({ ...base, acupointId: R2.quchi, progress: opened(R2.quchi), segmentNeili: 900 }))
+      .toBe('opened');
+  });
+  it('挡路的前穴可取名，供「{前穴名} 未通」文案用', () => {
+    expect(blockingPrevAcupoint(2, R2.hegu, {})?.name).toBe('曲池');
+    expect(blockingPrevAcupoint(2, R2.hegu, opened(R2.quchi))).toBeNull();
+  });
+});
+
+describe('突破条件 —— 首条经脉贯通（design.md §4）', () => {
+  const N2 = 2800;   // 境界 2 突破消耗（content.ts）
+  it('本境界须贯通的是表内首条经脉', () => {
+    expect(requiredMeridian(2)?.name).toBe('手阳明');
+    expect(requiredMeridian(4)?.name).toBe('任脉');
+    expect(requiredMeridian(5)?.name).toBe('督脉');
+    expect(requiredMeridian(1)).toBeNull();
+  });
+  it('丹田满 + 首脉贯通 → ready', () => {
+    expect(breakthroughReady(N2, N2, 2, opened(R2.quchi, R2.hegu))).toBe(true);
+  });
+  it('丹田满但首脉缺一穴 → not ready', () => {
+    expect(breakthroughReady(N2, N2, 2, opened(R2.quchi))).toBe(false);
+  });
+  it('通了别的脉不顶用——门槛只看首条脉', () => {
+    const other = REALM_ACUPOINTS[2].meridians[1].acupointIds;
+    expect(breakthroughReady(N2, N2, 2, opened(...other))).toBe(false);
+  });
+  it('丹田未满 + 首脉贯通 → not ready', () => {
+    expect(breakthroughReady(N2 - 1, N2, 2, opened(R2.quchi, R2.hegu))).toBe(false);
+  });
+  it('未接入周天的境界只看丹田', () => {
+    expect(breakthroughReady(N2, N2, 1, {})).toBe(true);
+  });
+  it('首脉进度读数', () => {
+    expect(requiredMeridianOpened(2, opened(R2.quchi))).toBe(1);
+    // 别的脉不计入首脉读数
+    expect(requiredMeridianOpened(2, opened(R2.shaohai))).toBe(0);
   });
 });
 
@@ -79,21 +185,6 @@ describe('加成计算（spec §6.3/§9）', () => {
   });
   it('总加成 = 窍穴 + 贯通（加法合并）', () => {
     expect(totalAcupointBonus(4, 3, 1)).toBe(0.09);  // 3×2% + 1×3% = 9%
-  });
-});
-
-describe('气势消耗与加成（spec §5）', () => {
-  it('消耗 70%：100 → 30', () => {
-    expect(consumeQishi(100)).toBeCloseTo(30, 6);
-  });
-  it('气势加成：满档 100 → +15pp', () => {
-    expect(qishiToBonus(100)).toBe(QISHI_CAP_PP);
-  });
-  it('气势加成：50 → +7.5pp（线性）', () => {
-    expect(qishiToBonus(50)).toBe(0.075);
-  });
-  it('气势加成封顶：200 → +15pp', () => {
-    expect(qishiToBonus(200)).toBe(QISHI_CAP_PP);
   });
 });
 

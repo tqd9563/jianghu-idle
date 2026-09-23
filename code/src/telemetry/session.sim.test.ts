@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import { REALMS } from '../engine/content';
-import { REALM_ACUPOINTS, type AcupointState } from '../engine/acupoints';
+import { requiredMeridian, type AcupointState } from '../engine/acupoints';
 import { effBreakCost, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
 import { exportTelemetryJSON, getEvents } from './telemetry';
 
@@ -45,6 +45,15 @@ function challenge(map: MapNo, stage: number): boolean {
 }
 
 /** 失败后的「有意义调整」：优先买机制节点，其次升武学，否则等突破（贪心画像，对齐 sim） */
+/** 直接把本境界首条经脉标为已贯通——埋点 sim 不测冲穴过程，只需越过突破门槛 */
+function openRequiredMeridian(realm: number): void {
+  const req = requiredMeridian(realm);
+  if (!req) return;
+  const acupointProgress: Record<string, AcupointState> = { ...useGameStore.getState().acupointProgress };
+  for (const id of req.acupointIds) acupointProgress[id] = { failCount: 0, opened: true };
+  useGameStore.setState({ acupointProgress });
+}
+
 function adjust() {
   const s = st();
   if (s.route) {
@@ -62,20 +71,8 @@ function adjust() {
   if (cost !== null) {
     let guard = 40;
     while (st().dantian < cost && guard-- > 0) advance(120);
-    // 主题版本双条件：模拟玩家已冲足够窍穴（spec §6）
-    const realm = st().realm;
-    const requiredAcupoints = REALMS[realm - 1].requiredAcupoints;
-    if (requiredAcupoints !== null) {
-      const acupointData = REALM_ACUPOINTS[realm];
-      if (acupointData) {
-        const openedIds = acupointData.acupoints.slice(0, requiredAcupoints);
-        const acupointProgress: Record<string, AcupointState> = {};
-        for (const a of openedIds) {
-          acupointProgress[a.id] = { failCount: 0, opened: true };
-        }
-        useGameStore.setState({ acupointProgress });
-      }
-    }
+    // 主题版本双条件：模拟玩家已贯通本境界首条经脉（design.md §4）
+    openRequiredMeridian(st().realm);
     st().breakthrough();
     st().dismissCeremony();
   } else {
@@ -109,20 +106,8 @@ function reachRealm(target: number) {
   while (st().realm < target && guard-- > 0) {
     const cost = effBreakCost(st())!;
     while (st().dantian < cost) advance(200);
-    // 主题版本双条件：模拟玩家已冲足够窍穴（spec §6）
-    const realm = st().realm;
-    const requiredAcupoints = REALMS[realm - 1].requiredAcupoints;
-    if (requiredAcupoints !== null) {
-      const acupointData = REALM_ACUPOINTS[realm];
-      if (acupointData) {
-        const openedIds = acupointData.acupoints.slice(0, requiredAcupoints);
-        const acupointProgress: Record<string, AcupointState> = {};
-        for (const a of openedIds) {
-          acupointProgress[a.id] = { failCount: 0, opened: true };
-        }
-        useGameStore.setState({ acupointProgress });
-      }
-    }
+    // 主题版本双条件：模拟玩家已贯通本境界首条经脉（design.md §4）
+    openRequiredMeridian(st().realm);
     st().breakthrough();
     st().dismissCeremony();
     if (st().realm === 2 && st().route === null) st().selectRoute('tangmen');

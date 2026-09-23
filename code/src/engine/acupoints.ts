@@ -1,24 +1,34 @@
 /**
- * 窍穴 / 经脉 / 冲穴 / 气势纯函数引擎 —— 权威来源：docs/systems/zhoutian/design.md v2.0
+ * 窍穴 / 经脉 / 冲穴纯函数引擎 —— 权威来源：docs/systems/zhoutian/design.md v4.0
  * 本模块为纯函数，禁止引入 UI/存储依赖；与 sim.py（同目录）做 golden 对照。
+ *
+ * v4.0「冲穴耗内力制」：废止冲穴机会与气势，冲穴从当前段扣「所需真气」、成败同扣；
+ * 成功率与所需真气按脉内位次公式生成；突破门槛 = 本境界首条经脉贯通。
  */
 
 // ─────────────────────────────────────────────────────────────
-// 参数（spec §4/§5/§6.3 定稿）
+// 参数（design.md §3.3，2026-09-22 拍板；sim.py 判据 W1–W4 PASS）
 // ─────────────────────────────────────────────────────────────
 
-/** 基础冲穴成功率（spec §4：85%） */
-export const BASE_P = 0.85;
-/** 每次失败 +10pp（spec §4） */
+/** 脉内第 1 穴成功率 */
+export const P_BASE = 0.90;
+/** 每往后一穴成功率 −10pp */
+export const P_STEP = 0.10;
+/** 成功率下限（末穴再难也不低于此） */
+export const P_FLOOR = 0.50;
+/** 同穴每失败一次，下次 +10pp（累进保留；v3 的「第 3 次必成」已废止——内力可无限重试，不需保底） */
 export const FAIL_BONUS_PP = 0.10;
-/** 第 3 次必成兜底（spec §4：累计失败 2 次后第 3 次必成） */
-export const FORCE_SUCCESS_K = 3;
-/** 单次冲穴气势加成封顶 +15pp（spec §5） */
-export const QISHI_CAP_PP = 0.15;
-/** 每次冲穴消耗 70% 当前气势（spec §5） */
-export const QISHI_CONSUME_RATE = 0.7;
-/** 气势满档阈值（spec §5：100 气势 = 满档，加成 = +15pp） */
-export const QISHI_FULL = 100;
+
+/** 脉内第 1 穴所需真气占当前段配额的比例 */
+export const T_BASE = 0.11;
+/** 每往后一穴 +5pp */
+export const T_STEP = 0.05;
+/**
+ * 境界乘数：所需真气比例 × REALM_MUL^(境界−2)。
+ * 没有它，境界 2→3、4→5 这类「突破所需穴数不变」的台阶上附加时间会持平甚至倒退，
+ * 与「越往上越难」相悖（sim.py 判据 W4）。
+ */
+export const REALM_MUL = 1.2;
 
 // ─────────────────────────────────────────────────────────────
 // 数据结构
@@ -49,9 +59,18 @@ export interface AttemptResult {
   success: boolean;
   newFailCount: number;
   opened: boolean;
-  qishiBonusApplied: number;  // 本次应用的气势加成（pp，0–0.15）
-  forced: boolean;            // 是否触发必成兜底
 }
+
+/**
+ * 冲穴可否放手的判定结果（design.md §2 两个条件）。
+ * 每个不可冲的原因对应一条冻结文案（rules/copy/zhoutian.md §1），故须区分而非合并成 boolean。
+ */
+export type ChongxueGate =
+  | 'ok'               // 可冲
+  | 'opened'           // 已通
+  | 'not-loosened'     // 真气未行至该穴
+  | 'prev-unopened'    // 同脉前一穴未通（须循序而行）
+  | 'insufficient';    // 当前段真气不足
 
 // ─────────────────────────────────────────────────────────────
 // 窍穴池与经脉分组数据（spec §3）
@@ -135,59 +154,168 @@ export const REALM_ACUPOINTS: Record<number, {
 };
 
 // ─────────────────────────────────────────────────────────────
-// 纯函数：成功率与冲穴
+// 纯函数：脉内位次 —— v4.0 的一切按穴难度都由它导出
 // ─────────────────────────────────────────────────────────────
 
-/** 计算本次冲穴成功率（spec §4：p=85% + 失败×10pp + 气势加成 + 必成兜底） */
-export function currentSuccessRate(
-  acupoint: AcupointState,
-  qishiBonus: number
-): number {
-  if (acupoint.failCount >= FORCE_SUCCESS_K - 1) return 1.0;  // 第 3 次必成
-  return Math.min(1, BASE_P + FAIL_BONUS_PP * acupoint.failCount + qishiBonus);
+/**
+ * 窍穴在其所属经脉内的位次（1 起）；找不到返回 0。
+ * 难度不按境界定而按位次定：贯通一条脉就是一路越冲越难（design.md §3.3）。
+ */
+export function acupointPos(realm: number, acupointId: string): number {
+  const data = REALM_ACUPOINTS[realm];
+  if (!data) return 0;
+  const acu = data.acupoints.find(a => a.id === acupointId);
+  if (!acu) return 0;
+  const m = data.meridians.find(x => x.id === acu.meridianId);
+  if (!m) return 0;
+  return m.acupointIds.indexOf(acupointId) + 1;
 }
 
-/** 计算气势加成（pp，0–0.15）：满档 100 气势 = +15pp，线性，封顶 */
-export function qishiToBonus(qishi: number): number {
-  return Math.min(QISHI_CAP_PP, (qishi / QISHI_FULL) * QISHI_CAP_PP);
+/** 本境界突破必须贯通的经脉：表内首条（design.md §4） */
+export function requiredMeridian(realm: number): MeridianDef | null {
+  return REALM_ACUPOINTS[realm]?.meridians[0] ?? null;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 纯函数：成功率与所需真气
+// ─────────────────────────────────────────────────────────────
+
+/** 该位次窍穴的基础成功率：max(50%, 90% − 10pp×(pos−1)) */
+export function basePForPos(pos: number): number {
+  return Math.max(P_FLOOR, P_BASE - P_STEP * (pos - 1));
 }
 
 /**
- * 冲穴尝试（纯函数，spec §5.2）：
- * 输入当前窍穴状态 + 气势加成 + 随机数（0–1），返回结果与新状态。
- * 失败不损失机会以外的任何资源；失败时 failCount+1，触发保底累积。
+ * 本次冲穴成功率 = 位次基础值 + 失败累进（design.md §3.3）。
+ * 无气势加成、无必成兜底——两者均随 v4.0 废止。
+ */
+export function currentSuccessRate(acupoint: AcupointState, pos: number): number {
+  return Math.min(1, basePForPos(pos) + FAIL_BONUS_PP * acupoint.failCount);
+}
+
+/** 该位次窍穴的所需真气占当前段配额的比例：(11% + 5%×(pos−1)) × 1.2^(境界−2)，封顶 100% */
+export function neiliRatioForPos(pos: number, realm: number): number {
+  return Math.min(1, (T_BASE + T_STEP * (pos - 1)) * REALM_MUL ** (realm - 2));
+}
+
+/**
+ * 冲一次该穴要从当前段扣的内力。
+ *
+ * 锚在**当前段配额**而非本境界总额：高境界前几段配额只占总额零头，
+ * 按总额计价会让高境界冲穴反而便宜（sim.py 判据 W4 曾因此 FAIL）。
+ * 比例封顶 100%，所以松动即装得下，没有等丹田扩容的空窗。
+ */
+export function neiliCostFor(realm: number, acupointId: string, segmentQuota: number): number {
+  const pos = acupointPos(realm, acupointId);
+  if (pos === 0) return 0;
+  return segmentQuota * neiliRatioForPos(pos, realm);
+}
+
+// ─────────────────────────────────────────────────────────────
+// 纯函数：松动（真气行至该穴）与冲穴门槛
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 该穴是否已松动（design.md §2/§3.2）。
+ *
+ * 突破所需的 M 个穴（首条经脉）在**最后 M 段**依次松动：第 k 穴需已缴 N−M+k 段。
+ * 其余经脉的穴在末段圆满时一并松动。前几段是筑基，真气未至窍穴——因段间递增，
+ * 这几段只占本境界一小截时长。
+ *
+ * 用 chargeHighWater（高水位）而非当前段数：冲穴扣款会让液面回落，
+ * 但真气已行至的穴不该因此重新锁上。
+ */
+export function isLoosened(
+  realm: number,
+  acupointId: string,
+  chargeHighWater: number,
+  zhoutianCount: number
+): boolean {
+  const req = requiredMeridian(realm);
+  if (!req) return false;
+  const k = req.acupointIds.indexOf(acupointId) + 1;
+  if (k === 0) return chargeHighWater >= zhoutianCount;   // 非必贯通脉：末段圆满一并松动
+  const M = req.acupointIds.length;
+  return chargeHighWater >= Math.max(1, zhoutianCount - M + k);
+}
+
+/**
+ * 冲穴门槛判定（design.md §2）：两个条件——该穴已松动且同脉前穴已通、当前段真气够。
+ * 返回具体原因而非 boolean，因为每个原因对应一条冻结文案。
+ */
+export function chongxueGate(args: {
+  realm: number;
+  acupointId: string;
+  progress: Record<string, AcupointState>;
+  chargeHighWater: number;
+  zhoutianCount: number;
+  segmentNeili: number;
+  segmentQuota: number;
+}): ChongxueGate {
+  const { realm, acupointId, progress, chargeHighWater, zhoutianCount, segmentNeili, segmentQuota } = args;
+  const data = REALM_ACUPOINTS[realm];
+  if (!data) return 'not-loosened';
+  const acu = data.acupoints.find(a => a.id === acupointId);
+  if (!acu) return 'not-loosened';
+  if (progress[acupointId]?.opened) return 'opened';
+  if (!isLoosened(realm, acupointId, chargeHighWater, zhoutianCount)) return 'not-loosened';
+
+  // 同一条脉须按次序冲：前面任一穴未通即不可冲（不同脉之间不互相阻塞）
+  const m = data.meridians.find(x => x.id === acu.meridianId);
+  if (m) {
+    const idx = m.acupointIds.indexOf(acupointId);
+    for (let i = 0; i < idx; i++) {
+      if (!progress[m.acupointIds[i]]?.opened) return 'prev-unopened';
+    }
+  }
+  if (segmentNeili < neiliCostFor(realm, acupointId, segmentQuota)) return 'insufficient';
+  return 'ok';
+}
+
+/** 同一条脉中该穴之前、尚未冲通的第一个穴（供「{前穴名} 未通」文案取名） */
+export function blockingPrevAcupoint(
+  realm: number,
+  acupointId: string,
+  progress: Record<string, AcupointState>
+): AcupointDef | null {
+  const data = REALM_ACUPOINTS[realm];
+  const acu = data?.acupoints.find(a => a.id === acupointId);
+  const m = data?.meridians.find(x => x.id === acu?.meridianId);
+  if (!data || !acu || !m) return null;
+  const idx = m.acupointIds.indexOf(acupointId);
+  for (let i = 0; i < idx; i++) {
+    if (!progress[m.acupointIds[i]]?.opened) {
+      return data.acupoints.find(a => a.id === m.acupointIds[i]) ?? null;
+    }
+  }
+  return null;
+}
+
+/**
+ * 冲穴尝试（纯函数，design.md §3.3）：
+ * 成败同扣所需真气（扣款在 store 侧），失败时 failCount+1 使下次 +10pp。
  */
 export function attemptAcupoint(
   acupoint: AcupointState,
-  qishiBonus: number,
+  pos: number,
   roll: number
 ): AttemptResult {
-  const p = currentSuccessRate(acupoint, qishiBonus);
-  const success = roll < p;
-  const forced = !success && acupoint.failCount >= FORCE_SUCCESS_K - 1;
-  // 必成兜底：第 3 次必成（currentSuccessRate 返回 1.0，roll < 1.0 必成立）
-  // 但若 roll 恰好 = 1.0（极小概率），仍记为成功（forced）
-  const actualSuccess = success || forced;
-
+  const success = roll < currentSuccessRate(acupoint, pos);
   return {
-    success: actualSuccess,
-    newFailCount: actualSuccess ? acupoint.failCount : acupoint.failCount + 1,
-    opened: actualSuccess || acupoint.opened,
-    qishiBonusApplied: qishiBonus,
-    forced,
+    success,
+    newFailCount: success ? acupoint.failCount : acupoint.failCount + 1,
+    opened: success || acupoint.opened,
   };
 }
 
 // ─────────────────────────────────────────────────────────────
-// 纯函数：突破双条件（spec §6）
+// 纯函数：突破条件（design.md §4）
 // ─────────────────────────────────────────────────────────────
 
-/** 突破双条件：丹田充满 且 已通窍穴数 ≥ M */
 /**
  * 本境界已通窍穴数。
  *
- * 突破的 M 条件按**境界**计，不跨境界累计——`sim.py` 的 P(≥M) 验算即按
- * 「每境界重建 pool、N 次机会、判 successes ≥ M」建模（design.md §3.2/§4）。
+ * 门槛按**境界**计，不跨境界累计——每境界重建窍穴池。
  * 加成口径与此不同：窍穴加成保留至归隐，按全局累计（design.md §5 D1 裁决）。
  */
 export function openedInRealm(
@@ -199,13 +327,30 @@ export function openedInRealm(
   return data.acupoints.reduce((n, a) => n + (progress[a.id]?.opened ? 1 : 0), 0);
 }
 
+/** 本境界首条经脉已通的窍穴数（突破进度读数） */
+export function requiredMeridianOpened(
+  realm: number,
+  progress: Record<string, AcupointState>
+): number {
+  const req = requiredMeridian(realm);
+  if (!req) return 0;
+  return req.acupointIds.reduce((n, id) => n + (progress[id]?.opened ? 1 : 0), 0);
+}
+
+/**
+ * 突破双条件（design.md §4）：N 段周天全部缴清 且 本境界首条经脉贯通。
+ * 无首条脉配置的境界（本版 1/6/7）只看丹田。
+ */
 export function breakthroughReady(
   dantianNeili: number,
   breakthroughCost: number,
-  openedAcupoints: number,
-  requiredAcupoints: number
+  realm: number,
+  progress: Record<string, AcupointState>
 ): boolean {
-  return dantianNeili >= breakthroughCost && openedAcupoints >= requiredAcupoints;
+  if (dantianNeili < breakthroughCost) return false;
+  const req = requiredMeridian(realm);
+  if (!req) return true;
+  return req.acupointIds.every(id => progress[id]?.opened);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -240,13 +385,4 @@ export function totalAcupointBonus(
   completedMeridians: number
 ): number {
   return openedAcupoints * acupointBonus(realm) + completedMeridians * meridianBonus(realm);
-}
-
-// ─────────────────────────────────────────────────────────────
-// 纯函数：气势消耗（spec §5，每次冲穴消耗 70% 当前气势）
-// ─────────────────────────────────────────────────────────────
-
-/** 冲穴后气势剩余（消耗 70%） */
-export function consumeQishi(qishi: number): number {
-  return qishi * (1 - QISHI_CONSUME_RATE);
 }

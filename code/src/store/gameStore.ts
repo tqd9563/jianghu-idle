@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
 import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef, type MapId } from '../engine/enemies';
-import { idleNeiliPerSec, zhoutianProgress, overflowToQishi, CHARGE_SEGMENTS } from '../engine/formulas';
+import { idleNeiliPerSec, zhoutianProgress, currentSegmentNeili, CHARGE_SEGMENTS } from '../engine/formulas';
 import {
   freshInjuries, heal as healInjuries, inflict as inflictInjury, injuryFromBattle,
   idleOutputMultiplier, applyInjuriesToBuild, isHurt,
@@ -16,7 +16,7 @@ import {
 } from '../engine/injury';
 import {
   REALM_ACUPOINTS, attemptAcupoint as attemptAcupointFn, breakthroughReady,
-  consumeQishi, openedInRealm, qishiToBonus,
+  acupointPos, chongxueGate, neiliCostFor,
   type AcupointState,
 } from '../engine/acupoints';
 import {
@@ -99,10 +99,6 @@ interface PersistedState {
   shopPurchasesThisRun?: number;
   /** 窍穴运行时状态（按穴 ID 索引）；突破时不清零（D1 保留到归隐），归隐时重置。可选字段兼容旧存档。 */
   acupointProgress?: Record<string, AcupointState>;
-  /** 当前气势（内力衍生临时状态，Q1）；突破时清零，归隐时清零。可选字段兼容旧存档。 */
-  qishi?: number;
-  /** 剩余冲穴机会（周天圆满发放，境界内有效）；突破时清零，归隐时清零。可选字段兼容旧存档。 */
-  chongxueChances?: number;
   /** 窍穴图鉴（已通窍穴 ID 列表，归隐保留为记录）。可选字段兼容旧存档。 */
   acupointLog?: string[];
   /** 伤势（injury/spec.md）：硬仗产生、随游戏内时间自愈；归隐时清零。可选字段兼容旧存档。 */
@@ -188,7 +184,6 @@ interface GameState extends PersistedState {
   recordNaturalWindowNote: (note: NaturalWindowNote) => void;
   tick: (now: number) => void;
   breakthrough: () => void;
-  /** 冲穴（spec §5.2）：消耗 1 机会，概率判定，保底累积，气势加成应用 */
   attemptAcupoint: (acupointId: string) => void;
   dismissCeremony: () => void;
   selectRoute: (r: RouteId) => void;
@@ -233,7 +228,7 @@ const FRESH: PersistedState = {
   sessionActive: false, paused: false,
   collectedPages: [], completedBooks: [],
   trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
-  acupointProgress: {}, qishi: 0, chongxueChances: 0, acupointLog: [],
+  acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
 };
 
@@ -529,20 +524,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       let dantian = s.dantian + effIdleRate(s) * dt;
       const runPlaySec = s.runPlaySec + dt;
       let chargeHighWater = s.chargeHighWater;
-      let qishi = s.qishi ?? 0;
-      let chongxueChances = s.chongxueChances ?? 0;
       if (cost !== null) {
-        // 丹田上限 = 突破消耗（spec §4.1）；溢出转气势（spec §5.3 裁决 D2）
-        if (dantian > cost) {
-          qishi += overflowToQishi(dantian, cost);
-          dantian = cost;
-        }
-        // N 段动态（spec §2：境界 2-5 = 3/4/6/8；旧存档 fallback 5 段）
+        // 丹田上限 = 突破消耗。v4.0 起满额后产出无处可去（旧「溢出转气势」已随 D5/v4.0 废止）。
+        if (dantian > cost) dantian = cost;
+        // N 段动态（design.md §3.1：境界 2-5 = 3/4/6/8；旧存档 fallback 5 段）
         const N = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
         const { segmentsFull } = zhoutianProgress(dantian, cost, N);
         while (chargeHighWater < segmentsFull) {
           chargeHighWater += 1;
-          chongxueChances += 1;  // 周天圆满发 1 次冲穴机会（spec §5.1）
+          // 周天圆满给三样：缴清一期账、丹田扩容、真气行至下一穴（design.md §2）。
+          // 前两样由 chargeHighWater 本身承载，第三样由 isLoosened 按高水位导出，无需另存字段。
           track('charge_segment_full', { run: s.run, realm: s.realm, route: s.route }, {
             realm_target: s.realm + 1, segment: chargeHighWater,
           });
@@ -551,7 +542,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 伤势自愈：与挂机共用同一游戏内时钟（injury/spec.md §5）
       const prevInj = s.injuries ?? freshInjuries();
       const injuries = isHurt(prevInj) ? healInjuries(prevInj, dt / 60, s.realm) : prevInj;
-      set({ dantian, chargeHighWater, runPlaySec, qishi, chongxueChances, injuries });
+      set({ dantian, chargeHighWater, runPlaySec, injuries });
     }
 
     // 归隐可用上报（§6.6 + 埋点规格 §1.4）：保底先触发的，后续击败 Boss 3 补发 standard
@@ -597,14 +588,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     const cost = effBreakCost(s);
     if (cost === null || s.dantian < cost) return;
-    // 双条件校验（spec §6）：丹田充满 且 已通窍穴数 ≥ M
-    const requiredAcupoints = REALMS[s.realm - 1].requiredAcupoints;
-    if (requiredAcupoints !== null) {
-      // M 条件按境界计，不跨境界累计——sim.py 的 P(≥M) 验算即按「每境界重建 pool」
-      // 建模；此前用全局累计，导致境界 3 起 M 形同虚设（进境界即已达标）。
-      const openedCount = openedInRealm(s.realm, s.acupointProgress ?? {});
-      if (!breakthroughReady(s.dantian, cost, openedCount, requiredAcupoints)) return;
-    }
+    // 双条件校验（design.md §4）：N 段缴清 且 本境界首条经脉贯通。
+    // 门槛按境界计，不跨境界累计——每境界重建窍穴池。
+    if (!breakthroughReady(s.dantian, cost, s.realm, s.acupointProgress ?? {})) return;
     const realmTo = s.realm + 1;
     // 窍穴图鉴更新（归隐保留，spec §8）
     const newAcupointLog = [...new Set([
@@ -616,50 +602,55 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       dantian: s.dantian - cost, realm: realmTo, chargeHighWater: 0, ceremony: realmTo,
       lastProgressSec: s.runPlaySec,
-      // 突破时清零气势、冲穴机会（spec §5/§5.1）；窍穴进度保留（D1 保留到归隐）
-      qishi: 0, chongxueChances: 0,
+      // 窍穴进度保留（D1 保留到归隐）；窍穴松动随 chargeHighWater 归零而重置
       acupointLog: newAcupointLog,
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, { realm_to: realmTo });
     persist(get());
   },
 
-  /** 冲穴（spec §5.2）：消耗 1 机会，概率判定，保底累积，气势加成应用 */
+  /**
+   * 冲穴（design.md §2/§3.3）：从当前段扣所需真气，**成败同扣**——失败即真气耗散，
+   * 这就是惩罚；下次同穴 +10pp。门槛（松动 / 循序 / 真气够）由 chongxueGate 判定。
+   */
   attemptAcupoint: (acupointId: string) => {
     const s = get();
-    const chances = s.chongxueChances ?? 0;
-    if (chances <= 0) return;
     const realm = s.realm;
+    const cost = effBreakCost(s);
+    if (cost === null) return;
     const acupointData = REALM_ACUPOINTS[realm];
     if (!acupointData) return;  // 本版境界 1/6/7 不接入
-    const acupointDef = acupointData.acupoints.find(a => a.id === acupointId);
-    if (!acupointDef) return;
-    const current = s.acupointProgress?.[acupointId] ?? { failCount: 0, opened: false };
-    if (current.opened) return;  // 已通不能再冲
+    if (!acupointData.acupoints.some(a => a.id === acupointId)) return;
 
-    // 气势加成（spec §5：满档 +15pp，消耗 70%）
-    const qishiBonus = qishiToBonus(s.qishi ?? 0);
-    const roll = Math.random();
-    const result = attemptAcupointFn(current, qishiBonus, roll);
+    const N = REALMS[realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
+    const segmentQuota = cost / N;
+    const segmentNeili = currentSegmentNeili(s.dantian, cost, N, s.chargeHighWater);
+    const progress = s.acupointProgress ?? {};
+    const gate = chongxueGate({
+      realm, acupointId, progress,
+      chargeHighWater: s.chargeHighWater, zhoutianCount: N,
+      segmentNeili, segmentQuota,
+    });
+    if (gate !== 'ok') return;
 
-    // 更新窍穴状态
-    const newAcupointProgress = {
-      ...s.acupointProgress,
-      [acupointId]: { failCount: result.newFailCount, opened: result.opened },
-    };
-    const newQishi = consumeQishi(s.qishi ?? 0);
-    const newChongxueChances = chances - 1;
+    const neiliCost = neiliCostFor(realm, acupointId, segmentQuota);
+    const current = progress[acupointId] ?? { failCount: 0, opened: false };
+    const pos = acupointPos(realm, acupointId);
+    const result = attemptAcupointFn(current, pos, Math.random());
 
     set({
-      acupointProgress: newAcupointProgress,
-      qishi: newQishi,
-      chongxueChances: newChongxueChances,
+      // 真气成败同扣，液面如实回落；已沉入根基（chargeHighWater）的部分不受影响
+      dantian: Math.max(0, s.dantian - neiliCost),
+      acupointProgress: {
+        ...progress,
+        [acupointId]: { failCount: result.newFailCount, opened: result.opened },
+      },
     });
     track('acupoint_attempt', { run: s.run, realm, route: s.route }, {
       acupoint_id: acupointId,
       success: result.success,
-      forced: result.forced,
-      qishi_bonus_pp: Math.round(result.qishiBonusApplied * 10000) / 100,
+      pos,
+      neili_cost: Math.round(neiliCost),
     });
     persist(get());
   },

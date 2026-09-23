@@ -8,6 +8,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, JSX } from 'react';
 import { effBreakCost, effIdleRate, useGameStore } from '../store/gameStore';
+
+/** 真气数额按内力口径呈现（冻结文案 §1 的 {所需真气}） */
+const fmtNeili = (n: number): string => Math.ceil(n).toLocaleString('en-US');
 import {
   buildSceneModel, polar, R_V, VIEW_H, VIEW_W,
   type SceneMeridian, type SceneStar,
@@ -33,8 +36,6 @@ export function CultivationScene(): JSX.Element | null {
     dantian: s.dantian,
     breakCost: effBreakCost(s),
     chargeHighWater: s.chargeHighWater,
-    chongxueChances: s.chongxueChances ?? 0,
-    qishi: s.qishi ?? 0,
     acupointProgress: s.acupointProgress ?? {},
   });
 
@@ -52,21 +53,20 @@ export function CultivationScene(): JSX.Element | null {
   if (model === null) return null;
 
   const onAttempt = (m: SceneMeridian, star: SceneStar): void => {
+    // 不可冲时按具体原因给话——三种原因玩家的下一步动作完全不同（冻结文案 §1）
     if (star.state !== 'actionable') {
-      if (star.state === 'dim') setFeedback('冲穴机会不足 · 运转周天获取');   // 冻结文案 §1
+      if (star.gate === 'not-loosened') setFeedback('真气未至 · 运转周天');
+      else if (star.gate === 'prev-unopened') setFeedback(`${star.blockedBy} 未通 · 循序而行`);
+      else if (star.gate === 'insufficient') setFeedback(`真气未足 · 蓄至 ${fmtNeili(star.neiliCost)} 方可冲`);
       return;
     }
-    const before = useGameStore.getState().acupointProgress?.[star.id] ?? { failCount: 0, opened: false };
     s.attemptAcupoint(star.id);
-    const now = useGameStore.getState().acupointProgress?.[star.id] ?? before;
+    const now = useGameStore.getState().acupointProgress?.[star.id] ?? { failCount: 0, opened: false };
     if (!now.opened) {
-      setFeedback('窍穴松动几分');                                          // 冻结文案 §1
+      setFeedback(`真气耗散 · ${star.name} 未通`);                           // 冻结文案 §1
       return;
     }
-    // 第 3 次必成（design.md §3.3）：措辞与普通成功区分
-    const line = before.failCount >= 2
-      ? `气血已通 · ${star.name}`                                           // 冻结文案 §1
-      : `行气冲穴 · ${star.name} 已通`;                                      // 冻结文案 §1
+    const line = `行气冲穴 · ${star.name} 已通`;                             // 冻结文案 §1
     const justThrough = m.stars.filter(v => v.state === 'opened').length + 1 === m.stars.length;
     setFeedback(justThrough ? `${line} · 经脉贯通 · ${m.name}` : line);      // 冻结文案 §4
   };
@@ -163,7 +163,9 @@ export function CultivationScene(): JSX.Element | null {
                     x={st.x - st.size / 2} y={st.y - st.size / 2}
                     width={st.size} height={st.size}
                     role="button" tabIndex={0}
-                    aria-label={`${st.name}${st.state === 'opened' ? ' 已通' : ` · 成功率 ${Math.round(st.rate * 100)}%`}`}
+                    aria-label={`${st.name}${st.state === 'opened'
+                      ? ' 已通'
+                      : ` · 成功率 ${Math.round(st.rate * 100)}% · 耗真气 ${fmtNeili(st.neiliCost)}`}`}
                     onClick={() => onAttempt(m, st)}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAttempt(m, st); } }}
                   />

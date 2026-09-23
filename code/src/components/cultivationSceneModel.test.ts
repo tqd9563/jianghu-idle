@@ -6,8 +6,7 @@ import { buildSceneModel, type SceneInput } from './cultivationSceneModel';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 
 const at = (o: Partial<SceneInput> = {}): SceneInput => ({
-  realm: 2, dantian: 0, breakCost: 2800, chargeHighWater: 0,
-  chongxueChances: 0, qishi: 0, acupointProgress: {}, ...o,
+  realm: 2, dantian: 0, breakCost: 2800, chargeHighWater: 0, acupointProgress: {}, ...o,
 });
 
 describe('修炼面板模型 · 周天与液面', () => {
@@ -43,11 +42,36 @@ describe('修炼面板模型 · 周天与液面', () => {
 });
 
 describe('修炼面板模型 · 星曜三态与经脉', () => {
-  it('无冲穴机会时全为墨星；有机会时未通的转朱砂', () => {
+  it('真气未至时全为墨星（design.md §2 松动）', () => {
     const dim = buildSceneModel(at())!;
     expect(dim.meridians.flatMap(m => m.stars).every(s => s.state === 'dim')).toBe(true);
-    const act = buildSceneModel(at({ chongxueChances: 1 }))!;
-    expect(act.meridians.flatMap(m => m.stars).every(s => s.state === 'actionable')).toBe(true);
+    expect(dim.meridians[0].stars[0].gate).toBe('not-loosened');
+  });
+
+  it('松动 + 真气够 → 首穴转朱砂；同脉后穴仍被「循序而行」挡住', () => {
+    // 境界 2：N=3、须贯通手阳明（2 穴）→ 第 2 段圆满松动首穴
+    const m = buildSceneModel(at({ chargeHighWater: 2, dantian: 2800 / 3 * 2 + 400 }))!;
+    const [first, second] = m.meridians[0].stars;
+    expect(first.state).toBe('actionable');
+    expect(second.gate).toBe('not-loosened');     // 第 3 段才松动
+    // 另一条脉要等末段
+    expect(m.meridians[1].stars[0].gate).toBe('not-loosened');
+  });
+
+  it('松动了但当前段真气不够 → 墨星，且原因是 insufficient', () => {
+    // 第 2 段圆满、当前段只蓄了 1 点：曲池要 2800/3×11% ≈ 103
+    const m = buildSceneModel(at({ chargeHighWater: 2, dantian: 2800 / 3 * 2 + 1 }))!;
+    const star = m.meridians[0].stars[0];
+    expect(star.state).toBe('dim');
+    expect(star.gate).toBe('insufficient');
+    expect(star.neiliCost).toBeCloseTo(2800 / 3 * 0.11, 6);
+  });
+
+  it('前穴未通时给出挡路穴名，供「{前穴名} 未通」文案用', () => {
+    const m = buildSceneModel(at({ chargeHighWater: 3, dantian: 2800 }))!;
+    const second = m.meridians[0].stars[1];
+    expect(second.gate).toBe('prev-unopened');
+    expect(second.blockedBy).toBe('曲池');
   });
 
   it('已通窍穴恒为金星，不因机会归零而回落', () => {
@@ -85,6 +109,20 @@ describe('修炼面板模型 · 星曜三态与经脉', () => {
       acupointProgress: { [r2.id]: { failCount: 0, opened: true } },
     }))!;
     expect(m.openedThisRealm).toBe(0);
+  });
+
+  it('突破门槛读数只看首条经脉（design.md §4）', () => {
+    const [m1, m2] = REALM_ACUPOINTS[2].meridians;
+    const m = buildSceneModel(at({
+      acupointProgress: Object.fromEntries(
+        m2.acupointIds.map(id => [id, { failCount: 0, opened: true }])
+      ),
+    }))!;
+    expect(m.requiredMeridianName).toBe(m1.name);
+    expect(m.requiredMeridianSize).toBe(m1.acupointIds.length);
+    // 通的是另一条脉，首脉读数仍为 0
+    expect(m.requiredMeridianOpened).toBe(0);
+    expect(m.openedThisRealm).toBe(m2.acupointIds.length);
   });
 });
 

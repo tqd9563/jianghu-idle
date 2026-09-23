@@ -3,7 +3,7 @@
  * 后续战斗/经济模块的完整 golden 用例由 sim/mvp0_sim.py 导出固定 fixture。
  */
 import { describe, expect, it } from 'vitest';
-import { hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, overflowToQishi } from './formulas';
+import { hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, currentSegmentNeili } from './formulas';
 import { REALMS, skillUpgradeCost } from './content';
 
 describe('双曲防御（公式表 §2）', () => {
@@ -79,11 +79,24 @@ describe('周天 N 段推广（spec §2：境界 2-5 = 3/4/6/8）', () => {
   });
 });
 
-describe('气势溢出转化（spec §5.3 裁决 D2）', () => {
-  it('丹田未满 → 溢出 0', () => {
-    expect(overflowToQishi(5000, 10000)).toBe(0);
+describe('当前段已蓄真气（design.md §2：冲穴与升武学都从当前段扣款）', () => {
+  it('未缴任何段时 = 丹田全额', () => {
+    expect(currentSegmentNeili(400, 3000, 3, 0)).toBe(400);
   });
-  it('丹田充满后溢出 500 → 气势 +500', () => {
-    expect(overflowToQishi(10500, 10000)).toBe(500);
+  it('已缴 1 段时扣掉那一段的配额', () => {
+    expect(currentSegmentNeili(1400, 3000, 3, 1)).toBe(400);
+  });
+  it('冲穴扣款使液面跌回已缴线以下 → 当前段归零，已沉入根基的部分不退回', () => {
+    // 已缴 2 段（2000），但丹田被扣到 1800
+    expect(currentSegmentNeili(1800, 3000, 3, 2)).toBe(0);
+  });
+  it('丹田超过全额时按全额截断', () => {
+    expect(currentSegmentNeili(9999, 3000, 3, 2)).toBe(1000);
+  });
+  it('末段圆满后当前段读作「第 N 段已蓄满」，而非归零——否则末穴永远冲不动', () => {
+    // 已缴满 3 段、丹田封顶：当前段真气 = 一段配额，足以支付冲穴
+    expect(currentSegmentNeili(3000, 3000, 3, 3)).toBe(1000);
+    // 冲穴扣款后液面回落，当前段随之减少，蓄回来又能再冲（design.md §3.4 W1 无死锁）
+    expect(currentSegmentNeili(2850, 3000, 3, 3)).toBe(850);
   });
 });

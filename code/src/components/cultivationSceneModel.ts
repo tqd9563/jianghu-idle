@@ -6,11 +6,12 @@
  * 本模块只做几何与状态推导，不含 React / DOM 依赖，可单测。
  * 组件只负责把结果画出来，不再自己算任何位置或状态。
  */
-import { CHARGE_SEGMENTS, zhoutianProgress } from '../engine/formulas';
+import { CHARGE_SEGMENTS, currentSegmentNeili, zhoutianProgress } from '../engine/formulas';
 import { REALMS } from '../engine/content';
 import {
-  REALM_ACUPOINTS, currentSuccessRate, isMeridianComplete, openedInRealm, qishiToBonus,
-  type AcupointState,
+  REALM_ACUPOINTS, acupointPos, blockingPrevAcupoint, chongxueGate, currentSuccessRate,
+  isMeridianComplete, neiliCostFor, openedInRealm, requiredMeridian, requiredMeridianOpened,
+  type AcupointState, type ChongxueGate,
 } from '../engine/acupoints';
 
 // ── 几何常量（viewBox 400×500，器皿中心 CX/CY）──
@@ -46,8 +47,6 @@ export interface SceneInput {
   dantian: number;
   breakCost: number | null;
   chargeHighWater: number;
-  chongxueChances: number;
-  qishi: number;
   acupointProgress: Record<string, AcupointState>;
 }
 
@@ -55,12 +54,18 @@ export interface SceneInput {
 export type MoonPhase = 'new' | 'waxing' | 'full';
 export interface SceneMoon { phase: MoonPhase; x: number; y: number; r: number; sprite: number }
 
-/** 星曜三态：墨星（待机会）/ 朱砂星（可冲）/ 金星（已通），spec §4.2 */
+/** 星曜三态：墨星（不可冲）/ 朱砂星（可冲）/ 金星（已通），spec §4.2 */
 export type StarState = 'dim' | 'actionable' | 'opened';
 export interface SceneStar {
   id: string; name: string; state: StarState;
-  /** 成功率（含气势加成），供 tooltip / 无障碍标签用 */
+  /** 成功率（位次基础值 + 失败累进），供 tooltip / 无障碍标签用 */
   rate: number;
+  /** 冲一次要扣的真气（design.md §3.3），成败同扣 */
+  neiliCost: number;
+  /** 不可冲的具体原因——每个原因对应一条冻结文案，不能合并成 boolean */
+  gate: ChongxueGate;
+  /** gate = 'prev-unopened' 时，挡路的那个前穴名；否则 null */
+  blockedBy: string | null;
   x: number; y: number; size: number; labelX: number; labelY: number;
 }
 export interface SceneMeridian {
@@ -91,10 +96,16 @@ export interface SceneModel {
   qiOpacity: number;
   moons: SceneMoon[];
   meridians: SceneMeridian[];
-  /** 本境界已通窍穴数（突破条件按境界计，design.md §4） */
+  /** 当前段已蓄真气（冲穴从这里扣，design.md §2） */
+  segmentNeili: number;
+  /** 本境界已通窍穴数（加成口径；突破门槛见下三项） */
   openedThisRealm: number;
   poolSize: number;
-  requiredAcupoints: number | null;
+  /** 突破必须贯通的经脉名（design.md §4）；本版境界 1/6/7 为 null */
+  requiredMeridianName: string | null;
+  /** 该脉已通 / 总穴数 */
+  requiredMeridianOpened: number;
+  requiredMeridianSize: number;
 }
 
 export function buildSceneModel(s: SceneInput): SceneModel | null {
@@ -103,7 +114,8 @@ export function buildSceneModel(s: SceneInput): SceneModel | null {
   const def = REALMS[s.realm - 1];
   const n = def.zhoutianCount ?? CHARGE_SEGMENTS;
   const p = zhoutianProgress(s.dantian, s.breakCost, n);
-  const qishiBonus = qishiToBonus(s.qishi);
+  const segmentQuota = s.breakCost / n;
+  const segmentNeili = currentSegmentNeili(s.dantian, s.breakCost, n, s.chargeHighWater);
   const pct = p.currentSegmentPct;
   const totalPct = (p.segmentsFull + pct) / n;
 
@@ -130,10 +142,20 @@ export function buildSceneModel(s: SceneInput): SceneModel | null {
       const r = R_V + 28 + JIT_R[ai % JIT_R.length];
       const [x, y] = polar(r, ang);
       const [labelX, labelY] = polar(r + 25, ang);
+      const gate = chongxueGate({
+        realm: s.realm, acupointId: aid, progress: s.acupointProgress,
+        chargeHighWater: s.chargeHighWater, zhoutianCount: n,
+        segmentNeili, segmentQuota,
+      });
       return {
         id: aid, name: acu.name,
-        state: st.opened ? 'opened' : s.chongxueChances > 0 ? 'actionable' : 'dim',
-        rate: currentSuccessRate(st, qishiBonus),
+        state: st.opened ? 'opened' : gate === 'ok' ? 'actionable' : 'dim',
+        rate: currentSuccessRate(st, acupointPos(s.realm, aid)),
+        neiliCost: neiliCostFor(s.realm, aid, segmentQuota),
+        gate,
+        blockedBy: gate === 'prev-unopened'
+          ? blockingPrevAcupoint(s.realm, aid, s.acupointProgress)?.name ?? null
+          : null,
         x, y, size: mag * STAR_SPRITE_SCALE, labelX, labelY,
       };
     });
@@ -166,8 +188,11 @@ export function buildSceneModel(s: SceneInput): SceneModel | null {
     qiOpacity: +(0.25 + totalPct * 0.35).toFixed(2),
     moons,
     meridians,
+    segmentNeili,
     openedThisRealm: openedInRealm(s.realm, s.acupointProgress),
     poolSize: def.acupointPoolSize ?? 0,
-    requiredAcupoints: def.requiredAcupoints,
+    requiredMeridianName: requiredMeridian(s.realm)?.name ?? null,
+    requiredMeridianOpened: requiredMeridianOpened(s.realm, s.acupointProgress),
+    requiredMeridianSize: requiredMeridian(s.realm)?.acupointIds.length ?? 0,
   };
 }

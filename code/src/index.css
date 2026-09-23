@@ -777,11 +777,6 @@ html[data-theme='pomo'] body {
 }
 
 /* 气势条（独立于周天充能，spec §1 第三层语义） */
-.qishi-bar { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-muted); padding: 6px 0; }
-.qishi-bar .k { color: var(--ink-faint); letter-spacing: 0.05em; }
-.qishi-bar .mini-bar { flex: 1; max-width: 200px; height: 6px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
-.qishi-bar .mini-bar > i { display: block; height: 100%; background: var(--sword-cyan); transition: width 0.3s var(--ease-sharp); }
-.qishi-bar .v { font-variant-numeric: tabular-nums; }
 
 /* 窍穴账目 */
 .acu-ledger {

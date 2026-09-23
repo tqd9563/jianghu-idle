@@ -8,8 +8,8 @@ import { ROUTES } from '../engine/routes';
 import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/gameStore';
 import {
   REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete, openedInRealm,
+  requiredMeridian, requiredMeridianOpened,
 } from '../engine/acupoints';
-import { QishiBar } from '../components/ZhoutianMandala';
 import { CultivationScene } from '../components/CultivationScene';
 
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
@@ -59,8 +59,6 @@ export function CultivatePane() {
                 </span>
               </div>
               <CultivationScene />
-              {/* 气势条独立成条（spec §1 第三层语义：与充能进度语义分离） */}
-              <QishiBar />
               {acupointData && (
                 <div className="acu-ledger">
                   <span>已冲开 <b>{openedThisRealm}/{REALMS[s.realm - 1].acupointPoolSize}</b> 穴</span>
@@ -160,16 +158,17 @@ function BreakthroughButton() {
   const nextRealm = REALMS[s.realm];
   const cost = effBreakCost(s);
   const dantianReady = cost !== null && s.dantian >= cost;
-  // 双条件校验（spec §6）：丹田充满 且 已通窍穴数 ≥ M
-  const requiredAcupoints = REALMS[s.realm - 1].requiredAcupoints;
+  // 双条件校验（design.md §4）：N 段缴清 且 本境界首条经脉贯通。
   // 与 gameStore.breakthrough 同口径：按境界计，不跨境界累计
-  const openedCount = openedInRealm(s.realm, s.acupointProgress ?? {});
-  const acupointReady = requiredAcupoints === null || openedCount >= requiredAcupoints;
-  const ready = dantianReady && acupointReady;
+  const progress = s.acupointProgress ?? {};
+  const req = requiredMeridian(s.realm);
+  const meridianOpened = requiredMeridianOpened(s.realm, progress);
+  const meridianReady = req === null || meridianOpened >= req.acupointIds.length;
+  const ready = dantianReady && meridianReady;
   const label = ready
     ? `突破 · ${nextRealm.name}`
-    : dantianReady && !acupointReady
-      ? `窍穴未通齐（${openedCount}/${requiredAcupoints}）`
+    : dantianReady && !meridianReady
+      ? `${req!.name} 未贯通（${meridianOpened}/${req!.acupointIds.length}）`   // 冻结文案 §5
       : '运转周天中…';
   return (
     <button className={ready ? 'btn pulse' : 'btn'} disabled={!ready} onClick={s.breakthrough}>

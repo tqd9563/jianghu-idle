@@ -43,9 +43,26 @@ export function zhoutianProgress(
   };
 }
 
-/** 丹田充满后溢出转化（spec §5.3 裁决 D2，Q1 内力衍生临时状态）：
- *  丹田充满后产出无处可去时转为气势；1 内力 = 1 气势；返回溢出量。
- *  气势的累积、封顶、衰减由 gameStore 管理（spec §5）。 */
-export function overflowToQishi(dantianNeili: number, breakthroughCost: number): number {
-  return Math.max(0, dantianNeili - breakthroughCost);
+/**
+ * 当前段已蓄内力（design.md §2：冲穴与升武学都从「当前段」扣款）。
+ *
+ * 当前段由 **chargeHighWater**（已沉入根基的段数）划定，不由 dantian 反推：
+ * 冲穴扣款会让液面回落到已缴线以下，但已沉入根基的部分不退回，
+ * 此时当前段真气归零、须重蓄（印记常亮 / 进度回落，spec §1）。
+ *
+ * 段配额当前为**均分**（cost / N）。design.md §3.1 的「段间公比 2」与长线数值
+ * 同属 v3.0 挂账、尚未落到代码，本函数按代码现行口径计算。
+ */
+export function currentSegmentNeili(
+  dantianNeili: number,
+  breakthroughCost: number,
+  segments: number,
+  chargeHighWater: number
+): number {
+  const perSegment = breakthroughCost / segments;
+  // 当前段封顶在第 N 段：末段圆满后丹田也就满了，若仍按「已缴 N 段」算，
+  // 当前段真气会恒为 0、最后一个窍穴永远冲不动——那正是 v4.0 要消灭的死锁。
+  // 满额时当前段读作「第 N 段已蓄满」，冲穴扣款后液面回落、重蓄即可再冲（design.md §3.4 W1）。
+  const paid = Math.min(chargeHighWater, segments - 1);
+  return Math.max(0, Math.min(dantianNeili, breakthroughCost) - paid * perSegment);
 }

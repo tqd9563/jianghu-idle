@@ -2,7 +2,7 @@
  * store 行为测试：单钱包丹田模型 + 埋点事件发射（对齐规格书 §6.1 v0.9 / 埋点规格 §1.2）
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { skillUpgradeCost } from '../engine/content';
+import { REALMS, skillUpgradeCost } from '../engine/content';
 import {
   resetLiveTestWindowForTests, startLiveTestWindow as persistLiveTestWindow, loadGame,
 } from '../save/storage';
@@ -11,6 +11,7 @@ import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import { effBreakCost, effIdleRate, playerBuild, resetLiveTestVisitForTests, retireKind, useGameStore } from './gameStore';
 import { freshInjuries, isHurt } from '../engine/injury';
 import { idleNeiliPerSec } from '../engine/formulas';
+import { REALM_ACUPOINTS } from '../engine/acupoints';
 
 function names() {
   return getEvents().map((e) => e.e);
@@ -503,5 +504,91 @@ describe('gameStore · 受伤系统接线（injury/spec.md）', () => {
     const after = useGameStore.getState();
     expect(isHurt(after.injuries ?? freshInjuries())).toBe(false);
     expect(after.lifespanLost ?? 0).toBe(0);
+  });
+});
+
+describe('gameStore · 冲穴耗内力制（design.md v4.0）', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+
+  /**
+   * 把角色放到境界 2、周天缴满 N 段、丹田封顶的状态。
+   * 消耗取 effBreakCost（= 下一境界行），与 store 内部同源——REALMS 行口径不一致是既有问题。
+   */
+  function atRealm2(chargeHighWater = 3) {
+    useGameStore.setState({ started: true, realm: 2, acupointProgress: {}, chargeHighWater });
+    const cost = effBreakCost(useGameStore.getState())!;
+    useGameStore.setState({ dantian: cost });
+    return cost;
+  }
+
+  it('真气未行至该穴时冲不动，内力分文不扣', () => {
+    const cost = atRealm2(0);
+    useGameStore.getState().attemptAcupoint('quchi');
+    expect(useGameStore.getState().acupointProgress).toEqual({});
+    expect(useGameStore.getState().dantian).toBe(cost);
+  });
+
+  it('同一条脉须按次序冲：前穴未通时后穴冲不动', () => {
+    const cost = atRealm2();
+    useGameStore.getState().attemptAcupoint('hegu');   // 曲池尚未通
+    expect(useGameStore.getState().acupointProgress).toEqual({});
+    expect(useGameStore.getState().dantian).toBe(cost);
+  });
+
+  it('冲穴成败同扣真气——失败也扣，这就是惩罚', () => {
+    const cost = atRealm2();
+    const N = REALMS[1].zhoutianCount!;
+    const before = useGameStore.getState().dantian;
+    // roll=0.99 > 曲池 90% → 必失败
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    useGameStore.getState().attemptAcupoint('quchi');
+    vi.mocked(Math.random).mockRestore();
+
+    const after = useGameStore.getState();
+    expect(after.acupointProgress!.quchi).toEqual({ failCount: 1, opened: false });
+    const expected = (cost / N) * 0.11;    // 当前段配额 × 11%
+    expect(before - after.dantian).toBeCloseTo(expected, 6);
+  });
+
+  it('末段圆满、丹田封顶时仍冲得动——v4.0 要消灭的死锁不再复现', () => {
+    // 旧实现把「已缴 N 段」直接拿去减，当前段真气恒为 0，最后一个窍穴永远冲不动。
+    const cost = atRealm2();
+    const N = REALMS[1].zhoutianCount!;
+    const per = (cost / N) * 0.11;
+
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);   // 第一次必失败（曲池 90%）
+    useGameStore.getState().attemptAcupoint('quchi');
+    expect(useGameStore.getState().acupointProgress!.quchi.opened).toBe(false);
+    expect(useGameStore.getState().dantian).toBeCloseTo(cost - per, 6);
+
+    // 扣款使液面回落，但真气仍够再冲一次——持续性正是无死锁的含义
+    useGameStore.getState().attemptAcupoint('quchi');
+    vi.mocked(Math.random).mockRestore();
+    expect(useGameStore.getState().acupointProgress!.quchi.opened).toBe(true);   // 失败累进到 100%
+    expect(useGameStore.getState().dantian).toBeCloseTo(cost - per * 2, 6);      // 两次都扣了
+  });
+
+  it('突破须贯通首条经脉：通了另一条脉不顶用', () => {
+    atRealm2();
+    const other = REALM_ACUPOINTS[2].meridians[1].acupointIds;
+    useGameStore.setState({
+      acupointProgress: Object.fromEntries(other.map(id => [id, { failCount: 0, opened: true }])),
+    });
+    useGameStore.getState().breakthrough();
+    expect(useGameStore.getState().realm).toBe(2);    // 没突破
+
+    // 补通首条脉 → 可突破
+    const req = REALM_ACUPOINTS[2].meridians[0].acupointIds;
+    useGameStore.setState({
+      acupointProgress: {
+        ...useGameStore.getState().acupointProgress,
+        ...Object.fromEntries(req.map(id => [id, { failCount: 0, opened: true }])),
+      },
+    });
+    useGameStore.getState().breakthrough();
+    expect(useGameStore.getState().realm).toBe(3);
   });
 });

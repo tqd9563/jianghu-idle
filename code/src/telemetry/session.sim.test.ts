@@ -7,7 +7,6 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
-import { REALMS } from '../engine/content';
 import { requiredMeridian, type AcupointState } from '../engine/acupoints';
 import { effBreakCost, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
 import { exportTelemetryJSON, getEvents } from './telemetry';
@@ -17,6 +16,21 @@ const T0 = Date.UTC(2026, 6, 6, 9, 0, 0);
 
 const st = () => useGameStore.getState();
 
+/**
+ * 本样例画像是「正常玩到归隐」，不该发生强制转世。一旦发生就立刻报错而不是让脚本空转：
+ * 转世会把境界打回 1，「推到境界 N」的循环将永远到不了，测试直接挂死。
+ */
+function assertNoForcedRebirth() {
+  const ev = getEvents().find((e) => e.e === 'forced_reincarnation');
+  if (ev) {
+    throw new Error(
+      `样例玩家在第 ${ev.run} 世被迫转世：死因 ${String(ev.cause)}，${String(ev.age_at_death)} 岁，` +
+      `已活 ${Math.round(Number(ev.run_duration_s) / 60)} 分钟，折寿 ${String(ev.lifespan_lost)} 年。` +
+      '年岁速率与实际游玩节奏不匹配，见 reincarnation/spec.md §2.2',
+    );
+  }
+}
+
 /** 推进假时钟并驱动 tick（分块 ≤250s，避开单 tick 300s 上限） */
 function advance(seconds: number) {
   let left = seconds;
@@ -24,6 +38,7 @@ function advance(seconds: number) {
     const step = Math.min(left, 250);
     vi.setSystemTime(Date.now() + step * 1000);
     st().tick(Date.now());
+    assertNoForcedRebirth();
     left -= step;
   }
 }
@@ -34,13 +49,25 @@ function playBattle() {
   while (st().battle && !st().battle!.resolved && guard-- > 0) {
     vi.setSystemTime(Date.now() + st().battle!.intervalMs);
     st().tick(Date.now());
+    assertNoForcedRebirth();
   }
   st().dismissFailure();
 }
 
+/**
+ * 有伤先养好再打：伤势升到重度会折寿，重度再败即越过致死线当场战死（injury/spec.md §6）。
+ * 正常玩家看到身上带伤会先养一养；不养伤硬撼同一堵墙是设计里的赌命路径，不是本样例要模拟的画像。
+ */
+function restIfGravelyHurt() {
+  let guard = 60;
+  while (Object.values(st().injuries ?? {}).some((w) => w.severity >= 1) && guard-- > 0) advance(60);
+}
+
 function challenge(map: MapNo, stage: number): boolean {
+  restIfGravelyHurt();
   st().challengeStage(map, stage);
   playBattle();
+
   return st().battle!.result.win;
 }
 
@@ -153,7 +180,9 @@ describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
     st().resumeSession();
     pushMap(2);
     pushMap(3);
-    reachRealm(REALMS.length);
+    // 推到标准归隐门槛（境界 5）即收手。此处原写 reachRealm(REALMS.length)：写于境界只有 5 个时，
+    // MVP-2 扩到 7 个后含义悄悄变成「深推到境界 7」——那正是寿元要惩罚的贪命路径，不是本样例画像。
+    reachRealm(5);
     if (nextStageOf(3, st().clearedStages) !== null) pushMap(3);
 
     // 归隐：预览 → 确认 → 30 秒内首购（§8.6-4）

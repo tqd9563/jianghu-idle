@@ -16,7 +16,7 @@
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
 | `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
-| `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, ZhoutianMandala.tsx |
+| `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, AgeLine.tsx, SoulChip.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 
 ### 全局设计
@@ -36,7 +36,7 @@
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 → 境界成本/宿慧/声望经济，唯一数值源） | design.md §3、economy.md v2 由其生成 |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
-| `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元可进实现；正邪未规格化） | — |
+| `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |
 | `systems/injury/spec.md` | 受伤系统规格（伤型表/严重度/压制/恢复/折寿接口，可进实现） | — |
 | `systems/sim/injury_sim.py` | 受伤系统标定 sim（判据 V6–V9） | — |

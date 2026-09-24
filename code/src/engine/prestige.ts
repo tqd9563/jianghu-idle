@@ -69,10 +69,16 @@ export const COUNTER_HINTS: Record<EnemyTag, string> = {
 
 // ---- 归隐门槛与声望结算 ----
 
-/** 保底触发实现值（声望经济表 §6.2 定稿）：Boss 3 累计失败 ≥4（调整不重置）/ 停滞 12 分钟 / 折扣 0.60 */
+/** 保底触发实现值（声望经济表 §6.2 定稿）：Boss 3 累计失败 ≥4（调整不重置）/ 停滞 12 分钟 */
 export const FALLBACK_FAIL_STREAK = 4;
 export const FALLBACK_STALL_MIN = 12;
-export const FALLBACK_DISCOUNT = 0.60;
+/**
+ * 保底折扣：**已退役，归 1.0**（reincarnation/spec.md v1.1 §4）。保底归隐是玩家主动选择，按全额结算；
+ * 「仓促收场」的代价改由强制转世的「魂魄未稳」承担，不再在结算里打折。
+ * ⚠ 口径分叉：`mvp0_sim.py` 的 REP_LOWYIELD_FACTOR 仍为 0.60——它牵动多轮 campaign 的购点节奏，
+ * 进而牵动转世标定，须与年岁速率重标定一并处理，不在此单改。
+ */
+export const FALLBACK_DISCOUNT = 1;
 /** 短轮惩罚门槛（声望经济表 §1.3）：≥15 分钟无修正，之下 ×(t/15)² */
 export const TIME_PENALTY_MIN = 15;
 
@@ -100,7 +106,7 @@ export interface RetireSettle {
   perfPct: number;
   /** 耗时修正（正常 1.0，声望经济表 §1.3） */
   timePenalty: number;
-  /** 保底折扣（标准 1.0 / 保底 0.60，声望经济表 §1.4） */
+  /** 保底折扣（已退役，恒为 1.0；字段保留供埋点 fallback_discount 口径延续） */
   discount: number;
   total: number;
 }

@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { REALMS, skillUpgradeCost } from '../engine/content';
 import {
-  resetLiveTestWindowForTests, startLiveTestWindow as persistLiveTestWindow, loadGame,
+  resetLiveTestWindowForTests, startLiveTestWindow as persistLiveTestWindow, loadGame, saveGame, backdateSavedAt,
 } from '../save/storage';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
@@ -12,6 +12,7 @@ import { effBreakCost, effIdleRate, playerBuild, resetLiveTestVisitForTests, ret
 import { freshInjuries, isHurt } from '../engine/injury';
 import { idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
+import { INIT_AGE, ERA_START, AGE_YEARS_PER_MIN, LIFESPAN_CAP, SOUL_WEAK_MULT } from '../engine/reincarnation';
 
 function names() {
   return getEvents().map((e) => e.e);
@@ -590,5 +591,148 @@ describe('gameStore · 冲穴耗内力制（design.md v4.0）', () => {
     });
     useGameStore.getState().breakthrough();
     expect(useGameStore.getState().realm).toBe(3);
+  });
+});
+
+describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+
+  const st = () => useGameStore.getState();
+  const heavyAll = () => ({
+    wai: { severity: 3 as const, healAccMin: 0 },
+    nei: { severity: 3 as const, healAccMin: 0 },
+    du: { severity: 3 as const, healAccMin: 0 },
+  });
+
+  it('新档：18 岁、江湖历 100 年、魂魄安稳', () => {
+    expect(st().age).toBe(INIT_AGE);
+    expect(st().eraStart).toBe(ERA_START);
+    expect(st().soulUnsettled).toBe(false);
+  });
+
+  it('年岁随活跃时长增长：一分钟老 1.322 岁', () => {
+    const t0 = Date.now();
+    st().tick(t0 + 60_000);
+    expect(st().age).toBeCloseTo(INIT_AGE + AGE_YEARS_PER_MIN, 6);
+  });
+
+  it('观察员暂停期间不变老（与挂机产出同一冻结口径）', () => {
+    useGameStore.setState({ paused: true });
+    st().tick(Date.now() + 60_000);
+    expect(st().age).toBe(INIT_AGE);
+  });
+
+  it('寿元将尽时再挂一会儿 → 老死：强制转世，声望全额，来世魂魄未稳', () => {
+    useGameStore.setState({ age: LIFESPAN_CAP - 0.01, reputation: 7 });
+    st().tick(Date.now() + 60_000);
+    const s = st();
+    expect(s.run).toBe(2);
+    expect(s.age).toBe(INIT_AGE);
+    expect(s.soulUnsettled).toBe(true);
+    expect(s.retireCeremony?.cause).toBe('old');
+    expect(s.retireCeremony?.deathAge).toBe(LIFESPAN_CAP);
+    // 江湖历从谢幕年份接着算：出生 100 年，活到约 120 岁 → 下一世生于约 202 年
+    expect(s.eraStart).toBeGreaterThan(ERA_START + (LIFESPAN_CAP - INIT_AGE) - 0.1);
+    const ev = getEvents().find((e) => e.e === 'forced_reincarnation')!;
+    expect(ev.cause).toBe('old');
+    expect(getEvents().some((e) => e.e === 'retire_confirmed')).toBe(false);
+  });
+
+  it('重伤折寿压低寿元：折了 15 年，105 岁即老死', () => {
+    useGameStore.setState({ age: 105.5, lifespanLost: 15 });
+    st().tick(Date.now() + 1_000);
+    expect(st().retireCeremony?.cause).toBe('old');
+  });
+
+  it('魂魄未稳：挂机产出 ×0.6，与伤势压制同一乘法链', () => {
+    const base = effIdleRate(st());
+    useGameStore.setState({ soulUnsettled: true });
+    expect(effIdleRate(st())).toBeCloseTo(base * SOUL_WEAK_MULT, 10);
+  });
+
+  it('魂魄未稳在首次突破时解除', () => {
+    const cost = effBreakCost(st())!;
+    useGameStore.setState({ soulUnsettled: true, dantian: cost });
+    st().breakthrough();
+    expect(st().realm).toBe(2);
+    expect(st().soulUnsettled).toBe(false);
+  });
+
+  it('主动归隐：年岁重置、江湖历接续、魂魄安稳，走 retire_confirmed 而非强制转世', () => {
+    useGameStore.setState({
+      realm: 5, clearedStages: ['m3s10'], age: 60, eraStart: 130,
+      soulUnsettled: false, retireStep: 'confirm',
+    });
+    st().confirmRetire();
+    const s = st();
+    expect(s.run).toBe(2);
+    expect(s.age).toBe(INIT_AGE);
+    expect(s.eraStart).toBeCloseTo(130 + (60 - INIT_AGE), 6);
+    expect(s.soulUnsettled).toBe(false);
+    expect(s.retireCeremony?.cause).toBeNull();
+    expect(getEvents().some((e) => e.e === 'retire_confirmed')).toBe(true);
+    expect(getEvents().some((e) => e.e === 'forced_reincarnation')).toBe(false);
+  });
+
+  it('战死：三处重伤时再败于 Boss → 越过致死线，强制转世', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    useGameStore.setState({
+      realm: 1, route: null,
+      clearedStages: ['m1s1', 'm1s2', 'm1s3', 'm1s4', 'm1s5', 'm1s6', 'm1s7'],
+      injuries: heavyAll(), lifespanLost: 45,
+    });
+    st().challengeStage(1, 8);    // 境界 1 白身挑战 Boss 1，带三处重伤，必败
+    for (let i = 0; i < 400; i++) {
+      const b = st().battle;
+      if (!b || b.resolved) break;
+      vi.setSystemTime(Date.now() + 1_000);
+      st().tick(Date.now());
+    }
+    vi.useRealTimers();
+    const s = st();
+    expect(s.retireCeremony?.cause).toBe('battle');
+    expect(s.run).toBe(2);
+    expect(s.soulUnsettled).toBe(true);
+    // 伤势与折寿随转世清零
+    expect(isHurt(s.injuries ?? freshInjuries())).toBe(false);
+    expect(s.lifespanLost).toBe(0);
+    expect(s.battle).toBeNull();
+  });
+
+  it('离线同样变老；闭关期间寿终 → 回来直接进转世演出，出关结算屏不再出现', () => {
+    // 构造一份 119 岁、下线 30 分钟的存档
+    saveGame({ ...st(), age: 119, run: 1 });
+    backdateSavedAt(30 * 60);
+    useGameStore.setState({ started: false });
+    st().init();
+    const s = st();
+    expect(s.retireCeremony?.cause).toBe('old');
+    expect(s.retireCeremony?.deathAge).toBe(LIFESPAN_CAP);   // 按寿元封顶，不显示越界年岁
+    expect(s.offlineSettlement).toBeNull();
+    expect(s.run).toBe(2);
+  });
+
+  it('存档不丢字段：FRESH 里的每个字段都能原样存取（修复前窍穴进度 / 图鉴 / 伤势 / 折寿刷新即丢）', () => {
+    const [acu] = REALM_ACUPOINTS[2].acupoints;
+    useGameStore.setState({
+      acupointProgress: { [acu.id]: { failCount: 2, opened: true } },
+      acupointLog: [acu.id],
+      injuries: { ...freshInjuries(), nei: { severity: 2, healAccMin: 1.5 } },
+      lifespanLost: 15, age: 44.4, eraStart: 187, soulUnsettled: true,
+    });
+    st().pauseSession();   // 任一会持久化的动作都行，这里借暂停触发一次写盘
+    const saved = loadGame() as Record<string, unknown>;
+    expect(saved.acupointProgress).toEqual({ [acu.id]: { failCount: 2, opened: true } });
+    expect(saved.acupointLog).toEqual([acu.id]);
+    expect((saved.injuries as { nei: { severity: number } }).nei.severity).toBe(2);
+    expect(saved.lifespanLost).toBe(15);
+    expect(saved.age).toBe(44.4);
+    expect(saved.eraStart).toBe(187);
+    expect(saved.soulUnsettled).toBe(true);
   });
 });

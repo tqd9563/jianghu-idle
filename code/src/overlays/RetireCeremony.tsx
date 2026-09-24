@@ -25,6 +25,12 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
   return (
     <div className="modal-backdrop open ceremony">
       <div className="modal ceremony-card" role="dialog" aria-label="归隐结算">
+        {/* 强制转世只在两处与主动归隐分岔：卡顶死因、声望后的来世交代（原型 §3；文案 copy/reincarnation.md §3） */}
+        {c.cause && (
+          <div className="ceremony-cause">
+            <b>{c.deathAge}</b> 岁 · {c.cause === 'old' ? '寿终' : '重伤不治'}
+          </div>
+        )}
         <div className="ceremony-title serif">你的第{cnOrd(c.runEnded)}段江湖</div>
         <div className="ceremony-sum">
           历时 {minutes} 分钟，击败了 {strongFoes} 个强敌，{footprint}。
@@ -32,8 +38,15 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
         <div className="ceremony-rep">
           <span className="label">江湖会记得你</span>
           <span className="value gold serif">声望 +{c.settle.total}</span>
+          {c.cause && <span className="full">全额入账</span>}
         </div>
-        <button className="btn" onClick={onDone}>进入声望阁</button>
+        {c.cause && (
+          <div className="soul-note">
+            <div className="t"><span className="serif">魂魄未稳</span></div>
+            <div>仓促离世，魂魄受了创。来世首次突破之前，修炼只得六成。</div>
+          </div>
+        )}
+        <button className="btn" onClick={onDone}>{c.cause ? '转世 · 再入江湖' : '进入声望阁'}</button>
       </div>
     </div>
   );

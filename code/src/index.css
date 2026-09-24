@@ -1084,6 +1084,29 @@ button.wound-chip:hover { border-color: var(--line-strong); }
 .t-nei { color: var(--inner); }
 .t-du  { color: var(--poison); }
 
+/* ===== 转世：年岁行 / 魂魄芯片 / 强制转世演出（原型 reincarnation-prototype.html） ===== */
+/* 年岁行：紧贴境界之下，同一身份块 */
+.age-line { display: flex; align-items: baseline; gap: 10px; margin-top: 3px; font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.age-line .age b { color: var(--ink-warm); font-weight: 600; }
+.age-line .era { color: var(--ink-faint); }
+.age-line .era b { color: var(--ink-muted); font-weight: 600; }
+/* 垂暮：离寿元不足一次重伤。朱砂只在此时出现，平日不见——警示要稀缺才有效 */
+.age-line.dusk .age b { color: var(--cinnabar); }
+.age-line .dusk-tag { font-size: 11px; color: var(--cinnabar); border: 1px solid oklch(0.68 0.09 38 / 0.5); border-radius: var(--r-xs); padding: 0 6px; letter-spacing: 0.08em; }
+/* 魂魄芯片：与身体芯片同形制；不是伤，不用伤色，用墨金 */
+.wound-chip.soul-chip { border-color: oklch(0.74 0.075 76 / 0.45); }
+.wound-chip.soul-chip .wname { color: var(--ink-gold); }
+button.wound-chip.soul-chip:hover { border-color: var(--ink-gold); }
+/* 强制转世演出：卡顶死因、全额入账、来世交代 */
+.ceremony-cause { font-size: 13px; color: var(--ink-muted); letter-spacing: 0.12em; margin-bottom: 10px; }
+.ceremony-cause b { color: var(--ink-warm); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ceremony-rep .full { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.1em; }
+.soul-note { margin: 18px auto 0; max-width: 360px; border-top: 1px solid var(--line); padding-top: 14px; font-size: 12.5px; color: var(--ink-muted); line-height: 1.75; }
+.soul-note .t { color: var(--ink-gold); font-weight: 600; letter-spacing: 0.1em; margin-bottom: 2px; }
+.soul-note .t .serif { font-size: 14px; }
+/* 只有魂魄未稳、没有伤势行时，来源分解就是面板第一块，不再画自己的上边框（避免与页眉分隔线叠成两道） */
+.wound-panel .breakdown:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+
 /* 带伤时顶栏速率转血褐——修炼变慢是第一眼可见的代价 */
 .res .rate.down { color: var(--hp); }
 

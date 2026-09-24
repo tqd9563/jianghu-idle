@@ -44,13 +44,19 @@ describe('settleRetire · 对照 sim settle_reputation', () => {
     expect(r.total).toBe(182);
   });
 
-  it('保底归隐 · Boss1+2、3 精英、41 分钟 → 34（(20+30)×1.12×0.6）', () => {
+  it('保底归隐 · Boss1+2、3 精英、41 分钟 → 56（(20+30)×1.12，保底折扣已退役）', () => {
     const cleared = [...m1all, ...m2upto(10), ...m3upto(3)];
     const r = settleRetire('fallback', cleared, 41 * 60);
     expect(r.base).toBe(50);
     expect(r.eliteKills).toBe(3);
-    expect(r.discount).toBe(0.6);
-    expect(r.total).toBe(34);
+    expect(r.discount).toBe(1);
+    expect(r.total).toBe(56);
+  });
+
+  it('保底与标准同进度同结算：两种 kind 只剩「差一个 Boss 3 里程碑」的差别（reincarnation/spec.md §4）', () => {
+    const cleared = [...m1all, ...m2upto(10), ...m3upto(3)];
+    expect(settleRetire('fallback', cleared, 41 * 60).total)
+      .toBe(settleRetire('standard', cleared, 41 * 60).total);
   });
 
   it('短轮修正 · 三图全通但仅 10 分钟 → 53（×(10/15)²，纯保险条款）', () => {
@@ -59,12 +65,12 @@ describe('settleRetire · 对照 sim settle_reputation', () => {
     expect(r.total).toBe(53);
   });
 
-  it('保底最低档 · 仅 Boss1 + 1 精英、49 分钟 → 12', () => {
+  it('保底最低档 · 仅 Boss1 + 1 精英、49 分钟 → 21（20×1.04，保底折扣已退役）', () => {
     const cleared = [...m1all, ...m2upto(4)];
     const r = settleRetire('fallback', cleared, 49 * 60);
     expect(r.base).toBe(20);
     expect(r.eliteKills).toBe(1);
-    expect(r.total).toBe(12);
+    expect(r.total).toBe(21);
   });
 
   it('标准但未全通 · 三 Boss + 2 精英、34 分钟 → 108', () => {

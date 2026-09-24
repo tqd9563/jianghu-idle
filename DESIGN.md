@@ -83,6 +83,15 @@ components:
     rounded: "{rounded.xs}"
     width: "4px"
     height: "11px"
+  age-line:
+    textColor: "{colors.ink-muted}"
+    typography: "{typography.data}"
+    fontSize: "12px"
+  soul-chip:
+    backgroundColor: "{colors.night-surface}"
+    textColor: "{colors.ink-gold}"
+    rounded: "{rounded.md}"
+    padding: "6px 11px"
   game-tab-active:
     backgroundColor: "transparent"
     textColor: "{colors.ink-warm}"
@@ -132,8 +141,8 @@ components:
 - **淤紫 bruise-violet** (oklch(0.66 0.11 310)): 内伤。经脉气血受损之色，与血褐（外伤）、毒翠（毒伤）三色构成伤势谱——**三者色相拉开，便于在同屏并存时一眼分辨伤型**；不与修炼组的朱砂/墨金混淆。
 
 **修炼组**
-- **朱砂 cinnabar** (oklch(0.68 0.09 38)): 「可下手」态——有冲穴机会时星曜转朱砂并呼吸脉动。朱砂点穴、朱砂入药，武侠语境里本就是「此处可施为」的记号。
-- **墨金 ink-gold** (oklch(0.74 0.075 76)): 「已成」态——已通窍穴、已圆满周天的满月、已贯通经脉。它是烛火暖金在水墨语境下的低饱和变体，**不与 candle-gold 混用**：暖金标进展（还在涨），墨金标既成（已落定）。两色的字面值用于文字与图例；星曜/月相是位图精灵，其着色由 CSS `filter` 近似逼近这两个色值，不另立 token。
+- **朱砂 cinnabar** (oklch(0.68 0.09 38)): 「可下手」态——有冲穴机会时星曜转朱砂并呼吸脉动。朱砂点穴、朱砂入药，武侠语境里本就是「此处可施为」的记号。第二个用途是**垂暮**：年岁离寿元不足一次重伤时，年岁数字与「垂暮」小标转朱砂——同是「到了该出手/该收手的节点」。平日看不到，警示要稀缺才有效。
+- **墨金 ink-gold** (oklch(0.74 0.075 76)): 「已成」态——已通窍穴、已圆满周天的满月、已贯通经脉。它是烛火暖金在水墨语境下的低饱和变体，**不与 candle-gold 混用**：暖金标进展（还在涨），墨金标既成（已落定）。其反面「未成」也用墨金：**魂魄未稳**芯片与强制转世演出里的「魂魄未稳」标题——它不是伤，所以不进伤势三色。两色的字面值用于文字与图例；星曜/月相是位图精灵，其着色由 CSS `filter` 近似逼近这两个色值，不另立 token。
 
 ### Neutral
 - **夜幕 night-bg** (oklch(0.165 0.014 262)): 页面底色。**导航深黑 night-nav** (oklch(0.13 0.012 262))、**账台灰 night-chrome** (oklch(0.19 0.015 262))、**卡面 night-surface** (oklch(0.215 0.016 262))、**浮面 night-surface-raised** (oklch(0.26 0.018 262)) 依次抬升。
@@ -197,6 +206,12 @@ components:
 
 ### 严重度指示器 severity-meter
 三格微条（4×11px，间距 2px，圆角 1px），填充格用伤型语义色、空格用 `oklch(0.36 0.02 262)`——**空格必须可见**，否则数不出「三格里填了几格」，三重编码退化成单纯的颜色区分。轻＝1 格、中＝2 格、重＝3 格，始终与文字标签（「外伤 · 中」）同时出现。
+
+### 年岁行 age-line
+挂在侧栏境界名之下、同一身份块：`{年岁} 岁　江湖历 {年} 年`，12px 等宽数字，年岁数值 ink-warm、江湖历退到 ink-faint。**不做倒计时、不画进度条**——寿元是容量上限，不是沙漏。垂暮态在年岁后插一枚朱砂描边小标。境界名后不再显示「境界 N / 7」。原型 `docs/design/reincarnation-prototype.html` §1。
+
+### 魂魄芯片 soul-chip
+与身体芯片（`wound-chip`）同一形制并排：标签 11px 淡墨 +「未稳」13px 墨金 + 副文 11px。边框为墨金 45% 透明。**魂魄安稳时不渲染**——没到那一步就不露出。强制转世演出与主动归隐共用结算卡，只多卡顶死因行与声望下方的「魂魄未稳」交代（墨金小标 + 12.5px 正文，上方 1px 分隔线），两种死因只换死因那一句。
 
 ### Cards / Containers
 - **Panel:** night-surface 底、1px 描线、圆角 8px、panel 阴影；头部 10px 14px 带下描线，主体 12px 14px。禁止卡中嵌卡。

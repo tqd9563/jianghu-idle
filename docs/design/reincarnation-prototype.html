@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>转世系统 · 交互原型</title>
+<style>
+:root {
+  /* 与 docs/design/prototype.html 逐值一致，勿改 */
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --chrome: oklch(0.19 0.015 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.70 0.015 85);
+  --faint: oklch(0.56 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --primary: oklch(0.76 0.13 78);
+  --primary-ink: oklch(0.18 0.03 78);
+  --gold: oklch(0.76 0.13 78);
+  --ink-gold: oklch(0.74 0.075 76);
+  --cinnabar: oklch(0.68 0.09 38);
+  --poison: oklch(0.72 0.14 145);
+  --hp: oklch(0.64 0.17 25);
+  --inner: oklch(0.66 0.11 310);
+  --bar-track: oklch(0.28 0.018 262);
+  --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+  --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
+  --ceremony-backdrop-bg: oklch(0.10 0.012 262 / 0.86);
+  --ceremony-text-shadow: 0 0 18px oklch(0.76 0.13 78 / 0.35);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; padding: 0 0 80px;
+}
+.serif { font-family: "Songti SC", STSong, SimSun, serif; }
+.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* ===== 文档框架（仅原型用，非游戏 UI） ===== */
+.doc { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+.doc-head { padding: 36px 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.doc-head h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; }
+.doc-head p { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 76ch; }
+.sec { margin: 40px 0; }
+.sec > h2 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.sec > .desc { color: var(--muted); font-size: 13px; margin-bottom: 16px; max-width: 76ch; }
+.state-label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; margin: 18px 0 7px; }
+.note { font-size: 12px; color: var(--faint); margin-top: 10px; max-width: 76ch; }
+.note b { color: var(--muted); font-weight: 600; }
+
+/* ===== 顶栏（与 index.css .topbar 同构） ===== */
+.topbar {
+  display: flex; align-items: center; gap: 24px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px 18px;
+}
+.game-title { font-family: "Songti SC", STSong, SimSun, serif; font-size: 19px; font-weight: 700; letter-spacing: 0.06em; }
+.game-title .round { font-size: 12px; color: var(--gold); border: 1px solid currentColor; border-radius: 4px; padding: 1px 8px; margin-left: 10px; vertical-align: 2px; letter-spacing: 0.1em; font-family: -apple-system, "PingFang SC", system-ui, sans-serif; }
+.identity { display: flex; flex-direction: column; gap: 3px; }
+.realm-chip { display: flex; align-items: baseline; gap: 8px; }
+.realm-chip .name { font-size: 16px; font-weight: 600; color: var(--gold); }
+.realm-chip .lv { font-size: 12px; color: var(--muted); }
+/* 年岁行：紧贴境界之下，同一身份块。年岁是「这一世走到哪」，江湖历是「世界走到哪」 */
+.age-line { display: flex; align-items: baseline; gap: 10px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.age-line .age b { color: var(--ink); font-weight: 600; }
+.age-line .era { color: var(--faint); }
+.age-line .era b { color: var(--muted); font-weight: 600; }
+/* 垂暮：距寿元一刀之遥（≤15 年，即一次重伤折寿）。朱砂只在此时出现，平日不见 */
+.age-line.dusk .age b { color: var(--cinnabar); }
+.age-line .dusk-tag { font-size: 11px; color: var(--cinnabar); border: 1px solid oklch(0.68 0.09 38 / 0.5); border-radius: 4px; padding: 0 6px; letter-spacing: 0.08em; }
+
+.chips { display: flex; gap: 10px; margin-left: auto; align-items: center; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 11px; white-space: nowrap;
+}
+.chip.healthy { color: var(--faint); }
+.chip .clabel { font-size: 11px; letter-spacing: 0.05em; color: var(--faint); }
+.chip .cname { font-size: 13px; font-weight: 600; }
+.chip .csub { font-size: 11px; color: var(--muted); }
+/* 魂魄未稳：不是伤，不用伤色。用墨金——「已成」之色的反面：未成、未稳 */
+.chip.soul .cname { color: var(--ink-gold); }
+.chip.soul { border-color: oklch(0.74 0.075 76 / 0.45); }
+
+/* ===== 修炼页 · 来源分解（与 WoundPanel .breakdown 同构） ===== */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); max-width: 440px; }
+.panel > header { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+.panel > header h3 { font-size: 14px; font-weight: 600; }
+.panel > header .hint { margin-left: auto; font-size: 11px; color: var(--faint); }
+.panel > .body { padding: 12px 14px; }
+.breakdown .bt { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; margin-bottom: 6px; }
+.brow { display: flex; font-size: 12px; padding: 3px 0; }
+.brow .k { color: var(--muted); }
+.brow .v { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; }
+.brow .v.neg { color: var(--cinnabar); }
+.brow.total { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 6px; }
+.brow.total .k { color: var(--ink); }
+
+/* ===== 归隐入口（retire-copy §1 同构） ===== */
+.retire-btn { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 7px 14px; text-align: left; }
+.retire-btn .m { font-size: 13px; font-weight: 600; }
+.retire-btn .s { font-size: 11px; color: var(--faint); }
+.retire-btn.standard { border-color: var(--gold); }
+.retire-btn.standard .m { color: var(--gold); }
+.row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+
+/* ===== 强制转世演出（与 index.css .ceremony-card 同构） ===== */
+.stage { position: relative; background: var(--ceremony-backdrop-bg); border: 1px solid var(--line); border-radius: 10px; padding: 40px 20px; display: flex; justify-content: center; }
+.ceremony-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  max-width: 520px; width: 100%; text-align: center; padding: 36px 32px 28px; box-shadow: var(--shadow);
+}
+/* 死因行：在「你的第 N 段江湖」之上，一句话交代怎么死的。这是被迫转世与主动归隐在演出上的唯一差别 */
+.ceremony-cause { font-size: 13px; color: var(--muted); letter-spacing: 0.12em; margin-bottom: 10px; }
+.ceremony-cause b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ceremony-title { font-size: 26px; letter-spacing: 0.14em; color: var(--gold); text-shadow: var(--ceremony-text-shadow); }
+.ceremony-sum { margin-top: 12px; font-size: 13.5px; color: var(--muted); line-height: 1.8; }
+.ceremony-rep { margin: 22px 0 6px; display: flex; flex-direction: column; gap: 4px; }
+.ceremony-rep .label { font-size: 12px; letter-spacing: 0.24em; color: var(--faint); }
+.ceremony-rep .value { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: var(--ceremony-text-shadow); color: var(--gold); }
+.ceremony-rep .full { font-size: 11px; color: var(--faint); letter-spacing: 0.1em; }
+/* 魂魄未稳告知：不是惩罚公告，是来世的一句交代。放在声望之后、按钮之前，让玩家先拿到钱再听坏消息 */
+.soul-note {
+  margin: 18px auto 0; max-width: 360px;
+  border-top: 1px solid var(--line); padding-top: 14px;
+  font-size: 12.5px; color: var(--muted); line-height: 1.75;
+}
+.soul-note .t { color: var(--ink-gold); font-weight: 600; letter-spacing: 0.1em; margin-bottom: 2px; }
+.soul-note .t .serif { font-size: 14px; }
+.btn { display: block; width: 100%; max-width: 320px; margin: 24px auto 0; padding: 9px 0; border-radius: 6px; border: 1px solid var(--primary); background: var(--primary); color: var(--primary-ink); font-weight: 600; letter-spacing: 0.08em; }
+.btn:hover { filter: brightness(1.06); }
+.btn:focus-visible { outline: 2px solid oklch(0.74 0.10 215); outline-offset: 2px; }
+
+/* 演出入场：交叉淡入 + 微上移；数字滚动由 JS 驱动 */
+.ceremony-card { animation: rise .42s var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ceremony-card { animation: fade .2s linear both; } @keyframes fade { from { opacity: 0 } to { opacity: 1 } } }
+
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+.toggle button { background: var(--surface); border: 0; padding: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.toggle button + button { border-left: 1px solid var(--line); }
+.toggle button[aria-pressed="true"] { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="doc-head">
+    <h1>转世系统 · 交互原型</h1>
+    <p>范围：年岁与江湖历怎么露出、魂魄未稳怎么标、老死与战死的强制转世演出长什么样。设计权威 <code>docs/systems/reincarnation/design.md</code> v0.2，数值 <code>spec.md</code> v1.1。主动归隐的三栏预览、二次确认、演出与声望阁<b>不动</b>，本页只画新增的部分。</p>
+  </div>
+
+  <!-- ═════════════ §1 顶栏身份区 ═════════════ -->
+  <section class="sec">
+    <h2>§1 顶栏身份区 · 年岁与江湖历</h2>
+    <p class="desc">年岁挂在境界之下，同一个身份块——它回答「这一世走到哪了」；江湖历跟在后面，回答「世界走到哪了」。平日只是两个数，不做倒计时、不画进度条：寿元是容量上限，不是沙漏。</p>
+
+    <div class="state-label">A · 平日（第 3 世 · 37 岁 · 江湖历 226 年）</div>
+    <div class="topbar">
+      <div class="game-title">江湖无尽录<span class="round">第 3 世</span></div>
+      <div class="identity">
+        <div class="realm-chip"><span class="name serif">炉火纯青</span><span class="lv">境界 4 / 7</span></div>
+        <div class="age-line" title="寿元一百二十岁；重伤一次折寿十五年">
+          <span class="age"><b>37</b> 岁</span>
+          <span class="era">江湖历 <b>226</b> 年</span>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip healthy"><span class="clabel">身体</span><span class="cname">安好</span></div>
+      </div>
+    </div>
+
+    <div class="state-label">B · 垂暮（108 岁，距寿元一次重伤之遥）</div>
+    <div class="topbar">
+      <div class="game-title">江湖无尽录<span class="round">第 3 世</span></div>
+      <div class="identity">
+        <div class="realm-chip"><span class="name serif">一流高手</span><span class="lv">境界 5 / 7</span></div>
+        <div class="age-line dusk" title="寿元一百二十岁；再受一次重伤即折寿至尽">
+          <span class="age"><b>108</b> 岁</span>
+          <span class="dusk-tag">垂暮</span>
+          <span class="era">江湖历 <b>297</b> 年</span>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip healthy"><span class="clabel">身体</span><span class="cname">安好</span></div>
+      </div>
+    </div>
+    <p class="note"><b>垂暮</b>只在「年岁 ≥ 寿元 − 15」时出现：15 年正是一次重伤的折寿量，也就是说，此时再挨一记重伤就是老死。朱砂色只在这一态用，平日看不到——警示要稀缺才有效。这一态既不弹窗也不闪烁，玩家看一眼就懂，想不想收手自己定。</p>
+
+    <div class="state-label">C · 转世之初 · 魂魄未稳（第 4 世 · 18 岁）</div>
+    <div class="topbar">
+      <div class="game-title">江湖无尽录<span class="round">第 4 世</span></div>
+      <div class="identity">
+        <div class="realm-chip"><span class="name serif">江湖新丁</span><span class="lv">境界 1 / 7</span></div>
+        <div class="age-line">
+          <span class="age"><b>18</b> 岁</span>
+          <span class="era">江湖历 <b>309</b> 年</span>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip soul" title="仓促离世，魂魄受创。首次突破后自复。"><span class="clabel">魂魄</span><span class="cname">未稳</span><span class="csub">修炼六成 · 突破后自复</span></div>
+        <div class="chip healthy"><span class="clabel">身体</span><span class="cname">安好</span></div>
+      </div>
+    </div>
+    <p class="note">魂魄芯片与身体芯片并排，同一套形制。它不是伤，所以不用伤势三色，用<b>墨金</b>——「已成」之色的反面：未成、未稳。魂魄安稳时这枚芯片<b>不显示</b>，和归隐入口一样，没到那一步就不露出，免得解释负担。</p>
+  </section>
+
+  <!-- ═════════════ §2 修炼页来源分解 ═════════════ -->
+  <section class="sec">
+    <h2>§2 修炼页 · 产出来源分解</h2>
+    <p class="desc">账台精神：魂魄未稳压了多少，玩家在修炼页的来源分解里能查到，和伤势压制同一张表、同一条乘法链。</p>
+    <div class="panel">
+      <header><h3>身体状况</h3><span class="hint">魂魄未稳 · 首次突破后自复</span></header>
+      <div class="body">
+        <div class="breakdown">
+          <div class="bt">挂机内力产出 · 来源分解</div>
+          <div class="brow"><span class="k">境界 1 基础产出</span><span class="v">+9.0/秒</span></div>
+          <div class="brow"><span class="k">魂魄未稳</span><span class="v neg">×0.6000</span></div>
+          <div class="brow total"><span class="k">当前实得</span><span class="v">+5.4/秒</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ §3 强制转世演出 ═════════════ -->
+  <section class="sec">
+    <h2>§3 强制转世演出</h2>
+    <p class="desc">没有预览、没有二次确认——人已经没了，没什么可选的。直接进演出，和主动归隐用同一张结算卡，只多两处：卡顶一句死因，声望之后一句来世的交代。声望是全额，数字和主动归隐同源同算法。</p>
+
+    <div class="toggle" role="group" aria-label="切换死因">
+      <button type="button" aria-pressed="true" data-cause="old">老死</button>
+      <button type="button" aria-pressed="false" data-cause="battle">战死</button>
+    </div>
+
+    <div class="stage">
+      <div class="ceremony-card" role="dialog" aria-label="转世结算" id="card">
+        <div class="ceremony-cause" id="cause"><b>120</b> 岁 · 寿终</div>
+        <div class="ceremony-title serif">你的第三段江湖</div>
+        <div class="ceremony-sum">历时 71 分钟，击败了 6 个强敌，踏平黑风寨，走完了华山古道。</div>
+        <div class="ceremony-rep">
+          <span class="label">江湖会记得你</span>
+          <span class="value serif" id="rep">声望 +0</span>
+          <span class="full">全额入账</span>
+        </div>
+        <div class="soul-note">
+          <div class="t"><span class="serif">魂魄未稳</span></div>
+          <div id="soulText">仓促离世，魂魄受了创。来世首次突破之前，修炼只得六成。</div>
+        </div>
+        <button class="btn" type="button">转世 · 再入江湖</button>
+      </div>
+    </div>
+    <p class="note">两种死因只换<b>卡顶那一句</b>：老死是「120 岁 · 寿终」，战死是「37 岁 · 重伤不治」。其余一字不改——死法不同，待遇相同，这是 spec §4 的裁决，演出上也不该暗示谁更惨。「转世」按钮点下去落地声望阁，和归隐一样。</p>
+  </section>
+
+  <!-- ═════════════ §4 归隐入口副文案 ═════════════ -->
+  <section class="sec">
+    <h2>§4 归隐入口 · 保底折扣退役后的副文案</h2>
+    <p class="desc">保底归隐不再打六折，「声望六成」这四个字要从入口和提示里全部拿掉。两态主文案仍一致，差别只在副文案。</p>
+    <div class="row">
+      <div>
+        <div class="state-label">standard</div>
+        <button class="retire-btn standard" type="button"><span class="m">挂剑归隐</span><span class="s">本轮圆满 · 声望全额</span></button>
+      </div>
+      <div>
+        <div class="state-label">fallback（原「未竟之轮 · 声望六成」）</div>
+        <button class="retire-btn" type="button"><span class="m">挂剑归隐</span><span class="s">未竟之轮 · 声望全额</span></button>
+      </div>
+    </div>
+    <p class="note">fallback 的悬停提示与保底开放的一次性 toast 同步改写，见 <code>rules/copy/retire.md</code> 升版；此处不复述。</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const CAUSE = {
+    old:    { html: '<b>120</b> 岁 · 寿终' },
+    battle: { html: '<b>37</b> 岁 · 重伤不治' },
+  };
+  const cause = document.getElementById('cause');
+  const card = document.getElementById('card');
+  document.querySelectorAll('.toggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.toggle button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      cause.innerHTML = CAUSE[b.dataset.cause].html;
+      card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+      countUp();
+    });
+  });
+  // 声望滚动计数（与归隐演出同款；reduced-motion 直接落定）
+  const rep = document.getElementById('rep');
+  const TARGET = 1840;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp() {
+    if (reduced) { rep.textContent = `声望 +${TARGET.toLocaleString('en-US')}`; return; }
+    const t0 = performance.now(), D = 900;
+    (function f(now) {
+      const k = Math.min(1, (now - t0) / D);
+      const e = 1 - Math.pow(1 - k, 4);
+      rep.textContent = `声望 +${Math.round(TARGET * e).toLocaleString('en-US')}`;
+      if (k < 1) requestAnimationFrame(f);
+    })(t0);
+  }
+  countUp();
+})();
+</script>
+</body>
+</html>

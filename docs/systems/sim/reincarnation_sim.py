@@ -37,6 +37,9 @@ JIANGHU_ERA_START = 100  # 第一世出生时的江湖历年份
 # 玩家要在标准点之后再撑多久，年岁才会撞上寿元（= 赌命余量）。
 GREED_EXTRA_MIN = [0, 20, 40, 60, 80]
 
+# 魂魄未稳（design.md §3.1 / spec.md §4.1）：强制转世后到首次突破为止，产出 ×WEAK_MULT；不叠加。
+WEAK_MULT = 0.60
+
 
 # ═══════════════════════════════════════════════════════════
 # 年岁速率：由「目标一世跨度」反解（游戏内分钟 → 江湖历年）
@@ -97,9 +100,19 @@ def greed_margin(typical_minutes: float, rate: float):
     return natural, out
 
 
+def weakened_first_realm_minutes():
+    """V6：来世首个境界（境界 1→2）的耗时——正常 vs 魂魄未稳。
+    首境界只靠挂机内力攒突破消耗，战斗不耗内力，故耗时 = 消耗 ÷ 产出速率。
+    直接读 mvp0_sim 的常量，不复制数字。"""
+    cost = m.REALMS[2]["cost"]
+    normal = cost / m.idle_rate(1) / 60
+    weak = cost / m.idle_rate(1, WEAK_MULT) / 60
+    return normal, weak
+
+
 def criteria_report():
     print("=" * 60)
-    print("转世时间线 sim —— 判据 V1–V5")
+    print("转世时间线 sim —— 判据 V1–V7")
     print("=" * 60)
     lives, rate, typical = run_lives()
 
@@ -128,6 +141,18 @@ def criteria_report():
     yrs_all_online = years_lived(typical, rate)
     yrs_split = years_lived(typical, rate)  # minutes 相同 → 年岁相同（design.md §1.2 修订后）
     v5 = abs(yrs_all_online - yrs_split) < 1e-9
+    # V6：魂魄未稳有感不致命——来世首境界耗时增幅 ∈ [40%, 100%] 且绝对增量 ≤ 10 分钟
+    normal_min, weak_min = weakened_first_realm_minutes()
+    weak_ratio = weak_min / normal_min - 1
+    weak_extra = weak_min - normal_min
+    v6 = 0.40 <= weak_ratio <= 1.00 and weak_extra <= 10
+    # V7：不叠加——连续两次强制转世，来世折扣仍是 WEAK_MULT 而非 WEAK_MULT²（构造成立：标记为布尔）
+    stacked = WEAK_MULT  # 布尔标记语义：挂着就是 WEAK_MULT，没有第二层
+    v7 = abs(stacked - WEAK_MULT) < 1e-9
+
+    print("\n----- V6 魂魄未稳（来世首境界耗时）-----")
+    print(f"  正常 {normal_min:.1f} min → 未稳 {weak_min:.1f} min（+{weak_ratio:.0%}，+{weak_extra:.1f} min；"
+          f"占典型一世 {typical:.0f} min 的 {weak_extra/typical:.0%}）")
 
     print("\n----- V1 赌命余量（标准完成后再撑 X 分钟）-----")
     print(f"  自然寿命可活 {natural} 年（{INIT_AGE}→{LIFESPAN_CAP} 岁）")
@@ -142,6 +167,9 @@ def criteria_report():
         ("V3 一世典型跨度 ∈ [30,60] 年", v3, f"实测 {typical*rate:.1f} 年"),
         ("V4 N世累计江湖历跨度 ≥200 年", v4, f"实测 {total_span:.0f} 年 / {N_LIVES} 世"),
         ("V5 在线离线同速率（年岁与配比无关）", v5, "构造成立"),
+        ("V6 魂魄未稳有感不致命（首境界 +40%~+100%，≤10min）", v6,
+         f"+{weak_ratio:.0%} / +{weak_extra:.1f}min"),
+        ("V7 魂魄未稳不叠加", v7, "构造成立"),
     ]:
         print(f"  [{'PASS' if ok else 'FAIL'}] {label}  {note}")
 

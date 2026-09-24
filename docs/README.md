@@ -40,7 +40,8 @@
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |
 | `systems/injury/spec.md` | 受伤系统规格（伤型表/严重度/压制/恢复/折寿接口，可进实现） | — |
 | `systems/sim/injury_sim.py` | 受伤系统标定 sim（判据 V6–V9） | — |
-| `systems/sim/reincarnation_sim.py` | 转世时间线标定 sim（判据 V1–V5） | — |
+| `systems/sim/reincarnation_sim.py` | 转世时间线标定 sim（判据 V1–V7） | reincarnation.ts（年岁速率） |
+| `systems/sim/pace_measured.json` | 实测世时长（转世标定输入，由 `code/src/telemetry/pace.sim.test.ts` 生成，节奏漂移 >10% 该测试即失败） | pace.sim.test.ts |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）

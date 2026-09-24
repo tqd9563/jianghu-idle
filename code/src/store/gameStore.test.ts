@@ -614,7 +614,7 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(st().soulUnsettled).toBe(false);
   });
 
-  it('年岁随活跃时长增长：一分钟老 1.322 岁', () => {
+  it('年岁随活跃时长增长：一分钟老 0.718 岁', () => {
     const t0 = Date.now();
     st().tick(t0 + 60_000);
     expect(st().age).toBeCloseTo(INIT_AGE + AGE_YEARS_PER_MIN, 6);

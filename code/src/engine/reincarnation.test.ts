@@ -14,9 +14,9 @@ describe('常量与规格对表（spec §2.2 / §3.1 / §4.1）', () => {
     expect(LIFESPAN_CAP).toBe(120);
     expect(ERA_START).toBe(100);
   });
-  it('年岁速率 1.322 年/分：典型一世 34 分钟活 45 年', () => {
-    expect(AGE_YEARS_PER_MIN).toBe(1.322);
-    expect(ageAfter(INIT_AGE, 34) - INIT_AGE).toBeCloseTo(44.9, 1);
+  it('年岁速率 0.718 年/分：实测典型一世 62.7 分钟活 45 年', () => {
+    expect(AGE_YEARS_PER_MIN).toBe(0.718);
+    expect(ageAfter(INIT_AGE, 62.7) - INIT_AGE).toBeCloseTo(45, 0);
   });
   it('魂魄未稳 ×0.6', () => {
     expect(SOUL_WEAK_MULT).toBe(0.6);

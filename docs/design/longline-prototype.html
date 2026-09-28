@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>长线落地 · 交互原型</title>
+<style>
+:root {
+  /* 与 docs/design/prototype.html、DESIGN.md frontmatter 逐值一致，勿改 */
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --chrome: oklch(0.19 0.015 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.70 0.015 85);
+  --faint: oklch(0.56 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --gold: oklch(0.76 0.13 78);
+  --gold-ink: oklch(0.18 0.03 78);
+  --gold-soft: oklch(0.76 0.13 78 / 0.12);
+  --ink-gold: oklch(0.74 0.075 76);
+  --cinnabar: oklch(0.68 0.09 38);
+  --cyan: oklch(0.74 0.10 215);
+  --cyan-soft: oklch(0.74 0.10 215 / 0.12);
+  --poison: oklch(0.72 0.14 145);
+  --blood: oklch(0.64 0.17 25);
+  --blood-soft: oklch(0.64 0.17 25 / 0.12);
+  --bar-track: oklch(0.28 0.018 262);
+  --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+  --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; padding: 0 0 80px;
+}
+.serif { font-family: "Songti SC", STSong, SimSun, serif; }
+.num { font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+code { font-size: 12px; color: var(--muted); }
+
+/* ===== 文档框架（仅原型用，非游戏 UI） ===== */
+.doc { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+.doc-head { padding: 36px 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.doc-head h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; }
+.doc-head p { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 80ch; }
+.sec { margin: 44px 0; }
+.sec > h2 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.sec > .desc { color: var(--muted); font-size: 13px; margin-bottom: 16px; max-width: 80ch; }
+.state-label { font-size: 11px; color: var(--faint); letter-spacing: 0.05em; margin: 18px 0 7px; }
+.note { font-size: 12px; color: var(--faint); margin-top: 10px; max-width: 80ch; line-height: 1.7; }
+.note b { color: var(--muted); font-weight: 600; }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+.toggle button { background: var(--surface); border: 0; padding: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.toggle button + button { border-left: 1px solid var(--line); }
+.toggle button[aria-pressed="true"] { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+
+/* ===== 顶栏（index.css .topbar 同构，只画资源区） ===== */
+.topbar { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; flex-wrap: wrap; }
+.retire-chip { border: 1px solid var(--gold); color: var(--gold); background: transparent; border-radius: 6px; padding: 6px 16px; font-size: 13px; }
+.retire-chip:disabled { border-color: var(--line); color: var(--faint); cursor: not-allowed; }
+.res { display: flex; gap: 22px; margin-left: auto; align-items: baseline; flex-wrap: wrap; }
+.res .r { display: flex; align-items: baseline; gap: 7px; font-size: 12px; color: var(--muted); }
+.res .r b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.res .r.rep b { color: var(--gold); }
+.res .rate { font-size: 11px; color: var(--poison); font-variant-numeric: tabular-nums; }
+
+/* ===== 面板 ===== */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+.panel-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+.panel-head .sub { font-size: 12px; font-weight: 400; color: var(--muted); }
+.panel-head .right { margin-left: auto; font-size: 13px; font-weight: 400; color: var(--muted); }
+.panel-head .right b { color: var(--gold); font-variant-numeric: tabular-nums; font-size: 15px; }
+.panel-body { padding: 14px; }
+.cap-note { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
+.btn { display: inline-block; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--gold); background: var(--gold); color: var(--gold-ink); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; }
+.btn:hover { filter: brightness(1.06); }
+.btn.ghost { background: transparent; border-color: var(--line-strong); color: var(--ink); font-weight: 500; }
+.btn:disabled { background: var(--bar-track); border-color: var(--bar-track); color: var(--faint); cursor: not-allowed; filter: none; }
+.btn.ghost:disabled { background: transparent; border-color: var(--line); }
+.tag { font-size: 11px; padding: 1px 7px; border-radius: 4px; font-weight: 500; border: 1px solid; white-space: nowrap; }
+.tag.elite { color: var(--gold); border-color: var(--gold); }
+.tag.boss { color: var(--blood); border-color: var(--blood); background: var(--blood-soft); }
+.tag.trait { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-soft); }
+.tag.route { color: var(--poison); border-color: var(--poison); }
+
+/* ===== §1 战斗页 ===== */
+.map-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 14px 14px 0; }
+.map-tab { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 6px 8px; text-align: center; font-size: 13px; color: var(--muted); }
+.map-tab .prog { display: block; font-size: 11px; margin-top: 1px; font-variant-numeric: tabular-nums; color: var(--faint); }
+.map-tab.active { border-color: var(--gold); color: var(--ink); font-weight: 600; background: var(--surface-2); }
+.map-tab.active .prog { color: var(--gold); font-weight: 400; }
+.map-tab.locked { color: var(--faint); }
+/* 封存：不隐藏、写明原因。用墨金虚线框——与「未解锁」的灰区分开：未解锁是还没走到，封存是这一版到此为止 */
+.map-tab.sealed { border-style: dashed; border-color: oklch(0.74 0.075 76 / 0.45); color: var(--faint); }
+.map-tab.sealed .prog { color: var(--ink-gold); letter-spacing: 0.08em; }
+/* 前沿点：这张图今天还有能推的关 */
+.front-dot { position: absolute; top: 7px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+.tier-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px 0; flex-wrap: wrap; }
+.tier-row .lbl { font-size: 12px; color: var(--faint); }
+.tiers { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tier { background: var(--surface); border: 0; padding: 6px 14px 5px; min-width: 104px; text-align: left; position: relative; }
+.tier + .tier { border-left: 1px solid var(--line); }
+.tier .tn { display: block; font-size: 13.5px; font-weight: 600; letter-spacing: 0.12em; }
+.tier .ts { display: block; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.tier[aria-pressed="true"] { background: var(--surface-2); }
+.tier[aria-pressed="true"] .tn { color: var(--gold); }
+.tier.cleared .ts { color: var(--muted); }
+.tier.locked .tn, .tier.sealed .tn { color: var(--faint); }
+.tier.sealed .ts { color: var(--ink-gold); }
+.tier .front-dot { top: 8px; right: 8px; }
+.tier-hint { font-size: 12px; color: var(--muted); }
+
+.stage-strip { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px 0; }
+.stage-pill { position: relative; min-width: 34px; height: 28px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.stage-pill:hover:not(:disabled) { border-color: var(--line-strong); color: var(--ink); }
+.stage-pill.done { color: var(--muted); }
+.stage-pill.next { color: var(--gold); border-color: oklch(0.76 0.13 78 / 0.55); }
+.stage-pill.active { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
+.stage-pill.next.active { border-color: var(--gold); color: var(--gold); }
+.stage-pill:disabled { color: var(--faint); cursor: not-allowed; opacity: 0.7; }
+/* 精英 = 有名号的对手：药丸上直接写「精」；Boss 写「首」（寨首、头目） */
+.stage-pill .k { font-size: 10.5px; margin-left: 3px; font-weight: 600; }
+.stage-pill.elite .k { color: var(--gold); }
+.stage-pill.boss .k { color: var(--blood); }
+.stage-pill.elite.done:not(.active) .k, .stage-pill.boss.done:not(.active) .k { opacity: 0.6; }
+
+.sealed-card { margin: 14px; padding: 28px 20px; border: 1px dashed oklch(0.74 0.075 76 / 0.45); border-radius: 8px; text-align: center; }
+.sealed-card .t { font-size: 20px; letter-spacing: 0.3em; color: var(--ink-gold); }
+.sealed-card .d { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.8; }
+
+.battle-stage { padding: 14px; }
+.fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; }
+.fighter { padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+.fname { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.frealm { font-size: 12px; color: var(--muted); margin: 2px 0 8px; }
+.hp-num { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 6px 0 3px; }
+.bar { height: 8px; border-radius: 4px; background: var(--bar-track); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--blood); border-radius: 4px; }
+.mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.mini-stats b { color: var(--ink); font-weight: 600; margin-left: 3px; font-variant-numeric: tabular-nums; }
+.vs { align-self: center; font-size: 15px; font-weight: 700; color: var(--faint); letter-spacing: 0.1em; }
+.fame-line { font-size: 12px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.fame-line b { color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fame-line.gone { color: var(--faint); }
+.controls { text-align: center; margin-top: 12px; }
+.controls .btn { min-width: 300px; }
+
+/* 名号传开：首通精英 / Boss 的一行战果。不是弹窗——落在战斗记录里，金色一行，外加顶栏声望数字滚动 */
+.log { margin: 0 14px 14px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-height: 76px; }
+.log-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.log-line { font-size: 12.5px; color: var(--muted); display: flex; gap: 10px; padding: 2px 0; }
+.log-line .t { color: var(--faint); min-width: 42px; }
+.log-line.win { color: var(--poison); }
+.log-line.fame { color: var(--gold); }
+.log-line.fame .serif { font-size: 14px; letter-spacing: 0.08em; }
+.log-line.fame b { font-variant-numeric: tabular-nums; }
+.fame-in { animation: fameIn .5s var(--ease-out) both; }
+@keyframes fameIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ===== §2 声望阁 ===== */
+.ledger { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.ledger b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.ledger .op { color: var(--faint); }
+.ledger .total b { color: var(--gold); font-size: 17px; text-shadow: var(--glow-num); }
+.ledger .k { font-size: 12px; }
+.rep-top { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 12px; }
+.card { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.card .ch { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; }
+.card .cn { white-space: nowrap; }
+.card .cn { font-size: 17px; font-weight: 700; letter-spacing: 0.1em; }
+.card .cs { font-size: 12px; color: var(--muted); }
+.card .cr { margin-left: auto; font-size: 12px; color: var(--faint); }
+.card .cd { font-size: 12.5px; color: var(--muted); line-height: 1.75; margin-top: 6px; }
+.ganwu { border-color: oklch(0.76 0.13 78 / 0.5); }
+.ganwu .cn { color: var(--gold); }
+.lv-row { display: flex; align-items: baseline; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+.lv-row .big { font-size: 28px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.lv-row .big small { font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+.lv-row .eff { font-size: 13px; color: var(--muted); }
+.lv-row .eff b { color: var(--gold); font-variant-numeric: tabular-nums; }
+.buy-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.buy-row .btn { min-width: 150px; }
+.buy-row .btn .sub { display: block; font-size: 11px; font-weight: 500; opacity: 0.82; }
+.suhui-list { margin-top: 8px; }
+.suhui-list .row { display: flex; font-size: 12.5px; padding: 4px 0; border-bottom: 1px dashed var(--line); color: var(--muted); }
+.suhui-list .row:last-child { border-bottom: 0; }
+.suhui-list .row b { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.suhui-list .row.pending { color: var(--faint); }
+.suhui-list .row.pending b { color: var(--faint); font-weight: 400; }
+.qol-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
+.qol { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; }
+.qol.owned { border-color: oklch(0.76 0.13 78 / 0.55); }
+.qol .qn { font-size: 14.5px; font-weight: 700; }
+.qol.owned .qn { color: var(--gold); }
+.qol .qd { font-size: 12px; color: var(--muted); line-height: 1.65; flex: 1; }
+.qol .qo { font-size: 12px; color: var(--gold); letter-spacing: 0.1em; }
+.qol .btn { width: 100%; padding: 6px 8px; font-size: 12px; }
+.qol .lack { font-size: 11px; color: var(--faint); text-align: right; font-variant-numeric: tabular-nums; }
+.sub-h { font-size: 12px; color: var(--faint); margin-top: 18px; letter-spacing: 0.05em; }
+
+/* ===== §3 武学页 ===== */
+.skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.skill-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; }
+.skill-row .sn { font-weight: 600; white-space: nowrap; }
+.skill-row .sl { color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.skill-row .se { font-size: 12.5px; color: var(--muted); flex: 1; }
+.skill-row .done-tag { font-size: 12px; color: var(--gold); border: 1px solid oklch(0.76 0.13 78 / 0.5); border-radius: 4px; padding: 1px 8px; letter-spacing: 0.1em; }
+.huohou { margin-top: 10px; padding: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+.huohou .hh { display: flex; align-items: baseline; gap: 10px; }
+.huohou .hn { font-size: 16px; font-weight: 700; letter-spacing: 0.1em; }
+.huohou .hl { font-size: 13px; color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+.huohou .hr { margin-left: auto; font-size: 12px; color: var(--muted); }
+/* 折合境界尺：每 20 级一格，一格 = 一个境界。满格的格子实心，当前格按进度填 */
+.ruler { display: flex; gap: 4px; margin: 12px 0 4px; }
+.ruler .cell { flex: 1; height: 10px; border-radius: 3px; background: var(--bar-track); overflow: hidden; }
+.ruler .cell i { display: block; height: 100%; background: var(--gold); }
+.ruler-cap { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.huohou .btn { margin-top: 12px; width: 100%; }
+.huohou .cd { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.7; }
+
+/* ===== §4 归隐 ===== */
+.retire-row { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+.retire-tip { font-size: 11.5px; color: var(--faint); margin-top: 6px; max-width: 30ch; }
+.modal { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: var(--shadow); max-width: 900px; }
+.modal-head { display: flex; align-items: baseline; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.modal-head .t { font-size: 16px; font-weight: 700; }
+.modal-head .s { margin-left: auto; font-size: 12px; color: var(--muted); }
+.cols { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 12px; padding: 18px 20px 0; }
+.col { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.col h4 { font-size: 12.5px; font-weight: 600; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.col.gain h4 { color: var(--gold); }
+.col.lose h4 { color: var(--blood); }
+.col.keep h4 { color: var(--muted); }
+.li { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; font-size: 12.5px; padding: 4px 0; color: var(--muted); }
+.li b { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.li.dim, .li.dim b { color: var(--faint); font-weight: 400; }
+.li .why { grid-column: 1; grid-row: 2; font-size: 11px; color: var(--faint); }
+.li.total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; color: var(--ink); font-weight: 600; }
+.li.total b { color: var(--gold); font-size: 15px; }
+.li.sep { border-top: 1px dashed var(--line); margin-top: 4px; padding-top: 8px; }
+.ok { color: var(--poison); }
+.modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 20px 20px; }
+.modal-actions .btn { width: 100%; padding: 10px; }
+
+/* ===== §5 数字缩写 ===== */
+.fmt-table { width: 100%; max-width: 620px; border-collapse: collapse; font-size: 13px; }
+.fmt-table th, .fmt-table td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+.fmt-table th { font-size: 11.5px; color: var(--faint); font-weight: 500; }
+.fmt-table td.o { font-variant-numeric: tabular-nums; font-weight: 600; }
+.fmt-try { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.fmt-try input { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-radius: 6px; padding: 6px 10px; font: inherit; width: 200px; font-variant-numeric: tabular-nums; }
+.fmt-try output { font-size: 18px; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; min-width: 120px; }
+
+@media (max-width: 760px) {
+  .map-tabs { grid-template-columns: repeat(3, 1fr); }
+  .fighters { grid-template-columns: 1fr; }
+  .vs { display: none; }
+  .rep-top, .skill-grid, .cols { grid-template-columns: 1fr; }
+  .qol-grid { grid-template-columns: repeat(2, 1fr); }
+  .controls .btn { min-width: 0; width: 100%; }
+  .tier { min-width: 0; }
+  .modal-actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .fame-in { animation: none; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="doc-head">
+    <h1>长线落地 · 交互原型</h1>
+    <p>issue #22 第 3 步。画的是长线节奏新增或改动的界面：三档难度、封存、加密关卡与名号、声望阁的修行感悟与宿慧、武学的招式与火候、新的归隐盘点、大数字缩写。数值权威 <code>rules/economy.md</code> v2.2、<code>formulas.md</code> v1.6、<code>content.md</code> v2.2，设计权威 <code>systems/pacing/design.md</code> v1.1。</p>
+    <p>Mock 玩家：<b>第 35 天早上</b>，上一世闭关一夜，正处在峰值，境界 4「炉火纯青」，唐门，武学 64 级。乘区 38.0×（宿慧 9.8× + 修行感悟 27.2× + 基础 1）。</p>
+  </div>
+
+  <!-- ═════════════ 顶栏 ═════════════ -->
+  <section class="sec">
+    <h2>顶栏 · 资源读数</h2>
+    <p class="desc">内力走到千万级后按 §5 的规则缩写，数字仍在跳：挂机每秒 +669，「万」后留一位小数，约一秒半跳一格。声望走同一规则。</p>
+    <div class="topbar">
+      <button class="retire-chip" type="button">归隐</button>
+      <div class="res">
+        <span class="r">内力 <b id="neili">1,286.3万</b><span class="rate">+669 / 秒</span></span>
+        <span class="r">银两 <b>2,140</b></span>
+        <span class="r">阅历 <b>312</b></span>
+        <span class="r rep">声望 <b id="topRep">150</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ §1 战斗页 ═════════════ -->
+  <section class="sec">
+    <h2>§1 战斗页 · 地图、难度、关卡、名号</h2>
+    <p class="desc">地图页签照旧五张；页签下多一排难度「初入 / 历练 / 绝境」。<b>金点</b>标出今天还有关可推的地方——第 35 天有三处：华山古道·初入、洛阳近郊·历练、村外小径·绝境。每条前沿十几关，每 4 关一个有名号的精英，末尾一个 Boss。点页签、难度、关卡都能切。</p>
+
+    <div class="panel" id="battle">
+      <div class="map-tabs" id="mapTabs"></div>
+      <div class="tier-row">
+        <span class="lbl">难度</span>
+        <div class="tiers" id="tiers" role="group" aria-label="难度"></div>
+        <span class="tier-hint" id="tierHint"></span>
+      </div>
+      <div id="trackBody"></div>
+    </div>
+    <p class="note"><b>三档的解锁</b>：打通本图「初入」的 Boss 开「历练」，打通「历练」的 Boss 开「绝境」；解锁跨归隐保留。每天归隐只清空通关进度，所以早上醒来，已开的难度都还在，前沿要重推。<b>重推已通关的关卡</b>沿用现在的自动连战，一键推到前沿，不需要逐关点。</p>
+    <p class="note"><b>封存与未解锁</b>分两种样子：未解锁是灰色、写解锁条件（「通关华山古道·初入」）；封存用墨金虚线框、写「大周天未开」——前者是还没走到，后者是这一版到此为止，玩家一眼能分清。</p>
+    <p class="note"><b>名号传开</b>不弹窗：落在战斗记录里一行金字，同时顶栏声望滚动加上去。普通关打赢了不给声望，精英卡片底部直接写着「首次击败 · 名号传开 +243 声望」，已击败过的写「名号已传」。</p>
+  </section>
+
+  <!-- ═════════════ §2 声望阁 ═════════════ -->
+  <section class="sec">
+    <h2>§2 声望阁 · 修行感悟、宿慧与五件传承</h2>
+    <p class="desc">归隐落地页。最上面一行是乘区账：基础、宿慧、修行感悟加起来就是挂机产出的总倍率——玩家每天买的东西落在哪里，一眼可查。修行感悟是这里的主消费，每天大约买 4 级，所以给它最大的位置和一个「尽数传承」按钮。</p>
+
+    <div class="panel">
+      <div class="panel-head">声望阁 <span class="sub">归隐者的传承</span><span class="right">声望 <b id="repBal">7,570</b></span></div>
+      <div class="panel-body">
+        <div class="ledger" id="ledger"></div>
+        <div class="rep-top">
+          <div class="card ganwu">
+            <div class="ch"><span class="cn serif">修行感悟</span><span class="cs">无限级 · 每级挂机产出 +0.2×</span><span class="cr">永久 · 归隐不散</span></div>
+            <div class="lv-row">
+              <span class="big" id="gwLv">136<small>级</small></span>
+              <span class="eff">当前 <b id="gwEff">+27.2×</b></span>
+              <span class="eff">下一级 <b id="gwNext">1,370</b> 声望</span>
+            </div>
+            <div class="buy-row">
+              <button class="btn" type="button" id="buyOne">传承一级<span class="sub" id="buyOneSub">1,370 声望</span></button>
+              <button class="btn ghost" type="button" id="buyAll">尽数传承<span class="sub" id="buyAllSub">5 级 · 6,950 声望</span></button>
+            </div>
+            <div class="cd">侠名在外，江湖自有人奉上资粮。价格每级 +10 声望，和每天归隐拿到的声望一起往上涨，所以任何时候大约都是「一天买 4 级」。</div>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="cn serif">宿慧</span><span class="cr">首达境界自得 · 不耗声望</span></div>
+            <div class="suhui-list">
+              <div class="row">首达 初窥门径<b>+1.2×</b></div>
+              <div class="row">首达 小有所成<b>+2.8×</b></div>
+              <div class="row">首达 炉火纯青<b>+5.8×</b></div>
+              <div class="row pending">首达 一流高手<b>+10.0× · 未至</b></div>
+            </div>
+            <div class="cd">散功重修，然剑意不灭——身体忘了的，神魂记得。</div>
+          </div>
+        </div>
+
+        <div class="sub-h">传承</div>
+        <div class="qol-grid" id="qolGrid"></div>
+        <p class="cap-note">旧梦重温、快速入门、江湖熟路三件已废止，不再陈列。</p>
+      </div>
+    </div>
+    <p class="note"><b>「尽数传承」</b>把声望一口气买到买不起为止，副文案先写明会买几级、花多少，避免手滑；它只买修行感悟，不动五件传承——传承是一次性的选择，得玩家自己点。按钮点完后若还剩的声望买得起某件传承，那件的按钮自然亮起。</p>
+  </section>
+
+  <!-- ═════════════ §3 武学页 ═════════════ -->
+  <section class="sec">
+    <h2>§3 武学页 · 招式与火候</h2>
+    <p class="desc">前 10 级是招式，各路线效果照旧，练满即「十成」；之后是火候，三路线一样，没有上限。火候用一把「折合境界」尺来表达：每 20 级一格，一格就是一个境界的战力——玩家不用懂公式，也看得出自己的武学抵得上几个境界。</p>
+    <div class="panel">
+      <div class="panel-body">
+        <div class="skill-grid">
+          <div>
+            <div class="panel-head" style="padding:0 0 8px;border:0">武学 · 淬毒心法<span class="right" style="font-size:12px">上限：不限</span></div>
+            <div class="skill-row"><span class="sn">招式</span><span class="sl">10 / 10</span><span class="se">攻 +10% · 毒系数 +18.0pp</span><span class="done-tag">十成</span></div>
+            <div class="huohou">
+              <div class="hh"><span class="hn serif">火候</span><span class="hl" id="hhLv">第 54 重</span><span class="hr">每 20 重折合一个境界</span></div>
+              <div class="ruler" id="ruler"></div>
+              <div class="ruler-cap"><span>0</span><span id="rulerNow">折合 2.70 个境界</span><span>+4</span></div>
+              <button class="btn" type="button" id="hhBuy">精进一重（48.1万 内力）</button>
+              <div class="cd">三派相同：每一重，气血、攻击、防御同涨约 2.7%，命中、闪避随之略增——和突破同一个方向，只是一重只走二十分之一步。价格每重 ×1.08，越往后越贵；归隐即散，每一世从头练起。</div>
+            </div>
+          </div>
+          <div>
+            <div class="panel-head" style="padding:0 0 8px;border:0">淬毒心法 · 一世的武学</div>
+            <div class="card" style="margin-top:10px">
+              <div class="suhui-list">
+                <div class="row">境界（炉火纯青）<b>境界 4</b></div>
+                <div class="row">火候折合<b id="sideFold">+2.70 境界</b></div>
+                <div class="row">合计战力约当<b id="sideSum">6.70 境界</b></div>
+              </div>
+              <div class="cd">这一行是给玩家对照难度用的：「初入 / 历练 / 绝境」各差约 1.7 个境界。它只是读数，不参与任何判定。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note">现在武学页右上角的「上限 = 境界×2」和「突破至境界 6 后解锁 Lv 11–10」两处文案一并删除。<b>换路线</b>沿用现规则：武学等级清零，招式与火候都从头练，阅历返还不变。</p>
+  </section>
+
+  <!-- ═════════════ §4 归隐 ═════════════ -->
+  <section class="sec">
+    <h2>§4 归隐 · 入口与盘点</h2>
+    <p class="desc">门槛改成「本世至少突破过一次」。入口在门槛之前也露出，但是灰的、写明缘由；过了门槛才亮。盘点弹窗的「你将获得」按新的三层公式重排：基础声望随这一世的时长与乘区，前沿乘数看今天有没有打到自己最深的 Boss，成就是这一世首通的精英、Boss 与经脉。</p>
+
+    <div class="retire-row">
+      <div>
+        <div class="state-label">A · 本世尚未突破</div>
+        <button class="retire-chip" type="button" disabled>归隐</button>
+        <div class="retire-tip">悬停：未有所成，何以言归隐——本世突破一次后可归隐。</div>
+      </div>
+      <div>
+        <div class="state-label">B · 已突破（本世到过炉火纯青）</div>
+        <button class="retire-chip" type="button">归隐</button>
+        <div class="retire-tip">悬停：本世已有所成，随时可挂剑归隐。</div>
+      </div>
+    </div>
+
+    <div class="state-label">C · 归隐盘点（第 35 天早上，推完前沿后）</div>
+    <div class="toggle" role="group" aria-label="前沿乘数">
+      <button type="button" aria-pressed="true" data-front="1">今天打到了前沿</button>
+      <button type="button" aria-pressed="false" data-front="0">今天没打到</button>
+    </div>
+    <div class="modal" role="dialog" aria-label="归隐盘点">
+      <div class="modal-head"><span class="t">归隐盘点</span><span class="s">看清得失，再做决定</span></div>
+      <div class="cols">
+        <div class="col gain">
+          <h4>你将获得</h4>
+          <div class="li">基础声望<span class="why">本世 16.0 小时 · 平均乘区 37.4×</span><b>5,984</b></div>
+          <div class="li" id="frontLine">打到自己的前沿<span class="why">再败村外小径 · 历练的山贼头目</span><b class="ok">×1.2</b></div>
+          <div class="li sep">名号传开 ·「追魂」柳三娘<span class="why">洛阳近郊 · 历练 · 第 8 关</span><b>+243</b></div>
+          <div class="li dim">贯通经脉<span class="why">本世无新贯通</span><b>+0</b></div>
+          <div class="li total">本次归隐声望<b id="retireTotal">7,424</b></div>
+        </div>
+        <div class="col lose">
+          <h4>你将失去</h4>
+          <div class="li">境界<b>回到「江湖新丁」</b></div>
+          <div class="li">武学<b>招式与火候全散</b></div>
+          <div class="li">通关进度<b>各图各档重推</b></div>
+          <div class="li">内力<b>1,286.3万 散去</b></div>
+          <div class="li">银两 / 阅历<b>散去</b></div>
+        </div>
+        <div class="col keep">
+          <h4>你将保留</h4>
+          <div class="li">声望<b>现有 150 + 本次</b></div>
+          <div class="li">修行感悟<b>136 级</b></div>
+          <div class="li">宿慧<b>+9.8×</b></div>
+          <div class="li">难度解锁<b>历练 ×2 · 绝境 ×1</b></div>
+          <div class="li">江湖记录<b>名号与印记</b></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button">决意归隐</button>
+        <button class="btn ghost" type="button">返回江湖</button>
+      </div>
+    </div>
+    <p class="note"><b>前沿乘数</b>的判定是「本世击败的最深 Boss 不浅于历来击败过的最深 Boss」，按「图 × 难度」比深浅、难度优先（<code>economy.md</code> §1.2）。第 35 天击败过的 Boss 有村外小径·初入、洛阳近郊·初入、村外小径·历练三个；难度优先，最深的是村外小径·历练的山贼头目。没打到时这一行变灰，写「今天还没再败……」，玩家就知道差什么。</p>
+    <p class="note">旧盘点的「击败山贼头目 +20 / 精英首杀 ×5 +20% / 五图未全通」等 v1.3 行全部移除。</p>
+  </section>
+
+  <!-- ═════════════ §5 数字缩写 ═════════════ -->
+  <section class="sec">
+    <h2>§5 大数字缩写</h2>
+    <p class="desc">全局一个格式化规则，内力、声望、价格、战斗数字都走它。十万以下照写全数，免得前期的数字忽然变成「1.2万」；十万起用「万」，留一位小数让挂机时数字还在跳；一亿起用「亿」，留三位小数。</p>
+    <table class="fmt-table">
+      <thead><tr><th>区间</th><th>规则</th><th>原数</th><th>显示</th></tr></thead>
+      <tbody>
+        <tr><td>&lt; 10 万</td><td>全数，千分位</td><td class="num">86,420</td><td class="o">86,420</td></tr>
+        <tr><td>10 万 – 1 亿</td><td>「万」，一位小数，千分位</td><td class="num">12,863,420</td><td class="o">1,286.3万</td></tr>
+        <tr><td></td><td></td><td class="num">480,561</td><td class="o">48.1万</td></tr>
+        <tr><td>≥ 1 亿</td><td>「亿」，三位小数</td><td class="num">346,215,880</td><td class="o">3.462亿</td></tr>
+      </tbody>
+    </table>
+    <div class="fmt-try"><label for="fmtIn" style="font-size:12px;color:var(--faint)">试一个数</label><input id="fmtIn" inputmode="numeric" value="37000000"><output id="fmtOut" for="fmtIn">3,700.0万</output></div>
+    <p class="note">小数一律截断不四舍五入，免得「差 1 点」时显示成「够了」。每秒产出、气血、攻防这些天然较小的数不受影响。</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ── 数字缩写（§5）：截断，不四舍五入
+  const trunc = (x, d) => Math.floor(x * 10 ** d) / 10 ** d;
+  const grp = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  function fmt(n) {
+    n = Math.floor(n);
+    if (n < 1e5) return grp(String(n));
+    if (n < 1e8) { const v = trunc(n / 1e4, 1).toFixed(1); const [i, f] = v.split('.'); return `${grp(i)}.${f}万`; }
+    return `${trunc(n / 1e8, 3).toFixed(3)}亿`;
+  }
+  const $ = (id) => document.getElementById(id);
+
+  // 顶栏内力跳动
+  let neili = 12863420;
+  setInterval(() => { neili += 669 / 4; $('neili').textContent = fmt(neili); }, 250);
+
+  // ── §1 战斗页数据
+  const MAPS = ['村外小径', '洛阳近郊', '华山古道', '蜀道险关', '铁壁绝谷'];
+  const TIERS = ['初入', '历练', '绝境'];
+  // 普通敌人与 Boss 沿用现行名单（enemies.ts / mvp2Content.ts）；精英名号为示意，第 5 步定稿
+  const ROSTER = [
+    { n: ['拦路泼皮', '山野猎户', '山贼喽啰'], e: ['「独眼」胡三', '「快刀」刘七', '「铁尺」孙五', '「夜猫」钱六', '「黑鹞」马九', '「白眉」赵老'], h: '山贼小头目', b: '山贼头目' },
+    { n: ['城郊恶棍', '镖局逃卒', '游侠儿', '恶寺武僧'], e: ['「铁臂」法空', '「追魂」柳三娘', '「笑面」吴通', '「断魂刀」彭虎'], b: '铁掌恶僧' },
+    { n: ['古道剑客', '荆棘武者', '落魄镖师', '黑风寨卒'], e: ['「清风」道人', '「青锋」秦朗', '「寒梅」卓小婉'], b: '黑风寨主' },
+    { n: ['蜀道游匪', '飞檐夜盗', '落草刀客'], e: ['「毒蛊」婆婆'], b: '镇关都督' },
+  ];
+  // 每条前沿的结构（content.md §2.0）：普通关数、头目位置、精英每 4 关、末尾 Boss
+  function trackDef(m, t) {
+    if (m === 1 && t === 0) return { n: 24, head: 11 };       // 23 关 + 头目，末尾 Boss
+    if ((m === 2 && t === 0) || (m === 1 && t === 1)) return { n: 16 };
+    return { n: 13 };
+  }
+  // 第 35 天的进度：done = 已通关数（不含 Boss）；bossDone；state = open / locked / sealed
+  const STATE = {
+    '1-0': { done: 24, bossDone: true }, '1-1': { done: 16, bossDone: true }, '1-2': { done: 8, front: true },
+    '2-0': { done: 16, bossDone: true }, '2-1': { done: 8, front: true }, '2-2': { locked: '通关洛阳近郊 · 历练 Boss 解锁' },
+    '3-0': { done: 8, front: true }, '3-1': { locked: '通关华山古道 · 初入 Boss 解锁' }, '3-2': { locked: '通关华山古道 · 历练 Boss 解锁' },
+    '4-0': { locked: '通关华山古道 · 初入 Boss 解锁' }, '4-1': { sealed: true }, '4-2': { sealed: true },
+    '5-0': { sealed: true }, '5-1': { sealed: true }, '5-2': { sealed: true },
+  };
+  // 各前沿起点当量（content.md §2.0）；关距 0.05
+  const X0 = { '1-0': 2.63, '1-1': 6.41, '1-2': 8.29, '2-0': 6.41, '2-1': 8.29, '2-2': 9.95, '3-0': 8.29, '3-1': 9.95, '3-2': 11.75, '4-0': 9.95 };
+  const M = 38.0; // 当前乘区
+  const eliteRep = () => Math.floor(6.4 * M), bossRep = () => Math.floor(24 * M);
+
+  function stageList(m, t) {
+    const d = trackDef(m, t), key = `${m}-${t}`, r = ROSTER[m - 1];
+    const out = []; let ei = 0;
+    for (let i = 1; i <= d.n; i++) {
+      let kind = 'normal', name = r.n[(i * 7 + t) % r.n.length];
+      if (d.head === i) { kind = 'head'; name = r.h; }
+      else if (i % 4 === 0) { kind = 'elite'; name = r.e[ei++ % r.e.length]; }
+      const x = (X0[key] ?? 8) + (i - 1) * 0.05 + (kind === 'head' ? 0.9 : 0);
+      out.push({ no: i, kind, name, x });
+    }
+    out.push({ no: d.n + 1, kind: 'boss', name: r.b, x: (X0[key] ?? 8) + d.n * 0.05 + 1.0 });
+    return out;
+  }
+  const enemyStats = (x) => {
+    const k = 1.7 ** (x - 1);
+    return { hp: Math.round(60 * k), atk: Math.round(6 * k), def: Math.round(3.5 * k), hit: Math.round(100 + 12 * (x - 1)), dodge: Math.round(8 + 3 * (x - 1)) };
+  };
+  const recRealm = (x) => Math.max(1, Math.min(6, Math.round(x - 4.3)));
+
+  let curMap = 3, curTier = 0, curStage = null;
+  const fameClaimed = new Set(['2-1-4', '1-2-4', '1-2-8', '3-0-4', '3-0-8']);
+
+  function renderTabs() {
+    const box = $('mapTabs'); box.innerHTML = '';
+    for (let m = 1; m <= 5; m++) {
+      const sealed = STATE[`${m}-0`].sealed, locked = STATE[`${m}-0`].locked;
+      const front = [0, 1, 2].some((t) => STATE[`${m}-${t}`].front);
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = `map-tab${m === curMap ? ' active' : ''}${sealed ? ' sealed' : locked ? ' locked' : ''}`;
+      const opened = [0, 1, 2].filter((t) => !STATE[`${m}-${t}`].locked && !STATE[`${m}-${t}`].sealed).length;
+      el.innerHTML = `${MAPS[m - 1]}<span class="prog">${sealed ? '大周天未开' : locked ? '通关华山古道·初入解锁' : `已开 ${opened} 档`}</span>${front ? '<span class="front-dot" title="今天有关可推"></span>' : ''}`;
+      el.onclick = () => { curMap = m; curTier = [0, 1, 2].find((t) => STATE[`${m}-${t}`].front) ?? 0; curStage = null; render(); };
+      box.appendChild(el);
+    }
+  }
+  function renderTiers() {
+    const box = $('tiers'); box.innerHTML = '';
+    TIERS.forEach((name, t) => {
+      const st = STATE[`${curMap}-${t}`];
+      const d = trackDef(curMap, t);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(t === curTier));
+      let sub;
+      if (st.sealed) { b.className = 'tier sealed'; sub = '大周天未开'; }
+      else if (st.locked) { b.className = 'tier locked'; sub = '未解锁'; }
+      else if (st.bossDone) { b.className = 'tier cleared'; sub = `已通 ${d.n + 1}/${d.n + 1}`; }
+      else { b.className = 'tier'; sub = `${st.done} / ${d.n + 1}`; }
+      b.innerHTML = `<span class="tn serif">${name}</span><span class="ts">${sub}</span>${st.front ? '<span class="front-dot"></span>' : ''}`;
+      b.onclick = () => { curTier = t; curStage = null; render(); };
+      box.appendChild(b);
+    });
+    const st = STATE[`${curMap}-${curTier}`];
+    $('tierHint').textContent = st.sealed ? '' : st.locked ? st.locked : st.front ? '前沿 · 今天可推' : st.bossDone ? '本档已通，早上一键重推即可' : '';
+  }
+  function renderTrack() {
+    const key = `${curMap}-${curTier}`, st = STATE[key], body = $('trackBody');
+    if (st.sealed) {
+      body.innerHTML = `<div class="sealed-card"><div class="t serif">大周天未开</div><div class="d">小周天止于任督俱通。${MAPS[curMap - 1]}${curMap === 5 ? '' : '的' + TIERS[curTier]}之险，留待下一版大周天。<br>本版的最终一战在蜀道险关 · 初入的尽头。</div></div>`;
+      return;
+    }
+    if (st.locked) {
+      body.innerHTML = `<div class="sealed-card" style="border-style:solid;border-color:var(--line)"><div class="t serif" style="color:var(--faint);letter-spacing:.2em">未解锁</div><div class="d">${st.locked}</div></div>`;
+      return;
+    }
+    const list = stageList(curMap, curTier);
+    const done = st.bossDone ? list.length : st.done;
+    const next = st.bossDone ? null : done + 1;
+    if (curStage === null) curStage = next ?? list.length;
+    const pills = list.map((s) => {
+      const isDone = s.no <= done, isNext = s.no === next, locked = !isDone && !isNext;
+      const k = s.kind === 'elite' ? '<span class="k">精</span>' : s.kind === 'boss' ? '<span class="k">首</span>' : s.kind === 'head' ? '<span class="k">首</span>' : '';
+      const cls = ['stage-pill', isDone && 'done', isNext && 'next', s.no === curStage && 'active', s.kind === 'elite' && 'elite', (s.kind === 'boss' || s.kind === 'head') && 'boss'].filter(Boolean).join(' ');
+      return `<button type="button" class="${cls}" data-no="${s.no}" ${locked ? 'disabled' : ''} title="第 ${s.no} 关 · ${s.name}">${s.no}${k}</button>`;
+    }).join('');
+    const s = list[curStage - 1];
+    const e = enemyStats(s.x);
+    const fameKey = `${key}-${s.no}`;
+    let fame = '';
+    if (s.kind === 'elite' || s.kind === 'boss') {
+      const rep = s.kind === 'elite' ? eliteRep() : bossRep();
+      fame = fameClaimed.has(fameKey)
+        ? '<div class="fame-line gone">名号已传 · 首通声望已得</div>'
+        : `<div class="fame-line">首次击败 · 名号传开 <b>+${fmt(rep)}</b> 声望</div>`;
+    }
+    const kindTag = s.kind === 'elite' ? '<span class="tag elite">精英</span>' : s.kind === 'boss' ? '<span class="tag boss">Boss</span>' : s.kind === 'head' ? '<span class="tag boss">头目</span>' : '';
+    const traits = s.kind === 'normal' ? '' : s.kind === 'elite' ? '<span class="tag trait">反伤</span>' : '<span class="tag trait">高血</span><span class="tag trait">狂暴</span>';
+    const isRefarm = s.no <= done;
+    body.innerHTML = `
+      <div class="stage-strip">${pills}</div>
+      <div class="battle-stage">
+        <div class="fighters">
+          <div class="fighter">
+            <div class="fname serif">你 <span class="tag route">唐门</span></div>
+            <div class="frealm">炉火纯青 · 境界 4 · 火候 54 重</div>
+            <div class="hp-num"><span>气血</span><span>2,074 / 2,074</span></div>
+            <div class="bar"><i style="width:100%"></i></div>
+            <div class="mini-stats"><span>攻<b>226</b></span><span>防<b>109</b></span><span>命<b>168</b></span><span>闪<b>27</b></span></div>
+          </div>
+          <div class="vs serif">对决</div>
+          <div class="fighter">
+            <div class="fname serif">${s.name} ${kindTag}${traits}</div>
+            <div class="frealm">${MAPS[curMap - 1]} · ${TIERS[curTier]} · 第 ${s.no} 关 · 推荐境界 ${recRealm(s.x)}</div>
+            <div class="hp-num"><span>气血</span><span>${fmt(e.hp)} / ${fmt(e.hp)}</span></div>
+            <div class="bar"><i style="width:100%"></i></div>
+            <div class="mini-stats"><span>攻<b>${fmt(e.atk)}</b></span><span>防<b>${fmt(e.def)}</b></span><span>命<b>${e.hit}</b></span><span>闪<b>${e.dodge}</b></span></div>
+            ${fame}
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn ${isRefarm ? 'ghost' : ''}" type="button" id="fightBtn">${isRefarm ? '重打' : '挑战'} 第 ${s.no} 关 · ${s.name}</button>
+          <div class="cap-note">${isRefarm ? '已通关的关卡只掉银两与阅历，不掉内力' : '关卡不掉内力；精英与 Boss 首次击败给声望'}</div>
+        </div>
+      </div>
+      <div class="log" id="log"><div class="log-title">战斗记录 · 自动结算</div><div class="log-line"><span class="t"></span>等待开战…</div></div>`;
+    body.querySelectorAll('.stage-pill').forEach((p) => p.onclick = () => { curStage = +p.dataset.no; renderTrack(); });
+    $('fightBtn').onclick = () => fight(s, key, done);
+  }
+  let topRep = 150;
+  function bumpRep(add) {
+    const from = topRep, to = topRep + add, t0 = performance.now(), D = 700;
+    topRep = to;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) { $('topRep').textContent = fmt(to); return; }
+    (function f(now) { const k = Math.min(1, (now - t0) / D); $('topRep').textContent = fmt(from + (to - from) * (1 - (1 - k) ** 4)); if (k < 1) requestAnimationFrame(f); })(t0);
+  }
+  function fight(s, key, done) {
+    const log = $('log');
+    const lines = ['<div class="log-title">战斗记录 · 自动结算</div>',
+      '<div class="log-line"><span class="t">回合 1</span>施毒 3 层</div>',
+      '<div class="log-line"><span class="t">回合 9</span>毒层叠满，毒爆</div>',
+      `<div class="log-line win"><span class="t">回合 14</span>击败 ${s.name}　收获 银两 +${s.kind === 'normal' ? 34 : 120}　阅历 +${s.kind === 'normal' ? 4 : 15}</div>`];
+    const fameKey = `${key}-${s.no}`;
+    if ((s.kind === 'elite' || s.kind === 'boss') && !fameClaimed.has(fameKey)) {
+      const rep = s.kind === 'elite' ? eliteRep() : bossRep();
+      lines.push(`<div class="log-line fame fame-in"><span class="t"></span><span><span class="serif">名号传开</span>　挑落${s.name}，江湖为之侧目　声望 <b>+${fmt(rep)}</b></span></div>`);
+      fameClaimed.add(fameKey);
+      bumpRep(rep);
+    }
+    log.innerHTML = lines.join('');
+    if (s.no === done + 1) {
+      const st = STATE[key];
+      if (s.kind === 'boss') { st.bossDone = true; st.front = false; } else st.done = s.no;
+      curStage = null;
+      setTimeout(render, 1600);
+    }
+  }
+  function render() { renderTabs(); renderTiers(); renderTrack(); }
+  render();
+
+  // ── §2 声望阁
+  let bal = 7570, gw = 136;
+  const SUHUI = 9.8;
+  const QOL = [
+    { id: 'zairu', n: '再入江湖', d: '开战前，敌人的每个机制标签都附上一条克制提示', p: 150, owned: true },
+    { id: 'qingzhuang', n: '轻装上路', d: '每一世里，第一次更换路线不收银两', p: 220, owned: true },
+    { id: 'wudao', n: '武道笔记', d: '每一世开局自带一笔阅历', p: 440, owned: true },
+    { id: 'shimen', n: '师门指引', d: '每一世开局免费获得当前路线的一重参悟', p: 660, owned: true },
+    { id: 'poguan', n: '破关心得', d: '对各图 Boss 造成的伤害提高 10%', p: 1100, owned: false },
+  ];
+  const priceOf = (lv) => 10 * lv;
+  function allPlan() { let b = bal, l = gw, n = 0, c = 0; while (b >= priceOf(l + 1)) { b -= priceOf(l + 1); c += priceOf(l + 1); l++; n++; } return { n, c }; }
+  function renderRep() {
+    const eff = gw * 0.2, total = 1 + SUHUI + eff;
+    $('repBal').textContent = fmt(bal);
+    $('ledger').innerHTML = `<span class="k">挂机产出乘区</span><span>基础 <b>1</b></span><span class="op">+</span><span>宿慧 <b>${SUHUI.toFixed(1)}×</b></span><span class="op">+</span><span>修行感悟 <b>${eff.toFixed(1)}×</b></span><span class="op">=</span><span class="total"><b>${total.toFixed(1)}×</b></span>`;
+    $('gwLv').innerHTML = `${gw}<small>级</small>`;
+    $('gwEff').textContent = `+${eff.toFixed(1)}×`;
+    $('gwNext').textContent = fmt(priceOf(gw + 1));
+    const one = $('buyOne'), all = $('buyAll');
+    one.disabled = bal < priceOf(gw + 1);
+    $('buyOneSub').textContent = one.disabled ? `还差 ${fmt(priceOf(gw + 1) - bal)}` : `${fmt(priceOf(gw + 1))} 声望`;
+    const plan = allPlan();
+    all.disabled = plan.n < 2;
+    $('buyAllSub').textContent = plan.n < 2 ? '至少够两级时可用' : `${plan.n} 级 · ${fmt(plan.c)} 声望`;
+    const g = $('qolGrid'); g.innerHTML = '';
+    QOL.forEach((q) => {
+      const el = document.createElement('div');
+      el.className = `qol${q.owned ? ' owned' : ''}`;
+      const ok = bal >= q.p;
+      el.innerHTML = `<span class="qn serif">${q.n}</span><span class="qd">${q.d}</span>${q.owned ? '<span class="qo">已传承</span>' : `<button class="btn ${ok ? '' : 'ghost'}" type="button" ${ok ? '' : 'disabled'}>${ok ? `传承（${fmt(q.p)}）` : '声望不足'}</button>${ok ? '' : `<span class="lack">还差 ${fmt(q.p - bal)}</span>`}`}`;
+      const b = el.querySelector('button');
+      if (b && ok) b.onclick = () => { bal -= q.p; q.owned = true; renderRep(); };
+      g.appendChild(el);
+    });
+  }
+  $('buyOne').onclick = () => { const p = priceOf(gw + 1); if (bal >= p) { bal -= p; gw++; renderRep(); } };
+  $('buyAll').onclick = () => { while (bal >= priceOf(gw + 1)) { bal -= priceOf(gw + 1); gw++; } renderRep(); };
+  renderRep();
+
+  // ── §3 火候
+  let hh = 54;
+  const cost = (lv) => 3490 * 1.08 ** (lv - 1);
+  function renderHH() {
+    const fold = hh / 20;
+    $('hhLv').textContent = `第 ${hh} 重`;
+    const r = $('ruler'); r.innerHTML = '';
+    for (let i = 0; i < 4; i++) { const f = Math.max(0, Math.min(1, fold - i)); r.innerHTML += `<span class="cell"><i style="width:${f * 100}%"></i></span>`; }
+    $('rulerNow').textContent = `折合 ${fold.toFixed(2)} 个境界`;
+    $('sideFold').textContent = `+${fold.toFixed(2)} 境界`;
+    $('sideSum').textContent = `${(4 + fold).toFixed(2)} 境界`;
+    $('hhBuy').textContent = `精进一重（${fmt(cost(hh + 10 + 1))} 内力）`;
+  }
+  $('hhBuy').onclick = () => { hh++; renderHH(); };
+  renderHH();
+
+  // ── §4 前沿乘数切换
+  document.querySelectorAll('[data-front]').forEach((b) => b.onclick = () => {
+    document.querySelectorAll('[data-front]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const on = b.dataset.front === '1', line = $('frontLine');
+    line.className = on ? 'li' : 'li dim';
+    line.innerHTML = on
+      ? '打到自己的前沿<span class="why">再败村外小径 · 历练的山贼头目</span><b class="ok">×1.2</b>'
+      : '打到自己的前沿<span class="why">今天还没再败村外小径 · 历练的山贼头目</span><b>×1.0</b>';
+    $('retireTotal').textContent = fmt(Math.floor(5984 * (on ? 1.2 : 1)) + 243);
+  });
+
+  // ── §5 试算
+  const inp = $('fmtIn');
+  inp.oninput = () => { const v = Number(inp.value.replace(/[^\d]/g, '')); $('fmtOut').textContent = Number.isFinite(v) ? fmt(v) : '—'; };
+  inp.oninput();
+})();
+</script>
+</body>
+</html>

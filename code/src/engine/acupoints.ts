@@ -77,12 +77,12 @@ export type ChongxueGate =
 // ─────────────────────────────────────────────────────────────
 
 /**
- * 各境界窍穴池与经脉分组（境界 2–5；境界 1/6/7 不接入本版）。
+ * 各境界窍穴池与经脉分组（境界 1–5；境界 6/7 无周天）。
  *
  * 名称取真实经络：窍穴的经脉归属、穴位在经上的位置均与中医经络学一致。
  * 次第为手 → 足 → 任 → 督，境界 5 任督俱通即小周天圆满，与 design.md
  * 「小周天段止于境界 5」吻合；大周天（境界 6–8）见 design.md §7 敞口。
- * 手太阴肺经预留给境界 1 教学脉（design.md §3.2 v3.0 已定、代码未接入）。
+ * 境界 1 是手太阴肺经教学脉（design.md §3.2 v3.0）：首日整天在境界 1，让玩家当天走完「圆满→冲穴→贯通」全循环。
  *
  * 奇经八脉除任督外无专属穴位，冲脉/带脉列出的是其交会穴（分属肾经、胆经），
  * 这是经络学事实而非简化。
@@ -95,6 +95,16 @@ export const REALM_ACUPOINTS: Record<number, {
   acupoints: AcupointDef[];
   meridians: MeridianDef[];
 }> = {
+  1: {
+    acupoints: [
+      { id: 'zhongfu', name: '中府', meridianId: 'shoutaiyin' },
+      { id: 'chize',   name: '尺泽', meridianId: 'shoutaiyin' },
+      { id: 'taiyuan', name: '太渊', meridianId: 'shoutaiyin' },
+    ],
+    meridians: [
+      { id: 'shoutaiyin', name: '手太阴', acupointIds: ['zhongfu', 'chize', 'taiyuan'] },
+    ],
+  },
   2: {
     acupoints: [
       { id: 'quchi',   name: '曲池', meridianId: 'shouyangming' },
@@ -339,7 +349,7 @@ export function requiredMeridianOpened(
 
 /**
  * 突破双条件（design.md §4）：N 段周天全部缴清 且 本境界首条经脉贯通。
- * 无首条脉配置的境界（本版 1/6/7）只看丹田。
+ * 无首条脉配置的境界（6/7）只看丹田。
  */
 export function breakthroughReady(
   dantianNeili: number,
@@ -357,7 +367,7 @@ export function breakthroughReady(
 // 纯函数：加成计算（spec §6.3/§9，加法合并进临时乘区）
 // ─────────────────────────────────────────────────────────────
 
-/** 单穴加成（spec §6.3：境界 2–4 +2%，境界 5 +1.5%） */
+/** 单穴加成（zhoutian/design.md §3.3：境界 1–4 +2%，境界 5 +1.5%） */
 export function acupointBonus(realm: number): number {
   return realm === 5 ? 0.015 : 0.02;
 }

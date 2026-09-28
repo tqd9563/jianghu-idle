@@ -1,8 +1,9 @@
 /**
  * 归隐结算演出（规格书 §8.6-3）：声望入账的峰终庆典 + 本轮总结；关闭后落地声望阁（§8.6-4）。
- * 文案模板逐字取自 docs/rules/copy/retire.md §4（冻结）。
+ * 文案模板逐字取自 docs/rules/copy/retire.md v2.0 §4（冻结）。
  */
 import { useGameStore } from '../store/gameStore';
+import { fmtBig } from '../fmt';
 
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 const cnOrd = (n: number) => (n < CN.length ? CN[n] : String(n));
@@ -11,12 +12,11 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
   const s = useGameStore();
   const c = s.retireCeremony;
   if (!c) return null;
-  const minutes = Math.round(c.durationSec / 60);
-  // {S} = 本轮 kind ∈ {elite, boss} 的首通计数（retire-copy §4 变量定义）
-  const strongFoes = c.settle.milestones.filter((m) => m.achieved).length + c.settle.eliteKills;
+  // {T}：本世时长（在线 + 有效闭关），不足 1 小时写分钟（retire-copy §4）
+  const duration = c.lifeMinutes < 60 ? `${Math.round(c.lifeMinutes)} 分钟` : `${Math.round(c.lifeMinutes / 60)} 小时`;
+  const strongFoes = c.strongFoes;
   // {最远足迹} 措辞映射（retire-copy §4）
-  const boss3 = c.settle.milestones[2].achieved;
-  const footprint = boss3
+  const footprint = c.boss3
     ? '踏平黑风寨，走完了华山古道'
     : c.maxMap === 3 ? '走到了华山古道'
       : c.maxMap === 2 ? '一路走到了洛阳近郊'
@@ -33,11 +33,11 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
         )}
         <div className="ceremony-title serif">你的第{cnOrd(c.runEnded)}段江湖</div>
         <div className="ceremony-sum">
-          历时 {minutes} 分钟，击败了 {strongFoes} 个强敌，{footprint}。
+          历时 {duration}，击败了 {strongFoes} 个强敌，{footprint}。
         </div>
         <div className="ceremony-rep">
           <span className="label">江湖会记得你</span>
-          <span className="value gold serif">声望 +{c.settle.total}</span>
+          <span className="value gold serif">声望 +{fmtBig(c.settle.total)}</span>
           {c.cause && <span className="full">全额入账</span>}
         </div>
         {c.cause && (

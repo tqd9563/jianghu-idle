@@ -6,8 +6,8 @@ import { loadSavedAt, saveGame, setDebugOfflineCap } from '../save/storage';
 import { useGameStore } from '../store/gameStore';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import {
-  calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
-  maxIdleStage, OFFLINE_REWARD_STAGES, shouldShowOfflineSettlement,
+  OFFLINE_CAP_MIN, calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
+  maxIdleStage, shouldShowOfflineSettlement,
 } from './offlineRewards';
 
 const MIN = 60_000;
@@ -53,55 +53,34 @@ describe('offlineRewards · 档位匹配与驱动字段（表 A §2.2）', () =>
   });
 });
 
-describe('offlineRewards · MVP-2 地图 4/5 扩展', () => {
-  it.each([[29, 826.8], [38, 826.8], [39, 1033.7], [48, 1033.7]])(
-    '关卡 %i 的 50%%效率产出为 %f 内力/分',
-    (stage, expectedOfflineNeiliPerMin) => {
-      const tier = findOfflineRewardStage(stage);
-      expect(tier.offlineEfficiency).toBe(0.50);
-      expect(tier.neiliPerMin * tier.offlineEfficiency).toBeCloseTo(expectedOfflineNeiliPerMin, 10);
-    },
-  );
+describe('offlineRewards · v2.0 长线规则（offline-rewards.md §1.1）', () => {
+  const RATE = 669; // 第 35 天境界 4 的在线速率（内力/秒，含乘区）
 
-  it.each([29, 38, 39, 48])('关卡 %i 的正式离线上限保持 8 小时', (stage) => {
-    const r = calculateOfflineRewards({ currentMaxIdleStage: stage, lastSeenAt: 0, now: 10 * 60 * MIN });
-    expect(r.capMin).toBe(480);
-    expect(r.effectiveMin).toBe(480);
-    expect(r.capped).toBe(true);
-    expect(r.neili).toBe(Math.floor(r.tier.neiliPerMin * 480 * 0.50));
-  });
-});
-
-describe('offlineRewards · A1 结算链路对账（满额校验表 §3.3 逐格）', () => {
-  // [档位代表关卡, 满额内力, 满额银两, 满额阅历]
-  // 口径：§2.1 主公式 floor 真值。§3.3 校验表为四舍五入粗算，4 格差 1（75→74/1822→1821/111→110/2621→2620），
-  // 以主公式为权威（验收文档 A1 注记同口径）。
-  const FULL: Array<[number, number, number, number]> = [
-    [1, 630, 28, 4], [5, 840, 42, 6], [9, 1159, 59, 8], [13, 1421, 74, 10],
-    [19, 1821, 95, 13], [23, 2138, 110, 15], [26, 2620, 133, 19], [28, 2995, 166, 23],
-  ];
-  it.each(FULL)('关卡 %i 满额 = %i 内力 / %i 银两 / %i 阅历', (stage, neili, silver, xp) => {
-    const tier = findOfflineRewardStage(stage);
-    const r = calculateOfflineRewards({
-      currentMaxIdleStage: stage, lastSeenAt: 0, now: tier.offlineCapMin * MIN,
-    });
-    expect([r.neili, r.silver, r.xp]).toEqual([neili, silver, xp]);
-    expect(r.capped).toBe(true);
-  });
-
-  it('部分时长：构成因子可核对（时长 × 速率 × 效率，floor）', () => {
-    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 10 * MIN });
+  it('离线内力 = 在线速率 × 有效分钟 × 60 × 60%', () => {
+    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 10 * MIN, neiliPerSec: RATE });
     expect(r.effectiveMin).toBe(10);
-    expect(r.neili).toBe(Math.floor(90 * 10 * 0.35)); // 315
-    expect(r.silver).toBe(Math.floor(4 * 10 * 0.35)); // 14
-    expect(r.xp).toBe(Math.floor(0.6 * 10 * 0.35)); // 2
-    expect(r.capped).toBe(false);
+    expect(r.efficiency).toBe(0.60);
+    expect(r.neili).toBe(Math.floor(RATE * 60 * 10 * 0.60));
   });
 
-  it('红线：既有 8 档满额内力 ≤ 4,200（境界 5 单段周天充能，§3.3 预算线）', () => {
-    for (const t of OFFLINE_REWARD_STAGES.slice(0, 8)) {
-      expect(Math.floor(t.neiliPerMin * t.offlineCapMin * t.offlineEfficiency)).toBeLessThanOrEqual(4200);
+  it('银两 / 阅历沿用表 A 档位 × 60%', () => {
+    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 10 * MIN, neiliPerSec: RATE });
+    expect(r.silver).toBe(Math.floor(4 * 10 * 0.60));
+    expect(r.xp).toBe(Math.floor(0.6 * 10 * 0.60));
+  });
+
+  it('上限 24 小时，与关卡档位无关', () => {
+    for (const stage of [1, 28, 48]) {
+      const r = calculateOfflineRewards({ currentMaxIdleStage: stage, lastSeenAt: 0, now: 30 * 60 * MIN, neiliPerSec: RATE });
+      expect(r.capMin).toBe(OFFLINE_CAP_MIN);
+      expect(r.effectiveMin).toBe(1440);
+      expect(r.capped).toBe(true);
     }
+  });
+
+  it('20 小时离线折合 12 小时在线（标准一天 4 + 20 × 60% = 16 小时）', () => {
+    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 20 * 60 * MIN, neiliPerSec: 1 });
+    expect(r.neili).toBe(Math.floor(20 * 3600 * 0.60));
   });
 });
 
@@ -114,20 +93,20 @@ describe('offlineRewards · A3 触顶 / A6 时钟边界（表 C 策略）', () =
   });
 
   it('A6：时钟回拨 → 0 处理（zero_reward），不为负不崩溃', () => {
-    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 100 * MIN, now: 0 });
+    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 100 * MIN, now: 0, neiliPerSec: 9 });
     expect(r.rawSec).toBe(0);
     expect([r.neili, r.silver, r.xp]).toEqual([0, 0, 0]);
   });
 
   it('A6：前拨一年 → 按上限截断（clamp_to_cap），发放不超满额', () => {
-    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 365 * 24 * 60 * MIN });
-    expect(r.effectiveMin).toBe(20);
-    expect(r.neili).toBe(630);
+    const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 365 * 24 * 60 * MIN, neiliPerSec: 9 });
+    expect(r.effectiveMin).toBe(1440);
+    expect(r.neili).toBe(Math.floor(9 * 60 * 1440 * 0.60));
   });
 
   it('A4 调试覆盖：capOverrideMin=10 生效且 debug_cap 位裸露；长离线不误判静默', () => {
     const r = calculateOfflineRewards({
-      currentMaxIdleStage: 1, lastSeenAt: 0, now: 60 * MIN, capOverrideMin: 10,
+      currentMaxIdleStage: 1, lastSeenAt: 0, now: 60 * MIN, capOverrideMin: 10, neiliPerSec: 9,
     });
     expect(r.effectiveMin).toBe(10);
     expect(r.debugCap).toBe(true);
@@ -137,8 +116,8 @@ describe('offlineRewards · A3 触顶 / A6 时钟边界（表 C 策略）', () =
 
 describe('offlineRewards · A5 最小结算阈值', () => {
   it('原始离线 < 180s 静默入账（silent），≥180s 弹出出关结算', () => {
-    expect(calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 179_000 }).silent).toBe(true);
-    expect(calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 180_000 }).silent).toBe(false);
+    expect(calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 179_000, neiliPerSec: 9 }).silent).toBe(true);
+    expect(calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 180_000, neiliPerSec: 9 }).silent).toBe(false);
     expect(shouldShowOfflineSettlement(3, 3)).toBe(true);
     expect(shouldShowOfflineSettlement(2.9, 3)).toBe(false);
   });
@@ -156,6 +135,9 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     setDebugOfflineCap(null);
   });
 
+  /** 新手（境界 1、乘区 1）离线 min 分钟的内力：9/秒 × 60 × min × 60% */
+  const OFF = (min: number) => Math.floor(9 * 60 * min * 0.60);
+
   function reopenAfter(offlineMs: number) {
     // 模拟关页：persist 已由 hardReset/动作写盘（savedAt = 当前假时钟），前拨时钟后重新 init
     vi.setSystemTime(Date.now() + offlineMs);
@@ -168,12 +150,12 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     expect(before.dantian).toBe(0);
     reopenAfter(10 * MIN);
     const s = useGameStore.getState();
-    expect(s.dantian).toBe(315);
-    expect(s.silver).toBe(14);
-    expect(s.xp).toBe(2);
+    expect(s.dantian).toBe(OFF(10));
+    expect(s.silver).toBe(Math.floor(4 * 10 * 0.60));
+    expect(s.xp).toBe(Math.floor(0.6 * 10 * 0.60));
     const ev = getEvents().find((e) => e.e === 'offline_settled')!;
     expect(ev).toBeDefined();
-    expect([ev.neili, ev.silver, ev.xp]).toEqual([315, 14, 2]);
+    expect([ev.neili, ev.silver, ev.xp]).toEqual([s.dantian, s.silver, s.xp]);
     expect(ev.silent).toBe(false);
     expect(s.offlineSettlement).not.toBeNull();
   });
@@ -181,31 +163,31 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
   it('A2 决策保留：不自动突破/不推进关卡/不动停滞计时；除资源外状态与离线前一致', () => {
     useGameStore.setState({ dantian: 2700, runPlaySec: 500, lastProgressSec: 100 });
     useGameStore.getState().setAutoAdvance(true); // 触发 persist，写入上述状态
-    reopenAfter(20 * MIN); // 满额 630 → 丹田 3330 ≥ 突破 2800，但绝不自动扣款
+    reopenAfter(20 * MIN);
     const s = useGameStore.getState();
-    expect(s.dantian).toBe(2700 + 630);
+    expect(s.dantian).toBe(2700 + OFF(20));
     expect(s.realm).toBe(1); // 不自动突破
     expect(s.clearedStages).toEqual([]); // 不推进关卡
     expect(s.runPlaySec).toBe(500); // 活跃秒不计离线（A7 口径隔离）
-    expect(s.lastProgressSec).toBe(100); // 保底停滞计时不动
+    expect(s.lastProgressSec).toBe(100); // 进展计时不动
   });
 
   it('consume_timestamp_once：结算后立即刷新 savedAt，重复 init 不双重结算（A5）', () => {
     reopenAfter(10 * MIN);
-    expect(useGameStore.getState().dantian).toBe(315);
+    expect(useGameStore.getState().dantian).toBe(OFF(10));
     const savedAt = loadSavedAt()!;
     expect(Math.abs(savedAt - Date.now())).toBeLessThan(1000); // 时间戳已消费
     // 立即再次重开（<5s 热刷新下界）：不入账、不再发事件
     useGameStore.setState({ started: false, offlineSettlement: null });
     useGameStore.getState().init();
-    expect(useGameStore.getState().dantian).toBe(315);
+    expect(useGameStore.getState().dantian).toBe(OFF(10));
     expect(getEvents().filter((e) => e.e === 'offline_settled')).toHaveLength(1);
   });
 
   it('短离线（<180s）静默入账：资源到账但不弹结算屏', () => {
     reopenAfter(2 * MIN);
     const s = useGameStore.getState();
-    expect(s.dantian).toBe(Math.floor(90 * 2 * 0.35)); // 63
+    expect(s.dantian).toBe(OFF(2));
     expect(s.offlineSettlement).toBeNull();
     expect(getEvents().find((e) => e.e === 'offline_settled')!.silent).toBe(true);
   });
@@ -233,7 +215,7 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     for (let i = 1; i <= 3; i++) {
       reopenAfter(60 * MIN); // 每次离线 1h，压至 10 分钟上限
       const s = useGameStore.getState();
-      expect(s.dantian).toBe(Math.floor(90 * 10 * 0.35) * i); // 315 × i，逐次累计不串账
+      expect(s.dantian).toBe(OFF(10) * i); // 逐次累计不串账
       const evs = getEvents().filter((e) => e.e === 'offline_settled');
       expect(evs).toHaveLength(i);
       expect(evs[i - 1].capped).toBe(true);

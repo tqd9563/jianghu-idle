@@ -145,7 +145,8 @@ describe('突破条件 —— 首条经脉贯通（design.md §4）', () => {
     expect(requiredMeridian(2)?.name).toBe('手阳明');
     expect(requiredMeridian(4)?.name).toBe('任脉');
     expect(requiredMeridian(5)?.name).toBe('督脉');
-    expect(requiredMeridian(1)).toBeNull();
+    expect(requiredMeridian(1)?.name).toBe('手太阴');
+    expect(requiredMeridian(6)).toBeNull();
   });
   it('丹田满 + 首脉贯通 → ready', () => {
     expect(breakthroughReady(N2, N2, 2, opened(R2.quchi, R2.hegu))).toBe(true);
@@ -160,8 +161,12 @@ describe('突破条件 —— 首条经脉贯通（design.md §4）', () => {
   it('丹田未满 + 首脉贯通 → not ready', () => {
     expect(breakthroughReady(N2 - 1, N2, 2, opened(R2.quchi, R2.hegu))).toBe(false);
   });
-  it('未接入周天的境界只看丹田', () => {
-    expect(breakthroughReady(N2, N2, 1, {})).toBe(true);
+  it('无周天的境界（6/7）只看丹田', () => {
+    expect(breakthroughReady(N2, N2, 6, {})).toBe(true);
+  });
+  it('境界 1 教学脉：手太阴三穴贯通才可突破', () => {
+    expect(breakthroughReady(N2, N2, 1, {})).toBe(false);
+    expect(breakthroughReady(N2, N2, 1, opened('zhongfu', 'chize', 'taiyuan'))).toBe(true);
   });
   it('首脉进度读数', () => {
     expect(requiredMeridianOpened(2, opened(R2.quchi))).toBe(1);
@@ -220,8 +225,11 @@ describe('窍穴池数据完整性（spec §3）', () => {
     expect(d.acupoints).toHaveLength(8);
     expect(d.meridians).toHaveLength(3);
   });
-  it('境界 1/6/7 不接入本版', () => {
-    expect(REALM_ACUPOINTS[1]).toBeUndefined();
+  it('境界 1: 教学脉手太阴三穴（design.md §3.2 v3.0）', () => {
+    expect(REALM_ACUPOINTS[1].acupoints.map((a) => a.id)).toEqual(['zhongfu', 'chize', 'taiyuan']);
+    expect(REALM_ACUPOINTS[1].meridians).toHaveLength(1);
+  });
+  it('境界 6/7 无窍穴池', () => {
     expect(REALM_ACUPOINTS[6]).toBeUndefined();
     expect(REALM_ACUPOINTS[7]).toBeUndefined();
   });

@@ -10,6 +10,7 @@ import {
 } from '../store/gameStore';
 
 const f0 = (n: number) => Math.round(n).toLocaleString('en-US');
+import { fmtBig } from '../fmt';
 
 import { BattleVictoryRow } from '../components/BattleVictoryRow';
 import { MVP2_ELITE_CHALLENGE_ENEMIES } from '../engine/mvp2Content';
@@ -258,9 +259,15 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                 <span className="win-t">
                   {battle.mode === 'trial'
                     ? '试炼通过'
-                    : `${battle.reward.refarm ? '回刷收获' : '收获'}　内力 +${f0(battle.reward.neili)}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
+                    : `${battle.reward.refarm ? '回刷收获' : '收获'}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
                 </span>
               </div>
+              {(battle.reward.fame ?? 0) > 0 && (
+                <div className="log-line">
+                  <span className="turn" />
+                  <span className="fame-t"><span className="serif">名号传开</span>　挑落{battle.enemy.name}，江湖为之侧目　声望 +{fmtBig(battle.reward.fame!)}</span>
+                </div>
+              )}
               <BattleVictoryRow pageId={battle.reward.grantedPageId} />
             </>
           )}

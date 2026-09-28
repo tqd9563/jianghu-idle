@@ -15,11 +15,11 @@ export const INIT_AGE = 18;
 export const LIFESPAN_CAP = 120;
 /**
  * 年岁速率：年 / 游戏内分钟（spec §2.2）。
- * 由「一世典型跨度 45 年 ÷ 实测世时长中位 62.7 分钟」反解（2026-09-24 重标定）。
- * 世时长由 telemetry/pace.sim.test.ts 驱动真实游戏测得；游戏节奏一变，那条测试会先报漂移，
- * 届时 WRITE_PACE=1 重测、重跑 reincarnation_sim.py V1–V7，再改这里。
+ * 长线暂定值：标准一天 24 小时（在线 4 + 离线 20，年岁全额计）活 45 年 → 45 ÷ 1440 ≈ 0.031 年/分钟，
+ * 约每小时 1.9 岁（pacing/design.md §1 裁决 7）。最终值由 issue #22 第 6 步按长线实测反推，
+ * 届时重跑 reincarnation_sim.py V1–V7 再改这里。
  */
-export const AGE_YEARS_PER_MIN = 0.718;
+export const AGE_YEARS_PER_MIN = 45 / 1440;
 /** 江湖历起点：第一世出生年份（spec §2.2） */
 export const ERA_START = 100;
 /** 魂魄未稳的产出折扣（spec §4.1）：强制转世后到首次突破为止 */

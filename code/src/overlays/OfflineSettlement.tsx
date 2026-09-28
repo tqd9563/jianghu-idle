@@ -9,7 +9,10 @@ import { getStage, mapName, MAP_STAGE_COUNT, type EnemyDef } from '../engine/ene
 import type { OfflineSettleResult } from '../engine/offlineRewards';
 import { effBreakCost, mapUnlocked, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
+import { fmtBig as fmt, fmtRate } from '../fmt';
+
+/** 时长：不足 1 小时写分钟，否则写小时（闭关上限 24 小时） */
+const durText = (min: number) => (min < 60 ? `${min.toFixed(1)} 分钟` : `${(min / 60).toFixed(1)} 小时`);
 
 /** 离开时长的玩家侧措辞（原始时长，非截断值——截断在「有效闭关」行表达） */
 function awayText(rawSec: number): string {
@@ -44,10 +47,10 @@ export function OfflineSettlement(props: {
   const xpRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const items = [
-      { el: durRef.current!, to: r.effectiveMin, f: (v: number) => `${v.toFixed(1)} 分钟`, delay: 0 },
-      { el: neiliRef.current!, to: r.neili, f: (v: number) => `+${fmt(Math.round(v))}`, delay: 150 },
-      { el: silverRef.current!, to: r.silver, f: (v: number) => `+${Math.round(v)}`, delay: 280 },
-      { el: xpRef.current!, to: r.xp, f: (v: number) => `+${Math.round(v)}`, delay: 410 },
+      { el: durRef.current!, to: r.effectiveMin, f: durText, delay: 0 },
+      { el: neiliRef.current!, to: r.neili, f: (v: number) => `+${fmt(v)}`, delay: 150 },
+      { el: silverRef.current!, to: r.silver, f: (v: number) => `+${fmt(v)}`, delay: 280 },
+      { el: xpRef.current!, to: r.xp, f: (v: number) => `+${fmt(v)}`, delay: 410 },
     ];
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       for (const i of items) i.el.textContent = i.f(i.to);
@@ -82,7 +85,7 @@ export function OfflineSettlement(props: {
             <span className="k">有效闭关</span>
             <span>
               <span className="v" ref={durRef} />
-              {r.capped && <span className="settle-cap-tag">已达上限 {r.capMin} 分钟</span>}
+              {r.capped && <span className="settle-cap-tag">已达上限 {durText(r.capMin)}</span>}
               {r.debugCap && <span className="settle-cap-tag debug">调试上限</span>}
             </span>
           </div>
@@ -96,7 +99,7 @@ export function OfflineSettlement(props: {
           {props.observer && (
             <div className="settle-observer">
               <span className="ob-tag">观察员</span>
-              {r.effectiveMin.toFixed(1)} 分{r.capped ? '（上限截断）' : ''} × {r.tier.neiliPerMin} 内力/分
+              {r.effectiveMin.toFixed(1)} 分{r.capped ? '（上限截断）' : ''} × {fmtRate(r.neiliPerSec)} 内力/秒 × 60
               × {Math.round(r.efficiency * 100)}% 闭关折算 = {fmt(r.neili)}
             </div>
           )}
@@ -121,7 +124,7 @@ export function OfflineSettlement(props: {
             </div>
           )}
           {breakReady && (
-            <div className="settle-keep gold">五周天圆满，突破就绪——闭关不会替你突破，这一下要你亲手来。</div>
+            <div className="settle-keep gold">周天圆满，突破就绪——闭关不会替你突破，这一下要你亲手来。</div>
           )}
           <button className="btn" style={{ marginTop: 14 }} onClick={props.onClose}>出关 · 回归江湖</button>
         </div>

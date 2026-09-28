@@ -3,7 +3,7 @@
  * 本模块为纯函数，禁止引入 UI/存储依赖；与 docs/systems/sim/mvp0_sim.py 做 golden 对照。
  */
 
-/** 双曲防御减免系数：受到伤害 = 攻击 × 100/(100+DEF)。常数 K=100（调境界底数须联动复查，公式表 §3.1） */
+/** 双曲防御减免系数：受到伤害 = 攻击 × 100/(100+DEF)。常数 K 随关卡放大属第 5 步（公式表 §1.3 v1.6） */
 export function mitigationMultiplier(def: number): number {
   return 100 / (100 + def);
 }
@@ -19,28 +19,48 @@ export function idleNeiliPerSec(realm: number): number {
   return 9 * Math.pow(1.25, realm - 1);
 }
 
-/** 周天进度派生显示（规格书 §6.1 v0.9 单钱包模型 + 主题版本 spec §2 N 段推广）：
- *  丹田内力对突破消耗的 N 段阈值；segments 默认 5（MVP-0 固定 5 段 fallback，维持 golden 用例） */
-export const CHARGE_SEGMENTS = 5;
+/** 周天段间公比（zhoutian/design.md §3.1）：第 i 段配额 = 首段 × 2^(i−1)，末段约占本境界一半时长 */
+export const QUOTA_RATIO = 2;
+
+/** 各段配额：总额按公比 2 分成 N 段（首段 = 总额 × (r−1)/(r^N−1)） */
+export function segmentQuotas(total: number, segments: number): number[] {
+  const first = total * (QUOTA_RATIO - 1) / (QUOTA_RATIO ** segments - 1);
+  return Array.from({ length: segments }, (_, i) => first * QUOTA_RATIO ** i);
+}
+
+/** 缴满前 k 段所需的累计内力（k = 0..N） */
+export function paidThrough(total: number, segments: number, k: number): number {
+  const first = total * (QUOTA_RATIO - 1) / (QUOTA_RATIO ** segments - 1);
+  return first * (QUOTA_RATIO ** Math.max(0, Math.min(k, segments)) - 1) / (QUOTA_RATIO - 1);
+}
+
+/** 周天进度派生显示：丹田内力对本境界总额的 N 段阈值（段间公比 2） */
 export function zhoutianProgress(
   dantianNeili: number,
-  breakthroughCost: number,
-  segments?: number
+  total: number,
+  segments: number,
 ): {
   segmentsFull: number;      // 已圆满周天数 0–N
   currentSegmentPct: number; // 进行中周天的百分比 0–1
   ready: boolean;            // 丹田 ≥ 全额，可点「突破」
 } {
-  const N = segments ?? CHARGE_SEGMENTS;
-  const clamped = Math.max(0, Math.min(dantianNeili, breakthroughCost));
-  const perSegment = breakthroughCost / N;
-  const segmentsFull = Math.min(N, Math.floor(clamped / perSegment));
-  const remainder = clamped - segmentsFull * perSegment;
+  const clamped = Math.max(0, Math.min(dantianNeili, total));
+  // 浮点：末段阈值 = total，用 1e-9 相对容差避免满额时差一丝不算圆满
+  const eps = total * 1e-9;
+  let segmentsFull = 0;
+  while (segmentsFull < segments && clamped + eps >= paidThrough(total, segments, segmentsFull + 1)) segmentsFull++;
+  const quota = segmentQuotas(total, segments);
   return {
     segmentsFull,
-    currentSegmentPct: segmentsFull >= N ? 0 : remainder / perSegment,
-    ready: dantianNeili >= breakthroughCost,
+    currentSegmentPct: segmentsFull >= segments ? 0
+      : (clamped - paidThrough(total, segments, segmentsFull)) / quota[segmentsFull],
+    ready: dantianNeili + eps >= total,
   };
+}
+
+/** 当前段的配额（冲穴所需真气锚在它上面，zhoutian/design.md §3.3）；末段圆满后仍读第 N 段 */
+export function currentSegmentQuota(total: number, segments: number, chargeHighWater: number): number {
+  return segmentQuotas(total, segments)[Math.min(chargeHighWater, segments - 1)];
 }
 
 /**
@@ -49,20 +69,16 @@ export function zhoutianProgress(
  * 当前段由 **chargeHighWater**（已沉入根基的段数）划定，不由 dantian 反推：
  * 冲穴扣款会让液面回落到已缴线以下，但已沉入根基的部分不退回，
  * 此时当前段真气归零、须重蓄（印记常亮 / 进度回落，spec §1）。
- *
- * 段配额当前为**均分**（cost / N）。design.md §3.1 的「段间公比 2」与长线数值
- * 同属 v3.0 挂账、尚未落到代码，本函数按代码现行口径计算。
  */
 export function currentSegmentNeili(
   dantianNeili: number,
-  breakthroughCost: number,
+  total: number,
   segments: number,
-  chargeHighWater: number
+  chargeHighWater: number,
 ): number {
-  const perSegment = breakthroughCost / segments;
   // 当前段封顶在第 N 段：末段圆满后丹田也就满了，若仍按「已缴 N 段」算，
   // 当前段真气会恒为 0、最后一个窍穴永远冲不动——那正是 v4.0 要消灭的死锁。
   // 满额时当前段读作「第 N 段已蓄满」，冲穴扣款后液面回落、重蓄即可再冲（design.md §3.4 W1）。
   const paid = Math.min(chargeHighWater, segments - 1);
-  return Math.max(0, Math.min(dantianNeili, breakthroughCost) - paid * perSegment);
+  return Math.max(0, Math.min(dantianNeili, total) - paidThrough(total, segments, paid));
 }

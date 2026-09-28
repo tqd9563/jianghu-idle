@@ -10,7 +10,7 @@ import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import { effBreakCost, effIdleRate, playerBuild, resetLiveTestVisitForTests, retireKind, useGameStore } from './gameStore';
 import { freshInjuries, isHurt } from '../engine/injury';
-import { idleNeiliPerSec } from '../engine/formulas';
+import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { INIT_AGE, ERA_START, AGE_YEARS_PER_MIN, LIFESPAN_CAP, SOUL_WEAK_MULT } from '../engine/reincarnation';
 
@@ -25,30 +25,43 @@ describe('gameStore · 单钱包丹田模型', () => {
   });
 
   it('挂机 tick 按境界速率入丹田；周天新高越段发 charge_segment_full，回落再越不重复', () => {
-    const s = useGameStore.getState();
     const t0 = Date.now();
-    // 100 秒 → 900 内力（境界 1 速率 9/s），越过第一段阈值 560
-    s.tick(t0 + 100_000);
-    expect(useGameStore.getState().dantian).toBeCloseTo(900, 0);
+    // 境界 1 速率 9/s、首段配额 23,267：tick 单次最多结算 300 秒，走 9 次 = 2,700 秒 → 24,300
+    for (let i = 1; i <= 9; i++) useGameStore.getState().tick(t0 + i * 300_000);
+    expect(useGameStore.getState().dantian).toBeCloseTo(24_300, 0);
     expect(names().filter((n) => n === 'charge_segment_full')).toHaveLength(1);
 
     // 花钱回落（模拟升武学扣款）再涨回：不重复发段事件
-    useGameStore.setState({ dantian: 300 });
-    useGameStore.getState().tick(t0 + 140_000); // +360 → 660，重新越过 560
+    useGameStore.setState({ dantian: 22_000 });
+    useGameStore.getState().tick(t0 + 9 * 300_000 + 300_000); // +2,700 → 24,700，重新越过 23,267
     expect(names().filter((n) => n === 'charge_segment_full')).toHaveLength(1);
+  });
+
+  it('乘区加权时长随在线时间累计（基础声望口径，economy.md §1.1）', () => {
+    useGameStore.setState({ peakRealm: 3, ganwuLevel: 24 }); // 乘区 9.8×
+    useGameStore.getState().tick(Date.now() + 300_000);
+    expect(useGameStore.getState().lifeWeightedHours).toBeCloseTo((300 / 3600) * 9.8, 6);
   });
 
   it('丹田不足时不能突破；足额突破扣全额、境界+1、发 realm_breakthrough', () => {
     useGameStore.getState().breakthrough();
     expect(useGameStore.getState().realm).toBe(1);
 
-    useGameStore.setState({ dantian: 2800 });
+    // 境界 1 教学脉：缴满 34.9 万但手太阴未贯通，仍不能突破
+    useGameStore.setState({ dantian: 349_000, chargeHighWater: 4 });
+    useGameStore.getState().breakthrough();
+    expect(useGameStore.getState().realm).toBe(1);
+
+    const open = { failCount: 0, opened: true };
+    useGameStore.setState({ acupointProgress: { zhongfu: open, chize: open, taiyuan: open } });
     useGameStore.getState().breakthrough();
     const s = useGameStore.getState();
     expect(s.realm).toBe(2);
     expect(s.dantian).toBe(0);
     expect(s.ceremony).toBe(2);
-    expect(names()).toContain('realm_breakthrough');
+    expect(s.peakRealm).toBe(2); // 首达即得宿慧
+    const ev = getEvents().find((e) => e.e === 'realm_breakthrough')!;
+    expect(ev.first_reach).toBe(true);
   });
 
   it('武学升级受上限 = 境界×2 约束，消耗 200×1.4^(n−1)', () => {
@@ -90,38 +103,26 @@ describe('gameStore · 归隐与声望阁', () => {
     resetTelemetry();
   });
 
-  it('归隐门槛：境界 5 前不可用；境界 5 + Boss 3 = 标准；保底一经开放持续存在', () => {
+  it('归隐门槛：本世至少突破一次（境界 ≥ 2）；首次可归隐时上报一次 retire_unlocked', () => {
     expect(retireKind(useGameStore.getState())).toBeNull();
+    useGameStore.getState().openRetire();
+    expect(useGameStore.getState().retireStep).toBeNull();
 
-    useGameStore.setState({ realm: 5, clearedStages: [...m1all, ...m2all, ...m3all] });
+    useGameStore.setState({ realm: 2 });
     expect(retireKind(useGameStore.getState())).toBe('standard');
-
-    // 保底：累计 4 败触发；后续调整（b3Fails 不清）也不收回
-    useGameStore.setState({ clearedStages: [...m1all, ...m2all, ...m3all.slice(0, 9)], b3Fails: 4 });
-    expect(retireKind(useGameStore.getState())).toBe('fallback');
-    useGameStore.setState({ b3Fails: 0, fallbackUnlocked: true, lastProgressSec: 0, runPlaySec: 0 });
-    expect(retireKind(useGameStore.getState())).toBe('fallback');
-  });
-
-  it('保底触发 tick 上报 retire_unlocked(fallback) 并弹一次性提示', () => {
-    useGameStore.setState({
-      realm: 5, clearedStages: [...m1all, ...m2all, ...m3all.slice(0, 9)],
-      b3Fails: 4, runPlaySec: 2400, lastProgressSec: 2300,
-    });
     useGameStore.getState().tick(Date.now() + 500);
-    const s = useGameStore.getState();
-    expect(s.fallbackUnlocked).toBe(true);
-    expect(s.retireToast).toBe('fail_streak');
-    const ev = getEvents().find((e) => e.e === 'retire_unlocked')!;
-    expect(ev.kind).toBe('fallback');
-    expect(ev.trigger).toBe('fail_streak');
+    useGameStore.getState().tick(Date.now() + 1000);
+    const ev = getEvents().filter((e) => e.e === 'retire_unlocked');
+    expect(ev).toHaveLength(1);
+    expect(ev[0].trigger).toBe('first_breakthrough');
   });
 
-  it('归隐执行：三事件链、声望入账（三图轮 120）、状态重置、节点继承生效', () => {
+  it('归隐执行：声望 = 10 × 加权小时 × 前沿乘数；宿慧、修行感悟、最深 Boss、名号跨世保留', () => {
     useGameStore.setState({
-      realm: 5, route: 'tangmen', skillLevel: 10,
+      realm: 5, route: 'tangmen', skillLevel: 10, peakRealm: 5, ganwuLevel: 3,
       dantian: 3400, silver: 830, xp: 59,
-      clearedStages: [...m1all, ...m2all, ...m3all],
+      clearedStages: [...m1all, ...m2all], deepestBossEver: 2,
+      lifeWeightedHours: 12, fameClaimed: ['stage:m1s8'], fameThisLife: 30, reputation: 30,
       runPlaySec: 2760, ownedRepNodes: ['wudao_biji'],
     });
     useGameStore.getState().openRetire();
@@ -134,12 +135,19 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.dantian).toBe(0);
     expect(s.silver).toBe(0);
     expect(s.xp).toBe(40); // 武道笔记
-    expect(s.reputation).toBe(120);
+    // 基础 120 × 前沿 1.2（本世再败洛阳近郊 Boss，不浅于历来最深）= 144
+    expect(s.retireCeremony!.settle.total).toBe(144);
+    expect(s.reputation).toBe(30 + 144);
     expect(s.clearedStages).toEqual([]);
-    expect(s.retireCeremony!.settle.total).toBe(120);
-    const ns = names();
-    expect(ns).toContain('retire_preview_opened');
-    expect(ns).toContain('retire_confirmed');
+    expect(s.peakRealm).toBe(5);
+    expect(s.ganwuLevel).toBe(3);
+    expect(s.deepestBossEver).toBe(2);
+    expect(s.fameClaimed).toEqual(['stage:m1s8']);
+    expect(s.lifeWeightedHours).toBe(0);
+    expect(s.fameThisLife).toBe(0);
+    const confirmed = getEvents().find((e) => e.e === 'retire_confirmed')!;
+    expect(confirmed.prestige_total).toBe(144);
+    expect(confirmed.front_mult).toBe(1.2);
     const runStart = getEvents().find((e) => e.e === 'run_start' && e.run === 2)!;
     expect(runStart.carry_xp).toBe(40);
     expect(runStart.owned_nodes).toEqual(['wudao_biji']);
@@ -194,19 +202,33 @@ describe('gameStore · 归隐与声望阁', () => {
   });
 
   it('声望节点购买：扣声望、发 prestige_node_bought；不足拒绝', () => {
-    useGameStore.setState({ reputation: 130 });
-    useGameStore.getState().buyRepNode('jiumeng_chongwen'); // 60
+    useGameStore.setState({ reputation: 370 });
+    useGameStore.getState().buyRepNode('zairu_jianghu'); // 150
     let s = useGameStore.getState();
-    expect(s.reputation).toBe(70);
-    expect(s.ownedRepNodes).toEqual(['jiumeng_chongwen']);
-    useGameStore.getState().buyRepNode('poguan_xinde'); // 70 → 0
-    useGameStore.getState().buyRepNode('shimen_zhiyin'); // 80 > 0，拒绝
+    expect(s.reputation).toBe(220);
+    expect(s.ownedRepNodes).toEqual(['zairu_jianghu']);
+    useGameStore.getState().buyRepNode('qingzhuang_shanglu'); // 220 → 0
+    useGameStore.getState().buyRepNode('wudao_biji'); // 440 > 0，拒绝
     s = useGameStore.getState();
     expect(s.reputation).toBe(0);
-    expect(s.ownedRepNodes).toEqual(['jiumeng_chongwen', 'poguan_xinde']);
+    expect(s.ownedRepNodes).toEqual(['zairu_jianghu', 'qingzhuang_shanglu']);
     const ev = getEvents().filter((e) => e.e === 'prestige_node_bought');
     expect(ev).toHaveLength(2);
-    expect(ev[0].balance_after).toBe(70);
+    expect(ev[0].balance_after).toBe(220);
+  });
+
+  it('修行感悟：传承一级 / 尽数传承，乘区随之上涨', () => {
+    useGameStore.setState({ reputation: 7570, ganwuLevel: 136 });
+    useGameStore.getState().buyGanwu('one');
+    expect(useGameStore.getState().ganwuLevel).toBe(137);
+    expect(useGameStore.getState().reputation).toBe(7570 - 1370);
+    useGameStore.getState().buyGanwu('all');
+    const s = useGameStore.getState();
+    expect(s.ganwuLevel).toBe(141); // 再买 4 级：1,380 + 1,390 + 1,400 + 1,410 = 5,580
+    expect(s.reputation).toBe(7570 - 1370 - 5580);
+    const ev = getEvents().filter((e) => e.e === 'ganwu_bought');
+    expect(ev.map((e) => e.level_to)).toEqual([137, 141]);
+    expect(effIdleRate(s)).toBeCloseTo(idleNeiliPerSec(1) * (1 + 141 * 0.2), 6);
   });
 
   it('换路线：阅历 100% 返还（仅已投入）、200 银两摩擦费、武学清零、发 route_changed', () => {
@@ -297,14 +319,11 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.paused).toBe(false);
   });
 
-  it('胜利收益快照（收益行同源同值）：首通全额、回刷内力两成阅历为零、江湖熟路仅乘内力', () => {
-    useGameStore.setState({
-      realm: 5, route: 'tangmen', skillLevel: 10, ownedRepNodes: ['jianghu_shulu'],
-      autoAdvance: false,
-    });
+  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、连续回刷衰减；首次击败 Boss 名号传开', () => {
+    useGameStore.setState({ realm: 5, route: 'tangmen', skillLevel: 10, autoAdvance: false });
     const play = () => {
       const t0 = Date.now();
-      for (let i = 1; i <= 80 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+      for (let i = 1; i <= 200 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
         useGameStore.getState().tick(t0 + i * 700);
       }
       return useGameStore.getState().battle!;
@@ -313,33 +332,43 @@ describe('gameStore · 归隐与声望阁', () => {
     const first = play();
     expect(first.result.win).toBe(true);
     const base = first.enemy.reward;
-    expect(first.reward).toEqual({
-      neili: base.neili * 1.2, silver: base.silver, xp: base.xp, refarm: false,
-    });
+    expect(first.reward).toEqual({ neili: 0, silver: base.silver, xp: base.xp, refarm: false, fame: 0 });
 
     useGameStore.getState().challengeStage(1, 1); // 回刷同一关
     const second = play();
     expect(second.reward!.refarm).toBe(true);
-    expect(second.reward!.neili).toBeCloseTo(Math.round(base.neili * 0.2) * 1.2, 6);
+    expect(second.reward!.neili).toBe(0);
+    expect(second.reward!.silver).toBe(Math.round(base.silver * 0.5));
     expect(second.reward!.xp).toBe(0);
 
     useGameStore.getState().challengeStage(1, 1); // 连续第 2 次回刷：×0.8 衰减（公式表 §6）
     const third = play();
-    expect(third.reward!.neili).toBeCloseTo(Math.round(Math.round(base.neili * 0.2) * 0.8) * 1.2, 6);
     expect(third.reward!.silver).toBe(Math.round(Math.round(base.silver * 0.5) * 0.8));
 
-    // 间隔 10 分钟重置衰减
-    useGameStore.setState({ runPlaySec: useGameStore.getState().runPlaySec + 601 });
-    useGameStore.getState().challengeStage(1, 1);
-    const fourth = play();
-    expect(fourth.reward!.neili).toBeCloseTo(Math.round(base.neili * 0.2) * 1.2, 6);
+    // 首次击败山贼头目（图 1 Boss）：24 × 乘区 1 = 24 声望，跨世只领一次
+    useGameStore.setState({ clearedStages: m1all.slice(0, 7) });
+    useGameStore.getState().challengeStage(1, 8);
+    const boss = play();
+    expect(boss.result.win).toBe(true);
+    expect(boss.reward!.fame).toBe(24);
+    let s = useGameStore.getState();
+    expect(s.reputation).toBe(24);
+    expect(s.fameThisLife).toBe(24);
+    expect(s.fameClaimed).toEqual(['stage:m1s8']);
+    useGameStore.getState().challengeStage(1, 8); // 回刷 Boss 不再给
+    expect(play().reward!.fame).toBe(0);
+    s = useGameStore.getState();
+    expect(s.reputation).toBe(24);
+    expect(getEvents().filter((e) => e.e === 'fame_gained')).toHaveLength(1);
   });
 
-  it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；快速入门折减境界 2 消耗', () => {
-    useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin', 'kuaisu_rumen'] });
-    expect(effBreakCost(useGameStore.getState())).toBe(Math.round(5000 * 0.7)); // 境界 3 目标
+  it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；突破总额取「离开本境界」行', () => {
+    useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin'] });
+    expect(effBreakCost(useGameStore.getState())).toBe(2_700_000);
     useGameStore.setState({ realm: 1 });
-    expect(effBreakCost(useGameStore.getState())).toBe(Math.round(2800 * 0.7));
+    expect(effBreakCost(useGameStore.getState())).toBe(349_000);
+    useGameStore.setState({ realm: 6 });
+    expect(effBreakCost(useGameStore.getState())).toBeNull(); // 本版终点
 
     useGameStore.setState({ realm: 2 });
     useGameStore.getState().selectRoute('tangmen');
@@ -416,7 +445,7 @@ describe('gameStore · MVP-2 natural live-test window', () => {
 
   it('captures only existing objective snapshot decisions and stops in ended order', () => {
     useGameStore.setState({
-      realm: 2, route: 'tangmen', skillLevel: 3, dantian: 10_000,
+      realm: 2, route: 'tangmen', skillLevel: 3, dantian: 2_700_000,
       clearedStages: [...m1all, 'm2s1'],
     });
     useGameStore.getState().applyLiveTestSwitch(1);
@@ -424,7 +453,7 @@ describe('gameStore · MVP-2 natural live-test window', () => {
     expect(visit).toMatchObject({
       run: 1, realm: 2, route: 'tangmen', max_cleared_stage: 'm2s1', cleared_stage_count: 9,
       offline_settlement_present: false, offline_settlement_capped: null,
-      decision_breakthrough: true, decision_skill: true, decision_battle: true, decision_retire: false,
+      decision_breakthrough: true, decision_skill: true, decision_battle: true, decision_retire: true,
     });
     useGameStore.getState().applyLiveTestSwitch(0);
     useGameStore.getState().applyLiveTestSwitch(0);
@@ -516,7 +545,7 @@ describe('gameStore · 冲穴耗内力制（design.md v4.0）', () => {
 
   /**
    * 把角色放到境界 2、周天缴满 N 段、丹田封顶的状态。
-   * 消耗取 effBreakCost（= 下一境界行），与 store 内部同源——REALMS 行口径不一致是既有问题。
+   * 消耗取 effBreakCost（离开本境界的总额），与 store 内部同源。
    */
   function atRealm2(chargeHighWater = 3) {
     useGameStore.setState({ started: true, realm: 2, acupointProgress: {}, chargeHighWater });
@@ -550,7 +579,7 @@ describe('gameStore · 冲穴耗内力制（design.md v4.0）', () => {
 
     const after = useGameStore.getState();
     expect(after.acupointProgress!.quchi).toEqual({ failCount: 1, opened: false });
-    const expected = (cost / N) * 0.11;    // 当前段配额 × 11%
+    const expected = currentSegmentQuota(cost, N, 3) * 0.11;    // 当前段（末段）配额 × 11%
     expect(before - after.dantian).toBeCloseTo(expected, 6);
   });
 
@@ -558,7 +587,7 @@ describe('gameStore · 冲穴耗内力制（design.md v4.0）', () => {
     // 旧实现把「已缴 N 段」直接拿去减，当前段真气恒为 0，最后一个窍穴永远冲不动。
     const cost = atRealm2();
     const N = REALMS[1].zhoutianCount!;
-    const per = (cost / N) * 0.11;
+    const per = currentSegmentQuota(cost, N, 3) * 0.11;
 
     vi.spyOn(Math, 'random').mockReturnValue(0.99);   // 第一次必失败（曲池 90%）
     useGameStore.getState().attemptAcupoint('quchi');
@@ -614,10 +643,11 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(st().soulUnsettled).toBe(false);
   });
 
-  it('年岁随活跃时长增长：一分钟老 0.718 岁', () => {
+  it('年岁随活跃时长增长：一分钟老 AGE_YEARS_PER_MIN 岁', () => {
     const t0 = Date.now();
     st().tick(t0 + 60_000);
-    expect(st().age).toBeCloseTo(INIT_AGE + AGE_YEARS_PER_MIN, 6);
+    // hardReset 与 t0 之间可能隔出几毫秒，按 3 位小数比（每毫秒约 5e-7 岁）
+    expect(st().age).toBeCloseTo(INIT_AGE + AGE_YEARS_PER_MIN, 3);
   });
 
   it('观察员暂停期间不变老（与挂机产出同一冻结口径）', () => {
@@ -656,7 +686,11 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
 
   it('魂魄未稳在首次突破时解除', () => {
     const cost = effBreakCost(st())!;
-    useGameStore.setState({ soulUnsettled: true, dantian: cost });
+    const open = { failCount: 0, opened: true };
+    useGameStore.setState({
+      soulUnsettled: true, dantian: cost,
+      acupointProgress: { zhongfu: open, chize: open, taiyuan: open },   // 境界 1 教学脉须贯通
+    });
     st().breakthrough();
     expect(st().realm).toBe(2);
     expect(st().soulUnsettled).toBe(false);
@@ -705,9 +739,9 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
   });
 
   it('离线同样变老；闭关期间寿终 → 回来直接进转世演出，出关结算屏不再出现', () => {
-    // 构造一份 119 岁、下线 30 分钟的存档
+    // 构造一份 119 岁、下线 1 小时（长线年岁速率约每小时 1.9 岁）的存档
     saveGame({ ...st(), age: 119, run: 1 });
-    backdateSavedAt(30 * 60);
+    backdateSavedAt(60 * 60);
     useGameStore.setState({ started: false });
     st().init();
     const s = st();

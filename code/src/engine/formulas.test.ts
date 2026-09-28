@@ -3,7 +3,10 @@
  * 后续战斗/经济模块的完整 golden 用例由 sim/mvp0_sim.py 导出固定 fixture。
  */
 import { describe, expect, it } from 'vitest';
-import { hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, currentSegmentNeili } from './formulas';
+import {
+  hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, currentSegmentNeili,
+  currentSegmentQuota, paidThrough, segmentQuotas,
+} from './formulas';
 import { REALMS, skillUpgradeCost } from './content';
 
 describe('双曲防御（公式表 §2）', () => {
@@ -32,13 +35,17 @@ describe('挂机产出（公式表 §3.2）', () => {
   });
 });
 
-describe('境界表（内容表 §1 MVP-0 r1-r5）', () => {
-  it('突破消耗 2,800 / 5,000 / 10,000 / 21,000', () => {
-    expect(REALMS.slice(1, 5).map((r) => r.breakthroughCost)).toEqual([2800, 5000, 10000, 21000]);
+describe('境界表（content.md §1 v2.2「离开本境界」行口径）', () => {
+  it('离开境界 1–5 的总额：34.9 万 / 270 万 / 693 万 / 1790 万 / 3700 万（pacing_sim 表一）', () => {
+    expect(REALMS.slice(0, 5).map((r) => r.leaveCost)).toEqual([349_000, 2_700_000, 6_930_000, 17_900_000, 37_000_000]);
+  });
+  it('周天段数 N 与总额同一行：4 / 3 / 4 / 6 / 8；境界 6/7 不可再突破', () => {
+    expect(REALMS.slice(0, 5).map((r) => r.zhoutianCount)).toEqual([4, 3, 4, 6, 8]);
+    expect(REALMS[5].leaveCost).toBeNull();
+    expect(REALMS[6].leaveCost).toBeNull();
   });
   it('武学上限 = 境界 × 2（MVP-0 §1 r1-r5；MVP-2 §8.1 r6/r7 固定 10 不开放 lv11）', () => {
     for (const r of REALMS.slice(0, 5)) expect(r.skillCap).toBe(r.realm * 2);
-    // MVP-2 §8.1：r6/r7 skillCap=10，不开放 lv11
     expect(REALMS[5]?.skillCap).toBe(10);
     expect(REALMS[6]?.skillCap).toBe(10);
   });
@@ -51,52 +58,59 @@ describe('武学消耗 200 × 1.4^(n−1)（内容表 §3.1）', () => {
   });
 });
 
-describe('周天派生显示（规格书 §6.1 v0.9 单钱包模型）', () => {
-  it('丹田 6,900 / 消耗 10,000 → 3 段圆满 + 第四周天 45%', () => {
-    const p = zhoutianProgress(6900, 10000);
-    expect(p.segmentsFull).toBe(3);
-    expect(p.currentSegmentPct).toBeCloseTo(0.45, 6);
-    expect(p.ready).toBe(false);
+describe('周天段间公比 2（zhoutian/design.md §3.1）', () => {
+  it('7,000 分 3 段 → 1,000 / 2,000 / 4,000，合计等于总额', () => {
+    expect(segmentQuotas(7000, 3)).toEqual([1000, 2000, 4000]);
+    expect(paidThrough(7000, 3, 2)).toBe(3000);
+    expect(paidThrough(7000, 3, 3)).toBe(7000);
   });
-  it('丹田 ≥ 全额 → 可突破', () => {
-    expect(zhoutianProgress(21000, 21000).ready).toBe(true);
+  it('境界 1 首段 / 末段配额与设计表一致（23,267 / 186,133）', () => {
+    const q = segmentQuotas(349_000, 4);
+    expect(Math.round(q[0])).toBe(23_267);
+    expect(Math.round(q[3])).toBe(186_133);
+  });
+  it('当前段配额：未缴读首段，末段圆满后仍读第 N 段', () => {
+    expect(currentSegmentQuota(7000, 3, 0)).toBe(1000);
+    expect(currentSegmentQuota(7000, 3, 3)).toBe(4000);
   });
 });
 
-describe('周天 N 段推广（spec §2：境界 2-5 = 3/4/6/8）', () => {
-  it('境界 4 N=6：丹田 2,000 / 消耗 10,000 → 1 段圆满 + 20%', () => {
-    const p = zhoutianProgress(2000, 10000, 6);
+describe('周天派生显示', () => {
+  it('丹田 2,000 / 总额 7,000（3 段）→ 1 段圆满 + 第二周天 50%', () => {
+    const p = zhoutianProgress(2000, 7000, 3);
     expect(p.segmentsFull).toBe(1);
-    expect(p.currentSegmentPct).toBeCloseTo(0.2, 6);
+    expect(p.currentSegmentPct).toBeCloseTo(0.5, 6);
+    expect(p.ready).toBe(false);
   });
-  it('境界 5 N=8：丹田 2,625 / 消耗 21,000 → 1 段圆满', () => {
-    const p = zhoutianProgress(2625, 21000, 8);
-    expect(p.segmentsFull).toBe(1);
-  });
-  it('MVP-0 fallback：不传 N 默认 5 段（维持 golden）', () => {
-    const p = zhoutianProgress(6900, 10000);
+  it('丹田 ≥ 全额 → 全部圆满、可突破', () => {
+    const p = zhoutianProgress(7000, 7000, 3);
     expect(p.segmentsFull).toBe(3);
+    expect(p.ready).toBe(true);
+  });
+  it('6 段：丹田恰好缴满前两段 → 2 段圆满、第三段 0%', () => {
+    const p = zhoutianProgress(3000, 63000, 6);
+    expect(p.segmentsFull).toBe(2);
+    expect(p.currentSegmentPct).toBeCloseTo(0, 6);
   });
 });
 
 describe('当前段已蓄真气（design.md §2：冲穴与升武学都从当前段扣款）', () => {
   it('未缴任何段时 = 丹田全额', () => {
-    expect(currentSegmentNeili(400, 3000, 3, 0)).toBe(400);
+    expect(currentSegmentNeili(400, 7000, 3, 0)).toBe(400);
   });
   it('已缴 1 段时扣掉那一段的配额', () => {
-    expect(currentSegmentNeili(1400, 3000, 3, 1)).toBe(400);
+    expect(currentSegmentNeili(1400, 7000, 3, 1)).toBe(400);
   });
   it('冲穴扣款使液面跌回已缴线以下 → 当前段归零，已沉入根基的部分不退回', () => {
-    // 已缴 2 段（2000），但丹田被扣到 1800
-    expect(currentSegmentNeili(1800, 3000, 3, 2)).toBe(0);
+    // 已缴 2 段（3,000），但丹田被扣到 2,800
+    expect(currentSegmentNeili(2800, 7000, 3, 2)).toBe(0);
   });
   it('丹田超过全额时按全额截断', () => {
-    expect(currentSegmentNeili(9999, 3000, 3, 2)).toBe(1000);
+    expect(currentSegmentNeili(9999, 7000, 3, 2)).toBe(4000);
   });
   it('末段圆满后当前段读作「第 N 段已蓄满」，而非归零——否则末穴永远冲不动', () => {
-    // 已缴满 3 段、丹田封顶：当前段真气 = 一段配额，足以支付冲穴
-    expect(currentSegmentNeili(3000, 3000, 3, 3)).toBe(1000);
+    expect(currentSegmentNeili(7000, 7000, 3, 3)).toBe(4000);
     // 冲穴扣款后液面回落，当前段随之减少，蓄回来又能再冲（design.md §3.4 W1 无死锁）
-    expect(currentSegmentNeili(2850, 3000, 3, 3)).toBe(850);
+    expect(currentSegmentNeili(6850, 7000, 3, 3)).toBe(3850);
   });
 });

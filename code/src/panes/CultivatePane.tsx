@@ -3,23 +3,24 @@ import { WoundPanel } from '../components/WoundPanel';
 import { freshInjuries } from '../engine/injury';
 import { computeAttributes } from '../engine/attributes';
 import { REALMS } from '../engine/content';
-import { CHARGE_SEGMENTS } from '../engine/formulas';
+import { currentSegmentQuota } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
-import { effBreakCost, effIdleRate, retireKind, useGameStore } from '../store/gameStore';
+import { effBreakCost, effIdleRate, retireKind, useGameStore, zhoutianN as zhoutianNOf } from '../store/gameStore';
+import { fmtBig, fmtRate } from '../fmt';
 import {
   REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete, openedInRealm,
   requiredMeridian, requiredMeridianOpened,
 } from '../engine/acupoints';
 import { CultivationScene } from '../components/CultivationScene';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export function CultivatePane() {
   const s = useGameStore();
-  const nextRealm = s.realm < REALMS.length ? REALMS[s.realm] : null;
   const breakCost = effBreakCost(s);
+  // 本版终点 = 突破入境界 6（pacing/design.md §4）：境界 6 无周天，不再显示下一境界
+  const nextRealm = breakCost !== null ? REALMS[s.realm] : null;
   const rate = effIdleRate(s);
   // 窍穴/贯通加成（spec §9：加法合并进临时乘区）
   const acupointData = REALM_ACUPOINTS[s.realm];
@@ -36,7 +37,7 @@ export function CultivatePane() {
     ? acupointData.meridians.filter(m => isMeridianComplete(m, openedIds)).length
     : 0;
   const acupointPct = totalAcupointBonus(s.realm, openedTotal, meridianCount);
-  const zhoutianN = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
+  const zhoutianN = zhoutianNOf(s.realm);
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel, 0, acupointPct);
   const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel, 0, acupointPct) : null;
   const routeDef = s.route ? ROUTES[s.route] : null;
@@ -54,8 +55,7 @@ export function CultivatePane() {
               <div className="kv">
                 <span className="k">总消耗</span>
                 <span className="v">
-                  {fmt(breakCost!)} 内力（每周天 {fmt(breakCost! / zhoutianN)} × {zhoutianN}）
-                  {breakCost! < nextRealm.breakthroughCost! && <span className="perm"> · 快速入门 −30%</span>}
+                  {fmtBig(breakCost!)} 内力（{zhoutianN} 段周天，逐段翻倍 · 本段 {fmtBig(currentSegmentQuota(breakCost!, zhoutianN, s.chargeHighWater))}）
                 </span>
               </div>
               <CultivationScene />
@@ -74,26 +74,13 @@ export function CultivatePane() {
           </>
         ) : (
           <>
-            <div className="panel-head">运转周天 <span className="sub">境界圆满</span></div>
+            <div className="panel-head">运转周天 <span className="sub">小周天圆满</span></div>
             <div className="panel-body">
-              {retireKind(s) !== null ? (
-                <>
-                  <button className={retireKind(s) === 'standard' ? 'btn pulse' : 'btn'} onClick={s.openRetire}>
-                    挂剑归隐
-                    <span className="btn-sub">
-                      {retireKind(s) === 'standard' ? '本轮圆满 · 声望全额' : '未竟之轮 · 声望全额'}
-                    </span>
-                  </button>
-                  {retireKind(s) === 'fallback' && (
-                    <div className="cap-note">
-                      黑风寨主仍未被击败。现在归隐，声望照常全额结算，只是少了击败他的那一笔。
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="cap-note" style={{ margin: 0 }}>
-                  一流高手已是本轮武学之极——击败黑风寨主可获得全额声望
-                </p>
+              <p className="cap-note" style={{ margin: '0 0 12px' }}>
+                任督俱通，小周天至此圆满。大周天未开——这一版的修行到此为止。
+              </p>
+              {retireKind(s) !== null && (
+                <button className="btn" onClick={s.openRetire}>挂剑归隐</button>
               )}
             </div>
           </>
@@ -129,7 +116,7 @@ export function CultivatePane() {
           <AttrRow name="暴击伤害" cur={pct(attrs.critDmg)} next={nextAttrs ? pct(nextAttrs.critDmg) : null} />
           <div className="attr-note">
             {nextRealm && (
-              <>突破另得：挂机产出 {rate.toFixed(1)} → {effIdleRate({ realm: s.realm + 1, ownedRepNodes: s.ownedRepNodes }).toFixed(1)} / 秒 · 武学上限 {REALMS[s.realm - 1].skillCap} → {nextRealm.skillCap}
+              <>突破另得：挂机产出 {fmtRate(rate)} → {fmtRate(effIdleRate({ ...s, realm: s.realm + 1 }))} / 秒 · 武学上限 {REALMS[s.realm - 1].skillCap} → {nextRealm.skillCap}
                 {s.realm === 1 && ' · 解锁三大路线'}
               </>
             )}

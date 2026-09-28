@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.0（合并 `../mvp0/telemetry.md` v1.1 + `../mvp1/telemetry.md` v1.0 + `../mvp2/telemetry.md` v1.0，去重去散，口径零变更）
+> **版本**：v2.1
 >
 > **日期**：2026-07-25
 >
@@ -64,6 +64,17 @@
 | `natural_window_note` | 主观观察记录 | `date_time`, `opened_naturally`, `reason`, `capped`, `decision`, `next_goal`, `feeling` |
 | `live_test_end` | 自然窗口结束 | `tables_version_started`, `tables_version_ended` |
 
+### 受伤与转世事件
+
+| 事件名 | 触发时机 | 关键字段 |
+|---|---|---|
+| `injury_inflicted` | 硬仗失败或惨胜留伤 | `target`, `injury`, `severity`, `win`, `player_hp_pct`, `became_heavy`, `lethal`, `lifespan_lost` |
+| `forced_reincarnation` | 老死或战死触发强制转世 | `cause`（`old` / `battle`）, `age_at_death`, `lifespan_lost`, `prestige_total`, `run_duration_s`, `era_end` |
+
+- `injury_inflicted` 自受伤系统（PR #16）起已在代码中上报，v2.1 补登。
+- 强制转世**不发** `retire_confirmed`；两者互斥，各自计一次转世。其后照常发 `run_start`。
+- `retire_confirmed.fallback_discount` 自保底折扣退役起恒为 1（字段保留，口径延续）。
+
 ---
 
 ## 口径守恒表
@@ -74,3 +85,10 @@
 | `mvp1/telemetry.md` | MVP-1 事件 | 离线结算/会话事件 | 逐字保留 | 同上 |
 | `mvp2/telemetry.md` | MVP-2 事件 | 自然窗口事件 | 逐字保留 | 同上 |
 | 三份公共信封 | 公共信封 | 重复的 `run/realm/route` 定义 | 去重合并 | 三文件信封定义一致 |
+
+## 变更日志
+
+| 版本 | 日期 | 变更内容 |
+|---|---|---|
+| v2.1 | 2026-09-24 | 新增「受伤与转世事件」：补登 `injury_inflicted`，新增 `forced_reincarnation`；注明 `fallback_discount` 恒为 1。 |
+| v2.0 | — | 合并三份阶段埋点规格，去重去散，口径零变更。 |

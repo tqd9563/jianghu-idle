@@ -23,6 +23,9 @@ import { OfflineSettlement } from './overlays/OfflineSettlement';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
 import { FragmentShelf } from './panes/FragmentShelf';
+import { AgeLine } from './components/AgeLine';
+import { SoulChip } from './components/SoulChip';
+import { ERA_START, INIT_AGE } from './engine/reincarnation';
 
 type TabId = 'cultivate' | 'battle' | 'skill' | 'rep' | 'fragments';
 
@@ -82,12 +85,12 @@ export default function App() {
       <nav className="game-rail">
         <div className="rail-identity">
           <div className="game-title serif">
-            江湖无尽录<span className="round">第 {s.run} 轮</span>
+            江湖无尽录<span className="round">第 {s.run} 世</span>
           </div>
           <div className="realm-chip">
             <span className="name serif">{realmDef.name}</span>
-            <span className="lv">境界 {s.realm} / {REALMS.length}</span>
           </div>
+          <AgeLine age={s.age ?? INIT_AGE} eraStart={s.eraStart ?? ERA_START} lifespanLost={s.lifespanLost ?? 0} />
         </div>
         <div className="nav-group">
           <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
@@ -122,18 +125,19 @@ export default function App() {
             onClick={s.openRetire}
             title={retire === 'standard'
               ? '挂剑归隐 · 本轮圆满 · 声望全额'
-              : '挂剑归隐 · 未竟之轮 · 声望六成\n黑风寨主仍未被击败。现在归隐，声望按六成结算；击败黑风寨主可获得全额声望。'}
+              : '挂剑归隐 · 未竟之轮 · 声望全额\n黑风寨主仍未被击败。现在归隐，声望照常全额结算，只是少了击败他的那一笔。'}
           >
             归隐<span className={`retire-dot ${retire}`} />
           </button>
         )}
+        {s.soulUnsettled && <SoulChip onClick={() => setTab('cultivate')} />}
         <WoundChip injuries={s.injuries ?? freshInjuries()} onClick={() => setTab('cultivate')} />
         <div className="res-group">
           <div className="res">
             <span className="label">内力</span>
             <span className="value">{fmt(s.dantian)}</span>
-            {/* 带伤时速率转血褐——修炼变慢是第一眼就能看见的代价（原型 §1） */}
-            <span className={`rate${isHurt(s.injuries ?? freshInjuries()) ? ' down' : ''}`}>
+            {/* 带伤或魂魄未稳时速率转血褐——修炼变慢是第一眼就能看见的代价（受伤原型 §1） */}
+            <span className={`rate${isHurt(s.injuries ?? freshInjuries()) || s.soulUnsettled ? ' down' : ''}`}>
               +{rate.toFixed(1)} / 秒
             </span>
           </div>
@@ -197,8 +201,8 @@ export default function App() {
         <div className="toast" role="status">
           <span>
             {s.retireToast === 'fail_streak'
-              ? '四战黑风寨主未果。可就此归隐（声望六成），也可再作调整——击败他可获全额声望。'
-              : '许久没有新的进展了。可就此归隐（声望六成）——击败黑风寨主可获得全额声望。'}
+              ? '四战黑风寨主未果。可就此归隐，声望全额结算；也可再作调整，击败他还能多得一笔。'
+              : '许久没有新的进展了。可就此归隐，声望全额结算——击败黑风寨主还能多得一笔。'}
           </span>
           <button className="toast-close" onClick={s.dismissRetireToast} aria-label="关闭">×</button>
         </div>

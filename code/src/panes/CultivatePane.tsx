@@ -43,7 +43,7 @@ export function CultivatePane() {
 
   return (
     <div className="pane-wrap pane-grid cultivate-grid">
-      <WoundPanel injuries={s.injuries ?? freshInjuries()} realm={s.realm} />
+      <WoundPanel injuries={s.injuries ?? freshInjuries()} realm={s.realm} soulUnsettled={s.soulUnsettled ?? false} />
       <section className="panel cs-panel">
         {nextRealm ? (
           <>
@@ -81,12 +81,12 @@ export function CultivatePane() {
                   <button className={retireKind(s) === 'standard' ? 'btn pulse' : 'btn'} onClick={s.openRetire}>
                     挂剑归隐
                     <span className="btn-sub">
-                      {retireKind(s) === 'standard' ? '本轮圆满 · 声望全额' : '未竟之轮 · 声望六成'}
+                      {retireKind(s) === 'standard' ? '本轮圆满 · 声望全额' : '未竟之轮 · 声望全额'}
                     </span>
                   </button>
                   {retireKind(s) === 'fallback' && (
                     <div className="cap-note">
-                      黑风寨主仍未被击败。现在归隐，声望按六成结算；击败黑风寨主可获得全额声望。
+                      黑风寨主仍未被击败。现在归隐，声望照常全额结算，只是少了击败他的那一笔。
                     </div>
                   )}
                 </>

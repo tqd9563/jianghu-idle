@@ -68,14 +68,7 @@ export function RetireFlow() {
                   <span>表现加成封顶</span><span className="v">+30%</span>
                 </div>
               )}
-              {settle.discount < 1 && (
-                <>
-                  <div className="rline penalty">
-                    <span>未竟折算</span><span className="v">×60%</span>
-                  </div>
-                  <div className="rline-note">击败黑风寨主可获得全额声望</div>
-                </>
-              )}
+              {/* 「未竟折算 ×60%」行随保底折扣退役删除（reincarnation/spec.md §4；retire-copy v1.1 §2.1） */}
               {settle.timePenalty < 1 && (
                 <div className="rline penalty">
                   <span>轮时过短</span>

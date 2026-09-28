@@ -42,6 +42,9 @@ import {
   resetGame, saveGame, startLiveTestWindow, type LiveTestWindowRecord,
 } from '../save/storage';
 import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
+import {
+  INIT_AGE, ERA_START, ageAfter, isOldDeath, lifespanCap, nextLife, soulMult, type DeathCause,
+} from '../engine/reincarnation';
 
 export type MapNo = MapId;
 
@@ -105,6 +108,12 @@ interface PersistedState {
   injuries?: Injuries;
   /** 本轮因重伤累计折损的寿元年数（spec §6）；转世系统消费，归隐时清零。可选字段兼容旧存档。 */
   lifespanLost?: number;
+  /** 角色年岁（reincarnation/spec.md §2）：随游戏内时间增长，每世重置为 INIT_AGE。可选字段兼容旧存档。 */
+  age?: number;
+  /** 本世出生时的江湖历年份（spec §6）：当前江湖历 = eraStart + (age − INIT_AGE)。跨世累进。 */
+  eraStart?: number;
+  /** 魂魄未稳（spec §4.1）：强制转世后挂上，首次突破时解除。 */
+  soulUnsettled?: boolean;
 }
 
 export interface BattleState {
@@ -159,6 +168,10 @@ export interface RetireCeremonyData {
   durationSec: number;
   clearedCount: number;
   maxMap: MapNo;
+  /** 强制转世的死因；主动归隐为 null（演出只在这里分岔，原型 reincarnation-prototype.html §3） */
+  cause: DeathCause | null;
+  /** 谢幕年岁（整岁取下），供死因行「{N} 岁 · 寿终 / 重伤不治」 */
+  deathAge: number;
 }
 
 interface GameState extends PersistedState {
@@ -230,6 +243,7 @@ const FRESH: PersistedState = {
   trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
+  age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -240,25 +254,13 @@ let visitedLiveTestWindowId: string | null = null;
 const stageKey = (m: MapNo, s: number) => `m${m}s${s}`;
 const BOSS3_KEY = stageKey(3, MAP_STAGE_COUNT[3]);
 
+/**
+ * 持久化键 = FRESH 的全部键。不再手写字段清单：旧清单漏了窍穴进度、窍穴图鉴、伤势、折寿
+ * 四个字段（PR #15/#16 新增时没同步），刷新页面即丢。新增持久化字段只需在 FRESH 给默认值。
+ */
+const PERSIST_KEYS = Object.keys(FRESH) as (keyof PersistedState)[];
 const persist = (s: PersistedState) =>
-  saveGame({
-    run: s.run, realm: s.realm, route: s.route, skillLevel: s.skillLevel,
-    dantian: s.dantian, silver: s.silver, xp: s.xp,
-    reputation: s.reputation, repTotal: s.repTotal,
-    ownedMechNodes: s.ownedMechNodes, ownedRepNodes: s.ownedRepNodes,
-    chargeHighWater: s.chargeHighWater,
-    clearedStages: s.clearedStages, attempts: s.attempts, autoAdvance: s.autoAdvance,
-    runPlaySec: s.runPlaySec, b3Fails: s.b3Fails,
-    lastProgressSec: s.lastProgressSec,
-    fallbackUnlocked: s.fallbackUnlocked, standardNotified: s.standardNotified,
-    mechXpInvested: s.mechXpInvested, switchCount: s.switchCount,
-    refarmKey: s.refarmKey, refarmCount: s.refarmCount, refarmAt: s.refarmAt,
-    sessionActive: s.sessionActive, paused: s.paused,
-    collectedPages: s.collectedPages ?? [], completedBooks: s.completedBooks ?? [],
-    trialWinsThisRun: s.trialWinsThisRun ?? {}, eliteChallengeWinsThisRun: s.eliteChallengeWinsThisRun ?? {},
-    bossKillsThisRun: s.bossKillsThisRun ?? {},
-    shopPurchasesThisRun: s.shopPurchasesThisRun ?? 0,
-  });
+  saveGame(Object.fromEntries(PERSIST_KEYS.map((k) => [k, s[k] ?? FRESH[k]])));
 
 /** 地图解锁：图 N 需通关图 N−1 末关（由 MAP_IDS 顺序派生，新增地图无需改此处） */
 export function mapUnlocked(map: MapNo, cleared: string[]): boolean {
@@ -308,10 +310,13 @@ export function effBreakCost(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>)
   return Math.round(base * breakthroughDiscount(s.realm + 1, s.ownedRepNodes));
 }
 
-/** 有效挂机产出（旧梦重温：+20%；伤势按 injury/spec.md §3 压制） */
-export function effIdleRate(s: Pick<PersistedState, 'realm' | 'ownedRepNodes' | 'injuries'>): number {
+/** 有效挂机产出（旧梦重温：+20%；伤势按 injury/spec.md §3 压制；魂魄未稳 ×0.6，reincarnation/spec.md §4.1） */
+export function effIdleRate(
+  s: Pick<PersistedState, 'realm' | 'ownedRepNodes' | 'injuries' | 'soulUnsettled'>,
+): number {
   return idleNeiliPerSec(s.realm) * idleMult(s.ownedRepNodes)
-    * idleOutputMultiplier(s.injuries ?? freshInjuries());
+    * idleOutputMultiplier(s.injuries ?? freshInjuries())
+    * soulMult(s.soulUnsettled ?? false);
 }
 
 /**
@@ -436,6 +441,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           merged.injuries = healInjuries(
             merged.injuries ?? freshInjuries(), r.effectiveMin, merged.realm,
           );
+          // 离线同样变老（reincarnation/spec.md §2.3）：与在线同速率，只受离线封顶截断
+          merged.age = ageAfter(merged.age ?? INIT_AGE, r.effectiveMin);
           track('offline_settled', { run: merged.run, realm: merged.realm, route: merged.route }, {
             raw_offline_s: Math.round(r.rawSec),
             effective_min: Math.round(r.effectiveMin * 100) / 100,
@@ -452,8 +459,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
       set({ ...merged, started: true, selectedMap, offlineSettlement });
-      // consume_timestamp_once（表 C）：结算后立即持久化刷新 savedAt，关页→重开恰好一次结算
-      persist(get());
+      if (isOldDeath(merged.age ?? INIT_AGE, merged.lifespanLost ?? 0)) {
+        // 闭关期间寿终：资源随转世散去，出关结算屏不再有意义，直接进转世演出
+        set({ offlineSettlement: null });
+        rebirth(set, get, 'old');   // rebirth 自带持久化
+      } else {
+        // consume_timestamp_once（表 C）：结算后立即持久化刷新 savedAt，关页→重开恰好一次结算
+        persist(get());
+      }
     } else {
       set({ ...FRESH, started: true });
       track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
@@ -542,7 +555,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 伤势自愈：与挂机共用同一游戏内时钟（injury/spec.md §5）
       const prevInj = s.injuries ?? freshInjuries();
       const injuries = isHurt(prevInj) ? healInjuries(prevInj, dt / 60, s.realm) : prevInj;
-      set({ dantian, chargeHighWater, runPlaySec, injuries });
+      // 年岁同一时钟（reincarnation/spec.md §2）：角色老一岁，江湖历走一年
+      const age = ageAfter(s.age ?? INIT_AGE, dt / 60);
+      set({ dantian, chargeHighWater, runPlaySec, injuries, age });
+      if (isOldDeath(age, s.lifespanLost ?? 0)) {
+        rebirth(set, get, 'old');
+        return;
+      }
     }
 
     // 归隐可用上报（§6.6 + 埋点规格 §1.4）：保底先触发的，后续击败 Boss 3 补发 standard
@@ -604,6 +623,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       lastProgressSec: s.runPlaySec,
       // 窍穴进度保留（D1 保留到归隐）；窍穴松动随 chargeHighWater 归零而重置
       acupointLog: newAcupointLog,
+      // 魂魄未稳在首次突破时解除（reincarnation/spec.md §4.1）
+      soulUnsettled: false,
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, { realm_to: realmTo });
     persist(get());
@@ -794,50 +815,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   confirmRetire: () => {
     const s = get();
     if (s.retireStep !== 'confirm') return;
-    const kind = retireKind(s);
-    if (kind === null) return;
-    const settle = settleRetire(kind, s.clearedStages, s.runPlaySec);
-    track('retire_confirmed', { run: s.run, realm: s.realm, route: s.route }, {
-      kind,
-      prestige_base: settle.base,
-      perf_bonus_pct: Math.round(settle.perfPct * 100),
-      time_penalty: Math.round(settle.timePenalty * 100) / 100,
-      fallback_discount: settle.discount,
-      prestige_total: settle.total,
-      run_duration_s: Math.round(s.runPlaySec),
-      pages_gained_run: getEvents().filter((event) => event.e === 'page_acquired' && event.run === s.run).length,
-    });
-
-    const maxMap: MapNo = mapUnlocked(3, s.clearedStages) ? 3 : mapUnlocked(2, s.clearedStages) ? 2 : 1;
-    const ceremonyData: RetireCeremonyData = {
-      runEnded: s.run, settle, durationSec: s.runPlaySec,
-      clearedCount: s.clearedStages.length, maxMap,
-    };
-
-    // 重置与保留（§8.3 + 声望经济表继承审计）：资源全清空，仅武道笔记 +40 阅历随新轮生效
-    const newRun = s.run + 1;
-    const xp = carryXp(s.ownedRepNodes);
-    set({
-      ...FRESH,
-      run: newRun,
-      xp,
-      reputation: s.reputation + settle.total,
-      repTotal: s.repTotal + settle.total,
-      ownedRepNodes: s.ownedRepNodes,
-      collectedPages: s.collectedPages ?? [],
-      completedBooks: s.completedBooks ?? [],
-      autoAdvance: s.autoAdvance,
-      // 窍穴图鉴归隐保留（spec §8）；窍穴进度/气势/机会由 ...FRESH 重置
-      acupointLog: s.acupointLog ?? [],
-      retireStep: null,
-      retireCeremony: ceremonyData,
-      retireToast: null,
-      battle: null, failure: null, ceremony: null, selectedMap: 1, pendingTab: null,
-    });
-    track('run_start', { run: newRun, realm: 1, route: null }, {
-      owned_nodes: s.ownedRepNodes, carry_xp: xp,
-    });
-    persist(get());
+    if (retireKind(s) === null) return;
+    rebirth(set, get, null);
   },
 
   closeRetireCeremony: () => set({ retireCeremony: null }),
@@ -1045,6 +1024,89 @@ export const useGameStore = create<GameState>((set, get) => ({
 }));
 
 /** 战斗结束结算：奖励入账、首通标记、埋点、失败诊断、Boss3 连败计数、自动连战 */
+/**
+ * 转世：主动归隐与强制转世共用（reincarnation/spec.md §4 / §6）。
+ *
+ * - cause = null：主动归隐。调用方已确认归隐可用。
+ * - cause = 'old' | 'battle'：强制转世。声望同样**全额**结算（design.md §3.1 裁决），
+ *   代价落在来世：挂上「魂魄未稳」，首次突破前产出 ×0.6。没有预览与二次确认——人已经没了。
+ *
+ * 两条路的重置、继承、江湖历接续完全一致，只在埋点、死因与魂魄标记上分岔。
+ */
+function rebirth(
+  set: (partial: Partial<GameState>) => void,
+  get: () => GameState,
+  cause: DeathCause | null,
+) {
+  const s = get();
+  // 强制转世可能发生在归隐门槛之前（retireKind 为 null）；保底折扣已退役，两种 kind 结算同值
+  const kind: RetireKind = retireKind(s) ?? (s.clearedStages.includes(BOSS3_KEY) ? 'standard' : 'fallback');
+  const settle = settleRetire(kind, s.clearedStages, s.runPlaySec);
+  // 老死按寿元封顶：tick 一次最多推进 300 秒（≈6.6 岁），不封顶会显示「121 岁 · 寿终」、江湖历也多走一截
+  const rawAge = s.age ?? INIT_AGE;
+  const age = cause === 'old' ? Math.min(rawAge, lifespanCap(s.lifespanLost ?? 0)) : rawAge;
+  const next = nextLife(s.eraStart ?? ERA_START, age);
+  const ctx = { run: s.run, realm: s.realm, route: s.route };
+
+  if (cause === null) {
+    track('retire_confirmed', ctx, {
+      kind,
+      prestige_base: settle.base,
+      perf_bonus_pct: Math.round(settle.perfPct * 100),
+      time_penalty: Math.round(settle.timePenalty * 100) / 100,
+      fallback_discount: settle.discount,
+      prestige_total: settle.total,
+      run_duration_s: Math.round(s.runPlaySec),
+      pages_gained_run: getEvents().filter((event) => event.e === 'page_acquired' && event.run === s.run).length,
+    });
+  } else {
+    track('forced_reincarnation', ctx, {
+      cause,
+      age_at_death: Math.round(age * 10) / 10,
+      lifespan_lost: s.lifespanLost ?? 0,
+      prestige_total: settle.total,
+      run_duration_s: Math.round(s.runPlaySec),
+      era_end: Math.floor(next.eraStart),
+    });
+  }
+
+  const maxMap: MapNo = mapUnlocked(3, s.clearedStages) ? 3 : mapUnlocked(2, s.clearedStages) ? 2 : 1;
+  const ceremonyData: RetireCeremonyData = {
+    runEnded: s.run, settle, durationSec: s.runPlaySec,
+    clearedCount: s.clearedStages.length, maxMap,
+    cause, deathAge: Math.floor(age),
+  };
+
+  // 重置与保留（§8.3 + 声望经济表继承审计）：资源全清空，仅武道笔记 +40 阅历随新轮生效
+  const newRun = s.run + 1;
+  const xp = carryXp(s.ownedRepNodes);
+  set({
+    ...FRESH,
+    run: newRun,
+    xp,
+    reputation: s.reputation + settle.total,
+    repTotal: s.repTotal + settle.total,
+    ownedRepNodes: s.ownedRepNodes,
+    collectedPages: s.collectedPages ?? [],
+    completedBooks: s.completedBooks ?? [],
+    autoAdvance: s.autoAdvance,
+    // 窍穴图鉴归隐保留（spec §8）；窍穴进度、伤势、折寿由 ...FRESH 重置
+    acupointLog: s.acupointLog ?? [],
+    // 两个时钟（reincarnation/spec.md §6）：年岁重置，江湖历从谢幕年份接着算
+    age: next.age,
+    eraStart: next.eraStart,
+    soulUnsettled: cause !== null,
+    retireStep: null,
+    retireCeremony: ceremonyData,
+    retireToast: null,
+    battle: null, failure: null, ceremony: null, selectedMap: 1, pendingTab: null,
+  });
+  track('run_start', { run: newRun, realm: 1, route: null }, {
+    owned_nodes: s.ownedRepNodes, carry_xp: xp,
+  });
+  persist(get());
+}
+
 function resolveBattle(
   set: (partial: Partial<GameState>) => void,
   get: () => GameState,
@@ -1160,11 +1222,13 @@ function resolveBattle(
   // 普通关不产伤；伤势升入重度折寿，越致死线交由转世系统处理（§6）。
   let injuries = s.injuries ?? freshInjuries();
   let lifespanLost = s.lifespanLost ?? 0;
+  let lethal = false;
   const hurtBy = injuryFromBattle(enemy, result.win, result.playerHpPct);
   if (hurtBy) {
     const r = inflictInjury(injuries, hurtBy);
     injuries = r.injuries;
     lifespanLost += r.lifespanLost;
+    lethal = r.lethal;
     track('injury_inflicted', { run: s.run, realm: s.realm, route: s.route }, {
       target: tid, injury: hurtBy, severity: r.injuries[hurtBy].severity,
       win: result.win, player_hp_pct: result.playerHpPct,
@@ -1208,6 +1272,12 @@ function resolveBattle(
         }
       }
     }
+  }
+  // 战死（reincarnation/spec.md §3.2）：伤势越过致死线，或重伤折寿后年岁已超剩余寿元。
+  // 放在奖励与残页发放之后——惨胜也是胜，该拿的先拿到手，再走。
+  if (lethal || isOldDeath(get().age ?? INIT_AGE, lifespanLost)) {
+    rebirth(set, get, 'battle');   // rebirth 自带持久化
+    return;
   }
   persist(get());
 }

@@ -8,6 +8,7 @@ import {
   type Injuries, type InjuryId, type Severity,
 } from '../engine/injury';
 import { idleNeiliPerSec } from '../engine/formulas';
+import { SOUL_WEAK_MULT } from '../engine/reincarnation';
 import { SeverityMeter } from './WoundChip';
 
 const TYPE_CLASS: Record<InjuryId, string> = { wai: 't-wai', nei: 't-nei', du: 't-du' };
@@ -33,14 +34,18 @@ function fmtMin(min: number): string {
   return m > 0 ? `${m}分${String(sec).padStart(2, '0')}秒` : `${sec}秒`;
 }
 
-export function WoundPanel({ injuries, realm }: { injuries: Injuries; realm: number }) {
+export function WoundPanel({ injuries, realm, soulUnsettled = false }: {
+  injuries: Injuries; realm: number;
+  /** 魂魄未稳（reincarnation/spec.md §4.1）：与伤势压制同一乘法链，列进同一张来源分解 */
+  soulUnsettled?: boolean;
+}) {
   const hurt = isHurt(injuries);
   const factor = healRealmFactor(realm);
   const baseRate = idleNeiliPerSec(realm);
-  const mult = idleOutputMultiplier(injuries);
+  const mult = idleOutputMultiplier(injuries) * (soulUnsettled ? SOUL_WEAK_MULT : 1);
 
-  // 无伤：收成一行，不铺三个空位
-  if (!hurt) {
+  // 无伤且魂魄安稳：收成一行，不铺三个空位
+  if (!hurt && !soulUnsettled) {
     return (
       <section className="panel wound-panel healthy">
         <header>
@@ -55,10 +60,10 @@ export function WoundPanel({ injuries, realm }: { injuries: Injuries; realm: num
     <section className="panel wound-panel">
       <header>
         <h3>身体状况</h3>
-        <span className="hint">挂机静养中 · 离线同样恢复</span>
+        <span className="hint">{hurt ? '挂机静养中 · 离线同样恢复' : '魂魄未稳 · 首次突破后自复'}</span>
       </header>
       <div className="body">
-        {INJURY_IDS.map((id) => {
+        {hurt && INJURY_IDS.map((id) => {
           const { severity, healAccMin } = injuries[id];
           const def = INJURY_DEFS[id];
           if (severity === 0) {
@@ -97,7 +102,7 @@ export function WoundPanel({ injuries, realm }: { injuries: Injuries; realm: num
           );
         })}
 
-        {hurt && (
+        {(hurt || soulUnsettled) && (
           <div className="breakdown">
             <div className="bt">挂机内力产出 · 来源分解</div>
             <div className="brow">
@@ -110,6 +115,12 @@ export function WoundPanel({ injuries, realm }: { injuries: Injuries; realm: num
                 <span className="v neg">×{(1 - idlePressPct(id, injuries[id].severity)).toFixed(4)}</span>
               </div>
             ))}
+            {soulUnsettled && (
+              <div className="brow">
+                <span className="k">魂魄未稳</span>
+                <span className="v neg">×{SOUL_WEAK_MULT.toFixed(4)}</span>
+              </div>
+            )}
             <div className="brow total">
               <span className="k">当前实得</span>
               <span className="v">+{(baseRate * mult).toFixed(1)}/秒</span>

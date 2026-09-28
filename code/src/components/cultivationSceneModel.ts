@@ -6,7 +6,7 @@
  * 本模块只做几何与状态推导，不含 React / DOM 依赖，可单测。
  * 组件只负责把结果画出来，不再自己算任何位置或状态。
  */
-import { CHARGE_SEGMENTS, currentSegmentNeili, zhoutianProgress } from '../engine/formulas';
+import { currentSegmentNeili, currentSegmentQuota, zhoutianProgress } from '../engine/formulas';
 import { REALMS } from '../engine/content';
 import {
   REALM_ACUPOINTS, acupointPos, blockingPrevAcupoint, chongxueGate, currentSuccessRate,
@@ -101,7 +101,7 @@ export interface SceneModel {
   /** 本境界已通窍穴数（加成口径；突破门槛见下三项） */
   openedThisRealm: number;
   poolSize: number;
-  /** 突破必须贯通的经脉名（design.md §4）；本版境界 1/6/7 为 null */
+  /** 突破必须贯通的经脉名（design.md §4）；境界 6/7 为 null */
   requiredMeridianName: string | null;
   /** 该脉已通 / 总穴数 */
   requiredMeridianOpened: number;
@@ -112,9 +112,9 @@ export function buildSceneModel(s: SceneInput): SceneModel | null {
   if (s.breakCost === null) return null;   // 境界圆满：无周天可运转
 
   const def = REALMS[s.realm - 1];
-  const n = def.zhoutianCount ?? CHARGE_SEGMENTS;
+  const n = def.zhoutianCount!;
   const p = zhoutianProgress(s.dantian, s.breakCost, n);
-  const segmentQuota = s.breakCost / n;
+  const segmentQuota = currentSegmentQuota(s.breakCost, n, s.chargeHighWater);
   const segmentNeili = currentSegmentNeili(s.dantian, s.breakCost, n, s.chargeHighWater);
   const pct = p.currentSegmentPct;
   const totalPct = (p.segmentsFull + pct) / n;
@@ -178,7 +178,7 @@ export function buildSceneModel(s: SceneInput): SceneModel | null {
     zhoutianCount: n,
     segmentsFull: p.segmentsFull,
     currentSegmentPct: pct,
-    perSegment: s.breakCost / n,
+    perSegment: segmentQuota,
     // 留 6% 底、8% 顶的呼吸空间，液面不完全贴边
     emptyPct: 92 - pct * 86,
     qiSpeedSec: +(4.0 - s.realm * 0.35 - pct * 0.6).toFixed(2),

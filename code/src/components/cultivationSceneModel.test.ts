@@ -6,7 +6,8 @@ import { buildSceneModel, type SceneInput } from './cultivationSceneModel';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 
 const at = (o: Partial<SceneInput> = {}): SceneInput => ({
-  realm: 2, dantian: 0, breakCost: 2800, chargeHighWater: 0, acupointProgress: {}, ...o,
+  // 总额 7,000 分 3 段、公比 2：各段 1,000 / 2,000 / 4,000，累计 1,000 / 3,000 / 7,000
+  realm: 2, dantian: 0, breakCost: 7000, chargeHighWater: 0, acupointProgress: {}, ...o,
 });
 
 describe('修炼面板模型 · 周天与液面', () => {
@@ -15,7 +16,8 @@ describe('修炼面板模型 · 周天与液面', () => {
   });
 
   it('月相数 = 本境界周天数，三态随已缴段推进', () => {
-    const m = buildSceneModel(at({ realm: 4, breakCost: 10000, dantian: 10000 / 6 * 2.5 }))!;
+    // 6 段、总额 63,000：各段 1,000 × 2^(i−1)；缴满两段（3,000）+ 第三段一半（2,000）
+    const m = buildSceneModel(at({ realm: 4, breakCost: 63000, dantian: 5000 }))!;
     expect(m.zhoutianCount).toBe(6);
     expect(m.moons).toHaveLength(6);
     expect(m.moons.map(x => x.phase)).toEqual(
@@ -25,7 +27,7 @@ describe('修炼面板模型 · 周天与液面', () => {
 
   it('液面留空随段进度单调下降，且留出上下呼吸空间', () => {
     const empty = (pct: number) =>
-      buildSceneModel(at({ dantian: 2800 / 3 * pct }))!.emptyPct;
+      buildSceneModel(at({ dantian: 1000 * pct }))!.emptyPct;
     expect(empty(0)).toBeCloseTo(92, 5);          // 空池不贴顶
     // 注意 pct=1 会进位到下一段、段内归零，故取逼近值
     expect(empty(0.99)).toBeGreaterThan(6);       // 满池不贴底
@@ -34,7 +36,7 @@ describe('修炼面板模型 · 周天与液面', () => {
   });
 
   it('挂满一段后液面归零、月相进位', () => {
-    const m = buildSceneModel(at({ dantian: 2800 / 3 }))!;
+    const m = buildSceneModel(at({ dantian: 1000 }))!;
     expect(m.segmentsFull).toBe(1);
     expect(m.currentSegmentPct).toBeCloseTo(0, 5);
     expect(m.moons[0].phase).toBe('full');
@@ -50,7 +52,8 @@ describe('修炼面板模型 · 星曜三态与经脉', () => {
 
   it('松动 + 真气够 → 首穴转朱砂；同脉后穴仍被「循序而行」挡住', () => {
     // 境界 2：N=3、须贯通手阳明（2 穴）→ 第 2 段圆满松动首穴
-    const m = buildSceneModel(at({ chargeHighWater: 2, dantian: 2800 / 3 * 2 + 400 }))!;
+    // 当前段（第 3 段）配额 4,000，曲池要 11% = 440
+    const m = buildSceneModel(at({ chargeHighWater: 2, dantian: 3000 + 500 }))!;
     const [first, second] = m.meridians[0].stars;
     expect(first.state).toBe('actionable');
     expect(second.gate).toBe('not-loosened');     // 第 3 段才松动
@@ -59,16 +62,16 @@ describe('修炼面板模型 · 星曜三态与经脉', () => {
   });
 
   it('松动了但当前段真气不够 → 墨星，且原因是 insufficient', () => {
-    // 第 2 段圆满、当前段只蓄了 1 点：曲池要 2800/3×11% ≈ 103
-    const m = buildSceneModel(at({ chargeHighWater: 2, dantian: 2800 / 3 * 2 + 1 }))!;
+    // 第 2 段圆满、当前段只蓄了 1 点：曲池要当前段配额 4,000 × 11% = 440
+    const m = buildSceneModel(at({ chargeHighWater: 2, dantian: 3000 + 1 }))!;
     const star = m.meridians[0].stars[0];
     expect(star.state).toBe('dim');
     expect(star.gate).toBe('insufficient');
-    expect(star.neiliCost).toBeCloseTo(2800 / 3 * 0.11, 6);
+    expect(star.neiliCost).toBeCloseTo(4000 * 0.11, 6);
   });
 
   it('前穴未通时给出挡路穴名，供「{前穴名} 未通」文案用', () => {
-    const m = buildSceneModel(at({ chargeHighWater: 3, dantian: 2800 }))!;
+    const m = buildSceneModel(at({ chargeHighWater: 3, dantian: 7000 }))!;
     const second = m.meridians[0].stars[1];
     expect(second.gate).toBe('prev-unopened');
     expect(second.blockedBy).toBe('曲池');
@@ -133,11 +136,11 @@ describe('修炼面板模型 · 氛围绑定', () => {
   });
 
   it('丹田满时 segmentsFull 抵满额、段进度归零——渲染层据此走「圆满」而非「第 N 转 0%」', () => {
-    const full = buildSceneModel(at({ dantian: 2800, chargeHighWater: 3 }))!;
+    const full = buildSceneModel(at({ dantian: 7000, chargeHighWater: 3 }))!;
     expect(full.segmentsFull).toBe(full.zhoutianCount);   // 三周天全满
     expect(full.currentSegmentPct).toBe(0);               // 段进度为 0，但含义是「已满」不是「刚起步」
     // 未满时才是真正的「第 N 转 x%」
-    const midway = buildSceneModel(at({ dantian: 2800 * 0.5 }))!;
+    const midway = buildSceneModel(at({ dantian: 3500 }))!;
     expect(midway.segmentsFull).toBeLessThan(midway.zhoutianCount);
   });
 

@@ -63,7 +63,8 @@ describe('manual fragments data layer', () => {
     const legacyPermTotal = EFFECT_TABLE
       .filter((effect) => effect.kind === 'permPct')
       .reduce((sum, effect) => sum + effect.value, 0);
-    expect(repNodeTotal).toBe(420);
+    // economy.md v2.2 五件传承：150 + 220 + 440 + 660 + 1,100（旧 8 节点合计 420）
+    expect(repNodeTotal).toBe(2570);
     expect(fragmentEquivalentTotal).toBe(180);
     expect(fragmentEquivalentTotal).toBeLessThanOrEqual(repNodeTotal / 2);
     expect(EFFECT_TABLE.every((effect) => effect.equivalent_reputation >= 30)).toBe(true);

@@ -1,11 +1,15 @@
 /**
- * 基础离线收益（闭关—出关结算）—— 权威来源：docs/rules/offline-rewards.md v1.0
+ * 基础离线收益（闭关—出关结算）—— 权威来源：docs/rules/offline-rewards.md v2.0
  * 纯函数模块：不引入 UI/存储依赖；结算时点 = 回归上线一次性结算（store.init），离线期间无后台结算。
  * 机制内部称「离线收益」；玩家侧文案一律「闭关 / 出关结算」（术语纪律，表 A 推导锚点）。
  */
 import { MAP_IDS, MAP_STAGE_COUNT, type MapId } from './enemies';
 
-/** 表 A 行结构（offline-rewards.md §7 导出结构定稿） */
+/** 离线上限与效率（offline-rewards.md §1.4 v2.0）：闭关以一日为限，效率恒定 60% */
+export const OFFLINE_CAP_MIN = 1440;
+export const OFFLINE_EFFICIENCY = 0.60;
+
+/** 表 A 行结构（offline-rewards.md §7 导出结构定稿；v2.0 起只用 silver/experience 两列） */
 export interface OfflineRewardStage {
   id: number;
   idleStageMin: number;
@@ -43,7 +47,7 @@ export const OFFLINE_SETTLEMENT_RULE = {
   /** 低于该原始离线秒数不展示出关结算（短离线静默入账，A5 在线连续口径） */
   minSettleSec: 180,
   silentGrantBelowMin: true,
-  maxSingleOfflineMin: 26,
+  maxSingleOfflineMin: OFFLINE_CAP_MIN,
   debugCapMin: 10,
   negativeTimePolicy: 'zero_reward',
   forwardTimePolicy: 'clamp_to_cap',
@@ -113,8 +117,10 @@ export interface OfflineSettleInput {
   currentMaxIdleStage: number;
   lastSeenAt: number;
   now: number;
-  /** A4 验收调试覆盖上限（分钟）；null/undefined = 用表 A 正式上限 */
+  /** A4 验收调试覆盖上限（分钟）；null/undefined = 用正式上限 24 小时 */
   capOverrideMin?: number | null;
+  /** 在线挂机内力速率（内力/秒，含全部乘区：宿慧、修行感悟、伤势、魂魄；formulas.md §3.2） */
+  neiliPerSec: number;
 }
 
 /** 出关结算结果：三资源 + 构成因子全量裸露（§6-2 数值可信：时长 × 速率 × 效率可核对） */
@@ -126,6 +132,8 @@ export interface OfflineSettleResult {
   capMin: number;
   capped: boolean;
   efficiency: number;
+  /** 结算用的在线挂机速率（内力/秒，含全部乘区），供观察员构成行核对 */
+  neiliPerSec: number;
   neili: number;
   silver: number;
   xp: number;
@@ -136,16 +144,17 @@ export interface OfflineSettleResult {
 }
 
 /**
- * 主公式（offline-rewards.md §2.1）：
- * 最终发放 = floor(每分钟产出 × 有效闭关分钟 × 离线效率 × 追赶倍率)，首发追赶倍率恒为 1。
+ * 主公式（offline-rewards.md §1.1 v2.0）：
+ *   离线内力 = 在线挂机速率 × 有效闭关分钟 × 60 × 60%
+ *   离线银两 / 阅历 = 表 A 档位每分钟产出 × 有效闭关分钟 × 60%
+ * 有效闭关分钟封顶 24 小时。
  */
 export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettleResult {
   const tier = findOfflineRewardStage(input.currentMaxIdleStage);
   const debugCap = input.capOverrideMin != null;
-  const capMin = debugCap ? input.capOverrideMin! : tier.offlineCapMin;
+  const capMin = debugCap ? input.capOverrideMin! : OFFLINE_CAP_MIN;
   const { rawSec, effectiveMin, capped } = getEffectiveOfflineMinutes(input.lastSeenAt, input.now, capMin);
-  const catchup = 1; // 首发 catchup_per_stage = catchup_max = 0（表 A §6）
-  const grant = (perMin: number) => Math.floor(perMin * effectiveMin * tier.offlineEfficiency * catchup);
+  const grant = (perMin: number) => Math.floor(perMin * effectiveMin * OFFLINE_EFFICIENCY);
   return {
     stageBasis: Math.max(1, Math.min(TOTAL_GLOBAL_STAGES, Math.floor(input.currentMaxIdleStage))),
     tier,
@@ -153,8 +162,9 @@ export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettl
     effectiveMin,
     capMin,
     capped,
-    efficiency: tier.offlineEfficiency,
-    neili: grant(tier.neiliPerMin),
+    efficiency: OFFLINE_EFFICIENCY,
+    neiliPerSec: input.neiliPerSec,
+    neili: grant(input.neiliPerSec * 60),
     silver: grant(tier.silverPerMin),
     xp: grant(tier.experiencePerMin),
     // 静默判定按原始离线秒（表 C min_settle_sec 语义：短离线/会话内刷新按在线连续处理），

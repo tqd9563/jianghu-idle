@@ -1,18 +1,26 @@
 /**
  * 归隐流程：三栏预览 → 二次确认（规格书 §8.6-1/2 硬性要求）
- * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md §2/§3/§6（冻结，不得改写）。
+ * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.0 §2/§3（冻结，不得改写）。
  */
-import { settleRetire } from '../engine/prestige';
+import { getStage, MAP_STAGE_COUNT, type MapId } from '../engine/enemies';
+import { deepestBoss, settleRetire, suhuiTotal } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';
 import { RetireHint } from '../components/RetireHint';
+import { fmtBig } from '../fmt';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
+/** 深浅 → 该图 Boss 名（本版深浅 = 图序，三档难度随第 5 步接入） */
+const bossName = (depth: number) => getStage(depth as MapId, MAP_STAGE_COUNT[depth as MapId]).name;
 
 export function RetireFlow() {
   const s = useGameStore();
-  const kind = retireKind(s);
-  if (kind === null || s.retireStep === null) return null;
-  const settle = settleRetire(kind, s.clearedStages, s.runPlaySec);
+  if (retireKind(s) === null || s.retireStep === null) return null;
+  const settle = settleRetire({
+    weightedHours: s.lifeWeightedHours ?? 0,
+    clearedStages: s.clearedStages,
+    deepestBossEver: s.deepestBossEver ?? 0,
+    fameThisLife: s.fameThisLife ?? 0,
+  });
+  const target = Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages));
 
   if (s.retireStep === 'confirm') {
     return (
@@ -21,8 +29,8 @@ export function RetireFlow() {
           <div className="modal-head"><span className="serif">就此归隐？</span></div>
           <div className="modal-body">
             <p className="retire-confirm-text">
-              这一段江湖就到此为止：境界、武学、地图进度与所有资源都会散去。
-              只有声望、已购节点和你留下的江湖记录，随你归来。此去无回头。
+              这一段江湖就到此为止：境界、武学、通关进度与所有资源都会散去。
+              只有声望、修行感悟、宿慧、传承和你留下的江湖记录，随你归来。此去无回头。
             </p>
             <div className="modal-actions">
               <button className="btn" onClick={s.confirmRetire}>挂剑，归隐</button>
@@ -45,55 +53,48 @@ export function RetireFlow() {
           <div className="retire-cols">
             <div className="rcol gain">
               <div className="rcol-head">你将获得</div>
-              {settle.milestones.map((m) => (
-                <div key={m.boss} className={`rline${m.achieved ? '' : ' na'}`}>
-                  <span>{m.achieved ? `击败${m.boss}` : `${m.boss}未败`}</span>
-                  <span className="v">+{m.achieved ? m.value : 0}</span>
-                </div>
-              ))}
-              <div className="rline subtotal">
-                <span>基础声望</span><span className="v">{settle.base}</span>
+              <div className="rline">
+                <span>基础声望<small className="why">本世乘区加权 {settle.weightedHours.toFixed(1)} 小时（闭关按六成计）</small></span>
+                <span className="v">{fmtBig(settle.base)}</span>
               </div>
-              <div className={`rline${settle.eliteKills > 0 ? '' : ' na'}`}>
-                <span>精英首杀 ×{settle.eliteKills}</span>
-                <span className="v">+{settle.eliteKills * 4}%</span>
+              <div className={`rline${settle.frontReached ? '' : ' na'}`}>
+                <span>
+                  打到自己的前沿
+                  <small className="why">
+                    {target === 0 ? '尚未击败任何 Boss'
+                      : settle.frontReached ? `再败${bossName(target)} · 历来最深`
+                        : `今天还没再败${bossName(target)}`}
+                  </small>
+                </span>
+                <span className="v">×{settle.frontMult.toFixed(1)}</span>
               </div>
-              <div className={`rline${settle.fullClear ? '' : ' na'}`}>
-                <span>{settle.fullClear ? '五图全通' : '五图未全通'}</span>
-                <span className="v">+{settle.fullClear ? 10 : 0}%</span>
-              </div>
-              {/* 加成触顶时显式说明，避免分项之和（可达 +58%）与实际生效值对不上（retire-copy §7.1） */}
-              {settle.perfPct >= 0.30 && settle.eliteKills * 4 + (settle.fullClear ? 10 : 0) > 30 && (
-                <div className="rline subtotal">
-                  <span>表现加成封顶</span><span className="v">+30%</span>
-                </div>
-              )}
-              {/* 「未竟折算 ×60%」行随保底折扣退役删除（reincarnation/spec.md §4；retire-copy v1.1 §2.1） */}
-              {settle.timePenalty < 1 && (
-                <div className="rline penalty">
-                  <span>轮时过短</span>
-                  <span className="v">×{Math.round(settle.timePenalty * 100) / 100}</span>
+              {settle.fameThisLife > 0 && (
+                <div className="rline na">
+                  <span>名号与经脉<small className="why">已随战随得，入账在先</small></span>
+                  <span className="v">+{fmtBig(settle.fameThisLife)}</span>
                 </div>
               )}
               <div className="rline total">
-                <span>本次归隐声望</span><span className="v gold">+{settle.total}</span>
+                <span>本次归隐声望</span><span className="v gold">+{fmtBig(settle.total)}</span>
               </div>
             </div>
             <div className="rcol lose">
               <div className="rcol-head">你将失去</div>
               <div className="rline"><span>境界</span><span className="v">回到「江湖新丁」</span></div>
-              <div className="rline"><span>地图</span><span className="v">回到「村外小径」</span></div>
               <div className="rline"><span>武学</span><span className="v">全部重置</span></div>
               <div className="rline"><span>路线</span><span className="v">重新选择</span></div>
-              <div className="rline"><span>内力</span><span className="v">{fmt(s.dantian)}　散去</span></div>
-              <div className="rline"><span>银两</span><span className="v">{fmt(s.silver)}　散去</span></div>
-              <div className="rline"><span>阅历</span><span className="v">{fmt(s.xp)}　散去</span></div>
+              <div className="rline"><span>通关进度</span><span className="v">各图重推</span></div>
+              <div className="rline"><span>内力</span><span className="v">{fmtBig(s.dantian)}　散去</span></div>
+              <div className="rline"><span>银两</span><span className="v">{fmtBig(s.silver)}　散去</span></div>
+              <div className="rline"><span>阅历</span><span className="v">{fmtBig(s.xp)}　散去</span></div>
             </div>
             <div className="rcol keep">
               <div className="rcol-head">你将保留</div>
-              <div className="rline"><span>声望</span><span className="v">现有 {fmt(s.reputation)} + 本次 {settle.total}</span></div>
-              <div className="rline"><span>声望节点</span><span className="v">已购 {s.ownedRepNodes.length} 个，永久生效</span></div>
-              <div className="rline"><span>江湖记录</span><span className="v">Boss 首破与通关印记</span></div>
+              <div className="rline"><span>声望</span><span className="v">现有 {fmtBig(s.reputation)} + 本次 {fmtBig(settle.total)}</span></div>
+              <div className="rline"><span>修行感悟</span><span className="v">{s.ganwuLevel ?? 0} 级</span></div>
+              <div className="rline"><span>宿慧</span><span className="v">+{suhuiTotal(s.peakRealm ?? 1).toFixed(1)}×</span></div>
+              <div className="rline"><span>传承</span><span className="v">已购 {s.ownedRepNodes.length} 件，永久生效</span></div>
+              <div className="rline"><span>江湖记录</span><span className="v">名号与通关印记</span></div>
               <RetireHint />
             </div>
           </div>

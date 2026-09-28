@@ -39,7 +39,11 @@ function exportFile(testerId: string) {
   writeFileSync(resolve(OUT_DIR, `mvp0_${testerId}_sample.json`), json);
 }
 
-describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
+/**
+ * ⚠ 暂时跳过（issue #22 第 4 步，用户 2026-09-28 拍板）：长线落地后境界总额约放大百倍，
+ * 本测试的「一小时一世」模拟玩家已不适用。第 6 步把模拟玩家改为「一天一世」模型后恢复。
+ */
+describe.skip('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
   beforeAll(() => {
     setAfterTick(assertNoForcedRebirth);
     vi.useFakeTimers();
@@ -84,9 +88,9 @@ describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
     st().confirmRetire();
     st().closeRetireCeremony();
     advance(10);
-    st().buyRepNode('jiumeng_chongwen');
+    st().buyRepNode('zairu_jianghu');
     advance(5);
-    st().buyRepNode('kuaisu_rumen');
+    st().buyRepNode('qingzhuang_shanglu');
 
     // 第二轮：更快抵达 Boss 2（首次挑战即算抵达，胜负不论）
     advance(15);

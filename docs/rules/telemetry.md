@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.1
+> **版本**：v2.2
 >
 > **日期**：2026-07-25
 >
@@ -32,7 +32,7 @@
 | `run_start` | 新轮开始（归隐确认后） | `carry_xp` |
 | `route_selected` | 选择路线 | `route` |
 | `charge_segment_full` | 新高水位的周天段圆满 | `segment`, `realm_target` |
-| `realm_breakthrough` | 突破成功 | `realm_to` |
+| `realm_breakthrough` | 突破成功 | `realm_to`, `first_reach`（首达即得宿慧） |
 | `skill_upgrade` | 武学升级 | `skill_level_to` |
 | `mech_node_bought` | 购买机制节点 | `node_id` |
 | `rep_node_bought` | 购买声望节点 | `node_id` |
@@ -40,8 +40,8 @@
 | `key_battle_end` | Boss/精英战斗结束 | `target`, `win`, `turns` |
 | `adjustment` | 失败后有意义调整 | `action`, `context` |
 | `route_switch` | 换路线 | `from`, `to` |
-| `retire_unlocked` | 归隐条件满足 | `kind`, `trigger` |
-| `retire_confirmed` | 归隐确认 | `kind`, `prestige_total`, `run_duration_s` |
+| `retire_unlocked` | 本世首次可归隐 | `kind`（恒为 `standard`）, `trigger`（`first_breakthrough`） |
+| `retire_confirmed` | 归隐确认 | `kind`, `weighted_hours`, `prestige_base`, `front_mult`, `fame_this_life`, `prestige_total`, `run_duration_s` |
 | `page_acquired` | 获得秘籍残页 | `page_id`, `channel` |
 | `test_paused` / `test_resumed` | 观察员暂停/恢复 | — |
 
@@ -73,7 +73,15 @@
 
 - `injury_inflicted` 自受伤系统（PR #16）起已在代码中上报，v2.1 补登。
 - 强制转世**不发** `retire_confirmed`；两者互斥，各自计一次转世。其后照常发 `run_start`。
-- `retire_confirmed.fallback_discount` 自保底折扣退役起恒为 1（字段保留，口径延续）。
+
+### 长线声望事件（v2.2）
+
+| 事件名 | 触发时机 | 关键字段 |
+|---|---|---|
+| `fame_gained` | 首次击败精英 / Boss、首次贯通经脉（跨世一次） | `source`（`elite` / `boss` / `meridian`）, `key`, `reputation` |
+| `ganwu_bought` | 购买修行感悟（一级或尽数） | `level_from`, `level_to`, `price`, `balance_after` |
+
+- 长线起保底归隐废止（`economy.md` §1.4）：`retire_unlocked` 不再有 `fallback` 形态；`retire_confirmed` 的 `perf_bonus_pct` / `time_penalty` / `fallback_discount` 三个字段随 v1.3 公式退役，改报三层公式的构成（`weighted_hours` × 10 → `prestige_base`，× `front_mult` → `prestige_total`）。
 
 ---
 
@@ -90,5 +98,6 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.2 | 2026-09-28 | 长线第 4 步：`realm_breakthrough` 加 `first_reach`；`retire_unlocked` 只剩 `first_breakthrough` 一种触发；`retire_confirmed` 改报三层公式构成；新增 `fame_gained`、`ganwu_bought`。 |
 | v2.1 | 2026-09-24 | 新增「受伤与转世事件」：补登 `injury_inflicted`，新增 `forced_reincarnation`；注明 `fallback_discount` 恒为 1。 |
 | v2.0 | — | 合并三份阶段埋点规格，去重去散，口径零变更。 |

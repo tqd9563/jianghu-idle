@@ -19,12 +19,16 @@ const PRESETS: Record<string, object> = {
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
   },
-  // 突破就绪态：境界 4 · 丹田 21,000 · 图3 推进到第 8 关
+  // 突破就绪态：境界 4 · 六段周天缴清、任脉已贯通 · 图3 推进到第 8 关
   ready: {
-    run: 1, realm: 4, route: 'tangmen', skillLevel: 7,
-    dantian: 21000, silver: 830, xp: 250,
+    run: 1, realm: 4, route: 'tangmen', skillLevel: 7, peakRealm: 4,
+    dantian: 17_900_000, silver: 830, xp: 250,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 5,
+    ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 6,
+    acupointProgress: {
+      guanyuan: { failCount: 0, opened: true }, qihai: { failCount: 0, opened: true },
+      danzhong: { failCount: 1, opened: true },
+    },
     clearedStages: [...m1all, ...m2upto(10), ...m3upto(7)], attempts: {}, autoAdvance: true,
   },
   // Boss 2 卡点态：境界 3 打推荐境界 4 的铁掌恶僧（复现失败诊断规则 1）
@@ -35,25 +39,27 @@ const PRESETS: Record<string, object> = {
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 1,
     clearedStages: [...m1all, ...m2upto(9)], attempts: {}, autoAdvance: false,
   },
-  // 标准归隐就绪态：境界 5 + 三图全通（46 分钟轮长 → 120 声望）
+  // 归隐就绪态：境界 5 + 三图全通
   retire: {
-    run: 1, realm: 5, route: 'tangmen', skillLevel: 10,
+    run: 1, realm: 5, route: 'tangmen', skillLevel: 10, peakRealm: 5, lifeWeightedHours: 12,
     dantian: 3400, silver: 830, xp: 59,
     reputation: 0, repTotal: 0,
     ownedMechNodes: ['tm1', 'tm2', 'tm3'], mechXpInvested: 270, chargeHighWater: 0,
     clearedStages: [...m1all, ...m2upto(10), ...m3upto(10)],
     attempts: { boss3: 2 }, autoAdvance: true,
-    runPlaySec: 2760, b3Fails: 0, lastProgressSec: 2700, fallbackUnlocked: false, standardNotified: false,
+    runPlaySec: 2760, lastProgressSec: 2700, standardNotified: false,
   },
-  // 保底归隐触发态：境界 5、Boss 3 连败 4 次（低收益归隐 ×60%）
-  fallback: {
-    run: 1, realm: 5, route: 'shaolin', skillLevel: 10,
-    dantian: 5200, silver: 610, xp: 12,
-    reputation: 0, repTotal: 0,
-    ownedMechNodes: ['sl1', 'sl2', 'sl3'], mechXpInvested: 270, chargeHighWater: 0,
-    clearedStages: [...m1all, ...m2upto(10), ...m3upto(9)],
-    attempts: { boss3: 4 }, autoAdvance: false,
-    runPlaySec: 2940, b3Fails: 4, lastProgressSec: 2760, fallbackUnlocked: false, standardNotified: false,
+  // 长线第 35 天早上（原型 longline-prototype.html 的 mock 玩家）：境界 4 峰值、推完前沿待归隐
+  day35: {
+    run: 35, realm: 4, route: 'tangmen', skillLevel: 8, peakRealm: 4,
+    dantian: 12_863_420, silver: 2140, xp: 312,
+    reputation: 150, repTotal: 180_000, ganwuLevel: 136,
+    ownedRepNodes: ['zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin'],
+    ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 5,
+    clearedStages: [...m1all, ...m2upto(10), ...m3upto(7)], attempts: {}, autoAdvance: true,
+    lifeWeightedHours: 598.4, deepestBossEver: 2, fameThisLife: 243,
+    fameClaimed: ['stage:m1s8', 'stage:m2s10', 'meridian:shoutaiyin', 'meridian:shouyangming', 'meridian:zuyangming'],
+    age: 63, eraStart: 1580,
   },
   // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证声望阁与节点购买
   run2: {
@@ -62,7 +68,7 @@ const PRESETS: Record<string, object> = {
     reputation: 130, repTotal: 130,
     ownedMechNodes: [], ownedRepNodes: [], chargeHighWater: 0,
     clearedStages: [], attempts: {}, autoAdvance: true,
-    runPlaySec: 0, b3Fails: 0, lastProgressSec: 0, fallbackUnlocked: false, standardNotified: false,
+    runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
   },
   // 转世系统（reincarnation-prototype.html）：垂暮态——108 岁，离寿元不足一次重伤
   dusk: {

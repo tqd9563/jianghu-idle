@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react';
 import { computeAttributes } from './engine/attributes';
 import { REALMS } from './engine/content';
 import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
-import { CHARGE_SEGMENTS, zhoutianProgress } from './engine/formulas';
-import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore } from './store/gameStore';
+import { zhoutianProgress } from './engine/formulas';
+import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore, zhoutianN } from './store/gameStore';
+import { fmtBig, fmtRate } from './fmt';
 import { WoundChip } from './components/WoundChip';
 import { freshInjuries, isHurt } from './engine/injury';
 import { SkinPicker } from './components/SkinPicker';
@@ -28,8 +29,6 @@ import { SoulChip } from './components/SoulChip';
 import { ERA_START, INIT_AGE } from './engine/reincarnation';
 
 type TabId = 'cultivate' | 'battle' | 'skill' | 'rep' | 'fragments';
-
-const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 
 export default function App() {
   const s = useGameStore();
@@ -73,7 +72,7 @@ export default function App() {
   const realmDef = REALMS[s.realm - 1];
   const rate = effIdleRate(s);
   const breakCost = effBreakCost(s);
-  const N = REALMS[s.realm - 1].zhoutianCount ?? CHARGE_SEGMENTS;
+  const N = zhoutianN(s.realm);
   const progress = breakCost !== null ? zhoutianProgress(s.dantian, breakCost, N) : null;
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
   const routeSelectOpen = s.realm >= 2 && s.route === null && s.retireCeremony === null;
@@ -119,34 +118,32 @@ export default function App() {
       </nav>
 
       <header className="topbar">
-        {retire && (
-          <button
-            className={`retire-btn${retire === 'standard' ? ' ready' : ''}`}
-            onClick={s.openRetire}
-            title={retire === 'standard'
-              ? '挂剑归隐 · 本轮圆满 · 声望全额'
-              : '挂剑归隐 · 未竟之轮 · 声望全额\n黑风寨主仍未被击败。现在归隐，声望照常全额结算，只是少了击败他的那一笔。'}
-          >
-            归隐<span className={`retire-dot ${retire}`} />
-          </button>
-        )}
+        {/* 归隐入口：门槛前也露出、但置灰写明缘由（长线原型 §4 A/B，economy.md §1.4） */}
+        <button
+          className={`retire-btn${retire ? ' ready' : ''}`}
+          onClick={s.openRetire}
+          disabled={!retire}
+          title={retire ? '本世已有所成，随时可挂剑归隐。' : '未有所成，何以言归隐——本世突破一次后可归隐。'}
+        >
+          归隐{retire && <span className="retire-dot standard" />}
+        </button>
         {s.soulUnsettled && <SoulChip onClick={() => setTab('cultivate')} />}
         <WoundChip injuries={s.injuries ?? freshInjuries()} onClick={() => setTab('cultivate')} />
         <div className="res-group">
           <div className="res">
             <span className="label">内力</span>
-            <span className="value">{fmt(s.dantian)}</span>
+            <span className="value">{fmtBig(s.dantian)}</span>
             {/* 带伤或魂魄未稳时速率转血褐——修炼变慢是第一眼就能看见的代价（受伤原型 §1） */}
             <span className={`rate${isHurt(s.injuries ?? freshInjuries()) || s.soulUnsettled ? ' down' : ''}`}>
-              +{rate.toFixed(1)} / 秒
+              +{fmtRate(rate)} / 秒
             </span>
           </div>
-          <div className="res"><span className="label">银两</span><span className="value">{fmt(s.silver)}</span></div>
-          <div className="res"><span className="label">阅历</span><span className="value">{fmt(s.xp)}</span></div>
+          <div className="res"><span className="label">银两</span><span className="value">{fmtBig(s.silver)}</span></div>
+          <div className="res"><span className="label">阅历</span><span className="value">{fmtBig(s.xp)}</span></div>
           <div className="res rep">
             <span className="label">声望</span>
-            <span className="value">{fmt(s.reputation)}</span>
-            {s.repTotal > 0 && <span className="rate faint">累计 {fmt(s.repTotal)}</span>}
+            <span className="value">{fmtBig(s.reputation)}</span>
+            {s.repTotal > 0 && <span className="rate faint">累计 {fmtBig(s.repTotal)}</span>}
           </div>
         </div>
       </header>
@@ -197,16 +194,6 @@ export default function App() {
       )}
       {s.paused && <div className="paused-chip">测试暂停中 · 计时与产出已冻结</div>}
       {observerOpen && <ObserverPanel onClose={() => setObserverOpen(false)} />}
-      {s.retireToast && (
-        <div className="toast" role="status">
-          <span>
-            {s.retireToast === 'fail_streak'
-              ? '四战黑风寨主未果。可就此归隐，声望全额结算；也可再作调整，击败他还能多得一笔。'
-              : '许久没有新的进展了。可就此归隐，声望全额结算——击败黑风寨主还能多得一笔。'}
-          </span>
-          <button className="toast-close" onClick={s.dismissRetireToast} aria-label="关闭">×</button>
-        </div>
-      )}
       {s.ceremony !== null && (
         <BreakthroughCeremony
           realmTo={s.ceremony}

@@ -27,8 +27,7 @@ const SEEDS = [42, 7, 2026];
 const LIVES = 6;
 /** 与 mvp0_sim.GREEDY_SHOP_ORDER 一致 */
 const SHOP: RepNodeId[] = [
-  'jiumeng_chongwen', 'kuaisu_rumen', 'poguan_xinde', 'jianghu_shulu',
-  'shimen_zhiyin', 'wudao_biji', 'zairu_jianghu', 'qingzhuang_shanglu',
+  'zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin', 'poguan_xinde',
 ];
 const DRIFT_TOLERANCE = 0.10;
 
@@ -71,7 +70,11 @@ interface Measured {
   medianMinutes: number;
 }
 
-describe('世时长实测（转世年岁速率标定输入）', () => {
+/**
+ * ⚠ 暂时跳过（issue #22 第 4 步，用户 2026-09-28 拍板）：长线落地后境界总额约放大百倍，
+ * 本测试的「一小时一世」模拟玩家已不适用。第 6 步把模拟玩家改为「一天一世」模型后恢复。
+ */
+describe.skip('世时长实测（转世年岁速率标定输入）', () => {
   beforeAll(() => {
     vi.useFakeTimers();
     // 冻结年岁：只量节奏，不让寿元截断测量

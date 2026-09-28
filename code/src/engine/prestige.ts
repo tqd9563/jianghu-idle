@@ -1,13 +1,12 @@
 /**
- * 声望与归隐 —— 权威来源：docs/rules/economy.md v1.2（§6 实现口径定稿）
- * + 规格书 §6.6/§8（v0.10）；玩家可见文案唯一冻结源：docs/rules/copy/retire.md v1.0。
+ * 声望、宿慧与修行感悟 —— 权威来源：docs/rules/economy.md v2.2；
+ * 玩家可见文案唯一冻结源：docs/rules/copy/retire.md。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
-import { allStages, pyRound, type EnemyTag } from './enemies';
+import { allStages, type EnemyTag } from './enemies';
 
 export type RepNodeId =
-  | 'qingzhuang_shanglu' | 'zairu_jianghu' | 'wudao_biji' | 'kuaisu_rumen'
-  | 'jianghu_shulu' | 'jiumeng_chongwen' | 'poguan_xinde' | 'shimen_zhiyin';
+  | 'zairu_jianghu' | 'qingzhuang_shanglu' | 'wudao_biji' | 'shimen_zhiyin' | 'poguan_xinde';
 
 export interface RepNodeDef {
   id: RepNodeId;
@@ -17,16 +16,16 @@ export interface RepNodeDef {
   desc: string;
 }
 
-/** 8 节点定稿（声望经济表 §2 v1.1）；卡面文案逐字取自 retire-copy §5.1 */
+/**
+ * 五件传承（economy.md §4 v2.2 定价：修行感悟买完后每日结余 220，约第 12 天前买齐）。
+ * 旧梦重温、快速入门、江湖熟路已废止。卡面文案逐字取自 retire-copy §5.1。
+ */
 export const REP_NODES: RepNodeDef[] = [
-  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 30, type: '策略', desc: '每一轮里，第一次更换路线不收银两' },
-  { id: 'zairu_jianghu',      name: '再入江湖', price: 40, type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
-  { id: 'wudao_biji',         name: '武道笔记', price: 40, type: '资源', desc: '每轮开局自带 40 点阅历' },
-  { id: 'kuaisu_rumen',       name: '快速入门', price: 50, type: '节奏', desc: '突破至「初窥门径」「小有所成」的内力消耗降低 30%' },
-  { id: 'jianghu_shulu',      name: '江湖熟路', price: 50, type: '效率', desc: '地图战斗获得的内力提高 20%' },
-  { id: 'jiumeng_chongwen',   name: '旧梦重温', price: 60, type: '效率', desc: '挂机修炼的内力产出提高 20%' },
-  { id: 'poguan_xinde',       name: '破关心得', price: 70, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
-  { id: 'shimen_zhiyin',      name: '师门指引', price: 80, type: '策略', desc: '每轮开局免费获得当前路线的一重参悟，更换路线后跟随新路线' },
+  { id: 'zairu_jianghu',      name: '再入江湖', price: 150,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
+  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '每一世里，第一次更换路线不收银两' },
+  { id: 'wudao_biji',         name: '武道笔记', price: 440,  type: '资源', desc: '每一世开局自带 40 点阅历' },
+  { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '每一世开局免费获得当前路线的一重参悟，更换路线后跟随新路线' },
+  { id: 'poguan_xinde',       name: '破关心得', price: 1100, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
 ];
 
 export const REP_NODE_MAP: Record<RepNodeId, RepNodeDef> = Object.fromEntries(
@@ -37,19 +36,8 @@ export const hasNode = (owned: string[], id: RepNodeId) => owned.includes(id);
 
 // ---- 节点效果（与 sim run_playthrough2 逐项对齐，声望经济表 §6.1/§6.3） ----
 
-/** 旧梦重温：挂机内力产出 ×1.2（只作用于挂机，不作用于战斗奖励） */
-export const idleMult = (owned: string[]) => (hasNode(owned, 'jiumeng_chongwen') ? 1.2 : 1);
-
-/** 快速入门：境界 2/3 突破消耗 −30%（sim early_realm_discount） */
-export function breakthroughDiscount(realmTo: number, owned: string[]): number {
-  return realmTo <= 3 && hasNode(owned, 'kuaisu_rumen') ? 0.7 : 1;
-}
-
 /** 破关心得：对 Boss（高血 或 高防+高攻）伤害 +10%，走 fight 的 bossDmgBonus */
 export const bossDmgBonus = (owned: string[]) => (hasNode(owned, 'poguan_xinde') ? 0.10 : 0);
-
-/** 江湖熟路：地图战斗（含首通与回刷）内力奖励 ×1.2；银两/阅历不乘（§6.1 定稿按 sim） */
-export const battleNeiliMult = (owned: string[]) => (hasNode(owned, 'jianghu_shulu') ? 1.2 : 1);
 
 /** 武道笔记：新一轮开局继承阅历 */
 export const carryXp = (owned: string[]) => (hasNode(owned, 'wudao_biji') ? 40 : 0);
@@ -67,69 +55,91 @@ export const COUNTER_HINTS: Record<EnemyTag, string> = {
   高攻: '出手极重，需足够气血或护盾扛住',
 };
 
-// ---- 归隐门槛与声望结算 ----
+// ---- 产出乘区：宿慧 + 修行感悟（economy.md §2 / §3） ----
 
-/** 保底触发实现值（声望经济表 §6.2 定稿）：Boss 3 累计失败 ≥4（调整不重置）/ 停滞 12 分钟 */
-export const FALLBACK_FAIL_STREAK = 4;
-export const FALLBACK_STALL_MIN = 12;
-/**
- * 保底折扣：**已退役，归 1.0**（reincarnation/spec.md v1.1 §4）。保底归隐是玩家主动选择，按全额结算；
- * 「仓促收场」的代价改由强制转世的「魂魄未稳」承担，不再在结算里打折。
- * 口径分叉（已知、无害）：`mvp0_sim.py` 的 REP_LOWYIELD_FACTOR 仍为 0.60。它只影响 mvp0 历史
- * campaign；转世标定自 2026-09-24 起改用真实游戏实测世时长（pace.sim.test.ts），不再依赖它。
- */
-export const FALLBACK_DISCOUNT = 1;
-/** 短轮惩罚门槛（声望经济表 §1.3）：≥15 分钟无修正，之下 ×(t/15)² */
-export const TIME_PENALTY_MIN = 15;
+/** 宿慧：首达境界 X 的一次性永久产出加成，跨归隐保留（economy.md §2，pacing_sim 表二） */
+export const SUHUI: Readonly<Record<number, number>> = { 2: 1.2, 3: 2.8, 4: 5.8, 5: 10.0 };
 
-/** 里程碑声望（声望经济表 §1.1）；行文案见 retire-copy §2.1 */
-/** 里程碑 = 各图 Boss（声望经济表 §1.1，五图合计 200） */
-const MILESTONES = [
-  { key: 'm1s8', boss: '山贼头目', value: 20 },
-  { key: 'm2s10', boss: '铁掌恶僧', value: 30 },
-  { key: 'm3s10', boss: '黑风寨主', value: 50 },
-  { key: 'm4s10', boss: '镇关都督', value: 40 },
-  { key: 'm5s10', boss: '无相居士', value: 60 },
-] as const;
+/** 历来到过的最高境界 peakRealm 对应的宿慧合计 */
+export function suhuiTotal(peakRealm: number): number {
+  return Object.entries(SUHUI).reduce((sum, [realm, v]) => sum + (Number(realm) <= peakRealm ? v : 0), 0);
+}
 
-/** 精英与全通判据覆盖全部五图（§1.2：每精英 +4%、48 关全通 +10%，合计封顶 +30%） */
-const ELITE_KEYS = allStages().filter((e) => e.kind === 'elite').map((e) => `m${e.map}s${e.stage}`);
-const TOTAL_STAGES = allStages().length;
+/** 修行感悟：第 n 级 +0.2× 基础产出，价格 10 × n 声望，不限购（economy.md §3） */
+export const GANWU_GAIN = 0.2;
+export const ganwuPrice = (level: number) => 10 * level;
+
+/** 从当前等级起，用 reputation 最多能连买几级、共花多少（「尽数传承」） */
+export function ganwuAffordable(level: number, reputation: number): { levels: number; cost: number } {
+  let levels = 0, cost = 0;
+  while (cost + ganwuPrice(level + levels + 1) <= reputation) {
+    cost += ganwuPrice(level + levels + 1);
+    levels += 1;
+  }
+  return { levels, cost };
+}
+
+/** 产出乘区 M = 1 + 宿慧 + 修行感悟（formulas.md §3.2；伤势、魂魄另乘，不计入 M） */
+export function outputMult(peakRealm: number, ganwuLevel: number): number {
+  return 1 + suhuiTotal(peakRealm) + GANWU_GAIN * ganwuLevel;
+}
+
+// ---- 归隐声望：基础 × 行为乘数 + 成就（economy.md §1） ----
+
+/** 基础声望 = 10 × 本世乘区加权有效时长（小时）；在线全额、离线 × 60% */
+export const BASE_REP_PER_HOUR = 10;
+/** 行为乘数「打到自己的前沿」（economy.md §1.2） */
+export const FRONT_MULT = 1.2;
+/** 成就层（economy.md §1.3）：一次性，按当前乘区 × 系数给，即时入账 */
+export const FAME_ELITE = 6.4;
+export const FAME_BOSS = 24;
+export const FAME_MERIDIAN = 80;
+
+/** Boss 关卡键 → 深浅（本版只有「初入」一档，深浅 = 图序；三档难度随第 5 步接入，难度优先） */
+const BOSS_DEPTH: ReadonlyMap<string, number> = new Map(
+  allStages().filter((e) => e.kind === 'boss').map((e) => [`m${e.map}s${e.stage}`, e.map]),
+);
+const ELITE_KEYS: ReadonlySet<string> = new Set(
+  allStages().filter((e) => e.kind === 'elite').map((e) => `m${e.map}s${e.stage}`),
+);
+export const isBossKey = (key: string) => BOSS_DEPTH.has(key);
+export const isEliteKey = (key: string) => ELITE_KEYS.has(key);
+
+/** 本世击败过的最深 Boss；一个都没打过为 0 */
+export function deepestBoss(clearedStages: readonly string[]): number {
+  return clearedStages.reduce((d, k) => Math.max(d, BOSS_DEPTH.get(k) ?? 0), 0);
+}
 
 export interface RetireSettle {
-  kind: 'standard' | 'fallback';
-  milestones: { boss: string; value: number; achieved: boolean }[];
+  /** 本世乘区加权有效时长（小时） */
+  weightedHours: number;
   base: number;
-  eliteKills: number;
-  fullClear: boolean;
-  /** 表现加成（0–0.30，声望经济表 §1.2 封顶） */
-  perfPct: number;
-  /** 耗时修正（正常 1.0，声望经济表 §1.3） */
-  timePenalty: number;
-  /** 保底折扣（已退役，恒为 1.0；字段保留供埋点 fallback_discount 口径延续） */
-  discount: number;
+  /** 是否打到自己的前沿：本世最深 Boss 不浅于历来最深，且至少打过一个 Boss */
+  frontReached: boolean;
+  frontMult: number;
+  /** 本世已入账的名号与经脉声望（成就层即时入账，结算只展示不再重复发放） */
+  fameThisLife: number;
+  /** 本次归隐入账 = 基础 × 行为乘数（成就层已即时入账） */
   total: number;
 }
 
 /**
- * 本轮声望 = 基础 × (1 + 表现加成) × 耗时修正 × 保底折扣（声望经济表 §1）。
- * 口径 = sim settle_reputation；末位取整用 Python 银行家舍入（pyRound），防 .5 边界差一。
+ * 本世声望结算（economy.md §1）：基础 = 10 × 乘区加权小时；× 行为乘数；成就层另计且已即时入账。
+ * 口径与 pacing_sim 表五一致（c = NODE_P0 = 10）。
  */
-export function settleRetire(
-  kind: 'standard' | 'fallback',
-  clearedStages: string[],
-  runPlaySec: number,
-): RetireSettle {
-  const milestones = MILESTONES.map((m) => ({
-    boss: m.boss, value: m.value, achieved: clearedStages.includes(m.key),
-  }));
-  const base = milestones.reduce((sum, m) => sum + (m.achieved ? m.value : 0), 0);
-  const eliteKills = ELITE_KEYS.filter((k) => clearedStages.includes(k)).length;
-  const fullClear = clearedStages.length >= TOTAL_STAGES;
-  const perfPct = Math.min(0.30, eliteKills * 0.04 + (fullClear ? 0.10 : 0));
-  const minutes = runPlaySec / 60;
-  const timePenalty = minutes >= TIME_PENALTY_MIN ? 1 : Math.pow(minutes / TIME_PENALTY_MIN, 2);
-  const discount = kind === 'fallback' ? FALLBACK_DISCOUNT : 1;
-  const total = pyRound(base * (1 + perfPct) * timePenalty * discount);
-  return { kind, milestones, base, eliteKills, fullClear, perfPct, timePenalty, discount, total };
+export function settleRetire(args: {
+  weightedHours: number;
+  clearedStages: readonly string[];
+  deepestBossEver: number;
+  fameThisLife: number;
+}): RetireSettle {
+  const base = Math.floor(BASE_REP_PER_HOUR * args.weightedHours);
+  const thisLife = deepestBoss(args.clearedStages);
+  const frontReached = thisLife > 0 && thisLife >= args.deepestBossEver;
+  const frontMult = frontReached ? FRONT_MULT : 1;
+  return {
+    weightedHours: args.weightedHours, base, frontReached, frontMult,
+    fameThisLife: args.fameThisLife,
+    total: Math.floor(base * frontMult),
+  };
 }

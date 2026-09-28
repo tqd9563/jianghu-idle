@@ -34,6 +34,7 @@
 | `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定 / 修炼面板呈现方案） | ZhoutianMandala.tsx, zhoutianMandalaModel.ts |
 | `systems/zhoutian/sim.py` | 周天 sim（v4 冲穴耗内力制，判据 W1–W4） | acupoints.test.ts |
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 → 境界成本/宿慧/声望经济，唯一数值源） | design.md §3、economy.md v2 由其生成 |
+| `systems/pacing/design.md` | 长线节奏落地设计（9 条裁决总账：每日归隐、归隐门槛、离线、战斗长线化、版本天花板；issue #22） | — |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |

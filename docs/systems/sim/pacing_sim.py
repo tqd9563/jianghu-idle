@@ -31,14 +31,23 @@ MILESTONE_DAY: dict[int, int] = {2: 1, 3: 7, 4: 21, 5: 50, 6: 100}
 E_HOURS = 16.0          # 标准玩家每日有效产出时长（在线 + 离线折算）
 OFFLINE_EFF = 0.60      # 离线效率：4h 在线 + 20h 离线 × 60% = 16h ✓
 RETIRES_PER_DAY = 1.0   # 归隐频率
-SUHUI_SHARE = 0.60      # 乘区成长中由「宿慧」（首达奖励）交付的比例，其余由声望阁
+SUHUI_SHARE = 0.20      # 乘区成长中由「宿慧」（首达奖励）交付的比例，其余由声望阁
 
 # 周天段数与配额公比
 ZHOUTIAN_N: dict[int, int] = {1: 4, 2: 3, 3: 4, 4: 6, 5: 8}
 QUOTA_RATIO = 2.0       # 境界内每个周天的配额是上一个的 2 倍
 
+# 内力的其它去处（2026-09-28 长线落地第 2 步新增）：
+#   境界总额只是「突破要缴的」那部分；同一段时间里产出的内力还要分给冲穴与门径武学。
+#   不扣掉它们，里程碑会整体往后漂。两项均为「占该境界全部内力开销」的份额口径。
+# 冲穴附加：通够突破所需经脉额外花掉的内力 ÷ 境界总额（../zhoutian/sim.py 中位值，
+#   境界 1 教学脉按同一规则另算）
+CHONGXUE_OVERHEAD: dict[int, float] = {1: 0.19, 2: 0.15, 3: 0.31, 4: 0.31, 5: 0.37}
+# 门径武学份额：标准玩家把全部内力产出的这一比例花在门径武学上（longline_sim.py 标定）
+SKILL_SHARE = 0.20
+
 # 产出类节点（声望阁「修行感悟」）：第 n 级 +NODE_GAIN 基础产出，价格 = NODE_P0 × n
-NODE_GAIN = 0.10
+NODE_GAIN = (1 - SUHUI_SHARE) / 4   # 每天购 4 级即交付声望阁的日斜率；表五闭式解 c = NODE_P0 依赖「每天 4 级」
 NODE_P0 = 10.0          # 声望；由表五闭式解反标定——基础声望系数 c = NODE_P0
 
 def rate(realm: int) -> float:
@@ -64,9 +73,12 @@ BASE_TIME = {1: 0.0}                       # 到达境界 X 所需的累计基�
 for x, d in MILESTONE_DAY.items():
     BASE_TIME[x] = E * d
 
-REALM_TOTAL: dict[int, int] = {}           # 停留在境界 r 期间需产出的内力
+REALM_TOTAL: dict[int, int] = {}           # 境界 r 的突破总额（分 N 段周天缴纳）
+REALM_SPEND: dict[int, float] = {}         # 停留在境界 r 期间的全部内力开销 = 产出
 for r in range(1, 6):
-    REALM_TOTAL[r] = sig3((BASE_TIME[r + 1] - BASE_TIME[r]) * rate(r))
+    REALM_SPEND[r] = (BASE_TIME[r + 1] - BASE_TIME[r]) * rate(r)
+    # 产出 = 总额 × (1 + 冲穴附加) ÷ (1 − 武学份额)  ⇒  总额 = 产出 × (1 − 武学份额) ÷ (1 + 冲穴附加)
+    REALM_TOTAL[r] = sig3(REALM_SPEND[r] * (1 - SKILL_SHARE) / (1 + CHONGXUE_OVERHEAD[r]))
 
 def quotas(realm: int) -> list[float]:
     """境界内各周天配额：等比数列，末段 = 该境界总额的一半（公比 2）"""
@@ -75,7 +87,7 @@ def quotas(realm: int) -> list[float]:
     return [q1 * QUOTA_RATIO ** i for i in range(n)]
 
 # ═══════════════════════════════════════════════════════════
-# 求解 2：乘区的两层交付（宿慧 60% + 声望阁 40%）
+# 求解 2：乘区的两层交付（宿慧 SUHUI_SHARE + 声望阁其余）
 #   要「在第 d_X 天刚好够得着境界 X」，此刻乘区必须 = d_X，
 #   而此刻玩家手上只有境界 2..X-1 的宿慧（X 尚未达成）。
 # ═══════════════════════════════════════════════════════════
@@ -133,6 +145,8 @@ def main() -> None:
     print("═" * w)
     print(f"节奏求解器 · 输入：E={E_HOURS}h/天（离线效率 {OFFLINE_EFF:.0%}）、"
           f"归隐 {RETIRES_PER_DAY:.0f}次/天、宿慧占比 {SUHUI_SHARE:.0%}、周天公比 {QUOTA_RATIO:.0f}")
+    print(f"          内力去处：武学份额 {SKILL_SHARE:.0%}、冲穴附加 "
+          + " / ".join(f"境界{r} {CHONGXUE_OVERHEAD[r]:.0%}" for r in range(1, 6)))
     print("═" * w)
 
     print("\n【表一】各境界内力总额与周天配额")
@@ -142,7 +156,7 @@ def main() -> None:
     prev = None
     for r in range(1, 6):
         q = quotas(r)
-        t = REALM_TOTAL[r] / rate(r) / 3600
+        t = REALM_SPEND[r] / rate(r) / 3600          # 停留时长含冲穴与武学开销
         cliff = f"{REALM_TOTAL[r]/prev:.1f}×" if prev else "—"
         print(f"{r:<4}{ZHOUTIAN_N[r]:>3}{rate(r):>9.1f}{REALM_TOTAL[r]:>14,}{cliff:>7}"
               f"{t:>9.0f}h{q[0]:>12,.0f}{q[-1]:>14,.0f}")

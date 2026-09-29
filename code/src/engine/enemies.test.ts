@@ -2,15 +2,17 @@
  * 长线关卡表完整性（content.md §2.0 v2.3；数据由 export_stage_table.py 生成）。
  */
 import { describe, expect, it } from 'vitest';
+import { fight } from './combat';
+import { playerBuild } from '../store/gameStore';
 import {
   allStages, enemyStatsAt, getStage, isSealed, MAP_IDS, parseStageKey, stageKey, TIERS, trackLength,
 } from './enemies';
 
 describe('长线关卡表', () => {
-  it('开放 9 条前沿、共 227 关；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
+  it('开放 9 条前沿、共 233 关；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
     const open = MAP_IDS.flatMap((m) => TIERS.filter((t) => !isSealed(m, t)).map((t) => `${m}-${t}`));
     expect(open).toEqual(['1-0', '1-1', '1-2', '2-0', '2-1', '2-2', '3-0', '3-1', '4-0']);
-    expect(allStages()).toHaveLength(227);
+    expect(allStages()).toHaveLength(233);
     expect(trackLength(5, 0)).toBe(0);
   });
 
@@ -45,6 +47,18 @@ describe('长线关卡表', () => {
     const st = enemyStatsAt(e.x!, e.tags);
     expect(e.hp).toBeCloseTo(st.hp, 9);
     expect(e.defK).toBeCloseTo(st.defK, 9);
+  });
+
+  it('图 1 初入前 6 关是入门关：境界 1 未择路的裸属性实战胜率 ≥ 90%，第 7 关起要境界 2', () => {
+    const bare = playerBuild({ realm: 1, route: null, skillLevel: 0, ownedMechNodes: [], completedBooks: [], injuries: undefined });
+    for (let st = 1; st <= 6; st++) {
+      const e = getStage(1, 0, st);
+      expect(e.recommendedRealm).toBe(1);
+      let wins = 0;
+      for (let i = 0; i < 400; i++) if (fight(bare, e, { mode: 'rng' }).win) wins++;
+      expect(wins / 400).toBeGreaterThanOrEqual(0.9);
+    }
+    expect(getStage(1, 0, 7).recommendedRealm).toBe(2);
   });
 
   it('关卡键可往返解析', () => {

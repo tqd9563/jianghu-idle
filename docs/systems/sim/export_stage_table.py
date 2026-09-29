@@ -12,6 +12,8 @@
           当量 = 格位当量 − 该天各路线因标签损失的最大当量。
   · Boss（段末）：三条路线在下一境界首日都打得过（含破关心得），带双标签。
     （图 1 初入中段的头目只在「境界 1 段」存在时出现；多天一世后首日在线即入境界 2，该段已不存在。）
+  · 入门关（图 1 初入最前面）：境界 1 还没择路、练不了武学，只有裸属性。从当量 INTRO_X0 起每关 +INTRO_GAP，
+          铺到裸属性 EV 前沿减 INTRO_MARGIN（实战胜率约 95% 以上），让第一世开局的几个小时有关可推。
 
 用法：python3 export_stage_table.py > ../../../code/src/engine/data/longline-stages.json
 """
@@ -57,7 +59,30 @@ BOSSES = {
     3: ("黑风寨主", ("高血", "狂暴")),
     4: ("镇关都督", ("高防", "高攻")),
 }
-HEADMAN = ("山贼小头目", ("高血",))   # 图 1 初入中段：承接第 1 世到第 2 世的那一跳
+HEADMAN = ("山贼小头目", ("高血",))
+INTRO_NAMES = ["村口恶犬", "醉酒闲汉", "偷鸡毛贼", "街头地痞", "泼皮帮闲", "泼皮头子"]
+
+# 入门关（图 1 初入最前面）：境界 1 未择路的裸属性构筑能稳赢的几关
+INTRO_X0 = 1.0
+INTRO_GAP = 0.15
+INTRO_MARGIN = 0.25   # EV 前沿 2.04 − 0.25 ≈ 1.79，实战（RNG）胜率约 95% 以上
+
+
+def bare_build(realm: int) -> dict:
+    """未择路的裸属性构筑（与 gameStore.playerBuild 的未择路分支一致）"""
+    b = L.m.make_build("huashan", realm, 0, 0)
+    r = L.m.REALMS[realm]
+    b.update(hp=r["hp"], atk=r["atk"], dfs=r["dfs"], hit=r["hit"], dodge=r["dodge"],
+             crit=L.m.BASE_CRIT, cd=L.m.BASE_CD, first_crit=False, sq_need=99, burst_mult=0.0)
+    return b
+
+
+def intro_stages() -> list[dict]:
+    top = L.frontier_x(bare_build(1)) - INTRO_MARGIN
+    n = math.floor((top - INTRO_X0) / INTRO_GAP + 1e-9) + 1
+    return [dict(stage=i + 1, kind="normal", name=INTRO_NAMES[i % len(INTRO_NAMES)],
+                 x=round(INTRO_X0 + i * INTRO_GAP, 4), tags=[], recommendedRealm=1)
+            for i in range(n)]   # 图 1 初入中段：承接第 1 世到第 2 世的那一跳
 
 # 奖励（content.md §2.0，暂定）：关卡不掉内力；银两随当量涨，阅历按类别给
 def silver_of(x: float, kind: str) -> int:
@@ -92,18 +117,21 @@ def main():
             xs.append(L.frontier_x(bd, tags))
         return min(xs)
 
-    out: dict[tuple[int, int], list[dict]] = {}
+    out: dict[tuple[int, int], list[dict]] = {(1, 0): intro_stages()}
+    n_intro = len(out[(1, 0)])
     elite_seq = {m: 0 for m in ELITES}
     for (mp, tier_name, b), (x0, top, _xb) in sorted(S["tracks"].items(), key=lambda kv: (kv[0][2], kv[0][0])):
         tier = TIER_OF[tier_name]
         ds = plateaus[b]
         stages = out.setdefault((mp, tier), [])
+        base = n_intro if (mp, tier) == (1, 0) else 0   # 入门关不参与精英排位与普通敌人轮换，原有关卡只顺延编号
         stagger = L.TRACKS[b].index((mp, tier_name)) * L.ELITE_EVERY // len(L.TRACKS[b])
         n = max(0, math.floor((top - x0) / L.STAGE_GAP))
         for i in range(n):
             slot = x0 + i * L.STAGE_GAP
             no = len(stages) + 1
-            if (no + stagger) % L.ELITE_EVERY == 0:
+            seg_no = no - base
+            if (seg_no + stagger) % L.ELITE_EVERY == 0:
                 tags = ELITE_TAGS[mp][(elite_seq[mp]) % len(ELITE_TAGS[mp])]
                 name = ELITES[mp][elite_seq[mp] % len(ELITES[mp])]
                 elite_seq[mp] += 1
@@ -112,7 +140,7 @@ def main():
                 kind = "elite"
             else:
                 tags, kind = (), "normal"
-                name = NORMALS[mp][(no - 1) % len(NORMALS[mp])]
+                name = NORMALS[mp][(seg_no - 1) % len(NORMALS[mp])]
                 x = slot
             # 推荐境界 = 本段境界（普通关与精英在本段内就打得过）
             stages.append(dict(stage=no, kind=kind, name=name, x=round(x, 4), tags=list(tags),

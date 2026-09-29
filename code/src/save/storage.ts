@@ -15,9 +15,10 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v3 = 窍穴 id 由位置编码（r2-a11）改为穴位拼音（quchi），与境界/脉序解耦；
  * v4 = 长线节奏（issue #22）：境界总额约放大百倍、新增宿慧与修行感悟；
  * v5 = 长线关卡（issue #22 第 5b 步）：关卡键改为「图 × 难度 × 关」，新增难度解锁；
- * v6 = 多天一世（issue #22 第 6 步）：境界总额与关卡表重解、寿元随境界、新增本世时长。
+ * v6 = 多天一世（issue #22 第 6 步）：境界总额与关卡表重解、寿元随境界、新增本世时长；
+ * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延。
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -94,7 +95,45 @@ export function loadGameWithVersion<T>(): { state: T; version: number } | null {
 export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   let out = state;
   if (fromVer < 3) out = migrateAcupointIdsV2ToV3(out);
+  if (fromVer < 7) out = migrateIntroStagesV6ToV7(out);
   return out;
+}
+
+/** v7 在图 1 初入最前面插入的入门关数（迁移专用，冻结在 v7 口径，不随关卡表变化） */
+const V7_INTRO_STAGES = 6;
+const M1T0_RE = /^(stage:)?m1t0s(\d+)$/;
+
+/**
+ * v6 → v7：图 1 初入原第 N 关变成第 N+6 关。凡按关卡键记的字段都顺延：
+ * 通关记录、挑战次数、回刷衰减键、已领成就（'stage:' 前缀）。
+ * 已通过图 1 初入任意一关的存档，入门关视为已通，免得回头重打。
+ */
+function migrateIntroStagesV6ToV7<T>(state: T): T {
+  const s = state as {
+    clearedStages?: string[];
+    attempts?: Record<string, number>;
+    refarmKey?: string | null;
+    fameClaimed?: string[];
+  };
+  if (!s || typeof s !== 'object') return state;
+  const shift = (key: string) =>
+    key.replace(M1T0_RE, (_, pre: string | undefined, n: string) =>
+      `${pre ?? ''}m1t0s${Number(n) + V7_INTRO_STAGES}`);
+
+  // 只改存档里本来就有的字段：补出 undefined 键会在 {...FRESH, ...saved} 合并时盖掉默认值
+  const out: typeof s = { ...s };
+  if (Array.isArray(s.clearedStages)) {
+    const shifted = s.clearedStages.map(shift);
+    const touched = s.clearedStages.some((k) => M1T0_RE.test(k));
+    const intro = Array.from({ length: V7_INTRO_STAGES }, (_, i) => `m1t0s${i + 1}`);
+    out.clearedStages = touched ? [...intro, ...shifted] : shifted;
+  }
+  if (s.attempts && typeof s.attempts === 'object') {
+    out.attempts = Object.fromEntries(Object.entries(s.attempts).map(([k, v]) => [shift(k), v]));
+  }
+  if (typeof s.refarmKey === 'string') out.refarmKey = shift(s.refarmKey);
+  if (Array.isArray(s.fameClaimed)) out.fameClaimed = s.fameClaimed.map(shift);
+  return out as T;
 }
 
 function migrateAcupointIdsV2ToV3<T>(state: T): T {

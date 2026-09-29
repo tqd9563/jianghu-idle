@@ -18,6 +18,8 @@ const THORNS_ENEMY = 0.3;
 const ARMOR_BREAK_PP = 0.15;
 const ENEMY_POISON_COEF = 0.08;
 const CRIT_CAP = 0.8;
+/** 伤害浮动（formulas.md §1.3 v1.8）：RNG 模式每次出手 ×[1−DMG_SPREAD, 1+DMG_SPREAD]，均值 1；EV 模式不浮动 */
+export const DMG_SPREAD = 0.1;
 
 export interface Build {
   hp: number; atk: number; plainMult: number; def: number;
@@ -144,6 +146,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   const defK = enemy.defK ?? 100;
   const rng = opts.rng ?? Math.random;
   const roll = (p: number) => (ev ? p : rng() < p ? 1 : 0);
+  const spread = () => (ev ? 1 : 1 + DMG_SPREAD * (2 * rng() - 1));
 
   let php = build.hp;
   let pshield = build.hp * build.shieldPct;
@@ -198,13 +201,13 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     const critEv = ev
       ? (forced ? build.cd : 1 - build.crit + build.crit * build.cd)
       : (critRoll ? build.cd : 1);
-    let dealt = build.atk * critEv * mitigationMultiplier(enemy.def, defK) * hitRoll * dmgMult * build.plainMult;
+    let dealt = build.atk * critEv * mitigationMultiplier(enemy.def, defK) * hitRoll * dmgMult * build.plainMult * spread();
 
     if (build.sqNeed < 99) {
       sq += ev ? pHit * (forced ? 1 : build.crit) : hitRoll * critRoll;
       if (sq >= build.sqNeed) {
         sq -= build.sqNeed;
-        const burst = build.atk * build.burstMult * mitigationMultiplier(enemy.def, defK) * dmgMult;
+        const burst = build.atk * build.burstMult * mitigationMultiplier(enemy.def, defK) * dmgMult * spread();
         dealt += burst;
         stats.burstCount += 1;
         stats.burstDmg += burst;
@@ -245,7 +248,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     }
     const pdfs = build.def * (1 - Math.min(abStacks, 3) * ARMOR_BREAK_PP);
     const eHitRoll = roll(eHit);
-    let edmg = eatk * eHitRoll * mitigationMultiplier(pdfs, defK);
+    let edmg = eatk * eHitRoll * mitigationMultiplier(pdfs, defK) * spread();
     if (build.lowhpDr && php < 0.3 * build.hp) edmg *= 1 - build.lowhpDr;
     const absorb = Math.min(pshield, edmg);
     pshield -= absorb;

@@ -250,6 +250,7 @@ button { font: inherit; color: inherit; }
 /* 身手 / 伤势：同一种卡片，靠底色区分，不描边 */
 .card { border-radius: 12px; padding: 16px 18px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
 .card + .card { margin-top: 14px; }
+:is(.grid2, .retire-cols) > .card + .card { margin-top: 0; }
 .card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
 .card .head .serif { font-size: 15px; letter-spacing: 0.2em; }
 .card .head small { color: var(--faint); font-size: 12px; }
@@ -397,6 +398,10 @@ button { font: inherit; color: inherit; }
 
 /* 对阵场：水墨远山做底，信息长在画里 */
 .arena { position: relative; margin-top: 22px; border-radius: 16px; overflow: hidden; padding: 28px 30px 26px; background: linear-gradient(to bottom, oklch(0.2 0.018 250), oklch(0.16 0.014 258)); }
+.arena-art { position: absolute; inset: 0; background: url('../../code/public/art/battle-village.jpg') center 38% / cover no-repeat; opacity: 0.75; filter: brightness(0.62) saturate(0.55);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 55%, transparent 92%); mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 55%, transparent 92%); }
+.arena.has-art svg.mtn { display: none; }
+.arena > :not(.arena-art):not(svg) { position: relative; }
 .arena svg.mtn { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 72%; pointer-events: none; }
 .arena .moon-bg { position: absolute; left: calc(50% - 28px); top: 70px; width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, oklch(0.9 0.03 85 / 0.5), oklch(0.8 0.03 85 / 0.12) 60%, transparent 70%); filter: blur(0.5px); }
 .duel { position: relative; display: grid; grid-template-columns: 1fr 90px 1fr; align-items: start; gap: 12px; }
@@ -431,7 +436,7 @@ button { font: inherit; color: inherit; }
 .fight-btn { min-width: 300px; padding: 13px 28px; }
 .fight-btn:disabled { background: none; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--hair); color: var(--muted); cursor: default; font-size: 14px; letter-spacing: 0.1em; font-weight: 500; }
 .switch { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; color: var(--muted); font-size: 13px; user-select: none; }
-.switch input { appearance: none; width: 32px; height: 18px; border-radius: 9px; background: oklch(0.3 0.016 262); position: relative; cursor: pointer; transition: background .2s; margin: 0; }
+.switch input { appearance: none; width: 32px; height: 18px; border-radius: 9px; background: oklch(0.3 0.016 262); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 262 / 0.6); position: relative; cursor: pointer; transition: background .2s; margin: 0; }
 .switch input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .2s var(--ease), background .2s; }
 .switch input:checked { background: oklch(0.78 0.13 78 / 0.4); }
 .switch input:checked::after { transform: translateX(14px); background: var(--gold); }
@@ -458,6 +463,170 @@ button { font: inherit; color: inherit; }
 .log .empty { color: var(--faint); padding: 40px 0; text-align: center; font-family: var(--serif); letter-spacing: 0.2em; }
 
 .placeholder { padding: 90px 0; text-align: center; color: var(--faint); font-family: var(--serif); letter-spacing: 0.2em; }
+
+/* ═══════ 第二轮：通用 ═══════ */
+/* 页头底图：AI 水墨横幅，椭圆羽化融进底色，不占版面 */
+.page { position: relative; }
+.page-art { position: absolute; left: -48px; right: -48px; top: -30px; height: 300px; z-index: -1; pointer-events: none;
+  background: var(--art) center 40% / cover no-repeat; opacity: 0.5; filter: saturate(0.55);
+  -webkit-mask-image: radial-gradient(ellipse 55% 70% at 70% 30%, #000 25%, transparent 78%);
+          mask-image: radial-gradient(ellipse 55% 70% at 70% 30%, #000 25%, transparent 78%); }
+.stage { position: relative; z-index: 0; isolation: isolate; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.card .head .serif.big { font-size: 17px; }
+.muted { color: var(--muted); } .faint { color: var(--faint); } .gold { color: var(--gold); } .ok { color: var(--ink-gold); }
+.qtag { font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: oklch(0.3 0.016 262 / 0.6); color: var(--muted); white-space: nowrap; }
+.qtag.fine { color: oklch(0.78 0.09 215); background: oklch(0.74 0.10 215 / 0.12); }
+.qtag.peak { color: var(--ink-gold); background: oklch(0.75 0.075 76 / 0.14); }
+.qtag.res { color: var(--gold); background: oklch(0.78 0.13 78 / 0.12); }
+/* 次级按钮：描金的轻量版，只有文字与细金边 */
+.btn2 { border: 0; background: none; cursor: pointer; font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.1em; color: var(--gold);
+  padding: 5px 14px; border-radius: 8px; box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.4); white-space: nowrap; transition: box-shadow .2s, background .2s; }
+.btn2:hover:not(:disabled) { background: oklch(0.78 0.13 78 / 0.1); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.75); }
+.btn2:disabled { color: var(--faint); box-shadow: inset 0 0 0 1px var(--hair); cursor: default; }
+.btn2.quiet { color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
+.main-btn { position: relative; border: 0; cursor: pointer; font-family: var(--serif); font-size: 16px; font-weight: 600; letter-spacing: 0.16em;
+  padding: 11px 26px; border-radius: 10px; color: var(--gold);
+  background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.16), oklch(0.78 0.13 78 / 0.05));
+  box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55), inset 0 1px 0 oklch(0.92 0.08 82 / 0.18); transition: background .2s, box-shadow .25s; }
+.main-btn:hover:not(:disabled) { background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.26), oklch(0.78 0.13 78 / 0.10)); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.85), 0 0 22px oklch(0.78 0.13 78 / 0.22); }
+.main-btn:disabled { color: var(--faint); background: none; box-shadow: inset 0 0 0 1px var(--hair); cursor: default; }
+.main-btn.quiet { color: var(--muted); background: none; box-shadow: inset 0 0 0 1px var(--hair); }
+.main-btn.quiet:hover { color: var(--ink); background: oklch(0.3 0.016 262 / 0.3); box-shadow: inset 0 0 0 1px oklch(0.5 0.02 262); }
+.main-btn small { display: block; font-family: var(--body, var(--sans)); font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--muted); margin-top: 1px; }
+/* 列表行：替代「一格一框」的卡片网格 */
+.rows { display: grid; }
+.row-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
+.row-i:first-child { border-top: 0; padding-top: 2px; }
+.row-i .t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row-i .t .serif { font-size: 15px; letter-spacing: 0.08em; }
+.row-i .d { grid-column: 1; color: var(--muted); font-size: 12.5px; }
+.row-i .a { grid-row: 1 / span 2; grid-column: 2; display: flex; align-items: center; gap: 12px; }
+.row-i .price { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.row-i.done .serif { color: var(--muted); }
+.row-i.lock .serif { color: var(--faint); }
+/* 同一进度线规则：实线已完成、虚线剩余 */
+.pline { position: relative; height: 3px; }
+.pline::before { content: ''; position: absolute; left: 0; right: 0; top: 1px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.4 0.014 262 / 0.7) 0 3px, transparent 3px 6px); }
+.pline i { position: absolute; left: 0; top: 0.5px; height: 1.5px; border-radius: 1px; background: oklch(0.5 0.045 70); }
+.pline.warm i { background: var(--ink-gold); }
+.checks { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; }
+.checks .y { color: var(--ink-gold); } .checks .y::before { content: '✓ '; }
+.checks .n { color: var(--faint); } .checks .n::before { content: '· '; }
+
+/* ═══════ 内功 ═══════ */
+.ng-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; margin-bottom: 26px; }
+.ng-zhong { text-align: right; }
+.ng-zhong .z { font-family: var(--serif); font-size: 44px; font-weight: 700; line-height: 1; }
+.ng-zhong .z small { font-size: 18px; margin-left: 4px; color: var(--muted); }
+.ng-zhong .f { color: var(--faint); font-size: 12.5px; margin-top: 6px; }
+.ladder { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); margin: 8px 0 30px; }
+.ladder::before { content: ''; position: absolute; left: 10%; right: 10%; top: 10px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.4 0.014 262 / 0.7) 0 3px, transparent 3px 6px); }
+.ladder .walked { position: absolute; left: 10%; top: 9.5px; height: 1.5px; background: oklch(0.5 0.045 70); }
+.step { position: relative; text-align: center; display: grid; justify-items: center; gap: 4px; padding: 0 6px; }
+.step .k { width: 21px; height: 21px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 262); display: grid; place-items: center; font-size: 11px; color: var(--faint); }
+.step.done .k { background: var(--ink-gold); box-shadow: none; color: var(--gold-ink); }
+.step.wait .k { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 12px oklch(0.78 0.13 78 / 0.35); color: var(--gold); }
+.step .n { font-family: var(--serif); font-size: 15px; letter-spacing: 0.2em; margin-top: 4px; }
+.step .z { font-size: 12px; color: var(--faint); }
+.step .e { font-size: 12.5px; color: var(--muted); max-width: 150px; }
+.step.done .n { color: var(--ink-gold); }
+.step.na { opacity: 0.45; }
+.ng-act { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
+.ng-act .note { color: var(--faint); font-size: 12.5px; }
+.mech { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.mech li { color: var(--muted); } .mech li b { color: var(--ink); font-weight: 600; }
+.qi-num { font-size: 34px; font-weight: 600; line-height: 1.1; }
+.qi-num small { font-size: 13px; color: var(--faint); font-weight: 400; margin-left: 6px; }
+
+/* ═══════ 武学 ═══════ */
+.slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 26px; }
+.slot { border: 0; text-align: left; border-radius: 10px; padding: 12px 14px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); cursor: pointer; min-height: 70px; color: inherit; }
+.slot .n { font-family: var(--serif); font-size: 16px; letter-spacing: 0.1em; display: block; }
+.slot .m { font-size: 12px; color: var(--faint); }
+.slot[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+.slot.empty { background: none; box-shadow: inset 0 0 0 1px var(--hair); color: var(--faint); font-size: 13px; display: grid; place-items: center; cursor: default; }
+.slot.locked { background: none; color: oklch(0.45 0.012 262); font-size: 12.5px; display: grid; place-items: center; cursor: default; box-shadow: inset 0 0 0 1px oklch(0.25 0.012 262 / 0.6); }
+.wx { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 34px; }
+.wx-list { display: grid; gap: 2px; }
+.wx-list button { border: 0; background: none; text-align: left; padding: 10px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.wx-list button .serif { font-size: 15.5px; letter-spacing: 0.1em; }
+.wx-list button .pg { margin-left: auto; font-size: 12px; color: var(--faint); }
+.wx-list button[aria-current="true"] { background: oklch(0.78 0.13 78 / 0.09); color: var(--ink); }
+.wx-list button:hover { color: var(--ink); }
+.form { display: grid; grid-template-columns: 64px minmax(0, 1fr) 70px; gap: 6px 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--hair); }
+.form .fi { font-family: var(--serif); letter-spacing: 0.1em; }
+.form .fm { text-align: right; font-weight: 600; }
+.form .lv { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 5px; }
+.form .lv b { color: var(--muted); font-weight: 600; }
+.form.locked .fi, .form.locked .fm { color: var(--faint); }
+.wx-params { display: flex; gap: 16px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin: -4px 0 6px; }
+.wx-params b { color: var(--ink); font-weight: 600; }
+
+/* ═══════ 门派 ═══════ */
+.task-run { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--hair); }
+.task-run .top { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+.sect-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.sect-opt { border: 0; text-align: left; color: inherit; cursor: pointer; border-radius: 12px; padding: 20px; background: linear-gradient(160deg, oklch(0.25 0.017 262 / 0.6), oklch(0.19 0.014 262 / 0.3)); display: grid; gap: 8px; align-content: start; }
+.sect-opt .n { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: 0.2em; }
+.sect-opt .o { color: var(--muted); font-size: 13px; }
+.sect-opt .g { color: var(--faint); font-size: 12.5px; line-height: 1.7; }
+.sect-opt[aria-checked="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.6), 0 0 26px oklch(0.78 0.13 78 / 0.1); }
+.sect-foot { display: flex; justify-content: flex-end; align-items: center; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
+
+/* ═══════ 声望阁 ═══════ */
+.mult { text-align: right; }
+.mult .v { font-size: 30px; font-weight: 600; color: var(--gold); line-height: 1.1; cursor: help; }
+.mult .k { font-size: 12px; color: var(--faint); }
+.gw { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
+.gw .lv { font-family: var(--serif); font-size: 40px; font-weight: 700; line-height: 1; }
+.gw .lv small { font-size: 16px; color: var(--muted); margin-left: 4px; }
+.gw .info { color: var(--muted); font-size: 13px; }
+.gw .info b { color: var(--ink); }
+.gw-btns { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.suhui .r { display: flex; justify-content: space-between; padding: 6px 0; color: var(--muted); }
+.suhui .r b { font-weight: 600; color: var(--ink); }
+.suhui .r.no { color: var(--faint); } .suhui .r.no b { color: var(--faint); font-weight: 400; }
+
+/* ═══════ 弹窗 ═══════ */
+.veil { position: fixed; inset: 0; z-index: var(--z-toast); display: none; place-items: center; padding: 20px;
+  background: oklch(0.08 0.01 262 / 0.78); backdrop-filter: blur(3px); }
+.veil.on { display: grid; animation: veil-in .3s var(--ease); }
+@keyframes veil-in { from { opacity: 0; } }
+.dlg { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; border-radius: 16px; padding: 26px 28px 24px;
+  background: linear-gradient(170deg, oklch(0.22 0.016 262), oklch(0.17 0.014 262)); box-shadow: 0 20px 60px oklch(0.05 0.01 262 / 0.7);
+  animation: dlg-in .35s var(--ease); }
+.dlg.wide { width: min(860px, 100%); }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+.dlg h2 { margin: 0 0 4px; font-family: var(--serif); font-size: 22px; letter-spacing: 0.2em; font-weight: 700; }
+.dlg .sub { color: var(--faint); font-size: 13px; margin-bottom: 20px; }
+.dlg .acts { display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; flex-wrap: wrap; }
+.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--hair); }
+.kv:first-of-type { border-top: 0; }
+.kv .k { color: var(--muted); } .kv .v { font-weight: 600; font-size: 16px; }
+.kv .v.big { font-size: 22px; color: var(--gold); }
+.note-line { margin-top: 14px; font-size: 13px; color: var(--muted); }
+.note-line.gold { color: var(--gold); }
+/* 突破：整屏演出，比弹窗重一档 */
+.ceremony { position: fixed; inset: 0; z-index: var(--z-toast); display: none; place-items: center; text-align: center;
+  background: radial-gradient(ellipse at 50% 42%, oklch(0.28 0.05 78 / 0.95), oklch(0.10 0.012 262 / 0.98) 70%); }
+.ceremony.on { display: grid; }
+.ceremony > div > * { animation: rise .8s var(--ease) both; }
+.ceremony > div > *:nth-child(2) { animation-delay: .15s; } .ceremony > div > *:nth-child(3) { animation-delay: .3s; } .ceremony > div > *:nth-child(4) { animation-delay: .45s; } .ceremony > div > *:nth-child(5) { animation-delay: .6s; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+.ceremony .kick { font-family: var(--serif); letter-spacing: 0.6em; color: var(--ink-gold); font-size: 14px; }
+.ceremony h2 { font-family: var(--serif); font-size: clamp(40px, 7vw, 64px); letter-spacing: 0.25em; margin: 14px 0 6px; font-weight: 700; }
+.ceremony .d { color: var(--muted); }
+.ceremony .gains { display: grid; grid-template-columns: auto auto; gap: 8px 30px; justify-content: center; margin: 28px auto 30px; font-size: 15px; }
+.ceremony .gains span:nth-child(odd) { color: var(--faint); text-align: right; }
+.ceremony .gains span:nth-child(even) { text-align: left; }
+.ceremony .gains b { color: var(--gold); font-weight: 600; }
+.diag { font-size: 16px; line-height: 1.7; margin-bottom: 6px; }
+.diag small { display: block; color: var(--faint); font-size: 13px; margin-top: 4px; }
+.retire-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.retire-cols .card .head .serif.g { color: var(--gold); } .retire-cols .card .head .serif.l { color: var(--blood); }
+.retire-cols .kv .v { font-size: 13.5px; }
+.retire-cols .kv.total .v { font-size: 20px; color: var(--gold); }
 
 /* ═══════ 手机宽度 ═══════ */
 .mob-top, .tabbar { display: none; }
@@ -490,6 +659,13 @@ button { font: inherit; color: inherit; }
   .road .station .nm { font-size: 12px; letter-spacing: 0.05em; }
   .page-head h1 { font-size: 24px; }
   .proto { bottom: 72px; }
+  .grid2, .wx, .sect-pick, .retire-cols { grid-template-columns: 1fr; }
+  .slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ladder { grid-template-columns: repeat(5, minmax(56px, 1fr)); overflow-x: auto; }
+  .step .e { display: none; }
+  .ng-top { grid-template-columns: 1fr; }
+  .ng-zhong { text-align: left; }
+  .page-art { left: -16px; right: -16px; }
 }
 @media (max-width: 480px) {
   .road .station:nth-child(n+5) .nm { display: none; }
@@ -508,9 +684,11 @@ button { font: inherit; color: inherit; }
   <div class="row"><span>标题字</span><button data-font="noto" aria-pressed="true">思源宋体</button><button data-font="songti">系统宋体</button><button data-font="wenkai">霞鹜文楷</button><button data-font="xiaowei">站酷小薇</button><button data-font="mashan">马善政楷</button><button data-font="zhimang">志莽行书</button></div>
   <div class="row"><span>正文字</span><button data-body="sans">苹方</button><button data-body="wenkai" aria-pressed="true">霞鹜文楷</button></div>
   <div class="row"><span>按钮</span><button data-btn="gold" aria-pressed="true">描金</button><button data-btn="seal">朱印</button><button data-btn="ink">墨锭</button></div>
+  <div class="row"><span>门派</span><button data-sect="1" aria-pressed="true">已拜入</button><button data-sect="0">未拜入</button></div>
+  <div class="row"><span>弹窗</span><button data-dlg="break">突破</button><button data-dlg="offline">出关</button><button data-dlg="fail">战败</button><button data-dlg="retire">归隐</button></div>
   <div class="row"><span>身体</span><button data-hurt="0" aria-pressed="true">无伤</button><button data-hurt="1">带伤</button></div>
   <div class="row"><span>周天</span><button data-ready="0" aria-pressed="true">运转中</button><button data-ready="1">可突破</button></div>
-  <div style="color:oklch(0.45 0 0)">手机宽度：把窗口拉到 860px 以下</div>
+  <div style="color:oklch(0.45 0 0)">手机宽度：把窗口拉到 860px 以下<br>为了能看全，六个页签都显示；数据不强求同一时刻对得上</div>
 </div>
 
 <div class="tip" id="tip"></div>
@@ -522,13 +700,14 @@ button { font: inherit; color: inherit; }
     <div class="brand">江湖无尽录</div>
     <div class="who">
       <div class="realm">初窥门径<small>第二境</small></div>
-      <div class="life">第 <b>1</b> 世 · <b>21</b> 岁 · 江湖历 <b>1043</b> 年</div>
+      <div class="life">第 <b>2</b> 世 · <b>21</b> 岁 · 江湖历 <b>1043</b> 年</div>
     </div>
     <div class="body-state js-body">身无伤病</div>
     <div class="res">
       <div><div class="k">内力</div><div class="v"><span class="js-neili">1,284,300</span><span class="rate js-rate">+18.4/秒</span></div></div>
       <div class="res-pair">
         <div><div class="k">银两</div><div class="v small">3,420</div></div>
+        <div><div class="k">声望</div><div class="v small">1,240</div></div>
       </div>
     </div>
     <svg class="brush" viewBox="0 0 200 8" preserveAspectRatio="none"><path d="M2 5 C 40 2, 90 6, 140 3.5 S 190 4, 198 3" stroke="oklch(0.55 0.02 262)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
@@ -536,7 +715,9 @@ button { font: inherit; color: inherit; }
       <button data-go="cultivate" aria-current="page">修炼</button>
       <button data-go="battle">战斗</button>
       <button data-go="neigong">内功</button>
-      <button data-go="wuxue">武学<span class="fresh" aria-label="新开"></span></button>
+      <button data-go="wuxue">武学</button>
+      <button data-go="sect">门派<span class="fresh" aria-label="新开"></span></button>
+      <button data-go="rep">声望阁</button>
     </nav>
     <div class="scroll-foot">
       <button class="ghost-btn" disabled data-tip="本世突破一次后可归隐">归隐</button>
@@ -551,7 +732,9 @@ button { font: inherit; color: inherit; }
       <button data-go="cultivate" aria-current="page">修炼</button>
       <button data-go="battle">战斗</button>
       <button data-go="neigong">内功</button>
-      <button data-go="wuxue">武学<span class="fresh" aria-label="新开"></span></button>
+      <button data-go="wuxue">武学</button>
+      <button data-go="sect">门派<span class="fresh" aria-label="新开"></span></button>
+      <button data-go="rep">声望阁</button>
     </nav>
     <div class="foot">
       <button disabled data-tip="本世突破一次后可归隐">归隐</button>
@@ -562,7 +745,7 @@ button { font: inherit; color: inherit; }
   <!-- ===== 主舞台 ===== -->
   <main class="stage-wrap" style="min-width:0">
     <div class="mob-top">
-      <div class="realm">初窥门径<small>第 1 世 · 21 岁 · <span class="js-body-m">身无伤病</span></small></div>
+      <div class="realm">初窥门径<small>第 2 世 · 21 岁 · <span class="js-body-m">身无伤病</span></small></div>
       <div class="mres">
         <div>内力<b class="js-neili">1,284,300</b><span class="rate js-rate">+18.4/秒</span></div>
         <div>银两<b>3,420</b></div>
@@ -655,7 +838,7 @@ button { font: inherit; color: inherit; }
           <div class="all-stages js-allgrid"></div>
         </div>
 
-        <div class="arena">
+        <div class="arena"><div class="arena-art"></div>
           
           <svg class="mtn" viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true">
             <defs>
@@ -674,7 +857,7 @@ button { font: inherit; color: inherit; }
               <div class="name">你</div>
               <div class="desc">初窥门径 · 惊雷诀</div>
               <div class="meter"><div class="lbl"><span>气血</span><span><b class="js-php">184</b> / 184</span></div><div class="ink-bar hp"><i class="js-phpbar" style="width:100%"></i></div></div>
-              <div class="meter"><div class="lbl"><span>真气</span><span><b class="js-pqi">60</b> / 60</span></div><div class="ink-bar qi"><i class="js-pqibar" style="width:100%"></i></div></div>
+              <div class="meter"><div class="lbl"><span>真气</span><span><b class="js-pqi">73</b> / 73</span></div><div class="ink-bar qi"><i class="js-pqibar" style="width:100%"></i></div></div>
             </div>
             <div class="vs"><span class="big js-vs">对决</span><span class="rd js-rd"></span></div>
             <div class="side enemy">
@@ -697,8 +880,204 @@ button { font: inherit; color: inherit; }
         </div>
       </section>
 
-      <section class="page" id="p-neigong"><div class="placeholder">内功页 · 第二轮原型再画</div></section>
-      <section class="page" id="p-wuxue"><div class="placeholder">武学页 · 第二轮原型再画</div></section>
+
+      <!-- ─────────── 内功 ─────────── -->
+      <section class="page" id="p-neigong">
+        <div class="page-art" style="--art:url('../../code/public/art/neigong.jpg')"></div>
+        <div class="ng-top">
+          <div class="page-head" style="margin:0">
+            <div>
+              <h1>惊雷诀</h1>
+              <div class="sub"><span class="qtag">寻常</span>　惊雷一路 · 爆发 · 悟性 <b data-tip="每一世天生不同，决定顿悟快慢">1.12</b></div>
+            </div>
+          </div>
+          <div class="ng-zhong">
+            <div class="z">第 3<small>重</small></div>
+            <div class="f" data-tip="每 20 重折合一个境界的属性">火候折合 0.15 个境界</div>
+          </div>
+        </div>
+
+        <div class="ladder js-ladder"></div>
+
+        <div class="ng-act">
+          <button class="main-btn" data-tip="十重以内按路数逐重加成，此后每重气血、攻击、防御约 +2.7%；价格每重 ×1.08，归隐即散">精进一重<small>212,000 内力</small></button>
+          <span class="note">到第 4 重即临「入室」之关，需静候顿悟才能再升</span>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="head"><span class="serif">惊雷 · 路数</span><small>当前生效</small></div>
+            <ul class="mech">
+              <li>暴击率 <b>+5.0pp</b>，暴击伤害 <b>+20.0pp</b></li>
+              <li>开战首击<b>必定暴击</b></li>
+              <li>每次暴击积 <b>1 层剑意</b></li>
+              <li>剑意满 <b>4 层</b>，施展爆发剑招 <b>400%</b></li>
+            </ul>
+          </div>
+          <div>
+            <div class="card">
+              <div class="head"><span class="serif">真气</span><small>开战满，打完清零</small></div>
+              <div class="qi-num" data-tip="(70 + 15 × (境界 − 2) + 重数) × 品质系数<br>= (70 + 0 + 3) × 1.0">73<small>上限</small></div>
+              <div class="note-line" style="margin-top:6px">真气够，才领悟得了武学的后几式。</div>
+            </div>
+            <div class="card">
+              <div class="head"><span class="serif">已有内功</span></div>
+              <div class="rows">
+                <div class="row-i"><div class="t"><span class="serif">惊雷诀</span><span class="qtag">寻常</span></div><div class="d">惊雷一路</div><div class="a"><span class="price ok">主修中</span></div></div>
+                <div class="row-i"><div class="t"><span class="serif">镇岳功</span><span class="qtag">寻常</span></div><div class="d">镇岳一路 · 跨路数，重数归零</div><div class="a"><button class="btn2 quiet" data-dlg="switch">散功重修</button></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 武学 ─────────── -->
+      <section class="page" id="p-wuxue">
+        <div class="page-art" style="--art:url('../../code/public/art/wuxue.jpg')"></div>
+        <header class="page-head">
+          <div>
+            <h1>武学</h1>
+            <div class="sub">已装 <b>1</b> / 2 · 冷却好了、真气够了，每回合有三成机会随机出一门</div>
+          </div>
+        </header>
+
+        <div class="slots">
+          <button class="slot" aria-pressed="true"><span class="n">流云剑</span><span class="m">耗气 30 · 冷却 3</span></button>
+          <div class="slot empty">空槽</div>
+          <div class="slot locked">境界 3 开</div>
+          <div class="slot locked">境界 4 开</div>
+          <div class="slot locked">境界 5 开</div>
+        </div>
+
+        <div class="wx">
+          <div class="wx-list">
+            <button aria-current="true"><span class="serif">流云剑</span><span class="qtag res">共鸣</span><span class="pg">2/3 式</span></button>
+            <button><span class="serif">开山掌</span><span class="pg">1/3 式</span></button>
+          </div>
+          <div class="card">
+            <div class="head">
+              <span class="t" style="display:flex;gap:8px;align-items:center"><span class="serif big">流云剑</span><span class="qtag">寻常</span><span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span></span>
+              <button class="btn2 quiet">卸下</button>
+            </div>
+            <div class="wx-params"><span>剑法</span><span>耗气 <b>30</b></span><span>冷却 <b>3</b> 回合</span><span>特效 <b>必暴</b></span></div>
+            <div class="form">
+              <span class="fi">第一式</span>
+              <div><div class="pline"><i style="width:57%"></i></div><div class="lv"><span><b>熟练</b> · 下一档精通</span><span>86 / 150 次</span></div></div>
+              <span class="fm" data-tip="基础 100% · 熟练 +5% · 共鸣 ×1.1">×116%</span>
+            </div>
+            <div class="form">
+              <span class="fi">第二式</span>
+              <div><div class="pline"><i style="width:20%"></i></div><div class="lv"><span><b>生疏</b> · 下一档熟练</span><span>12 / 60 次</span></div></div>
+              <span class="fm">×132%</span>
+            </div>
+            <div class="form locked">
+              <span class="fi">第三式</span>
+              <div class="checks"><span class="n">境界 3</span><span class="n">真气 ≥ 90</span><span class="n">招式秘籍</span><span class="y">前式熟练</span></div>
+              <span class="fm">×165%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="head"><span class="serif">书肆</span><small>秘籍永久保留，银两每世清零</small></div>
+          <div class="rows">
+            <div class="row-i"><div class="t"><span class="serif">飞蝗石</span><span class="qtag">寻常</span></div><div class="d">暗器 · 特效破甲</div><div class="a"><span class="price">1,800 两</span><button class="btn2">购入</button></div></div>
+            <div class="row-i"><div class="t"><span class="serif">流云剑 · 第三式</span><span class="qtag fine">招式秘籍</span></div><div class="d">领悟第三式所需</div><div class="a"><span class="price">境界 3 上架</span></div></div>
+            <div class="row-i lock"><div class="t"><span class="serif">雷鸣剑经</span><span class="qtag fine">上乘内功</span></div><div class="d">惊雷一路 · 四级台阶</div><div class="a"><span class="price">境界 3 上架</span></div></div>
+            <div class="row-i done"><div class="t"><span class="serif">流云剑</span><span class="qtag">寻常</span></div><div class="d">剑法 · 特效必暴</div><div class="a"><span class="price">已有</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 门派 ─────────── -->
+      <section class="page" id="p-sect">
+        <div class="page-art" style="--art:url('../../code/public/art/sect.jpg')"></div>
+        <div class="js-sect-home">
+          <header class="page-head">
+            <div>
+              <h1>华山</h1>
+              <div class="sub">惊雷剑意，相传源出华山 · 本世贡献 <b>320</b></div>
+            </div>
+          </header>
+          <div class="grid2">
+            <div class="card">
+              <div class="head"><span class="serif">门派任务</span><small>同时只跑一件，离线照算</small></div>
+              <div class="rows">
+                <div class="row-i"><div class="t"><span class="serif">巡守玉女峰</span></div><div class="d">2 小时 · +40 贡献</div><div class="a"><button class="btn2" disabled>进行中</button></div></div>
+                <div class="row-i"><div class="t"><span class="serif">护送药材下山</span></div><div class="d">8 小时 · +200 贡献 · 适合睡前派出</div><div class="a"><button class="btn2" disabled>派出</button></div></div>
+              </div>
+              <div class="task-run">
+                <div class="top"><span>巡守玉女峰</span><span class="muted">还剩 1 小时 12 分</span></div>
+                <div class="pline"><i style="width:40%"></i></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="head"><span class="serif">贡献商店</span><small>贡献 <b class="gold">320</b></small></div>
+              <div class="rows">
+                <div class="row-i"><div class="t"><span class="serif">苍崖剑诀</span><span class="qtag peak">绝学</span></div><div class="d">剑法 · 本门练得快两成</div><div class="a"><span class="price">450</span><button class="btn2" disabled>差 130</button></div></div>
+                <div class="row-i"><div class="t"><span class="serif">云台心法</span><span class="qtag peak">绝学内功</span></div><div class="d">惊雷一路 · 五级台阶</div><div class="a"><span class="price">600</span><button class="btn2" disabled>差 280</button></div></div>
+                <div class="row-i lock"><div class="t"><span class="serif">落星剑</span><span class="qtag peak">绝学 · 独门</span></div><div class="d">蓄势，越打越快</div><div class="a"><span class="price">境界 4 可换</span></div></div>
+                <div class="row-i"><div class="t"><span class="serif">归真卷册</span></div><div class="d">内功第 40 重「归真」所需</div><div class="a"><span class="price">500</span><button class="btn2" disabled>差 180</button></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="js-sect-join" hidden>
+          <header class="page-head">
+            <div>
+              <h1>拜山</h1>
+              <div class="sub">择一派拜入，本世有效，下一世重选</div>
+            </div>
+          </header>
+          <div class="sect-pick" role="radiogroup">
+            <button class="sect-opt" role="radio" aria-checked="true"><span class="n">华山</span><span class="o">惊雷剑意，相传源出华山。</span><span class="g">绝学内功 云台心法<br>绝学武学 苍崖剑诀 · 落星剑<br>独门：蓄势，越打越快</span></button>
+            <button class="sect-opt" role="radio" aria-checked="false"><span class="n">少林</span><span class="o">镇岳护体，相传源出少林。</span><span class="g">绝学内功 菩提心功<br>绝学武学 罗汉伏魔棍 · 降魔杵法<br>独门：反震，攻防同算</span></button>
+            <button class="sect-opt" role="radio" aria-checked="false"><span class="n">唐门</span><span class="o">蚀骨毒功，相传源出唐门。</span><span class="g">绝学内功 千蛊心诀<br>绝学武学 落英飞针 · 千机镖<br>独门：引爆，毒层一并结算</span></button>
+          </div>
+          <div class="sect-foot"><span class="faint" style="font-size:12.5px">战力不因拜哪派而变，本门绝学练得快两成</span><button class="main-btn js-join">拜入 华山</button></div>
+        </div>
+      </section>
+
+      <!-- ─────────── 声望阁 ─────────── -->
+      <section class="page" id="p-rep">
+        <div class="page-art" style="--art:url('../../code/public/art/rep.jpg')"></div>
+        <header class="page-head">
+          <div>
+            <h1>声望阁</h1>
+            <div class="sub">归隐者的传承 · 声望 <b>1,240</b></div>
+          </div>
+          <div class="mult"><div class="v" data-tip-html="基础 1<br>+ 宿慧 5.3×<br>+ 修行感悟 1.2×<br><span class='l'>三项相加即挂机产出倍率</span>">7.5×</div><div class="k">挂机产出</div></div>
+        </header>
+        <div class="grid2">
+          <div class="card">
+            <div class="head"><span class="serif">修行感悟</span><small>永久 · 归隐不散</small></div>
+            <div class="gw"><span class="lv">6<small>级</small></span><span class="info">每级挂机产出 +0.2× · 当前 <b>+1.2×</b></span></div>
+            <div class="gw-btns">
+              <button class="main-btn">传承一级<small>80 声望</small></button>
+              <button class="main-btn quiet">尽数传承<small>9 级 · 1,080 声望</small></button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="head"><span class="serif">宿慧</span><small>首达境界自得</small></div>
+            <div class="suhui">
+              <div class="r"><span>首达 初窥门径</span><b>+1.6×</b></div>
+              <div class="r"><span>首达 小有所成</span><b>+3.7×</b></div>
+              <div class="r no"><span>首达 炉火纯青</span><b>+7.6× · 未至</b></div>
+              <div class="r no"><span>首达 一流高手</span><b>+13.4× · 未至</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="head"><span class="serif">传承</span><small>一次购得，永久生效</small></div>
+          <div class="rows">
+            <div class="row-i done"><div class="t"><span class="serif">再入江湖</span><span class="qtag">信息</span></div><div class="d">开战前，敌人的每个机制标签都附上一条克制提示</div><div class="a"><span class="price ok">已传承</span></div></div>
+            <div class="row-i"><div class="t"><span class="serif">轻装上路</span><span class="qtag">策略</span></div><div class="d">书肆的秘籍一律八折</div><div class="a"><span class="price">220</span><button class="btn2">传承</button></div></div>
+            <div class="row-i"><div class="t"><span class="serif">武道笔记</span><span class="qtag">资源</span></div><div class="d">每一世悟性 +0.1，领悟得更快</div><div class="a"><span class="price">440</span><button class="btn2">传承</button></div></div>
+            <div class="row-i"><div class="t"><span class="serif">师门指引</span><span class="qtag">策略</span></div><div class="d">武学领悟新招的顿悟概率翻倍</div><div class="a"><span class="price">660</span><button class="btn2">传承</button></div></div>
+            <div class="row-i"><div class="t"><span class="serif">破关心得</span><span class="qtag">战斗</span></div><div class="d">对各图头目（Boss）造成的伤害提高 10%</div><div class="a"><span class="price">1,100</span><button class="btn2">传承</button></div></div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -706,7 +1085,7 @@ button { font: inherit; color: inherit; }
   <aside class="body-col b-only flex">
     <div class="who">
       <div class="realm">初窥门径<small>第二境</small></div>
-      <div class="life">第 <b>1</b> 世 · <b>21</b> 岁 · 江湖历 <b>1043</b> 年</div>
+      <div class="life">第 <b>2</b> 世 · <b>21</b> 岁 · 江湖历 <b>1043</b> 年</div>
     </div>
     <div class="res">
       <div><div class="k">内力</div><div class="v"><span class="js-neili">1,284,300</span><span class="rate js-rate">+18.4/秒</span></div></div>
@@ -726,8 +1105,81 @@ button { font: inherit; color: inherit; }
     <button data-go="cultivate" aria-current="page">修炼</button>
     <button data-go="battle">战斗</button>
     <button data-go="neigong">内功</button>
-    <button data-go="wuxue">武学<span class="fresh" aria-label="新开"></span></button>
+    <button data-go="wuxue">武学</button>
+    <button data-go="sect">门派<span class="fresh" aria-label="新开"></span></button>
+    <button data-go="rep">声望</button>
   </nav>
+</div>
+
+<!-- ───── 弹窗 ───── -->
+<div class="ceremony js-dlg" id="d-break">
+  <div>
+    <div class="kick">境 界 突 破</div>
+    <h2>小有所成</h2>
+    <div class="d">内力鼓荡，脱胎换骨</div>
+    <div class="gains">
+      <span>气血</span><span>184 → <b>313</b></span>
+      <span>攻击</span><span>18.4 → <b>31.3</b></span>
+      <span>防御</span><span>9.7 → <b>16.2</b></span>
+      <span>挂机产出</span><span>18.4 → <b>29.0</b> / 秒</span>
+      <span>新开</span><span><b>门派</b> · 武学第 3 槽</span>
+    </div>
+    <button class="main-btn js-close" style="min-width:240px">继续</button>
+  </div>
+</div>
+
+<div class="veil js-dlg" id="d-offline">
+  <div class="dlg">
+    <h2>出关</h2>
+    <div class="sub">离开 3 小时 12 分 · 有效闭关 3.2 小时</div>
+    <div class="kv"><span class="k">内力</span><span class="v big">+186,400</span></div>
+    <div class="kv"><span class="k">银两</span><span class="v">+1,120</span></div>
+    <div class="kv"><span class="k">门派任务</span><span class="v">巡守玉女峰已归 · +40 贡献</span></div>
+    <div class="note-line gold">周天圆满，突破就绪——闭关不会替你突破，这一下要你亲手来。</div>
+    <div class="acts"><button class="main-btn js-close">回归江湖</button></div>
+  </div>
+</div>
+
+<div class="veil js-dlg" id="d-fail">
+  <div class="dlg">
+    <h2>战败 · 黑风寨头目</h2>
+    <div class="sub">第 42 关 · 历时 31 / 50 回合</div>
+    <div class="diag">对方气血太厚，你的输出跟不上。<small>另：你的命中偏低，对方闪避了近三成攻击</small></div>
+    <div class="kv"><span class="k">你造成</span><span class="v">286 <span class="faint" style="font-weight:400;font-size:13px">敌余 25%</span></span></div>
+    <div class="kv"><span class="k">你承受</span><span class="v">184 <span class="faint" style="font-weight:400;font-size:13px">气血耗尽</span></span></div>
+    <div class="kv"><span class="k">爆发剑招</span><span class="v">2 次 · 占输出 31%</span></div>
+    <div class="acts"><button class="btn2 quiet js-close" style="padding:10px 18px">立即重试</button><button class="main-btn js-close" data-go="cultivate">回去修炼 · 周天 62%</button></div>
+  </div>
+</div>
+
+<div class="veil js-dlg" id="d-retire">
+  <div class="dlg wide">
+    <h2>归隐盘点</h2>
+    <div class="sub">看清得失，再做决定</div>
+    <div class="retire-cols">
+      <div class="card">
+        <div class="head"><span class="serif g">你将获得</span></div>
+        <div class="kv"><span class="k" data-tip="本世乘区加权 18.6 小时，闭关按六成计">基础声望</span><span class="v">412</span></div>
+        <div class="kv"><span class="k" data-tip="再败村外小径 · 初入的黑风寨主，历来最深">打到前沿</span><span class="v">×1.5</span></div>
+        <div class="kv total"><span class="k">本次声望</span><span class="v">+618</span></div>
+      </div>
+      <div class="card">
+        <div class="head"><span class="serif l">你将失去</span></div>
+        <div class="kv"><span class="k">境界</span><span class="v">回到江湖新丁</span></div>
+        <div class="kv"><span class="k">内功</span><span class="v">重数清零</span></div>
+        <div class="kv"><span class="k">通关进度</span><span class="v">各图重推</span></div>
+        <div class="kv"><span class="k">内力 · 银两</span><span class="v">散去</span></div>
+      </div>
+      <div class="card">
+        <div class="head"><span class="serif">你将保留</span></div>
+        <div class="kv"><span class="k">声望</span><span class="v">1,240 + 618</span></div>
+        <div class="kv"><span class="k">修行感悟</span><span class="v">6 级</span></div>
+        <div class="kv"><span class="k">宿慧</span><span class="v">+5.3×</span></div>
+        <div class="kv"><span class="k">内功 · 传承</span><span class="v">2 部 · 1 件</span></div>
+      </div>
+    </div>
+    <div class="acts"><button class="btn2 quiet js-close" style="padding:10px 18px">返回江湖</button><button class="main-btn js-close">决意归隐</button></div>
+  </div>
 </div>
 
 <script>
@@ -743,7 +1195,7 @@ function go(p) {
   st.page = p;
   $$('.page').forEach(el => el.classList.toggle('on', el.id === 'p-' + p));
   $$('[data-go]').forEach(b => b.tagName === 'BUTTON' && (b.getAttribute('data-go') === p ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
-  if (p === 'wuxue') $$('[data-go="wuxue"] .fresh').forEach(d => d.remove());
+  if (p === 'sect') $$('[data-go="sect"] .fresh').forEach(d => d.remove());
   window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
@@ -914,7 +1366,7 @@ function renderEnemy() {
   b.dataset.tip = refarm ? '已通关卡只掉五成银两，连打同一关逐次递减' : '';
   $('.js-vs').textContent = '对决'; $('.js-rd').textContent = '';
   $('.js-php').textContent = 184; $('.js-phpbar').style.width = '100%';
-  $('.js-pqi').textContent = 60; $('.js-pqibar').style.width = '100%';
+  $('.js-pqi').textContent = 73; $('.js-pqibar').style.width = '100%';
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-st]');
@@ -930,14 +1382,14 @@ $('.js-fight').onclick = () => {
   fighting = true;
   const e = enemyOf(sel), log = $('.js-log'), b = $('.js-fight');
   log.innerHTML = '';
-  let php = 184, ehp = e.hp, qi = 60, rd = 0;
+  let php = 184, ehp = e.hp, qi = 73, rd = 0;
   b.disabled = true;
   const add = (cls, r, x) => { log.insertAdjacentHTML('beforeend', `<div class="ll ${cls}"><span class="r">${r}</span><span class="x">${x}</span></div>`); log.scrollTop = log.scrollHeight; };
   const paint = () => {
     ehp = Math.max(0, ehp); php = Math.max(1, php);
     $('.js-ehp').textContent = ehp; $('.js-ehpbar').style.width = ehp / e.hp * 100 + '%';
     $('.js-php').textContent = php; $('.js-phpbar').style.width = php / 184 * 100 + '%';
-    $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 60 * 100 + '%';
+    $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 73 * 100 + '%';
   };
   const win = () => {
     add('win', '', `${e.name}败退。`);
@@ -960,13 +1412,33 @@ $('.js-fight').onclick = () => {
     if (qi >= 30 && rd % 3 === 0) { qi -= 30; const d = 32 + (Math.random() * 6 | 0); ehp -= d; add('cast', r, `你使出流云剑「回风拂柳」，造成 <em>${d}</em> 点伤害`); }
     else if (Math.random() < 0.12) { const d = 22 + (Math.random() * 4 | 0); ehp -= d; add('crit', r, `你一剑刺中要害，暴击 <em>${d}</em>`); }
     else { const d = 11 + (Math.random() * 4 | 0); ehp -= d; add('', r, `你出手命中，造成 <em>${d}</em> 点伤害`); }
-    qi = Math.min(60, qi + 8);
+    qi = Math.min(73, qi + 8);
     paint();
     if (ehp <= 0) { setTimeout(win, 600); return; }
     setTimeout(enemyTurn, 700);
   };
   setTimeout(step, 400);
 };
+
+
+/* ───── 内功台阶 ───── */
+(function () {
+  const T = [['登堂', 2, '剑意需求 5 → 4', 'done'], ['入室', 4, '剑招 400% → 550%', 'next'], ['大成', 6, '剑意需求 → 3', ''], ['化境', 20, '剑招 +50pp · 上乘可达', 'na'], ['归真', 40, '暴伤 +20pp · 绝学可达', 'na']];
+  $('.js-ladder').innerHTML = `<div class="walked" style="width:10%"></div>` + T.map(([n, z, e, c], i) =>
+    `<div class="step ${c === 'done' ? 'done' : c === 'next' ? 'wait' : c}"><span class="k">${c === 'done' ? '✓' : i + 1}</span><span class="n">${n}</span><span class="z">第 ${z} 重</span><span class="e">${e}</span></div>`).join('');
+})();
+/* ───── 弹窗 ───── */
+function openDlg(id) { $$('.js-dlg').forEach(d => d.classList.toggle('on', d.id === 'd-' + id)); }
+document.addEventListener('click', e => {
+  if (e.target.closest('.js-close')) $$('.js-dlg').forEach(d => d.classList.remove('on'));
+  const b = e.target.closest('[data-dlg]');
+  if (b && b.dataset.dlg !== 'switch' && !b.closest('.proto')) openDlg(b.dataset.dlg);
+});
+$$('.js-break').forEach(b => b.addEventListener('click', () => openDlg('break')));
+/* 战斗底图加载成功才隐藏代码远山 */
+(function () { const i = new Image(); i.onload = () => $('.arena').classList.add('has-art'); i.src = '../../code/public/art/battle-village.jpg'; })();
+/* 门派页：选派 */
+$$('.sect-opt').forEach(o => o.onclick = () => { $$('.sect-opt').forEach(x => x.setAttribute('aria-checked', x === o)); $('.js-join').textContent = '拜入 ' + o.querySelector('.n').textContent; });
 
 /* ───── 原型控制 ───── */
 const FONTS = {
@@ -983,9 +1455,11 @@ proto.addEventListener('click', e => {
   if (b.dataset.font) document.documentElement.style.setProperty('--serif', FONTS[b.dataset.font]);
   if (b.dataset.body) document.documentElement.style.setProperty('--body', b.dataset.body === 'wenkai' ? '"LXGW WenKai", var(--sans)' : 'var(--sans)');
   if (b.dataset.btn) app.dataset.btn = b.dataset.btn;
+  if (b.dataset.dlg) openDlg(b.dataset.dlg);
+  if (b.dataset.sect) { $('.js-sect-home').hidden = b.dataset.sect === '0'; $('.js-sect-join').hidden = b.dataset.sect === '1'; go('sect'); }
   if (b.dataset.hurt) { st.hurt = b.dataset.hurt === '1'; renderBody(); }
   if (b.dataset.ready) { st.ready = b.dataset.ready === '1'; renderZhoutian(); }
-  for (const k of ['skel', 'hurt', 'ready', 'font', 'body', 'btn']) if (b.dataset[k] !== undefined) $$(`[data-${k}]`, proto).forEach(x => x.setAttribute('aria-pressed', x === b));
+  for (const k of ['skel', 'hurt', 'ready', 'font', 'body', 'btn', 'sect']) if (b.dataset[k] !== undefined) $$(`[data-${k}]`, proto).forEach(x => x.setAttribute('aria-pressed', x === b));
 });
 
 renderAttrs(); renderBody(); renderZhoutian(); renderRoad(); renderTrack(); renderEnemy();

@@ -51,7 +51,7 @@ const PRESETS: Record<string, object> = {
   },
   // 长线第 35 天早上（原型 longline-prototype.html 的 mock 玩家）：境界 4 峰值、推完前沿待归隐
   day35: {
-    run: 35, realm: 4, route: 'tangmen', skillLevel: 8, peakRealm: 4,
+    run: 35, realm: 4, route: 'tangmen', skillLevel: 64, peakRealm: 4,
     dantian: 12_863_420, silver: 2140, xp: 312,
     reputation: 150, repTotal: 180_000, ganwuLevel: 136,
     ownedRepNodes: ['zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin'],

@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { assertNever } from '../engine/exhaustive';
 import { computeAttributes } from '../engine/attributes';
 import type { Build } from '../engine/combat';
-import { REALMS, skillUpgradeCost, type RouteId } from '../engine/content';
+import { HUOHOU_PER_REALM, SHICHENG, huohouEffect, huohouRealms, skillUpgradeCost, zhaoshiLevel, type RouteId } from '../engine/content';
 import { bossDmgBonus } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
 import { RouteSwitch } from '../overlays/RouteSwitch';
 import { playerBuild, useGameStore } from '../store/gameStore';
 
-const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
+import { fmtBig } from '../fmt';
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const pp = (v: number) => `${(v * 100).toFixed(1)}pp`;
 const CN_CHONG = ['', '一', '二', '三'];
@@ -22,11 +22,14 @@ export function SkillPane() {
   const [switchTo, setSwitchTo] = useState<RouteId | null>(() =>
     new URLSearchParams(window.location.hash.slice(1)).get('switch') === '1' ? otherRoutes[0] : null);
   const bossBonus = bossDmgBonus(s.ownedRepNodes);
-  const cap = REALMS[s.realm - 1].skillCap;
   const next = s.skillLevel + 1;
-  const atCap = next > cap;
-  const cost = atCap ? null : skillUpgradeCost(next);
-  const affordable = cost !== null && s.dantian >= cost;
+  const cost = skillUpgradeCost(next);
+  const affordable = s.dantian >= cost;
+  const zhaoshi = zhaoshiLevel(s.skillLevel);
+  const shicheng = s.skillLevel >= SHICHENG;
+  const hhLevel = Math.max(0, s.skillLevel - SHICHENG);
+  const fold = huohouRealms(s.skillLevel);
+  const cells = Math.max(4, Math.ceil(fold + 0.001));
   const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
   const nextNode = route.mechNodes.find((n) => !s.ownedMechNodes.includes(n.id));
   const build = playerBuild(s);
@@ -36,20 +39,40 @@ export function SkillPane() {
       <div className="pane-grid">
         <div>
           <section className="panel">
-            <div className="panel-head">武学 · {route.skillName} <span className="sub">上限 = 境界×2</span></div>
+            <div className="panel-head">武学 · {route.skillName} <span className="sub">上限：不限</span></div>
             <div className="panel-body">
               <div className="skill-row">
-                <span className="sname">{route.skillName}</span>
-                <span className="slv">Lv {s.skillLevel} / {cap}</span>
-                <span className="seff"><SkillEffects routeId={s.route!} level={s.skillLevel} /></span>
-                <button
-                  className="skill-btn"
-                  disabled={atCap || !affordable}
-                  onClick={s.upgradeSkill}
-                  title={atCap ? `突破至更高境界解锁 Lv ${next}` : undefined}
-                >
-                  {atCap ? '已达上限' : `升级 ${fmt(cost!)}`}
-                </button>
+                <span className="sname">招式</span>
+                <span className="slv">{zhaoshi} / {SHICHENG}</span>
+                <span className="seff"><SkillEffects routeId={s.route!} level={zhaoshi} /></span>
+                {shicheng ? (
+                  <span className="shicheng-tag">十成</span>
+                ) : (
+                  <button className="skill-btn" disabled={!affordable} onClick={s.upgradeSkill}>
+                    修习 {fmtBig(cost)}
+                  </button>
+                )}
+              </div>
+              <div className={`huohou${shicheng ? '' : ' locked'}`}>
+                <div className="hh-head">
+                  <span className="hh-name serif">火候</span>
+                  <span className="hh-lv">{shicheng ? `第 ${hhLevel} 重` : '招式十成后开启'}</span>
+                  <span className="hh-rule">每 {HUOHOU_PER_REALM} 重折合一个境界</span>
+                </div>
+                <div className="hh-ruler" aria-label={`火候折合 ${fold.toFixed(2)} 个境界`}>
+                  {Array.from({ length: cells }, (_, i) => (
+                    <span key={i} className="cell"><i style={{ width: `${Math.max(0, Math.min(1, fold - i)) * 100}%` }} /></span>
+                  ))}
+                </div>
+                <div className="hh-cap"><span>0</span><span>折合 {fold.toFixed(2)} 个境界</span><span>+{cells}</span></div>
+                {shicheng && (
+                  <button className="btn" disabled={!affordable} onClick={s.upgradeSkill}>
+                    精进一重（{fmtBig(cost)} 内力）
+                  </button>
+                )}
+                <div className="cap-note">
+                  三派相同：每一重，气血、攻击、防御同涨约 2.7%，命中、闪避随之略增——和突破同一个方向，只是一重只走二十分之一步。价格每重 ×1.08，越往后越贵；归隐即散，每一世从头练起。
+                </div>
               </div>
               <div className="skill-row">
                 <span className="sname">武学参悟</span>
@@ -69,10 +92,6 @@ export function SkillPane() {
                   </button>
                 )}
               </div>
-              <div className="cap-note">
-                武学等级上限 {cap}（境界 {s.realm} × 2）
-                {s.realm < REALMS.length && `；突破至境界 ${s.realm + 1} 后解锁 Lv ${cap + 1}–${REALMS[s.realm].skillCap}`}
-              </div>
             </div>
           </section>
 
@@ -85,11 +104,12 @@ export function SkillPane() {
                   <span className="base">基础 {attrs.zones.atkBase}</span>
                   {' '}× <span className="perm">(1 + {pct(attrs.zones.atkPermPct)})</span>
                   {' '}× <span className="temp">(1 + {pct(attrs.zones.atkTempPct)})</span>
+                  {shicheng && <>{' '}× <span className="temp">火候 {huohouEffect(s.skillLevel).statMult.toFixed(2)}</span></>}
                   {' '}= <span className="result">{attrs.atk}</span>
                 </div>
                 <div className="zone-legend">
                   <span className="perm">永久加成</span>
-                  <span className="temp">本轮加成（{route.skillName} Lv{s.skillLevel}）</span>
+                  <span className="temp">本世加成（{route.skillName} 招式 {zhaoshi} 成）</span>
                 </div>
               </div>
               <div className="zone-box">
@@ -109,7 +129,7 @@ export function SkillPane() {
           <div className="panel-head"><span className={`route-name serif route-${s.route}`}>{route.name}</span></div>
           <div className="panel-body">
             <ul className="route-mech">
-              <RouteMechList routeId={s.route!} level={s.skillLevel} build={build} />
+              <RouteMechList routeId={s.route!} level={zhaoshi} build={build} />
             </ul>
             <button
               className="btn ghost"

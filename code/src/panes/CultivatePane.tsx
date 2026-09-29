@@ -116,7 +116,7 @@ export function CultivatePane() {
           <AttrRow name="暴击伤害" cur={pct(attrs.critDmg)} next={nextAttrs ? pct(nextAttrs.critDmg) : null} />
           <div className="attr-note">
             {nextRealm && (
-              <>突破另得：挂机产出 {fmtRate(rate)} → {fmtRate(effIdleRate({ ...s, realm: s.realm + 1 }))} / 秒 · 武学上限 {REALMS[s.realm - 1].skillCap} → {nextRealm.skillCap}
+              <>突破另得：挂机产出 {fmtRate(rate)} → {fmtRate(effIdleRate({ ...s, realm: s.realm + 1 }))} / 秒
                 {s.realm === 1 && ' · 解锁三大路线'}
               </>
             )}

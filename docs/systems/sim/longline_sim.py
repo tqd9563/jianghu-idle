@@ -21,7 +21,7 @@
     第 1 天没有上一世，用第一世在线 4 小时时的构筑。
 
 golden 红线：只 import mvp0_sim 与 pacing_sim，不改它们的任何函数。
-    唯一的例外是战斗时临时把 mvp0_sim.DEF_K 换成本关的防御常数（formulas.md §1.3 v1.6），打完即还原。
+    本关防御常数经 fight(def_k=…) 传入（formulas.md §1.3 v1.6），缺省 100 保持旧 golden 不变。
 
 产物回填：formulas.md §1.3 / §3.4 / §6.1、content.md §2.0、economy.md §1.3 / §4。
 
@@ -126,12 +126,7 @@ def def_k(x: float) -> float:
 
 
 def win_at(b: dict, x: float, tags: tuple[str, ...] = ()) -> bool:
-    saved = m.DEF_K
-    m.DEF_K = def_k(x)
-    try:
-        return m.fight(b, enemy_at(x, tags))[0]
-    finally:
-        m.DEF_K = saved
+    return m.fight(b, enemy_at(x, tags), def_k=def_k(x))[0]
 
 
 def frontier_x(b: dict, tags: tuple[str, ...] = ()) -> float:

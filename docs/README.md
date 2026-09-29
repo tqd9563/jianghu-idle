@@ -18,6 +18,7 @@
 | `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
 | `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, AgeLine.tsx, SoulChip.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
+| `systems/sim/export_longline_fixtures.py` | 长线 golden 导出（招式 + 火候、关卡当量敌人、随当量放大的防御常数） | combat.longline.golden.test.ts |
 
 ### 全局设计
 

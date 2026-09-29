@@ -4,7 +4,7 @@
  * MVP-0 首轮永久加成为 0；「破关心得」（对 Boss +10%）是条件加成，由战斗模块单独结算，不入常值。
  * 单一数据源红线：修炼页 / 战斗页 / 武学页的属性均由本模块计算。
  */
-import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, type RouteId } from './content';
+import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouEffect, zhaoshiLevel, type RouteId } from './content';
 import { ROUTES } from './routes';
 
 export interface FinalAttributes {
@@ -44,7 +44,9 @@ export function computeAttributes(
   const def = route ? ROUTES[route] : null;
   const g = def?.grant ?? {};
   const p = def?.perLevel ?? {};
-  const L = route ? skillLevel : 0;
+  // 招式效果封顶十成；十成以上的火候与境界曲线同形叠在最外层（formulas.md §3.4 v1.6）
+  const L = route ? zhaoshiLevel(skillLevel) : 0;
+  const hh = huohouEffect(route ? skillLevel : 0);
 
   // 本轮临时乘区（路线赠予 + 武学 + 窍穴/贯通，加法合并）；永久乘区首轮为 0
   const atkTempPct = (p.atkPct ?? 0) * L + acupointPct;
@@ -52,11 +54,11 @@ export function computeAttributes(
   const hpTempPct = (p.hpPct ?? 0) * L + acupointPct;
 
   return {
-    hp: Math.round(base.hp * (1 + permPct) * (1 + hpTempPct)),
-    atk: round1(base.atk * (1 + permPct) * (1 + atkTempPct)),
-    def: round1(base.def * (1 + permPct) * (1 + defTempPct)),
-    accuracy: round1(base.accuracy * (1 + permPct)),
-    evasion: round1(base.evasion * (1 + permPct)),
+    hp: Math.round(base.hp * (1 + permPct) * (1 + hpTempPct) * hh.statMult),
+    atk: round1(base.atk * (1 + permPct) * (1 + atkTempPct) * hh.statMult),
+    def: round1(base.def * (1 + permPct) * (1 + defTempPct) * hh.statMult),
+    accuracy: round1(base.accuracy * (1 + permPct) + hh.hit),
+    evasion: round1(base.evasion * (1 + permPct) + hh.dodge),
     critRate: (BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L) * (1 + permPct),
     critDmg: (BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L) * (1 + permPct),
     basicAtkMult: g.basicAtkMult ?? 1,

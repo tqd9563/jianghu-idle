@@ -21,7 +21,6 @@ export function BreakthroughCeremony(props: {
           <div className="kv"><span className="k">攻击</span><span className="v">{props.prevAttrs.atk} → {props.nextAttrs.atk}</span></div>
           <div className="kv"><span className="k">防御</span><span className="v">{props.prevAttrs.def} → {props.nextAttrs.def}</span></div>
           <div className="kv"><span className="k">挂机产出</span><span className="v">{idleNeiliPerSec(props.realmTo - 1).toFixed(1)} → {idleNeiliPerSec(props.realmTo).toFixed(1)} / 秒</span></div>
-          <div className="kv"><span className="k">武学上限</span><span className="v">Lv {REALMS[props.realmTo - 2].skillCap} → Lv {def.skillCap}</span></div>
         </div>
         <button className="btn fade-item" style={{ maxWidth: 280, margin: '26px auto 0' }} onClick={props.onClose}>
           {props.realmTo === 2 ? '继续 · 选择路线' : '继续'}

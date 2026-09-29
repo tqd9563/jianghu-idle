@@ -28,6 +28,8 @@ export interface EnemyDef {
   kind: 'normal' | 'elite' | 'boss';
   recommendedRealm: number;
   reward: { neili: number; silver: number; xp: number };
+  /** 本关防御常数 K（formulas.md §1.3 v1.6）；缺省 100 */
+  defK?: number;
 }
 
 /** Python round()：banker's rounding（四舍六入五取偶），digits 位小数 */
@@ -189,4 +191,26 @@ export function targetId(e: EnemyDef): string {
 /** 回刷收益（公式表 §6）：内力 20% / 银两 50% / 阅历 0 */
 export function refarmReward(e: EnemyDef): { neili: number; silver: number; xp: number } {
   return { neili: Math.round(e.reward.neili * 0.2), silver: Math.round(e.reward.silver * 0.5), xp: 0 };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 长线关卡：敌人由「关卡当量」换算（content.md §2.0 v2.2，与 longline_sim.enemy_at 同式）
+// ─────────────────────────────────────────────────────────────
+
+/** 当量 1 的敌人模板（content.md §2.0） */
+export const ENEMY_BASE = { hp: 60, atk: 6, def: 3.5, hit: 100, dodge: 8 } as const;
+
+/** 本关防御常数：K = 100 × 1.7^max(0, 当量 − 3)（formulas.md §1.3 v1.6） */
+export function defKAt(x: number): number {
+  return 100 * Math.pow(1.7, Math.max(0, x - 3));
+}
+
+/** 当量 x 的敌人属性：气血/攻击/防御 × 1.7^(x−1)，命中 +12(x−1)，闪避 +3(x−1) */
+export function enemyStatsAt(x: number): { hp: number; atk: number; def: number; hit: number; dodge: number; defK: number } {
+  const k = Math.pow(1.7, x - 1);
+  return {
+    hp: ENEMY_BASE.hp * k, atk: ENEMY_BASE.atk * k, def: ENEMY_BASE.def * k,
+    hit: ENEMY_BASE.hit + 12 * (x - 1), dodge: ENEMY_BASE.dodge + 3 * (x - 1),
+    defK: defKAt(x),
+  };
 }

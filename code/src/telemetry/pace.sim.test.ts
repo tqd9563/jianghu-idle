@@ -1,130 +1,93 @@
 /**
- * 世时长实测 —— 转世年岁速率的标定输入（reincarnation/spec.md §2.2）。
+ * 节奏守卫 —— 多天一世（pacing/design.md §2 / §5，issue #22 第 6 步）。
  *
- * 为什么在代码里量、不在 mvp0_sim 里算：年岁速率 = 一世典型跨度 ÷ 典型世时长。旧速率 1.322
- * 的世时长取自 mvp0_sim，它早于周天 v4.0（冲穴耗内力）与受伤系统（压产出、要养伤），
- * 实际节奏已慢得多。这里用模拟玩家驱动**真实 store** 连续玩多世，量出的才是当前游戏的节奏。
+ * 用模拟玩家驱动**真实 store** 连续玩 100 多天，量出首达境界 2–6 是第几天，直接对里程碑
+ * （第 1 / 7 / 21 / 50 / 100 天）。玩家画像同 pacing_sim：每天在线 4 小时、离线 20 小时，
+ * 丹田封顶、只能在线突破，寿元撑不到下次上线就推完前沿归隐（simBot.ts）。
  *
- * 画像：三条路线 × 三个随机种子 × 连续六世；每世推到标准归隐点（境界 5 + 击败黑风寨主）即归隐，
- * 世间按 mvp0_sim 的贪心顺序购买声望节点。测量期间冻结年岁——只量节奏，不让寿元截断测量。
+ * 为什么在代码里量：pacing_sim 是按规则推出来的数，这里用真实代码再走一遍——
+ * 前沿乘数 ×1.2、名号声望、冲穴的随机、受伤养伤这些 sim 里简化掉的东西都照实发生。
  *
  * 用法：
- *   重新测量并写入标定输入：WRITE_PACE=1 npx vitest run src/telemetry/pace.sim.test.ts
- *   日常（CI）：对比实测与 pace_measured.json，中位数偏离 >10% 即失败——游戏节奏变了，须重标定。
+ *   重新测量并写入记录：WRITE_PACE=1 npx vitest run src/telemetry/pace.sim.test.ts
+ *   日常（CI）：各路线首达日须落在里程碑 ±20%（至少 ±2 天）之内，否则游戏节奏已偏离设计。
+ *
+ * 为什么是 ±20%（2026-09-29 用户选定）：sim 把冲穴与武学的份额也算进了丹田封顶，真实代码里它们在线另付，
+ * 前期会早到一两天；三条路线的战斗与名号声望也不同，首达境界 5 相差近一成。这两处 sim 刻画不了。
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { RouteId } from '../engine/content';
-import type { RepNodeId } from '../engine/prestige';
-import { INIT_AGE } from '../engine/reincarnation';
-import { nextStageOf, retireKind, useGameStore } from '../store/gameStore';
-import { advance, pushMap, reachRealm, setAfterTick, st } from './simBot';
+import { useGameStore } from '../store/gameStore';
+import { playDay, resetBot, st } from './simBot';
 
 const OUT = resolve(process.cwd(), '../docs/systems/sim/pace_measured.json');
 const ROUTES: RouteId[] = ['huashan', 'tangmen', 'shaolin'];
-const SEEDS = [42, 7, 2026];
-const LIVES = 6;
-/** 与 mvp0_sim.GREEDY_SHOP_ORDER 一致 */
-const SHOP: RepNodeId[] = [
-  'zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin', 'poguan_xinde',
-];
-const DRIFT_TOLERANCE = 0.10;
+const SEED = 42;
+/** 里程碑（pacing/design.md §0，pacing_sim.MILESTONE_DAY） */
+const MILESTONE: Record<number, number> = { 2: 1, 3: 7, 4: 21, 5: 50, 6: 100 };
+const TOLERANCE = 0.20;
+const MIN_SLACK_DAYS = 2;
+const MAX_DAYS = 120;
+/** 写记录用的真实日期（测试里时钟是假的） */
+const TODAY = new Date().toISOString().slice(0, 10);
 
-function median(xs: number[]): number {
-  const a = [...xs].sort((x, y) => x - y);
-  return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+interface Sample {
+  route: RouteId;
+  firstDay: Record<number, number>;
+  lives: number;
 }
 
-/** 玩一世到标准归隐点，返回活跃分钟数 */
-function playOneLife(route: RouteId): number {
-  st().setAutoAdvance(false);
-  advance(30);
-  reachRealm(2, route);
-  pushMap(1, route);
-  pushMap(2, route);
-  pushMap(3, route);
-  reachRealm(5, route);
-  if (nextStageOf(3, 0, st().clearedStages) !== null) pushMap(3, route);
-  const kind = retireKind(st());
-  if (kind !== 'standard') {
-    throw new Error(`${route} 未到标准归隐点：境界 ${st().realm}，归隐形态 ${String(kind)}`);
-  }
-  return st().runPlaySec / 60;
-}
-
-function retireAndShop(): void {
-  st().openRetire();
-  st().proceedRetire();
-  st().confirmRetire();
-  st().closeRetireCeremony();
-  for (const id of SHOP) st().buyRepNode(id);
-}
-
-interface Measured {
-  generated: string;
-  note: string;
-  samples: { route: RouteId; seed: number; lives: number[] }[];
-  firstLifeMinutes: number[];
-  allLifeMinutes: number[];
-  medianMinutes: number;
-}
-
-/**
- * ⚠ 暂时跳过（issue #22 第 4 步，用户 2026-09-28 拍板）：长线落地后境界总额约放大百倍，
- * 本测试的「一小时一世」模拟玩家已不适用。第 6 步把模拟玩家改为「一天一世」模型后恢复。
- */
-describe.skip('世时长实测（转世年岁速率标定输入）', () => {
-  beforeAll(() => {
-    vi.useFakeTimers();
-    // 冻结年岁：只量节奏，不让寿元截断测量
-    setAfterTick(() => { if ((st().age ?? INIT_AGE) > INIT_AGE + 30) useGameStore.setState({ age: INIT_AGE }); });
+/** 从第 1 天玩到首达境界 6（或 MAX_DAYS），返回各境界首达日与转世次数 */
+function playLongline(route: RouteId): Sample {
+  let x = SEED;
+  vi.spyOn(Math, 'random').mockImplementation(() => {
+    x = (x * 1664525 + 1013904223) >>> 0;
+    return x / 2 ** 32;
   });
+  vi.setSystemTime(Date.UTC(2026, 8, 29, 8, 0, 0));
+  st().hardReset();
+  useGameStore.setState({ started: true });
+  st().setAutoAdvance(false);
+  resetBot();
+  const firstDay: Record<number, number> = {};
+  for (let day = 1; day <= MAX_DAYS; day++) {
+    playDay(route);
+    const peak = st().peakRealm ?? 1;
+    for (let r = 2; r <= peak; r++) firstDay[r] ??= day;
+    if (peak >= 6) break;
+  }
+  vi.mocked(Math.random).mockRestore();
+  return { route, firstDay, lives: st().run };
+}
+
+describe('节奏守卫：真实代码的里程碑天数（多天一世）', () => {
+  beforeAll(() => { vi.useFakeTimers(); });
   afterAll(() => {
-    setAfterTick(() => {});
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it('三路线 × 三种子 × 六世', () => {
-    const samples: Measured['samples'] = [];
-    for (const route of ROUTES) {
-      for (const seed of SEEDS) {
-        let x = seed;
-        vi.spyOn(Math, 'random').mockImplementation(() => {
-          x = (x * 1664525 + 1013904223) >>> 0;
-          return x / 2 ** 32;
-        });
-        vi.setSystemTime(Date.UTC(2026, 8, 24, 9, 0, 0));
-        st().hardReset();
-        const lives: number[] = [];
-        for (let i = 0; i < LIVES; i++) {
-          lives.push(Math.round(playOneLife(route) * 10) / 10);
-          retireAndShop();
-        }
-        samples.push({ route, seed, lives });
-        vi.mocked(Math.random).mockRestore();
+  it('三条路线首达境界 2–6 落在里程碑 ±20%', () => {
+    const samples = ROUTES.map(playLongline);
+    if (process.env.WRITE_PACE) {
+      writeFileSync(OUT, JSON.stringify({
+        generated: TODAY,
+        note: '由 code/src/telemetry/pace.sim.test.ts 生成（WRITE_PACE=1）：真实代码的首达日，对照 pacing/design.md 里程碑。',
+        milestone: MILESTONE,
+        samples,
+      }, null, 2) + '\n');
+    }
+    for (const s of samples) {
+      for (const [realm, target] of Object.entries(MILESTONE)) {
+        const got = s.firstDay[Number(realm)];
+        const slack = Math.max(MIN_SLACK_DAYS, Math.round(target * TOLERANCE));
+        expect(got, `${s.route} 首达境界 ${realm}：第 ${got} 天，目标第 ${target} 天 ±${slack}`)
+          .toBeGreaterThanOrEqual(target - slack);
+        expect(got, `${s.route} 首达境界 ${realm}：第 ${got} 天，目标第 ${target} 天 ±${slack}`)
+          .toBeLessThanOrEqual(target + slack);
       }
     }
-    const firstLifeMinutes = samples.map((s) => s.lives[0]);
-    const allLifeMinutes = samples.flatMap((s) => s.lives);
-    const measured: Measured = {
-      generated: new Date().toISOString().slice(0, 10),
-      note: '由 code/src/telemetry/pace.sim.test.ts 生成（WRITE_PACE=1）。reincarnation_sim.py 读本文件反解年岁速率。',
-      samples, firstLifeMinutes, allLifeMinutes,
-      medianMinutes: median(allLifeMinutes),
-    };
-
-    if (process.env.WRITE_PACE) {
-      writeFileSync(OUT, JSON.stringify(measured, null, 2) + '\n');
-      return;
-    }
-    expect(existsSync(OUT), '缺标定输入，先跑 WRITE_PACE=1').toBe(true);
-    const saved = JSON.parse(readFileSync(OUT, 'utf8')) as Measured;
-    const drift = Math.abs(measured.medianMinutes - saved.medianMinutes) / saved.medianMinutes;
-    expect(
-      drift,
-      `世时长中位数 ${measured.medianMinutes} 分钟，标定时为 ${saved.medianMinutes}——游戏节奏已变，须重标定年岁速率`,
-    ).toBeLessThanOrEqual(DRIFT_TOLERANCE);
-  });
+  }, 600_000);
 });

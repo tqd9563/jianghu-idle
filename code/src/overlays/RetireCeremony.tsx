@@ -1,6 +1,6 @@
 /**
  * 归隐结算演出（规格书 §8.6-3）：声望入账的峰终庆典 + 本轮总结；关闭后落地声望阁（§8.6-4）。
- * 文案模板逐字取自 docs/rules/copy/retire.md v2.0 §4（冻结）。
+ * 文案模板逐字取自 docs/rules/copy/retire.md v2.1 §4（冻结）；战死分岔见 copy/reincarnation.md v1.1 §3。
  */
 import { useGameStore } from '../store/gameStore';
 import { fmtBig } from '../fmt';
@@ -12,8 +12,11 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
   const s = useGameStore();
   const c = s.retireCeremony;
   if (!c) return null;
-  // {T}：本世时长（在线 + 有效闭关），不足 1 小时写分钟（retire-copy §4）
-  const duration = c.lifeMinutes < 60 ? `${Math.round(c.lifeMinutes)} 分钟` : `${Math.round(c.lifeMinutes / 60)} 小时`;
+  // {T}：本世时长（在线 + 有效闭关）：不足 1 小时写分钟，不足 1 天写小时，否则写天（retire-copy §4）
+  const duration = c.lifeMinutes < 60 ? `${Math.round(c.lifeMinutes)} 分钟`
+    : c.lifeMinutes < 1440 ? `${Math.round(c.lifeMinutes / 60)} 小时`
+      : `${Math.round(c.lifeMinutes / 1440)} 天`;
+  const battle = c.cause === 'battle';
   const strongFoes = c.strongFoes;
   // {最远足迹} 措辞映射（retire-copy §4）
   const footprint = c.boss3
@@ -25,10 +28,10 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
   return (
     <div className="modal-backdrop open ceremony">
       <div className="modal ceremony-card" role="dialog" aria-label="归隐结算">
-        {/* 强制转世只在两处与主动归隐分岔：卡顶死因、声望后的来世交代（原型 §3；文案 copy/reincarnation.md §3） */}
+        {/* 寿终正寝只多卡顶一行（retire.md §4）；战死另有「全额入账」与来世交代（copy/reincarnation.md §3） */}
         {c.cause && (
           <div className="ceremony-cause">
-            <b>{c.deathAge}</b> 岁 · {c.cause === 'old' ? '寿终' : '重伤不治'}
+            <b>{c.deathAge}</b> 岁 · {battle ? '重伤不治' : '寿终正寝'}
           </div>
         )}
         <div className="ceremony-title serif">你的第{cnOrd(c.runEnded)}段江湖</div>
@@ -38,15 +41,15 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
         <div className="ceremony-rep">
           <span className="label">江湖会记得你</span>
           <span className="value gold serif">声望 +{fmtBig(c.settle.total)}</span>
-          {c.cause && <span className="full">全额入账</span>}
+          {battle && <span className="full">全额入账</span>}
         </div>
-        {c.cause && (
+        {battle && (
           <div className="soul-note">
             <div className="t"><span className="serif">魂魄未稳</span></div>
-            <div>仓促离世，魂魄受了创。来世首次突破之前，修炼只得六成。</div>
+            <div>仓促离世，魂魄受了创。来世头十年，修炼只得六成。</div>
           </div>
         )}
-        <button className="btn" onClick={onDone}>{c.cause ? '转世 · 再入江湖' : '进入声望阁'}</button>
+        <button className="btn" onClick={onDone}>{battle ? '转世 · 再入江湖' : '进入声望阁'}</button>
       </div>
     </div>
   );

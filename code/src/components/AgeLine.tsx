@@ -5,9 +5,12 @@
  */
 import { DUSK_MARGIN, currentEra, isDusk, lifespanCap } from '../engine/reincarnation';
 
-export function AgeLine({ age, eraStart, lifespanLost }: { age: number; eraStart: number; lifespanLost: number }) {
-  const dusk = isDusk(age, lifespanLost);
-  const cap = lifespanCap(lifespanLost);
+export function AgeLine({ age, eraStart, realm, lifespanLost }: {
+  age: number; eraStart: number; realm: number; lifespanLost: number;
+}) {
+  // 寿元随当前境界（reincarnation/spec.md §3.1），突破当场上调
+  const dusk = isDusk(age, realm, lifespanLost);
+  const cap = lifespanCap(realm, lifespanLost);
   const title = dusk
     ? `寿元 ${cap} 岁 · 再受一次重伤即寿终`
     : `寿元 ${cap} 岁 · 重伤一次折寿 ${DUSK_MARGIN} 年`;

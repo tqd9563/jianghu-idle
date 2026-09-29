@@ -66,6 +66,11 @@ SKILL_SHARE = 0.20
 NODE_GAIN = 0.20
 NODE_P0 = 10.0          # 声望；基础声望系数 c 同为 10（economy.md §1.1）
 
+# 声望的另两层与另一项开销（2026-09-29 第 6 步补入：真实代码的节奏守卫要对得上，不再当余量）：
+FRONT_MULT = 1.2        # 行为乘数「打到自己的前沿」（economy.md §1.2）：首个 Boss 要境界 3，首达境界 3 之后的世才有
+FAME_SHARE = 0.05       # 名号与经脉声望约占基础声望的这一比例（longline_sim 表六）
+QOL_PRICES = [150, 220, 440, 660, 1100]   # 五件传承（economy.md §4）：前沿乘数与名号多出来的声望先买它们，买齐后并入修行感悟
+
 
 def rate(realm: int) -> float:
     """基础挂机产出/秒（现行公式，本次不改）"""
@@ -129,7 +134,8 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
     first: dict[int, int] = {}
     lives: list[Life] = []
     levels_by_day: dict[int, int] = {}
-    levels, wallet = 0, 0.0
+    levels, wallet, extra = 0, 0.0, 0.0
+    qol = list(QOL_PRICES)
     k, end_k = 0, days * STEPS_PER_DAY
     dt = 1 / STEPS_PER_DAY
     pending_weak = False
@@ -138,7 +144,7 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
         pending_weak = False
         life = Life(k * dt, 1 + NODE_GAIN * levels, levels, max([1, *reached]))
         lives.append(life)
-        age, realm, held, life_rep = float(INIT_AGE), 1, 0.0, 0.0
+        age, realm, held, life_rep, life_extra = float(INIT_AGE), 1, 0.0, 0.0, 0.0
         while k < end_k:
             if die_at is not None and k * dt >= die_at:
                 die_at, pending_weak = None, True       # 战死：本世就此结束，来世魂魄未稳
@@ -161,7 +167,9 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
             m = life.m_base + sum(suhui.get(x, 0.0) for x in reached)
             eff = (1.0 if online else OFFLINE_EFF) * (weak_mult if age < weak_until else 1.0)
             gain = 3600 * m * eff
+            front = FRONT_MULT if life.peak_at_start >= 3 else 1.0
             life_rep += NODE_P0 * m * eff
+            life_extra += NODE_P0 * m * eff * (front - 1 + FAME_SHARE)
             cap = need.get(realm)
             held = held + gain if cap is None else min(held + gain, cap)
             k += 1
@@ -176,6 +184,11 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
             if age >= LIFESPAN[realm]:
                 break
         life.end, life.age_end = k * dt, age
+        extra += life_extra
+        while qol and extra >= qol[0]:
+            extra -= qol.pop(0)
+        if not qol:
+            wallet, extra = wallet + extra, 0.0
         wallet += shop_frac * life_rep
         while wallet >= NODE_P0 * (levels + 1):
             wallet -= NODE_P0 * (levels + 1)
@@ -301,7 +314,7 @@ def main() -> None:
 
     print("\n【表四】声望阁：修行感悟的实际购买（归隐时用本世声望尽数买入）")
     print(f"  第 n 级 +{NODE_GAIN:.0%} 基础产出，价格 = {NODE_P0:.0f}P × n；基础声望 = {NODE_P0:.0f} × 乘区加权有效小时")
-    print("  （只算基础声望；前沿乘数 ×1.2 与名号声望不计，留作托底余量）")
+    print(f"  （声望 = 基础 × 前沿乘数 {FRONT_MULT}（首达境界 3 之后）+ 名号约 {FAME_SHARE:.0%}；多出基础的部分先买齐五件传承）")
     print(f"{'第d天':>7}{'累计级数':>10}{'声望阁乘区':>12}{'总乘区':>9}")
     print("-" * 40)
     for d in [2, 7, 21, 50, 100]:

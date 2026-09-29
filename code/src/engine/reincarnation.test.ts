@@ -1,53 +1,75 @@
 /**
- * 转世引擎测试 —— 权威来源：docs/systems/reincarnation/spec.md v1.1
+ * 转世引擎测试 —— 权威来源：docs/systems/reincarnation/spec.md v1.5
  */
 import { describe, expect, it } from 'vitest';
 import {
-  INIT_AGE, LIFESPAN_CAP, AGE_YEARS_PER_MIN, ERA_START, SOUL_WEAK_MULT, DUSK_MARGIN,
-  lifespanCap, ageAfter, isOldDeath, isDusk, currentEra, nextLife, soulMult,
+  INIT_AGE, LIFESPAN, LIFE_DAYS, ERA_START, SOUL_WEAK_MULT, SOUL_WEAK_YEARS, DUSK_MARGIN,
+  lifespanCap, ageAfter, ageYearsPerDay, minutesUntilAge, isOldDeath, isDusk, outlivesADay,
+  currentEra, nextLife, soulMult, soulSettles,
 } from './reincarnation';
 import { LIFESPAN_LOSS_HEAVY } from './injury';
 
 describe('常量与规格对表（spec §2.2 / §3.1 / §4.1）', () => {
-  it('初始 18 岁、寿元 120、江湖历起于 100 年', () => {
+  it('初始 18 岁、江湖历起于 100 年；寿元随境界 70 → 150', () => {
     expect(INIT_AGE).toBe(18);
-    expect(LIFESPAN_CAP).toBe(120);
     expect(ERA_START).toBe(100);
+    expect([1, 2, 3, 4, 5, 6].map((r) => LIFESPAN[r])).toEqual([70, 70, 90, 110, 130, 150]);
   });
-  it('年岁速率（长线暂定）：标准一天 24 小时活 45 年，约每小时 1.9 岁', () => {
-    expect(ageAfter(INIT_AGE, 24 * 60) - INIT_AGE).toBeCloseTo(45, 6);
-    expect(AGE_YEARS_PER_MIN * 60).toBeCloseTo(1.875, 6);
+  it('年岁速率 = (寿元 − 18) ÷ (一世天数 + 4 小时)，对上 pacing_sim 表三', () => {
+    expect(ageYearsPerDay(2)).toBeCloseTo(44.6, 1);
+    expect(ageYearsPerDay(3)).toBeCloseTo(33.2, 1);
+    expect(ageYearsPerDay(4)).toBeCloseTo(29.1, 1);
+    expect(ageYearsPerDay(5)).toBeCloseTo(21.7, 1);
+    expect(ageYearsPerDay(6)).toBe(ageYearsPerDay(5));   // 境界 6 沿用境界 5
   });
-  it('魂魄未稳 ×0.6', () => {
+  it('阶段 P 的一世：第 L 天上线时还活着，再过一个在线时段寿终', () => {
+    for (const p of [2, 3, 4, 5]) {
+      const atLogin = ageAfter(INIT_AGE, LIFE_DAYS[p] * 1440, p);
+      expect(isOldDeath(atLogin, p, 0)).toBe(false);
+      expect(isOldDeath(ageAfter(atLogin, 4 * 60, p), p, 0)).toBe(true);
+    }
+  });
+  it('魂魄未稳 ×0.6、前 10 年', () => {
     expect(SOUL_WEAK_MULT).toBe(0.6);
+    expect(SOUL_WEAK_YEARS).toBe(10);
+    expect(soulSettles(27.9)).toBe(false);
+    expect(soulSettles(28)).toBe(true);
   });
   it('垂暮阈值与重伤折寿量绑定，不另设常量', () => {
     expect(DUSK_MARGIN).toBe(LIFESPAN_LOSS_HEAVY);
   });
 });
 
-describe('寿元与老死（spec §3）', () => {
-  it('未折寿时 120 岁即老死，119.9 岁未死', () => {
-    expect(isOldDeath(119.9, 0)).toBe(false);
-    expect(isOldDeath(120, 0)).toBe(true);
+describe('寿元与寿终（spec §3）', () => {
+  it('境界 1 七十岁寿终，境界 3 九十岁', () => {
+    expect(isOldDeath(69.9, 1, 0)).toBe(false);
+    expect(isOldDeath(70, 1, 0)).toBe(true);
+    expect(isOldDeath(85, 3, 0)).toBe(false);
   });
   it('重伤折寿直接压低本世寿元', () => {
-    expect(lifespanCap(15)).toBe(105);
-    expect(isOldDeath(106, 15)).toBe(true);
+    expect(lifespanCap(3, 15)).toBe(75);
+    expect(isOldDeath(76, 3, 15)).toBe(true);
+  });
+  it('离线寿终：从 69 岁活到 70 岁要多少分钟', () => {
+    expect(minutesUntilAge(69, 70, 1)).toBeCloseTo(1440 / ageYearsPerDay(1), 6);
+    expect(minutesUntilAge(71, 70, 1)).toBe(0);
+  });
+  it('寿元提示：剩余寿元够再活一天才提示（retire.md §3）', () => {
+    expect(outlivesADay(INIT_AGE, 2, 0, 2)).toBe(true);
+    expect(outlivesADay(LIFESPAN[2] - 10, 2, 0, 2)).toBe(false);
   });
 });
 
 describe('垂暮（原型 §1-B）', () => {
   it('离寿元不足一次重伤时进入垂暮', () => {
-    expect(isDusk(104.9, 0)).toBe(false);
-    expect(isDusk(105, 0)).toBe(true);
-    expect(isDusk(119, 0)).toBe(true);
+    expect(isDusk(54.9, 1, 0)).toBe(false);
+    expect(isDusk(55, 1, 0)).toBe(true);
   });
   it('已死不算垂暮', () => {
-    expect(isDusk(120, 0)).toBe(false);
+    expect(isDusk(70, 1, 0)).toBe(false);
   });
   it('折寿后垂暮线随之前移', () => {
-    expect(isDusk(90, 15)).toBe(true);    // 寿元 105，垂暮自 90 起
+    expect(isDusk(60, 3, 15)).toBe(true);    // 寿元 75，垂暮自 60 起
   });
 });
 

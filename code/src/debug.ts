@@ -86,21 +86,21 @@ const PRESETS: Record<string, object> = {
     clearedStages: [], attempts: {}, autoAdvance: true,
     runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
   },
-  // 转世系统（reincarnation-prototype.html）：垂暮态——108 岁，离寿元不足一次重伤
+  // 转世系统（reincarnation-prototype.html）：垂暮态——境界 3 寿元 90，80 岁时离寿元不足一次重伤
   dusk: {
     run: 3, realm: 3, route: 'tangmen', skillLevel: 5,
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
-    tiersUnlocked: ['1-0', '2-0', '1-1'], age: 108, eraStart: 206,
+    tiersUnlocked: ['1-0', '2-0', '1-1'], age: 80, eraStart: 206, peakRealm: 3,
   },
-  // 将死态：119.9 岁，挂机数秒即老死，用于看强制转世演出
+  // 将死态：境界 3、89.99 岁，挂机片刻即寿终正寝，用于看自动归隐演出
   dying: {
     run: 3, realm: 3, route: 'tangmen', skillLevel: 5,
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
-    tiersUnlocked: ['1-0', '2-0', '1-1'], age: 119.9, eraStart: 206,
+    tiersUnlocked: ['1-0', '2-0', '1-1'], age: 89.99, eraStart: 206, peakRealm: 3,
   },
   // 魂魄未稳态：被迫转世后的新一世开局
   soul: {

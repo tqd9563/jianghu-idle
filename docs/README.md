@@ -45,7 +45,7 @@
 | `systems/injury/spec.md` | 受伤系统规格（伤型表/严重度/压制/恢复/折寿接口，可进实现） | — |
 | `systems/sim/injury_sim.py` | 受伤系统标定 sim（判据 V6–V9） | — |
 | `systems/sim/reincarnation_sim.py` | 转世判据复核（V1–V7；寿元与年岁速率已由 pacing_sim 生成） | — |
-| `systems/sim/pace_measured.json` | 实测世时长（压缩原型时期的转世标定输入；第 6 步代码实装时改为真实代码的里程碑实测） | pace.sim.test.ts |
+| `systems/sim/pace_measured.json` | 真实代码的里程碑实测（三路线首达境界 2–6 的天数，`code/src/telemetry/pace.sim.test.ts` 以 WRITE_PACE=1 生成；守卫判据 ±20%） | pace.sim.test.ts |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）

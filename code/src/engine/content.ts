@@ -25,11 +25,11 @@ export interface RealmDef {
 
 /** 境界表（content.md §1 v2.2）。基础暴击率 5%、暴击伤害 150% 全境界一致 */
 export const REALMS: RealmDef[] = [
-  { realm: 1, name: '江湖新丁', hp: 100, atk: 10, def: 5,  accuracy: 100, evasion: 10, leaveCost: 349_000,    zhoutianCount: 4, acupointPoolSize: 3 },
-  { realm: 2, name: '初窥门径', hp: 170, atk: 17, def: 9,  accuracy: 112, evasion: 13, leaveCost: 2_700_000,  zhoutianCount: 3, acupointPoolSize: 4 },
-  { realm: 3, name: '小有所成', hp: 290, atk: 29, def: 15, accuracy: 124, evasion: 16, leaveCost: 6_930_000,  zhoutianCount: 4, acupointPoolSize: 5 },
-  { realm: 4, name: '炉火纯青', hp: 495, atk: 49, def: 26, accuracy: 136, evasion: 19, leaveCost: 17_900_000, zhoutianCount: 6, acupointPoolSize: 6 },
-  { realm: 5, name: '一流高手', hp: 840, atk: 84, def: 44, accuracy: 148, evasion: 22, leaveCost: 37_000_000, zhoutianCount: 8, acupointPoolSize: 8 },
+  { realm: 1, name: '江湖新丁', hp: 100, atk: 10, def: 5,  accuracy: 100, evasion: 10, leaveCost: 87_100,     zhoutianCount: 4, acupointPoolSize: 3 },
+  { realm: 2, name: '初窥门径', hp: 170, atk: 17, def: 9,  accuracy: 112, evasion: 13, leaveCost: 3_360_000,  zhoutianCount: 3, acupointPoolSize: 4 },
+  { realm: 3, name: '小有所成', hp: 290, atk: 29, def: 15, accuracy: 124, evasion: 16, leaveCost: 12_400_000, zhoutianCount: 4, acupointPoolSize: 5 },
+  { realm: 4, name: '炉火纯青', hp: 495, atk: 49, def: 26, accuracy: 136, evasion: 19, leaveCost: 75_200_000, zhoutianCount: 6, acupointPoolSize: 6 },
+  { realm: 5, name: '一流高手', hp: 840, atk: 84, def: 44, accuracy: 148, evasion: 22, leaveCost: 280_000_000, zhoutianCount: 8, acupointPoolSize: 8 },
   // MVP-2A §8.1：从 Realm 5 冻结值逐境界对 HP/ATK/DEF 乘 2.0；HIT/DODGE +12/+3；技能上限固定 10
   // 本版终点 = 突破入境界 6（pacing/design.md §4）：境界 6 可达不可再突破，境界 7 封存
   { realm: 6, name: '一代宗师', hp: 1680, atk: 168, def: 88,  accuracy: 160, evasion: 25, leaveCost: null, zhoutianCount: null, acupointPoolSize: null },

@@ -5,12 +5,17 @@
  * 归隐：本世至少突破过一次即可（economy.md §1.4）；声望 = 基础 × 行为乘数 + 成就（§1）。
  */
 import { create } from 'zustand';
-import { diagnose, fight, type Build, type FightResult, type FightStats } from '../engine/combat';
+import { diagnose, fight, type Build, type CombatSkill, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, type RouteId } from '../engine/content';
 import {
   DUNWU_INTERVAL_SEC, HUOHOU_MULT, NEIGONG, STARTER_NEIGONG, WUDAO_BIJI_WUXING, dunwuChance, neigongBuild,
-  rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
+  neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
+import {
+  BOSS_DROPS, DUPLICATE_SILVER, QINGZHUANG_DISCOUNT, QUALITY_PARAMS, SHOP_ITEMS, SHOP_NEIGONG_PRICE, SHOP_NEIGONG_REALM,
+  SHULIAN_CARRY, WUXUE, checkFormGate, formDunwuChance, formHasEffect, formKey, formMult, formName, slotCount,
+  type ShopItem, type WuxueId,
+} from '../engine/wuxue';
 import {
   getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackKey, trackLength,
   type EnemyDef, type MapId, type TierId,
@@ -124,6 +129,20 @@ interface PersistedState {
   fameThisLife: number;
   /** 已解锁的前沿（跨世保留）：`{图}-{难度}`；打通本图上一档 Boss 开下一档，打通初入 Boss 开下一图初入 */
   tiersUnlocked: string[];
+  /** 已拥有的武学（跨世保留，sect-neigong/spec.md §6.1） */
+  ownedWuxue: WuxueId[];
+  /** 已拥有的招式秘籍 `武学:式`（跨世保留） */
+  ownedScrolls: string[];
+  /** 本世装配（每世清空） */
+  equipped: WuxueId[];
+  /** 每式累计出招数 `武学:式` → 次数（熟练度来源；转世 ×0.5 带入下一世） */
+  formCasts: Record<string, number>;
+  /** 本世顿悟领悟的招式（秘籍自带的式不记）；每世清空 */
+  learnedForms: string[];
+  /** 前世领悟过的招式（跨世保留）：重悟顿悟 ×3（spec S4） */
+  pastLearned: string[];
+  /** 已领过首杀掉落的前沿 `{图}-{难度}`（跨世保留，spec §4.3） */
+  dropsClaimed: string[];
 }
 
 export interface BattleState {
@@ -140,7 +159,7 @@ export interface BattleState {
   /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
   chainStage: number | null;
   /** 胜利实际入账（收益行同源同值）；fame = 本场首通精英 / Boss 的名号声望 */
-  reward: { neili: number; silver: number; refarm: boolean; fame?: number } | null;
+  reward: { neili: number; silver: number; refarm: boolean; fame?: number; drop?: string } | null;
 }
 
 export interface FailureInfo {
@@ -224,6 +243,11 @@ interface GameState extends PersistedState {
   dismissDunwu: () => void;
   /** 点开页签：记入已见，金点消失 */
   seeTab: (tab: string) => void;
+  /** 装上 / 卸下武学（spec §2.4，装卸无成本） */
+  equipWuxue: (id: WuxueId) => void;
+  unequipWuxue: (id: WuxueId) => void;
+  /** 书肆购买（spec §4.2） */
+  buyShopItem: (itemId: string) => void;
   selectMap: (m: MapNo) => void;
   selectTier: (t: TierId) => void;
   challengeStage: (map: MapNo, tier: TierId, stage: number) => void;
@@ -260,6 +284,7 @@ const FRESH: PersistedState = {
   peakRealm: 1, ganwuLevel: 0, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
+  ownedWuxue: [], ownedScrolls: [], equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -338,6 +363,91 @@ export function playerBuild(
 /** 所修内功的火候品质倍率（未选内功为 1），供 computeAttributes 展示用 */
 export function huohouMultOf(s: Pick<PersistedState, 'neigong'>): number {
   return s.neigong ? HUOHOU_MULT[NEIGONG[s.neigong].quality] : 1;
+}
+
+// ---------------------------------------------------------------- 武学（sect-neigong/spec.md §2）
+
+type WuxueState = Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'ownedWuxue' | 'ownedScrolls' | 'equipped'
+  | 'formCasts' | 'learnedForms' | 'pastLearned'>;
+
+/** 当前真气上限（未选内功为 0） */
+export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'>): number {
+  return s.neigong ? qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) : 0;
+}
+
+/** 这门武学已领悟的式：秘籍自带前几式 + 本世顿悟的式 */
+export function learnedFormsOf(s: Pick<PersistedState, 'learnedForms'>, id: WuxueId): number[] {
+  const p = QUALITY_PARAMS[WUXUE[id].quality];
+  return Array.from({ length: p.forms }, (_, i) => i + 1)
+    .filter((k) => k <= p.given || (s.learnedForms ?? []).includes(formKey(id, k)));
+}
+
+/** 装配转成战斗用的武学表：只列已领悟的式，倍率含熟练与共鸣 */
+export function buildLoadout(s: WuxueState): CombatSkill[] {
+  const route = s.neigong ? NEIGONG[s.neigong].route : null;
+  return (s.equipped ?? []).map((id) => {
+    const d = WUXUE[id];
+    const p = QUALITY_PARAMS[d.quality];
+    const res = d.route !== null && d.route === route;
+    return {
+      id, name: d.name, cost: p.cost, cd: p.cd,
+      forms: learnedFormsOf(s, id).map((k) => ({
+        key: formKey(id, k), name: formName(k),
+        mult: formMult(d.quality, k, (s.formCasts ?? {})[formKey(id, k)] ?? 0, res),
+        effect: formHasEffect(d, k) ? d.effect : null,
+      })),
+    };
+  });
+}
+
+/** 书肆实价：轻装上路八折（spec S9） */
+export function shopPriceOf(s: Pick<PersistedState, 'ownedRepNodes'>, price: number): number {
+  return Math.round(price * (hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') ? QINGZHUANG_DISCOUNT : 1));
+}
+
+/** 书肆的上乘内功：尚未拥有的第一部（惊雷、镇岳、蚀骨顺序）；都有了为 null */
+export function shopNeigongOf(s: Pick<PersistedState, 'ownedNeigong'>): NeigongId | null {
+  return (['huashan', 'shaolin', 'tangmen'] as const).map((r) => neigongOf(r, '上乘'))
+    .find((id) => !(s.ownedNeigong ?? []).includes(id)) ?? null;
+}
+
+/** 书肆货架（含动态的上乘内功一件）；招式秘籍只陈列已拥有武学的 */
+export function shopItemsOf(s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue'>): ShopItem[] {
+  const ng = shopNeigongOf(s);
+  const items = SHOP_ITEMS.filter((it) => it.kind !== 'scroll' || (s.ownedWuxue ?? []).includes(it.wuxue!));
+  return ng ? [...items, {
+    id: `neigong:${ng}`, label: NEIGONG[ng].name, price: SHOP_NEIGONG_PRICE, realm: SHOP_NEIGONG_REALM, kind: 'neigong',
+  }] : items;
+}
+
+/**
+ * 战后结算武学（spec §2.2 / §2.3 / §3）：累计每式出招数；每门武学按本场出招次数判顿悟，
+ * 下一式条件都满足才判，一场最多悟一式。返回新状态与顿悟到的招式名。
+ */
+function settleWuxue(
+  s: WuxueState & Pick<PersistedState, 'wuxing' | 'ownedRepNodes'>, stats: FightStats, rand: () => number,
+): { formCasts: Record<string, number>; learnedForms: string[]; learned: string[] } {
+  const formCasts = { ...(s.formCasts ?? {}) };
+  for (const [k, n] of Object.entries(stats.formCasts)) formCasts[k] = (formCasts[k] ?? 0) + n;
+  const learnedForms = [...(s.learnedForms ?? [])];
+  const learned: string[] = [];
+  const qi = qiMaxOf(s);
+  const shimen = hasNode(s.ownedRepNodes, 'shimen_zhiyin');
+  for (const [id, n] of Object.entries(stats.skillCasts) as [WuxueId, number][]) {
+    const d = WUXUE[id];
+    const have = learnedFormsOf({ learnedForms }, id);
+    const k = have.length + 1;
+    if (k > QUALITY_PARAMS[d.quality].forms) continue;
+    const key = formKey(id, k);
+    const gate = checkFormGate(d, k, s.realm, qi, (s.ownedScrolls ?? []).includes(key),
+      formCasts[formKey(id, k - 1)] ?? 0);
+    if (!gate.ready) continue;
+    const p = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), shimen);
+    for (let i = 0; i < n; i++) {
+      if (rand() < p) { learnedForms.push(key); learned.push(`${d.name} · ${formName(k)}`); break; }
+    }
+  }
+  return { formCasts, learnedForms, learned };
 }
 
 /** 升重是否被台阶挡住（本版无卷册来源，归真一律缺卷册） */
@@ -846,6 +956,45 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
+  equipWuxue: (id) => {
+    const s = get();
+    const eq = s.equipped ?? [];
+    if (!(s.ownedWuxue ?? []).includes(id) || eq.includes(id) || eq.length >= slotCount(s.realm)) return;
+    set({ equipped: [...eq, id] });
+    track('wuxue_equipped', { run: s.run, realm: s.realm, route: s.route }, { wuxue: id, slots: eq.length + 1 });
+    persist(get());
+  },
+
+  unequipWuxue: (id) => {
+    const s = get();
+    if (!(s.equipped ?? []).includes(id)) return;
+    set({ equipped: s.equipped.filter((x) => x !== id) });
+    persist(get());
+  },
+
+  buyShopItem: (itemId) => {
+    const s = get();
+    const item = shopItemsOf(s).find((i) => i.id === itemId);
+    if (!item || s.realm < item.realm) return;
+    const price = shopPriceOf(s, item.price);
+    if (s.silver < price) return;
+    let patch: Partial<PersistedState>;
+    if (item.kind === 'wuxue') {
+      if ((s.ownedWuxue ?? []).includes(item.wuxue!)) return;
+      patch = { ownedWuxue: [...(s.ownedWuxue ?? []), item.wuxue!] };
+    } else if (item.kind === 'scroll') {
+      const key = formKey(item.wuxue!, item.form!);
+      if ((s.ownedScrolls ?? []).includes(key)) return;
+      patch = { ownedScrolls: [...(s.ownedScrolls ?? []), key] };
+    } else {
+      const ng = shopNeigongOf(s)!;
+      patch = { ownedNeigong: [...(s.ownedNeigong ?? []), ng] };
+    }
+    set({ ...patch, silver: s.silver - price, lastProgressSec: s.runPlaySec });
+    track('shop_bought', { run: s.run, realm: s.realm, route: s.route }, { item: itemId, price });
+    persist(get());
+  },
+
   // 未解锁 / 封存的图与难度也可点开查看（显示解锁条件或「大周天未开」），只是打不了（长线原型 §1）
   selectMap: (m) => {
     const s = get();
@@ -872,7 +1021,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     const enemy = getStage(map, tier, stage);
     const build = playerBuild(s);
-    const result = fight(build, enemy, { mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes) });
+    const result = fight(build, enemy, {
+      mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes), loadout: buildLoadout(s), qiMax: qiMaxOf(s),
+    });
     const key = enemy.kind !== 'normal';
     const turnCount = result.turns.length;
     // Boss/精英演出 15–30 秒不可跳过（§7.1）；普通关快节奏
@@ -1011,7 +1162,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       selectedMap: 1, selectedTier: 0, retireStep: null, retireCeremony: null,
       offlineSettlement: null, pendingTab: null,
     });
-    track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
+    track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], wuxing: get().wuxing });
     persist(get());
   },
 }));
@@ -1092,6 +1243,13 @@ function rebirth(
     run: newRun,
     // 阅历冻结：原值原样留着，不清零也不再增加（spec §4.4）
     xp: s.xp,
+    // 武学（spec §6.1）：秘籍与首杀记录保留；装配、本世领悟清空；每式熟练带一半
+    ownedWuxue: s.ownedWuxue ?? [],
+    ownedScrolls: s.ownedScrolls ?? [],
+    dropsClaimed: s.dropsClaimed ?? [],
+    pastLearned: [...new Set([...(s.pastLearned ?? []), ...(s.learnedForms ?? [])])],
+    formCasts: Object.fromEntries(Object.entries(s.formCasts ?? {})
+      .map(([k, n]) => [k, Math.floor(n * SHULIAN_CARRY)] as const).filter(([, n]) => n > 0)),
     ownedNeigong: s.ownedNeigong ?? [...STARTER_NEIGONG],
     wuxing,
     seenTabs: s.seenTabs ?? [],
@@ -1213,6 +1371,12 @@ function resolveBattle(
     });
   }
 
+  // 武学：累计熟练、判新招顿悟（胜负都算，出过招就算练过）
+  const wx = settleWuxue(s, result.stats, Math.random);
+  for (const name of wx.learned) {
+    track('form_learned', { run: s.run, realm: s.realm, route: s.route }, { form: name });
+  }
+
   // 自动连战：首通胜利推进下一关；回刷胜利回到原关（回退挂机）
   const chainStage = result.win && s.autoAdvance
     ? (firstClear ? nextStageOf(b.map, b.tier, clearedStages) : b.stage)
@@ -1220,6 +1384,8 @@ function resolveBattle(
   set({
     silver, clearedStages, attempts, failure, lastProgressSec,
     refarmKey, refarmCount, refarmAt, injuries, lifespanLost, ...fameState,
+    formCasts: wx.formCasts, learnedForms: wx.learnedForms,
+    ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),
     battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
   });
   if (fameGained > 0) {
@@ -1236,6 +1402,38 @@ function resolveBattle(
       track('tier_unlocked', { run: s.run, realm: s.realm, route: s.route }, {
         by: key, opened,
       });
+    }
+  }
+  // Boss 首次击杀（跨世只算第一次）必掉秘籍（spec §4.3）；已拥有改给银两
+  if (result.win && enemy.kind === 'boss' && b.stage === trackLength(b.map, b.tier)) {
+    const tk = trackKey(b.map, b.tier);
+    const drop = BOSS_DROPS[tk];
+    const cur = get();
+    if (drop && !(cur.dropsClaimed ?? []).includes(tk)) {
+      const patch: Partial<GameState> = { dropsClaimed: [...(cur.dropsClaimed ?? []), tk] };
+      let got: string;
+      if (drop.kind === 'wuxue') {
+        if ((cur.ownedWuxue ?? []).includes(drop.wuxue)) {
+          patch.silver = cur.silver + DUPLICATE_SILVER.wuxue;
+          got = `银两 +${DUPLICATE_SILVER.wuxue}（${WUXUE[drop.wuxue].name}已有）`;
+        } else {
+          patch.ownedWuxue = [...(cur.ownedWuxue ?? []), drop.wuxue];
+          got = `《${WUXUE[drop.wuxue].name}》`;
+        }
+      } else {
+        const own = cur.route ? neigongOf(cur.route, '上乘') : null;
+        const ng = drop.which === 'own' && own && !(cur.ownedNeigong ?? []).includes(own) ? own : shopNeigongOf(cur);
+        if (ng) {
+          patch.ownedNeigong = [...(cur.ownedNeigong ?? []), ng];
+          got = `《${NEIGONG[ng].name}》`;
+        } else {
+          patch.silver = cur.silver + DUPLICATE_SILVER.neigong;
+          got = `银两 +${DUPLICATE_SILVER.neigong}（上乘内功已齐）`;
+        }
+      }
+      const bt = get().battle!;
+      set({ ...patch, battle: { ...bt, reward: bt.reward ? { ...bt.reward, drop: got } : bt.reward } });
+      track('boss_drop', { run: s.run, realm: s.realm, route: s.route }, { track: tk, got });
     }
   }
   // 战死（reincarnation/spec.md §3.2）：伤势越过致死线，或重伤折寿后年岁已超剩余寿元。

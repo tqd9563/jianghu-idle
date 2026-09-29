@@ -12,11 +12,12 @@
 import { vi } from 'vitest';
 import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
-import { neigongOf, zhongCost } from '../engine/neigong';
+import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost } from '../engine/neigong';
+import { WUXUE, slotCount } from '../engine/wuxue';
 import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
 import { REP_NODES, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
-import { nextStageOf, openFronts, retireKind, useGameStore, zhoutianN, type MapNo } from '../store/gameStore';
+import { nextStageOf, openFronts, retireKind, shopItemsOf, shopPriceOf, useGameStore, zhoutianN, type MapNo } from '../store/gameStore';
 import type { TierId } from '../engine/enemies';
 
 export const st = () => useGameStore.getState();
@@ -127,7 +128,30 @@ export function tend(route: RouteId): void {
       st().upgradeZhong();
       if (st().zhong === z) { skillBudget += zhongCost(z + 1); break; }
     }
+    if (!process.env.PACE_NO_WUXUE) tendWuxue();
   }
+}
+
+/** 武学（标准玩家）：银两全花在书肆（从便宜的买起），按品质、同路数优先装满槽 */
+function tendWuxue(): void {
+  for (let guard = 0; guard < 20; guard++) {
+    const s = st();
+    const item = shopItemsOf(s)
+      .filter((it) => s.realm >= it.realm && shopPriceOf(s, it.price) <= s.silver)
+      .filter((it) => it.kind === 'wuxue' ? !s.ownedWuxue.includes(it.wuxue!)
+        : it.kind === 'scroll' ? !s.ownedScrolls.includes(`${it.wuxue}:${it.form}`) : true)
+      .sort((a, b) => a.price - b.price)[0];
+    if (!item) break;
+    s.buyShopItem(item.id);
+  }
+  const s = st();
+  const route = s.neigong ? NEIGONG[s.neigong].route : null;
+  const want = [...s.ownedWuxue].sort((a, b) =>
+    (QUALITY_ORDER.indexOf(WUXUE[b].quality) - QUALITY_ORDER.indexOf(WUXUE[a].quality))
+    || (Number(WUXUE[b].route === route) - Number(WUXUE[a].route === route)))
+    .slice(0, slotCount(s.realm));
+  for (const id of s.equipped) if (!want.includes(id)) st().unequipWuxue(id);
+  for (const id of want) st().equipWuxue(id);
 }
 
 /** 在线 hours 小时：每 5 分钟看一眼 */

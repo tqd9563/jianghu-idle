@@ -1306,3 +1306,66 @@ button.wound-chip.soul-chip:hover { border-color: var(--ink-gold); }
   .ng-step .se { display: none; }
   .ng-zhong { margin-left: 0; text-align: left; }
 }
+
+/* ===== 武学页（docs/design/sect-neigong-prototype.html §3） ===== */
+.qtag.res-tag { color: var(--candle-gold); border-color: var(--candle-gold); }
+.qtag.eff { color: var(--crit-ember); border-color: var(--crit-ember); margin-left: 6px; }
+.wx-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.wx-slot { min-height: 74px; border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px 10px; background: var(--night-surface-raised); text-align: left; display: flex; flex-direction: column; gap: 4px; color: var(--ink-warm); font-family: inherit; cursor: pointer; }
+.wx-slot .sn { font-weight: 700; font-size: 14px; letter-spacing: 0.06em; }
+.wx-slot .ss { font-size: 11.5px; color: var(--ink-muted); }
+.wx-slot[aria-pressed="true"] { border-color: var(--candle-gold); }
+.wx-slot.empty, .wx-slot.locked { border-style: dashed; background: transparent; color: var(--ink-faint); justify-content: center; align-items: center; font-size: 12px; cursor: default; }
+.wx-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 12px; margin-top: 12px; }
+.wx-list { display: flex; flex-direction: column; }
+.wx-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; text-align: left; flex-wrap: wrap; color: var(--ink-warm); font-family: inherit; cursor: pointer; }
+.wx-item:hover { background: var(--night-surface-raised); }
+.wx-item[aria-current="true"] { border-color: var(--line-strong); background: var(--night-surface-raised); }
+.wx-item .nm { font-weight: 600; min-width: 80px; }
+.wx-item .eq { margin-left: auto; font-size: 11.5px; color: var(--candle-gold); }
+.wx-item .pg { font-size: 11.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.wx-detail .dh { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wx-detail .dh .nm { font-size: 20px; font-weight: 700; letter-spacing: 0.12em; }
+.wx-detail .dh .btn { margin-left: auto; }
+.wx-detail .params { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-muted); margin: 8px 0 10px; flex-wrap: wrap; }
+.wx-detail .params b { color: var(--ink-warm); font-variant-numeric: tabular-nums; }
+.wx-form { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 9px 0; border-top: 1px dashed var(--line); }
+.wx-form .fi { font-size: 13px; font-weight: 600; }
+.wx-form .fm { font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; text-align: right; }
+.wx-form .fx { grid-column: 1 / 4; }
+.wx-form.locked .fi { color: var(--ink-faint); }
+.wx-form .lvl { font-size: 11.5px; color: var(--ink-muted); display: flex; justify-content: space-between; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.wx-form .lvl b { color: var(--ink-warm); font-weight: 600; }
+.bar.thin { height: 4px; }
+.bar.qi i { background: var(--sword-cyan); }
+.wx-form .bar i { background: var(--candle-gold); }
+.wx-form .cond { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.wx-form .cond .ok { color: var(--ink-muted); }
+.wx-form .cond .ok::before { content: "✓ "; color: var(--poison-green); }
+.wx-form .cond .no { color: var(--ink-faint); }
+.wx-form .cond .no::before { content: "· "; }
+.wx-form .cond .wait { color: var(--candle-gold); }
+.wx-shop { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.wx-good { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--night-surface-raised); flex-wrap: wrap; }
+.wx-good .gn { font-weight: 600; }
+.wx-good .gp { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 13px; }
+.wx-good.owned { opacity: 0.6; }
+.wx-good.locked { background: transparent; border-style: dashed; }
+.wx-good.locked .gn, .wx-good.locked .gp { color: var(--ink-faint); }
+
+/* 战斗页：武学出招与触发统计 */
+.log-line .cast-t { color: var(--sword-cyan); }
+.cast-stats { margin-top: 12px; border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 14px; }
+.cast-stats table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+.cast-stats th { text-align: left; font-weight: 500; color: var(--ink-faint); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.cast-stats td { padding: 5px 6px; border-bottom: 1px dashed var(--line); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.cast-stats td:first-child { color: var(--ink-warm); }
+.cast-stats .share { display: flex; align-items: center; gap: 8px; }
+.cast-stats .share .bar { flex: 1; min-width: 60px; height: 5px; }
+.cast-stats .share .bar i { background: var(--sword-cyan); }
+.cast-stats tr.mech .share .bar i { background: var(--crit-ember); }
+.cast-stats tr.plain .share .bar i { background: var(--line-strong); }
+@media (max-width: 720px) {
+  .wx-layout { grid-template-columns: 1fr; }
+  .wx-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

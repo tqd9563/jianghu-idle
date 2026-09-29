@@ -1,6 +1,7 @@
 /** 战斗页 —— 地图 × 难度 × 关（长线原型 docs/design/longline-prototype.html §1；风格随 issue #26 整改） */
 import { useEffect, useRef, useState } from 'react';
-import { DIAG_TEXTS } from '../engine/combat';
+import { DIAG_TEXTS, type FightResult } from '../engine/combat';
+import { WUXUE, type WuxueId } from '../engine/wuxue';
 import { REALMS } from '../engine/content';
 import {
   getStage, isSealed, MAP_IDS, mapName, stageKey, TIER_NAMES, TIERS, trackLength,
@@ -10,7 +11,7 @@ import { COUNTER_HINTS, FAME_BOSS, FAME_ELITE, hasNode } from '../engine/prestig
 import { ROUTES } from '../engine/routes';
 import {
   currentMult, effBreakCost, mapUnlocked, nextStageOf, openFronts, playerBuild, tierUnlocked,
-  useGameStore, type MapNo,
+  qiMaxOf, useGameStore, type MapNo,
 } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
@@ -38,6 +39,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const total = trackLength(viewMap, viewTier);
   const next = open ? nextStageOf(viewMap, viewTier, cleared) : null;
   const build = playerBuild(s);
+  const qiCap = qiMaxOf(s);
+  const hasLoadout = (s.equipped ?? []).length > 0;
 
   // 选关（已通关卡可回刷；默认跟随推进关卡，全通默认末关）
   const [viewStage, setViewStage] = useState<number | null>(null);
@@ -184,6 +187,15 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     <i style={{ width: `${phpPct * 100}%` }} />
                     {shieldNow > 0 && <em className="shield-fill" style={{ width: `${Math.min(shieldNow / build.hp, 1) * 100}%` }} />}
                   </div>
+                  {hasLoadout && (
+                    <>
+                      <div className="hp-num">
+                        <span>真气</span>
+                        <span>{f0(battle && last ? last.pQi : qiCap)} / {f0(qiCap)}</span>
+                      </div>
+                      <div className="bar qi"><i style={{ width: `${qiCap > 0 ? Math.min(1, (battle && last ? last.pQi : qiCap) / qiCap) * 100 : 0}%` }} /></div>
+                    </>
+                  )}
                   {battle && !battleDone && last && (build.sqNeed < 99 || build.poison.cap > 0) && (
                     <div className="status-chips">
                       {build.sqNeed < 99 && <span className="chip sq">剑意 {Math.floor(last.pSq)}/{build.sqNeed}</span>}
@@ -284,6 +296,12 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   {`${battle.reward.refarm ? '回刷收获' : '收获'}　银两 +${f0(battle.reward.silver)}`}
                 </span>
               </div>
+              {battle.reward.drop && (
+                <div className="log-line">
+                  <span className="turn" />
+                  <span className="fame-t"><span className="serif">首杀所得</span>　{battle.reward.drop}</span>
+                </div>
+              )}
               {(battle.reward.fame ?? 0) > 0 && (
                 <div className="log-line">
                   <span className="turn" />
@@ -293,6 +311,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             </>
           )}
         </div>
+        {battle && battleDone && battle.result.stats.casts > 0 && <CastStats stats={battle.result.stats} />}
       </section>
 
       {s.failure && <FailureModal goCultivate={goCultivate} />}
@@ -305,9 +324,41 @@ function tagLabel(t: EnemyTag): string {
   return t === '毒' ? '剧毒' : t;
 }
 
+/** 武学触发统计（spec §4.7）：每门武学出招次数、伤害占比；路数机制与普攻也列出，便于看出机制没有变弱 */
+function CastStats({ stats }: { stats: FightResult['stats'] }) {
+  const total = stats.dmgDealt || 1;
+  const skillSum = Object.values(stats.skillDmg).reduce((a, b) => a + b, 0);
+  const mech = stats.burstDmg + stats.thornsOut + stats.poisonDmg;
+  const plain = Math.max(0, total - skillSum - mech);
+  const rows: [string, string, number, string][] = [
+    ...Object.entries(stats.skillCasts)
+      .sort((a, b) => (stats.skillDmg[b[0]] ?? 0) - (stats.skillDmg[a[0]] ?? 0))
+      .map(([id, n]) => [WUXUE[id as WuxueId].name, String(n), stats.skillDmg[id] ?? 0, ''] as [string, string, number, string]),
+    ['路数机制', stats.burstCount > 0 ? `剑招 ${stats.burstCount}` : '—', mech, 'mech'],
+    ['普攻', '—', plain, 'plain'],
+  ];
+  return (
+    <div className="cast-stats">
+      <div className="log-title">武学触发统计 · 出招 {stats.casts} 次</div>
+      <table>
+        <thead><tr><th>来源</th><th>出招</th><th>伤害占比</th></tr></thead>
+        <tbody>
+          {rows.map(([name, n, dmg, cls]) => (
+            <tr key={name} className={cls}>
+              <td>{name}</td><td>{n}</td>
+              <td><span className="share"><span className="bar"><i style={{ width: `${(dmg / total) * 100}%` }} /></span>{Math.round((dmg / total) * 100)}%</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function logCls(kind: string): string {
   switch (kind) {
     case 'crit': case 'burst': return 'crit-t';
+    case 'cast': return 'cast-t';
     case 'poison_apply': case 'poison_tick': case 'poison_burst': case 'enemy_poison_tick': return 'poison-t';
     case 'miss': case 'purify': return 'info-t';
     case 'thorns_to_player': case 'thorns_to_enemy': return 'shield-t';

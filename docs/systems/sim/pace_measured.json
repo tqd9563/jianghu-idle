@@ -1,35 +1,39 @@
 {
   "generated": "2026-09-29",
-  "note": "由 code/src/telemetry/pace.sim.test.ts 生成（WRITE_PACE=1）：真实代码的首达日，对照 pacing/design.md 里程碑。",
+  "note": "由 code/src/telemetry/pace.sim.test.ts 生成（WRITE_PACE=1）：真实代码的首达日（各路线 4 个种子），对照 pacing/design.md 里程碑。",
   "milestone": {
     "2": 1,
     "3": 7,
     "4": 21,
-    "5": 50,
+    "5": 42,
     "6": 100
   },
-  "samples": [
+  "seeds": [
+    7,
+    42,
+    99,
+    2026
+  ],
+  "means": [
     {
       "route": "huashan",
       "firstDay": {
         "2": 1,
         "3": 5,
-        "4": 22,
-        "5": 42,
-        "6": 112
-      },
-      "lives": 42
+        "4": 21.5,
+        "5": 40,
+        "6": 113.5
+      }
     },
     {
       "route": "tangmen",
       "firstDay": {
         "2": 1,
         "3": 5,
-        "4": 20,
-        "5": 40,
-        "6": 110
-      },
-      "lives": 40
+        "4": 21.5,
+        "5": 41,
+        "6": 108.5
+      }
     },
     {
       "route": "shaolin",
@@ -37,10 +41,155 @@
         "2": 1,
         "3": 5,
         "4": 21,
-        "5": 42,
-        "6": 106
+        "5": 41,
+        "6": 99.8
+      }
+    }
+  ],
+  "samples": [
+    {
+      "route": "huashan",
+      "seed": 7,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 20,
+        "5": 41,
+        "6": 110
       },
-      "lives": 39
+      "lives": 41
+    },
+    {
+      "route": "huashan",
+      "seed": 42,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
+        "5": 36,
+        "6": 111
+      },
+      "lives": 41
+    },
+    {
+      "route": "huashan",
+      "seed": 99,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
+        "5": 44,
+        "6": 119
+      },
+      "lives": 43
+    },
+    {
+      "route": "huashan",
+      "seed": 2026,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
+        "5": 39,
+        "6": 114
+      },
+      "lives": 42
+    },
+    {
+      "route": "tangmen",
+      "seed": 7,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
+        "5": 39,
+        "6": 114
+      },
+      "lives": 42
+    },
+    {
+      "route": "tangmen",
+      "seed": 42,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
+        "5": 44,
+        "6": 109
+      },
+      "lives": 42
+    },
+    {
+      "route": "tangmen",
+      "seed": 99,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 21,
+        "5": 42,
+        "6": 107
+      },
+      "lives": 41
+    },
+    {
+      "route": "tangmen",
+      "seed": 2026,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 21,
+        "5": 39,
+        "6": 104
+      },
+      "lives": 40
+    },
+    {
+      "route": "shaolin",
+      "seed": 7,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 21,
+        "5": 39,
+        "6": 99
+      },
+      "lives": 37
+    },
+    {
+      "route": "shaolin",
+      "seed": 42,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 21,
+        "5": 39,
+        "6": 109
+      },
+      "lives": 40
+    },
+    {
+      "route": "shaolin",
+      "seed": 99,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
+        "5": 44,
+        "6": 89
+      },
+      "lives": 36
+    },
+    {
+      "route": "shaolin",
+      "seed": 2026,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 20,
+        "5": 42,
+        "6": 102
+      },
+      "lives": 38
     }
   ]
 }

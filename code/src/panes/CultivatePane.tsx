@@ -5,7 +5,8 @@ import { computeAttributes } from '../engine/attributes';
 import { REALMS } from '../engine/content';
 import { currentSegmentQuota } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
-import { effBreakCost, effIdleRate, retireKind, useGameStore, zhoutianN as zhoutianNOf } from '../store/gameStore';
+import { effBreakCost, effIdleRate, huohouMultOf, retireKind, useGameStore, zhoutianN as zhoutianNOf } from '../store/gameStore';
+import { NEIGONG } from '../engine/neigong';
 import { fmtBig, fmtRate } from '../fmt';
 import {
   REALM_ACUPOINTS, totalAcupointBonus, isMeridianComplete, openedInRealm,
@@ -38,9 +39,10 @@ export function CultivatePane() {
     : 0;
   const acupointPct = totalAcupointBonus(s.realm, openedTotal, meridianCount);
   const zhoutianN = zhoutianNOf(s.realm);
-  const attrs = computeAttributes(s.realm, s.route, s.skillLevel, 0, acupointPct);
-  const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.skillLevel, 0, acupointPct) : null;
-  const routeDef = s.route ? ROUTES[s.route] : null;
+  const hhMult = huohouMultOf(s);
+  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acupointPct, hhMult);
+  const nextAttrs = nextRealm ? computeAttributes(s.realm + 1, s.route, s.zhong, 0, acupointPct, hhMult) : null;
+  const ngName = s.neigong ? NEIGONG[s.neigong].name : '';
 
   return (
     <div className="pane-wrap pane-grid cultivate-grid">
@@ -68,7 +70,7 @@ export function CultivatePane() {
               )}
               <BreakthroughButton />
               <div className="cap-note">
-                内力自归丹田，第{CN[zhoutianN]}周天圆满后需手动点击「突破」完成晋升；动用内力升级武学时，周天进度如实回落（气机回落）
+                内力自归丹田，第{CN[zhoutianN]}周天圆满后需手动点击「突破」完成晋升；动用内力精进内功时，周天进度如实回落（气机回落）
               </div>
             </div>
           </>
@@ -101,14 +103,14 @@ export function CultivatePane() {
           {(attrs.zones.atkTempPct > 0 || attrs.basicAtkMult !== 1) && (
             <div className="attr-sub">
               {attrs.zones.atkTempPct > 0 && (
-                <>基础 {attrs.zones.atkBase} × 本轮 +{pct(attrs.zones.atkTempPct)}（{routeDef!.skillName} Lv{s.skillLevel}）</>
+                <>基础 {attrs.zones.atkBase} × 本轮 +{pct(attrs.zones.atkTempPct)}（{ngName} 第 {s.zhong} 重）</>
               )}
               {attrs.basicAtkMult !== 1 && <>{attrs.zones.atkTempPct > 0 && ' · '}普攻系数 ×{attrs.basicAtkMult.toFixed(2)}（轻手暗器）</>}
             </div>
           )}
           <AttrRow name="防御" cur={String(attrs.def)} next={nextAttrs ? String(nextAttrs.def) : null} />
           {attrs.zones.defTempPct > 0 && (
-            <div className="attr-sub">基础 {REALMS[s.realm - 1].def} × 本轮 +{pct(attrs.zones.defTempPct)}（路线赠予{s.skillLevel > 0 ? ` + ${routeDef!.skillName}` : ''}）</div>
+            <div className="attr-sub">基础 {REALMS[s.realm - 1].def} × 本轮 +{pct(attrs.zones.defTempPct)}（路数赠予{s.zhong > 0 ? ` + ${ngName}` : ''}）</div>
           )}
           <AttrRow name="命中" cur={String(attrs.accuracy)} next={nextAttrs ? String(nextAttrs.accuracy) : null} />
           <AttrRow name="闪避" cur={String(attrs.evasion)} next={nextAttrs ? String(nextAttrs.evasion) : null} />
@@ -117,11 +119,11 @@ export function CultivatePane() {
           <div className="attr-note">
             {nextRealm && (
               <>突破另得：挂机产出 {fmtRate(rate)} → {fmtRate(effIdleRate({ ...s, realm: s.realm + 1 }))} / 秒
-                {s.realm === 1 && ' · 解锁三大路线'}
+                {s.realm === 1 && ' · 可择一部内功'}
               </>
             )}
             {s.route && (
-              <><br />路线机制参数（{routeDef!.name.slice(0, 2)}）见武学页</>
+              <><br />路数机制参数（{ROUTES[s.route].name}）见内功页</>
             )}
           </div>
         </div>

@@ -49,8 +49,8 @@ describe('长线关卡表', () => {
     expect(e.defK).toBeCloseTo(st.defK, 9);
   });
 
-  it('图 1 初入前 6 关是入门关：境界 1 未择路的裸属性实战胜率 ≥ 90%，第 7 关起要境界 2', () => {
-    const bare = playerBuild({ realm: 1, route: null, skillLevel: 0, ownedMechNodes: [], completedBooks: [], injuries: undefined });
+  it('图 1 初入前 6 关是入门关：境界 1 未选内功的裸属性实战胜率 ≥ 90%，第 7 关起要境界 2', () => {
+    const bare = playerBuild({ realm: 1, neigong: null, zhong: 0, tiersPassed: 0, injuries: undefined });
     for (let st = 1; st <= 6; st++) {
       const e = getStage(1, 0, st);
       expect(e.recommendedRealm).toBe(1);

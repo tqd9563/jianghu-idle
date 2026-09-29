@@ -11,7 +11,8 @@
  */
 import { vi } from 'vitest';
 import { requiredMeridian } from '../engine/acupoints';
-import { skillUpgradeCost, type RouteId } from '../engine/content';
+import type { RouteId } from '../engine/content';
+import { neigongOf, zhongCost } from '../engine/neigong';
 import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
 import { REP_NODES, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
@@ -22,15 +23,14 @@ export const st = () => useGameStore.getState();
 
 export const ONLINE_H = 4;
 const OFFLINE_H = 24 - ONLINE_H;
-/** 一世内力花在门径武学上的份额（pacing_sim.SKILL_SHARE） */
+/** 一世内力花在内功重数上的份额（pacing_sim.SKILL_SHARE） */
 const SKILL_SHARE = 0.2;
-const MECH_PREFIX: Record<RouteId, string> = { huashan: 'hs', tangmen: 'tm', shaolin: 'sl' };
 
 /** 每次 tick 之后调用的钩子：样例用它拦截意外战死 */
 let afterTick: () => void = () => {};
 export function setAfterTick(fn: () => void): void { afterTick = fn; }
 
-/** 武学预算：丹田实际进账的两成记入，升武学从这里支取（与 pacing_sim 的「武学份额」同口径） */
+/** 内功预算：丹田实际进账的两成记入，升重从这里支取（与 pacing_sim 的「武学份额」同口径） */
 let skillBudget = 0;
 let lastDantian = 0;
 /** 传承预算：前沿乘数与名号多出基础声望的部分 */
@@ -102,33 +102,31 @@ function tryAcupoints(): void {
   }
 }
 
-/** 本境界的周天已缴到最后一段：窍穴要冲、突破在即，这时不拿内力去升武学 */
+/** 本境界的周天已缴到最后一段：窍穴要冲、突破在即，这时不拿内力去升重 */
 function breakthroughPending(): boolean {
   const s = st();
   const N = zhoutianN(s.realm);
   return N !== null && s.chargeHighWater >= N - 1;
 }
 
-/** 在线时的一次「看一眼」：冲穴、突破、择路、升武学、买机制节点 */
+/** 在线时的一次「看一眼」：冲穴、突破、选内功（该路数的寻常内功）、升重；台阶顿悟由 tick 自动判 */
 export function tend(route: RouteId): void {
   for (let guard = 0; guard < 10; guard++) {
     const realm = st().realm;
     tryAcupoints();
     st().breakthrough();
     st().dismissCeremony();
-    if (st().realm >= 2 && st().route === null) st().selectRoute(route);
+    if (st().realm >= 2 && st().neigong === null) st().selectNeigong(neigongOf(route, '寻常'));
     if (st().realm === realm) break;
   }
-  if (st().route) {
-    while (!breakthroughPending() && skillBudget >= skillUpgradeCost(st().skillLevel + 1) && st().dantian >= skillUpgradeCost(st().skillLevel + 1)) {
-      const lv = st().skillLevel;
-      skillBudget -= skillUpgradeCost(lv + 1);
-      st().upgradeSkill();
-      if (st().skillLevel === lv) break;
+  if (st().neigong) {
+    // 卡在台阶上时 upgradeZhong 不动，预算留着，顿悟后再花
+    while (!breakthroughPending() && skillBudget >= zhongCost(st().zhong + 1) && st().dantian >= zhongCost(st().zhong + 1)) {
+      const z = st().zhong;
+      skillBudget -= zhongCost(z + 1);
+      st().upgradeZhong();
+      if (st().zhong === z) { skillBudget += zhongCost(z + 1); break; }
     }
-    const prefix = MECH_PREFIX[st().route!];
-    const next = [1, 2, 3].map((i) => `${prefix}${i}`).find((id) => !st().ownedMechNodes.includes(id));
-    if (next) st().buyMechNode(next);
   }
 }
 

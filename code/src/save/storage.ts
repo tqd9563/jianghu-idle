@@ -5,6 +5,9 @@
  * savedAt 时间戳即离线时长的权威来源，出关结算见 engine/offlineRewards.ts + store.init。
  */
 
+import { STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
+import type { RouteId } from '../engine/content';
+
 const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
 const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
@@ -16,9 +19,10 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v4 = 长线节奏（issue #22）：境界总额约放大百倍、新增宿慧与修行感悟；
  * v5 = 长线关卡（issue #22 第 5b 步）：关卡键改为「图 × 难度 × 关」，新增难度解锁；
  * v6 = 多天一世（issue #22 第 6 步）：境界总额与关卡表重解、寿元随境界、新增本世时长；
- * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延。
+ * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
+ * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -96,6 +100,7 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   let out = state;
   if (fromVer < 3) out = migrateAcupointIdsV2ToV3(out);
   if (fromVer < 7) out = migrateIntroStagesV6ToV7(out);
+  if (fromVer < 8) out = migrateNeigongV7ToV8(out);
   return out;
 }
 
@@ -236,4 +241,42 @@ export function endLiveTestWindow(): LiveTestWindowRecord | null {
 /** Focused test seam; live-test state is intentionally independent from game reset. */
 export function resetLiveTestWindowForTests(): void {
   store.removeItem(LIVE_TEST_WINDOW_KEY);
+}
+
+/** 秘籍阁三本真传 → 同路数上乘内功（sect-neigong/spec.md §6.2 补偿） */
+const TRUE_BOOK_ROUTE: Record<string, RouteId> = {
+  true_jinglei: 'huashan', true_zhenyue: 'shaolin', true_shigu: 'tangmen',
+};
+
+/**
+ * v7 → v8（sect-neigong/spec.md §6.2）：
+ * - 当前路线 → 所修内功 = 该路数寻常内功；三部寻常内功全部视为已拥有；
+ * - 武学等级 n → 内功重数 n；机制节点丢弃，台阶按重数直接视为已过（不再判顿悟）；
+ * - 秘籍阁集齐的真传 → 拥有同路数上乘内功；其余残页、遗篇与换线计数丢弃；
+ * - 阅历保留数值（冻结）；悟性从中位 1.0 起步，下一世再随机。
+ */
+export function migrateNeigongV7ToV8<T>(state: T): T {
+  const s = state as Record<string, unknown>;
+  if (!s || typeof s !== 'object') return state;
+  // 只迁移真带着门径字段的存档：补出新键会在 {...FRESH, ...saved} 合并时盖掉默认值（同 v6→v7 口径）
+  if (!('route' in s) && !('skillLevel' in s)) return state;
+  const out: Record<string, unknown> = { ...s };
+  const route = (s.route ?? null) as RouteId | null;
+  const zhong = typeof s.skillLevel === 'number' ? s.skillLevel : 0;
+  const owned: NeigongId[] = [...STARTER_NEIGONG];
+  for (const b of Array.isArray(s.completedBooks) ? (s.completedBooks as string[]) : []) {
+    const r = TRUE_BOOK_ROUTE[b];
+    if (r) owned.push(neigongOf(r, '上乘'));
+  }
+  out.neigong = route ? neigongOf(route, '寻常') : null;
+  out.zhong = route ? zhong : 0;
+  out.tiersPassed = route ? TIERS.slice(0, 3).filter((t) => zhong >= t.at).length : 0;
+  out.dunwuSec = 0;
+  out.ownedNeigong = owned;
+  out.wuxing = 1;
+  // 老玩家熟悉声望阁；新出现的内功页签留金点
+  out.seenTabs = ['rep'];
+  for (const k of ['skillLevel', 'ownedMechNodes', 'mechXpInvested', 'switchCount',
+    'collectedPages', 'completedBooks', 'shopPurchasesThisRun']) delete out[k];
+  return out as T;
 }

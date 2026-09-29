@@ -40,22 +40,17 @@ export const BASE_CRIT_RATE = 0.05;
 export const BASE_CRIT_DMG = 1.5;
 
 /**
- * 门径武学（formulas.md §3.4 v1.6，门派重做前的临时替身）：
- * 前 SHICHENG 级是「招式」，沿用各路线逐级效果；练满即「十成」。之后每级是「火候」，
- * 三路线相同，每 HUOHOU_PER_REALM 级折合一个境界。等级不设上限，只受内力约束。
+ * 内功重数（sect-neigong/spec.md §1.2，接替原门径武学）：
+ * 第 1–SHICHENG 重沿用各路数逐重效果；之后每重是「火候」，每 HUOHOU_PER_REALM 重折合一个境界
+ * （品质倍率见 neigong.ts）。重数不设上限，只受内力约束；价格见 neigong.zhongCost。
  */
 export const SHICHENG = 10;
 export const HUOHOU_PER_REALM = 20;
 
-/** 第 level 级的内力价 = 3,490 × 1.08^(level−1)，绝对计价、与境界无关；四舍五入到整数 */
-export function skillUpgradeCost(level: number): number {
-  return Math.round(3490 * Math.pow(1.08, level - 1));
-}
-
-/** 招式等级（生效于各路线逐级效果）：封顶十成 */
+/** 生效于路数逐重效果的重数：封顶十重 */
 export const zhaoshiLevel = (level: number) => Math.min(level, SHICHENG);
 
-/** 火候折合的境界数：十成以上每 20 级折合 1 个境界 */
+/** 火候折合的境界数（寻常品质）：十重以上每 20 重折合 1 个境界 */
 export const huohouRealms = (level: number) => Math.max(0, level - SHICHENG) / HUOHOU_PER_REALM;
 
 /** 火候对属性的作用（与境界曲线同形）：气血/攻击/防御 × 1.7^dx，命中 +12dx，闪避 +3dx */
@@ -66,9 +61,5 @@ export function huohouEffect(level: number): { statMult: number; hit: number; do
 
 export type RouteId = 'huashan' | 'shaolin' | 'tangmen';
 
-/** 换路线银两摩擦成本（内容表 §4；银两唯一核心 sink，阅历 100% 返还见规格书 §6.4） */
-export const ROUTE_SWITCH_SILVER = 200;
-
 // TODO(内容表 §2)：三地图 28 关敌人表 —— 实现战斗模块时搬运
-// TODO(内容表 §3)：三路线赠予参数与机制节点表
 // TODO(声望经济表)：8 节点定稿与里程碑声望

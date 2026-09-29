@@ -45,13 +45,11 @@ export function OfflineSettlement(props: {
   const durRef = useRef<HTMLSpanElement>(null);
   const neiliRef = useRef<HTMLSpanElement>(null);
   const silverRef = useRef<HTMLSpanElement>(null);
-  const xpRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const items = [
       { el: durRef.current!, to: r.effectiveMin, f: durText, delay: 0 },
       { el: neiliRef.current!, to: r.neili, f: (v: number) => `+${fmt(v)}`, delay: 150 },
       { el: silverRef.current!, to: r.silver, f: (v: number) => `+${fmt(v)}`, delay: 280 },
-      { el: xpRef.current!, to: r.xp, f: (v: number) => `+${fmt(v)}`, delay: 410 },
     ];
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       for (const i of items) i.el.textContent = i.f(i.to);
@@ -92,7 +90,6 @@ export function OfflineSettlement(props: {
           </div>
           <div className="settle-row neili"><span className="k">内力（入丹田）</span><span className="v" ref={neiliRef} /></div>
           <div className="settle-row"><span className="k">银两</span><span className="v" ref={silverRef} /></div>
-          <div className="settle-row"><span className="k">阅历</span><span className="v" ref={xpRef} /></div>
           {r.capped && (
             <div className="settle-cap-line">丹田盈满，闭关收益已达上限——早些回来，莫让修为白流。</div>
           )}

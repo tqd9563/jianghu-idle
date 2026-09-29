@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  FRONT_MULT, REP_NODES, carryXp, deepestBoss, ganwuAffordable, ganwuPrice, isBossKey, isEliteKey,
+  FRONT_MULT, REP_NODES, deepestBoss, ganwuAffordable, ganwuPrice, isBossKey, isEliteKey,
   outputMult, settleRetire, suhuiTotal,
 } from './prestige';
 import { allStages, stageKey, trackLength, type MapId, type TierId } from './enemies';
@@ -94,8 +94,7 @@ describe('五件传承（economy.md §4 v2.2）', () => {
       ['shimen_zhiyin', 660], ['poguan_xinde', 1100],
     ]);
   });
-  it('武道笔记继承 40 阅历', () => {
-    expect(carryXp(['wudao_biji'])).toBe(40);
-    expect(carryXp([])).toBe(0);
+  it('武道笔记改为每世悟性 +0.1（sect-neigong/spec.md S9）', () => {
+    expect(REP_NODES.find((n) => n.id === 'wudao_biji')!.desc).toContain('悟性 +0.1');
   });
 });

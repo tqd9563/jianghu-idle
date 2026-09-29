@@ -2,7 +2,8 @@
  * store 行为测试：单钱包丹田模型 + 埋点事件发射（对齐规格书 §6.1 v0.9 / 埋点规格 §1.2）
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { REALMS, skillUpgradeCost } from '../engine/content';
+import { REALMS } from '../engine/content';
+import { zhongCost } from '../engine/neigong';
 import {
   resetLiveTestWindowForTests, startLiveTestWindow as persistLiveTestWindow, loadGame, saveGame, backdateSavedAt,
 } from '../save/storage';
@@ -67,33 +68,49 @@ describe('gameStore · 单钱包丹田模型', () => {
     expect(ev.first_reach).toBe(true);
   });
 
-  it('武学升级不设上限、只受内力约束（formulas.md §3.4 v1.6）', () => {
-    useGameStore.setState({ realm: 2, route: 'tangmen', dantian: 10_000_000, skillLevel: 10 });
-    useGameStore.getState().upgradeSkill(); // 十成之后进入火候，境界 2 也能练
-    expect(useGameStore.getState().skillLevel).toBe(11);
-    expect(useGameStore.getState().dantian).toBe(10_000_000 - skillUpgradeCost(11));
+  it('升重不设上限、只受内力约束（sect-neigong/spec.md §1.2）', () => {
+    useGameStore.setState({ realm: 2, route: 'tangmen', neigong: 'shiguxinfa', tiersPassed: 3, dantian: 10_000_000, zhong: 10 });
+    useGameStore.getState().upgradeZhong(); // 十重之后进入火候，境界 2 也能练
+    expect(useGameStore.getState().zhong).toBe(11);
+    expect(useGameStore.getState().dantian).toBe(10_000_000 - zhongCost(11));
 
-    useGameStore.setState({ dantian: skillUpgradeCost(12) - 1 });
-    useGameStore.getState().upgradeSkill(); // 内力差 1，拒绝
-    expect(useGameStore.getState().skillLevel).toBe(11);
+    useGameStore.setState({ dantian: zhongCost(12) - 1 });
+    useGameStore.getState().upgradeZhong(); // 内力差 1，拒绝
+    expect(useGameStore.getState().zhong).toBe(11);
   });
 
-  it('选路线只此一次（换线走 route_changed，随战斗模块交付）', () => {
-    useGameStore.setState({ realm: 2 });
-    useGameStore.getState().selectRoute('shaolin');
-    expect(names()).toContain('route_selected');
-    useGameStore.getState().selectRoute('huashan');
-    expect(useGameStore.getState().route).toBe('shaolin');
-  });
+  it('台阶挡升重：卡在台阶上挂机每 10 分钟判一次顿悟，成功即跨阶并发 dunwu（spec §1.3）', () => {
+    useGameStore.setState({ realm: 2, route: 'tangmen', neigong: 'shiguxinfa', zhong: 2, tiersPassed: 0, dantian: 10_000_000, wuxing: 1 });
+    useGameStore.getState().upgradeZhong(); // 第 2 重已到「登堂」门槛，未顿悟不能再升
+    expect(useGameStore.getState().zhong).toBe(2);
 
-  it('机制节点按路线购买、扣阅历、发 mech_node_bought', () => {
-    useGameStore.setState({ realm: 3, route: 'tangmen', xp: 100 });
-    useGameStore.getState().buyMechNode('tm1'); // 40 阅历
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0.99); // 判不中
+    const t0 = Date.now();
+    useGameStore.getState().tick(t0);
+    useGameStore.getState().tick(t0 + 300_000);
+    useGameStore.getState().tick(t0 + 600_000);   // 累计 600 秒：判一次，不中
+    expect(useGameStore.getState().tiersPassed).toBe(0);
+    rand.mockReturnValue(0.1);                    // 50% × 悟性 1.0 → 判中
+    useGameStore.getState().tick(t0 + 900_000);
+    useGameStore.getState().tick(t0 + 1_200_000);
+    rand.mockRestore();
     const s = useGameStore.getState();
-    expect(s.ownedMechNodes).toEqual(['tm1']);
-    expect(s.xp).toBe(60);
-    useGameStore.getState().buyMechNode('tm2'); // 80 阅历 > 60，拒绝
-    expect(useGameStore.getState().ownedMechNodes).toEqual(['tm1']);
+    expect(s.tiersPassed).toBe(1);
+    expect(s.dunwuNotice).toBe('登堂');
+    expect(getEvents().find((e) => e.e === 'dunwu')!.tier).toBe('登堂');
+    useGameStore.getState().upgradeZhong();       // 跨阶后可继续升
+    expect(useGameStore.getState().zhong).toBe(3);
+  });
+
+  it('选内功只此一次、只能选已拥有的，发 neigong_selected', () => {
+    useGameStore.setState({ realm: 2 });
+    useGameStore.getState().selectNeigong('panshigong'); // 上乘未拥有，拒绝
+    expect(useGameStore.getState().neigong).toBeNull();
+    useGameStore.getState().selectNeigong('zhenyuegong');
+    expect(names()).toContain('neigong_selected');
+    expect(useGameStore.getState().route).toBe('shaolin');
+    useGameStore.getState().selectNeigong('jingleijue');
+    expect(useGameStore.getState().neigong).toBe('zhenyuegong');
   });
 });
 
@@ -130,7 +147,7 @@ describe('gameStore · 归隐与声望阁', () => {
 
   it('归隐执行：声望 = 10 × 加权小时 × 前沿乘数；宿慧、修行感悟、最深 Boss、名号跨世保留', () => {
     useGameStore.setState({
-      realm: 5, route: 'tangmen', skillLevel: 10, peakRealm: 5, ganwuLevel: 3,
+      realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, tiersPassed: 3, peakRealm: 5, ganwuLevel: 3,
       dantian: 3400, silver: 830, xp: 59,
       clearedStages: [...m1all, ...m2all], deepestBossEver: 2,
       lifeWeightedHours: 12, fameClaimed: [`stage:${stageKey(1, 0, trackLength(1, 0))}`], fameThisLife: 30, reputation: 30,
@@ -145,7 +162,12 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.route).toBeNull();
     expect(s.dantian).toBe(0);
     expect(s.silver).toBe(0);
-    expect(s.xp).toBe(40); // 武道笔记
+    expect(s.xp).toBe(59); // 阅历冻结：原样留着
+    expect(s.neigong).toBeNull();
+    expect(s.zhong).toBe(0);
+    expect(s.ownedNeigong).toEqual(['jingleijue', 'zhenyuegong', 'shiguxinfa']);
+    expect(s.wuxing).toBeGreaterThanOrEqual(0.9);   // 武道笔记：悟性 +0.1
+    expect(s.wuxing).toBeLessThanOrEqual(1.3);
     // 基础 120 × 前沿 1.2（本世再败洛阳近郊 Boss，不浅于历来最深）= 144
     expect(s.retireCeremony!.settle.total).toBe(144);
     expect(s.reputation).toBe(30 + 144);
@@ -160,38 +182,26 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(confirmed.prestige_total).toBe(144);
     expect(confirmed.front_mult).toBe(1.2);
     const runStart = getEvents().find((e) => e.e === 'run_start' && e.run === 2)!;
-    expect(runStart.carry_xp).toBe(40);
+    expect(runStart.wuxing).toBe(s.wuxing);
     expect(runStart.owned_nodes).toEqual(['wudao_biji']);
   });
 
-  it('秘籍收集跨归隐保留，本轮渠道计数重置并全部持久化', () => {
+  it('已拥有的内功跨世保留并持久化；所修内功与重数清零', () => {
     useGameStore.setState({
-      realm: 5,
-      clearedStages: [...m1all, ...m2all, ...m3all],
-      runPlaySec: 2760,
-      collectedPages: ['legacy_intro_page_1'],
-      completedBooks: ['legacy_intro'],
-      shopPurchasesThisRun: 1,
+      realm: 5, route: 'huashan', neigong: 'leimingjianjing', zhong: 40, tiersPassed: 4,
+      ownedNeigong: ['jingleijue', 'zhenyuegong', 'shiguxinfa', 'leimingjianjing'],
+      clearedStages: [...m1all, ...m2all, ...m3all], runPlaySec: 2760,
     });
     useGameStore.getState().openRetire();
     useGameStore.getState().proceedRetire();
     useGameStore.getState().confirmRetire();
-
     const state = useGameStore.getState();
-    expect(state.collectedPages).toEqual(['legacy_intro_page_1']);
-    expect(state.completedBooks).toEqual(['legacy_intro']);
-    expect(state.shopPurchasesThisRun).toBe(0);
-
-    const saved = loadGame<{
-      collectedPages: string[];
-      completedBooks: string[];
-      shopPurchasesThisRun: number;
-    }>();
-    expect(saved).toMatchObject({
-      collectedPages: ['legacy_intro_page_1'],
-      completedBooks: ['legacy_intro'],
-      shopPurchasesThisRun: 0,
-    });
+    expect(state.ownedNeigong).toContain('leimingjianjing');
+    expect(state.neigong).toBeNull();
+    expect(state.tiersPassed).toBe(0);
+    const saved = loadGame<{ ownedNeigong: string[]; zhong: number }>();
+    expect(saved).toMatchObject({ zhong: 0 });
+    expect(saved!.ownedNeigong).toContain('leimingjianjing');
   });
 
   it('预览/确认中退出发 retire_cancelled 且不结算', () => {
@@ -234,47 +244,37 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(effIdleRate(s)).toBeCloseTo(idleNeiliPerSec(1) * (1 + 141 * 0.2), 6);
   });
 
-  it('换路线：阅历 100% 返还（仅已投入）、200 银两摩擦费、武学清零、发 route_changed', () => {
+  it('同路数转修：少 3 重、台阶重新顿悟、收境界 × 100 银两，发 neigong_switched（spec §1.5）', () => {
     useGameStore.setState({
-      realm: 3, route: 'tangmen', skillLevel: 5, silver: 530, xp: 189,
-      ownedMechNodes: ['tm1'], mechXpInvested: 40,
+      realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 30, tiersPassed: 3, silver: 530,
+      ownedNeigong: ['jingleijue', 'zhenyuegong', 'shiguxinfa', 'leimingjianjing'],
     });
-    useGameStore.getState().switchRoute('shaolin');
+    useGameStore.getState().switchNeigong('leimingjianjing');
+    const s = useGameStore.getState();
+    expect(s.neigong).toBe('leimingjianjing');
+    expect(s.route).toBe('huashan');
+    expect(s.zhong).toBe(27);
+    expect(s.tiersPassed).toBe(0);
+    expect(s.silver).toBe(230);
+    const ev = getEvents().find((e) => e.e === 'neigong_switched')!;
+    expect(ev.same_route).toBe(true);
+    expect(ev.fee_paid).toBe(300);
+  });
+
+  it('跨路数散功重修：重数归零；银两不足或未拥有则拒绝', () => {
+    useGameStore.setState({
+      realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 12, tiersPassed: 3, silver: 299,
+    });
+    useGameStore.getState().switchNeigong('zhenyuegong'); // 手续费 300，差 1
+    expect(useGameStore.getState().neigong).toBe('shiguxinfa');
+    useGameStore.setState({ silver: 300 });
+    useGameStore.getState().switchNeigong('panshigong'); // 未拥有
+    expect(useGameStore.getState().neigong).toBe('shiguxinfa');
+    useGameStore.getState().switchNeigong('zhenyuegong');
     const s = useGameStore.getState();
     expect(s.route).toBe('shaolin');
-    expect(s.skillLevel).toBe(0);
-    expect(s.silver).toBe(330);
-    expect(s.xp).toBe(229);
-    expect(s.ownedMechNodes).toEqual([]);
-    expect(s.mechXpInvested).toBe(0);
-    const ev = getEvents().find((e) => e.e === 'route_changed')!;
-    expect(ev.route_from).toBe('tangmen');
-    expect(ev.route_to).toBe('shaolin');
-    expect(ev.xp_refunded).toBe(40);
-    expect(ev.fee_paid).toBe(200);
-  });
-
-  it('轻装上路：每轮第一次换线免费；第二次收费且银两不足拒绝', () => {
-    useGameStore.setState({
-      realm: 3, route: 'tangmen', skillLevel: 2, silver: 0, xp: 0,
-      ownedRepNodes: ['qingzhuang_shanglu'],
-    });
-    useGameStore.getState().switchRoute('huashan'); // 免费成功
-    expect(useGameStore.getState().route).toBe('huashan');
-    expect(getEvents().find((e) => e.e === 'route_changed')!.fee_paid).toBe(0);
-    useGameStore.getState().switchRoute('shaolin'); // 第二次要 200，银两 0 → 拒绝
-    expect(useGameStore.getState().route).toBe('huashan');
-  });
-
-  it('师门指引跟随换线：新路线节点一免费重赠，免费赠予不计入返还', () => {
-    useGameStore.setState({
-      realm: 3, route: 'tangmen', skillLevel: 0, silver: 400, xp: 0,
-      ownedRepNodes: ['shimen_zhiyin'], ownedMechNodes: ['tm1'], mechXpInvested: 0,
-    });
-    useGameStore.getState().switchRoute('shaolin');
-    const s = useGameStore.getState();
-    expect(s.ownedMechNodes).toEqual(['sl1']);
-    expect(s.xp).toBe(0); // 赠予节点无投入，无返还
+    expect(s.zhong).toBe(0);
+    expect(s.silver).toBe(0);
   });
 
   it('观察员暂停冻结产出与活跃时长；恢复后继续；会话事件字段齐全', () => {
@@ -323,7 +323,7 @@ describe('gameStore · 归隐与声望阁', () => {
   });
 
   it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、连续回刷衰减；首次击败精英名号传开', () => {
-    useGameStore.setState({ realm: 5, route: 'tangmen', skillLevel: 10, autoAdvance: false });
+    useGameStore.setState({ realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, tiersPassed: 3, autoAdvance: false });
     const play = () => {
       const t0 = Date.now();
       for (let i = 1; i <= 200 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
@@ -335,14 +335,14 @@ describe('gameStore · 归隐与声望阁', () => {
     const first = play();
     expect(first.result.win).toBe(true);
     const base = first.enemy.reward;
-    expect(first.reward).toEqual({ neili: 0, silver: base.silver, xp: base.xp, refarm: false, fame: 0 });
+    expect(first.reward).toEqual({ neili: 0, silver: base.silver, refarm: false, fame: 0 });
+    expect(useGameStore.getState().xp).toBe(0); // 阅历冻结：关卡不再发
 
     useGameStore.getState().challengeStage(1, 0, 1); // 回刷同一关
     const second = play();
     expect(second.reward!.refarm).toBe(true);
     expect(second.reward!.neili).toBe(0);
     expect(second.reward!.silver).toBe(Math.round(base.silver * 0.5));
-    expect(second.reward!.xp).toBe(0);
 
     useGameStore.getState().challengeStage(1, 0, 1); // 连续第 2 次回刷：×0.8 衰减（公式表 §6）
     const third = play();
@@ -367,7 +367,7 @@ describe('gameStore · 归隐与声望阁', () => {
 
   it('难度解锁：打通段末 Boss 开本图下一档与下一图初入，跨世保留；封存的前沿打不了', () => {
     const st = () => useGameStore.getState();
-    useGameStore.setState({ realm: 5, route: 'shaolin', skillLevel: 40, autoAdvance: false });
+    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3, autoAdvance: false });
     const n = trackLength(1, 0);
     useGameStore.setState({ clearedStages: m1all.slice(0, n - 1) });
     expect(tierUnlocked(1, 1, st().tiersUnlocked)).toBe(false);
@@ -392,24 +392,20 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(mapUnlocked(5, st().tiersUnlocked)).toBe(false);
   });
 
-  it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；突破总额取「离开本境界」行', () => {
-    useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin'] });
+  it('突破总额取「离开本境界」行', () => {
+    useGameStore.setState({ realm: 2 });
     expect(effBreakCost(useGameStore.getState())).toBe(3_360_000);
     useGameStore.setState({ realm: 1 });
     expect(effBreakCost(useGameStore.getState())).toBe(87_100);
     useGameStore.setState({ realm: 6 });
     expect(effBreakCost(useGameStore.getState())).toBeNull(); // 本版终点
 
-    useGameStore.setState({ realm: 2 });
-    useGameStore.getState().selectRoute('tangmen');
-    expect(useGameStore.getState().ownedMechNodes).toEqual(['tm1']);
-    expect(names().filter((n) => n === 'mech_node_bought')).toHaveLength(0);
   });
 
   it('回刷胜利后自动连战回到同一关（回退挂机）；收益标记 refarm', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
-    useGameStore.setState({ realm: 5, route: 'shaolin', skillLevel: 10, clearedStages: [stageKey(1, 0, 1)], autoAdvance: true });
+    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: [stageKey(1, 0, 1)], autoAdvance: true });
     useGameStore.getState().challengeStage(1, 0, 1); // 已通关 → 回刷
 
     // 推进回放至结算（境界 5 打第 1 关必胜，普通关 650ms/回合）
@@ -475,7 +471,7 @@ describe('gameStore · MVP-2 natural live-test window', () => {
 
   it('captures only existing objective snapshot decisions and stops in ended order', () => {
     useGameStore.setState({
-      realm: 2, route: 'tangmen', skillLevel: 3, dantian: 3_360_000,
+      realm: 2, route: 'tangmen', neigong: 'shiguxinfa', zhong: 3, tiersPassed: 1, dantian: 3_360_000,
       clearedStages: [...m1all, stageKey(2, 0, 1)], tiersUnlocked: ['1-0', '2-0', '1-1'],
     });
     useGameStore.getState().applyLiveTestSwitch(1);
@@ -541,12 +537,12 @@ describe('gameStore · 受伤系统接线（injury/spec.md）', () => {
     expect(useGameStore.getState().injuries!.wai.severity).toBe(0);  // 满 3 分钟痊愈
   });
 
-  it('伤势叠加进 playerBuild，且不污染路线专属字段', () => {
+  it('伤势叠加进 playerBuild，且不污染路数专属字段', () => {
     const base = playerBuild({
-      realm: 4, route: 'huashan', skillLevel: 7, ownedMechNodes: [], completedBooks: [],
+      realm: 4, neigong: 'jingleijue', zhong: 7, tiersPassed: 0,
     });
     const hurt = playerBuild({
-      realm: 4, route: 'huashan', skillLevel: 7, ownedMechNodes: [], completedBooks: [],
+      realm: 4, neigong: 'jingleijue', zhong: 7, tiersPassed: 0,
       injuries: { ...freshInjuries(), nei: { severity: 3, healAccMin: 0 } },
     });
     expect(hurt.atk).toBeCloseTo(base.atk * 0.55, 6);   // 重度内伤压攻击 45%
@@ -815,5 +811,17 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(saved.age).toBe(44.4);
     expect(saved.eraStart).toBe(187);
     expect(saved.soulUnsettled).toBe(true);
+  });
+});
+
+describe('页签已见', () => {
+  it('未启动时点开页签不存档（否则会盖掉尚未载入的存档）', () => {
+    saveGame({ run: 7, realm: 3 });
+    useGameStore.setState({ started: false });
+    useGameStore.getState().seeTab('neigong');
+    expect(loadGame<{ run: number }>()!.run).toBe(7);
+    useGameStore.setState({ started: true, seenTabs: [] });
+    useGameStore.getState().seeTab('neigong');
+    expect(useGameStore.getState().seenTabs).toEqual(['neigong']);
   });
 });

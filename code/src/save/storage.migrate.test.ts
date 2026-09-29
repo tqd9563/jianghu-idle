@@ -80,3 +80,32 @@ describe('存档迁移 v6 → v7：图 1 初入补入门关，原关卡编号顺
     expect(migrate(v7, 7, SAVE_VERSION)).toEqual(v7);
   });
 });
+
+describe('存档迁移 v7 → v8：门径并入内功（sect-neigong/spec.md §6.2）', () => {
+  it('路线 → 同路数寻常内功，武学等级 → 重数，台阶按重数视为已过，门径字段删除', () => {
+    const out = migrate({
+      route: 'tangmen', skillLevel: 5, ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120,
+      switchCount: 1, xp: 189,
+    } as Record<string, unknown>, 7, SAVE_VERSION);
+    expect(out).toMatchObject({
+      neigong: 'shiguxinfa', zhong: 5, tiersPassed: 2, dunwuSec: 0, wuxing: 1, xp: 189,
+      ownedNeigong: ['jingleijue', 'zhenyuegong', 'shiguxinfa'],
+    });
+    for (const k of ['skillLevel', 'ownedMechNodes', 'mechXpInvested', 'switchCount']) expect(out).not.toHaveProperty(k);
+  });
+
+  it('境界 1 未择路：不选内功、重数为零', () => {
+    const out = migrate({ route: null, skillLevel: 0 } as Record<string, unknown>, 7, SAVE_VERSION);
+    expect(out).toMatchObject({ neigong: null, zhong: 0, tiersPassed: 0 });
+  });
+
+  it('集齐的真传补偿同路数上乘内功；残页与遗篇丢弃', () => {
+    const out = migrate({
+      route: 'huashan', skillLevel: 12,
+      collectedPages: ['true_jinglei_page_1'], completedBooks: ['true_jinglei', 'legacy_intro'], shopPurchasesThisRun: 1,
+    } as Record<string, unknown>, 7, SAVE_VERSION);
+    expect(out.ownedNeigong).toEqual(['jingleijue', 'zhenyuegong', 'shiguxinfa', 'leimingjianjing']);
+    expect(out.tiersPassed).toBe(3);
+    for (const k of ['collectedPages', 'completedBooks', 'shopPurchasesThisRun']) expect(out).not.toHaveProperty(k);
+  });
+});

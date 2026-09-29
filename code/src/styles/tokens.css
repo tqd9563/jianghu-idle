@@ -98,7 +98,7 @@
   --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* z-index 语义层 */
-  --z-nav: 40; --z-modal-backdrop: 60; --z-modal: 61; --z-ceremony: 70;
+  --z-nav: 40; --z-modal-backdrop: 60; --z-modal: 61; --z-ceremony: 70; --z-toast: 80;
 
   /* 字体 */
   --font-body: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;

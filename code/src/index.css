@@ -1229,3 +1229,80 @@ button.wound-chip.soul-chip:hover { border-color: var(--ink-gold); }
   .fighters, .app .fighters { grid-template-columns: 1fr !important; }
   .fighters .vs { display: none; }
 }
+
+/* ===== 内功页 / 选内功（docs/design/sect-neigong-prototype.html §1–§2） ===== */
+.qtag { font-size: 11px; padding: 1px 7px; border-radius: var(--r-xs); border: 1px solid; white-space: nowrap; font-weight: 500; }
+.qtag.q-common { color: var(--ink-muted); border-color: var(--line-strong); }
+.qtag.q-fine { color: var(--sword-cyan); border-color: var(--sword-cyan); background: var(--cyan-soft); }
+.qtag.q-peak { color: var(--candle-gold); border-color: var(--candle-gold); background: var(--gold-soft); }
+.btn.small { width: auto; padding: 4px 10px; font-size: 12px; margin-top: 0; }
+.loss, .rline .v.loss { color: var(--blood-red); }
+
+.ng-hero { display: flex; gap: 18px; align-items: flex-end; flex-wrap: wrap; }
+.ng-name { font-size: 26px; font-weight: 700; letter-spacing: 0.18em; line-height: 1.1; }
+.ng-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+.wuxing-chip { display: inline-flex; gap: 6px; align-items: baseline; font-size: 12px; color: var(--ink-muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; }
+.wuxing-chip b { color: var(--ink-warm); font-variant-numeric: tabular-nums; }
+.ng-zhong { margin-left: auto; text-align: right; }
+.ng-zhong .big { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.ng-zhong .big small { font-size: 14px; color: var(--ink-muted); font-weight: 400; margin-left: 3px; }
+.ng-zhong .fold { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+.ng-up { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.ng-up .btn { width: auto; min-width: 220px; margin-top: 0; padding: 8px 18px; }
+.ng-up .btn .sub { display: block; font-size: 11px; font-weight: 500; opacity: 0.85; }
+.ng-up .why { font-size: 12.5px; color: var(--ink-muted); flex: 1; min-width: 240px; }
+
+/* 台阶轨：过了的实心、正在顿悟的呼吸、未到的空心、缺卷册的虚线、品质不够的淡出 */
+.ng-steps { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 18px; }
+.ng-step { position: relative; padding: 0 6px; text-align: center; }
+.ng-step::before { content: ""; position: absolute; top: 11px; left: -50%; width: 100%; height: 2px; background: var(--line); }
+.ng-step:first-child::before { display: none; }
+.ng-step.done::before, .ng-step.wait::before, .ng-step.scroll::before { background: var(--candle-gold); }
+.ng-step .dot { position: relative; width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; border: 2px solid var(--line-strong); background: var(--night-surface); display: grid; place-items: center; font-size: 11px; color: var(--ink-faint); }
+.ng-step.done .dot { background: var(--candle-gold); border-color: var(--candle-gold); color: var(--candle-ink, oklch(0.18 0.03 78)); font-weight: 700; }
+.ng-step.wait .dot { border-color: var(--candle-gold); color: var(--candle-gold); animation: ng-breathe 2.4s var(--ease-out, ease-out) infinite; }
+.ng-step.scroll .dot { border-style: dashed; border-color: var(--ink-gold, oklch(0.74 0.075 76)); }
+.ng-step.na { opacity: 0.42; }
+.ng-step .sn { display: block; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; margin-top: 6px; }
+.ng-step .sz { display: block; font-size: 11.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.ng-step .se { display: block; font-size: 12px; color: var(--ink-muted); margin-top: 4px; line-height: 1.5; }
+.ng-step.done .sn { color: var(--candle-gold); }
+.ng-step.done .se { color: var(--ink-warm); }
+@keyframes ng-breathe { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 6px var(--gold-soft); } }
+.ng-wait { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--candle-gold); border-radius: var(--r-md); background: var(--gold-soft); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.ng-wait .t { font-size: 15px; letter-spacing: 0.12em; color: var(--candle-gold); }
+.ng-wait .d { font-size: 12.5px; color: var(--ink-muted); line-height: 1.7; flex: 1; min-width: 240px; }
+.ng-wait .d b { color: var(--ink-warm); font-variant-numeric: tabular-nums; }
+.ng-wait.scroll { border-style: dashed; border-color: var(--ink-gold, oklch(0.74 0.075 76)); background: transparent; }
+.ng-wait.scroll .t { color: var(--ink-gold, oklch(0.74 0.075 76)); }
+
+.qi-box { display: flex; gap: 12px; align-items: baseline; }
+.qi-box .big { font-size: 26px; font-weight: 700; color: var(--sword-cyan); font-variant-numeric: tabular-nums; }
+.qi-box .sub { font-size: 12.5px; color: var(--ink-muted); }
+.qi-formula { font-size: 12.5px; color: var(--ink-muted); line-height: 1.8; }
+.qi-formula b { color: var(--ink-warm); font-variant-numeric: tabular-nums; font-weight: 600; }
+.ng-lib { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); flex-wrap: wrap; }
+.ng-lib .nm { font-weight: 600; font-size: 14px; min-width: 80px; }
+.ng-lib .st { font-size: 12px; color: var(--ink-muted); }
+.ng-lib .btn { width: auto; margin: 0 0 0 auto; }
+.ng-lib.cur .nm { color: var(--candle-gold); }
+
+.ng-owned { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+.ng-chip { display: inline-flex; gap: 6px; align-items: center; background: var(--night-surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 4px 10px; font-size: 13px; color: var(--ink-warm); cursor: pointer; font-family: inherit; }
+.ng-chip.on { border-color: var(--candle-gold); }
+
+/* 新开页签的金点：点开即消 */
+.fresh-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--candle-gold); box-shadow: 0 0 0 3px var(--gold-soft); margin-left: auto; }
+.app .game-rail .game-tab { display: flex; align-items: center; }
+
+/* 顿悟轻提示：不弹窗，几秒后自收 */
+.dunwu-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--night-surface-raised); border: 1px solid var(--candle-gold); color: var(--candle-gold); padding: 10px 18px; border-radius: var(--r-md); font-size: 14px; letter-spacing: 0.08em; z-index: var(--z-toast); animation: dunwu-in .4s var(--ease-out, ease-out) both; }
+@keyframes dunwu-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .ng-step.wait .dot, .dunwu-toast { animation: none; }
+}
+@media (max-width: 720px) {
+  .ng-steps { grid-template-columns: repeat(5, minmax(56px, 1fr)); }
+  .ng-step .se { display: none; }
+  .ng-zhong { margin-left: 0; text-align: left; }
+}

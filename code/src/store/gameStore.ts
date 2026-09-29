@@ -5,8 +5,12 @@
  * 归隐：本世至少突破过一次即可（economy.md §1.4）；声望 = 基础 × 行为乘数 + 成就（§1）。
  */
 import { create } from 'zustand';
-import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
-import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
+import { diagnose, fight, type Build, type FightResult, type FightStats } from '../engine/combat';
+import { REALMS, type RouteId } from '../engine/content';
+import {
+  DUNWU_INTERVAL_SEC, HUOHOU_MULT, NEIGONG, STARTER_NEIGONG, WUDAO_BIJI_WUXING, dunwuChance, neigongBuild,
+  rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
+} from '../engine/neigong';
 import {
   getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackKey, trackLength,
   type EnemyDef, type MapId, type TierId,
@@ -24,26 +28,19 @@ import {
 } from '../engine/acupoints';
 import {
   FAME_BOSS, FAME_ELITE, FAME_MERIDIAN, REP_NODE_MAP,
-  bossDmgBonus, carryXp, deepestBoss, ganwuAffordable, ganwuPrice, hasNode, isBossKey, isEliteKey,
+  bossDmgBonus, deepestBoss, ganwuAffordable, ganwuPrice, hasNode, isBossKey, isEliteKey,
   outputMult, settleRetire, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
 import {
   OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage, type OfflineSettleResult,
 } from '../engine/offlineRewards';
-import { ROUTES } from '../engine/routes';
-import {
-  applyFragmentEffectsToBuild, computeFragmentEffects, emitPageGrant, getMissingPages,
-  grantPage as grantFragmentPage, isPageId, offlinePages, shopPrice,
-  type CollectionChannel, type FragmentEffects, type MissingPage,
-} from '../engine/fragmentLogic';
-import { PAGE_SOURCE_TABLE, type BookId } from '../engine/fragments';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
   endLiveTestWindow, getDebugOfflineCap, loadGameWithVersion, loadLiveTestWindow, loadSavedAt,
   migrate, MIN_COMPATIBLE_SAVE_VERSION, SAVE_VERSION,
   resetGame, saveGame, startLiveTestWindow, type LiveTestWindowRecord,
 } from '../save/storage';
-import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
+import { resetTelemetry, track } from '../telemetry/telemetry';
 import {
   INIT_AGE, ERA_START, ageAfter, isOldDeath, lifespanCap, minutesUntilAge, nextLife, soulMult, soulSettles,
   type DeathCause,
@@ -54,14 +51,28 @@ export type MapNo = MapId;
 interface PersistedState {
   run: number;
   realm: number;
+  /** 所修内功的路数（= NEIGONG[neigong].route）；境界 2 选内功前为 null */
   route: RouteId | null;
-  skillLevel: number;
+  /** 所修内功（sect-neigong/spec.md §1）；每世境界 2 重选 */
+  neigong: NeigongId | null;
+  /** 内功重数（spec §1.2，接替原门径武学等级）；每世清零 */
+  zhong: number;
+  /** 已跨过的台阶数（登堂 / 入室 / 大成 / 化境 / 归真，spec §1.3）；每世清零 */
+  tiersPassed: number;
+  /** 卡在台阶上累计的挂机秒数：每满 600 秒判一次顿悟 */
+  dunwuSec: number;
+  /** 已拥有的内功（跨世保留） */
+  ownedNeigong: NeigongId[];
+  /** 悟性（spec §3）：每世转世时随机，一世内不变 */
+  wuxing: number;
+  /** 已点开过的页签（跨世保留）：新出现且未点开过的页签带金点 */
+  seenTabs: string[];
   dantian: number;
   silver: number;
+  /** 阅历：冻结（spec §4.4），不再产出、界面隐藏，字段保留待「提升悟性」途径启用 */
   xp: number;
   reputation: number;
   repTotal: number;
-  ownedMechNodes: string[];
   ownedRepNodes: string[];
   chargeHighWater: number;
   clearedStages: string[];
@@ -73,10 +84,6 @@ interface PersistedState {
   lastProgressSec: number;
   /** 本世 retire_unlocked 是否已上报 */
   standardNotified: boolean;
-  /** 本轮已购机制节点实际投入的阅历（换线 100% 返还的口径 =「已投入」，师门指引免费赠予不计入） */
-  mechXpInvested: number;
-  /** 本轮换线次数（轻装上路：每轮第一次免摩擦费） */
-  switchCount: number;
   /** 连续回刷衰减（公式表 §6 防原地刷爆）：同一关连续第 n 次回刷 ×0.8^(n−1)，间隔 10 分钟重置 */
   refarmKey: string | null;
   refarmCount: number;
@@ -87,12 +94,6 @@ interface PersistedState {
   /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结。
    *  持久化：刷新页面不得静默解冻——test_paused 无配对 test_resumed 时，离线口径会把后续游玩全算进暂停 */
   paused: boolean;
-  /** 秘籍残页跨归隐保留；可选字段由 FRESH 为旧存档迁移补默认值。 */
-  collectedPages?: string[];
-  /** 已集齐秘籍跨归隐保留；效果应用由后续任务实现。 */
-  completedBooks?: string[];
-  /** 本轮指名寻访购买次数，归隐重置。 */
-  shopPurchasesThisRun?: number;
   /** 窍穴运行时状态（按穴 ID 索引）；突破时不清零（D1 保留到归隐），归隐时重置。可选字段兼容旧存档。 */
   acupointProgress?: Record<string, AcupointState>;
   /** 窍穴图鉴（已通窍穴 ID 列表，归隐保留为记录）。可选字段兼容旧存档。 */
@@ -139,7 +140,7 @@ export interface BattleState {
   /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
   chainStage: number | null;
   /** 胜利实际入账（收益行同源同值）；fame = 本场首通精英 / Boss 的名号声望 */
-  reward: { neili: number; silver: number; xp: number; refarm: boolean; grantedPageId?: string; fame?: number } | null;
+  reward: { neili: number; silver: number; refarm: boolean; fame?: number } | null;
 }
 
 export interface FailureInfo {
@@ -202,6 +203,8 @@ interface GameState extends PersistedState {
   offlineSettlement: OfflineSettleResult | null;
   /** 独立持久化的自然测试窗口；不进入游戏存档。 */
   liveTestWindow: LiveTestWindowRecord | null;
+  /** 刚发生的顿悟（台阶名），供一次性轻提示；非持久化 */
+  dunwuNotice: string | null;
   init: () => void;
   dismissOfflineSettlement: () => void;
   startLiveTestWindow: () => void;
@@ -212,10 +215,15 @@ interface GameState extends PersistedState {
   breakthrough: () => void;
   attemptAcupoint: (acupointId: string) => void;
   dismissCeremony: () => void;
-  selectRoute: (r: RouteId) => void;
-  switchRoute: (to: RouteId) => void;
-  upgradeSkill: () => void;
-  buyMechNode: (nodeId: string) => void;
+  /** 境界 2 选定本世所修内功（每世开头，免费） */
+  selectNeigong: (id: NeigongId) => void;
+  /** 一世之内转修（spec §1.5）：同路数少 3 重，跨路数归零，台阶重新顿悟，收手续费 */
+  switchNeigong: (to: NeigongId) => void;
+  /** 灌注内力升一重（被台阶挡住时不可升） */
+  upgradeZhong: () => void;
+  dismissDunwu: () => void;
+  /** 点开页签：记入已见，金点消失 */
+  seeTab: (tab: string) => void;
   selectMap: (m: MapNo) => void;
   selectTier: (t: TierId) => void;
   challengeStage: (map: MapNo, tier: TierId, stage: number) => void;
@@ -229,11 +237,6 @@ interface GameState extends PersistedState {
   buyRepNode: (id: RepNodeId) => void;
   /** 修行感悟：'one' 买一级，'all' 买到买不起为止（economy.md §3） */
   buyGanwu: (mode: 'one' | 'all') => void;
-  grantPage: (pageId: string, channel: CollectionChannel) => void;
-  buyShopPage: (pageId: string) => void;
-  getFragmentEffects: () => FragmentEffects;
-  getMissingPages: () => MissingPage[];
-  openManualShelf: () => void;
   startSession: (testerId: string) => void;
   endSession: (reason: 'completed' | 'external_dropout' | 'design_dropout') => void;
   pauseSession: () => void;
@@ -242,17 +245,15 @@ interface GameState extends PersistedState {
 }
 
 const FRESH: PersistedState = {
-  run: 1, realm: 1, route: null, skillLevel: 0,
+  run: 1, realm: 1, route: null, neigong: null, zhong: 0, tiersPassed: 0, dunwuSec: 0,
+  ownedNeigong: [...STARTER_NEIGONG], wuxing: 1, seenTabs: [],
   dantian: 0, silver: 0, xp: 0,
   reputation: 0, repTotal: 0,
-  ownedMechNodes: [], ownedRepNodes: [], chargeHighWater: 0,
+  ownedRepNodes: [], chargeHighWater: 0,
   clearedStages: [], attempts: {}, autoAdvance: true,
   runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
-  mechXpInvested: 0, switchCount: 0,
   refarmKey: null, refarmCount: 0, refarmAt: 0,
   sessionActive: false, paused: false,
-  collectedPages: [], completedBooks: [],
-  shopPurchasesThisRun: 0,
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
@@ -317,28 +318,50 @@ export function openFronts(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedSta
 }
 
 export function playerBuild(
-  s: Pick<PersistedState, 'realm' | 'route' | 'skillLevel' | 'ownedMechNodes' | 'completedBooks' | 'injuries'>,
+  s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'tiersPassed' | 'injuries'>,
 ): Build {
-  const effects = computeFragmentEffects((s.completedBooks ?? []).filter(isBookId));
-  const base = s.route
-    ? applyFragmentEffectsToBuild(
-        makeBuild(s.route, s.realm, s.skillLevel, s.ownedMechNodes.length), effects,
-      )
-    // 未择路（境界 1）：纯基础属性
-    : applyFragmentEffectsToBuild({
+  const base = s.neigong
+    ? neigongBuild(s.neigong, s.realm, s.zhong, s.tiersPassed)
+    // 未选内功（境界 1）：纯基础属性
+    : {
         hp: REALMS[s.realm - 1].hp, atk: REALMS[s.realm - 1].atk, plainMult: 1,
         def: REALMS[s.realm - 1].def, hit: REALMS[s.realm - 1].accuracy,
         dodge: REALMS[s.realm - 1].evasion,
         crit: 0.05, cd: 1.5, firstCrit: false, shieldPct: 0, thorns: 0,
         poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
-        sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan',
-      }, effects);
+        sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan' as RouteId,
+      };
   // 伤势在最后一层叠加（injury/spec.md §0 红线：只改喂进 fight() 的 Build，不碰 fight()）
   return applyInjuriesToBuild(base, s.injuries ?? freshInjuries());
 }
 
-function isBookId(value: string): value is BookId {
-  return ['legacy_intro', 'legacy_advanced', 'legacy_finale', 'true_jinglei', 'true_zhenyue', 'true_shigu'].includes(value);
+/** 所修内功的火候品质倍率（未选内功为 1），供 computeAttributes 展示用 */
+export function huohouMultOf(s: Pick<PersistedState, 'neigong'>): number {
+  return s.neigong ? HUOHOU_MULT[NEIGONG[s.neigong].quality] : 1;
+}
+
+/** 升重是否被台阶挡住（本版无卷册来源，归真一律缺卷册） */
+export function zhongGate(s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed'>) {
+  return s.neigong ? tierGate(NEIGONG[s.neigong].quality, s.zhong, s.tiersPassed) : null;
+}
+
+/**
+ * 卡在台阶上时推进顿悟（spec §1.3）：累计挂机秒数，每满 600 秒按「概率 × 悟性」判一次。
+ * 一次最多跨一阶——跨过后要先升重才会撞上下一阶。返回新状态与是否顿悟。
+ */
+function advanceDunwu(
+  s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed' | 'dunwuSec' | 'wuxing'>, dtSec: number, rand: () => number,
+): { tiersPassed: number; dunwuSec: number; tier: string | null } {
+  const gate = zhongGate(s);
+  if (!gate || gate.needScroll) return { tiersPassed: s.tiersPassed, dunwuSec: 0, tier: null };
+  let acc = (s.dunwuSec ?? 0) + dtSec;
+  while (acc >= DUNWU_INTERVAL_SEC) {
+    acc -= DUNWU_INTERVAL_SEC;
+    if (rand() < dunwuChance(gate.tier, s.wuxing ?? 1)) {
+      return { tiersPassed: s.tiersPassed + 1, dunwuSec: 0, tier: gate.tier.name };
+    }
+  }
+  return { tiersPassed: s.tiersPassed, dunwuSec: acc, tier: null };
 }
 
 /** 离开本境界要缴清的内力总额（content.md §1「离开本境界」行口径）；本版不可再突破返回 null */
@@ -409,7 +432,6 @@ function maxClearedStage(clearedStages: readonly string[]): string | null {
 
 function visitSnapshot(s: GameState) {
   const breakCost = effBreakCost(s);
-  const nextSkillLevel = s.skillLevel + 1;
   const decisionBattle = openFronts(s).length > 0;
   return {
     max_cleared_stage: maxClearedStage(s.clearedStages),
@@ -417,7 +439,7 @@ function visitSnapshot(s: GameState) {
     offline_settlement_present: s.offlineSettlement !== null,
     offline_settlement_capped: s.offlineSettlement?.capped ?? null,
     decision_breakthrough: breakCost !== null && s.dantian >= breakCost,
-    decision_skill: s.route !== null && s.dantian >= skillUpgradeCost(nextSkillLevel),
+    decision_skill: s.neigong !== null && zhongGate(s) === null && s.dantian >= zhongCost(s.zhong + 1),
     decision_battle: decisionBattle,
     decision_retire: retireKind(s) !== null,
   };
@@ -438,6 +460,7 @@ export function resetLiveTestVisitForTests(): void {
 
 export const useGameStore = create<GameState>((set, get) => ({
   ...FRESH,
+  dunwuNotice: null,
   started: false,
   ceremony: null,
   selectedMap: 1,
@@ -474,6 +497,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 观察员暂停中的存档不结算（暂停冻结一切结算，与 tick 口径一致），时间戳照常消费。
       // 离线只发三资源（A2 决策保留）：不触碰 runPlaySec / lastProgressSec / 战斗 / 归隐 / 关卡。
       let offlineSettlement: OfflineSettleResult | null = null;
+      let dunwuNotice: string | null = null;
       if (savedAt !== null && !merged.paused) {
         const r = calculateOfflineRewards({
           currentMaxIdleStage: maxIdleStage(merged.clearedStages),
@@ -494,7 +518,12 @@ export const useGameStore = create<GameState>((set, get) => ({
           const liveMin = r.effectiveMin * k;
           merged.dantian += r.neili * k;
           merged.silver += Math.round(r.silver * k);
-          merged.xp += Math.round(r.xp * k);
+          // 阅历冻结（sect-neigong/spec.md §4.4）：离线不再产出
+          // 卡在台阶上时，闭关同样判顿悟（spec §1.3「在线离线都算」）
+          const dw = advanceDunwu(merged, liveMin * 60, Math.random);
+          merged.tiersPassed = dw.tiersPassed;
+          merged.dunwuSec = dw.dunwuSec;
+          if (dw.tier) dunwuNotice = dw.tier;
           // 基础声望的离线部分：乘区加权时长按 60% 折算（economy.md §1.1）
           merged.lifeWeightedHours = (merged.lifeWeightedHours ?? 0)
             + (liveMin / 60) * OFFLINE_EFFICIENCY * currentMult(merged);
@@ -515,14 +544,14 @@ export const useGameStore = create<GameState>((set, get) => ({
             stage_basis: r.stageBasis,
             tier_id: r.tier.id,
             efficiency: r.efficiency,
-            neili: r.neili, silver: r.silver, xp: r.xp,
+            neili: r.neili, silver: r.silver,
             silent: r.silent,
             debug_cap: r.debugCap,
           });
           if (!r.silent) offlineSettlement = r;
         }
       }
-      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement });
+      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, dunwuNotice });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
         // 闭关期间寿终正寝：自动归隐，出关结算屏不再有意义，直接进归隐演出
         set({ offlineSettlement: null });
@@ -532,8 +561,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         persist(get());
       }
     } else {
-      set({ ...FRESH, started: true });
-      track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
+      set({ ...FRESH, wuxing: rollWuxing(Math.random()), started: true });
+      track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], wuxing: get().wuxing });
       persist(get());
     }
     const activeWindow = loadLiveTestWindow();
@@ -610,7 +639,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const { segmentsFull } = zhoutianProgress(dantian, cost, N);
         while (chargeHighWater < segmentsFull) {
           chargeHighWater += 1;
-          // 周天圆满给三样：缴清一期账、丹田扩容、真气行至下一穴（design.md §2）。
+          // 周天圆满给三样：缴清一期账、丹田扩容、内力行至下一穴（design.md §2）。
           // 前两样由 chargeHighWater 本身承载，第三样由 isLoosened 按高水位导出，无需另存字段。
           track('charge_segment_full', { run: s.run, realm: s.realm, route: s.route }, {
             realm_target: s.realm + 1, segment: chargeHighWater,
@@ -625,7 +654,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       const lifeMinutes = (s.lifeMinutes ?? 0) + dt / 60;
       // 魂魄未稳：转世后前 10 年（spec §4.1）
       const soulUnsettled = (s.soulUnsettled ?? false) && !soulSettles(age);
-      set({ dantian, chargeHighWater, runPlaySec, injuries, age, lifeWeightedHours, lifeMinutes, soulUnsettled });
+      // 卡在台阶上：挂机累计判顿悟（spec §1.3）
+      const dw = advanceDunwu(s, dt, Math.random);
+      set({
+        dantian, chargeHighWater, runPlaySec, injuries, age, lifeWeightedHours, lifeMinutes, soulUnsettled,
+        tiersPassed: dw.tiersPassed, dunwuSec: dw.dunwuSec,
+        ...(dw.tier ? { dunwuNotice: dw.tier, lastProgressSec: runPlaySec } : {}),
+      });
+      if (dw.tier) {
+        track('dunwu', { run: s.run, realm: s.realm, route: s.route }, {
+          neigong: s.neigong, tier: dw.tier, zhong: s.zhong, wuxing: s.wuxing,
+        });
+      }
       if (isOldDeath(age, s.realm, s.lifespanLost ?? 0)) {
         rebirth(set, get, 'old');
         return;
@@ -752,73 +792,57 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   dismissCeremony: () => set({ ceremony: null }),
 
-  selectRoute: (r) => {
+  selectNeigong: (id) => {
     const s = get();
-    if (s.route !== null) return; // 换路线（route_changed）随换线弹窗交付
-    // 师门指引：择路即免费获得该路线机制节点一（非玩家调整动作，不发 mech_node_bought）
-    const granted = hasNode(s.ownedRepNodes, 'shimen_zhiyin')
-      ? [ROUTES[r].mechNodes[0].id] : [];
-    set({ route: r, ownedMechNodes: [...new Set([...s.ownedMechNodes, ...granted])] });
-    track('route_selected', { run: s.run, realm: s.realm, route: r }, { route_to: r });
+    if (s.neigong !== null || s.realm < 2) return;
+    if (!(s.ownedNeigong ?? STARTER_NEIGONG).includes(id)) return;
+    const route = NEIGONG[id].route;
+    set({ neigong: id, route, zhong: 0, tiersPassed: 0, dunwuSec: 0 });
+    track('neigong_selected', { run: s.run, realm: s.realm, route }, {
+      neigong: id, quality: NEIGONG[id].quality,
+    });
     persist(get());
   },
 
-  /**
-   * 换路线（规格书 §6.4 + 内容表 §4）：已投入阅历 100% 返还（等额交换，免费赠予节点不计入）、
-   * 银两摩擦费 200（轻装上路：每轮第一次免费）、武学清零重练；师门指引跟随新路线重新赠予。
-   */
-  switchRoute: (to) => {
+  switchNeigong: (to) => {
     const s = get();
-    if (!s.route || s.route === to) return;
-    const free = hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') && s.switchCount === 0;
-    const fee = free ? 0 : ROUTE_SWITCH_SILVER;
+    if (!s.neigong || s.neigong === to || !(s.ownedNeigong ?? []).includes(to)) return;
+    const fee = switchFee(s.realm);
     if (s.silver < fee) return;
-    const refund = s.mechXpInvested;
-    const granted = hasNode(s.ownedRepNodes, 'shimen_zhiyin')
-      ? [ROUTES[to].mechNodes[0].id] : [];
+    const zhong = zhongAfterSwitch(s.neigong, to, s.zhong);
+    const route = NEIGONG[to].route;
     set({
-      route: to,
-      skillLevel: 0,
-      silver: s.silver - fee,
-      xp: s.xp + refund,
-      mechXpInvested: 0,
-      ownedMechNodes: granted,
-      switchCount: s.switchCount + 1,
-      lastProgressSec: s.runPlaySec,
+      neigong: to, route, zhong, tiersPassed: 0, dunwuSec: 0,
+      silver: s.silver - fee, lastProgressSec: s.runPlaySec,
     });
-    track('route_changed', { run: s.run, realm: s.realm, route: to }, {
-      route_from: s.route, route_to: to, xp_refunded: refund, fee_paid: fee,
+    track('neigong_switched', { run: s.run, realm: s.realm, route }, {
+      from: s.neigong, to, same_route: NEIGONG[s.neigong].route === route,
+      zhong_from: s.zhong, zhong_to: zhong, fee_paid: fee,
     });
     persist(get());
   },
 
-  upgradeSkill: () => {
+  upgradeZhong: () => {
     const s = get();
-    if (!s.route) return;
-    // 等级不设上限（formulas.md §3.4 v1.6），只受内力约束
-    const next = s.skillLevel + 1;
-    const cost = skillUpgradeCost(next);
+    if (!s.neigong || zhongGate(s)) return;
+    // 重数不设上限（spec §1.2），只受内力约束；被台阶挡住时须先顿悟
+    const next = s.zhong + 1;
+    const cost = zhongCost(next);
     if (s.dantian < cost) return;
-    set({ dantian: s.dantian - cost, skillLevel: next, lastProgressSec: s.runPlaySec });
-    track('wugong_upgraded', { run: s.run, realm: s.realm, route: s.route }, {
-      level_to: next, cost_neili: cost,
+    set({ dantian: s.dantian - cost, zhong: next, lastProgressSec: s.runPlaySec });
+    track('zhong_upgraded', { run: s.run, realm: s.realm, route: s.route }, {
+      neigong: s.neigong, zhong_to: next, cost_neili: cost,
     });
     persist(get());
   },
 
-  buyMechNode: (nodeId) => {
+  dismissDunwu: () => set({ dunwuNotice: null }),
+
+  seeTab: (tab) => {
     const s = get();
-    if (!s.route || s.ownedMechNodes.includes(nodeId)) return;
-    const node = ROUTES[s.route].mechNodes.find((n) => n.id === nodeId);
-    if (!node || s.xp < node.cost) return;
-    set({
-      xp: s.xp - node.cost, ownedMechNodes: [...s.ownedMechNodes, nodeId],
-      mechXpInvested: s.mechXpInvested + node.cost,
-      lastProgressSec: s.runPlaySec,
-    });
-    track('mech_node_bought', { run: s.run, realm: s.realm, route: s.route }, {
-      node_id: nodeId, cost_xp: node.cost,
-    });
+    // 未启动时存档里还是空状态：此时持久化会盖掉刚载入的存档（调试预设带 tab= 时踩过）
+    if (!s.started || (s.seenTabs ?? []).includes(tab)) return;
+    set({ seenTabs: [...(s.seenTabs ?? []), tab] });
     persist(get());
   },
 
@@ -931,64 +955,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
-  grantPage: (pageId, channel) => {
-    const s = get();
-    if (channel === 'D') {
-      offlinePages();
-      return;
-    }
-    if (!isPageId(pageId)) return;
-    const source = PAGE_SOURCE_TABLE.find((page) => page.page_id === pageId);
-    if (!source) return;
-    if (channel === 'A' && source.channel !== 'Boss_kill') return;
-    if (channel === 'B' && source.channel !== 'trial_victory') return;
-    const collection = {
-      collectedPages: (s.collectedPages ?? []).filter(isPageId),
-      completedBooks: (s.completedBooks ?? []).filter(isBookId),
-    };
-    const result = grantFragmentPage(collection, pageId);
-    if (!result.grantedPage) return;
-    set({ collectedPages: [...result.collectedPages], completedBooks: [...result.completedBooks] });
-    emitPageGrant({ run: s.run, realm: s.realm, route: s.route }, result, channel);
-    persist(get());
-  },
-
-  buyShopPage: (pageId) => {
-    const s = get();
-    if (!isPageId(pageId) || (s.shopPurchasesThisRun ?? 0) >= 1) return;
-    if ((s.collectedPages ?? []).includes(pageId)) return;
-    const price = shopPrice(pageId);
-    if (price === null || s.reputation < price) return;
-    const source = PAGE_SOURCE_TABLE.find((page) => page.page_id === pageId);
-    if (!source) return;
-    const purchases = (s.shopPurchasesThisRun ?? 0) + 1;
-    set({ reputation: s.reputation - price, shopPurchasesThisRun: purchases });
-    get().grantPage(pageId, 'C');
-    track('shop_page_exchanged', { run: s.run, realm: s.realm, route: s.route }, {
-      page_id: pageId,
-      price_paid: price,
-      shop_purchases_this_run: purchases,
-    });
-    persist(get());
-  },
-
-  getFragmentEffects: () => computeFragmentEffects(
-    (get().completedBooks ?? []).filter(isBookId),
-  ),
-
-  getMissingPages: () => getMissingPages((get().collectedPages ?? []).filter(isPageId)),
-
-  openManualShelf: () => {
-    const s = get();
-    const collectedCount = (s.collectedPages ?? []).filter(isPageId).length;
-    const completedCount = (s.completedBooks ?? []).filter(isBookId).length;
-    track('manual_shelf_opened', { run: s.run, realm: s.realm, route: s.route }, {
-      collected_count: collectedCount,
-      completed_count: completedCount,
-      missing_count: PAGE_SOURCE_TABLE.length - collectedCount,
-    });
-  },
-
   // ---- 观察员会话（埋点规格 §1.1；tick 活跃秒口径天然扣除暂停区间） ----
 
   startSession: (testerId) => {
@@ -996,7 +962,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.sessionActive) return; // 防面板状态错乱导致重复 test_session_start
     track('test_session_start', { run: s.run, realm: s.realm, route: s.route }, {
       tester_id: testerId, build: BUILD, tables_version: TABLES_VERSION, telemetry_spec: TELEMETRY_SPEC,
-      missing_pages_snapshot: getMissingPages((s.collectedPages ?? []).filter(isPageId)),
     });
     set({ sessionActive: true });
     persist(get());
@@ -1092,7 +1057,6 @@ function rebirth(
       fame_this_life: settle.fameThisLife,
       prestige_total: settle.total,
       run_duration_s: Math.round(s.runPlaySec),
-      pages_gained_run: getEvents().filter((event) => event.e === 'page_acquired' && event.run === s.run).length,
     });
   } else {
     track('forced_reincarnation', ctx, {
@@ -1119,14 +1083,18 @@ function rebirth(
     boss3: deepestBoss(s.clearedStages) >= 3,
   };
 
-  // 重置与保留（§8.3 + 声望经济表继承审计）：资源全清空，仅武道笔记 +40 阅历随新轮生效；
-  // 宿慧（peakRealm）、修行感悟、历来最深 Boss、已领成就跨世保留
+  // 重置与保留（§8.3 + sect-neigong/spec.md §6.1）：资源全清空；已拥有的内功、宿慧（peakRealm）、
+  // 修行感悟、历来最深 Boss、已领成就跨世保留；内功重数与台阶清零、下一世境界 2 重选；悟性重掷
   const newRun = s.run + 1;
-  const xp = carryXp(s.ownedRepNodes);
+  const wuxing = rollWuxing(Math.random(), hasNode(s.ownedRepNodes, 'wudao_biji') ? WUDAO_BIJI_WUXING : 0);
   set({
     ...FRESH,
     run: newRun,
-    xp,
+    // 阅历冻结：原值原样留着，不清零也不再增加（spec §4.4）
+    xp: s.xp,
+    ownedNeigong: s.ownedNeigong ?? [...STARTER_NEIGONG],
+    wuxing,
+    seenTabs: s.seenTabs ?? [],
     reputation: s.reputation + settle.total,
     repTotal: s.repTotal + settle.total,
     ownedRepNodes: s.ownedRepNodes,
@@ -1134,8 +1102,6 @@ function rebirth(
     ganwuLevel: s.ganwuLevel ?? 0,
     deepestBossEver: Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages)),
     fameClaimed: s.fameClaimed ?? [],
-    collectedPages: s.collectedPages ?? [],
-    completedBooks: s.completedBooks ?? [],
     autoAdvance: s.autoAdvance,
     // 窍穴图鉴归隐保留（spec §8）；窍穴进度、伤势、折寿由 ...FRESH 重置
     acupointLog: s.acupointLog ?? [],
@@ -1149,7 +1115,7 @@ function rebirth(
     battle: null, failure: null, ceremony: null, selectedMap: 1, selectedTier: 0, pendingTab: null,
   });
   track('run_start', { run: newRun, realm: 1, route: null }, {
-    owned_nodes: s.ownedRepNodes, carry_xp: xp,
+    owned_nodes: s.ownedRepNodes, wuxing,
   });
   persist(get());
 }
@@ -1170,7 +1136,7 @@ function resolveBattle(
   const attempts = { ...s.attempts, [tid]: attempt };
   const isKeyBattle = enemy.kind !== 'normal';
 
-  let { silver, xp, lastProgressSec, refarmKey, refarmCount, refarmAt } = s;
+  let { silver, lastProgressSec, refarmKey, refarmCount, refarmAt } = s;
   let fameState: Partial<PersistedState> = {};
   let fameGained = 0;
   let clearedStages = s.clearedStages;
@@ -1185,22 +1151,17 @@ function resolveBattle(
       refarmKey = key;
       refarmAt = s.runPlaySec;
       const decay = Math.pow(0.8, refarmCount - 1);
-      reward = {
-        neili: 0,
-        silver: Math.round(reward.silver * decay),
-        xp: 0,
-      };
+      reward = { ...reward, silver: Math.round(reward.silver * decay) };
     }
     // 关卡不掉内力（formulas.md §6.1 v1.6）：推完前沿即归隐，关卡内力落在一世末尾等于白拿
-    silver += reward.silver;
-    xp += reward.xp;
+    silver += reward.silver;   // 阅历冻结（spec §4.4）：关卡不再发阅历
     // 首次击败精英 / Boss：名号传开（economy.md §1.3），跨世只领一次
     if (isEliteKey(key) || isBossKey(key)) {
       const { fame, ...rest } = claimFame(s, `stage:${key}`, isBossKey(key) ? FAME_BOSS : FAME_ELITE);
       fameGained = fame;
       if (fame > 0) fameState = rest;
     }
-    rewardApplied = { neili: 0, silver: reward.silver, xp: reward.xp, refarm: !firstClear, fame: fameGained };
+    rewardApplied = { neili: 0, silver: reward.silver, refarm: !firstClear, fame: fameGained };
     if (firstClear) {
       clearedStages = [...clearedStages, key];
       lastProgressSec = s.runPlaySec;
@@ -1257,7 +1218,7 @@ function resolveBattle(
     ? (firstClear ? nextStageOf(b.map, b.tier, clearedStages) : b.stage)
     : null;
   set({
-    silver, xp, clearedStages, attempts, failure, lastProgressSec,
+    silver, clearedStages, attempts, failure, lastProgressSec,
     refarmKey, refarmCount, refarmAt, injuries, lifespanLost, ...fameState,
     battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
   });
@@ -1266,7 +1227,7 @@ function resolveBattle(
       source: enemy.kind, key, reputation: fameGained,
     });
   }
-  // 打通段末 Boss：解锁本图下一档与下一图初入，跨世保留（秘籍残页 Boss 掉落随秘籍阁冻结暂停）
+  // 打通段末 Boss：解锁本图下一档与下一图初入，跨世保留
   if (result.win && enemy.kind === 'boss' && b.stage === trackLength(b.map, b.tier)) {
     const have = s.tiersUnlocked ?? ['1-0'];
     const opened = unlocksAfterBoss(b.map, b.tier).filter((k) => !have.includes(k));
@@ -1278,7 +1239,7 @@ function resolveBattle(
     }
   }
   // 战死（reincarnation/spec.md §3.2）：伤势越过致死线，或重伤折寿后年岁已超剩余寿元。
-  // 放在奖励与残页发放之后——惨胜也是胜，该拿的先拿到手，再走。
+  // 放在奖励发放之后——惨胜也是胜，该拿的先拿到手，再走。
   if (lethal || isOldDeath(get().age ?? INIT_AGE, get().realm, lifespanLost)) {
     rebirth(set, get, 'battle');   // rebirth 自带持久化
     return;

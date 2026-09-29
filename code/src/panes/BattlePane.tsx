@@ -16,7 +16,6 @@ import { fmtBig } from '../fmt';
 
 const f0 = (n: number) => fmtBig(Math.round(n));
 
-import { BattleVictoryRow } from '../components/BattleVictoryRow';
 
 /** 未解锁时的解锁条件（封存另显「大周天未开」） */
 function unlockHint(map: MapNo, tier: TierId): string {
@@ -246,7 +245,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     </button>
                     {isRefarmTarget && (
                       <div className="cap-note" style={{ marginTop: 8 }}>
-                        已通关的关卡只掉银两（五成）与阅历（无），连续重打同一关逐次递减（间隔 10 分钟重置）
+                        已通关的关卡只掉五成银两，连续重打同一关逐次递减（间隔 10 分钟重置）
                       </div>
                     )}
                   </>
@@ -282,7 +281,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               <div className="log-line">
                 <span className="turn" />
                 <span className="win-t">
-                  {`${battle.reward.refarm ? '回刷收获' : '收获'}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
+                  {`${battle.reward.refarm ? '回刷收获' : '收获'}　银两 +${f0(battle.reward.silver)}`}
                 </span>
               </div>
               {(battle.reward.fame ?? 0) > 0 && (
@@ -291,7 +290,6 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   <span className="fame-t"><span className="serif">名号传开</span>　挑落{battle.enemy.name}，江湖为之侧目　声望 +{fmtBig(battle.reward.fame!)}</span>
                 </div>
               )}
-              <BattleVictoryRow pageId={battle.reward.grantedPageId} />
             </>
           )}
         </div>

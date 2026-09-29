@@ -22,9 +22,9 @@ export interface RepNodeDef {
  */
 export const REP_NODES: RepNodeDef[] = [
   { id: 'zairu_jianghu',      name: '再入江湖', price: 150,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
-  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '每一世里，第一次更换路线不收银两' },
-  { id: 'wudao_biji',         name: '武道笔记', price: 440,  type: '资源', desc: '每一世开局自带 40 点阅历' },
-  { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '每一世开局免费获得当前路线的一重参悟，更换路线后跟随新路线' },
+  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '书肆的秘籍一律八折' },
+  { id: 'wudao_biji',         name: '武道笔记', price: 440,  type: '资源', desc: '每一世悟性 +0.1，领悟得更快' },
+  { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '武学领悟新招的顿悟概率翻倍' },
   { id: 'poguan_xinde',       name: '破关心得', price: 1100, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
 ];
 
@@ -40,7 +40,6 @@ export const hasNode = (owned: string[], id: RepNodeId) => owned.includes(id);
 export const bossDmgBonus = (owned: string[]) => (hasNode(owned, 'poguan_xinde') ? 0.10 : 0);
 
 /** 武道笔记：新一轮开局继承阅历 */
-export const carryXp = (owned: string[]) => (hasNode(owned, 'wudao_biji') ? 40 : 0);
 
 /** 再入江湖：机制标签克制提示（retire-copy §7 逐条冻结；组合标签逐条各附，不合成） */
 export const COUNTER_HINTS: Record<EnemyTag, string> = {

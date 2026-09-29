@@ -7,7 +7,8 @@ import {
   hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, currentSegmentNeili,
   currentSegmentQuota, paidThrough, segmentQuotas,
 } from './formulas';
-import { REALMS, huohouEffect, huohouRealms, skillUpgradeCost, zhaoshiLevel } from './content';
+import { REALMS, huohouEffect, huohouRealms, zhaoshiLevel } from './content';
+import { zhongCost } from './neigong';
 
 describe('双曲防御（公式表 §2）', () => {
   it('DEF 17.8（铁臂僧）→ 减免系数 ≈ 0.849', () => {
@@ -48,8 +49,8 @@ describe('境界表（content.md §1 v2.2「离开本境界」行口径）', () 
 
 describe('门径武学：招式 10 级 + 火候（formulas.md §3.4 v1.6）', () => {
   it('第 n 级价 3,490 × 1.08^(n−1)，四舍五入', () => {
-    expect(skillUpgradeCost(1)).toBe(3490);
-    expect(skillUpgradeCost(65)).toBe(Math.round(3490 * 1.08 ** 64));
+    expect(zhongCost(1)).toBe(3490);
+    expect(zhongCost(65)).toBe(Math.round(3490 * 1.08 ** 64));
   });
   it('招式封顶十成；十成以上每 20 级火候折合一个境界', () => {
     expect(zhaoshiLevel(7)).toBe(7);

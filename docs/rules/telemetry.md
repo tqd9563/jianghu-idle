@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.4
+> **版本**：v2.5
 >
 > **日期**：2026-09-29
 >
@@ -29,27 +29,26 @@
 
 | 事件名 | 触发时机 | 关键字段 |
 |---|---|---|
-| `run_start` | 新轮开始（归隐确认后） | `carry_xp` |
-| `route_selected` | 选择路线 | `route` |
+| `run_start` | 新轮开始（归隐确认后） | `owned_nodes`, `wuxing`（本世悟性） |
+| `neigong_selected` | 境界 2 选定本世所修内功 | `neigong`, `quality` |
 | `charge_segment_full` | 新高水位的周天段圆满 | `segment`, `realm_target` |
 | `realm_breakthrough` | 突破成功 | `realm_to`, `first_reach`（首达即得宿慧） |
-| `skill_upgrade` | 武学升级 | `skill_level_to` |
-| `mech_node_bought` | 购买机制节点 | `node_id` |
+| `zhong_upgraded` | 内功升一重 | `neigong`, `zhong_to`, `cost_neili` |
+| `dunwu` | 顿悟跨过内功台阶 | `neigong`, `tier`, `zhong`, `wuxing` |
 | `rep_node_bought` | 购买声望节点 | `node_id` |
 | `battle_end` | 战斗结束 | `target`, `win`, `turns`, `hp_left_pct` |
 | `key_battle_end` | Boss/精英战斗结束 | `target`, `win`, `turns` |
 | `adjustment` | 失败后有意义调整 | `action`, `context` |
-| `route_switch` | 换路线 | `from`, `to` |
+| `neigong_switched` | 一世之内转修 | `from`, `to`, `same_route`, `zhong_from`, `zhong_to`, `fee_paid` |
 | `retire_unlocked` | 本世首次可归隐 | `kind`（恒为 `standard`）, `trigger`（`first_breakthrough`） |
 | `retire_confirmed` | 归隐确认，或寿终正寝自动归隐 | `kind`（`standard` 主动 / `natural` 寿终正寝）, `age_at_end`, `weighted_hours`, `prestige_base`, `front_mult`, `fame_this_life`, `prestige_total`, `run_duration_s` |
-| `page_acquired` | 获得秘籍残页 | `page_id`, `channel` |
 | `test_paused` / `test_resumed` | 观察员暂停/恢复 | — |
 
 ### MVP-1 离线事件
 
 | 事件名 | 触发时机 | 关键字段 |
 |---|---|---|
-| `offline_settled` | 出关结算完成 | `idle_sec`, `neili`, `silver`, `xp`, `cap_hit`, `cap_min`, `debug_cap` |
+| `offline_settled` | 出关结算完成 | `idle_sec`, `neili`, `silver`, `cap_hit`, `cap_min`, `debug_cap` |
 | `offline_tax_revealed` | 出关结算税率条展示 | `efficiency_pct` |
 | `session_start` | 页面激活（会话开始） | — |
 | `session_end` | 页面关闭/失焦 | `reason`, `duration_sec` |
@@ -100,6 +99,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.5 | 2026-09-29 | 门径并入内功（issue #36）：`route_selected` / `route_switch` / `skill_upgrade` / `mech_node_bought` 改为 `neigong_selected` / `neigong_switched` / `zhong_upgraded`，新增 `dunwu`；秘籍阁废止，`page_acquired` 等残页事件删除；阅历冻结，`run_start.carry_xp` 与 `offline_settled.xp` 删除。 |
 | v2.4 | 2026-09-29 | 多天一世：寿终正寝改报 `retire_confirmed`（`kind: natural`），新增字段 `age_at_end`；`forced_reincarnation` 只剩战死（`../systems/pacing/design.md` 裁决 19）。 |
 | v2.3 | 2026-09-29 | 长线第 5b 步：关卡键加难度，`stage_first_clear` 加 `tier`，target 改关卡键；新增 `tier_unlocked`。 |
 | v2.2 | 2026-09-28 | 长线第 4 步：`realm_breakthrough` 加 `first_reach`；`retire_unlocked` 只剩 `first_breakthrough` 一种触发；`retire_confirmed` 改报三层公式构成；新增 `fame_gained`、`ganwu_bought`。 |

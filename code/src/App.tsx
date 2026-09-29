@@ -1,14 +1,13 @@
 /**
  * 实现基准：docs/design/prototype.html（获批原型）+ 根目录 DESIGN.md，1:1 还原。
- * 当前覆盖：修炼页 / 武学页 / 路线选择 / 突破演出；战斗与声望阁下一步。
+ * 内功页与选内功：docs/design/sect-neigong-prototype.html §1–§2；侧边栏页签解锁前不显示（同原型「侧边栏」节）。
  */
 import { useEffect, useState } from 'react';
 import { computeAttributes } from './engine/attributes';
 import { REALMS } from './engine/content';
 import { mapName, stageKey, TIER_NAMES, trackLength } from './engine/enemies';
-import { FRAGMENTS_FROZEN } from './engine/fragmentLogic';
 import { zhoutianProgress } from './engine/formulas';
-import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore, zhoutianN } from './store/gameStore';
+import { effBreakCost, effIdleRate, huohouMultOf, nextStageOf, retireKind, useGameStore, zhoutianN } from './store/gameStore';
 import { fmtBig, fmtRate } from './fmt';
 import { WoundChip } from './components/WoundChip';
 import { freshInjuries, isHurt } from './engine/injury';
@@ -17,28 +16,32 @@ import { applyDebugHash } from './debug';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
 import { RepPane } from './panes/RepPane';
-import { SkillPane } from './panes/SkillPane';
-import { RouteSelect } from './overlays/RouteSelect';
+import { NeigongPane } from './panes/NeigongPane';
+import { NeigongSelect } from './overlays/NeigongSelect';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
 import { ObserverPanel } from './overlays/ObserverPanel';
 import { OfflineSettlement } from './overlays/OfflineSettlement';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
-import { FragmentShelf } from './panes/FragmentShelf';
 import { AgeLine } from './components/AgeLine';
 import { SoulChip } from './components/SoulChip';
 import { ERA_START, INIT_AGE } from './engine/reincarnation';
+import { NEIGONG } from './engine/neigong';
 
-type TabId = 'cultivate' | 'battle' | 'skill' | 'rep' | 'fragments';
+const NEIGONG_NAME = (id: keyof typeof NEIGONG) => NEIGONG[id].name;
+
+type TabId = 'cultivate' | 'battle' | 'neigong' | 'rep';
 
 export default function App() {
   const s = useGameStore();
-  const [tab, setTab] = useState<TabId>('cultivate');
+  const [tab, setTabRaw] = useState<TabId>('cultivate');
+  // 点开页签即记入「已见」，新开页签的金点随之消失
+  const setTab = (t: TabId) => { setTabRaw(t); useGameStore.getState().seeTab(t); };
   const [observerOpen, setObserverOpen] = useState(false);
 
   useEffect(() => {
     const { tab: debugTab, fight: autoFight, retire: debugRetire, observer, livetest } = applyDebugHash();
-    if (debugTab) setTab(debugTab as TabId);
+    if (debugTab) setTabRaw(debugTab as TabId);   // init 之前不记「已见」
     if (observer) setObserverOpen(true);
     s.init();
     useGameStore.getState().applyLiveTestSwitch(livetest);
@@ -61,6 +64,18 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 新一世内功页签随之隐藏：停在内功页的玩家退回修炼页
+  useEffect(() => {
+    if (tab === 'neigong' && s.started && s.neigong === null) setTabRaw('cultivate');
+  }, [tab, s.started, s.neigong]);
+
+  // 顿悟轻提示：几秒后自动收起
+  useEffect(() => {
+    if (!s.dunwuNotice) return;
+    const t = setTimeout(() => useGameStore.getState().dismissDunwu(), 3200);
+    return () => clearTimeout(t);
+  }, [s.dunwuNotice]);
+
   useEffect(() => {
     if (s.pendingTab) {
       setTab(s.pendingTab as TabId);
@@ -75,8 +90,8 @@ export default function App() {
   const breakCost = effBreakCost(s);
   const N = zhoutianN(s.realm);
   const progress = breakCost !== null ? zhoutianProgress(s.dantian, breakCost, N) : null;
-  const attrs = computeAttributes(s.realm, s.route, s.skillLevel);
-  const routeSelectOpen = s.realm >= 2 && s.route === null && s.retireCeremony === null;
+  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, 0, huohouMultOf(s));
+  const neigongSelectOpen = s.realm >= 2 && s.neigong === null && s.retireCeremony === null;
   const retire = retireKind(s);
   const repUnlocked = s.repTotal > 0 || s.run > 1;
 
@@ -93,28 +108,17 @@ export default function App() {
           <AgeLine age={s.age ?? INIT_AGE} eraStart={s.eraStart ?? ERA_START} realm={s.realm} lifespanLost={s.lifespanLost ?? 0} />
         </div>
         <div className="nav-group">
+          {/* 未解锁的页签一律不显示；新开且没点开过的带金点（门派原型「侧边栏」节） */}
           <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>
           <button className={tabCls(tab, 'battle')} onClick={() => setTab('battle')}>战斗</button>
-          {s.route ? (
-            <button className={tabCls(tab, 'skill')} onClick={() => setTab('skill')}>武学</button>
-          ) : (
-            <button className="game-tab" disabled title="突破至境界 2 后解锁">武学</button>
+          {s.neigong && (
+            <button className={tabCls(tab, 'neigong')} onClick={() => setTab('neigong')}>
+              内功{!(s.seenTabs ?? []).includes('neigong') && <span className="fresh-dot" aria-label="新开" />}
+            </button>
           )}
-          {repUnlocked ? (
-            <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>声望阁</button>
-          ) : (
-            <button className="game-tab" disabled title="首次归隐后解锁">声望阁</button>
-          )}
-          {/* 秘籍阁冻结（issue #22 第 5b 步）：随「真传残页获取方式重做」恢复 */}
-          {!FRAGMENTS_FROZEN && (
-            <button
-              className={tabCls(tab, 'fragments')}
-              onClick={() => { setTab('fragments'); s.openManualShelf(); }}
-            >
-              秘籍阁
-              <span style={{ fontSize: '11px', opacity: 0.6, marginLeft: '6px', fontVariantNumeric: 'tabular-nums' }}>
-                {(s.collectedPages ?? []).length}/18
-              </span>
+          {repUnlocked && (
+            <button className={tabCls(tab, 'rep')} onClick={() => setTab('rep')}>
+              声望阁{!(s.seenTabs ?? []).includes('rep') && <span className="fresh-dot" aria-label="新开" />}
             </button>
           )}
         </div>
@@ -143,7 +147,6 @@ export default function App() {
             </span>
           </div>
           <div className="res"><span className="label">银两</span><span className="value">{fmtBig(s.silver)}</span></div>
-          <div className="res"><span className="label">阅历</span><span className="value">{fmtBig(s.xp)}</span></div>
           <div className="res rep">
             <span className="label">声望</span>
             <span className="value">{fmtBig(s.reputation)}</span>
@@ -188,12 +191,12 @@ export default function App() {
 
         {tab === 'cultivate' && <CultivatePane />}
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
-        {tab === 'skill' && s.route && <SkillPane />}
+        {tab === 'neigong' && s.neigong && <NeigongPane />}
         {tab === 'rep' && <RepPane />}
-        {tab === 'fragments' && !FRAGMENTS_FROZEN && <FragmentShelf />}
       </main>
 
-      {routeSelectOpen && <RouteSelect />}
+      {neigongSelectOpen && <NeigongSelect />}
+      {s.dunwuNotice && <div className="dunwu-toast serif" role="status">顿悟 · {s.neigong ? NEIGONG_NAME(s.neigong) : ''} · {s.dunwuNotice}</div>}
       <RetireFlow />
       {s.retireCeremony && (
         <RetireCeremony onDone={() => { s.closeRetireCeremony(); setTab('rep'); }} />
@@ -203,7 +206,7 @@ export default function App() {
       {s.ceremony !== null && (
         <BreakthroughCeremony
           realmTo={s.ceremony}
-          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.skillLevel)}
+          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, 0, huohouMultOf(s))}
           nextAttrs={attrs}
           onClose={s.dismissCeremony}
         />

@@ -60,7 +60,7 @@ export interface SceneStar {
   id: string; name: string; state: StarState;
   /** 成功率（位次基础值 + 失败累进），供 tooltip / 无障碍标签用 */
   rate: number;
-  /** 冲一次要扣的真气（design.md §3.3），成败同扣 */
+  /** 冲一次要扣的内力（design.md §3.3），成败同扣 */
   neiliCost: number;
   /** 不可冲的具体原因——每个原因对应一条冻结文案，不能合并成 boolean */
   gate: ChongxueGate;
@@ -96,7 +96,7 @@ export interface SceneModel {
   qiOpacity: number;
   moons: SceneMoon[];
   meridians: SceneMeridian[];
-  /** 当前段已蓄真气（冲穴从这里扣，design.md §2） */
+  /** 当前段已蓄内力（冲穴从这里扣，design.md §2） */
   segmentNeili: number;
   /** 本境界已通窍穴数（加成口径；突破门槛见下三项） */
   openedThisRealm: number;

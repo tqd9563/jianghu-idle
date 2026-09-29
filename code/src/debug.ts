@@ -16,21 +16,21 @@ const m2upto = (n: number) => upto(2, 0, n);
 const m3upto = (n: number) => upto(3, 0, n);
 
 const PRESETS: Record<string, object> = {
-  // 原型场景 3 对应态：境界 3 · 唐门 Lv5 · 丹田 6,900 · 图2 推进到第 7 关（精英铁臂僧）
+  // 原型场景 3 对应态：境界 3 · 蚀骨心法第 5 重 · 丹田 6,900 · 图2 推进到第 7 关（精英铁臂僧）
   realm3: {
-    run: 1, realm: 3, route: 'tangmen', skillLevel: 5,
+    run: 1, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 5,
     dantian: 6900, silver: 530, xp: 189,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
+    tiersPassed: 2, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
     tiersUnlocked: ['1-0', '2-0', '1-1'], 
   },
   // 突破就绪态：境界 4 · 六段周天缴清、任脉已贯通 · 图3 推进到第 8 关
   ready: {
-    run: 1, realm: 4, route: 'tangmen', skillLevel: 7, peakRealm: 4,
+    run: 1, realm: 4, route: 'tangmen', neigong: 'shiguxinfa', zhong: 7, peakRealm: 4,
     dantian: 17_900_000, silver: 830, xp: 250,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 6,
+    tiersPassed: 3, chargeHighWater: 6,
     acupointProgress: {
       guanyuan: { failCount: 0, opened: true }, qihai: { failCount: 0, opened: true },
       danzhong: { failCount: 1, opened: true },
@@ -40,19 +40,19 @@ const PRESETS: Record<string, object> = {
   },
   // Boss 2 卡点态：境界 3 打推荐境界 4 的铁掌恶僧（复现失败诊断规则 1）
   boss2: {
-    run: 1, realm: 3, route: 'tangmen', skillLevel: 6,
+    run: 1, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 6,
     dantian: 3210, silver: 490, xp: 96,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 1,
+    tiersPassed: 3, chargeHighWater: 1,
     clearedStages: [...m1all, ...m2upto(trackLength(2, 0) - 1)], attempts: {}, autoAdvance: false,
     tiersUnlocked: ['1-0', '2-0', '1-1'], 
   },
   // 归隐就绪态：境界 5 + 三图全通
   retire: {
-    run: 1, realm: 5, route: 'tangmen', skillLevel: 10, peakRealm: 5, lifeWeightedHours: 12,
+    run: 1, realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, peakRealm: 5, lifeWeightedHours: 12,
     dantian: 3400, silver: 830, xp: 59,
     reputation: 0, repTotal: 0,
-    ownedMechNodes: ['tm1', 'tm2', 'tm3'], mechXpInvested: 270, chargeHighWater: 0,
+    tiersPassed: 3, chargeHighWater: 0,
     clearedStages: [...m1all, ...upto(2, 0), ...upto(3, 0)],
     tiersUnlocked: ['1-0', '2-0', '1-1', '3-0', '2-1', '4-0', '3-1'], deepestBossEver: 3,
     attempts: { boss3: 2 }, autoAdvance: true,
@@ -60,11 +60,11 @@ const PRESETS: Record<string, object> = {
   },
   // 长线第 35 天早上（原型 longline-prototype.html 的 mock 玩家）：境界 4 峰值、推完前沿待归隐
   day35: {
-    run: 35, realm: 4, route: 'tangmen', skillLevel: 64, peakRealm: 4,
+    run: 35, realm: 4, route: 'tangmen', neigong: 'shiguxinfa', zhong: 64, peakRealm: 4,
     dantian: 12_863_420, silver: 2140, xp: 312,
     reputation: 150, repTotal: 180_000, ganwuLevel: 136,
     ownedRepNodes: ['zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin'],
-    ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 5,
+    tiersPassed: 3, chargeHighWater: 5,
     // 早上推完前沿：图 1 初入 / 历练、图 2 初入全通，图 1 绝境、图 2 历练、图 3 初入各推到第 8 关
     clearedStages: [...m1all, ...upto(1, 1), ...upto(1, 2, 8), ...upto(2, 0), ...upto(2, 1, 8), ...m3upto(8)],
     attempts: {}, autoAdvance: true,
@@ -79,34 +79,34 @@ const PRESETS: Record<string, object> = {
   },
   // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证声望阁与节点购买
   run2: {
-    run: 2, realm: 1, route: null, skillLevel: 0,
+    run: 2, realm: 1, route: null, neigong: null, zhong: 0,
     dantian: 0, silver: 0, xp: 0,
     reputation: 130, repTotal: 130,
-    ownedMechNodes: [], ownedRepNodes: [], chargeHighWater: 0,
+    tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
     clearedStages: [], attempts: {}, autoAdvance: true,
     runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
   },
   // 转世系统（reincarnation-prototype.html）：垂暮态——境界 3 寿元 90，80 岁时离寿元不足一次重伤
   dusk: {
-    run: 3, realm: 3, route: 'tangmen', skillLevel: 5,
+    run: 3, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 5,
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
-    ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
+    tiersPassed: 2, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
     tiersUnlocked: ['1-0', '2-0', '1-1'], age: 80, eraStart: 206, peakRealm: 3,
   },
   // 将死态：境界 3、89.99 岁，挂机片刻即寿终正寝，用于看自动归隐演出
   dying: {
-    run: 3, realm: 3, route: 'tangmen', skillLevel: 5,
+    run: 3, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 5,
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
-    ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
+    tiersPassed: 2, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
     tiersUnlocked: ['1-0', '2-0', '1-1'], age: 89.99, eraStart: 206, peakRealm: 3,
   },
   // 魂魄未稳态：被迫转世后的新一世开局
   soul: {
-    run: 4, realm: 1, route: null, skillLevel: 0,
+    run: 4, realm: 1, route: null, neigong: null, zhong: 0,
     dantian: 0, silver: 0, xp: 0, reputation: 390, repTotal: 390,
-    ownedMechNodes: [], ownedRepNodes: [], chargeHighWater: 0,
+    tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
     clearedStages: [], attempts: {}, autoAdvance: true,
     age: 18, eraStart: 308, soulUnsettled: true,
   },

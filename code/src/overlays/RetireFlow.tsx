@@ -39,7 +39,7 @@ export function RetireFlow() {
           <div className="modal-head"><span className="serif">就此归隐？</span></div>
           <div className="modal-body">
             <p className="retire-confirm-text">
-              这一段江湖就到此为止：境界、武学、通关进度与所有资源都会散去。
+              这一段江湖就到此为止：境界、内功重数、通关进度与所有资源都会散去。
               只有声望、修行感悟、宿慧、传承和你留下的江湖记录，随你归来。此去无回头。
             </p>
             {warnLifespan && (
@@ -96,18 +96,17 @@ export function RetireFlow() {
             <div className="rcol lose">
               <div className="rcol-head">你将失去</div>
               <div className="rline"><span>境界</span><span className="v">回到「江湖新丁」</span></div>
-              <div className="rline"><span>武学</span><span className="v">全部重置</span></div>
-              <div className="rline"><span>路线</span><span className="v">重新选择</span></div>
+              <div className="rline"><span>内功</span><span className="v">重数与台阶清零，下一世重选</span></div>
               <div className="rline"><span>通关进度</span><span className="v">各图重推</span></div>
               <div className="rline"><span>内力</span><span className="v">{fmtBig(s.dantian)}　散去</span></div>
               <div className="rline"><span>银两</span><span className="v">{fmtBig(s.silver)}　散去</span></div>
-              <div className="rline"><span>阅历</span><span className="v">{fmtBig(s.xp)}　散去</span></div>
             </div>
             <div className="rcol keep">
               <div className="rcol-head">你将保留</div>
               <div className="rline"><span>声望</span><span className="v">现有 {fmtBig(s.reputation)} + 本次 {fmtBig(settle.total)}</span></div>
               <div className="rline"><span>修行感悟</span><span className="v">{s.ganwuLevel ?? 0} 级</span></div>
               <div className="rline"><span>宿慧</span><span className="v">+{suhuiTotal(s.peakRealm ?? 1).toFixed(1)}×</span></div>
+              <div className="rline"><span>内功</span><span className="v">已有 {(s.ownedNeigong ?? []).length} 部，下一世可任选</span></div>
               <div className="rline"><span>传承</span><span className="v">已购 {s.ownedRepNodes.length} 件，永久生效</span></div>
               <div className="rline"><span>江湖记录</span><span className="v">名号与通关印记</span></div>
               <RetireHint />

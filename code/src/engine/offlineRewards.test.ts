@@ -140,17 +140,18 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     useGameStore.getState().init();
   }
 
-  it('出关结算只发三资源；埋点与 store 入账同源同值（A1 三处同源的引擎/埋点两处）', () => {
+  it('出关结算发内力与银两（阅历冻结）；埋点与 store 入账同源同值（A1 三处同源的引擎/埋点两处）', () => {
     const before = useGameStore.getState();
     expect(before.dantian).toBe(0);
     reopenAfter(10 * MIN);
     const s = useGameStore.getState();
     expect(s.dantian).toBe(OFF(10));
     expect(s.silver).toBe(Math.floor(4 * 10 * 0.60));
-    expect(s.xp).toBe(Math.floor(0.6 * 10 * 0.60));
+    expect(s.xp).toBe(0); // 阅历冻结（sect-neigong/spec.md §4.4）：离线不再入账
     const ev = getEvents().find((e) => e.e === 'offline_settled')!;
     expect(ev).toBeDefined();
-    expect([ev.neili, ev.silver, ev.xp]).toEqual([s.dantian, s.silver, s.xp]);
+    expect([ev.neili, ev.silver]).toEqual([s.dantian, s.silver]);
+    expect(ev).not.toHaveProperty('xp');
     expect(ev.silent).toBe(false);
     expect(s.offlineSettlement).not.toBeNull();
   });

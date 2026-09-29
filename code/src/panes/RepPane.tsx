@@ -6,6 +6,7 @@ import { REALMS } from '../engine/content';
 import { GANWU_GAIN, REP_NODES, SUHUI, ganwuAffordable, ganwuPrice, suhuiTotal } from '../engine/prestige';
 import { currentMult, useGameStore } from '../store/gameStore';
 import { ShopCategory } from '../components/ShopCategory';
+import { FRAGMENTS_FROZEN } from '../engine/fragmentLogic';
 import { fmtBig } from '../fmt';
 
 export function RepPane() {
@@ -113,7 +114,7 @@ export function RepPane() {
             })}
           </div>
           <div className="cap-note">旧梦重温、快速入门、江湖熟路三件已废止，不再陈列。</div>
-          <ShopCategory />
+          {!FRAGMENTS_FROZEN && <ShopCategory />}
         </div>
       </section>
     </div>

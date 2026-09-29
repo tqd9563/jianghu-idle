@@ -321,6 +321,39 @@ body {
 .map-tab.locked { color: var(--ink-faint); cursor: not-allowed; }
 .map-tab .prog { display: block; font-size: 11px; font-variant-numeric: tabular-nums; margin-top: 1px; font-weight: 400; }
 .map-tab.active .prog { color: var(--candle-gold); }
+/* 长线战斗页（原型 longline-prototype.html §1；视觉风格随 issue #26 整改） */
+.map-tab { position: relative; }
+/* 封存：不隐藏、写明原因；墨金虚线框与「未解锁」的灰区分开 */
+.map-tab.sealed, .app .map-tab.sealed { border-style: dashed !important; border-color: oklch(0.74 0.075 76 / 0.45) !important; color: var(--ink-faint); }
+.map-tab.sealed .prog { color: var(--ink-gold, oklch(0.74 0.075 76)); letter-spacing: 0.08em; }
+.front-dot { position: absolute; top: 7px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--candle-gold); }
+.tier-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px 0; flex-wrap: wrap; }
+.tier-row .lbl { font-size: 12px; color: var(--ink-faint); }
+.tiers { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
+.tier { position: relative; background: var(--night-surface); border: 0; padding: 6px 14px 5px; min-width: 104px; text-align: left; cursor: pointer; font-family: inherit; color: var(--ink-warm); }
+.tier + .tier { border-left: 1px solid var(--line); }
+.tier .tn { display: block; font-size: 13.5px; font-weight: 600; letter-spacing: 0.12em; }
+.tier .ts { display: block; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.tier[aria-pressed="true"] { background: var(--night-surface-raised); }
+.tier[aria-pressed="true"] .tn { color: var(--candle-gold); }
+.tier.cleared .ts { color: var(--ink-muted); }
+.tier.locked .tn, .tier.sealed .tn { color: var(--ink-faint); }
+.tier.sealed .ts { color: oklch(0.74 0.075 76); }
+.tier:disabled { cursor: not-allowed; }
+.tier .front-dot { top: 8px; right: 8px; }
+.tier-hint { font-size: 12px; color: var(--ink-muted); }
+.stage-pill .k { font-size: 10.5px; margin-left: 3px; font-weight: 600; }
+.stage-pill.elite .k { color: var(--candle-gold); }
+.stage-pill.boss .k { color: var(--blood-red); }
+.sealed-card { margin: 16px; padding: 28px 20px; border: 1px dashed oklch(0.74 0.075 76 / 0.45); border-radius: var(--r-md); text-align: center; }
+.sealed-card .t { font-size: 20px; letter-spacing: 0.3em; color: oklch(0.74 0.075 76); }
+.sealed-card .d { font-size: 12.5px; color: var(--ink-muted); margin-top: 8px; line-height: 1.8; }
+.sealed-card.locked { border-style: solid; border-color: var(--line); }
+.sealed-card.locked .t { color: var(--ink-faint); letter-spacing: 0.2em; }
+.fame-line { font-size: 12px; color: var(--ink-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.fame-line b { color: var(--candle-gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fame-line.gone { color: var(--ink-faint); }
+@media (max-width: 760px) { .tier { min-width: 0; } }
 
 .battle-stage { padding: 16px 18px; }
 .fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
@@ -1190,3 +1223,8 @@ button.wound-chip.soul-chip:hover { border-color: var(--ink-gold); }
 /* 名号传开：首通精英 / Boss 的一行金字（battle-copy §1 v1.1） */
 .log-line .fame-t { color: var(--candle-gold); }
 .log-line .fame-t .serif { letter-spacing: 0.08em; }
+/* 手机宽度：双方卡上下排列，不再左右挤压折行 */
+@media (max-width: 760px) {
+  .fighters, .app .fighters { grid-template-columns: 1fr !important; }
+  .fighters .vs { display: none; }
+}

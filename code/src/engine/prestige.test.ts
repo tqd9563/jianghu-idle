@@ -6,6 +6,9 @@ import {
   FRONT_MULT, REP_NODES, carryXp, deepestBoss, ganwuAffordable, ganwuPrice, isBossKey, isEliteKey,
   outputMult, settleRetire, suhuiTotal,
 } from './prestige';
+import { allStages, stageKey, trackLength, type MapId, type TierId } from './enemies';
+
+const boss = (map: MapId, tier: TierId) => stageKey(map, tier, trackLength(map, tier));
 
 describe('宿慧（economy.md §2）', () => {
   it('首达 2/3/4/5 依次 +1.2 / +2.8 / +5.8 / +10.0，累计', () => {
@@ -43,12 +46,12 @@ describe('归隐声望（economy.md §1）', () => {
   });
 
   it('打到自己的前沿 ×1.2：本世最深 Boss 不浅于历来最深', () => {
-    const cleared = ['m1s8', 'm2s10'];
+    const cleared = [boss(1, 0), boss(2, 0)];
     const hit = settleRetire({ ...base, weightedHours: 598.4, clearedStages: cleared, deepestBossEver: 2 });
     expect(hit.frontReached).toBe(true);
     expect(hit.frontMult).toBe(FRONT_MULT);
     expect(hit.total).toBe(Math.floor(5984 * 1.2));
-    const miss = settleRetire({ ...base, weightedHours: 598.4, clearedStages: ['m1s8'], deepestBossEver: 2 });
+    const miss = settleRetire({ ...base, weightedHours: 598.4, clearedStages: [boss(1, 0)], deepestBossEver: 2 });
     expect(miss.frontReached).toBe(false);
     expect(miss.total).toBe(5984);
   });
@@ -66,13 +69,21 @@ describe('归隐声望（economy.md §1）', () => {
   });
 });
 
-describe('Boss 深浅与精英键', () => {
-  it('Boss 深浅 = 图序；精英、Boss 键可辨认', () => {
-    expect(deepestBoss(['m1s3', 'm1s8', 'm2s4'])).toBe(1);
-    expect(deepestBoss(['m1s8', 'm3s10'])).toBe(3);
-    expect(isBossKey('m2s10')).toBe(true);
-    expect(isEliteKey('m2s10')).toBe(false);
-    expect(isBossKey('m1s1')).toBe(false);
+describe('Boss 深浅与精英键（难度优先、同档比图序，economy.md §1.2）', () => {
+  it('只有段末 Boss 计深浅；图 1 初入中段的头目不计', () => {
+    expect(deepestBoss([boss(1, 0)])).toBe(1);
+    expect(deepestBoss([boss(1, 0), boss(3, 0)])).toBe(3);
+    expect(deepestBoss([boss(3, 0), boss(1, 1)])).toBe(11);   // 历练 · 图 1 深于 初入 · 图 3
+    const headman = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'boss' && e.stage < trackLength(1, 0))!;
+    expect(deepestBoss([stageKey(1, 0, headman.stage)])).toBe(0);
+    expect(isBossKey(stageKey(1, 0, headman.stage))).toBe(true);   // 头目照样给名号
+  });
+  it('精英、Boss 键可辨认，普通关都不是', () => {
+    const elite = allStages().find((e) => e.kind === 'elite')!;
+    expect(isEliteKey(stageKey(elite.map, elite.tier, elite.stage))).toBe(true);
+    expect(isBossKey(boss(2, 1))).toBe(true);
+    expect(isEliteKey(boss(2, 1))).toBe(false);
+    expect(isBossKey(stageKey(1, 0, 1))).toBe(false);
   });
 });
 

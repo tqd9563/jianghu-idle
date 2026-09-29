@@ -13,15 +13,16 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * 存档版本号。
  * v1 = MVP-0/1/2 无周天系统；v2 = 主题版本加窍穴/经脉/气势字段；
  * v3 = 窍穴 id 由位置编码（r2-a11）改为穴位拼音（quchi），与境界/脉序解耦；
- * v4 = 长线节奏（issue #22）：境界总额约放大百倍、新增宿慧与修行感悟。
+ * v4 = 长线节奏（issue #22）：境界总额约放大百倍、新增宿慧与修行感悟；
+ * v5 = 长线关卡（issue #22 第 5b 步）：关卡键改为「图 × 难度 × 关」，新增难度解锁。
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
  * （pacing/design.md §1「旧存档强制重开」，zhoutian/design.md §5 v3.0 已拍板）。
  */
-export const MIN_COMPATIBLE_SAVE_VERSION = 4;
+export const MIN_COMPATIBLE_SAVE_VERSION = 5;
 
 /**
  * v2 → v3 窍穴 id 映射：旧 id 编码了「境界-脉序-穴序」，一旦调整窍穴所属境界

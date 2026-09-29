@@ -45,6 +45,7 @@ describe('MVP-2 finalized non-playable constants', () => {
         hit: trial.hit,
         dodge: trial.dodge,
         tags: [...trial.tags],
+        tier: 0 as const,
         kind: 'elite' as const,
         recommendedRealm: trial.recommendedRealm,
         reward: { neili: 0, silver: 0, xp: 0 },

@@ -15,6 +15,13 @@ import {
 import { track } from '../telemetry/telemetry';
 
 export type CollectionChannel = 'A' | 'B' | 'C' | 'D';
+/**
+ * 秘籍阁冻结（issue #22 第 5b 步，用户 2026-09-29 裁决「乙」）：长线里 Boss 掉残页、试炼、声望购买
+ * 都绑在旧关卡结构与旧声望量级上，先整体隐藏，随需求池「真传残页获取方式重做」一起恢复。
+ * 代码与数据保留；界面入口按此开关隐藏。
+ */
+export const FRAGMENTS_FROZEN = true;
+
 export type BossFragmentSource = 'boss_1' | 'boss_2';
 
 export interface FragmentEffects {

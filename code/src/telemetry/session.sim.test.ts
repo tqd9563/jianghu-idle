@@ -77,7 +77,7 @@ describe.skip('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () 
     // 推到标准归隐门槛（境界 5）即收手。此处原写 reachRealm(REALMS.length)：写于境界只有 5 个时，
     // MVP-2 扩到 7 个后含义悄悄变成「深推到境界 7」——那正是寿元要惩罚的贪命路径，不是本样例画像。
     reachRealm(5, R);
-    if (nextStageOf(3, st().clearedStages) !== null) pushMap(3, R);
+    if (nextStageOf(3, 0, st().clearedStages) !== null) pushMap(3, R);
 
     // 归隐：预览 → 确认 → 30 秒内首购（§8.6-4）
     advance(40); // 归隐犹豫
@@ -121,7 +121,7 @@ describe.skip('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () 
     pushMap(2, R, { stopAfterFirstBossAttempt: true });
     // 纯重试三次（不做任何调整）→ §10.2「无脑连点」信号
     for (let i = 0; i < 3; i++) {
-      const next = nextStageOf(2, st().clearedStages);
+      const next = nextStageOf(2, 0, st().clearedStages);
       if (next === null) break;
       challenge(2, next);
       advance(6);

@@ -45,7 +45,7 @@ function playOneLife(route: RouteId): number {
   pushMap(2, route);
   pushMap(3, route);
   reachRealm(5, route);
-  if (nextStageOf(3, st().clearedStages) !== null) pushMap(3, route);
+  if (nextStageOf(3, 0, st().clearedStages) !== null) pushMap(3, route);
   const kind = retireKind(st());
   if (kind !== 'standard') {
     throw new Error(`${route} 未到标准归隐点：境界 ${st().realm}，归隐形态 ${String(kind)}`);

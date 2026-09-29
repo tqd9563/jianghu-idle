@@ -5,9 +5,10 @@
  */
 import { useEffect, useRef } from 'react';
 import { REALMS } from '../engine/content';
-import { getStage, mapName, MAP_STAGE_COUNT, type EnemyDef } from '../engine/enemies';
+import { getStage, mapName, TIER_NAMES, trackLength, type EnemyDef } from '../engine/enemies';
 import type { OfflineSettleResult } from '../engine/offlineRewards';
-import { effBreakCost, mapUnlocked, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
+import { effBreakCost, nextStageOf, openFronts, useGameStore, type MapNo } from '../store/gameStore';
+import type { TierId } from '../engine/enemies';
 
 import { fmtBig as fmt, fmtRate } from '../fmt';
 
@@ -33,12 +34,12 @@ export function OfflineSettlement(props: {
   const realmDef = REALMS[s.realm - 1];
   const breakCost = effBreakCost(s);
   const breakReady = breakCost !== null && s.dantian >= breakCost;
-  let curMap: MapNo = 1;
-  for (const m of [5, 4, 3, 2, 1] as MapNo[]) {
-    if (mapUnlocked(m, s.clearedStages)) { curMap = m; break; }
-  }
-  const nextStage = nextStageOf(curMap, s.clearedStages);
-  const nextBoss: EnemyDef | null = nextStage !== null ? getStage(curMap, MAP_STAGE_COUNT[curMap]) : null;
+  // 最深的一条可推前沿
+  const fronts = openFronts(s);
+  const front = fronts[fronts.length - 1] ?? { map: s.selectedMap as MapNo, tier: s.selectedTier as TierId };
+  const curMap = front.map;
+  const nextStage = nextStageOf(front.map, front.tier, s.clearedStages);
+  const nextBoss: EnemyDef | null = nextStage !== null ? getStage(front.map, front.tier, trackLength(front.map, front.tier)) : null;
 
   // count-up：直接写 textContent（等宽数字列不晃，不走 60fps 的 React 重渲染）
   const durRef = useRef<HTMLSpanElement>(null);
@@ -115,7 +116,7 @@ export function OfflineSettlement(props: {
           </div>
           <div className="settle-row info">
             <span className="k">推进</span>
-            <span className="v">{mapName(curMap)}{nextStage !== null ? ` 第 ${nextStage} 关` : ' 已全通'}</span>
+            <span className="v">{mapName(curMap)} · {TIER_NAMES[front.tier]}{nextStage !== null ? ` 第 ${nextStage} 关` : ' 已全通'}</span>
           </div>
           {nextBoss && (
             <div className="settle-row info">

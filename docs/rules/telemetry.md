@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.2
+> **版本**：v2.3
 >
 > **日期**：2026-07-25
 >
@@ -80,7 +80,9 @@
 |---|---|---|
 | `fame_gained` | 首次击败精英 / Boss、首次贯通经脉（跨世一次） | `source`（`elite` / `boss` / `meridian`）, `key`, `reputation` |
 | `ganwu_bought` | 购买修行感悟（一级或尽数） | `level_from`, `level_to`, `price`, `balance_after` |
+| `tier_unlocked` | 打通段末 Boss 开出新前沿（跨世保留） | `by`（关卡键）, `opened`（`{图}-{难度}` 列表） |
 
+- 关卡键 v2.3 起为 `m{图}t{难度}s{关}`：`stage_first_clear` 增加 `tier` 字段，`key_battle_end.target` / `injury_inflicted.target` 改为关卡键（原 `boss1` / `elite_m2s4` 形态退役）。
 - 长线起保底归隐废止（`economy.md` §1.4）：`retire_unlocked` 不再有 `fallback` 形态；`retire_confirmed` 的 `perf_bonus_pct` / `time_penalty` / `fallback_discount` 三个字段随 v1.3 公式退役，改报三层公式的构成（`weighted_hours` × 10 → `prestige_base`，× `front_mult` → `prestige_total`）。
 
 ---
@@ -98,6 +100,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.3 | 2026-09-29 | 长线第 5b 步：关卡键加难度，`stage_first_clear` 加 `tier`，target 改关卡键；新增 `tier_unlocked`。 |
 | v2.2 | 2026-09-28 | 长线第 4 步：`realm_breakthrough` 加 `first_reach`；`retire_unlocked` 只剩 `first_breakthrough` 一种触发；`retire_confirmed` 改报三层公式构成；新增 `fame_gained`、`ganwu_bought`。 |
 | v2.1 | 2026-09-24 | 新增「受伤与转世事件」：补登 `injury_inflicted`，新增 `forced_reincarnation`；注明 `fallback_discount` 恒为 1。 |
 | v2.0 | — | 合并三份阶段埋点规格，去重去散，口径零变更。 |

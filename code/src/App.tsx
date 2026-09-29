@@ -5,7 +5,8 @@
 import { useEffect, useState } from 'react';
 import { computeAttributes } from './engine/attributes';
 import { REALMS } from './engine/content';
-import { mapName, MAP_STAGE_COUNT } from './engine/enemies';
+import { mapName, stageKey, TIER_NAMES, trackLength } from './engine/enemies';
+import { FRAGMENTS_FROZEN } from './engine/fragmentLogic';
 import { zhoutianProgress } from './engine/formulas';
 import { effBreakCost, effIdleRate, nextStageOf, retireKind, useGameStore, zhoutianN } from './store/gameStore';
 import { fmtBig, fmtRate } from './fmt';
@@ -43,8 +44,8 @@ export default function App() {
     useGameStore.getState().applyLiveTestSwitch(livetest);
     if (autoFight) {
       const st = useGameStore.getState();
-      const next = nextStageOf(st.selectedMap, st.clearedStages);
-      if (next !== null) st.challengeStage(st.selectedMap, next);
+      const next = nextStageOf(st.selectedMap, st.selectedTier, st.clearedStages);
+      if (next !== null) st.challengeStage(st.selectedMap, st.selectedTier, next);
     }
     if (debugRetire) {
       const st = useGameStore.getState();
@@ -104,15 +105,18 @@ export default function App() {
           ) : (
             <button className="game-tab" disabled title="首次归隐后解锁">声望阁</button>
           )}
-          <button 
-            className={tabCls(tab, 'fragments')} 
-            onClick={() => { setTab('fragments'); s.openManualShelf(); }}
-          >
-            秘籍阁
-            <span style={{ fontSize: '11px', opacity: 0.6, marginLeft: '6px', fontVariantNumeric: 'tabular-nums' }}>
-              {(s.collectedPages ?? []).length}/18
-            </span>
-          </button>
+          {/* 秘籍阁冻结（issue #22 第 5b 步）：随「真传残页获取方式重做」恢复 */}
+          {!FRAGMENTS_FROZEN && (
+            <button
+              className={tabCls(tab, 'fragments')}
+              onClick={() => { setTab('fragments'); s.openManualShelf(); }}
+            >
+              秘籍阁
+              <span style={{ fontSize: '11px', opacity: 0.6, marginLeft: '6px', fontVariantNumeric: 'tabular-nums' }}>
+                {(s.collectedPages ?? []).length}/18
+              </span>
+            </button>
+          )}
         </div>
         <SkinPicker />
       </nav>
@@ -163,12 +167,14 @@ export default function App() {
           )}
           {(() => {
             const m = s.selectedMap;
-            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
-              .filter((i) => s.clearedStages.includes(`m${m}s${i}`)).length;
+            const t = s.selectedTier;
+            const total = trackLength(m, t);
+            const clearedCount = Array.from({ length: total }, (_, i) => i + 1)
+              .filter((i) => s.clearedStages.includes(stageKey(m, t, i))).length;
             const lastTurn = s.battle?.result.turns[s.battle.revealed - 1];
             return (
               <button className="strip-item" onClick={() => setTab('battle')}>
-                {mapName(m)} <b>{clearedCount}/{MAP_STAGE_COUNT[m]}</b>
+                {mapName(m)} · {TIER_NAMES[t]} <b>{clearedCount}/{total}</b>
                 {s.battle && !s.battle.resolved && (
                   <>
                     {' '}· 对战 {s.battle.enemy.name}{' '}
@@ -184,7 +190,7 @@ export default function App() {
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'skill' && s.route && <SkillPane />}
         {tab === 'rep' && <RepPane />}
-        {tab === 'fragments' && <FragmentShelf />}
+        {tab === 'fragments' && !FRAGMENTS_FROZEN && <FragmentShelf />}
       </main>
 
       {routeSelectOpen && <RouteSelect />}

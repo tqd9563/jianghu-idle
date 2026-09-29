@@ -6,9 +6,14 @@
  */
 import { backdateSavedAt, saveGame, setDebugOfflineCap } from './save/storage';
 
-const m1all = Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`);
-const m2upto = (n: number) => Array.from({ length: n }, (_, i) => `m2s${i + 1}`);
-const m3upto = (n: number) => Array.from({ length: n }, (_, i) => `m3s${i + 1}`);
+import { stageKey, trackLength, type MapId, type TierId } from './engine/enemies';
+
+/** 某前沿的前 n 关（关卡键 m{图}t{难度}s{关}）；n 缺省为全通 */
+const upto = (map: MapId, tier: TierId, n = trackLength(map, tier)) =>
+  Array.from({ length: n }, (_, i) => stageKey(map, tier, i + 1));
+const m1all = upto(1, 0);
+const m2upto = (n: number) => upto(2, 0, n);
+const m3upto = (n: number) => upto(3, 0, n);
 
 const PRESETS: Record<string, object> = {
   // 原型场景 3 对应态：境界 3 · 唐门 Lv5 · 丹田 6,900 · 图2 推进到第 7 关（精英铁臂僧）
@@ -18,6 +23,7 @@ const PRESETS: Record<string, object> = {
     reputation: 0, repTotal: 0,
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
+    tiersUnlocked: ['1-0', '2-0', '1-1'], 
   },
   // 突破就绪态：境界 4 · 六段周天缴清、任脉已贯通 · 图3 推进到第 8 关
   ready: {
@@ -29,7 +35,8 @@ const PRESETS: Record<string, object> = {
       guanyuan: { failCount: 0, opened: true }, qihai: { failCount: 0, opened: true },
       danzhong: { failCount: 1, opened: true },
     },
-    clearedStages: [...m1all, ...m2upto(10), ...m3upto(7)], attempts: {}, autoAdvance: true,
+    clearedStages: [...m1all, ...upto(2, 0), ...m3upto(7)], attempts: {}, autoAdvance: true,
+    tiersUnlocked: ['1-0', '2-0', '1-1', '3-0', '2-1'],
   },
   // Boss 2 卡点态：境界 3 打推荐境界 4 的铁掌恶僧（复现失败诊断规则 1）
   boss2: {
@@ -37,7 +44,8 @@ const PRESETS: Record<string, object> = {
     dantian: 3210, silver: 490, xp: 96,
     reputation: 0, repTotal: 0,
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 1,
-    clearedStages: [...m1all, ...m2upto(9)], attempts: {}, autoAdvance: false,
+    clearedStages: [...m1all, ...m2upto(trackLength(2, 0) - 1)], attempts: {}, autoAdvance: false,
+    tiersUnlocked: ['1-0', '2-0', '1-1'], 
   },
   // 归隐就绪态：境界 5 + 三图全通
   retire: {
@@ -45,7 +53,8 @@ const PRESETS: Record<string, object> = {
     dantian: 3400, silver: 830, xp: 59,
     reputation: 0, repTotal: 0,
     ownedMechNodes: ['tm1', 'tm2', 'tm3'], mechXpInvested: 270, chargeHighWater: 0,
-    clearedStages: [...m1all, ...m2upto(10), ...m3upto(10)],
+    clearedStages: [...m1all, ...upto(2, 0), ...upto(3, 0)],
+    tiersUnlocked: ['1-0', '2-0', '1-1', '3-0', '2-1', '4-0', '3-1'], deepestBossEver: 3,
     attempts: { boss3: 2 }, autoAdvance: true,
     runPlaySec: 2760, lastProgressSec: 2700, standardNotified: false,
   },
@@ -56,9 +65,16 @@ const PRESETS: Record<string, object> = {
     reputation: 150, repTotal: 180_000, ganwuLevel: 136,
     ownedRepNodes: ['zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin'],
     ownedMechNodes: ['tm1', 'tm2'], mechXpInvested: 120, chargeHighWater: 5,
-    clearedStages: [...m1all, ...m2upto(10), ...m3upto(7)], attempts: {}, autoAdvance: true,
-    lifeWeightedHours: 598.4, deepestBossEver: 2, fameThisLife: 243,
-    fameClaimed: ['stage:m1s8', 'stage:m2s10', 'meridian:shoutaiyin', 'meridian:shouyangming', 'meridian:zuyangming'],
+    // 早上推完前沿：图 1 初入 / 历练、图 2 初入全通，图 1 绝境、图 2 历练、图 3 初入各推到第 8 关
+    clearedStages: [...m1all, ...upto(1, 1), ...upto(1, 2, 8), ...upto(2, 0), ...upto(2, 1, 8), ...m3upto(8)],
+    attempts: {}, autoAdvance: true,
+    tiersUnlocked: ['1-0', '1-1', '1-2', '2-0', '2-1', '3-0'],
+    lifeWeightedHours: 598.4, deepestBossEver: 11, fameThisLife: 243,
+    fameClaimed: [
+      `stage:${stageKey(1, 0, trackLength(1, 0))}`, `stage:${stageKey(1, 1, trackLength(1, 1))}`,
+      `stage:${stageKey(2, 0, trackLength(2, 0))}`,
+      'meridian:shoutaiyin', 'meridian:shouyangming', 'meridian:zuyangming',
+    ],
     age: 63, eraStart: 1580,
   },
   // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证声望阁与节点购买
@@ -76,7 +92,7 @@ const PRESETS: Record<string, object> = {
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
-    age: 108, eraStart: 206,
+    tiersUnlocked: ['1-0', '2-0', '1-1'], age: 108, eraStart: 206,
   },
   // 将死态：119.9 岁，挂机数秒即老死，用于看强制转世演出
   dying: {
@@ -84,7 +100,7 @@ const PRESETS: Record<string, object> = {
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
     ownedMechNodes: ['tm1'], mechXpInvested: 40, chargeHighWater: 3,
     clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
-    age: 119.9, eraStart: 206,
+    tiersUnlocked: ['1-0', '2-0', '1-1'], age: 119.9, eraStart: 206,
   },
   // 魂魄未稳态：被迫转世后的新一世开局
   soul: {

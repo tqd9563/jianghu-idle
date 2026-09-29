@@ -3,7 +3,7 @@
  * 玩家可见文案唯一冻结源：docs/rules/copy/retire.md。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
-import { allStages, type EnemyTag } from './enemies';
+import { allStages, stageKey, trackDepth, trackLength, type EnemyTag } from './enemies';
 
 export type RepNodeId =
   | 'zairu_jianghu' | 'qingzhuang_shanglu' | 'wudao_biji' | 'shimen_zhiyin' | 'poguan_xinde';
@@ -95,17 +95,24 @@ export const FAME_ELITE = 6.4;
 export const FAME_BOSS = 24;
 export const FAME_MERIDIAN = 80;
 
-/** Boss 关卡键 → 深浅（本版只有「初入」一档，深浅 = 图序；三档难度随第 5 步接入，难度优先） */
+/** 段末 Boss 关卡键 → 深浅（难度优先、同档比图序，economy.md §1.2）；图 1 初入中段的头目不计深浅 */
 const BOSS_DEPTH: ReadonlyMap<string, number> = new Map(
-  allStages().filter((e) => e.kind === 'boss').map((e) => [`m${e.map}s${e.stage}`, e.map]),
+  allStages()
+    .filter((e) => e.kind === 'boss' && e.stage === trackLength(e.map, e.tier))
+    .map((e) => [stageKey(e.map, e.tier, e.stage), trackDepth(e.map, e.tier)]),
 );
-const ELITE_KEYS: ReadonlySet<string> = new Set(
-  allStages().filter((e) => e.kind === 'elite').map((e) => `m${e.map}s${e.stage}`),
+/** 名号键：精英与所有 Boss（含头目）首次击败都给名号声望（economy.md §1.3） */
+const FAME_KIND: ReadonlyMap<string, 'elite' | 'boss'> = new Map(
+  allStages()
+    .filter((e) => e.kind !== 'normal')
+    .map((e) => [stageKey(e.map, e.tier, e.stage), e.kind as 'elite' | 'boss']),
 );
-export const isBossKey = (key: string) => BOSS_DEPTH.has(key);
-export const isEliteKey = (key: string) => ELITE_KEYS.has(key);
+export const isBossKey = (key: string) => FAME_KIND.get(key) === 'boss';
+export const isEliteKey = (key: string) => FAME_KIND.get(key) === 'elite';
+/** 该键是否是计深浅的段末 Boss */
+export const bossDepthOf = (key: string) => BOSS_DEPTH.get(key) ?? 0;
 
-/** 本世击败过的最深 Boss；一个都没打过为 0 */
+/** 本世击败过的最深段末 Boss（深浅 = 难度 × 10 + 图序）；一个都没打过为 0 */
 export function deepestBoss(clearedStages: readonly string[]): number {
   return clearedStages.reduce((d, k) => Math.max(d, BOSS_DEPTH.get(k) ?? 0), 0);
 }

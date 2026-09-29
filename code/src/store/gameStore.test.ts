@@ -8,8 +8,11 @@ import {
 } from '../save/storage';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
-import { effBreakCost, effIdleRate, playerBuild, resetLiveTestVisitForTests, retireKind, useGameStore } from './gameStore';
+import {
+  effBreakCost, effIdleRate, mapUnlocked, playerBuild, resetLiveTestVisitForTests, retireKind, tierUnlocked, useGameStore,
+} from './gameStore';
 import { freshInjuries, isHurt } from '../engine/injury';
+import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { INIT_AGE, ERA_START, AGE_YEARS_PER_MIN, LIFESPAN_CAP, SOUL_WEAK_MULT } from '../engine/reincarnation';
@@ -94,9 +97,14 @@ describe('gameStore · 单钱包丹田模型', () => {
   });
 });
 
-const m1all = Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`);
-const m2all = Array.from({ length: 10 }, (_, i) => `m2s${i + 1}`);
-const m3all = Array.from({ length: 10 }, (_, i) => `m3s${i + 1}`);
+/** 某前沿的前 n 关；n 缺省为全通 */
+const upto = (map: MapId, tier: TierId, n = trackLength(map, tier)) =>
+  Array.from({ length: n }, (_, i) => stageKey(map, tier, i + 1));
+const m1all = upto(1, 0);
+const m2all = upto(2, 0);
+const m3all = upto(3, 0);
+/** 图 1 初入中段的头目（kind = boss、非段末） */
+const HEADMAN = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'boss' && e.stage < trackLength(1, 0))!.stage;
 
 describe('gameStore · 归隐与声望阁', () => {
   beforeEach(() => {
@@ -123,7 +131,7 @@ describe('gameStore · 归隐与声望阁', () => {
       realm: 5, route: 'tangmen', skillLevel: 10, peakRealm: 5, ganwuLevel: 3,
       dantian: 3400, silver: 830, xp: 59,
       clearedStages: [...m1all, ...m2all], deepestBossEver: 2,
-      lifeWeightedHours: 12, fameClaimed: ['stage:m1s8'], fameThisLife: 30, reputation: 30,
+      lifeWeightedHours: 12, fameClaimed: [`stage:${stageKey(1, 0, trackLength(1, 0))}`], fameThisLife: 30, reputation: 30,
       runPlaySec: 2760, ownedRepNodes: ['wudao_biji'],
     });
     useGameStore.getState().openRetire();
@@ -143,7 +151,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.peakRealm).toBe(5);
     expect(s.ganwuLevel).toBe(3);
     expect(s.deepestBossEver).toBe(2);
-    expect(s.fameClaimed).toEqual(['stage:m1s8']);
+    expect(s.fameClaimed).toEqual([`stage:${stageKey(1, 0, trackLength(1, 0))}`]);
     expect(s.lifeWeightedHours).toBe(0);
     expect(s.fameThisLife).toBe(0);
     const confirmed = getEvents().find((e) => e.e === 'retire_confirmed')!;
@@ -161,8 +169,6 @@ describe('gameStore · 归隐与声望阁', () => {
       runPlaySec: 2760,
       collectedPages: ['legacy_intro_page_1'],
       completedBooks: ['legacy_intro'],
-      trialWinsThisRun: { trial_jinglei: 1 },
-      bossKillsThisRun: { boss_1: 1, boss_2: 1 },
       shopPurchasesThisRun: 1,
     });
     useGameStore.getState().openRetire();
@@ -172,22 +178,16 @@ describe('gameStore · 归隐与声望阁', () => {
     const state = useGameStore.getState();
     expect(state.collectedPages).toEqual(['legacy_intro_page_1']);
     expect(state.completedBooks).toEqual(['legacy_intro']);
-    expect(state.trialWinsThisRun).toEqual({});
-    expect(state.bossKillsThisRun).toEqual({});
     expect(state.shopPurchasesThisRun).toBe(0);
 
     const saved = loadGame<{
       collectedPages: string[];
       completedBooks: string[];
-      trialWinsThisRun: Record<string, number>;
-      bossKillsThisRun: Record<string, number>;
       shopPurchasesThisRun: number;
     }>();
     expect(saved).toMatchObject({
       collectedPages: ['legacy_intro_page_1'],
       completedBooks: ['legacy_intro'],
-      trialWinsThisRun: {},
-      bossKillsThisRun: {},
       shopPurchasesThisRun: 0,
     });
   });
@@ -329,38 +329,65 @@ describe('gameStore · 归隐与声望阁', () => {
       }
       return useGameStore.getState().battle!;
     };
-    useGameStore.getState().challengeStage(1, 1);
+    useGameStore.getState().challengeStage(1, 0, 1);
     const first = play();
     expect(first.result.win).toBe(true);
     const base = first.enemy.reward;
     expect(first.reward).toEqual({ neili: 0, silver: base.silver, xp: base.xp, refarm: false, fame: 0 });
 
-    useGameStore.getState().challengeStage(1, 1); // 回刷同一关
+    useGameStore.getState().challengeStage(1, 0, 1); // 回刷同一关
     const second = play();
     expect(second.reward!.refarm).toBe(true);
     expect(second.reward!.neili).toBe(0);
     expect(second.reward!.silver).toBe(Math.round(base.silver * 0.5));
     expect(second.reward!.xp).toBe(0);
 
-    useGameStore.getState().challengeStage(1, 1); // 连续第 2 次回刷：×0.8 衰减（公式表 §6）
+    useGameStore.getState().challengeStage(1, 0, 1); // 连续第 2 次回刷：×0.8 衰减（公式表 §6）
     const third = play();
     expect(third.reward!.silver).toBe(Math.round(Math.round(base.silver * 0.5) * 0.8));
 
-    // 首次击败山贼头目（图 1 Boss）：24 × 乘区 1 = 24 声望，跨世只领一次
-    useGameStore.setState({ clearedStages: m1all.slice(0, 7) });
-    useGameStore.getState().challengeStage(1, 8);
+    // 首次击败图 1 初入中段的头目（kind = boss）：24 × 乘区 1 = 24 声望，跨世只领一次
+    useGameStore.setState({ clearedStages: m1all.slice(0, HEADMAN - 1) });
+    useGameStore.getState().challengeStage(1, 0, HEADMAN);
     const boss = play();
     expect(boss.result.win).toBe(true);
     expect(boss.reward!.fame).toBe(24);
     let s = useGameStore.getState();
     expect(s.reputation).toBe(24);
     expect(s.fameThisLife).toBe(24);
-    expect(s.fameClaimed).toEqual(['stage:m1s8']);
-    useGameStore.getState().challengeStage(1, 8); // 回刷 Boss 不再给
+    expect(s.fameClaimed).toEqual([`stage:${stageKey(1, 0, HEADMAN)}`]);
+    useGameStore.getState().challengeStage(1, 0, HEADMAN); // 重打不再给
     expect(play().reward!.fame).toBe(0);
     s = useGameStore.getState();
     expect(s.reputation).toBe(24);
     expect(getEvents().filter((e) => e.e === 'fame_gained')).toHaveLength(1);
+  });
+
+  it('难度解锁：打通段末 Boss 开本图下一档与下一图初入，跨世保留；封存的前沿打不了', () => {
+    const st = () => useGameStore.getState();
+    useGameStore.setState({ realm: 5, route: 'shaolin', skillLevel: 40, autoAdvance: false });
+    const n = trackLength(1, 0);
+    useGameStore.setState({ clearedStages: m1all.slice(0, n - 1) });
+    expect(tierUnlocked(1, 1, st().tiersUnlocked)).toBe(false);
+    useGameStore.getState().challengeStage(1, 0, n);
+    const t0 = Date.now();
+    for (let i = 1; i <= 400 && !(st().battle?.resolved ?? false); i++) st().tick(t0 + i * 700);
+    expect(st().battle!.result.win).toBe(true);
+    expect(st().tiersUnlocked).toEqual(['1-0', '1-1', '2-0']);
+    expect(getEvents().find((e) => e.e === 'tier_unlocked')!.opened).toEqual(['1-1', '2-0']);
+
+    // 跨世保留：归隐后仍可直接选历练
+    useGameStore.setState({ retireStep: 'confirm' });
+    st().confirmRetire();
+    expect(st().tiersUnlocked).toEqual(['1-0', '1-1', '2-0']);
+    useGameStore.setState({ selectedMap: 1 });
+    st().selectTier(1);
+    expect(st().selectedTier).toBe(1);
+
+    // 封存：图 4 历练、图 5 永远不开
+    useGameStore.setState({ tiersUnlocked: ['4-1', '5-0'] });
+    expect(tierUnlocked(4, 1, st().tiersUnlocked)).toBe(false);
+    expect(mapUnlocked(5, st().tiersUnlocked)).toBe(false);
   });
 
   it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；突破总额取「离开本境界」行', () => {
@@ -380,8 +407,8 @@ describe('gameStore · 归隐与声望阁', () => {
   it('回刷胜利后自动连战回到同一关（回退挂机）；收益标记 refarm', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
-    useGameStore.setState({ realm: 5, route: 'shaolin', skillLevel: 10, clearedStages: ['m1s1'], autoAdvance: true });
-    useGameStore.getState().challengeStage(1, 1); // 已通关 → 回刷
+    useGameStore.setState({ realm: 5, route: 'shaolin', skillLevel: 10, clearedStages: [stageKey(1, 0, 1)], autoAdvance: true });
+    useGameStore.getState().challengeStage(1, 0, 1); // 已通关 → 回刷
 
     // 推进回放至结算（境界 5 打第 1 关必胜，普通关 650ms/回合）
     for (let i = 0; i < 300; i++) {
@@ -447,12 +474,12 @@ describe('gameStore · MVP-2 natural live-test window', () => {
   it('captures only existing objective snapshot decisions and stops in ended order', () => {
     useGameStore.setState({
       realm: 2, route: 'tangmen', skillLevel: 3, dantian: 2_700_000,
-      clearedStages: [...m1all, 'm2s1'],
+      clearedStages: [...m1all, stageKey(2, 0, 1)], tiersUnlocked: ['1-0', '2-0', '1-1'],
     });
     useGameStore.getState().applyLiveTestSwitch(1);
     const visit = getEvents().find((event) => event.e === 'natural_window_visit')!;
     expect(visit).toMatchObject({
-      run: 1, realm: 2, route: 'tangmen', max_cleared_stage: 'm2s1', cleared_stage_count: 9,
+      run: 1, realm: 2, route: 'tangmen', max_cleared_stage: stageKey(2, 0, 1), cleared_stage_count: m1all.length + 1,
       offline_settlement_present: false, offline_settlement_capped: null,
       decision_breakthrough: true, decision_skill: true, decision_battle: true, decision_retire: true,
     });
@@ -718,10 +745,10 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     vi.setSystemTime(1_000_000_000);
     useGameStore.setState({
       realm: 1, route: null,
-      clearedStages: ['m1s1', 'm1s2', 'm1s3', 'm1s4', 'm1s5', 'm1s6', 'm1s7'],
+      clearedStages: m1all.slice(0, HEADMAN - 1),
       injuries: heavyAll(), lifespanLost: 45,
     });
-    st().challengeStage(1, 8);    // 境界 1 白身挑战 Boss 1，带三处重伤，必败
+    st().challengeStage(1, 0, HEADMAN);    // 境界 1 白身挑战头目，带三处重伤，必败
     for (let i = 0; i < 400; i++) {
       const b = st().battle;
       if (!b || b.resolved) break;

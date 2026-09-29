@@ -1,34 +1,50 @@
-/** 战斗页 —— 原型场景 3 战斗页签 / 场景 4 失败提示的 1:1 实现（对阵单职责） */
+/** 战斗页 —— 地图 × 难度 × 关（长线原型 docs/design/longline-prototype.html §1；风格随 issue #26 整改） */
 import { useEffect, useRef, useState } from 'react';
 import { DIAG_TEXTS } from '../engine/combat';
 import { REALMS } from '../engine/content';
-import { getStage, mapName, MAP_STAGE_COUNT, type EnemyTag } from '../engine/enemies';
-import { COUNTER_HINTS, hasNode } from '../engine/prestige';
+import {
+  getStage, isSealed, MAP_IDS, mapName, stageKey, TIER_NAMES, TIERS, trackLength,
+  type EnemyTag, type TierId,
+} from '../engine/enemies';
+import { COUNTER_HINTS, FAME_BOSS, FAME_ELITE, hasNode } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
 import {
-  effBreakCost, mapUnlocked, nextStageOf, playerBuild, useGameStore, type MapNo,
+  currentMult, effBreakCost, mapUnlocked, nextStageOf, openFronts, playerBuild, tierUnlocked,
+  useGameStore, type MapNo,
 } from '../store/gameStore';
-
-const f0 = (n: number) => Math.round(n).toLocaleString('en-US');
 import { fmtBig } from '../fmt';
 
+const f0 = (n: number) => fmtBig(Math.round(n));
+
 import { BattleVictoryRow } from '../components/BattleVictoryRow';
-import { MVP2_ELITE_CHALLENGE_ENEMIES } from '../engine/mvp2Content';
+
+/** 未解锁时的解锁条件（封存另显「大周天未开」） */
+function unlockHint(map: MapNo, tier: TierId): string {
+  if (tier === 0) return `通关${mapName((map - 1) as MapNo)} · 初入解锁`;
+  return `通关${mapName(map)} · ${TIER_NAMES[(tier - 1) as TierId]} Boss 解锁`;
+}
 
 export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const s = useGameStore();
   const cleared = s.clearedStages;
+  const unlocked = s.tiersUnlocked ?? ['1-0'];
   const viewMap = s.selectedMap;
-  // 只展示当前页签地图上的战斗；其它图的战斗不占对阵位（切图即面向该图下一关）
-  const battle = s.battle && s.battle.map === viewMap ? s.battle : null;
-  const next = nextStageOf(viewMap, cleared);
+  const viewTier = s.selectedTier;
+  const fronts = openFronts(s);
+  const isFront = (m: MapNo, t?: TierId) => fronts.some((f) => f.map === m && (t === undefined || f.tier === t));
+  // 只展示当前前沿上的战斗；其它前沿的战斗不占对阵位
+  const battle = s.battle && s.battle.map === viewMap && s.battle.tier === viewTier ? s.battle : null;
+  const sealed = isSealed(viewMap, viewTier);
+  const open = tierUnlocked(viewMap, viewTier, unlocked);
+  const total = trackLength(viewMap, viewTier);
+  const next = open ? nextStageOf(viewMap, viewTier, cleared) : null;
   const build = playerBuild(s);
 
-  // 选关（已通关卡可回刷；默认跟随推进关卡，全通图默认末关）
+  // 选关（已通关卡可回刷；默认跟随推进关卡，全通默认末关）
   const [viewStage, setViewStage] = useState<number | null>(null);
-  useEffect(() => setViewStage(null), [viewMap]);
-  const idleStage = viewStage ?? next ?? MAP_STAGE_COUNT[viewMap];
-  const isRefarmTarget = cleared.includes(`m${viewMap}s${idleStage}`);
+  useEffect(() => setViewStage(null), [viewMap, viewTier]);
+  const idleStage = viewStage ?? next ?? total;
+  const isRefarmTarget = cleared.includes(stageKey(viewMap, viewTier, idleStage));
 
   const revealedTurns = battle ? battle.result.turns.slice(0, battle.revealed) : [];
   const last = revealedTurns[revealedTurns.length - 1];
@@ -38,11 +54,15 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   // 自血条左端向右伸展、覆盖在气血层之上；扣盾时右缘向左削减）。
   const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
   const hpNow = build.hp * phpPct;
-  const battleEnemy = battle?.enemy ?? null;
-  const idleEnemy = getStage(viewMap, idleStage);
-  const enemy = battle ? battleEnemy : idleEnemy;
+  const idleEnemy = open && total > 0 ? getStage(viewMap, viewTier, idleStage) : null;
+  const enemy = battle ? battle.enemy : idleEnemy;
   const battleDone = battle ? battle.revealed >= battle.result.turns.length : false;
   const victory = battle !== null && battleDone && battle.result.win;
+  // 名号：精英 / Boss 首次击败给声望（economy.md §1.3），跨世只一次
+  const fameKey = enemy ? `stage:${stageKey(enemy.map, enemy.tier, enemy.stage)}` : '';
+  const fameClaimed = (s.fameClaimed ?? []).includes(fameKey);
+  const fameReward = enemy && enemy.kind !== 'normal'
+    ? Math.floor((enemy.kind === 'boss' ? FAME_BOSS : FAME_ELITE) * currentMult(s)) : 0;
 
   // 战斗日志跟随最新行滚动
   const logRef = useRef<HTMLDivElement>(null);
@@ -55,97 +75,95 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
     <div className="pane-wrap wide">
       <section className="panel">
         <div className="map-tabs">
-          {([1, 2, 3, 4, 5] as MapNo[]).map((m) => {
-            const unlocked = mapUnlocked(m, cleared);
-            const clearedCount = Array.from({ length: MAP_STAGE_COUNT[m] }, (_, i) => i + 1)
-              .filter((i) => cleared.includes(`m${m}s${i}`)).length;
-            const full = clearedCount === MAP_STAGE_COUNT[m];
+          {MAP_IDS.map((m) => {
+            const mapSealed = isSealed(m, 0);
+            const ok = mapUnlocked(m, unlocked);
+            const opened = TIERS.filter((t) => tierUnlocked(m, t, unlocked)).length;
             return (
               <div
                 key={m}
-                className={`map-tab${viewMap === m ? ' active' : ''}${unlocked ? '' : ' locked'}`}
+                className={`map-tab${viewMap === m ? ' active' : ''}${mapSealed ? ' sealed' : ok ? '' : ' locked'}`}
                 onClick={() => s.selectMap(m)}
               >
                 {mapName(m)}
                 <span className="prog">
-                  {!unlocked
-                    ? `通关${mapName((m - 1) as MapNo)}解锁`
-                    : full
-                      ? `已通关 ${clearedCount}/${MAP_STAGE_COUNT[m]}`
-                      : `${clearedCount} / ${MAP_STAGE_COUNT[m]}`}
+                  {mapSealed ? '大周天未开' : !ok ? unlockHint(m, 0) : `已开 ${opened} 档`}
                 </span>
+                {isFront(m) && <span className="front-dot" title="今天有关可推" />}
               </div>
             );
           })}
         </div>
 
-        {/* 选关条：已通关卡可点选回刷（回退挂机），当前推进关金色，未解锁灰置 */}
+        {!isSealed(viewMap, 0) && (
+          <div className="tier-row">
+            <span className="lbl">难度</span>
+            <div className="tiers" role="group" aria-label="难度">
+              {TIERS.map((t) => {
+                const tSealed = isSealed(viewMap, t);
+                const tOpen = tierUnlocked(viewMap, t, unlocked);
+                const tTotal = trackLength(viewMap, t);
+                const tDone = Array.from({ length: tTotal }, (_, i) => i + 1)
+                  .filter((i) => cleared.includes(stageKey(viewMap, t, i))).length;
+                const cls = tSealed ? ' sealed' : !tOpen ? ' locked' : tDone === tTotal ? ' cleared' : '';
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`tier${cls}`}
+                    aria-pressed={t === viewTier}
+                    onClick={() => s.selectTier(t)}
+                  >
+                    <span className="tn serif">{TIER_NAMES[t]}</span>
+                    <span className="ts">{tSealed ? '大周天未开' : !tOpen ? '未解锁' : `${tDone} / ${tTotal}`}</span>
+                    {isFront(viewMap, t) && <span className="front-dot" />}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="tier-hint">
+              {sealed ? '' : !open ? unlockHint(viewMap, viewTier)
+                : isFront(viewMap, viewTier) ? '前沿 · 今天可推' : '本档已通，归隐后重推'}
+            </span>
+          </div>
+        )}
+
+        {sealed ? (
+          <div className="sealed-card">
+            <div className="t serif">大周天未开</div>
+            <div className="d">
+              小周天止于任督俱通。{mapName(viewMap)}{viewMap === 5 ? '' : ` · ${TIER_NAMES[viewTier]}`}之险，留待下一版大周天。<br />
+              本版的最终一战在蜀道险关 · 初入的尽头。
+            </div>
+          </div>
+        ) : !open ? (
+          <div className="sealed-card locked">
+            <div className="t serif">未解锁</div>
+            <div className="d">{unlockHint(viewMap, viewTier)}</div>
+          </div>
+        ) : (
+        <>
+        {/* 选关条：已通关卡可点选回刷，当前推进关金色，未解锁灰置；精英标「精」、Boss / 头目标「首」 */}
         <div className="stage-strip">
-          {Array.from({ length: MAP_STAGE_COUNT[viewMap] }, (_, i) => i + 1).map((st) => {
-            const done = cleared.includes(`m${viewMap}s${st}`);
+          {Array.from({ length: total }, (_, i) => i + 1).map((st) => {
+            const done = cleared.includes(stageKey(viewMap, viewTier, st));
             const isNext = st === next;
             const locked = !done && !isNext;
-            const def = getStage(viewMap, st);
+            const def = getStage(viewMap, viewTier, st);
             const active = st === (battle ? battle.stage : idleStage);
             return (
               <button
                 key={st}
                 disabled={locked || (battle !== null && !battleDone)}
-                className={`stage-pill${isNext ? ' next' : ''}${active ? ' active' : ''}${def.kind !== 'normal' ? ' key' : ''}`}
+                className={`stage-pill${done ? ' done' : ''}${isNext ? ' next' : ''}${active ? ' active' : ''}${def.kind === 'elite' ? ' elite' : def.kind === 'boss' ? ' boss' : ''}`}
                 title={`第 ${st} 关 · ${def.name}${done ? '（已通关 · 可回刷）' : isNext ? '（当前推进）' : '（未解锁）'}`}
                 onClick={() => setViewStage(st)}
               >
-                {st}
+                {st}{def.kind === 'elite' ? <span className="k">精</span> : def.kind === 'boss' ? <span className="k">首</span> : null}
               </button>
             );
           })}
         </div>
-
-        {/* 精英挑战入口（§5.2 v0.9）：所属地图 stages 1-5 全通 + 推荐境界达标时显示；本轮首胜后不可重复 */}
-        {MVP2_ELITE_CHALLENGE_ENEMIES.filter((e) => e.map === viewMap).map((e) => {
-          const stagesCleared = Array.from({ length: e.unlockAfterStage }, (_, i) => i + 1)
-            .every((i) => cleared.includes(`m${viewMap}s${i}`));
-          const realmReady = s.realm >= e.recommendedRealm;
-          const completed = (s.eliteChallengeWinsThisRun?.[e.id] ?? 0) > 0;
-          const inProgress = battle?.mode === 'elite' && battle?.eliteChallengeId === e.id;
-          const canChallenge = stagesCleared && realmReady && !completed && !inProgress;
-          const disabledReason = !stagesCleared
-            ? `需通关本图 stages 1-${e.unlockAfterStage}`
-            : !realmReady
-              ? `需达到境界 ${e.recommendedRealm}`
-              : completed
-                ? '本轮已击败'
-                : null;
-          return (
-            <div key={e.id} className="elite-challenge-entry" style={{
-              margin: '8px 0 4px', padding: '8px 12px',
-              background: 'var(--night-surface-raised)', borderRadius: '6px',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              opacity: stagesCleared ? 1 : 0.5,
-            }}>
-              <div>
-                <div className="serif" style={{ fontSize: '13.5px', fontWeight: 600 }}>
-                  精英挑战
-                  {e.tags.map((t) => <span key={t} className="tag trait" style={{ marginLeft: 6 }}>{tagLabel(t)}</span>)}
-                </div>
-                <div style={{ fontSize: '11.5px', color: 'var(--ink-muted)' }}>推荐境界 {e.recommendedRealm}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <button
-                  className="btn"
-                  style={{ width: 'auto', marginTop: 0, padding: '6px 14px', fontSize: '12.5px' }}
-                  disabled={!canChallenge}
-                  onClick={() => s.challengeElite(e.id)}
-                >
-                  {inProgress ? '战斗中…' : completed ? '✓ 已击败' : '挑战'}
-                </button>
-                {!canChallenge && disabledReason && !inProgress && (
-                  <div className="cap-note" style={{ marginTop: 4, fontSize: '11px' }}>{disabledReason}</div>
-                )}
-              </div>
-            </div>
-          );
-        })}
 
         <div className="battle-stage">
           {enemy ? (
@@ -176,8 +194,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   <div className="mini-stats">
                     <span>攻<b>{Math.round(build.atk * 10) / 10}</b></span>
                     <span>防<b>{Math.round(build.def * 10) / 10}</b></span>
-                    <span>命<b>{build.hit}</b></span>
-                    <span>闪<b>{build.dodge}</b></span>
+                    <span>命<b>{Math.round(build.hit)}</b></span>
+                    <span>闪<b>{Math.round(build.dodge)}</b></span>
                   </div>
                 </div>
                 <div className="vs serif">{battle && battleDone && !battle.result.win ? '败' : '对决'}</div>
@@ -185,10 +203,10 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   <div className="fname serif">
                     {enemy.name}
                     {enemy.kind === 'elite' && <span className="tag elite">精英</span>}
-                    {enemy.kind === 'boss' && <span className="tag boss">Boss {enemy.map}</span>}
+                    {enemy.kind === 'boss' && <span className="tag boss">{enemy.stage === trackLength(enemy.map, enemy.tier) ? 'Boss' : '头目'}</span>}
                     {enemy.tags.map((t) => <span key={t} className="tag trait">{tagLabel(t)}</span>)}
                   </div>
-                  <div className="frealm">{mapName(enemy.map)} · 第 {enemy.stage} 关 · 推荐境界 {enemy.recommendedRealm}</div>
+                  <div className="frealm">{mapName(enemy.map)} · {TIER_NAMES[enemy.tier]} · 第 {enemy.stage} 关 · 推荐境界 {enemy.recommendedRealm}</div>
                   {hasNode(s.ownedRepNodes, 'zairu_jianghu') && enemy.tags.length > 0 && (
                     <ul className="tag-hints">
                       {enemy.tags.map((t) => (
@@ -199,11 +217,16 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   <div className="hp-num"><span>气血</span><span>{f0(enemy.hp * (battle ? ehpPct : 1))} / {f0(enemy.hp)}</span></div>
                   <div className="bar enemy-hp"><i style={{ width: `${(battle ? ehpPct : 1) * 100}%` }} /></div>
                   <div className="mini-stats">
-                    <span>攻<b>{enemy.atk}</b></span>
-                    <span>防<b>{enemy.def}</b></span>
-                    <span>命<b>{enemy.hit}</b></span>
-                    <span>闪<b>{enemy.dodge}</b></span>
+                    <span>攻<b>{f0(enemy.atk)}</b></span>
+                    <span>防<b>{f0(enemy.def)}</b></span>
+                    <span>命<b>{Math.round(enemy.hit)}</b></span>
+                    <span>闪<b>{Math.round(enemy.dodge)}</b></span>
                   </div>
+                  {enemy.kind !== 'normal' && (
+                    <div className={`fame-line${fameClaimed ? ' gone' : ''}`}>
+                      {fameClaimed ? '名号已传 · 首通声望已得' : <>首次击败 · 名号传开 <b>+{fmtBig(fameReward)}</b> 声望</>}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -213,17 +236,17 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     <button
                       className={isRefarmTarget ? 'btn ghost' : 'btn'}
                       style={{ maxWidth: 320, marginTop: 12 }}
-                      onClick={() => s.challengeStage(viewMap, idleStage)}
+                      onClick={() => s.challengeStage(viewMap, viewTier, idleStage)}
                     >
                       {battle && battleDone && !battle.result.win && battle.stage === idleStage
                         ? '立即重试（免费）'
                         : isRefarmTarget
-                          ? `回刷 第 ${idleStage} 关 · ${idleEnemy.name}`
-                          : `挑战 第 ${idleStage} 关 · ${idleEnemy.name}`}
+                          ? `重打 第 ${idleStage} 关 · ${idleEnemy!.name}`
+                          : `挑战 第 ${idleStage} 关 · ${idleEnemy!.name}`}
                     </button>
                     {isRefarmTarget && (
                       <div className="cap-note" style={{ marginTop: 8 }}>
-                        回刷收益低于首通，连续回刷同一关逐次递减（间隔 10 分钟重置）；开自动连战即回刷循环
+                        已通关的关卡只掉银两（五成）与阅历（无），连续重打同一关逐次递减（间隔 10 分钟重置）
                       </div>
                     )}
                   </>
@@ -239,9 +262,11 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               </div>
             </>
           ) : (
-            <p className="cap-note" style={{ margin: 0, textAlign: 'center', padding: '16px 0' }}>本图已全通关</p>
+            <p className="cap-note" style={{ margin: 0, textAlign: 'center', padding: '16px 0' }}>本档已全通关</p>
           )}
         </div>
+        </>
+        )}
 
         <div className="log" ref={logRef}>
           <div className="log-title">战斗记录 · 自动结算</div>
@@ -257,9 +282,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               <div className="log-line">
                 <span className="turn" />
                 <span className="win-t">
-                  {battle.mode === 'trial'
-                    ? '试炼通过'
-                    : `${battle.reward.refarm ? '回刷收获' : '收获'}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
+                  {`${battle.reward.refarm ? '回刷收获' : '收获'}　银两 +${f0(battle.reward.silver)}　阅历 +${f0(battle.reward.xp)}`}
                 </span>
               </div>
               {(battle.reward.fame ?? 0) > 0 && (
@@ -335,7 +358,7 @@ function FailureModal({ goCultivate }: { goCultivate: () => void }) {
             <button className="btn" onClick={() => { s.dismissFailure(); goCultivate(); }}>
               回去修炼（周天进度 {chargePct}%）
             </button>
-            <button className="btn ghost" onClick={() => { s.dismissFailure(); s.challengeStage(f.map, f.stage); }}>
+            <button className="btn ghost" onClick={() => { s.dismissFailure(); s.challengeStage(f.map, f.tier, f.stage); }}>
               立即重试（免费）
             </button>
           </div>

@@ -46,7 +46,7 @@
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--ink);
-  font: 14px/1.6 var(--body, var(--sans)); font-variant-numeric: tabular-nums;
+  font: 14px/1.6 var(--body, "LXGW WenKai", var(--sans)); font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased; min-height: 100vh;
 }
 /* 纸绢纹理：极淡的噪点，让大面积暗底不像纯色后台 */
@@ -288,13 +288,13 @@ button { font: inherit; color: inherit; }
 /* —— 周天场景（沿用现行素材与分层，去掉外框） —— */
 .cs-wrap { width: 100%; --wave-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 24' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 11 Q 15 3 30 11 T 60 11 T 90 11 T 120 11 T 150 11 T 180 11 T 210 11 T 240 11 L240 24 L0 24 Z'/%3E%3C/svg%3E"); }
 .cs-scene { position: relative; width: 100%; max-width: 440px; margin: 0 auto; aspect-ratio: 4 / 5; overflow: hidden; }
+/* 四边羽化：椭圆遮罩从中心往外渐隐，边缘完全透明，不留直线接缝 */
 .cs-backdrop, .cs-inkbg {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 86%, transparent 100%), linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 86%, transparent 100%), linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
-  -webkit-mask-composite: source-in; mask-composite: intersect;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 52%, rgba(0,0,0,0.6) 72%, transparent 100%);
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 52%, rgba(0,0,0,0.6) 72%, transparent 100%);
 }
-.cs-backdrop { position: absolute; inset: 0; z-index: 1; background: url('../../code/public/zhoutian/figure-dark.png') center 28% / cover no-repeat; filter: brightness(0.62) saturate(0.9); transform-origin: 50% 64%; transition: transform 1s var(--ease), opacity 1s var(--ease), filter 1s var(--ease); }
-.cs-scene.inner .cs-backdrop { transform: scale(2.9); opacity: 0.12; filter: brightness(0.35) blur(5px); }
+.cs-backdrop { position: absolute; inset: 0; z-index: 1; background: url('../../code/public/zhoutian/figure-dark.png') center 28% / cover no-repeat; filter: brightness(0.62) saturate(0.45); transform-origin: 50% 64%; transition: transform 1s var(--ease), opacity 1s var(--ease), filter 1s var(--ease); }
+.cs-scene.inner .cs-backdrop { transform: scale(2.9); opacity: 0; filter: brightness(0.35) blur(5px); }
 .cs-inkbg { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; background: radial-gradient(64% 50% at 50% 46%, oklch(0.10 0.012 262 / 0.72), oklch(0.08 0.01 262 / 0.42) 62%, oklch(0.06 0.008 262 / 0.80) 96%), url('../../code/public/zhoutian/void-bg.jpg') center / cover no-repeat, oklch(0.085 0.01 262); transition: opacity 1s var(--ease); }
 .cs-scene.inner .cs-inkbg { opacity: 1; }
 .cs-shade, .cs-bloom { position: absolute; z-index: 3; left: 50%; top: 64%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; transition: opacity 0.8s var(--ease); }
@@ -508,7 +508,7 @@ button { font: inherit; color: inherit; }
   <div class="head"><b>原型控制</b>（不属于界面）<button class="min" onclick="proto.classList.toggle('folded')">–</button></div>
   <div class="row"><span>骨架</span><button data-skel="a" aria-pressed="true">A 人物卷</button><button data-skel="b">B 三栏</button></div>
   <div class="row"><span>标题字</span><button data-font="noto" aria-pressed="true">思源宋体</button><button data-font="songti">系统宋体</button><button data-font="wenkai">霞鹜文楷</button><button data-font="xiaowei">站酷小薇</button><button data-font="mashan">马善政楷</button><button data-font="zhimang">志莽行书</button></div>
-  <div class="row"><span>正文字</span><button data-body="sans" aria-pressed="true">苹方</button><button data-body="wenkai">霞鹜文楷</button></div>
+  <div class="row"><span>正文字</span><button data-body="sans">苹方</button><button data-body="wenkai" aria-pressed="true">霞鹜文楷</button></div>
   <div class="row"><span>按钮</span><button data-btn="gold" aria-pressed="true">描金</button><button data-btn="seal">朱印</button><button data-btn="ink">墨锭</button></div>
   <div class="row"><span>身体</span><button data-hurt="0" aria-pressed="true">无伤</button><button data-hurt="1">带伤</button></div>
   <div class="row"><span>周天</span><button data-ready="0" aria-pressed="true">运转中</button><button data-ready="1">可突破</button></div>

@@ -18,6 +18,8 @@ import { CultivatePane } from './panes/CultivatePane';
 import { RepPane } from './panes/RepPane';
 import { NeigongPane } from './panes/NeigongPane';
 import { WuxuePane } from './panes/WuxuePane';
+import { SectPane } from './panes/SectPane';
+import { SECT_REALM } from './engine/sect';
 import { NeigongSelect } from './overlays/NeigongSelect';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
 import { ObserverPanel } from './overlays/ObserverPanel';
@@ -31,7 +33,7 @@ import { NEIGONG } from './engine/neigong';
 
 const NEIGONG_NAME = (id: keyof typeof NEIGONG) => NEIGONG[id].name;
 
-type TabId = 'cultivate' | 'battle' | 'neigong' | 'wuxue' | 'rep';
+type TabId = 'cultivate' | 'battle' | 'neigong' | 'wuxue' | 'sect' | 'rep';
 
 export default function App() {
   const s = useGameStore();
@@ -68,7 +70,8 @@ export default function App() {
   // 新一世内功页签随之隐藏：停在内功页的玩家退回修炼页
   useEffect(() => {
     if ((tab === 'neigong' || tab === 'wuxue') && s.started && s.neigong === null) setTabRaw('cultivate');
-  }, [tab, s.started, s.neigong]);
+    if (tab === 'sect' && s.started && s.realm < SECT_REALM) setTabRaw('cultivate');
+  }, [tab, s.started, s.neigong, s.realm]);
 
   // 顿悟轻提示：几秒后自动收起
   useEffect(() => {
@@ -120,6 +123,11 @@ export default function App() {
           {s.neigong && (
             <button className={tabCls(tab, 'wuxue')} onClick={() => setTab('wuxue')}>
               武学{!(s.seenTabs ?? []).includes('wuxue') && <span className="fresh-dot" aria-label="新开" />}
+            </button>
+          )}
+          {s.realm >= SECT_REALM && (
+            <button className={tabCls(tab, 'sect')} onClick={() => setTab('sect')}>
+              门派{!(s.seenTabs ?? []).includes('sect') && <span className="fresh-dot" aria-label="新开" />}
             </button>
           )}
           {repUnlocked && (
@@ -199,6 +207,7 @@ export default function App() {
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'neigong' && s.neigong && <NeigongPane />}
         {tab === 'wuxue' && s.neigong && <WuxuePane />}
+        {tab === 'sect' && s.realm >= SECT_REALM && <SectPane />}
         {tab === 'rep' && <RepPane />}
       </main>
 

@@ -3,6 +3,7 @@
  * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.1 §2/§3（冻结，不得改写）。
  */
 import { getStage, mapName, TIER_NAMES, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { SECTS } from '../engine/sect';
 import { deepestBoss, settleRetire, suhuiTotal } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';
 import { RetireHint } from '../components/RetireHint';
@@ -100,6 +101,9 @@ export function RetireFlow() {
               <div className="rline"><span>通关进度</span><span className="v">各图重推</span></div>
               <div className="rline"><span>内力</span><span className="v">{fmtBig(s.dantian)}　散去</span></div>
               <div className="rline"><span>银两</span><span className="v">{fmtBig(s.silver)}　散去</span></div>
+              {s.sect && (
+                <div className="rline"><span>门派 · 贡献</span><span className="v">{SECTS[s.sect].name} · {s.contrib ?? 0}　散去</span></div>
+              )}
             </div>
             <div className="rcol keep">
               <div className="rcol-head">你将保留</div>

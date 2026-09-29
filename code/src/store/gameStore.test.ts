@@ -10,7 +10,8 @@ import {
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
-  effBreakCost, effIdleRate, mapUnlocked, playerBuild, resetLiveTestVisitForTests, retireKind, tierUnlocked, useGameStore,
+  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, playerBuild, resetLiveTestVisitForTests, retireKind, tierUnlocked,
+  useGameStore, zhongGate,
 } from './gameStore';
 import { freshInjuries, isHurt } from '../engine/injury';
 import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
@@ -921,5 +922,99 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     vi.useRealTimers();
     expect(useGameStore.getState().ownedWuxue.filter((w) => w === 'jinghongjian')).toHaveLength(1);
     expect(getEvents().filter((e) => e.e === 'boss_drop')).toHaveLength(1);
+  });
+});
+
+describe('门派（sect-neigong/spec.md §5）', () => {
+  const st = () => useGameStore.getState();
+  beforeEach(() => {
+    vi.useRealTimers();
+    st().hardReset();
+    resetTelemetry();
+  });
+
+  it('境界 3 起拜入，一世只拜一派；转世清空门派与贡献、换得的秘籍保留', () => {
+    useGameStore.setState({ realm: 2 });
+    st().joinSect('shaolin');
+    expect(st().sect).toBeNull();
+    useGameStore.setState({ realm: 3, neigong: 'jingleijue', route: 'huashan' });
+    st().joinSect('shaolin');                 // 不受路数限制
+    st().joinSect('tangmen');                 // 不设叛出
+    expect(st().sect).toBe('shaolin');
+    useGameStore.setState({ contrib: 1000 });
+    st().buySectItem('sect:luohanfumogun');
+    st().startSectTask('short');
+    st().openRetire(); st().proceedRetire(); st().confirmRetire();
+    expect(st().run).toBe(2);
+    expect(st().sect).toBeNull();
+    expect(st().contrib).toBe(0);
+    expect(st().sectTask).toBeNull();
+    expect(st().ownedWuxue).toContain('luohanfumogun');
+    expect(getEvents().filter((e) => e.e === 'sect_joined')).toHaveLength(1);
+  });
+
+  it('任务同时只跑一件；到点在线自动结算，离线照常计时', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    st().hardReset();
+    useGameStore.setState({ realm: 3, sect: 'huashan' });
+    st().startSectTask('short');
+    st().startSectTask('long');
+    expect(st().sectTask?.kind).toBe('short');
+    vi.setSystemTime(1_000_000_000 + 2 * 3600 * 1000);
+    st().tick(Date.now());
+    expect(st().sectTask).toBeNull();
+    expect(st().contrib).toBe(40);
+    // 下线前派长差，9 小时后上线
+    st().startSectTask('long');
+    saveGame(st());
+    vi.setSystemTime(Date.now() + 9 * 3600 * 1000);
+    useGameStore.setState({ started: false });
+    st().init();
+    expect(st().sectTask).toBeNull();
+    expect(st().contrib).toBe(160);
+    vi.useRealTimers();
+  });
+
+  it('贡献商店：招式秘籍要先有武学与前一式，归真卷册要先有本派绝学内功', () => {
+    useGameStore.setState({ realm: 3, sect: 'huashan', contrib: 2400 });
+    st().buySectItem('sect:cangyajianjue:5');     // 未得苍崖剑诀
+    st().buySectItem('sect:juance:yuntaixinfa');  // 未得云台心法
+    expect(st().contrib).toBe(2400);
+    st().buySectItem('sect:cangyajianjue');
+    st().buySectItem('sect:cangyajianjue:6');     // 要先有第五式
+    st().buySectItem('sect:cangyajianjue:5');
+    st().buySectItem('sect:cangyajianjue:6');
+    st().buySectItem('sect:yuntaixinfa');
+    st().buySectItem('sect:juance:yuntaixinfa');
+    expect(st().ownedWuxue).toEqual(['cangyajianjue']);
+    expect(st().ownedScrolls).toEqual(['cangyajianjue:5', 'cangyajianjue:6', 'juance:yuntaixinfa']);
+    expect(st().ownedNeigong).toContain('yuntaixinfa');
+    expect(st().contrib).toBe(2400 - 400 - 250 - 350 - 600 - 500);
+    st().buySectItem('sect:luoxingjian');         // 贡献不够
+    expect(st().ownedWuxue).toEqual(['cangyajianjue']);
+  });
+
+  it('归真：有卷册才判顿悟', () => {
+    const s = { neigong: 'yuntaixinfa' as const, zhong: 40, tiersPassed: 4 };
+    expect(zhongGate({ ...s, ownedScrolls: [] })?.needScroll).toBe(true);
+    expect(zhongGate({ ...s, ownedScrolls: ['juance:yuntaixinfa'] })?.needScroll).toBe(false);
+  });
+
+  it('本门绝学熟练阈值 ×0.8：苍崖剑诀第一式出 5 次，拜华山即到「熟练」档', () => {
+    const base = {
+      realm: 4, neigong: 'shiguxinfa' as const, zhong: 10, ownedWuxue: ['cangyajianjue' as const], ownedScrolls: [],
+      equipped: ['cangyajianjue' as const], formCasts: { 'cangyajianjue:1': 5 }, learnedForms: [], pastLearned: [],
+    };
+    const m = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0].forms[0].mult;
+    expect(m('huashan')).toBeCloseTo(m(null) * 1.07, 6);
+    expect(m('shaolin')).toBeCloseTo(m(null), 6);
+  });
+
+  it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次', () => {
+    useGameStore.setState({ rumorPending: true, autoAdvance: false });
+    st().challengeStage(1, 0, 1);
+    expect(st().battle?.rumor).toBe(true);
+    expect(st().rumorPending).toBe(false);
   });
 });

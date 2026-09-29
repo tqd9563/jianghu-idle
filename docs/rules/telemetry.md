@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.6
+> **版本**：v2.7
 >
 > **日期**：2026-09-29
 >
@@ -39,6 +39,9 @@
 | `form_learned` | 顿悟领悟武学新招 | `form` |
 | `shop_bought` | 书肆购买 | `item`, `price` |
 | `boss_drop` | Boss 首杀掉落 | `track`, `got` |
+| `sect_joined` | 拜入门派 | `sect`, `neigong` |
+| `sect_task_done` | 门派任务到点结算 | `sect`, `task`（`short` / `long`）, `contrib`（结算后贡献）, `offline`（载入时结算） |
+| `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price` |
 | `rep_node_bought` | 购买声望节点 | `node_id` |
 | `battle_end` | 战斗结束 | `target`, `win`, `turns`, `hp_left_pct` |
 | `key_battle_end` | Boss/精英战斗结束 | `target`, `win`, `turns` |
@@ -103,6 +106,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.7 | 2026-09-29 | 门派实装：新增 `sect_joined` / `sect_task_done` / `sect_shop_bought`。 |
 | v2.6 | 2026-09-29 | 武学实装：新增 `wuxue_equipped` / `form_learned` / `shop_bought` / `boss_drop`。 |
 | v2.5 | 2026-09-29 | 门径并入内功（issue #36）：`route_selected` / `route_switch` / `skill_upgrade` / `mech_node_bought` 改为 `neigong_selected` / `neigong_switched` / `zhong_upgraded`，新增 `dunwu`；秘籍阁废止，`page_acquired` 等残页事件删除；阅历冻结，`run_start.carry_xp` 与 `offline_settled.xp` 删除。 |
 | v2.4 | 2026-09-29 | 多天一世：寿终正寝改报 `retire_confirmed`（`kind: natural`），新增字段 `age_at_end`；`forced_reincarnation` 只剩战死（`../systems/pacing/design.md` 裁决 19）。 |

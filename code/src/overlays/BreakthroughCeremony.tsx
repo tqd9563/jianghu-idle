@@ -2,6 +2,7 @@
 import type { FinalAttributes } from '../engine/attributes';
 import { REALMS } from '../engine/content';
 import { idleNeiliPerSec } from '../engine/formulas';
+import { RUMOR } from '../engine/sect';
 
 export function BreakthroughCeremony(props: {
   realmTo: number;
@@ -22,8 +23,11 @@ export function BreakthroughCeremony(props: {
           <div className="kv"><span className="k">防御</span><span className="v">{props.prevAttrs.def} → {props.nextAttrs.def}</span></div>
           <div className="kv"><span className="k">挂机产出</span><span className="v">{idleNeiliPerSec(props.realmTo - 1).toFixed(1)} → {idleNeiliPerSec(props.realmTo).toFixed(1)} / 秒</span></div>
         </div>
+        {props.realmTo === 2 && (
+          <div className="rumor fade-item"><span className="serif">江湖传闻</span>　{RUMOR}</div>
+        )}
         <button className="btn fade-item" style={{ maxWidth: 280, margin: '26px auto 0' }} onClick={props.onClose}>
-          {props.realmTo === 2 ? '继续 · 选择路线' : '继续'}
+          {props.realmTo === 2 ? '继续 · 选择内功' : '继续'}
         </button>
       </div>
     </div>

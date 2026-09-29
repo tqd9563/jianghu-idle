@@ -7,7 +7,7 @@ import {
   hitChance, idleNeiliPerSec, mitigationMultiplier, zhoutianProgress, currentSegmentNeili,
   currentSegmentQuota, paidThrough, segmentQuotas,
 } from './formulas';
-import { REALMS, skillUpgradeCost } from './content';
+import { REALMS, huohouEffect, huohouRealms, skillUpgradeCost, zhaoshiLevel } from './content';
 
 describe('双曲防御（公式表 §2）', () => {
   it('DEF 17.8（铁臂僧）→ 减免系数 ≈ 0.849', () => {
@@ -44,17 +44,22 @@ describe('境界表（content.md §1 v2.2「离开本境界」行口径）', () 
     expect(REALMS[5].leaveCost).toBeNull();
     expect(REALMS[6].leaveCost).toBeNull();
   });
-  it('武学上限 = 境界 × 2（MVP-0 §1 r1-r5；MVP-2 §8.1 r6/r7 固定 10 不开放 lv11）', () => {
-    for (const r of REALMS.slice(0, 5)) expect(r.skillCap).toBe(r.realm * 2);
-    expect(REALMS[5]?.skillCap).toBe(10);
-    expect(REALMS[6]?.skillCap).toBe(10);
-  });
 });
 
-describe('武学消耗 200 × 1.4^(n−1)（内容表 §3.1）', () => {
-  it('Lv1 = 200，Lv6 = 1,076', () => {
-    expect(skillUpgradeCost(1)).toBe(200);
-    expect(skillUpgradeCost(6)).toBe(1076);
+describe('门径武学：招式 10 级 + 火候（formulas.md §3.4 v1.6）', () => {
+  it('第 n 级价 3,490 × 1.08^(n−1)，四舍五入', () => {
+    expect(skillUpgradeCost(1)).toBe(3490);
+    expect(skillUpgradeCost(65)).toBe(Math.round(3490 * 1.08 ** 64));
+  });
+  it('招式封顶十成；十成以上每 20 级火候折合一个境界', () => {
+    expect(zhaoshiLevel(7)).toBe(7);
+    expect(zhaoshiLevel(64)).toBe(10);
+    expect(huohouRealms(10)).toBe(0);
+    expect(huohouRealms(64)).toBeCloseTo(2.7, 10);
+    const e = huohouEffect(30);                // 折合 1 个境界
+    expect(e.statMult).toBeCloseTo(1.7, 10);
+    expect(e.hit).toBeCloseTo(12, 10);
+    expect(e.dodge).toBeCloseTo(3, 10);
   });
 });
 

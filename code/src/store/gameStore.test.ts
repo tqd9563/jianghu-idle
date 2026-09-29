@@ -64,14 +64,15 @@ describe('gameStore · 单钱包丹田模型', () => {
     expect(ev.first_reach).toBe(true);
   });
 
-  it('武学升级受上限 = 境界×2 约束，消耗 200×1.4^(n−1)', () => {
-    useGameStore.setState({ realm: 2, route: 'tangmen', dantian: 10_000, skillLevel: 3 });
-    useGameStore.getState().upgradeSkill(); // → Lv4（境界 2 上限 4）
-    expect(useGameStore.getState().skillLevel).toBe(4);
-    expect(useGameStore.getState().dantian).toBe(10_000 - skillUpgradeCost(4));
+  it('武学升级不设上限、只受内力约束（formulas.md §3.4 v1.6）', () => {
+    useGameStore.setState({ realm: 2, route: 'tangmen', dantian: 10_000_000, skillLevel: 10 });
+    useGameStore.getState().upgradeSkill(); // 十成之后进入火候，境界 2 也能练
+    expect(useGameStore.getState().skillLevel).toBe(11);
+    expect(useGameStore.getState().dantian).toBe(10_000_000 - skillUpgradeCost(11));
 
-    useGameStore.getState().upgradeSkill(); // Lv5 超上限，拒绝
-    expect(useGameStore.getState().skillLevel).toBe(4);
+    useGameStore.setState({ dantian: skillUpgradeCost(12) - 1 });
+    useGameStore.getState().upgradeSkill(); // 内力差 1，拒绝
+    expect(useGameStore.getState().skillLevel).toBe(11);
   });
 
   it('选路线只此一次（换线走 route_changed，随战斗模块交付）', () => {

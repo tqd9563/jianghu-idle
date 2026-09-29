@@ -172,11 +172,13 @@ def make_build(route, realm, lv, nodes):
 def hit_chance(hit, dodge):
     return max(HIT_FLOOR, min(1.0, hit / (hit + dodge)))
 
-def mitig(dfs):
-    return DEF_K / (DEF_K + dfs)
+def mitig(dfs, k=None):
+    """减伤系数 = K / (K + DEF)。k 缺省取 DEF_K = 100；长线起 K 随关卡当量放大（formulas.md §1.3 v1.6）"""
+    k = DEF_K if k is None else k
+    return k / (k + dfs)
 
-def fight(build, enemy, boss_dmg_bonus=0.0):
-    """EV 确定性回合模拟。返回 (win, rounds, 玩家剩余血量比)"""
+def fight(build, enemy, boss_dmg_bonus=0.0, def_k=None):
+    """EV 确定性回合模拟。返回 (win, rounds, 玩家剩余血量比)。def_k：本关防御常数，缺省 100（旧 golden 口径不变）"""
     php = build["hp"]
     pshield = build["hp"] * build["shield_pct"]
     ehp = enemy["hp"]
@@ -193,12 +195,12 @@ def fight(build, enemy, boss_dmg_bonus=0.0):
         # ---- 玩家行动 ----
         forced = rd == 1 and build.get("first_crit")
         crit_ev = build["cd"] if forced else (1 - build["crit"]) + build["crit"] * build["cd"]
-        dealt = build["atk"] * crit_ev * mitig(enemy["dfs"]) * p_hit * dmg_mult * build.get("plain_mult", 1.0)
+        dealt = build["atk"] * crit_ev * mitig(enemy["dfs"], def_k) * p_hit * dmg_mult * build.get("plain_mult", 1.0)
         if build["sq_need"] < 99:
             sq += p_hit * (1.0 if forced else build["crit"])
             if sq >= build["sq_need"]:
                 sq -= build["sq_need"]
-                dealt += build["atk"] * build["burst_mult"] * mitig(enemy["dfs"]) * dmg_mult
+                dealt += build["atk"] * build["burst_mult"] * mitig(enemy["dfs"], def_k) * dmg_mult
         if build["poison"]["per_hit"]:
             elayers = min(build["poison"]["cap"], elayers + p_hit * build["poison"]["per_hit"])
         ehp -= dealt
@@ -213,7 +215,7 @@ def fight(build, enemy, boss_dmg_bonus=0.0):
         if "狂暴" in tags and rd >= ENRAGE_START:
             eatk *= (1 + ENRAGE_STEP * (rd - ENRAGE_START + 1))
         pdfs = build["dfs"] * (1 - min(ab_stacks, 3) * ARMOR_BREAK_PP)
-        edmg = eatk * e_hit * mitig(pdfs)
+        edmg = eatk * e_hit * mitig(pdfs, def_k)
         if build["lowhp_dr"] and php < 0.30 * build["hp"]:
             edmg *= (1 - build["lowhp_dr"])
         absorb = min(pshield, edmg); pshield -= absorb

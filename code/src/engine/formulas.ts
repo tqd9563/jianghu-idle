@@ -3,9 +3,9 @@
  * 本模块为纯函数，禁止引入 UI/存储依赖；与 docs/systems/sim/mvp0_sim.py 做 golden 对照。
  */
 
-/** 双曲防御减免系数：受到伤害 = 攻击 × 100/(100+DEF)。常数 K 随关卡放大属第 5 步（公式表 §1.3 v1.6） */
-export function mitigationMultiplier(def: number): number {
-  return 100 / (100 + def);
+/** 双曲防御减免系数：受到伤害 = 攻击 × K/(K+DEF)。K 缺省 100；长线关卡 K 随当量放大（公式表 §1.3 v1.6） */
+export function mitigationMultiplier(def: number, k = 100): number {
+  return k / (k + def);
 }
 
 /** 命中率 = 命中/(命中+闪避)，下限 30%（公式表 §2） */

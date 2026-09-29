@@ -394,9 +394,7 @@ function visitSnapshot(s: GameState) {
     offline_settlement_present: s.offlineSettlement !== null,
     offline_settlement_capped: s.offlineSettlement?.capped ?? null,
     decision_breakthrough: breakCost !== null && s.dantian >= breakCost,
-    decision_skill: s.route !== null
-      && nextSkillLevel <= REALMS[s.realm - 1].skillCap
-      && s.dantian >= skillUpgradeCost(nextSkillLevel),
+    decision_skill: s.route !== null && s.dantian >= skillUpgradeCost(nextSkillLevel),
     decision_battle: decisionBattle,
     decision_retire: retireKind(s) !== null,
   };
@@ -762,8 +760,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   upgradeSkill: () => {
     const s = get();
     if (!s.route) return;
+    // 等级不设上限（formulas.md §3.4 v1.6），只受内力约束
     const next = s.skillLevel + 1;
-    if (next > REALMS[s.realm - 1].skillCap) return;
     const cost = skillUpgradeCost(next);
     if (s.dantian < cost) return;
     set({ dantian: s.dantian - cost, skillLevel: next, lastProgressSec: s.runPlaySec });

@@ -3,7 +3,7 @@
  * EV 模式与 sim/mvp0_sim.py fight() 逐行对齐（golden fixture 逐数校验）；
  * RNG 模式为运行时形态：同一结算结构，概率分支由注入的 rng 掷出。
  */
-import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, type RouteId } from './content';
+import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouEffect, zhaoshiLevel, type RouteId } from './content';
 import type { EnemyDef } from './enemies';
 import { HIT_FLOOR, mitigationMultiplier } from './formulas';
 import { ROUTES } from './routes';
@@ -28,9 +28,14 @@ export interface Build {
   route: RouteId;
 }
 
-/** 与 sim make_build() 对齐；nodes = 已购机制节点数（顺序生效） */
-export function makeBuild(route: RouteId, realm: number, lv: number, nodes: number): Build {
+/**
+ * 与 sim 对齐：招式部分 = mvp0_sim.make_build(lv ≤ 10)，火候部分 = longline_sim.build 的叠加
+ * （formulas.md §3.4 v1.6）。nodes = 已购机制节点数（顺序生效）。
+ */
+export function makeBuild(route: RouteId, realm: number, level: number, nodes: number): Build {
   const b = REALMS[realm - 1];
+  const lv = zhaoshiLevel(level);
+  const hh = huohouEffect(level);
   const r = ROUTES[route];
   let crit = BASE_CRIT_RATE;
   let cd = BASE_CRIT_DMG;
@@ -72,9 +77,9 @@ export function makeBuild(route: RouteId, realm: number, lv: number, nodes: numb
   }
 
   return {
-    hp: b.hp * (1 + hpPct), atk: b.atk * (1 + atkPct),
+    hp: b.hp * (1 + hpPct) * hh.statMult, atk: b.atk * (1 + atkPct) * hh.statMult,
     plainMult: route === 'tangmen' ? 0.6 : 1.0,
-    def: b.def * (1 + defPct), hit: b.accuracy, dodge: b.evasion,
+    def: b.def * (1 + defPct) * hh.statMult, hit: b.accuracy + hh.hit, dodge: b.evasion + hh.dodge,
     crit: Math.min(crit, CRIT_CAP), cd, firstCrit, shieldPct, thorns,
     poison, sqNeed, burstMult, lowhpDr, route,
   };
@@ -135,6 +140,8 @@ const f1 = (v: number) => Math.round(v * 10) / 10;
 
 export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightResult {
   const ev = opts.mode === 'ev';
+  // 本关防御常数（formulas.md §1.3 v1.6）：随关卡当量放大，旧关卡缺省 100
+  const defK = enemy.defK ?? 100;
   const rng = opts.rng ?? Math.random;
   const roll = (p: number) => (ev ? p : rng() < p ? 1 : 0);
 
@@ -191,13 +198,13 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     const critEv = ev
       ? (forced ? build.cd : 1 - build.crit + build.crit * build.cd)
       : (critRoll ? build.cd : 1);
-    let dealt = build.atk * critEv * mitigationMultiplier(enemy.def) * hitRoll * dmgMult * build.plainMult;
+    let dealt = build.atk * critEv * mitigationMultiplier(enemy.def, defK) * hitRoll * dmgMult * build.plainMult;
 
     if (build.sqNeed < 99) {
       sq += ev ? pHit * (forced ? 1 : build.crit) : hitRoll * critRoll;
       if (sq >= build.sqNeed) {
         sq -= build.sqNeed;
-        const burst = build.atk * build.burstMult * mitigationMultiplier(enemy.def) * dmgMult;
+        const burst = build.atk * build.burstMult * mitigationMultiplier(enemy.def, defK) * dmgMult;
         dealt += burst;
         stats.burstCount += 1;
         stats.burstDmg += burst;
@@ -238,7 +245,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     }
     const pdfs = build.def * (1 - Math.min(abStacks, 3) * ARMOR_BREAK_PP);
     const eHitRoll = roll(eHit);
-    let edmg = eatk * eHitRoll * mitigationMultiplier(pdfs);
+    let edmg = eatk * eHitRoll * mitigationMultiplier(pdfs, defK);
     if (build.lowhpDr && php < 0.3 * build.hp) edmg *= 1 - build.lowhpDr;
     const absorb = Math.min(pshield, edmg);
     pshield -= absorb;

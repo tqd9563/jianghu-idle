@@ -17,6 +17,7 @@ import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
 import { RepPane } from './panes/RepPane';
 import { NeigongPane } from './panes/NeigongPane';
+import { WuxuePane } from './panes/WuxuePane';
 import { NeigongSelect } from './overlays/NeigongSelect';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
 import { ObserverPanel } from './overlays/ObserverPanel';
@@ -30,7 +31,7 @@ import { NEIGONG } from './engine/neigong';
 
 const NEIGONG_NAME = (id: keyof typeof NEIGONG) => NEIGONG[id].name;
 
-type TabId = 'cultivate' | 'battle' | 'neigong' | 'rep';
+type TabId = 'cultivate' | 'battle' | 'neigong' | 'wuxue' | 'rep';
 
 export default function App() {
   const s = useGameStore();
@@ -66,7 +67,7 @@ export default function App() {
 
   // 新一世内功页签随之隐藏：停在内功页的玩家退回修炼页
   useEffect(() => {
-    if (tab === 'neigong' && s.started && s.neigong === null) setTabRaw('cultivate');
+    if ((tab === 'neigong' || tab === 'wuxue') && s.started && s.neigong === null) setTabRaw('cultivate');
   }, [tab, s.started, s.neigong]);
 
   // 顿悟轻提示：几秒后自动收起
@@ -114,6 +115,11 @@ export default function App() {
           {s.neigong && (
             <button className={tabCls(tab, 'neigong')} onClick={() => setTab('neigong')}>
               内功{!(s.seenTabs ?? []).includes('neigong') && <span className="fresh-dot" aria-label="新开" />}
+            </button>
+          )}
+          {s.neigong && (
+            <button className={tabCls(tab, 'wuxue')} onClick={() => setTab('wuxue')}>
+              武学{!(s.seenTabs ?? []).includes('wuxue') && <span className="fresh-dot" aria-label="新开" />}
             </button>
           )}
           {repUnlocked && (
@@ -192,11 +198,12 @@ export default function App() {
         {tab === 'cultivate' && <CultivatePane />}
         {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
         {tab === 'neigong' && s.neigong && <NeigongPane />}
+        {tab === 'wuxue' && s.neigong && <WuxuePane />}
         {tab === 'rep' && <RepPane />}
       </main>
 
       {neigongSelectOpen && <NeigongSelect />}
-      {s.dunwuNotice && <div className="dunwu-toast serif" role="status">顿悟 · {s.neigong ? NEIGONG_NAME(s.neigong) : ''} · {s.dunwuNotice}</div>}
+      {s.dunwuNotice && <div className="dunwu-toast serif" role="status">顿悟 · {s.dunwuNotice.includes('·') ? s.dunwuNotice : `${s.neigong ? NEIGONG_NAME(s.neigong) : ''} · ${s.dunwuNotice}`}</div>}
       <RetireFlow />
       {s.retireCeremony && (
         <RetireCeremony onDone={() => { s.closeRetireCeremony(); setTab('rep'); }} />

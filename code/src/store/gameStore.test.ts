@@ -825,3 +825,101 @@ describe('页签已见', () => {
     expect(useGameStore.getState().seenTabs).toEqual(['neigong']);
   });
 });
+
+describe('武学（sect-neigong/spec.md §2 / §4）', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+
+  it('装配槽跟境界走、只能装已拥有的；卸下无成本', () => {
+    useGameStore.setState({ realm: 2, neigong: 'jingleijue', route: 'huashan', ownedWuxue: ['liuyunjian', 'kaishanzhang', 'xiulizhen'] });
+    const st = () => useGameStore.getState();
+    st().equipWuxue('jinghongjian');            // 未拥有
+    st().equipWuxue('liuyunjian');
+    st().equipWuxue('kaishanzhang');
+    st().equipWuxue('xiulizhen');               // 境界 2 只有 2 槽
+    expect(st().equipped).toEqual(['liuyunjian', 'kaishanzhang']);
+    st().unequipWuxue('liuyunjian');
+    expect(st().equipped).toEqual(['kaishanzhang']);
+  });
+
+  it('书肆：按境界上架、扣银两、秘籍永久保留；轻装上路八折', () => {
+    useGameStore.setState({ realm: 2, silver: 1000, ownedRepNodes: ['qingzhuang_shanglu'] });
+    const st = () => useGameStore.getState();
+    st().buyShopItem('book:xingzhegun');       // 300 × 0.8 = 240
+    expect(st().ownedWuxue).toEqual(['xingzhegun']);
+    expect(st().silver).toBe(760);
+    st().buyShopItem('scroll:jinghongjian:4');  // 境界 4 才上架
+    expect(st().ownedScrolls).toEqual([]);
+    st().buyShopItem('book:xingzhegun');        // 已有不重复买
+    expect(st().silver).toBe(760);
+  });
+
+  it('战后累计每式熟练；条件满足按出招判顿悟，一场最多悟一式', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    useGameStore.setState({
+      realm: 5, route: 'huashan', neigong: 'jingleijue', zhong: 40, tiersPassed: 3, autoAdvance: false,
+      ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], formCasts: { 'liuyunjian:1': 4 }, wuxing: 1.2,
+      clearedStages: m1all,
+    });
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0.01); // 一出招就中
+    useGameStore.getState().challengeStage(1, 0, trackLength(1, 0)); // 回刷 Boss：回合够多
+    for (let i = 0; i < 400 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+      vi.setSystemTime(Date.now() + 700);
+      useGameStore.getState().tick(Date.now());
+    }
+    rand.mockRestore();
+    vi.useRealTimers();
+    const s = useGameStore.getState();
+    const casts = s.battle!.result.stats.formCasts['liuyunjian:1'] ?? 0;
+    expect(casts).toBeGreaterThan(0);
+    expect(s.formCasts['liuyunjian:1']).toBe(4 + casts);
+    expect(s.learnedForms).toEqual(['liuyunjian:2']);   // 第三式要先把第二式练到「熟练」
+    expect(getEvents().some((e) => e.e === 'form_learned')).toBe(true);
+  });
+
+  it('转世：秘籍与首杀记录保留，装配与本世领悟清空、记入前世悟过，熟练带一半', () => {
+    useGameStore.setState({
+      realm: 3, clearedStages: [], runPlaySec: 100,
+      ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], learnedForms: ['liuyunjian:2'],
+      formCasts: { 'liuyunjian:1': 25, 'liuyunjian:2': 1 }, dropsClaimed: ['1-0'], ownedScrolls: ['jinghongjian:4'],
+    });
+    useGameStore.setState({ retireStep: 'confirm' });
+    useGameStore.getState().confirmRetire();
+    const s = useGameStore.getState();
+    expect(s.ownedWuxue).toEqual(['liuyunjian']);
+    expect(s.equipped).toEqual([]);
+    expect(s.learnedForms).toEqual([]);
+    expect(s.pastLearned).toEqual(['liuyunjian:2']);
+    expect(s.formCasts).toEqual({ 'liuyunjian:1': 12 });
+    expect(s.dropsClaimed).toEqual(['1-0']);
+    expect(s.ownedScrolls).toEqual(['jinghongjian:4']);
+  });
+
+  it('Boss 首次击杀必掉秘籍，跨世只掉一次', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    const n = trackLength(1, 0);
+    useGameStore.setState({
+      realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3, autoAdvance: false,
+      clearedStages: m1all.slice(0, n - 1),
+    });
+    const play = () => {
+      for (let i = 0; i < 600 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+        vi.setSystemTime(Date.now() + 700);
+        useGameStore.getState().tick(Date.now());
+      }
+    };
+    useGameStore.getState().challengeStage(1, 0, n);
+    play();
+    expect(useGameStore.getState().ownedWuxue).toContain('jinghongjian');
+    expect(useGameStore.getState().battle!.reward!.drop).toBe('《惊鸿剑》');
+    useGameStore.getState().challengeStage(1, 0, n);    // 回刷 Boss：不再掉
+    play();
+    vi.useRealTimers();
+    expect(useGameStore.getState().ownedWuxue.filter((w) => w === 'jinghongjian')).toHaveLength(1);
+    expect(getEvents().filter((e) => e.e === 'boss_drop')).toHaveLength(1);
+  });
+});

@@ -7,6 +7,7 @@ import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouEffect, zhaoshiLevel, type
 import type { EnemyDef } from './enemies';
 import { HIT_FLOOR, mitigationMultiplier } from './formulas';
 import { ROUTES } from './routes';
+import { QI_REGEN, TRIGGER_RATE, type FormEffect } from './wuxue';
 import { assertNever } from './exhaustive';
 
 // 敌人标签参数（公式表，与 sim 常量一致）
@@ -94,7 +95,7 @@ function hitChance(hit: number, dodge: number): number {
 export interface TurnEvent {
   rd: number;
   side: 'player' | 'enemy' | 'end';
-  kind: 'attack' | 'miss' | 'crit' | 'burst' | 'poison_apply' | 'poison_tick' | 'poison_burst'
+  kind: 'attack' | 'cast' | 'miss' | 'crit' | 'burst' | 'poison_apply' | 'poison_tick' | 'poison_burst'
       | 'thorns_to_player' | 'thorns_to_enemy' | 'enemy_poison_tick' | 'purify' | 'enrage' | 'defeat' | 'victory';
   dmg?: number;
   text: string;
@@ -104,6 +105,8 @@ export interface TurnEvent {
   pSq: number;
   pShield: number;
   ePoison: number;
+  /** 当前真气（装了武学才有，spec §1.4） */
+  pQi: number;
 }
 
 /** 战斗统计 —— 纯累加器，不参与结算；失败战报（战斗文案冻结件）与诊断规则消费 */
@@ -121,6 +124,28 @@ export interface FightStats {
   thornsOut: number;       // 金钟反震总输出
   poisonDmg: number;       // 毒伤总量（含毒爆）
   poisonBurstCount: number; // 毒爆次数
+  /** 武学出招（spec §4.7 触发统计）：总次数、按武学的次数与伤害、按招式的次数（熟练度来源） */
+  casts: number;
+  skillCasts: Record<string, number>;
+  skillDmg: Record<string, number>;
+  formCasts: Record<string, number>;
+}
+
+/** 一式招式（已含熟练与共鸣的倍率） */
+export interface CombatForm {
+  key: string;
+  name: string;
+  mult: number;
+  effect: FormEffect | null;
+}
+
+/** 一门装配中的武学：只列已领悟的招式（spec §2.5） */
+export interface CombatSkill {
+  id: string;
+  name: string;
+  cost: number;
+  cd: number;
+  forms: CombatForm[];
 }
 
 export interface FightResult {
@@ -136,6 +161,10 @@ export interface FightOptions {
   mode: 'ev' | 'rng';
   rng?: () => number;
   bossDmgBonus?: number;
+  /** 装配的武学；只在实战掷骰模式出招，EV 模式（失败诊断）只算普攻 */
+  loadout?: CombatSkill[];
+  /** 真气上限（开战即满） */
+  qiMax?: number;
 }
 
 const f1 = (v: number) => Math.round(v * 10) / 10;
@@ -161,17 +190,28 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   let abStacks = 0;     // 玩家身上的破甲层
   const pHit = hitChance(build.hit, enemy.dodge);
   const eHit = hitChance(enemy.hit, build.dodge);
+  // 武学（spec §2.5）：冷却 → 真气 → 随机。不装武学时不消耗任何额外随机数，金标准逐项不变
+  const loadout = ev ? [] : (opts.loadout ?? []);
+  const useSkills = loadout.length > 0;
+  const qiMax = useSkills ? opts.qiMax ?? 0 : 0;
+  let qi = qiMax;
+  const cds = loadout.map(() => 0);
+  let fightCasts = 0;
+  // 非蚀骨被「附毒」挂上的毒：系数 12%、上限 8 层、不毒爆（spec §2.6）
+  const pCap = build.poison.cap || 8;
+  const pCoef = build.poison.coef || 0.12;
 
   const turns: TurnEvent[] = [];
   const stats: FightStats = {
     pHitRate: pHit, abStacksMax: 0, purgeCount: 0, thornsTaken: 0,
     dmgDealt: 0, dmgTaken: 0, critCount: 0, burstCount: 0, burstDmg: 0,
     shieldAbsorbed: 0, thornsOut: 0, poisonDmg: 0, poisonBurstCount: 0,
+    casts: 0, skillCasts: {}, skillDmg: {}, formCasts: {},
   };
   let pAttempts = 0, pHits = 0;
   const pct = () => ({
     phpPct: Math.max(php, 0) / build.hp, ehpPct: Math.max(ehp, 0) / enemy.hp,
-    pSq: sq, pShield: Math.max(pshield, 0), ePoison: elayers,
+    pSq: sq, pShield: Math.max(pshield, 0), ePoison: elayers, pQi: qi,
   });
   const push = (rd: number, side: TurnEvent['side'], kind: TurnEvent['kind'], text: string, dmg?: number) =>
     turns.push({ rd, side, kind, text, dmg, ...pct() });
@@ -193,15 +233,43 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       push(0, 'player', 'poison_apply', `唐门暗器出手，施毒 ${elayers} 层`);
     }
 
-    // ---- 玩家行动（结算顺序 1：命中 → 暴击 → 减免 → 护盾 → 气血）----
+    // ---- 玩家行动（结算顺序 1：出招判定 → 命中 → 暴击 → 减免 → 护盾 → 气血）----
+    let skill: CombatSkill | null = null;
+    let form: CombatForm | null = null;
+    if (useSkills) {
+      const cand = loadout.map((_, i) => i).filter((i) => cds[i] === 0 && qi >= loadout[i].cost);
+      if (cand.length > 0 && rng() < TRIGGER_RATE) {
+        const i = cand[Math.floor(rng() * cand.length)];
+        skill = loadout[i];
+        form = skill.forms[Math.floor(rng() * skill.forms.length)];
+        if (form.effect !== '回气') qi -= skill.cost;
+        cds[i] = skill.cd + 1;
+      }
+      for (let j = 0; j < cds.length; j++) cds[j] = Math.max(0, cds[j] - 1);
+    }
+    const eff = form?.effect ?? null;
     const forced = rd === 1 && build.firstCrit;
     const hitRoll = roll(pHit);
     pAttempts += 1; pHits += hitRoll;
-    const critRoll = forced ? 1 : roll(build.crit);
+    const critRoll = forced || eff === '必暴' ? 1 : roll(build.crit);
     const critEv = ev
       ? (forced ? build.cd : 1 - build.crit + build.crit * build.cd)
       : (critRoll ? build.cd : 1);
-    let dealt = build.atk * critEv * mitigationMultiplier(enemy.def, defK) * hitRoll * dmgMult * build.plainMult * spread();
+    // 招式：倍率 × 蓄势；反震按「攻击 + 防御」计；蚀骨「普攻 ×0.60」只作用于普攻（spec S3）
+    const baseAtk = build.atk + (eff === '反震' ? build.def : 0);
+    const mult = form ? form.mult * (eff === '蓄势' ? 1 + 0.1 * fightCasts : 1) : 1;
+    let dealt = baseAtk * mult * critEv * mitigationMultiplier(enemy.def, defK) * hitRoll * dmgMult
+      * (form ? 1 : build.plainMult) * spread();
+    if (form) fightCasts += 1;
+    else if (useSkills) qi = Math.min(qiMax, qi + QI_REGEN);
+    if (eff === '护体') pshield += 0.08 * build.hp;
+    let detonate = 0;
+    if (eff === '引爆' && elayers > 0) {
+      detonate = elayers * build.atk * pCoef * 3 * dmgMult;
+      dealt += detonate;
+      stats.poisonDmg += detonate;
+      elayers = 0;
+    }
 
     if (build.sqNeed < 99) {
       sq += ev ? pHit * (forced ? 1 : build.crit) : hitRoll * critRoll;
@@ -214,12 +282,25 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         push(rd, 'player', 'burst', `剑意迸发！爆发剑招造成 ${f1(burst)} 伤害`, f1(burst));
       }
     }
-    if (build.poison.perHit) {
-      elayers = Math.min(build.poison.cap, elayers + hitRoll * build.poison.perHit);
+    const perHit = build.poison.perHit + (eff === '附毒' ? 2 : 0);
+    if (perHit) {
+      elayers = Math.min(pCap, elayers + hitRoll * perHit);
     }
     ehp -= dealt;
     stats.dmgDealt += dealt;
-    if (!ev && hitRoll === 0) {
+    if (skill && form) {
+      stats.casts += 1;
+      stats.skillCasts[skill.id] = (stats.skillCasts[skill.id] ?? 0) + 1;
+      stats.skillDmg[skill.id] = (stats.skillDmg[skill.id] ?? 0) + dealt;
+      stats.formCasts[form.key] = (stats.formCasts[form.key] ?? 0) + 1;
+      const crit = critRoll === 1;
+      if (crit) stats.critCount += 1;
+      push(rd, 'player', 'cast',
+        hitRoll === 0
+          ? `施展「${skill.name} · ${form.name}」，被闪避`
+          : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}${build.sqNeed < 99 && crit ? `，剑意 ${sq}/${build.sqNeed}` : ''}`,
+        f1(dealt));
+    } else if (!ev && hitRoll === 0) {
       push(rd, 'player', 'miss', '你的攻击被闪避');
     } else if (dealt > 0) {
       const critMark = (forced || critRoll === 1) && !ev;
@@ -281,12 +362,12 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
 
     // ---- 回合结束（结算顺序 3：毒 → 狂暴/净化）----
     if (elayers > 0) {
-      const tick = elayers * build.atk * build.poison.coef * dmgMult;
+      const tick = elayers * build.atk * pCoef * dmgMult;
       ehp -= tick;
       stats.dmgDealt += tick;
       stats.poisonDmg += tick;
       push(rd, 'player', 'poison_tick', `毒发：${Math.round(elayers)} 层 → ${f1(tick)} 毒伤（无视防御）`, f1(tick));
-      if (elayers >= build.poison.cap - 1e-9) {
+      if (build.poison.burst > 0 && elayers >= build.poison.cap - 1e-9) {
         const burst = build.poison.cap * build.atk * build.poison.burst * dmgMult;
         ehp -= burst;
         elayers = 0;

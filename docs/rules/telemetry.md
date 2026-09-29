@@ -1,8 +1,8 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.3
+> **版本**：v2.4
 >
-> **日期**：2026-07-25
+> **日期**：2026-09-29
 >
 > **范围**：当前实现权威——全量埋点事件清单、公共信封、导出管线
 >
@@ -41,7 +41,7 @@
 | `adjustment` | 失败后有意义调整 | `action`, `context` |
 | `route_switch` | 换路线 | `from`, `to` |
 | `retire_unlocked` | 本世首次可归隐 | `kind`（恒为 `standard`）, `trigger`（`first_breakthrough`） |
-| `retire_confirmed` | 归隐确认 | `kind`, `weighted_hours`, `prestige_base`, `front_mult`, `fame_this_life`, `prestige_total`, `run_duration_s` |
+| `retire_confirmed` | 归隐确认，或寿终正寝自动归隐 | `kind`（`standard` 主动 / `natural` 寿终正寝）, `age_at_end`, `weighted_hours`, `prestige_base`, `front_mult`, `fame_this_life`, `prestige_total`, `run_duration_s` |
 | `page_acquired` | 获得秘籍残页 | `page_id`, `channel` |
 | `test_paused` / `test_resumed` | 观察员暂停/恢复 | — |
 
@@ -69,7 +69,7 @@
 | 事件名 | 触发时机 | 关键字段 |
 |---|---|---|
 | `injury_inflicted` | 硬仗失败或惨胜留伤 | `target`, `injury`, `severity`, `win`, `player_hp_pct`, `became_heavy`, `lethal`, `lifespan_lost` |
-| `forced_reincarnation` | 老死或战死触发强制转世 | `cause`（`old` / `battle`）, `age_at_death`, `lifespan_lost`, `prestige_total`, `run_duration_s`, `era_end` |
+| `forced_reincarnation` | 战死触发被迫转世 | `cause`（恒为 `battle`；v2.4 起寿终改报 `retire_confirmed` 的 `natural`）, `age_at_death`, `lifespan_lost`, `prestige_total`, `run_duration_s`, `era_end` |
 
 - `injury_inflicted` 自受伤系统（PR #16）起已在代码中上报，v2.1 补登。
 - 强制转世**不发** `retire_confirmed`；两者互斥，各自计一次转世。其后照常发 `run_start`。
@@ -100,6 +100,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.4 | 2026-09-29 | 多天一世：寿终正寝改报 `retire_confirmed`（`kind: natural`），新增字段 `age_at_end`；`forced_reincarnation` 只剩战死（`../systems/pacing/design.md` 裁决 19）。 |
 | v2.3 | 2026-09-29 | 长线第 5b 步：关卡键加难度，`stage_first_clear` 加 `tier`，target 改关卡键；新增 `tier_unlocked`。 |
 | v2.2 | 2026-09-28 | 长线第 4 步：`realm_breakthrough` 加 `first_reach`；`retire_unlocked` 只剩 `first_breakthrough` 一种触发；`retire_confirmed` 改报三层公式构成；新增 `fame_gained`、`ganwu_bought`。 |
 | v2.1 | 2026-09-24 | 新增「受伤与转世事件」：补登 `injury_inflicted`，新增 `forced_reincarnation`；注明 `fallback_discount` 恒为 1。 |

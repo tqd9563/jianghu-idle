@@ -52,3 +52,31 @@ describe('存档迁移 v2 → v3：窍穴 id 重写', () => {
     for (const id of migrated.acupointLog!) expect(allNewIds.has(id)).toBe(true);
   });
 });
+
+describe('存档迁移 v6 → v7：图 1 初入补入门关，原关卡编号顺延 6', () => {
+  it('按关卡键记的字段都顺延，其它前沿不动', () => {
+    const out = migrate({
+      clearedStages: ['m1t0s1', 'm1t0s2', 'm1t1s1'],
+      attempts: { m1t0s3: 4, m2t0s1: 1 },
+      refarmKey: 'm1t0s2',
+      fameClaimed: ['stage:m1t0s4', 'meridian:shoutaiyin'],
+    }, 6, SAVE_VERSION);
+    expect(out.clearedStages).toEqual([
+      'm1t0s1', 'm1t0s2', 'm1t0s3', 'm1t0s4', 'm1t0s5', 'm1t0s6', 'm1t0s7', 'm1t0s8', 'm1t1s1',
+    ]);
+    expect(out.attempts).toEqual({ m1t0s9: 4, m2t0s1: 1 });
+    expect(out.refarmKey).toBe('m1t0s8');
+    expect(out.fameClaimed).toEqual(['stage:m1t0s10', 'meridian:shoutaiyin']);
+  });
+
+  it('没打过图 1 初入的存档不补入门关；缺的字段不补 undefined', () => {
+    const out = migrate({ clearedStages: [] as string[] }, 6, SAVE_VERSION);
+    expect(out.clearedStages).toEqual([]);
+    expect(Object.keys(out)).toEqual(['clearedStages']);
+  });
+
+  it('已是 v7 的存档不再二次迁移', () => {
+    const v7 = { clearedStages: ['m1t0s1'] };
+    expect(migrate(v7, 7, SAVE_VERSION)).toEqual(v7);
+  });
+});

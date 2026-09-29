@@ -25,6 +25,66 @@
     {
      "stage": 1,
      "kind": "normal",
+     "name": "村口恶犬",
+     "x": 1.0,
+     "tags": [],
+     "recommendedRealm": 1,
+     "silver": 6,
+     "xp": 1
+    },
+    {
+     "stage": 2,
+     "kind": "normal",
+     "name": "醉酒闲汉",
+     "x": 1.15,
+     "tags": [],
+     "recommendedRealm": 1,
+     "silver": 6,
+     "xp": 1
+    },
+    {
+     "stage": 3,
+     "kind": "normal",
+     "name": "偷鸡毛贼",
+     "x": 1.3,
+     "tags": [],
+     "recommendedRealm": 1,
+     "silver": 6,
+     "xp": 1
+    },
+    {
+     "stage": 4,
+     "kind": "normal",
+     "name": "街头地痞",
+     "x": 1.45,
+     "tags": [],
+     "recommendedRealm": 1,
+     "silver": 7,
+     "xp": 1
+    },
+    {
+     "stage": 5,
+     "kind": "normal",
+     "name": "泼皮帮闲",
+     "x": 1.6,
+     "tags": [],
+     "recommendedRealm": 1,
+     "silver": 7,
+     "xp": 1
+    },
+    {
+     "stage": 6,
+     "kind": "normal",
+     "name": "泼皮头子",
+     "x": 1.75,
+     "tags": [],
+     "recommendedRealm": 1,
+     "silver": 7,
+     "xp": 1
+    },
+    {
+     "stage": 7,
+     "kind": "normal",
      "name": "拦路泼皮",
      "x": 2.5159,
      "tags": [],
@@ -33,7 +93,7 @@
      "xp": 1
     },
     {
-     "stage": 2,
+     "stage": 8,
      "kind": "normal",
      "name": "山野猎户",
      "x": 2.5659,
@@ -43,7 +103,7 @@
      "xp": 1
     },
     {
-     "stage": 3,
+     "stage": 9,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 2.6159,
@@ -53,7 +113,7 @@
      "xp": 1
     },
     {
-     "stage": 4,
+     "stage": 10,
      "kind": "elite",
      "name": "「独眼」胡三",
      "x": 2.4579,
@@ -65,7 +125,7 @@
      "xp": 5
     },
     {
-     "stage": 5,
+     "stage": 11,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 2.7159,
@@ -75,7 +135,7 @@
      "xp": 1
     },
     {
-     "stage": 6,
+     "stage": 12,
      "kind": "normal",
      "name": "山野猎户",
      "x": 2.7659,
@@ -85,7 +145,7 @@
      "xp": 1
     },
     {
-     "stage": 7,
+     "stage": 13,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 2.8159,
@@ -95,7 +155,7 @@
      "xp": 1
     },
     {
-     "stage": 8,
+     "stage": 14,
      "kind": "elite",
      "name": "「快刀」刘七",
      "x": 2.8363,
@@ -107,7 +167,7 @@
      "xp": 5
     },
     {
-     "stage": 9,
+     "stage": 15,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 2.9159,
@@ -117,7 +177,7 @@
      "xp": 1
     },
     {
-     "stage": 10,
+     "stage": 16,
      "kind": "normal",
      "name": "山野猎户",
      "x": 2.9659,
@@ -127,7 +187,7 @@
      "xp": 1
     },
     {
-     "stage": 11,
+     "stage": 17,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 3.0159,
@@ -137,7 +197,7 @@
      "xp": 1
     },
     {
-     "stage": 12,
+     "stage": 18,
      "kind": "elite",
      "name": "「铁尺」孙五",
      "x": 2.1893,
@@ -149,7 +209,7 @@
      "xp": 5
     },
     {
-     "stage": 13,
+     "stage": 19,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 3.1159,
@@ -159,7 +219,7 @@
      "xp": 1
     },
     {
-     "stage": 14,
+     "stage": 20,
      "kind": "normal",
      "name": "山野猎户",
      "x": 3.1659,
@@ -169,7 +229,7 @@
      "xp": 1
     },
     {
-     "stage": 15,
+     "stage": 21,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 3.2159,
@@ -179,7 +239,7 @@
      "xp": 1
     },
     {
-     "stage": 16,
+     "stage": 22,
      "kind": "elite",
      "name": "「夜猫」钱六",
      "x": 3.0579,
@@ -191,7 +251,7 @@
      "xp": 5
     },
     {
-     "stage": 17,
+     "stage": 23,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 3.3159,
@@ -201,7 +261,7 @@
      "xp": 1
     },
     {
-     "stage": 18,
+     "stage": 24,
      "kind": "normal",
      "name": "山野猎户",
      "x": 3.3659,
@@ -211,7 +271,7 @@
      "xp": 1
     },
     {
-     "stage": 19,
+     "stage": 25,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 3.4159,
@@ -221,7 +281,7 @@
      "xp": 1
     },
     {
-     "stage": 20,
+     "stage": 26,
      "kind": "elite",
      "name": "「黑鹞」马九",
      "x": 3.4363,
@@ -233,7 +293,7 @@
      "xp": 5
     },
     {
-     "stage": 21,
+     "stage": 27,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 3.5159,
@@ -243,7 +303,7 @@
      "xp": 1
     },
     {
-     "stage": 22,
+     "stage": 28,
      "kind": "normal",
      "name": "山野猎户",
      "x": 3.5659,
@@ -253,7 +313,7 @@
      "xp": 1
     },
     {
-     "stage": 23,
+     "stage": 29,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 3.6159,
@@ -263,7 +323,7 @@
      "xp": 1
     },
     {
-     "stage": 24,
+     "stage": 30,
      "kind": "elite",
      "name": "「白眉」赵老",
      "x": 2.7655,
@@ -275,7 +335,7 @@
      "xp": 5
     },
     {
-     "stage": 25,
+     "stage": 31,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 3.7159,
@@ -285,7 +345,7 @@
      "xp": 1
     },
     {
-     "stage": 26,
+     "stage": 32,
      "kind": "normal",
      "name": "山野猎户",
      "x": 3.7659,
@@ -295,7 +355,7 @@
      "xp": 1
     },
     {
-     "stage": 27,
+     "stage": 33,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 3.8159,
@@ -305,7 +365,7 @@
      "xp": 1
     },
     {
-     "stage": 28,
+     "stage": 34,
      "kind": "elite",
      "name": "「钻山豹」侯四",
      "x": 3.6309,
@@ -317,7 +377,7 @@
      "xp": 5
     },
     {
-     "stage": 29,
+     "stage": 35,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 3.9159,
@@ -327,7 +387,7 @@
      "xp": 1
     },
     {
-     "stage": 30,
+     "stage": 36,
      "kind": "normal",
      "name": "山野猎户",
      "x": 3.9659,
@@ -337,7 +397,7 @@
      "xp": 1
     },
     {
-     "stage": 31,
+     "stage": 37,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 4.0159,
@@ -347,7 +407,7 @@
      "xp": 1
     },
     {
-     "stage": 32,
+     "stage": 38,
      "kind": "elite",
      "name": "「草上飞」燕八",
      "x": 4.0274,
@@ -359,7 +419,7 @@
      "xp": 5
     },
     {
-     "stage": 33,
+     "stage": 39,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 4.1159,
@@ -369,7 +429,7 @@
      "xp": 1
     },
     {
-     "stage": 34,
+     "stage": 40,
      "kind": "normal",
      "name": "山野猎户",
      "x": 4.1659,
@@ -379,7 +439,7 @@
      "xp": 1
     },
     {
-     "stage": 35,
+     "stage": 41,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 4.2159,
@@ -389,7 +449,7 @@
      "xp": 1
     },
     {
-     "stage": 36,
+     "stage": 42,
      "kind": "elite",
      "name": "「疤脸」屠二",
      "x": 3.3655,
@@ -401,7 +461,7 @@
      "xp": 5
     },
     {
-     "stage": 37,
+     "stage": 43,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 4.3159,
@@ -411,7 +471,7 @@
      "xp": 1
     },
     {
-     "stage": 38,
+     "stage": 44,
      "kind": "normal",
      "name": "山野猎户",
      "x": 4.3659,
@@ -421,7 +481,7 @@
      "xp": 1
     },
     {
-     "stage": 39,
+     "stage": 45,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 4.4159,
@@ -431,7 +491,7 @@
      "xp": 1
     },
     {
-     "stage": 40,
+     "stage": 46,
      "kind": "elite",
      "name": "「笑弥勒」钱大肚",
      "x": 4.2309,
@@ -443,7 +503,7 @@
      "xp": 5
     },
     {
-     "stage": 41,
+     "stage": 47,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 4.5159,
@@ -453,7 +513,7 @@
      "xp": 1
     },
     {
-     "stage": 42,
+     "stage": 48,
      "kind": "normal",
      "name": "山野猎户",
      "x": 4.5659,
@@ -463,7 +523,7 @@
      "xp": 1
     },
     {
-     "stage": 43,
+     "stage": 49,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 4.6159,
@@ -473,7 +533,7 @@
      "xp": 1
     },
     {
-     "stage": 44,
+     "stage": 50,
      "kind": "elite",
      "name": "「断指」吴老六",
      "x": 4.6274,
@@ -485,7 +545,7 @@
      "xp": 5
     },
     {
-     "stage": 45,
+     "stage": 51,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 4.7159,
@@ -495,7 +555,7 @@
      "xp": 1
     },
     {
-     "stage": 46,
+     "stage": 52,
      "kind": "normal",
      "name": "山野猎户",
      "x": 4.7659,
@@ -505,7 +565,7 @@
      "xp": 1
     },
     {
-     "stage": 47,
+     "stage": 53,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 4.8159,
@@ -515,7 +575,7 @@
      "xp": 1
     },
     {
-     "stage": 48,
+     "stage": 54,
      "kind": "elite",
      "name": "「独脚」鲁十三",
      "x": 3.9365,
@@ -527,7 +587,7 @@
      "xp": 5
     },
     {
-     "stage": 49,
+     "stage": 55,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 4.9159,
@@ -537,7 +597,7 @@
      "xp": 1
     },
     {
-     "stage": 50,
+     "stage": 56,
      "kind": "normal",
      "name": "山野猎户",
      "x": 4.9659,
@@ -547,7 +607,7 @@
      "xp": 1
     },
     {
-     "stage": 51,
+     "stage": 57,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 5.0159,
@@ -557,7 +617,7 @@
      "xp": 1
     },
     {
-     "stage": 52,
+     "stage": 58,
      "kind": "elite",
      "name": "「血手」阎奎",
      "x": 4.8309,
@@ -569,7 +629,7 @@
      "xp": 5
     },
     {
-     "stage": 53,
+     "stage": 59,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 5.1159,
@@ -579,7 +639,7 @@
      "xp": 1
     },
     {
-     "stage": 54,
+     "stage": 60,
      "kind": "normal",
      "name": "山野猎户",
      "x": 5.1659,
@@ -589,7 +649,7 @@
      "xp": 1
     },
     {
-     "stage": 55,
+     "stage": 61,
      "kind": "normal",
      "name": "山贼喽啰",
      "x": 5.2159,
@@ -599,7 +659,7 @@
      "xp": 1
     },
     {
-     "stage": 56,
+     "stage": 62,
      "kind": "elite",
      "name": "「过山风」庞彪",
      "x": 5.2277,
@@ -611,7 +671,7 @@
      "xp": 5
     },
     {
-     "stage": 57,
+     "stage": 63,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 5.3159,
@@ -621,7 +681,7 @@
      "xp": 1
     },
     {
-     "stage": 58,
+     "stage": 64,
      "kind": "normal",
      "name": "山野猎户",
      "x": 5.3659,
@@ -631,7 +691,7 @@
      "xp": 1
     },
     {
-     "stage": 59,
+     "stage": 65,
      "kind": "boss",
      "name": "山贼头目",
      "x": 6.092,

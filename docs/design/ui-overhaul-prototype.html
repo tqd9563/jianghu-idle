@@ -13,7 +13,9 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
 <style>
 :root {
   color-scheme: dark;
@@ -44,7 +46,7 @@
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--ink);
-  font: 14px/1.6 var(--sans); font-variant-numeric: tabular-nums;
+  font: 14px/1.6 var(--body, var(--sans)); font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased; min-height: 100vh;
 }
 /* 纸绢纹理：极淡的噪点，让大面积暗底不像纯色后台 */
@@ -61,11 +63,11 @@ button { font: inherit; color: inherit; }
   position: fixed; right: 14px; bottom: 14px; z-index: var(--z-proto);
   background: oklch(0.97 0 0); color: oklch(0.2 0 0); border-radius: 10px;
   padding: 10px 12px; font-size: 12px; box-shadow: 0 8px 30px oklch(0 0 0 / 0.5);
-  display: grid; gap: 6px; width: 250px;
+  display: grid; gap: 6px; width: 300px;
 }
 .proto b { font-weight: 700; }
 .proto .row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-.proto .row > span { width: 44px; color: oklch(0.45 0 0); }
+.proto .row > span { width: 44px; flex: 0 0 44px; color: oklch(0.45 0 0); }
 .proto button {
   border: 1px solid oklch(0.8 0 0); background: white; border-radius: 6px;
   padding: 2px 8px; cursor: pointer; color: oklch(0.2 0 0);
@@ -201,33 +203,62 @@ button { font: inherit; color: inherit; }
 .cond .no::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
 .cond b { color: var(--ink); font-weight: 600; }
 
-.break-btn {
-  width: min(360px, 100%); padding: 13px 0; border-radius: 10px; border: 0; cursor: pointer;
-  font-family: var(--serif); font-size: 17px; letter-spacing: 0.3em; font-weight: 600;
-  background: var(--gold); color: var(--gold-ink);
-  box-shadow: 0 0 0 0 oklch(0.78 0.13 78 / 0.5); animation: ready 2.2s var(--ease) infinite;
+.break-btn { width: min(360px, 100%); padding: 13px 0; animation: ready 2.4s var(--ease) infinite; }
+.break-btn, .fight-btn {
+  position: relative; border: 0; cursor: pointer;
+  font-family: var(--serif); font-size: 17px; font-weight: 600; letter-spacing: 0.16em;
+  transition: background .2s var(--ease), box-shadow .25s var(--ease), color .2s, transform .15s var(--ease);
 }
+.btn-n { letter-spacing: 0.02em; margin: 0 0.1em; }
+/* 描金：暗底描一道金边，金字 */
+.app[data-btn="gold"] :is(.break-btn, .fight-btn):not(:disabled) {
+  border-radius: 10px; color: var(--gold);
+  background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.16), oklch(0.78 0.13 78 / 0.05));
+  box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55), inset 0 1px 0 oklch(0.92 0.08 82 / 0.18);
+}
+.app[data-btn="gold"] :is(.break-btn, .fight-btn):not(:disabled):hover {
+  background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.26), oklch(0.78 0.13 78 / 0.10));
+  box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.85), 0 0 22px oklch(0.78 0.13 78 / 0.22);
+}
+/* 朱印：朱砂底、双线印框，像盖下去的一方印 */
+.app[data-btn="seal"] :is(.break-btn, .fight-btn):not(:disabled) {
+  border-radius: 4px; color: oklch(0.95 0.02 80);
+  background: oklch(0.50 0.15 30);
+  box-shadow: inset 0 0 0 3px oklch(0.50 0.15 30), inset 0 0 0 4px oklch(0.92 0.03 80 / 0.45);
+}
+.app[data-btn="seal"] :is(.break-btn, .fight-btn):not(:disabled):hover { background: oklch(0.55 0.16 30); box-shadow: inset 0 0 0 3px oklch(0.55 0.16 30), inset 0 0 0 4px oklch(0.95 0.03 80 / 0.6), 0 0 20px oklch(0.55 0.16 30 / 0.35); }
+/* 墨锭：一笔浓墨，两端飞白，金字写在墨上 */
+.app[data-btn="ink"] :is(.break-btn, .fight-btn):not(:disabled) {
+  border-radius: 0; color: var(--gold);
+  background: linear-gradient(to bottom, oklch(0.09 0.008 262), oklch(0.06 0.006 262));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 50' preserveAspectRatio='none'%3E%3Cpath d='M6 9 C 40 4, 120 7, 200 3 S 285 6, 296 10 C 299 20, 294 30, 298 40 C 260 47, 170 43, 100 47 S 20 44, 3 42 C 7 32, 1 20, 6 9 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 50' preserveAspectRatio='none'%3E%3Cpath d='M6 9 C 40 4, 120 7, 200 3 S 285 6, 296 10 C 299 20, 294 30, 298 40 C 260 47, 170 43, 100 47 S 20 44, 3 42 C 7 32, 1 20, 6 9 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.app[data-btn="ink"] :is(.break-btn, .fight-btn):not(:disabled):hover { color: oklch(0.86 0.13 80); background: linear-gradient(to bottom, oklch(0.12 0.012 262), oklch(0.08 0.008 262)); }
+.app[data-btn="ink"] .break-btn:not(:disabled) { animation: none; }
 .break-btn:disabled {
-  background: var(--wash); color: var(--muted); cursor: default; animation: none;
-  font-size: 14px; letter-spacing: 0.15em; font-weight: 500;
+  background: none; color: var(--faint); cursor: default; animation: none; border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--hair); font-size: 14px; letter-spacing: 0.12em; font-weight: 500;
 }
-@keyframes ready { 60% { box-shadow: 0 0 0 12px oklch(0.78 0.13 78 / 0); } }
+@keyframes ready { 50% { filter: brightness(1.18) drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.35)); } }
 
 .acu-ledger { display: flex; gap: 22px; font-size: 13px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
 .acu-ledger b { color: var(--ink); font-weight: 600; margin-left: 3px; }
 .acu-ledger .gold { color: var(--gold); }
 
-/* 属性谱：三组，不画表头、不画框，只有组间墨线 */
-.attrs { display: grid; gap: 0; }
-.attr-group { padding: 14px 0; border-top: 1px solid var(--hair); display: grid; grid-template-columns: 52px 1fr; gap: 0 14px; }
-.attr-group:first-of-type { border-top: 0; padding-top: 4px; }
-.attr-group .g { font-family: var(--serif); color: var(--faint); font-size: 13px; letter-spacing: 0.2em; writing-mode: vertical-rl; justify-self: start; padding-top: 2px; }
-.attr-group dl { margin: 0; display: grid; gap: 7px; }
-.attr-group .r { display: flex; justify-content: space-between; align-items: baseline; }
-.attr-group dt { color: var(--muted); }
-.attr-group dd { margin: 0; font-size: 18px; font-weight: 600; position: relative; cursor: help; }
-.attr-group dd.boost { color: var(--ink); }
-.attr-group dd.boost::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: repeating-linear-gradient(to right, var(--ink-gold) 0 2px, transparent 2px 5px); }
+/* 身手 / 伤势：同一种卡片，靠底色区分，不描边 */
+.card { border-radius: 12px; padding: 16px 18px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
+.card + .card { margin-top: 14px; }
+.card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.card .head .serif { font-size: 15px; letter-spacing: 0.2em; }
+.card .head small { color: var(--faint); font-size: 12px; }
+.attr-list { margin: 0; display: grid; gap: 9px; }
+.attr-list .r { display: flex; justify-content: space-between; align-items: baseline; }
+.attr-list dt { color: var(--muted); }
+.attr-list dd { margin: 0; font-size: 17px; font-weight: 600; position: relative; }
+.attr-list dd.boost { cursor: help; }
+.attr-list dd.boost::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: repeating-linear-gradient(to right, var(--ink-gold) 0 2px, transparent 2px 5px); }
+.card .attr-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hair); }
 .attr-foot { margin-top: 10px; font-size: 12.5px; color: var(--faint); }
 .attr-foot a { color: var(--ink-gold); text-decoration: none; }
 .attr-foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -243,10 +274,9 @@ button { font: inherit; color: inherit; }
 .tip .l { color: var(--faint); }
 
 /* 伤势：有伤才出现 */
-.wounds { display: grid; gap: 12px; margin-bottom: 26px; padding: 16px 18px; border-radius: 12px; background: linear-gradient(135deg, oklch(0.62 0.17 25 / 0.10), oklch(0.62 0.17 25 / 0.03)); }
-.wounds .head { display: flex; justify-content: space-between; align-items: baseline; }
-.wounds .head .serif { font-size: 15px; letter-spacing: 0.2em; color: var(--blood); }
-.wounds .head small { color: var(--faint); font-size: 12px; }
+.card.wounds { display: grid; gap: 12px; background: linear-gradient(135deg, oklch(0.62 0.17 25 / 0.12), oklch(0.62 0.17 25 / 0.04)); }
+.card.wounds .head { margin-bottom: 0; }
+.card.wounds .head .serif { color: var(--blood); }
 .wound { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
 .wound .n { font-weight: 600; }
 .wound .e { color: var(--muted); font-size: 12.5px; grid-column: 1; }
@@ -400,13 +430,8 @@ button { font: inherit; color: inherit; }
 .fame { margin-top: 12px; font-size: 12.5px; color: var(--ink-gold); }
 
 .act { position: relative; display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 26px; flex-wrap: wrap; }
-.fight-btn {
-  min-width: 300px; padding: 13px 28px; border-radius: 10px; border: 0; cursor: pointer;
-  background: var(--gold); color: var(--gold-ink); font-family: var(--serif); font-size: 17px; font-weight: 700; letter-spacing: 0.2em;
-  box-shadow: 0 6px 24px oklch(0.78 0.13 78 / 0.22); transition: transform .15s var(--ease), box-shadow .2s;
-}
-.fight-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px oklch(0.78 0.13 78 / 0.32); }
-.fight-btn:disabled { background: oklch(0.26 0.016 262 / 0.85); color: var(--muted); box-shadow: none; transform: none; cursor: default; font-size: 14px; letter-spacing: 0.12em; font-weight: 500; }
+.fight-btn { min-width: 300px; padding: 13px 28px; }
+.fight-btn:disabled { background: none; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--hair); color: var(--muted); cursor: default; font-size: 14px; letter-spacing: 0.1em; font-weight: 500; }
 .switch { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; color: var(--muted); font-size: 13px; user-select: none; }
 .switch input { appearance: none; width: 32px; height: 18px; border-radius: 9px; background: oklch(0.3 0.016 262); position: relative; cursor: pointer; transition: background .2s; margin: 0; }
 .switch input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .2s var(--ease), background .2s; }
@@ -424,13 +449,13 @@ button { font: inherit; color: inherit; }
 }
 .ll { display: grid; grid-template-columns: 56px 1fr; gap: 10px; padding: 3px 0; animation: ll-in .35s var(--ease); }
 @keyframes ll-in { from { opacity: 0; transform: translateY(4px); } }
-.ll .r { font-family: var(--serif); color: var(--faint); font-size: 12.5px; text-align: right; }
+.ll .r { color: var(--faint); font-size: 12.5px; text-align: right; }
 .ll .x { color: var(--muted); }
 .ll .x em { font-style: normal; color: var(--ink); font-weight: 600; }
 .ll.crit .x em { color: var(--crit); }
 .ll.cast .x { color: var(--qi); }
 .ll.miss .x { color: var(--faint); }
-.ll.win .x { color: var(--ink-gold); font-family: var(--serif); letter-spacing: 0.08em; }
+.ll.win .x { color: var(--ink-gold); }
 .ll.loot .x { color: var(--gold); }
 .log .empty { color: var(--faint); padding: 40px 0; text-align: center; font-family: var(--serif); letter-spacing: 0.2em; }
 
@@ -482,6 +507,9 @@ button { font: inherit; color: inherit; }
 <div class="proto" id="proto">
   <div class="head"><b>原型控制</b>（不属于界面）<button class="min" onclick="proto.classList.toggle('folded')">–</button></div>
   <div class="row"><span>骨架</span><button data-skel="a" aria-pressed="true">A 人物卷</button><button data-skel="b">B 三栏</button></div>
+  <div class="row"><span>标题字</span><button data-font="noto" aria-pressed="true">思源宋体</button><button data-font="songti">系统宋体</button><button data-font="wenkai">霞鹜文楷</button><button data-font="xiaowei">站酷小薇</button><button data-font="mashan">马善政楷</button><button data-font="zhimang">志莽行书</button></div>
+  <div class="row"><span>正文字</span><button data-body="sans" aria-pressed="true">苹方</button><button data-body="wenkai">霞鹜文楷</button></div>
+  <div class="row"><span>按钮</span><button data-btn="gold" aria-pressed="true">描金</button><button data-btn="seal">朱印</button><button data-btn="ink">墨锭</button></div>
   <div class="row"><span>身体</span><button data-hurt="0" aria-pressed="true">无伤</button><button data-hurt="1">带伤</button></div>
   <div class="row"><span>周天</span><button data-ready="0" aria-pressed="true">运转中</button><button data-ready="1">可突破</button></div>
   <div style="color:oklch(0.45 0 0)">手机宽度：把窗口拉到 860px 以下</div>
@@ -489,7 +517,7 @@ button { font: inherit; color: inherit; }
 
 <div class="tip" id="tip"></div>
 
-<div class="app" id="app" data-skel="a">
+<div class="app" id="app" data-skel="a" data-btn="gold">
 
   <!-- ===== A：人物卷（身份 + 资源 + 导航合一） ===== -->
   <aside class="scroll a-only flex">
@@ -591,15 +619,14 @@ button { font: inherit; color: inherit; }
             <button class="break-btn js-break" disabled>周天运转中 · 约 21 分钟后可突破</button>
           </div>
 
-          <aside>
-            <!-- 有伤才出现；A 放这里，B 放右栏 -->
-            <div class="wounds js-wounds a-only grid" hidden></div>
-
-            <div class="a-only">
-              <h2 class="sec-title">身手</h2>
-              <div class="attrs js-attrs"></div>
+          <aside class="a-only">
+            <div class="card">
+              <div class="head"><span class="serif">身手</span></div>
+              <div class="js-attrs"></div>
               <div class="attr-foot">内功 惊雷诀 · 第 3 重 · <a href="#" data-go="neigong">详情</a></div>
             </div>
+            <!-- 有伤才出现，排在身手下方，身手位置不随伤势变化 -->
+            <div class="card wounds js-wounds" hidden></div>
           </aside>
         </div>
       </section>
@@ -663,7 +690,7 @@ button { font: inherit; color: inherit; }
           </div>
 
           <div class="act">
-            <button class="fight-btn js-fight">挑战 · 第 39 关</button>
+            <button class="fight-btn js-fight">挑战 · 第<span class="btn-n">39</span>关</button>
             <label class="switch"><input type="checkbox" class="js-auto"> 自动连战 <small>败则停</small></label>
           </div>
         </div>
@@ -690,11 +717,11 @@ button { font: inherit; color: inherit; }
       <div><div class="k">银两</div><div class="v small">3,420</div></div>
     </div>
     <div class="body-state js-body">身无伤病</div>
-    <div class="wounds js-wounds b-only grid" hidden></div>
+    <div class="card wounds js-wounds" hidden></div>
     <svg class="brush" viewBox="0 0 200 8" preserveAspectRatio="none"><path d="M2 5 C 40 2, 90 6, 140 3.5 S 190 4, 198 3" stroke="oklch(0.55 0.02 262)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
-    <div>
-      <h2 class="sec-title">身手</h2>
-      <div class="attrs js-attrs"></div>
+    <div class="card">
+      <div class="head"><span class="serif">身手</span></div>
+      <div class="js-attrs"></div>
       <div class="attr-foot">内功 惊雷诀 · 第 3 重 · <a href="#" data-go="neigong">详情</a></div>
     </div>
   </aside>
@@ -743,16 +770,11 @@ document.addEventListener('mouseover', e => {
 document.addEventListener('mouseout', e => { if (e.target.closest('[data-tip],[data-tip-html]')) tip.classList.remove('on'); });
 
 /* ───── 属性谱（不显示突破后数值；推导放悬停） ───── */
-const ATTR_GROUPS = [
-  ['攻守', [['气血', '184', '境界基础 170 · 内功加成 +8%'], ['攻击', '18.4', '境界基础 17 · 惊雷诀第 3 重 +8%'], ['防御', '9.7', '境界基础 9 · 路数赠予 +8%']]],
-  ['身法', [['命中', '112'], ['闪避', '13']]],
-  ['杀招', [['暴击率', '5%'], ['暴击伤害', '150%']]],
-];
+const ATTRS = [['气血', '184', '境界基础 170 · 内功加成 +8%'], ['攻击', '18.4', '境界基础 17 · 惊雷诀第 3 重 +8%'], ['防御', '9.7', '境界基础 9 · 路数赠予 +8%'],
+  ['命中', '112'], ['闪避', '13'], ['暴击率', '5%'], ['暴击伤害', '150%']];
 function renderAttrs() {
-  const html = ATTR_GROUPS.map(([g, rows]) => `
-    <div class="attr-group"><div class="g">${g}</div><dl>
-      ${rows.map(([k, v, why]) => `<div class="r"><dt>${k}</dt><dd class="${why ? 'boost' : ''}" ${why ? `data-tip="${why}"` : ''}>${v}</dd></div>`).join('')}
-    </dl></div>`).join('');
+  const html = `<dl class="attr-list">${ATTRS.map(([k, v, why]) =>
+    `<div class="r"><dt>${k}</dt><dd class="${why ? 'boost' : ''}" ${why ? `data-tip="${why}"` : ''}>${v}</dd></div>`).join('')}</dl>`;
   $$('.js-attrs').forEach(el => el.innerHTML = html);
 }
 
@@ -891,7 +913,7 @@ function renderEnemy() {
   $('.js-fame').textContent = e.k !== 'normal' ? (refarm ? '名号已传' : '首次击败 · 声望 +120') : '';
   const b = $('.js-fight');
   b.disabled = false;
-  b.textContent = refarm ? `重打 · 第 ${sel} 关` : `挑战 · 第 ${sel} 关`;
+  b.innerHTML = `${refarm ? '重打' : '挑战'} · 第<span class="btn-n">${sel}</span>关`;
   b.dataset.tip = refarm ? '已通关卡只掉五成银两，连打同一关逐次递减' : '';
   $('.js-vs').textContent = '对决'; $('.js-rd').textContent = '';
   $('.js-php').textContent = 184; $('.js-phpbar').style.width = '100%';
@@ -936,7 +958,7 @@ $('.js-fight').onclick = () => {
       add('loot', '', `收获银两 +${sel <= CLEARED ? 42 : 84}`);
       $('.js-vs').textContent = '胜'; $('.js-rd').textContent = `${rd} 回合`;
       fighting = false;
-      b.disabled = false; b.textContent = sel <= CLEARED ? `重打 · 第 ${sel} 关` : `下一关 · 第 ${sel + 1} 关`;
+      b.disabled = false; b.innerHTML = sel <= CLEARED ? `重打 · 第<span class="btn-n">${sel}</span>关` : `下一关 · 第<span class="btn-n">${sel + 1}</span>关`;
       return;
     }
     setTimeout(step, 520);
@@ -945,12 +967,23 @@ $('.js-fight').onclick = () => {
 };
 
 /* ───── 原型控制 ───── */
+const FONTS = {
+  noto: '"Noto Serif SC", "Songti SC", serif',
+  songti: '"Songti SC", "STSong", serif',
+  wenkai: '"LXGW WenKai", "Songti SC", serif',
+  xiaowei: '"ZCOOL XiaoWei", "Songti SC", serif',
+  mashan: '"Ma Shan Zheng", "Songti SC", serif',
+  zhimang: '"Zhi Mang Xing", "Songti SC", serif',
+};
 proto.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.skel) { st.skel = b.dataset.skel; app.dataset.skel = st.skel; }
+  if (b.dataset.font) document.documentElement.style.setProperty('--serif', FONTS[b.dataset.font]);
+  if (b.dataset.body) document.documentElement.style.setProperty('--body', b.dataset.body === 'wenkai' ? '"LXGW WenKai", var(--sans)' : 'var(--sans)');
+  if (b.dataset.btn) app.dataset.btn = b.dataset.btn;
   if (b.dataset.hurt) { st.hurt = b.dataset.hurt === '1'; renderBody(); }
   if (b.dataset.ready) { st.ready = b.dataset.ready === '1'; renderZhoutian(); }
-  for (const k of ['skel', 'hurt', 'ready']) if (b.dataset[k] !== undefined) $$(`[data-${k}]`, proto).forEach(x => x.setAttribute('aria-pressed', x === b));
+  for (const k of ['skel', 'hurt', 'ready', 'font', 'body', 'btn']) if (b.dataset[k] !== undefined) $$(`[data-${k}]`, proto).forEach(x => x.setAttribute('aria-pressed', x === b));
 });
 
 renderAttrs(); renderBody(); renderZhoutian(); renderRoad(); renderTrack(); renderEnemy();

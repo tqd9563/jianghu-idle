@@ -180,20 +180,21 @@ button { font: inherit; color: inherit; }
 .zt-read .eta { color: var(--faint); font-size: 12.5px; }
 
 /* 燃香进度：一炷香从右向左燃尽，香头一点火星 */
+/* 燃香进度：香从左往右燃，燃过的部分只剩淡灰香灰，未燃的是暗檀色细香；三段周天各一道刻痕 */
 .incense { width: min(420px, 100%); height: 14px; position: relative; }
-.incense .stick {
-  position: absolute; left: 0; right: 0; top: 6px; height: 2px; border-radius: 1px;
-  background: linear-gradient(to right, oklch(0.78 0.10 70), oklch(0.62 0.09 55));
-}
-.incense .ash { position: absolute; right: 0; top: 6px; height: 2px; background: oklch(0.34 0.012 262); border-radius: 1px; transition: width .6s var(--ease); }
+.incense .stick { position: absolute; right: 0; top: 6.5px; height: 1.5px; border-radius: 1px; background: oklch(0.44 0.045 55); transition: width .6s var(--ease); }
+.incense .ash { position: absolute; left: 0; top: 6.5px; height: 1.5px; background: repeating-linear-gradient(to right, oklch(0.52 0.008 262 / 0.55) 0 3px, transparent 3px 6px); transition: width .6s var(--ease); }
+.incense .tick { position: absolute; top: 3px; width: 1px; height: 8px; background: oklch(0.5 0.02 262 / 0.6); }
 .incense .ember {
-  position: absolute; top: 3px; width: 8px; height: 8px; border-radius: 50%; transform: translateX(-50%);
-  background: radial-gradient(circle, oklch(0.92 0.12 70), oklch(0.7 0.19 40) 55%, transparent 75%);
-  box-shadow: 0 0 10px 2px oklch(0.72 0.18 45 / 0.6); transition: left .6s var(--ease);
+  position: absolute; top: 4px; width: 6px; height: 6px; border-radius: 50%; transform: translateX(-50%);
+  background: radial-gradient(circle, oklch(0.9 0.1 70), oklch(0.66 0.18 38) 60%, transparent 80%);
+  box-shadow: 0 0 8px 1px oklch(0.7 0.17 42 / 0.5); transition: left .6s var(--ease);
   animation: ember 2.4s ease-in-out infinite;
 }
-.incense .smoke { position: absolute; bottom: 8px; width: 2px; height: 22px; transform: translateX(-50%); opacity: 0.35; background: linear-gradient(to top, oklch(0.8 0.01 262 / 0.6), transparent); filter: blur(1.5px); animation: smoke 3.2s ease-in-out infinite; transition: left .6s var(--ease); }
-@keyframes ember { 50% { box-shadow: 0 0 14px 4px oklch(0.72 0.18 45 / 0.75); } }
+.incense.done .ember { display: none; }
+.incense .smoke { position: absolute; bottom: 8px; width: 2px; height: 22px; transform: translateX(-50%); opacity: 0.3; background: linear-gradient(to top, oklch(0.8 0.01 262 / 0.6), transparent); filter: blur(1.5px); animation: smoke 3.2s ease-in-out infinite; transition: left .6s var(--ease); }
+.incense.done .smoke { display: none; }
+@keyframes ember { 50% { box-shadow: 0 0 12px 3px oklch(0.72 0.18 45 / 0.65); } }
 @keyframes smoke { 0%,100% { transform: translateX(-50%) skewX(0); } 50% { transform: translateX(-30%) skewX(-12deg); } }
 
 .cond { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; font-size: 13px; color: var(--muted); }
@@ -361,8 +362,8 @@ button { font: inherit; color: inherit; }
 /* 关卡进度：一条路 + 眼前一段，全表按需展开 */
 .track { margin-bottom: 8px; }
 .track-bar { position: relative; height: 18px; }
-.track-bar .rail-line { position: absolute; left: 0; right: 0; top: 8px; height: 2px; border-radius: 1px; background: oklch(0.27 0.014 262); }
-.track-bar .done { position: absolute; left: 0; top: 8px; height: 2px; border-radius: 1px; background: linear-gradient(to right, oklch(0.6 0.07 76), var(--ink-gold)); }
+.track-bar .rail-line { position: absolute; left: 0; right: 0; top: 8.5px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.4 0.014 262 / 0.7) 0 3px, transparent 3px 6px); }
+.track-bar .done { position: absolute; left: 0; top: 8px; height: 1.5px; border-radius: 1px; background: oklch(0.5 0.045 70); }
 .track-bar .mk { position: absolute; top: 5px; width: 8px; height: 8px; transform: translateX(-50%) rotate(45deg); background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.55 0.08 76); }
 .track-bar .mk.got { background: var(--ink-gold); box-shadow: none; }
 .track-bar .mk.boss { width: 11px; height: 11px; top: 3.5px; box-shadow: inset 0 0 0 1.5px var(--cinnabar); }
@@ -421,9 +422,6 @@ button { font: inherit; color: inherit; }
 .side.enemy .ink-bar.hp i { background: linear-gradient(to left, oklch(0.5 0.16 25), var(--blood) 70%, oklch(0.7 0.16 30)); }
 .ink-bar.qi { height: 5px; }
 .ink-bar.qi i { background: linear-gradient(to right, oklch(0.5 0.08 220), var(--qi)); }
-.stats4 { display: flex; gap: 18px; margin-top: 12px; font-size: 12.5px; color: var(--faint); }
-.side.enemy .stats4 { justify-content: flex-end; }
-.stats4 b { color: var(--ink); font-weight: 600; margin-left: 4px; font-size: 13.5px; }
 .vs { text-align: center; padding-top: 16px; font-family: var(--serif); color: var(--faint); letter-spacing: 0.2em; }
 .vs .big { font-size: 26px; color: var(--muted); letter-spacing: 0.1em; display: block; }
 .vs .rd { font-size: 12px; }
@@ -483,7 +481,7 @@ button { font: inherit; color: inherit; }
   .cult, .app[data-skel="b"] .cult { grid-template-columns: 1fr; gap: 26px; }
   .duel { grid-template-columns: 1fr; gap: 18px; }
   .side.enemy { text-align: left; }
-  .side.enemy .name, .side.enemy .stats4 { justify-content: flex-start; }
+  .side.enemy .name { justify-content: flex-start; }
   .side.enemy .meter .lbl { flex-direction: row; }
   .side.enemy .ink-bar i { left: 0; right: auto; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); background: linear-gradient(to right, oklch(0.5 0.16 25), var(--blood) 70%, oklch(0.7 0.16 30)); }
   .vs { padding: 0; text-align: left; } .vs .big { display: inline; font-size: 18px; }
@@ -608,7 +606,7 @@ button { font: inherit; color: inherit; }
               <div class="eta js-eta">约 6 分钟后本周天圆满</div>
             </div>
             <div class="incense" data-tip-html="本段 <b>1,034,800</b> / 1,668,000 内力<br><span class='l'>三段周天逐段翻倍，突破共需 2,780,000</span>">
-              <div class="stick"></div><div class="ash js-ash"></div><div class="smoke js-smoke"></div><div class="ember js-ember"></div>
+              <div class="ash js-ash"></div><div class="stick js-stick"></div><span class="tick" style="left:33.33%"></span><span class="tick" style="left:66.67%"></span><div class="smoke js-smoke"></div><div class="ember js-ember"></div>
             </div>
 
             <div class="acu-ledger">
@@ -677,21 +675,19 @@ button { font: inherit; color: inherit; }
               <div class="desc">初窥门径 · 惊雷诀</div>
               <div class="meter"><div class="lbl"><span>气血</span><span><b class="js-php">184</b> / 184</span></div><div class="ink-bar hp"><i class="js-phpbar" style="width:100%"></i></div></div>
               <div class="meter"><div class="lbl"><span>真气</span><span><b class="js-pqi">60</b> / 60</span></div><div class="ink-bar qi"><i class="js-pqibar" style="width:100%"></i></div></div>
-              <div class="stats4 a-only flex"><span>攻<b>18.4</b></span><span>防<b>9.7</b></span><span>命<b>112</b></span><span>闪<b>13</b></span></div>
             </div>
             <div class="vs"><span class="big js-vs">对决</span><span class="rd js-rd"></span></div>
             <div class="side enemy">
               <div class="name js-ename">剪径毛贼</div>
               <div class="desc js-edesc">第 39 关 · 推荐境界 2</div>
               <div class="meter"><div class="lbl"><span>气血</span><span><b class="js-ehp">212</b> / <span class="js-ehpmax">212</span></span></div><div class="ink-bar hp"><i class="js-ehpbar" style="width:100%"></i></div></div>
-              <div class="stats4 js-estats"></div>
               <div class="fame js-fame"></div>
             </div>
           </div>
 
           <div class="act">
             <button class="fight-btn js-fight">挑战 · 第<span class="btn-n">39</span>关</button>
-            <label class="switch"><input type="checkbox" class="js-auto"> 自动连战 <small>败则停</small></label>
+            <label class="switch"><input type="checkbox" class="js-auto"> 自动连战</label>
           </div>
         </div>
 
@@ -806,7 +802,9 @@ function renderZhoutian() {
   $$('.zt-read .t').forEach(el => el.innerHTML = st.ready ? '周天圆满' : `第二周天<b>${Math.round(pct * 100)}%</b>`);
   $$('.js-eta').forEach(el => el.textContent = st.ready ? '丹田已满' : '约 6 分钟后本周天圆满');
   const total = (full + (st.ready ? 0 : pct)) / segs;
-  $$('.js-ash').forEach(el => el.style.width = (100 - total * 100) + '%');
+  $$('.js-ash').forEach(el => el.style.width = (total * 100) + '%');
+  $$('.js-stick').forEach(el => el.style.width = (100 - total * 100) + '%');
+  $$('.incense').forEach(el => el.classList.toggle('done', st.ready));
   $$('.js-ember,.js-smoke').forEach(el => el.style.left = (total * 100) + '%');
   $$('.cs-read .js-pct').forEach(el => el.textContent = st.ready ? '圆满' : '62%');
   $$('.js-seg').forEach(el => el.textContent = st.ready ? '丹田已满 · 可突破' : '第 2 / 3 转');
@@ -909,7 +907,6 @@ function renderEnemy() {
   $('.js-ename').innerHTML = `${e.k === 'boss' ? '<span class="seal">寨主</span>' : e.k === 'elite' ? '<span class="seal elite">精英</span>' : ''}${e.trait ? `<span class="trait">${e.trait}</span>` : ''}${e.name}`;
   $('.js-edesc').textContent = `第 ${sel} 关${e.desc ? ' · ' + e.desc : ''}`;
   $('.js-ehp').textContent = e.hp; $('.js-ehpmax').textContent = e.hp; $('.js-ehpbar').style.width = '100%';
-  $('.js-estats').innerHTML = `<span>攻<b>${e.atk}</b></span><span>防<b>${e.def}</b></span><span>命<b>${e.hit}</b></span><span>闪<b>${e.dodge}</b></span>`;
   $('.js-fame').textContent = e.k !== 'normal' ? (refarm ? '名号已传' : '首次击败 · 声望 +120') : '';
   const b = $('.js-fight');
   b.disabled = false;
@@ -936,6 +933,25 @@ $('.js-fight').onclick = () => {
   let php = 184, ehp = e.hp, qi = 60, rd = 0;
   b.disabled = true;
   const add = (cls, r, x) => { log.insertAdjacentHTML('beforeend', `<div class="ll ${cls}"><span class="r">${r}</span><span class="x">${x}</span></div>`); log.scrollTop = log.scrollHeight; };
+  const paint = () => {
+    ehp = Math.max(0, ehp); php = Math.max(1, php);
+    $('.js-ehp').textContent = ehp; $('.js-ehpbar').style.width = ehp / e.hp * 100 + '%';
+    $('.js-php').textContent = php; $('.js-phpbar').style.width = php / 184 * 100 + '%';
+    $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 60 * 100 + '%';
+  };
+  const win = () => {
+    add('win', '', `${e.name}败退。`);
+    add('loot', '', `收获银两 +${sel <= CLEARED ? 42 : 84}`);
+    $('.js-vs').textContent = '胜'; $('.js-rd').textContent = `${rd} 回合`;
+    fighting = false;
+    b.disabled = false; b.innerHTML = sel <= CLEARED ? `重打 · 第<span class="btn-n">${sel}</span>关` : `下一关 · 第<span class="btn-n">${sel + 1}</span>关`;
+  };
+  const enemyTurn = () => {
+    if (Math.random() < 0.15) add('miss', '', `${e.name}出手，被你闪过`);
+    else { const d = 6 + (Math.random() * 4 | 0); php -= d; add('', '', `${e.name}出手，你受到 <em>${d}</em> 点伤害`); }
+    paint();
+    setTimeout(step, 800);
+  };
   const step = () => {
     rd++;
     $('.js-vs').textContent = '交手'; $('.js-rd').textContent = `第 ${rd} 回合`;
@@ -945,25 +961,11 @@ $('.js-fight').onclick = () => {
     else if (Math.random() < 0.12) { const d = 22 + (Math.random() * 4 | 0); ehp -= d; add('crit', r, `你一剑刺中要害，暴击 <em>${d}</em>`); }
     else { const d = 11 + (Math.random() * 4 | 0); ehp -= d; add('', r, `你出手命中，造成 <em>${d}</em> 点伤害`); }
     qi = Math.min(60, qi + 8);
-    if (ehp > 0) {
-      if (Math.random() < 0.15) add('miss', '', `${e.name}出手，被你闪过`);
-      else { const d = 6 + (Math.random() * 4 | 0); php -= d; add('', '', `${e.name}出手，你受到 <em>${d}</em> 点伤害`); }
-    }
-    ehp = Math.max(0, ehp); php = Math.max(1, php);
-    $('.js-ehp').textContent = ehp; $('.js-ehpbar').style.width = ehp / e.hp * 100 + '%';
-    $('.js-php').textContent = php; $('.js-phpbar').style.width = php / 184 * 100 + '%';
-    $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 60 * 100 + '%';
-    if (ehp <= 0) {
-      add('win', '', `${e.name}败退。`);
-      add('loot', '', `收获银两 +${sel <= CLEARED ? 42 : 84}`);
-      $('.js-vs').textContent = '胜'; $('.js-rd').textContent = `${rd} 回合`;
-      fighting = false;
-      b.disabled = false; b.innerHTML = sel <= CLEARED ? `重打 · 第<span class="btn-n">${sel}</span>关` : `下一关 · 第<span class="btn-n">${sel + 1}</span>关`;
-      return;
-    }
-    setTimeout(step, 520);
+    paint();
+    if (ehp <= 0) { setTimeout(win, 600); return; }
+    setTimeout(enemyTurn, 700);
   };
-  setTimeout(step, 200);
+  setTimeout(step, 400);
 };
 
 /* ───── 原型控制 ───── */

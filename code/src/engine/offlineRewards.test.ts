@@ -9,6 +9,7 @@ import {
   OFFLINE_CAP_MIN, calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
   maxIdleStage, shouldShowOfflineSettlement,
 } from './offlineRewards';
+import { stageKey, trackLength } from './enemies';
 
 const MIN = 60_000;
 
@@ -36,20 +37,14 @@ describe('offlineRewards · 档位匹配与驱动字段（表 A §2.2）', () =>
     expect(findOfflineRewardStage(99).id).toBe(1010);
   });
 
-  it('maxIdleStage：全局 1–28 序号（图 1 有 8 关、图 2 有 10 关偏移）', () => {
+  it('maxIdleStage：按最深「初入」地图及进度比例折回表 A 全局序号（旧图 1 八关、其余十关）', () => {
     expect(maxIdleStage([])).toBe(1);
-    expect(maxIdleStage(['m1s1', 'm1s2'])).toBe(2);
-    expect(maxIdleStage(Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`))).toBe(8);
-    expect(maxIdleStage(['m1s8', 'm2s3'])).toBe(11);
-    expect(maxIdleStage(['m2s10', 'm3s10'])).toBe(28);
-  });
-
-  it('maxIdleStage：地图 4/5 键映射为全局 29–48，忽略越界关卡', () => {
-    expect(maxIdleStage(['m4s1'])).toBe(29);
-    expect(maxIdleStage(['m4s10'])).toBe(38);
-    expect(maxIdleStage(['m5s1'])).toBe(39);
-    expect(maxIdleStage(['m5s10'])).toBe(48);
-    expect(maxIdleStage(['m5s11', 'm4s0'])).toBe(1);
+    const n1 = trackLength(1, 0);
+    expect(maxIdleStage([stageKey(1, 0, n1)])).toBe(8);
+    expect(maxIdleStage([stageKey(1, 0, n1), stageKey(2, 0, trackLength(2, 0))])).toBe(18);
+    expect(maxIdleStage([stageKey(4, 0, trackLength(4, 0))])).toBe(38);
+    // 只看初入：历练 / 绝境与非法键不计
+    expect(maxIdleStage([stageKey(1, 1, 5), 'm1s8', 'bogus'])).toBe(1);
   });
 });
 

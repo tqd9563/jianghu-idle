@@ -52,15 +52,15 @@ PRICE_0 = 0.01 * ps.REALM_TOTAL[1]
 
 STAGE_GAP = 0.05                  # 相邻两关的敌人差（境界当量）；0.05 ≈ 属性 +2.7%，等于 1 级火候
 MAX_STALL_DAYS = 7                # 判据：任何一天起，最多连续这么多天推不出新关（全部前沿合计）
-ELITE_EVERY = 4                   # 每条前沿每 8 关一个精英（有名号的对手），末尾是 Boss
+ELITE_EVERY = 4                   # 每条前沿每 4 关一个精英（有名号的对手），末尾是 Boss
 ELITE_REP = 0.04                  # 首通精英：当天基础声望的这一比例（一次性）
 BOSS_REP = 0.15                   # 首通 Boss：同上
 MERIDIAN_REP = 0.50               # 首次贯通一条经脉：当天基础声望的这一比例（每境界 2 条，按首达下一境界当天计）
 MERIDIANS_PER_REALM = 2
 ONE_TIME_CAP = 0.10               # 判据：一次性声望（首通 + 成就）≤ 累计基础声望的一成
-SHOP_FRACS = (1.0, 0.5, 0.0)
+SHOP_FRACS = (1.0, 0.5, 0.0)      # 判据：声望阁只买标准量的这些比例时，里程碑晚多少
 POGUAN_BONUS = 0.10               # 声望阁「破关心得」：对 Boss 伤害 +10%（economy.md §4）
-POGUAN_DAY = 12                   # 按 QoL 定价，标准玩家约第 12 天前买齐      # 判据：声望阁只买标准量的这些比例时，里程碑晚多少
+POGUAN_DAY = 12                   # 按 QoL 定价，标准玩家约第 12 天前买齐
 
 ROUTES = ["huashan", "tangmen", "shaolin"]
 ONLINE_H = 4.0                    # 标准玩家每天在线小时（pacing_sim 画像）
@@ -79,11 +79,25 @@ REALM_STATS[6] = dict(hp=1680, atk=168, dfs=88, hit=160, dodge=25, cost=0)
 ENEMY_BASE = dict(hp=60.0, atk=6.0, dfs=3.5, hit=100.0, dodge=8.0)
 
 
+# 属性类标签的修正（content.md §2.0）：这四个标签不在 fight() 里生效，而是改敌人属性；
+# 反伤 / 毒 / 净化 / 破甲 / 狂暴 由 fight() 结算，不改属性。
+TAG_MODS = {
+    "高闪": dict(dodge=3.0),
+    "高血": dict(hp=2.0),
+    "高防": dict(dfs=1.6),
+    "高攻": dict(atk=1.4),
+}
+
+
 def enemy_at(x: float, tags: tuple[str, ...] = ()) -> dict:
     k = 1.7 ** (x - 1)
-    return dict(hp=ENEMY_BASE["hp"] * k, atk=ENEMY_BASE["atk"] * k, dfs=ENEMY_BASE["dfs"] * k,
-                hit=ENEMY_BASE["hit"] + 12 * (x - 1), dodge=ENEMY_BASE["dodge"] + 3 * (x - 1),
-                tags=list(tags))
+    e = dict(hp=ENEMY_BASE["hp"] * k, atk=ENEMY_BASE["atk"] * k, dfs=ENEMY_BASE["dfs"] * k,
+             hit=ENEMY_BASE["hit"] + 12 * (x - 1), dodge=ENEMY_BASE["dodge"] + 3 * (x - 1),
+             tags=list(tags))
+    for t in tags:
+        for key, mult in TAG_MODS.get(t, {}).items():
+            e[key] *= mult
+    return e
 
 
 # ═══════════════════════════════════════════════════════════
@@ -202,13 +216,41 @@ def band_of(realm: int) -> int:
     return realm
 
 
-def main():
+def boss_threshold(combat: dict, d: int) -> float:
+    """Boss 门槛 = 下一境界首日最慢路线刚好打得过；买了破关心得的日子按伤害 +10% 算。
+    境界 5 段的 Boss 需境界 6：按「入境界 6、武学仍是第 100 天的等级」计（本版收官）"""
+    realm, lv = combat[d] if d <= 100 else (6, combat[100][1])
+    k = 1 + POGUAN_BONUS if d >= POGUAN_DAY else 1.0
+    xs = []
+    for r in ROUTES:
+        bd = build(r, realm, lv)
+        bd["atk"] *= k
+        xs.append(frontier_x(bd))
+    return min(xs)
+
+
+def solve() -> dict:
+    """前沿曲线与各前沿的起点 / 终点 / Boss 门槛（main 打印与关卡表导出共用，防两处口径漂移）"""
     peaks, combat, first_day = run_days()
     days = [d for d in sorted(combat) if d <= 100]
-
-    # 每天每条路线的前沿（境界当量）
     X = {r: {d: frontier_x(build(r, *combat[d])) for d in days} for r in ROUTES}
     x_min = {d: min(X[r][d] for r in ROUTES) for d in days}   # 最慢路线定关卡，保证三路线都推得动
+    plateaus: dict[int, list[int]] = {}
+    for d in days:
+        plateaus.setdefault(band_of(combat[d][0]), []).append(d)
+    tracks = {}     # (图, 难度, 段) → (起点 x, 段末 x, Boss x)
+    for b, ds in sorted(plateaus.items()):
+        nxt = ds[-1] + 1
+        for (mp, tier) in TRACKS[b]:
+            # 新前沿从解锁当天刚好打得过的位置起铺：突破那一跳由上一段的 Boss 承接，不白送一串关
+            tracks[(mp, tier, b)] = (x_min[ds[0]], x_min[ds[-1]], boss_threshold(combat, nxt))
+    return dict(combat=combat, first_day=first_day, days=days, X=X, x_min=x_min,
+                plateaus=plateaus, tracks=tracks)
+
+
+def main():
+    S = solve()
+    combat, first_day, days, X, x_min = S["combat"], S["first_day"], S["days"], S["X"], S["x_min"]
 
     print("=" * 96)
     print("长线战斗侧求解器 —— issue #22 第 2 步（判据见 pacing/design.md §3.6）")
@@ -240,9 +282,7 @@ def main():
     # ── 武学在一个境界平台期内的增长 < 一个境界（余量给更高难度与主动武学）
     print("\n【三】各平台期内的前沿增长（须 < 1 个境界当量，否则武学能越档）")
     ok_gap = True
-    plateaus = {}
-    for d in days:
-        plateaus.setdefault(band_of(combat[d][0]), []).append(d)
+    plateaus = S["plateaus"]
     for b, ds in sorted(plateaus.items()):
         grow = x_min[ds[-1]] - x_min[ds[0]]
         jump = (x_min[ds[-1] + 1] - x_min[ds[-1]]) if ds[-1] + 1 in x_min else float("nan")
@@ -253,25 +293,7 @@ def main():
 
     # ── 关卡：同一前沿相邻两关差 STAGE_GAP；前沿从本段首日能打到的位置铺到下一境界首日（Boss）
     print(f"\n【四】关卡与难度（关距 {STAGE_GAP} 境界 ≈ 属性 +{1.7 ** STAGE_GAP - 1:.1%}）")
-    tracks = {}     # (图, 难度, 段) → (起点 x, Boss x)
-    def boss_x(d):
-        """Boss 门槛 = 下一境界首日最慢路线刚好打得过；买了破关心得的日子按伤害 +10% 算"""
-        # 境界 5 段的 Boss 需境界 6：按「入境界 6、武学仍是第 100 天的等级」计（本版收官）
-        realm, lv = combat[d] if d <= 100 else (6, combat[100][1])
-        k = 1 + POGUAN_BONUS if d >= POGUAN_DAY else 1.0
-        xs = []
-        for r in ROUTES:
-            bd = build(r, realm, lv)
-            bd["atk"] *= k
-            xs.append(frontier_x(bd))
-        return min(xs)
-
-    for b, ds in sorted(plateaus.items()):
-        nxt = ds[-1] + 1
-        for (mp, tier) in TRACKS[b]:
-            # 新前沿从解锁当天刚好打得过的位置起铺：突破那一跳由上一段的 Boss 承接，不白送一串关
-            start = x_min[ds[0]]
-            tracks[(mp, tier, b)] = (start, boss_x(nxt))
+    tracks = {k: (v[0], v[2]) for k, v in S["tracks"].items()}   # (图, 难度, 段) → (起点 x, Boss x)
     for (mp, tier, b), (x0, xb) in tracks.items():
         ds = plateaus[b]
         top = x_min[ds[-1]]

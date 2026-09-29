@@ -22,7 +22,7 @@ const withSev = (partial: Partial<Record<'wai' | 'nei' | 'du', number>>): Injuri
 };
 
 const enemy = (over: Partial<EnemyDef>): EnemyDef => ({
-  map: 1, stage: 1, name: 'x', hp: 100, atk: 10, def: 5, hit: 100, dodge: 10,
+  map: 1, tier: 0, stage: 1, name: 'x', hp: 100, atk: 10, def: 5, hit: 100, dodge: 10,
   tags: [], kind: 'normal', recommendedRealm: 1,
   reward: { neili: 0, silver: 0, xp: 0 }, ...over,
 });

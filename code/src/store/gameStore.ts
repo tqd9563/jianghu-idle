@@ -7,7 +7,10 @@
 import { create } from 'zustand';
 import { diagnose, fight, makeBuild, type Build, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, ROUTE_SWITCH_SILVER, skillUpgradeCost, type RouteId } from '../engine/content';
-import { getStage, MAP_IDS, MAP_STAGE_COUNT, refarmReward, targetId, type EnemyDef, type MapId } from '../engine/enemies';
+import {
+  getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackKey, trackLength,
+  type EnemyDef, type MapId, type TierId,
+} from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, currentSegmentNeili, currentSegmentQuota } from '../engine/formulas';
 import {
   freshInjuries, heal as healInjuries, inflict as inflictInjury, injuryFromBattle,
@@ -30,11 +33,10 @@ import {
 import { ROUTES } from '../engine/routes';
 import {
   applyFragmentEffectsToBuild, computeFragmentEffects, emitPageGrant, getMissingPages,
-  grantPage as grantFragmentPage, isPageId, nextBossPage, nextTrialPage, offlinePages, shopPrice,
+  grantPage as grantFragmentPage, isPageId, offlinePages, shopPrice,
   type CollectionChannel, type FragmentEffects, type MissingPage,
 } from '../engine/fragmentLogic';
-import { PAGE_SOURCE_TABLE, TRIAL_TABLE, type BookId, type TrialId } from '../engine/fragments';
-import { MVP2_ELITE_CHALLENGE_ENEMIES, MVP2_ELITE_CHALLENGE_REWARDS, type Mvp2EliteChallengeEnemy } from '../engine/mvp2Content';
+import { PAGE_SOURCE_TABLE, type BookId } from '../engine/fragments';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
   endLiveTestWindow, getDebugOfflineCap, loadGameWithVersion, loadLiveTestWindow, loadSavedAt,
@@ -88,12 +90,6 @@ interface PersistedState {
   collectedPages?: string[];
   /** 已集齐秘籍跨归隐保留；效果应用由后续任务实现。 */
   completedBooks?: string[];
-  /** 本轮试炼首胜计数，归隐重置。 */
-  trialWinsThisRun?: Record<string, number>;
-  /** 本轮精英挑战首胜计数，归隐重置（content.md §5.2 / §7：每轮限一次首通奖励）。 */
-  eliteChallengeWinsThisRun?: Record<string, number>;
-  /** 本轮 Boss 首杀计数，归隐重置。 */
-  bossKillsThisRun?: Record<string, number>;
   /** 本轮指名寻访购买次数，归隐重置。 */
   shopPurchasesThisRun?: number;
   /** 窍穴运行时状态（按穴 ID 索引）；突破时不清零（D1 保留到归隐），归隐时重置。可选字段兼容旧存档。 */
@@ -122,10 +118,13 @@ interface PersistedState {
   fameClaimed: string[];
   /** 本世已入账的成就声望（只供归隐盘点展示） */
   fameThisLife: number;
+  /** 已解锁的前沿（跨世保留）：`{图}-{难度}`；打通本图上一档 Boss 开下一档，打通初入 Boss 开下一图初入 */
+  tiersUnlocked: string[];
 }
 
 export interface BattleState {
   map: MapNo;
+  tier: TierId;
   stage: number;
   enemy: EnemyDef;
   result: FightResult;
@@ -138,13 +137,11 @@ export interface BattleState {
   chainStage: number | null;
   /** 胜利实际入账（收益行同源同值）；fame = 本场首通精英 / Boss 的名号声望 */
   reward: { neili: number; silver: number; xp: number; refarm: boolean; grantedPageId?: string; fame?: number } | null;
-  mode?: 'mainline' | 'trial' | 'elite';
-  trialId?: string;
-  eliteChallengeId?: Mvp2EliteChallengeEnemy['id'];
 }
 
 export interface FailureInfo {
   map: MapNo;
+  tier: TierId;
   stage: number;
   enemyName: string;
   diagCodes: number[];
@@ -192,6 +189,7 @@ interface GameState extends PersistedState {
   started: boolean;
   ceremony: number | null;
   selectedMap: MapNo;
+  selectedTier: TierId;
   battle: BattleState | null;
   pendingTab: string | null;
   failure: FailureInfo | null;
@@ -216,7 +214,8 @@ interface GameState extends PersistedState {
   upgradeSkill: () => void;
   buyMechNode: (nodeId: string) => void;
   selectMap: (m: MapNo) => void;
-  challengeStage: (map: MapNo, stage: number) => void;
+  selectTier: (t: TierId) => void;
+  challengeStage: (map: MapNo, tier: TierId, stage: number) => void;
   setAutoAdvance: (v: boolean) => void;
   dismissFailure: () => void;
   openRetire: () => void;
@@ -228,8 +227,6 @@ interface GameState extends PersistedState {
   /** 修行感悟：'one' 买一级，'all' 买到买不起为止（economy.md §3） */
   buyGanwu: (mode: 'one' | 'all') => void;
   grantPage: (pageId: string, channel: CollectionChannel) => void;
-  challengeTrial: (trialId: TrialId) => void;
-  challengeElite: (challengeId: Mvp2EliteChallengeEnemy['id']) => void;
   buyShopPage: (pageId: string) => void;
   getFragmentEffects: () => FragmentEffects;
   getMissingPages: () => MissingPage[];
@@ -252,12 +249,13 @@ const FRESH: PersistedState = {
   refarmKey: null, refarmCount: 0, refarmAt: 0,
   sessionActive: false, paused: false,
   collectedPages: [], completedBooks: [],
-  trialWinsThisRun: {}, eliteChallengeWinsThisRun: {}, bossKillsThisRun: {}, shopPurchasesThisRun: 0,
+  shopPurchasesThisRun: 0,
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false,
   peakRealm: 1, ganwuLevel: 0, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
+  tiersUnlocked: ['1-0'],
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -265,7 +263,6 @@ let lastTick = 0;
 let lastSave = 0;
 let visitedLiveTestWindowId: string | null = null;
 
-const stageKey = (m: MapNo, s: number) => `m${m}s${s}`;
 
 /**
  * 持久化键 = FRESH 的全部键。不再手写字段清单：旧清单漏了窍穴进度、窍穴图鉴、伤势、折寿
@@ -275,20 +272,45 @@ const PERSIST_KEYS = Object.keys(FRESH) as (keyof PersistedState)[];
 const persist = (s: PersistedState) =>
   saveGame(Object.fromEntries(PERSIST_KEYS.map((k) => [k, s[k] ?? FRESH[k]])));
 
-/** 地图解锁：图 N 需通关图 N−1 末关（由 MAP_IDS 顺序派生，新增地图无需改此处） */
-export function mapUnlocked(map: MapNo, cleared: string[]): boolean {
-  const idx = MAP_IDS.indexOf(map);
-  if (idx <= 0) return true;
-  const prev = MAP_IDS[idx - 1];
-  return cleared.includes(stageKey(prev, MAP_STAGE_COUNT[prev]));
+/** 前沿是否已解锁（跨世保留，pacing/design.md §3.2）；封存的永远不开 */
+export function tierUnlocked(map: MapNo, tier: TierId, tiersUnlocked: readonly string[]): boolean {
+  return !isSealed(map, tier) && tiersUnlocked.includes(trackKey(map, tier));
 }
 
-/** 本图下一待通关关卡；全通返回 null */
-export function nextStageOf(map: MapNo, cleared: string[]): number | null {
-  for (let i = 1; i <= MAP_STAGE_COUNT[map]; i++) {
-    if (!cleared.includes(stageKey(map, i))) return i;
+/** 地图页签是否可进：初入已解锁 */
+export function mapUnlocked(map: MapNo, tiersUnlocked: readonly string[]): boolean {
+  return tierUnlocked(map, 0, tiersUnlocked);
+}
+
+/** 本前沿下一待通关关卡；全通返回 null */
+export function nextStageOf(map: MapNo, tier: TierId, cleared: readonly string[]): number | null {
+  const n = trackLength(map, tier);
+  for (let i = 1; i <= n; i++) {
+    if (!cleared.includes(stageKey(map, tier, i))) return i;
   }
   return null;
+}
+
+/** 打通段末 Boss 解锁的前沿：本图下一档；若是初入，另开下一图初入（封存的不开） */
+function unlocksAfterBoss(map: MapNo, tier: TierId): string[] {
+  const out: string[] = [];
+  if (tier < 2 && !isSealed(map, (tier + 1) as TierId)) out.push(trackKey(map, (tier + 1) as TierId));
+  const nextMap = (map + 1) as MapNo;
+  if (tier === 0 && MAP_IDS.includes(nextMap) && !isSealed(nextMap, 0)) out.push(trackKey(nextMap, 0));
+  return out;
+}
+
+/** 今天还有关可推的前沿（已解锁且未全通），供战斗页金点与默认选关 */
+export function openFronts(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): { map: MapNo; tier: TierId }[] {
+  const out: { map: MapNo; tier: TierId }[] = [];
+  for (const map of MAP_IDS) {
+    for (const tier of TIERS) {
+      if (tierUnlocked(map, tier, s.tiersUnlocked ?? []) && nextStageOf(map, tier, s.clearedStages) !== null) {
+        out.push({ map, tier });
+      }
+    }
+  }
+  return out;
 }
 
 export function playerBuild(
@@ -374,9 +396,9 @@ function liveTestFields(record: LiveTestWindowRecord) {
 function maxClearedStage(clearedStages: readonly string[]): string | null {
   let best: { key: string; order: number } | null = null;
   for (const key of clearedStages) {
-    const match = /^m([1-3])s(\d+)$/.exec(key);
-    if (!match) continue;
-    const order = (Number(match[1]) - 1) * 10 + Number(match[2]);
+    const p = parseStageKey(key);
+    if (!p) continue;
+    const order = p.tier * 10000 + p.map * 100 + p.stage;
     if (!best || order > best.order) best = { key, order };
   }
   return best?.key ?? null;
@@ -385,9 +407,7 @@ function maxClearedStage(clearedStages: readonly string[]): string | null {
 function visitSnapshot(s: GameState) {
   const breakCost = effBreakCost(s);
   const nextSkillLevel = s.skillLevel + 1;
-  const decisionBattle = ([1, 2, 3] as const).some(
-    (map) => mapUnlocked(map, s.clearedStages) && nextStageOf(map, s.clearedStages) !== null,
-  );
+  const decisionBattle = openFronts(s).length > 0;
   return {
     max_cleared_stage: maxClearedStage(s.clearedStages),
     cleared_stage_count: s.clearedStages.length,
@@ -418,6 +438,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   started: false,
   ceremony: null,
   selectedMap: 1,
+  selectedTier: 0,
   battle: null,
   pendingTab: null,
   failure: null,
@@ -440,10 +461,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     lastTick = now;
     if (saved) {
       const merged = { ...FRESH, ...saved };
-      let selectedMap: MapNo = 1;
-      for (const m of [3, 2, 1] as MapNo[]) {
-        if (mapUnlocked(m, merged.clearedStages)) { selectedMap = m; break; }
-      }
+      // 默认面向最深的一条可推前沿
+      const fronts = openFronts(merged);
+      const front = fronts[fronts.length - 1] ?? { map: 1 as MapNo, tier: 0 as TierId };
+      const selectedMap = front.map;
+      const selectedTier = front.tier;
 
       // 出关结算（MVP-1 §5：回归上线一次性结算；A5：存档恢复之后、玩家可操作之前）。
       // 观察员暂停中的存档不结算（暂停冻结一切结算，与 tick 口径一致），时间戳照常消费。
@@ -488,7 +510,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           if (!r.silent) offlineSettlement = r;
         }
       }
-      set({ ...merged, started: true, selectedMap, offlineSettlement });
+      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.lifespanLost ?? 0)) {
         // 闭关期间寿终：资源随转世散去，出关结算屏不再有意义，直接进转世演出
         set({ offlineSettlement: null });
@@ -614,7 +636,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       } else if (b.resolved && b.chainAt !== null && now >= b.chainAt) {
         const target = b.chainStage;
         set({ battle: null });
-        if (target !== null && get().autoAdvance) get().challengeStage(b.map, target);
+        if (target !== null && get().autoAdvance) get().challengeStage(b.map, b.tier, target);
       }
     }
 
@@ -787,23 +809,31 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
+  // 未解锁 / 封存的图与难度也可点开查看（显示解锁条件或「大周天未开」），只是打不了（长线原型 §1）
   selectMap: (m) => {
     const s = get();
-    if (!mapUnlocked(m, s.clearedStages)) return;
-    // 切图即面向该图下一关：已结算的旧图战斗残留一并清掉（含未触发的自动连战）
+    // 切图默认面向该图最深的可推难度；已结算的旧图战斗残留一并清掉（含未触发的自动连战）
+    const fronts = openFronts(s).filter((f) => f.map === m);
+    const tier = fronts[fronts.length - 1]?.tier ?? 0;
     const battle = s.battle && s.battle.resolved && s.battle.map !== m ? null : s.battle;
-    set({ selectedMap: m, battle });
+    set({ selectedMap: m, selectedTier: tier, battle });
   },
 
-  challengeStage: (map, stage) => {
+  selectTier: (t) => {
+    const s = get();
+    const battle = s.battle && s.battle.resolved && s.battle.tier !== t ? null : s.battle;
+    set({ selectedTier: t, battle });
+  },
+
+  challengeStage: (map, tier, stage) => {
     const s = get();
     if (s.battle && !s.battle.resolved) return;
-    if (!mapUnlocked(map, s.clearedStages)) return;
-    const next = nextStageOf(map, s.clearedStages);
-    const isRefarm = s.clearedStages.includes(stageKey(map, stage));
+    if (!tierUnlocked(map, tier, s.tiersUnlocked ?? [])) return;
+    const next = nextStageOf(map, tier, s.clearedStages);
+    const isRefarm = s.clearedStages.includes(stageKey(map, tier, stage));
     if (!isRefarm && stage !== next) return; // 只能打下一关或回刷已通关卡
 
-    const enemy = getStage(map, stage);
+    const enemy = getStage(map, tier, stage);
     const build = playerBuild(s);
     const result = fight(build, enemy, { mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes) });
     const key = enemy.kind !== 'normal';
@@ -815,8 +845,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       failure: null,
       selectedMap: map,
+      selectedTier: tier,
       battle: {
-        map, stage, enemy, result,
+        map, tier, stage, enemy, result,
         revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
         resolved: false, chainAt: null, chainStage: null, reward: null,
       },
@@ -909,74 +940,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
-  challengeTrial: (trialId) => {
-    const s = get();
-    if (s.battle && !s.battle.resolved) return;
-    const trial = TRIAL_TABLE.find((entry) => entry.trial_id === trialId);
-    if (!trial || s.realm < 5 || s.route !== trial.route || !s.clearedStages.includes('m2s10')) return;
-    const enemy: EnemyDef = {
-      ...trial.enemy_ref,
-      map: 3, stage: 0,
-      tags: [...trial.enemy_ref.tags],
-      kind: 'boss',
-      reward: { neili: 0, silver: 0, xp: 0 },
-    };
-    const build = playerBuild(s);
-    const result = fight(build, enemy, { mode: 'rng' });
-    const turnCount = result.turns.length;
-    const intervalMs = Math.min(Math.max(15000 / turnCount, 900), 30000 / turnCount);
-    set({
-      selectedMap: 3,
-      battle: {
-        map: 3, stage: 0, enemy, result,
-        revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
-        resolved: false, chainAt: null, chainStage: null, reward: null,
-        mode: 'trial', trialId,
-      },
-      pendingTab: 'battle',
-    });
-  },
-
-  challengeElite: (challengeId) => {
-    const s = get();
-    if (s.battle && !s.battle.resolved) return;
-    const enemyDef = MVP2_ELITE_CHALLENGE_ENEMIES.find((e) => e.id === challengeId);
-    if (!enemyDef) return;
-    // 解锁：所属地图 stages 1-5 全通（§5.1 v0.7 pre_challenge_neili 推导）+ 推荐境界达标
-    const map = enemyDef.map;
-    for (let i = 1; i <= enemyDef.unlockAfterStage; i++) {
-      if (!s.clearedStages.includes(stageKey(map, i))) return;
-    }
-    if (s.realm < enemyDef.recommendedRealm) return;
-    // 本轮已首胜不可重复（§5.2 v0.9 单解法约束 + 每轮限一次首通奖励）
-    if ((s.eliteChallengeWinsThisRun?.[challengeId] ?? 0) > 0) return;
-    const rewardRef = MVP2_ELITE_CHALLENGE_REWARDS.find((r) => r.challenge === enemyDef.rewardRef)!;
-    const enemy: EnemyDef = {
-      map, stage: 0,
-      name: enemyDef.name,
-      hp: enemyDef.hp, atk: enemyDef.atk, def: enemyDef.def,
-      hit: enemyDef.hit, dodge: enemyDef.dodge,
-      tags: [...enemyDef.tags],
-      kind: 'boss',
-      recommendedRealm: enemyDef.recommendedRealm,
-      reward: { neili: rewardRef.neili, silver: rewardRef.silver, xp: rewardRef.xp },
-    };
-    const build = playerBuild(s);
-    const result = fight(build, enemy, { mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes) });
-    const turnCount = result.turns.length;
-    const intervalMs = Math.min(Math.max(15000 / turnCount, 900), 30000 / turnCount);
-    set({
-      selectedMap: map,
-      battle: {
-        map, stage: 0, enemy, result,
-        revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
-        resolved: false, chainAt: null, chainStage: null, reward: null,
-        mode: 'elite', eliteChallengeId: challengeId,
-      },
-      pendingTab: 'battle',
-    });
-  },
-
   buyShopPage: (pageId) => {
     const s = get();
     if (!isPageId(pageId) || (s.shopPurchasesThisRun ?? 0) >= 1) return;
@@ -1067,7 +1030,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     lastTick = Date.now();
     set({
       ...FRESH, started: true, ceremony: null, battle: null, failure: null,
-      selectedMap: 1, retireStep: null, retireCeremony: null,
+      selectedMap: 1, selectedTier: 0, retireStep: null, retireCeremony: null,
       offlineSettlement: null, pendingTab: null,
     });
     track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], carry_xp: 0 });
@@ -1126,7 +1089,11 @@ function rebirth(
     });
   }
 
-  const maxMap: MapNo = mapUnlocked(3, s.clearedStages) ? 3 : mapUnlocked(2, s.clearedStages) ? 2 : 1;
+  // 最远足迹：本世到过的最深初入地图
+  const maxMap: MapNo = s.clearedStages.reduce<MapNo>((m, k) => {
+    const p = parseStageKey(k);
+    return p && p.tier === 0 && p.map > m ? p.map : m;
+  }, 1);
   const ceremonyData: RetireCeremonyData = {
     runEnded: s.run, settle, durationSec: s.runPlaySec,
     clearedCount: s.clearedStages.length, maxMap,
@@ -1162,7 +1129,8 @@ function rebirth(
     soulUnsettled: cause !== null,
     retireStep: null,
     retireCeremony: ceremonyData,
-    battle: null, failure: null, ceremony: null, selectedMap: 1, pendingTab: null,
+    tiersUnlocked: s.tiersUnlocked ?? ['1-0'],
+    battle: null, failure: null, ceremony: null, selectedMap: 1, selectedTier: 0, pendingTab: null,
   });
   track('run_start', { run: newRun, realm: 1, route: null }, {
     owned_nodes: s.ownedRepNodes, carry_xp: xp,
@@ -1179,55 +1147,7 @@ function resolveBattle(
   const b = s.battle!;
   if (b.resolved) return;
   const { enemy, result } = b;
-  if (b.mode === 'elite' && b.eliteChallengeId) {
-    track('elite_challenge_challenged', { run: s.run, realm: s.realm, route: s.route }, {
-      elite_challenge_id: b.eliteChallengeId,
-      result: result.win ? 'win' : 'loss',
-    });
-    let rewardApplied: BattleState['reward'] = null;
-    if (result.win && (s.eliteChallengeWinsThisRun?.[b.eliteChallengeId] ?? 0) === 0) {
-      // 关卡不掉内力（formulas.md §6.1 v1.6）
-      const enemyReward = enemy.reward;
-      const neili = 0;
-      set({
-        silver: s.silver + enemyReward.silver,
-        xp: s.xp + enemyReward.xp,
-        eliteChallengeWinsThisRun: { ...(s.eliteChallengeWinsThisRun ?? {}), [b.eliteChallengeId]: 1 },
-        lastProgressSec: s.runPlaySec,
-      });
-      rewardApplied = { neili, silver: enemyReward.silver, xp: enemyReward.xp, refarm: false };
-      track('elite_challenge_first_clear', { run: s.run, realm: s.realm, route: s.route }, {
-        elite_challenge_id: b.eliteChallengeId,
-        neili_gained: neili, silver_gained: enemyReward.silver, xp_gained: enemyReward.xp,
-      });
-    } else {
-      rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false };
-    }
-    set({ battle: { ...b, resolved: true, chainAt: null, chainStage: null, reward: rewardApplied } });
-    persist(get());
-    return;
-  }
-  if (b.mode === 'trial' && b.trialId) {
-    track('trial_challenged', { run: s.run, realm: s.realm, route: s.route }, {
-      trial_id: b.trialId,
-      result: result.win ? 'win' : 'loss',
-    });
-    let rewardApplied: BattleState['reward'] = null;
-    if (result.win && (s.trialWinsThisRun?.[b.trialId] ?? 0) === 0) {
-      const pageId = nextTrialPage(b.trialId as TrialId, (s.collectedPages ?? []).filter(isPageId));
-      set({ trialWinsThisRun: { ...(s.trialWinsThisRun ?? {}), [b.trialId]: 1 } });
-      if (pageId) {
-        get().grantPage(pageId, 'B');
-        rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false, grantedPageId: pageId };
-      }
-    } else {
-      rewardApplied = { neili: 0, silver: 0, xp: 0, refarm: false };
-    }
-    set({ battle: { ...b, resolved: true, chainAt: null, chainStage: null, reward: rewardApplied } });
-    persist(get());
-    return;
-  }
-  const key = stageKey(b.map, b.stage);
+  const key = stageKey(b.map, b.tier, b.stage);
   const firstClear = !s.clearedStages.includes(key);
   const tid = targetId(enemy);
   const attempt = (s.attempts[tid] ?? 0) + 1;
@@ -1269,14 +1189,14 @@ function resolveBattle(
       clearedStages = [...clearedStages, key];
       lastProgressSec = s.runPlaySec;
       track('stage_first_clear', { run: s.run, realm: s.realm, route: s.route }, {
-        map: b.map, stage: b.stage, kind: enemy.kind,
+        map: b.map, tier: b.tier, stage: b.stage, kind: enemy.kind,
       });
     }
   } else {
     const build = playerBuild(s);
     const diagCodes = diagnose(build, enemy, result, s.realm);
     failure = {
-      map: b.map, stage: b.stage, enemyName: enemy.name,
+      map: b.map, tier: b.tier, stage: b.stage, enemyName: enemy.name,
       diagCodes, rounds: result.rounds,
       playerHpPct: result.playerHpPct, enemyHpPct: result.enemyHpPct,
       hitRate: result.stats.pHitRate,
@@ -1318,7 +1238,7 @@ function resolveBattle(
 
   // 自动连战：首通胜利推进下一关；回刷胜利回到原关（回退挂机）
   const chainStage = result.win && s.autoAdvance
-    ? (firstClear ? nextStageOf(b.map, clearedStages) : b.stage)
+    ? (firstClear ? nextStageOf(b.map, b.tier, clearedStages) : b.stage)
     : null;
   set({
     silver, xp, clearedStages, attempts, failure, lastProgressSec,
@@ -1330,18 +1250,15 @@ function resolveBattle(
       source: enemy.kind, key, reputation: fameGained,
     });
   }
-  if (result.win && enemy.kind === 'boss') {
-    const boss = tid === 'boss1' ? 'boss_1' : tid === 'boss2' ? 'boss_2' : null;
-    if (boss && (s.bossKillsThisRun?.[boss] ?? 0) === 0) {
-      const pageId = nextBossPage(boss, (s.collectedPages ?? []).filter(isPageId));
-      set({ bossKillsThisRun: { ...(s.bossKillsThisRun ?? {}), [boss]: 1 } });
-      if (pageId) {
-        get().grantPage(pageId, 'A');
-        const bAfter = get().battle!;
-        if (bAfter && bAfter.reward) {
-          set({ battle: { ...bAfter, reward: { ...bAfter.reward, grantedPageId: pageId } } });
-        }
-      }
+  // 打通段末 Boss：解锁本图下一档与下一图初入，跨世保留（秘籍残页 Boss 掉落随秘籍阁冻结暂停）
+  if (result.win && enemy.kind === 'boss' && b.stage === trackLength(b.map, b.tier)) {
+    const have = s.tiersUnlocked ?? ['1-0'];
+    const opened = unlocksAfterBoss(b.map, b.tier).filter((k) => !have.includes(k));
+    if (opened.length > 0) {
+      set({ tiersUnlocked: [...have, ...opened] });
+      track('tier_unlocked', { run: s.run, realm: s.realm, route: s.route }, {
+        by: key, opened,
+      });
     }
   }
   // 战死（reincarnation/spec.md §3.2）：伤势越过致死线，或重伤折寿后年岁已超剩余寿元。

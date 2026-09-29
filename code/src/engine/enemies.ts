@@ -1,22 +1,28 @@
 /**
- * 五地图 48 关敌人表 —— 权威来源：docs/rules/content.md §2；
- * 数据由 content.ts 与 mvp2Content.ts 导出。
- * 生成公式与 sim/mvp0_sim.py build_stages() 逐行对齐（含 Python banker's rounding），
- * golden 测试会对照 fixture 中的敌人属性逐数校验。禁止在此调参。
+ * 长线关卡表 —— 权威来源：docs/rules/content.md §2.0（v2.3）。
+ *
+ * 结构：图 × 难度（初入 / 历练 / 绝境）× 关。每一关只记「关卡当量」，敌人属性由 enemyStatsAt
+ * 换算；关卡清单由 docs/systems/sim/export_stage_table.py 从 longline_sim 生成（data/longline-stages.json），
+ * 禁止在此手改关卡——改规则先改 sim 再重导出。
  */
-import { MVP2_STAGE_ENEMIES, MVP2_MAP_REWARD_PLANS, MVP2_BOSS_VALUES, MVP2_BOSS_REWARDS } from './mvp2Content';
+import stageData from './data/longline-stages.json';
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
 /**
- * 地图 ID 单一数据源 —— 新增地图只改这一处，MapId / MAP_STAGE_COUNT / 关卡键正则
- * 与 store 的 MapNo 全部由此派生（内容扩充防御，见 exhaustive.ts）。
+ * 地图 ID 单一数据源 —— MapId 与 store 的 MapNo 由此派生（内容扩充防御，见 exhaustive.ts）。
  */
 export const MAP_IDS = [1, 2, 3, 4, 5] as const;
 export type MapId = (typeof MAP_IDS)[number];
 
+/** 三档难度（pacing/design.md §3.3；名称 2026-09-28 用户选定） */
+export const TIERS = [0, 1, 2] as const;
+export type TierId = (typeof TIERS)[number];
+export const TIER_NAMES: Record<TierId, string> = { 0: '初入', 1: '历练', 2: '绝境' };
+
 export interface EnemyDef {
   map: MapId;
+  tier: TierId;
   stage: number;
   name: string;
   hp: number;
@@ -27,9 +33,14 @@ export interface EnemyDef {
   tags: EnemyTag[];
   kind: 'normal' | 'elite' | 'boss';
   recommendedRealm: number;
+  /** 关卡不掉内力（formulas.md §6.1 v1.6），neili 恒为 0 */
   reward: { neili: number; silver: number; xp: number };
   /** 本关防御常数 K（formulas.md §1.3 v1.6）；缺省 100 */
   defK?: number;
+  /** 关卡当量（content.md §2.0） */
+  x?: number;
+  /** 需境界 6 才打得过的收官 Boss（本版终点） */
+  final?: boolean;
 }
 
 /** Python round()：banker's rounding（四舍六入五取偶），digits 位小数 */
@@ -50,167 +61,115 @@ const MAP_NAMES: Record<MapId, string> = { 1: '村外小径', 2: '洛阳近郊',
 export function mapName(map: MapId): string {
   return MAP_NAMES[map];
 }
-export const MAP_STAGE_COUNT: Record<MapId, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
-
-const NAMES_1 = ['拦路泼皮', '拦路泼皮', '山野猎户', '山野猎户', '山贼喽啰', '山贼喽啰', '山贼小头目', '山贼头目'];
-const NAMES_2 = ['城郊恶棍', '城郊恶棍', '镖局逃卒', '游侠儿', '镖局逃卒', '恶寺武僧', '铁臂僧', '恶寺武僧', '恶寺护法', '铁掌恶僧'];
-const NAMES_3 = ['古道剑客', '古道剑客', '荆棘武者', '落魄镖师', '五毒散人', '黑风寨卒', '清风道人', '黑风寨卒', '黑风副寨主', '黑风寨主'];
-
-function rec1(i: number): number { return i <= 4 ? 1 : i <= 7 ? 2 : 3; }
-function rec2(i: number): number { return i <= 9 ? 3 : 4; }
-function rec3(i: number): number { return i <= 7 ? 4 : 5; }
-
-function buildStages(): EnemyDef[] {
-  const out: EnemyDef[] = [];
-  // 地图 1：8 关（Boss@8）
-  for (let i = 1; i <= 8; i++) {
-    let e = {
-      hp: pyRound(25 * 1.28 ** (i - 1)), atk: pyRound(4 * 1.17 ** (i - 1), 1),
-      def: pyRound(2 * 1.15 ** (i - 1), 1), hit: 90 + 2 * i, dodge: 8, tags: [] as EnemyTag[],
-    };
-    let reward = { neili: 60, silver: 10, xp: 3 };
-    let kind: EnemyDef['kind'] = 'normal';
-    if (i === 8) {
-      e = { hp: 550, atk: 15, def: 10, hit: 112, dodge: 8, tags: ['高血'] };
-      reward = { neili: 250, silver: 60, xp: 30 };
-      kind = 'boss';
-    }
-    out.push({ map: 1, stage: i, name: NAMES_1[i - 1], ...e, kind, recommendedRealm: rec1(i), reward });
-  }
-  // 地图 2：10 关，精英@4(高闪)/@7(破甲)，Boss@10
-  for (let i = 1; i <= 10; i++) {
-    const e = {
-      hp: pyRound(115 * 1.15 ** (i - 1)), atk: pyRound(11 * 1.1 ** (i - 1), 1),
-      def: pyRound(9 * 1.12 ** (i - 1), 1), hit: 105 + 2 * i, dodge: 12, tags: [] as EnemyTag[],
-    };
-    let reward = { neili: 150, silver: 20, xp: 5 };
-    let kind: EnemyDef['kind'] = 'normal';
-    if (i === 4) { e.tags = ['高闪']; e.dodge = 50; e.hp = pyRound(e.hp * 1.4); reward = { neili: 300, silver: 40, xp: 10 }; kind = 'elite'; }
-    if (i === 7) { e.tags = ['破甲']; e.hp = pyRound(e.hp * 1.4); reward = { neili: 300, silver: 40, xp: 10 }; kind = 'elite'; }
-    if (i === 10) {
-      Object.assign(e, { hp: 950, atk: 34, def: 55, hit: 132, dodge: 14, tags: ['高防', '高攻'] as EnemyTag[] });
-      reward = { neili: 800, silver: 120, xp: 50 };
-      kind = 'boss';
-    }
-    out.push({ map: 2, stage: i, name: NAMES_2[i - 1], ...e, kind, recommendedRealm: rec2(i), reward });
-  }
-  // 地图 3：10 关，精英@3(反伤)/@5(毒)/@7(净化)，Boss@10
-  for (let i = 1; i <= 10; i++) {
-    const e = {
-      hp: pyRound(340 * 1.14 ** (i - 1)), atk: pyRound(24 * 1.07 ** (i - 1), 1),
-      def: pyRound(20 * 1.1 ** (i - 1), 1), hit: 130 + 2 * i, dodge: 16, tags: [] as EnemyTag[],
-    };
-    let reward = { neili: 300, silver: 30, xp: 8 };
-    let kind: EnemyDef['kind'] = 'normal';
-    if (i === 3) { e.tags = ['反伤']; e.hp = pyRound(e.hp * 1.4); reward = { neili: 500, silver: 60, xp: 15 }; kind = 'elite'; }
-    if (i === 5) { e.tags = ['毒']; e.hp = pyRound(e.hp * 1.3); reward = { neili: 500, silver: 60, xp: 15 }; kind = 'elite'; }
-    if (i === 7) { e.tags = ['净化']; e.hp = pyRound(e.hp * 1.4); reward = { neili: 500, silver: 60, xp: 15 }; kind = 'elite'; }
-    if (i === 10) {
-      Object.assign(e, { hp: 2500, atk: 46, def: 35, hit: 152, dodge: 18, tags: ['高血', '狂暴'] as EnemyTag[] });
-      reward = { neili: 1500, silver: 200, xp: 80 };
-      kind = 'boss';
-    }
-    out.push({ map: 3, stage: i, name: NAMES_3[i - 1], ...e, kind, recommendedRealm: rec3(i), reward });
-  }
-  return out;
-}
-
-/** MVP-2A 地图 4/5 stages 1-9 + Boss 4/5 stage 10：从 mvp2Content.ts 导出的 Mvp2StageEnemy 与 MVP2_BOSS_VALUES 转为 EnemyDef。 */
-let _mvp2Stages: EnemyDef[] | null = null;
-function getMvp2Stages(): EnemyDef[] {
-  if (_mvp2Stages !== null) return _mvp2Stages;
-  const stages: EnemyDef[] = MVP2_STAGE_ENEMIES.map((entry) => {
-    const plan = MVP2_MAP_REWARD_PLANS.find((p) => p.map === entry.map)!;
-    const reward = entry.kind === 'elite' ? plan.elite : plan.normal;
-    return {
-      map: entry.map,
-      stage: entry.stage,
-      name: entry.name,
-      hp: entry.hp,
-      atk: entry.atk,
-      def: entry.def,
-      hit: entry.hit,
-      dodge: entry.dodge,
-      tags: [...entry.tags],
-      kind: entry.kind,
-      recommendedRealm: entry.recommendedRealm,
-      reward,
-    };
-  });
-  // Boss 4/5 stage 10（content.md §8.2 战斗值 + §9.3 击杀奖励）
-  for (const boss of MVP2_BOSS_VALUES) {
-    const reward = MVP2_BOSS_REWARDS.find((r) => r.boss === boss.boss)!;
-    stages.push({
-      map: boss.boss,
-      stage: 10,
-      name: boss.name,
-      hp: boss.hp,
-      atk: boss.atk,
-      def: boss.def,
-      hit: boss.hit,
-      dodge: boss.dodge,
-      tags: [...boss.tags],
-      kind: 'boss',
-      recommendedRealm: boss.boss === 4 ? 6 : 7,
-      reward: { neili: reward.neili, silver: reward.silver, xp: reward.xp },
-    });
-  }
-  _mvp2Stages = stages;
-  return _mvp2Stages;
-}
-
-/**
- * STAGES 只含 MVP-0 三地图 28 关（地图 1-3 的手写生成结果）。
- * 需要「全部五图 48 关」口径时用 `allStages()`——声望判据（`docs/rules/economy.md` §1.1/§1.2
- * 五图里程碑与 48 关全通）走该函数；地图 4/5 仍 lazy 构建，避免模块初始化期循环依赖。
- */
-export const STAGES: readonly EnemyDef[] = buildStages();
-
-/** 全部地图关卡（三图手写 + 地图 4/5 曲线生成），按需构建后缓存 */
-let _allStages: readonly EnemyDef[] | null = null;
-export function allStages(): readonly EnemyDef[] {
-  if (_allStages === null) _allStages = [...STAGES, ...getMvp2Stages()];
-  return _allStages;
-}
-
-export function getStage(map: MapId, stage: number): EnemyDef {
-  const s = (map === 4 || map === 5)
-    ? getMvp2Stages().find((x) => x.map === map && x.stage === stage)
-    : STAGES.find((x) => x.map === map && x.stage === stage);
-  if (!s) throw new Error(`no stage m${map}s${stage}`);
-  return s;
-}
-
-/** 埋点 target ID（埋点规格 §1.3）：boss1/boss2/boss3、elite_m2s4、m3s6 */
-export function targetId(e: EnemyDef): string {
-  if (e.kind === 'boss') return `boss${e.map}`;
-  if (e.kind === 'elite') return `elite_m${e.map}s${e.stage}`;
-  return `m${e.map}s${e.stage}`;
-}
-
-/** 回刷收益（公式表 §6）：内力 20% / 银两 50% / 阅历 0 */
-export function refarmReward(e: EnemyDef): { neili: number; silver: number; xp: number } {
-  return { neili: Math.round(e.reward.neili * 0.2), silver: Math.round(e.reward.silver * 0.5), xp: 0 };
-}
 
 // ─────────────────────────────────────────────────────────────
-// 长线关卡：敌人由「关卡当量」换算（content.md §2.0 v2.2，与 longline_sim.enemy_at 同式）
+// 敌人：由「关卡当量」换算（content.md §2.0，与 longline_sim.enemy_at 同式）
 // ─────────────────────────────────────────────────────────────
 
-/** 当量 1 的敌人模板（content.md §2.0） */
+/** 当量 1 的敌人模板 */
 export const ENEMY_BASE = { hp: 60, atk: 6, def: 3.5, hit: 100, dodge: 8 } as const;
+
+/** 属性类标签的修正（content.md §2.0）；反伤 / 毒 / 净化 / 破甲 / 狂暴 在战斗里结算，不改属性 */
+export const TAG_MODS: Partial<Record<EnemyTag, Partial<Record<'hp' | 'atk' | 'def' | 'dodge', number>>>> = {
+  高闪: { dodge: 3.0 },
+  高血: { hp: 2.0 },
+  高防: { def: 1.6 },
+  高攻: { atk: 1.4 },
+};
 
 /** 本关防御常数：K = 100 × 1.7^max(0, 当量 − 3)（formulas.md §1.3 v1.6） */
 export function defKAt(x: number): number {
   return 100 * Math.pow(1.7, Math.max(0, x - 3));
 }
 
-/** 当量 x 的敌人属性：气血/攻击/防御 × 1.7^(x−1)，命中 +12(x−1)，闪避 +3(x−1) */
-export function enemyStatsAt(x: number): { hp: number; atk: number; def: number; hit: number; dodge: number; defK: number } {
+/** 当量 x 的敌人属性：气血/攻击/防御 × 1.7^(x−1)，命中 +12(x−1)，闪避 +3(x−1)，再乘属性类标签修正 */
+export function enemyStatsAt(x: number, tags: readonly EnemyTag[] = []): {
+  hp: number; atk: number; def: number; hit: number; dodge: number; defK: number;
+} {
   const k = Math.pow(1.7, x - 1);
-  return {
+  const s = {
     hp: ENEMY_BASE.hp * k, atk: ENEMY_BASE.atk * k, def: ENEMY_BASE.def * k,
     hit: ENEMY_BASE.hit + 12 * (x - 1), dodge: ENEMY_BASE.dodge + 3 * (x - 1),
     defK: defKAt(x),
   };
+  for (const t of tags) {
+    for (const [key, mult] of Object.entries(TAG_MODS[t] ?? {}) as ['hp' | 'atk' | 'def' | 'dodge', number][]) {
+      s[key] *= mult;
+    }
+  }
+  return s;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 前沿（图 × 难度）与关卡
+// ─────────────────────────────────────────────────────────────
+
+interface StageRow {
+  stage: number; kind: EnemyDef['kind']; name: string; x: number; tags: string[];
+  recommendedRealm: number; silver: number; xp: number; final?: boolean;
+}
+interface TrackRow { map: number; tier: number; stages: StageRow[] }
+
+export const trackKey = (map: MapId, tier: TierId) => `${map}-${tier}`;
+/** 关卡键：`m{图}t{难度}s{关}`（存档 clearedStages、成就 fameClaimed 共用） */
+export const stageKey = (map: MapId, tier: TierId, stage: number) => `m${map}t${tier}s${stage}`;
+const KEY_RE = /^m(\d)t(\d)s(\d+)$/;
+export function parseStageKey(key: string): { map: MapId; tier: TierId; stage: number } | null {
+  const m = KEY_RE.exec(key);
+  return m ? { map: Number(m[1]) as MapId, tier: Number(m[2]) as TierId, stage: Number(m[3]) } : null;
+}
+
+const TRACKS: ReadonlyMap<string, readonly StageRow[]> = new Map(
+  (stageData.tracks as TrackRow[]).map((t) => [trackKey(t.map as MapId, t.tier as TierId), t.stages]),
+);
+
+/**
+ * 封存（pacing/design.md §4）：显示为锁定、写「大周天未开」。
+ * 图 3 绝境需境界 6 之后才开，本版一并封存（content.md §2.0 v2.3）。
+ */
+export function isSealed(map: MapId, tier: TierId): boolean {
+  return !TRACKS.has(trackKey(map, tier));
+}
+
+/** 该前沿的关数（含 Boss）；封存为 0 */
+export function trackLength(map: MapId, tier: TierId): number {
+  return TRACKS.get(trackKey(map, tier))?.length ?? 0;
+}
+
+export function getStage(map: MapId, tier: TierId, stage: number): EnemyDef {
+  const row = TRACKS.get(trackKey(map, tier))?.[stage - 1];
+  if (!row) throw new Error(`no stage ${stageKey(map, tier, stage)}`);
+  return {
+    map, tier, stage,
+    name: row.name,
+    ...enemyStatsAt(row.x, row.tags as EnemyTag[]),
+    tags: row.tags as EnemyTag[],
+    kind: row.kind,
+    recommendedRealm: row.recommendedRealm,
+    reward: { neili: 0, silver: row.silver, xp: row.xp },
+    x: row.x,
+    final: row.final ?? false,
+  };
+}
+
+/** 全部关卡（按图、难度、关序），供声望判据与测试遍历 */
+export function allStages(): EnemyDef[] {
+  const out: EnemyDef[] = [];
+  for (const t of stageData.tracks as TrackRow[]) {
+    for (const s of t.stages) out.push(getStage(t.map as MapId, t.tier as TierId, s.stage));
+  }
+  return out;
+}
+
+/** 前沿深浅：难度优先、同档比图序（economy.md §1.2）；只有段末 Boss 计深浅 */
+export const trackDepth = (map: MapId, tier: TierId) => tier * 10 + map;
+
+/** 埋点 target ID：关卡键 */
+export function targetId(e: EnemyDef): string {
+  return stageKey(e.map, e.tier, e.stage);
+}
+
+/** 回刷收益（公式表 §6）：银两 50% / 阅历 0；关卡不掉内力 */
+export function refarmReward(e: EnemyDef): { neili: number; silver: number; xp: number } {
+  return { neili: 0, silver: Math.round(e.reward.silver * 0.5), xp: 0 };
 }

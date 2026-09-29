@@ -27,7 +27,7 @@ describe('golden 对照 · 长线战斗 vs longline_sim.py', () => {
       expect(b.hit).toBeCloseTo(c.build.hit, 9);
       expect(b.dodge).toBeCloseTo(c.build.dodge, 9);
 
-      const st = enemyStatsAt(c.x);
+      const st = enemyStatsAt(c.x, c.tags);
       expect(st.hp).toBeCloseTo(c.enemy.hp, 6);
       expect(st.atk).toBeCloseTo(c.enemy.atk, 6);
       expect(st.def).toBeCloseTo(c.enemy.dfs, 6);
@@ -36,7 +36,7 @@ describe('golden 对照 · 长线战斗 vs longline_sim.py', () => {
       expect(st.defK).toBeCloseTo(c.defK, 6);
 
       const enemy: EnemyDef = {
-        map: 1, stage: 1, name: 'golden', kind: 'normal', recommendedRealm: 1,
+        map: 1, tier: 0, stage: 1, name: 'golden', kind: 'normal', recommendedRealm: 1,
         reward: { neili: 0, silver: 0, xp: 0 }, tags: [...c.tags], ...st,
       };
       const r = fight(b, enemy, { mode: 'ev' });

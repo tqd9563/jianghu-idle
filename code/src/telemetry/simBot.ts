@@ -10,6 +10,7 @@ import { vi } from 'vitest';
 import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
 import { effBreakCost, nextStageOf, useGameStore, type MapNo } from '../store/gameStore';
+import { trackLength } from '../engine/enemies';
 
 export const st = () => useGameStore.getState();
 
@@ -50,9 +51,10 @@ export function restIfHurt(): void {
   while (Object.values(st().injuries ?? {}).some((w) => w.severity >= 1) && guard-- > 0) advance(60);
 }
 
+/** 模拟玩家只推「初入」一档（第 6 步改「一天一世」模型时再扩到三档） */
 export function challenge(map: MapNo, stage: number): boolean {
   restIfHurt();
-  st().challengeStage(map, stage);
+  st().challengeStage(map, 0, stage);
   playBattle();
   return st().battle!.result.win;
 }
@@ -117,9 +119,9 @@ export function adjust(route: RouteId): void {
 export function pushMap(map: MapNo, route: RouteId, opts: { stopAfterFirstBossAttempt?: boolean } = {}): void {
   let guard = 120;
   for (;;) {
-    const next = nextStageOf(map, st().clearedStages);
+    const next = nextStageOf(map, 0, st().clearedStages);
     if (next === null || guard-- <= 0) return;
-    const isBoss = next === (map === 1 ? 8 : 10);
+    const isBoss = next === trackLength(map, 0);
     const win = challenge(map, next);
     if (isBoss && opts.stopAfterFirstBossAttempt) return;
     if (!win) {

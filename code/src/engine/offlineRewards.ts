@@ -3,7 +3,7 @@
  * 纯函数模块：不引入 UI/存储依赖；结算时点 = 回归上线一次性结算（store.init），离线期间无后台结算。
  * 机制内部称「离线收益」；玩家侧文案一律「闭关 / 出关结算」（术语纪律，表 A 推导锚点）。
  */
-import { MAP_IDS, MAP_STAGE_COUNT, type MapId } from './enemies';
+import { MAP_IDS, parseStageKey, trackLength, type MapId } from './enemies';
 
 /** 离线上限与效率（offline-rewards.md §1.4 v2.0）：闭关以一日为限，效率恒定 60% */
 export const OFFLINE_CAP_MIN = 1440;
@@ -55,38 +55,34 @@ export const OFFLINE_SETTLEMENT_RULE = {
   dailyCapEnabled: false,
 } as const;
 
+/** 表 A 的旧版关卡数（全局 1–48 序号的口径；v2.0 起只用于换算银两 / 阅历档位） */
+const LEGACY_STAGE_COUNT: Record<MapId, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
+
 /**
- * 当前最大可挂机关卡（全局 1–48 序号；offline-rewards.md §2.2 驱动字段）。
- * 首发实现口径 = 已通关的最高关卡（关卡在图内严格顺序通关、图间顺序解锁，故为前缀）；
- * 未通任何关时取 1（关卡 1 已解锁即为收益来源）。
+ * 当前最大可挂机关卡（表 A 全局 1–48 序号，offline-rewards.md §2 驱动字段）。
+ * 长线关卡结构改为「图 × 难度 × 关」后，按本世推到的最深「初入」地图及其进度比例折回旧序号：
+ * 银两 / 阅历只是离线的附带收益，档位粗粒度即可。未通任何关时取 1。
  */
 export function maxIdleStage(clearedStages: readonly string[]): number {
   let best = 1;
   for (const key of clearedStages) {
-    const m = /^m(\d+)s(\d+)$/.exec(key);
-    if (!m) continue;
-    const map = Number(m[1]) as MapId;
-    if (!(MAP_IDS as readonly number[]).includes(map)) continue;
-    const stage = Number(m[2]);
-    if (stage < 1 || stage > MAP_STAGE_COUNT[map]) continue;
-    const g = globalStageOffset(map) + stage;
+    const p = parseStageKey(key);
+    if (!p || p.tier !== 0) continue;
+    const total = trackLength(p.map, 0);
+    if (total === 0) continue;
+    let offset = 0;
+    for (const id of MAP_IDS) {
+      if (id >= p.map) break;
+      offset += LEGACY_STAGE_COUNT[id];
+    }
+    const g = offset + Math.ceil((p.stage / total) * LEGACY_STAGE_COUNT[p.map]);
     if (g > best) best = g;
   }
   return best;
 }
 
-/** 地图起始全局序号 = 其前所有地图关卡数之和（由 MAP_IDS 派生，新增地图无需改此处） */
-function globalStageOffset(map: MapId): number {
-  let sum = 0;
-  for (const id of MAP_IDS) {
-    if (id >= map) break;
-    sum += MAP_STAGE_COUNT[id];
-  }
-  return sum;
-}
-
 /** 全部地图关卡总数（表 A 的全局序号上界，首发 = 48） */
-export const TOTAL_GLOBAL_STAGES: number = MAP_IDS.reduce((n, id) => n + MAP_STAGE_COUNT[id], 0);
+export const TOTAL_GLOBAL_STAGES: number = MAP_IDS.reduce((n, id) => n + LEGACY_STAGE_COUNT[id], 0);
 
 /** 按最大可挂机关卡匹配表 A（越界 clamp 到首/末档） */
 export function findOfflineRewardStage(currentMaxIdleStage: number): OfflineRewardStage {

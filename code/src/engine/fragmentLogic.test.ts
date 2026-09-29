@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { useGameStore } from '../store/gameStore';
 import { makeBuild } from './combat';
@@ -62,13 +62,6 @@ describe('manual fragment engine', () => {
 });
 
 describe('manual fragments store integration', () => {
-  const resolveCurrentBattle = () => {
-    const battle = useGameStore.getState().battle!;
-    useGameStore.setState({
-      battle: { ...battle, revealed: battle.result.turns.length - 1, nextRevealAt: 0 },
-    });
-    useGameStore.getState().tick(Date.now());
-  };
 
   beforeEach(() => {
     useGameStore.getState().hardReset();
@@ -90,45 +83,13 @@ describe('manual fragments store integration', () => {
     });
   });
 
-  it('requires all trial prerequisites and grants the first animated trial win only once', () => {
-    useGameStore.setState({
-      route: 'huashan', realm: 1, clearedStages: ['m2s10'], ownedMechNodes: [], completedBooks: [],
-    });
-    useGameStore.getState().challengeTrial('trial_jinglei');
-    expect(useGameStore.getState().battle).toBeNull();
-
-    useGameStore.setState({ realm: 5, route: 'shaolin' });
-    useGameStore.getState().challengeTrial('trial_jinglei');
-    expect(useGameStore.getState().battle).toBeNull();
-
-    useGameStore.setState({ route: 'huashan', clearedStages: [] });
-    useGameStore.getState().challengeTrial('trial_jinglei');
-    expect(useGameStore.getState().battle).toBeNull();
-
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    useGameStore.setState({ clearedStages: ['m2s10'], skillLevel: 10, ownedMechNodes: ['hs1', 'hs2', 'hs3'] });
-    useGameStore.getState().challengeTrial('trial_jinglei');
-    expect(useGameStore.getState()).toMatchObject({ pendingTab: 'battle', battle: { mode: 'trial', trialId: 'trial_jinglei', resolved: false } });
-    resolveCurrentBattle();
-    const pagesAfterWin = useGameStore.getState().collectedPages;
-    useGameStore.getState().challengeTrial('trial_jinglei');
-    resolveCurrentBattle();
-    expect(pagesAfterWin).toEqual(['true_jinglei_page_1']);
-    expect(useGameStore.getState().collectedPages).toEqual(pagesAfterWin);
-    expect(useGameStore.getState().trialWinsThisRun).toEqual({ trial_jinglei: 1 });
-    vi.restoreAllMocks();
-  });
+  // 试炼随秘籍阁冻结下线（issue #22 第 5b 步，fragmentLogic.FRAGMENTS_FROZEN），重做时补回用例
 
   it('retains collection and resets per-run gates across retire with telemetry snapshots', () => {
-    const allStages = [
-      ...Array.from({ length: 8 }, (_, i) => `m1s${i + 1}`),
-      ...Array.from({ length: 10 }, (_, i) => `m2s${i + 1}`),
-      ...Array.from({ length: 10 }, (_, i) => `m3s${i + 1}`),
-    ];
     useGameStore.setState({
-      realm: 5, route: 'huashan', clearedStages: allStages, runPlaySec: 1800,
+      realm: 5, route: 'huashan', clearedStages: [], runPlaySec: 1800,
       collectedPages: ['legacy_intro_page_1'], completedBooks: [],
-      bossKillsThisRun: { boss_1: 1 }, trialWinsThisRun: { trial_jinglei: 1 }, shopPurchasesThisRun: 1,
+      shopPurchasesThisRun: 1,
     });
     useGameStore.getState().openManualShelf();
     useGameStore.getState().startSession('fragment-test');
@@ -136,7 +97,7 @@ describe('manual fragments store integration', () => {
     useGameStore.getState().proceedRetire();
     useGameStore.getState().confirmRetire();
     expect(useGameStore.getState()).toMatchObject({
-      collectedPages: ['legacy_intro_page_1'], bossKillsThisRun: {}, trialWinsThisRun: {}, shopPurchasesThisRun: 0,
+      collectedPages: ['legacy_intro_page_1'], shopPurchasesThisRun: 0,
     });
     expect(getEvents().find((event) => event.e === 'manual_shelf_opened')).toMatchObject({
       collected_count: 1, completed_count: 0, missing_count: 17,

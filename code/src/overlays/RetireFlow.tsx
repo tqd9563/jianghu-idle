@@ -2,14 +2,18 @@
  * 归隐流程：三栏预览 → 二次确认（规格书 §8.6-1/2 硬性要求）
  * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.0 §2/§3（冻结，不得改写）。
  */
-import { getStage, MAP_STAGE_COUNT, type MapId } from '../engine/enemies';
+import { getStage, mapName, TIER_NAMES, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { deepestBoss, settleRetire, suhuiTotal } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';
 import { RetireHint } from '../components/RetireHint';
 import { fmtBig } from '../fmt';
 
-/** 深浅 → 该图 Boss 名（本版深浅 = 图序，三档难度随第 5 步接入） */
-const bossName = (depth: number) => getStage(depth as MapId, MAP_STAGE_COUNT[depth as MapId]).name;
+/** 深浅（难度 × 10 + 图序）→「图 · 难度 的 Boss 名」 */
+function bossName(depth: number): string {
+  const map = (depth % 10) as MapId;
+  const tier = Math.floor(depth / 10) as TierId;
+  return `${mapName(map)} · ${TIER_NAMES[tier]}的${getStage(map, tier, trackLength(map, tier)).name}`;
+}
 
 export function RetireFlow() {
   const s = useGameStore();

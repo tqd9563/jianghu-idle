@@ -1,6 +1,5 @@
 import { useGameStore } from '../store/gameStore';
-import { BOOK_TABLE, TRIAL_TABLE } from '../engine/fragments';
-import { TrialEntry } from '../components/TrialEntry';
+import { BOOK_TABLE } from '../engine/fragments';
 import { ROUTES } from '../engine/routes';
 
 export function FragmentShelf() {
@@ -118,9 +117,7 @@ export function FragmentShelf() {
                 天下真传皆在世外隐士手中。每位隐士怀揣一部绝世真传，其功法卓绝，非等闲之辈可敌。<br/><br/>
                 击败本轮 Boss 2 后，对应门径隐士行踪显现。战而胜之，方可夺其真传。
               </p>
-              {TRIAL_TABLE.map(trial => (
-                <TrialEntry key={trial.trial_id} trial={trial} />
-              ))}
+              {/* 试炼入口随秘籍阁冻结下线（issue #22 第 5b 步），重做时恢复 */}
             </div>
           </section>
 

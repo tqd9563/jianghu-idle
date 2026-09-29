@@ -35,8 +35,8 @@
 | `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx, zhoutianMandalaModel.ts |
 | `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定 / 修炼面板呈现方案） | ZhoutianMandala.tsx, zhoutianMandalaModel.ts |
 | `systems/zhoutian/sim.py` | 周天 sim（v4 冲穴耗内力制，判据 W1–W4） | acupoints.test.ts |
-| `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 → 境界成本/宿慧/声望经济，唯一数值源） | design.md §3、economy.md v2 由其生成 |
-| `systems/pacing/design.md` | 长线节奏落地设计（16 条裁决总账：每日归隐、归隐门槛、离线、战斗长线化、战力预算、版本天花板；issue #22） | — |
+| `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 + 转世节奏 → 寿元与年岁速率/境界成本/宿慧；按现行规则逐世推演，唯一数值源） | design.md §3、economy.md v2 由其生成 |
+| `systems/pacing/design.md` | 长线节奏落地设计（23 条裁决总账：多天一世、寿元与年岁、归隐门槛、离线、战斗长线化、战力预算、版本天花板；issue #22） | — |
 | `systems/sim/longline_sim.py` | 长线战斗侧求解器（前沿曲线 → 关卡当量/Boss 门槛/武学计价/首通声望，判据 5 条） | formulas.md §1.3/§3.4/§6.1、content.md §2.0、economy.md §1.3/§4 由其生成 |
 | `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
@@ -44,8 +44,8 @@
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |
 | `systems/injury/spec.md` | 受伤系统规格（伤型表/严重度/压制/恢复/折寿接口，可进实现） | — |
 | `systems/sim/injury_sim.py` | 受伤系统标定 sim（判据 V6–V9） | — |
-| `systems/sim/reincarnation_sim.py` | 转世时间线标定 sim（判据 V1–V7） | reincarnation.ts（年岁速率） |
-| `systems/sim/pace_measured.json` | 实测世时长（转世标定输入，由 `code/src/telemetry/pace.sim.test.ts` 生成，节奏漂移 >10% 该测试即失败） | pace.sim.test.ts |
+| `systems/sim/reincarnation_sim.py` | 转世判据复核（V1–V7；寿元与年岁速率已由 pacing_sim 生成） | — |
+| `systems/sim/pace_measured.json` | 实测世时长（压缩原型时期的转世标定输入；第 6 步代码实装时改为真实代码的里程碑实测） | pace.sim.test.ts |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）

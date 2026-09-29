@@ -3,14 +3,23 @@
 节奏求解器（pacing solver）—— 长线节奏与声望经济的唯一数值源。
 
 依赖方向（不可颠倒）：
-    里程碑表（体验目标）
-      → 乘区成长要求 M(d)
-        → 各境界内力总额  → 境界内周天配额
-        → 宿慧表（首达奖励）
-        → 声望经济要求（每轮声望产出 / 节点定价）
+    里程碑表（体验目标）+ 转世节奏（各阶段一世活几天）
+      → 寿元上限 + 年岁速率（一世在第几天寿终）
+        → 按标准玩家推演每一世 → 乘区 M 的实际轨迹
+          → 各境界内力总额  → 境界内周天配额
+          → 宿慧表（首达奖励）
 
-改里程碑或任一外生假设后重跑本脚本，所有数值再生；
+改里程碑、转世节奏或任一外生假设后重跑本脚本，所有数值再生；
 禁止手工在 design.md / economy.md 里改单个数字。
+
+多天一世（2026-09-29 重开裁决 1，`../pacing/design.md` §2）：
+    原模型假设玩家每天归隐一次。但声望只按时间累计、与归隐频率无关，而一世越长攒的内力越多，
+    所以最优打法是后期越活越长。现在改为：寿元随当前境界提高、年岁速率随历来最高境界放慢，
+    寿终时自动归隐（寿终正寝不受罚）。
+
+按现行代码规则推演（2026-09-29 用户选定「维持丹田封顶」）：
+    丹田满了多出的产出散掉，突破只能在线做。所以标准玩家在「寿元撑不到下次上线」的那次上线时，
+    先突破、推前沿，再归隐，让新的一世从在线时段起爬，不在夜里寿终、白挂一夜。
 
 用法：python3 docs/systems/sim/pacing_sim.py
 """
@@ -24,14 +33,21 @@ import math
 # 首次「摸到」该境界的天数（第 1 天 = 开服首日）
 MILESTONE_DAY: dict[int, int] = {2: 1, 3: 7, 4: 21, 5: 50, 6: 100}
 
+# 转世节奏：阶段（历来最高境界）→ 一世活几天（2026-09-29 用户选定方案甲）
+LIFE_DAYS: dict[int, int] = {1: 1, 2: 1, 3: 2, 4: 3, 5: 5}
+
 # ═══════════════════════════════════════════════════════════
 # 输入 2：外生假设（拍板项，改动会整体缩放）
 # ═══════════════════════════════════════════════════════════
 
+ONLINE_H = 4            # 标准玩家每天在线小时（每天同一时刻上线）
 E_HOURS = 16.0          # 标准玩家每日有效产出时长（在线 + 离线折算）
 OFFLINE_EFF = 0.60      # 离线效率：4h 在线 + 20h 离线 × 60% = 16h ✓
-RETIRES_PER_DAY = 1.0   # 归隐频率
 SUHUI_SHARE = 0.20      # 乘区成长中由「宿慧」（首达奖励）交付的比例，其余由声望阁
+
+# 寿元（reincarnation/spec.md §3.1）：初始 18 岁；上限随「当前境界」提高，武侠范畴内不过 150
+INIT_AGE = 18
+LIFESPAN: dict[int, int] = {1: 70, 2: 70, 3: 90, 4: 110, 5: 130, 6: 150}
 
 # 周天段数与配额公比
 ZHOUTIAN_N: dict[int, int] = {1: 4, 2: 3, 3: 4, 4: 6, 5: 8}
@@ -46,21 +62,18 @@ CHONGXUE_OVERHEAD: dict[int, float] = {1: 0.19, 2: 0.15, 3: 0.31, 4: 0.31, 5: 0.
 # 门径武学份额：标准玩家把全部内力产出的这一比例花在门径武学上（longline_sim.py 标定）
 SKILL_SHARE = 0.20
 
-# 产出类节点（声望阁「修行感悟」）：第 n 级 +NODE_GAIN 基础产出，价格 = NODE_P0 × n
-NODE_GAIN = (1 - SUHUI_SHARE) / 4   # 每天购 4 级即交付声望阁的日斜率；表五闭式解 c = NODE_P0 依赖「每天 4 级」
-NODE_P0 = 10.0          # 声望；由表五闭式解反标定——基础声望系数 c = NODE_P0
+# 声望阁「修行感悟」：第 n 级 +NODE_GAIN 基础产出，价格 = NODE_P0 × n（economy.md §3）
+NODE_GAIN = 0.20
+NODE_P0 = 10.0          # 声望；基础声望系数 c 同为 10（economy.md §1.1）
+
 
 def rate(realm: int) -> float:
     """基础挂机产出/秒（现行公式，本次不改）"""
     return 9 * 1.25 ** (realm - 1)
 
-E = E_HOURS * 3600      # 单轮/单日预算（秒）
 
-# ═══════════════════════════════════════════════════════════
-# 求解 1：各境界内力总额
-#   玩家在第 d 天的乘区 M(d) = d（见求解 2 的构造）
-#   「第 d_X 天首次摸到境界 X」⇔ 累计基准时长 BaseTime(X) = E × d_X
-# ═══════════════════════════════════════════════════════════
+E = E_HOURS * 3600      # 一天的有效产出（秒，M=1 口径）
+
 
 def sig3(v: float) -> int:
     """圆整到 3 位有效数字，便于写进数值表"""
@@ -69,9 +82,141 @@ def sig3(v: float) -> int:
     mag = 10 ** (int(math.log10(v)) - 2)
     return int(round(v / mag) * mag)
 
-BASE_TIME = {1: 0.0}                       # 到达境界 X 所需的累计基准时长（秒，M=1 口径）
-for x, d in MILESTONE_DAY.items():
-    BASE_TIME[x] = E * d
+
+# ═══════════════════════════════════════════════════════════
+# 求解 1：年岁速率
+#   阶段 P 的一世活 LIFE_DAYS[P] 天，寿终于境界 P 的寿元。寿元比整天数多留一个在线时段：
+#   第 L 天上线时还活着，先突破、推前沿，再归隐——新的一世从在线时段起爬
+#   ⇒ 年岁速率 = (寿元 − 18) ÷ (L 天 + 在线时长)
+#   速率跟「历来最高境界」走，同一阶段每一世都一样；首达新境界的那一刻起换新速率；
+#   境界 6 沿用境界 5 的速率（本版终点）
+# ═══════════════════════════════════════════════════════════
+
+def age_rate(peak: int) -> float:
+    """年 / 天"""
+    p = min(peak, 5)
+    return (LIFESPAN[p] - INIT_AGE) / (LIFE_DAYS[p] + ONLINE_H / 24)
+
+
+# ═══════════════════════════════════════════════════════════
+# 推演：标准玩家（按现行代码规则，2026-09-29 用户选定「维持丹田封顶」）
+#   · 每天固定在线 ONLINE_H 小时（第 0 小时起），其余离线，离线产出 × OFFLINE_EFF
+#   · 丹田上限 = 本境界突破所需；满了多出的产出散掉。突破（含冲穴）只能在线做
+#   · 世内乘区 M = 1 + 修行感悟 + 宿慧；修行感悟只在归隐时用本世声望买，宿慧首达即时生效
+#   · 归隐时机：上线时若寿元撑不到下次上线，当场归隐——新的一世从在线时段起爬，
+#     不在夜里寿终、白挂一夜。否则寿终自动归隐
+# 以 NEED[r]（境界 r 要攒的「M 加权有效秒」，含冲穴附加与武学份额）为未知数求解
+# ═══════════════════════════════════════════════════════════
+
+STEPS_PER_DAY = 24      # 推演步长 1 小时
+
+
+class Life:
+    __slots__ = ("start", "end", "m_base", "levels", "peak_at_start", "age_end")
+
+    def __init__(self, start: float, m_base: float, levels: int, peak: int):
+        self.start, self.end, self.m_base, self.levels, self.peak_at_start = start, start, m_base, levels, peak
+        self.age_end = float(INIT_AGE)
+
+
+def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 1.0,
+         daily: bool = False, days: int = 130, die_at: float | None = None, weak_years: float = 0.0,
+         weak_mult: float = 0.6) -> dict:
+    """推演 days 天。daily=True 为「每次上线都归隐」的对照玩家；shop_frac 为声望阁只买标准量的比例；
+    die_at 为在该时刻（天）战死一次，来世前 weak_years 年产出 × weak_mult（魂魄未稳）。
+    返回 first（首达日）、lives（每一世）、levels_by_day（每天开始时的修行感悟级数）。"""
+    reached: set[int] = set()
+    first: dict[int, int] = {}
+    lives: list[Life] = []
+    levels_by_day: dict[int, int] = {}
+    levels, wallet = 0, 0.0
+    k, end_k = 0, days * STEPS_PER_DAY
+    dt = 1 / STEPS_PER_DAY
+    pending_weak = False
+    while k < end_k:
+        weak_until = INIT_AGE + weak_years if pending_weak else 0.0
+        pending_weak = False
+        life = Life(k * dt, 1 + NODE_GAIN * levels, levels, max([1, *reached]))
+        lives.append(life)
+        age, realm, held, life_rep = float(INIT_AGE), 1, 0.0, 0.0
+        while k < end_k:
+            if die_at is not None and k * dt >= die_at:
+                die_at, pending_weak = None, True       # 战死：本世就此结束，来世魂魄未稳
+                break
+            hour = k % STEPS_PER_DAY
+            online = hour < ONLINE_H
+            if hour == 0:
+                levels_by_day[k // STEPS_PER_DAY + 1] = levels
+                # 上线先把夜里攒满的突破掉（首达记在当天）
+                while realm in need and held >= need[realm]:
+                    held -= need[realm]
+                    realm += 1
+                    if realm not in first:
+                        first[realm] = k // STEPS_PER_DAY + 1
+                        reached.add(realm)
+                # 寿元撑不到下次上线就先归隐（还没到归隐门槛的第一世除外）
+                if k > round(life.start * STEPS_PER_DAY) and realm >= 2 and (
+                        daily or age + age_rate(max([1, *reached])) >= LIFESPAN[realm]):
+                    break
+            m = life.m_base + sum(suhui.get(x, 0.0) for x in reached)
+            eff = (1.0 if online else OFFLINE_EFF) * (weak_mult if age < weak_until else 1.0)
+            gain = 3600 * m * eff
+            life_rep += NODE_P0 * m * eff
+            cap = need.get(realm)
+            held = held + gain if cap is None else min(held + gain, cap)
+            k += 1
+            day = (k - 1) // STEPS_PER_DAY + 1
+            while online and realm in need and held >= need[realm]:
+                held -= need[realm]
+                realm += 1
+                if realm not in first:
+                    first[realm] = day
+                    reached.add(realm)
+            age += age_rate(max([1, *reached])) * dt
+            if age >= LIFESPAN[realm]:
+                break
+        life.end, life.age_end = k * dt, age
+        wallet += shop_frac * life_rep
+        while wallet >= NODE_P0 * (levels + 1):
+            wallet -= NODE_P0 * (levels + 1)
+            levels += 1
+    return dict(first=first, lives=lives, levels_by_day=levels_by_day)
+
+
+# ═══════════════════════════════════════════════════════════
+# 求解 2：各境界所需与宿慧（逐个里程碑二分 + 外层不动点迭代）
+#   NEED[X−1] 取「最晚第 d_X 天首达 X」的最大值；宿慧：首达 X 前手上的宿慧（境界 2..X−1）
+#   = 声望阁乘区的 SUHUI_SHARE/(1−SUHUI_SHARE)。两者互相影响，反复求解直到稳定
+# ═══════════════════════════════════════════════════════════
+
+def solve() -> tuple[dict[int, float], dict[int, float]]:
+    need: dict[int, float] = {}
+    suhui: dict[int, float] = {x: 0.0 for x in range(2, 6)}
+    for _ in range(8):
+        prev = dict(need)
+        for x in sorted(MILESTONE_DAY):
+            lo, hi = 1.0, 1e12
+            for _ in range(60):
+                mid = (lo * hi) ** 0.5
+                trial = {**{r: v for r, v in need.items() if r < x - 1}, x - 1: mid}
+                got = play(trial, suhui, days=MILESTONE_DAY[x])["first"].get(x)
+                if got is not None:
+                    lo = mid
+                else:
+                    hi = mid
+            need[x - 1] = lo
+            if x - 1 >= 2:
+                lv = play(need, suhui, days=MILESTONE_DAY[x])["levels_by_day"][MILESTONE_DAY[x]]
+                suhui[x - 1] = SUHUI_SHARE / (1 - SUHUI_SHARE) * NODE_GAIN * lv - sum(suhui[r] for r in range(2, x - 1))
+        if prev and all(abs(need[r] / prev[r] - 1) < 1e-4 for r in need):
+            break
+    return need, {x: round(v, 1) for x, v in suhui.items()}
+
+
+NEED, SUHUI = solve()
+BASE_TIME: dict[int, float] = {1: 0.0}      # 到达境界 X 所需的累计「M 加权有效秒」
+for r in range(1, 6):
+    BASE_TIME[r + 1] = BASE_TIME[r] + NEED[r]
 
 REALM_TOTAL: dict[int, int] = {}           # 境界 r 的突破总额（分 N 段周天缴纳）
 REALM_SPEND: dict[int, float] = {}         # 停留在境界 r 期间的全部内力开销 = 产出
@@ -80,71 +225,35 @@ for r in range(1, 6):
     # 产出 = 总额 × (1 + 冲穴附加) ÷ (1 − 武学份额)  ⇒  总额 = 产出 × (1 − 武学份额) ÷ (1 + 冲穴附加)
     REALM_TOTAL[r] = sig3(REALM_SPEND[r] * (1 - SKILL_SHARE) / (1 + CHONGXUE_OVERHEAD[r]))
 
+# 标准玩家的推演结果（战斗侧 longline_sim 按这张「每一世」表逐世模拟）
+STANDARD = play(NEED, SUHUI)
+LIVES: list[Life] = STANDARD["lives"]
+
+
 def quotas(realm: int) -> list[float]:
     """境界内各周天配额：等比数列，末段 = 该境界总额的一半（公比 2）"""
     n, total = ZHOUTIAN_N[realm], REALM_TOTAL[realm]
     q1 = total / ((QUOTA_RATIO ** n - 1) / (QUOTA_RATIO - 1))
     return [q1 * QUOTA_RATIO ** i for i in range(n)]
 
-# ═══════════════════════════════════════════════════════════
-# 求解 2：乘区的两层交付（宿慧 SUHUI_SHARE + 声望阁其余）
-#   要「在第 d_X 天刚好够得着境界 X」，此刻乘区必须 = d_X，
-#   而此刻玩家手上只有境界 2..X-1 的宿慧（X 尚未达成）。
-# ═══════════════════════════════════════════════════════════
 
-SHOP_SLOPE = (1 - SUHUI_SHARE)             # 声望阁每天贡献的乘区（线性）
-SUHUI: dict[int, float] = {}               # 首达境界 X 的一次性永久产出加成
-_acc = 0.0
-for x in sorted(MILESTONE_DAY):
-    need = SUHUI_SHARE * (MILESTONE_DAY[x] - 1)   # 到达 X 时应持有的宿慧总量
-    if x - 1 >= 2:
-        SUHUI[x - 1] = need - _acc
-        _acc = need
+def life_at(t: float) -> Life:
+    """时刻 t（天，从 0 起）活着的那一世"""
+    for life in LIVES:
+        if life.start <= t < life.end:
+            return life
+    return LIVES[-1]
 
-def multiplier(day: float, reached: set[int]) -> float:
-    """第 day 天、已首达过 reached 中各境界时的总乘区"""
-    return 1 + SHOP_SLOPE * (day - 1) + sum(SUHUI.get(x, 0.0) for x in reached)
 
-# ═══════════════════════════════════════════════════════════
-# 求解 3：声望经济
-#   声望阁需每天交付 SHOP_SLOPE 的乘区 → 每天买 SHOP_SLOPE/NODE_GAIN 级节点
-#   节点第 n 级价 = NODE_P0 × n ⇒ 每日所需声望随天数线性增长
-#   ⇒ 归隐声望必须与「本轮内力产出」挂钩，而不能只看到达境界（见输出注解）
-# ═══════════════════════════════════════════════════════════
-
-LEVELS_PER_DAY = SHOP_SLOPE / NODE_GAIN
-
-def rep_needed_on_day(day: int) -> float:
-    """第 day 天当天需要买下的节点总价 = 当天须获得的声望"""
-    lo = LEVELS_PER_DAY * (day - 2) + 1
-    hi = LEVELS_PER_DAY * (day - 1)
-    n_lo, n_hi = math.ceil(lo), math.floor(hi)
-    return NODE_P0 * sum(range(max(1, n_lo), n_hi + 1))
-
-# ═══════════════════════════════════════════════════════════
-# 验证：按天推演，检查里程碑是否逐条命中
-# ═══════════════════════════════════════════════════════════
-
-def simulate(days: int = 120) -> dict[int, int]:
-    reached: set[int] = set()
-    first_day: dict[int, int] = {}
-    for d in range(1, days + 1):
-        m = multiplier(d, reached)
-        afford = E * m
-        top = max((x for x in BASE_TIME if BASE_TIME[x] <= afford), default=1)
-        for x in range(2, top + 1):
-            if x not in first_day:
-                first_day[x] = d
-                reached.add(x)
-                m = multiplier(d, reached)          # 首达即时到账，可能连跳
-    return first_day
+def milestone_days(shop_frac: float = 1.0, daily: bool = False, days: int = 400) -> dict[int, int]:
+    return play(NEED, SUHUI, shop_frac=shop_frac, daily=daily, days=days)["first"]
 
 
 def main() -> None:
     w = 92
     print("═" * w)
-    print(f"节奏求解器 · 输入：E={E_HOURS}h/天（离线效率 {OFFLINE_EFF:.0%}）、"
-          f"归隐 {RETIRES_PER_DAY:.0f}次/天、宿慧占比 {SUHUI_SHARE:.0%}、周天公比 {QUOTA_RATIO:.0f}")
+    print(f"节奏求解器 · 输入：每天在线 {ONLINE_H}h + 离线 {24 - ONLINE_H}h（离线效率 {OFFLINE_EFF:.0%}）、"
+          f"丹田封顶、只能在线突破、宿慧占比 {SUHUI_SHARE:.0%}、周天公比 {QUOTA_RATIO:.0f}")
     print(f"          内力去处：武学份额 {SKILL_SHARE:.0%}、冲穴附加 "
           + " / ".join(f"境界{r} {CHONGXUE_OVERHEAD[r]:.0%}" for r in range(1, 6)))
     print("═" * w)
@@ -162,77 +271,68 @@ def main() -> None:
               f"{t:>9.0f}h{q[0]:>12,.0f}{q[-1]:>14,.0f}")
         prev = REALM_TOTAL[r]
 
+    first = STANDARD["first"]
     print("\n【表二】宿慧（首达境界的一次性永久产出加成）")
-    print(f"{'首达境界':<10}{'宿慧':>10}{'达成日':>9}{'达成后乘区':>12}{'距下一里程碑':>14}")
-    print("-" * 58)
-    reached: set[int] = set()
+    print(f"{'首达境界':<10}{'宿慧':>10}{'达成日':>9}")
+    print("-" * 30)
     for x in sorted(SUHUI):
-        d = MILESTONE_DAY[x]
-        reached.add(x)
-        m_after = multiplier(d, reached)
-        nxt = MILESTONE_DAY.get(x + 1)
-        gap = f"需 {nxt}× · 差 {nxt - m_after:.1f}" if nxt else "—"
-        print(f"境界 {x:<7}{'+' + format(SUHUI[x], '.1f') + '×':>10}{'第' + str(d) + '天':>9}"
-              f"{m_after:>11.1f}×{gap:>14}")
-    print(f"\n  （首达境界 6 的宿慧留待版本天花板上移时再解；"
-          f"第 100 天乘区构成：宿慧 {sum(SUHUI.values()):.1f}× + 声望阁 {SHOP_SLOPE*99:.1f}× + 基础 1×）")
+        print(f"境界 {x:<7}{'+' + format(SUHUI[x], '.1f') + '×':>10}{'第' + str(first.get(x)) + '天':>9}")
+    print("  （首达境界 6 的宿慧留待版本天花板上移时再解）")
 
-    print("\n【表三】声望阁需要交付的指标")
-    print(f"  产出类节点「修行感悟」：第 n 级 +{NODE_GAIN:.0%} 基础产出，价格 = {NODE_P0:.0f}P × n")
-    print(f"  每天须购入 {LEVELS_PER_DAY:.0f} 级（= 每天 +{SHOP_SLOPE:.1f}× 乘区）")
-    print(f"{'第d天':>7}{'当天须得声望':>14}{'累计级数':>10}{'声望阁乘区':>12}")
-    print("-" * 45)
+    print("\n【表三】转世节奏：寿元与年岁速率")
+    print(f"{'阶段':<8}{'目标世长':>8}{'寿元上限':>10}{'年岁速率':>12}{'实际世长':>18}{'世数':>6}")
+    print("-" * 66)
+    by_stage: dict[int, list[Life]] = {}
+    for life in LIVES:
+        if life.start < 100:
+            by_stage.setdefault(life.peak_at_start, []).append(life)
+    for p in range(1, 7):
+        ls = by_stage.get(p, [])
+        if not ls:
+            continue
+        spans = [life.end - life.start for life in ls]
+        target = f"{LIFE_DAYS[p]:g} 天" if p in LIFE_DAYS else "—"
+        print(f"境界 {p:<5}{target:>8}{LIFESPAN[p]:>9} 岁{age_rate(p):>8.1f} 年/天"
+              f"{min(spans):>8.2f}–{max(spans):.2f} 天{len(ls):>6}")
+    n100 = sum(1 for life in LIVES if life.start < 100)
+    years = sum(age_rate(life.peak_at_start) * (min(life.end, 100) - life.start)
+                for life in LIVES if life.start < 100)
+    print(f"  前 100 天共转世 {n100} 次；江湖历约走 {years:,.0f} 年（按开世时的速率估）")
+
+    print("\n【表四】声望阁：修行感悟的实际购买（归隐时用本世声望尽数买入）")
+    print(f"  第 n 级 +{NODE_GAIN:.0%} 基础产出，价格 = {NODE_P0:.0f}P × n；基础声望 = {NODE_P0:.0f} × 乘区加权有效小时")
+    print("  （只算基础声望；前沿乘数 ×1.2 与名号声望不计，留作托底余量）")
+    print(f"{'第d天':>7}{'累计级数':>10}{'声望阁乘区':>12}{'总乘区':>9}")
+    print("-" * 40)
     for d in [2, 7, 21, 50, 100]:
-        print(f"{d:>7}{rep_needed_on_day(d):>14,.0f}P{LEVELS_PER_DAY*(d-1):>9.0f}"
-              f"{SHOP_SLOPE*(d-1):>11.1f}×")
-    r2, r100 = rep_needed_on_day(2), rep_needed_on_day(100)
-    print(f"\n  声望产出须从第2天的 {r2:.0f}P 增长到第100天的 {r100:,.0f}P（{r100/r2:.0f}×）。")
-    print("  ⚠ 关键结论：平台期（如卡在境界 3 的两周）声望仍须逐日增长，")
-    print("     故归隐声望必须由「本轮累计内力产出」派生，不能只按到达境界给。")
+        lv = STANDARD["levels_by_day"][d]
+        life = life_at(d - 0.5)
+        m = life.m_base + sum(SUHUI[x] for x, fd in first.items() if fd < d and x in SUHUI)
+        print(f"{d:>7}{lv:>10}{NODE_GAIN * lv:>11.1f}×{m:>8.1f}×")
 
-    print("\n【表五】归隐声望三层公式（与表三联立的闭式解）")
-    print("  本轮声望 = 基础声望 × 行为乘数(1.0–1.5, 有界) + 成就声望(一次性表)")
-    print(f"  基础声望 = {NODE_P0:.0f} × 本轮乘区加权有效时长(小时)     [闭式解 c = NODE_P0]")
-    print("  推导：节点第 n 级价 P0·n、每天购 4 级 ⇒ 累计需求 ≈ 8·P0·(d−1)²；")
-    print("       基础声望累计 = 16c·Σd = 8c·d(d+1) ≥ 需求 ⇔ c ≥ P0·(d−1)²/d(d+1) → c = P0。")
-    print("  防刷：乘区加权时长与真实时间同速累积，拆轮/速刷不改变日总量。")
-    print(f"{'第d天':>7}{'基础声望/轮':>13}{'当天节点开销':>13}{'当日结余':>10}")
-    print("-" * 45)
-    for d in [1, 2, 7, 21, 50, 100]:
-        income = NODE_P0 * d * E_HOURS
-        cost = rep_needed_on_day(d)
-        print(f"{d:>7}{income:>13,.0f}{cost:>13,.0f}{income - cost:>10,.0f}")
-    # 累计口径自检：任意一天累计收入 ≥ 累计开销
-    cum_in = cum_out = 0.0
-    for d in range(1, 121):
-        cum_in += NODE_P0 * d * E_HOURS
-        cum_out += rep_needed_on_day(d)
-        assert cum_in >= cum_out, f"第{d}天声望入不敷出"
-    print("  自检：1–120 天累计收入 ≥ 累计开销 ✓（早期结余供 QoL/战斗类节点与容错）")
-
-    print("\n【表四】验证 · 按天推演")
-    first = simulate()
+    print("\n【表五】验证 · 按天推演（一世可能跨几天，首达日允许早于目标不超过一世）")
     print(f"{'境界':<6}{'目标日':>8}{'实测日':>8}{'判定':>6}")
     print("-" * 30)
     ok = True
     for x in sorted(MILESTONE_DAY):
         got = first.get(x, -1)
-        hit = got == MILESTONE_DAY[x]
+        slack = LIFE_DAYS.get(x - 1, 1)
+        hit = MILESTONE_DAY[x] - slack < got <= MILESTONE_DAY[x]
         ok &= hit
         print(f"境界 {x:<3}{MILESTONE_DAY[x]:>8}{got:>8}{'✓' if hit else '✗':>6}")
     print(f"\n  里程碑全部命中：{'是' if ok else '否'}")
+
+    print("\n【表六】对照：同一套数值下，每次上线都归隐的玩家")
+    daily = milestone_days(daily=True, days=400)
+    for x in sorted(MILESTONE_DAY):
+        d = daily.get(x)
+        print(f"  境界 {x}：第 {d if d else '>400'} 天（标准玩家第 {first.get(x)} 天）")
 
     print("\n【附】首日体验（境界 1，无声望加成）")
     acc = 0.0
     for i, q in enumerate(quotas(1), 1):
         acc += q
         print(f"  第{i}周天 {q:>10,.0f} 内力 · 本段 {q/rate(1)/3600:>4.1f}h · 累计 {acc/rate(1)/3600:>4.1f}h")
-
-    print("\n【附】玩家画像偏移（离线效率 %.0f%%）" % (OFFLINE_EFF * 100))
-    for label, online in [("全天在线", 24.0), ("标准 4h 在线", 4.0), ("轻度 2h 在线", 2.0)]:
-        eff = online + (24 - online) * OFFLINE_EFF
-        print(f"  {label:<12} 有效 {eff:>4.1f}h/天 → 里程碑 ×{E_HOURS/eff:.2f}"
-              f"（境界 6 ≈ 第 {100*E_HOURS/eff:.0f} 天）")
 
 
 if __name__ == "__main__":

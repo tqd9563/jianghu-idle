@@ -58,7 +58,7 @@ def neigong_build(route: str, realm: int, zhong: int, quality: str = "寻常") -
         for key in ("hp", "atk", "dfs"):
             b[key] *= s6[key] / s5[key]
         b["hit"], b["dodge"] = s6["hit"], s6["dodge"]
-    # 第四阶「化境」：原真传第四节点（剑意需求 −1、反伤 +15pp、每命中 +1 层毒）实测都超出一档品质差，
+    # 第四阶「化境」：曾试原秘籍阁真传效果（剑意需求 −1、反伤 +15pp、每命中 +1 层毒），实测超出一档品质差，
     # 改为剑招倍率 +0.5、反伤 +5pp、毒伤系数 +3pp
     if "化境" in passed:
         if route == "huashan":

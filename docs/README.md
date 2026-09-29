@@ -38,7 +38,7 @@
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 + 转世节奏 → 寿元与年岁速率/境界成本/宿慧；按现行规则逐世推演，唯一数值源） | design.md §3、economy.md v2 由其生成 |
 | `systems/pacing/design.md` | 长线节奏落地设计（23 条裁决总账：多天一世、寿元与年岁、归隐门槛、离线、战斗长线化、战力预算、版本天花板；issue #22） | — |
 | `systems/sim/longline_sim.py` | 长线战斗侧求解器（前沿曲线 → 关卡当量/Boss 门槛/武学计价/首通声望，判据 5 条） | formulas.md §1.3/§3.4/§6.1、content.md §2.0、economy.md §1.3/§4 由其生成 |
-| `systems/sect-neigong/design.md` | 门派/内功/主动武学设定（未规格化） | — |
+| `systems/sect-neigong/design.md` | 门派 / 内功 / 武学设定 v2.0（门径并入内功；未规格化） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |

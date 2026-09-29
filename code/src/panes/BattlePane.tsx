@@ -1,5 +1,6 @@
 /** 战斗页 —— 地图 × 难度 × 关（长线原型 docs/design/longline-prototype.html §1；风格随 issue #26 整改） */
 import { useEffect, useRef, useState } from 'react';
+import { RUMOR } from '../engine/sect';
 import { DIAG_TEXTS, type FightResult } from '../engine/combat';
 import { WUXUE, type WuxueId } from '../engine/wuxue';
 import { REALMS } from '../engine/content';
@@ -281,6 +282,12 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
 
         <div className="log" ref={logRef}>
           <div className="log-title">战斗记录 · 自动结算</div>
+          {battle?.rumor && (
+            <div className="log-line">
+              <span className="turn" />
+              <span className="rumor-t"><span className="serif">江湖传闻</span>　{RUMOR}</span>
+            </div>
+          )}
           {revealedTurns.length === 0 && <div className="log-line">等待开战…</div>}
           {revealedTurns.map((t, i) => (
             <div key={i} className="log-line">

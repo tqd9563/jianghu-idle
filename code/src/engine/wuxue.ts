@@ -90,16 +90,26 @@ const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 export const formKey = (id: WuxueId, k: number) => `${id}:${k}`;
 export const formName = (k: number) => `第${CN[k]}式`;
 
-/** 熟练档：0 生疏 · 1 熟练 · 2 精通 · 3 圆熟 */
-export function shulianTier(quality: Quality, casts: number): number {
+/** 门派本门小甜头（spec §5.4）：本门绝学武学的熟练阈值 ×0.8 */
+export const BENMEN_SHULIAN = 0.8;
+
+/** 熟练 / 精通 / 圆熟三档所需出招数；本门武学 ×0.8 后向上取整 */
+export function shulianThresholds(quality: Quality, benmen = false): [number, number, number] {
   const th = QUALITY_PARAMS[quality].shulian;
+  return benmen ? th.map((n) => Math.ceil(n * BENMEN_SHULIAN)) as [number, number, number] : th;
+}
+
+/** 熟练档：0 生疏 · 1 熟练 · 2 精通 · 3 圆熟 */
+export function shulianTier(quality: Quality, casts: number, benmen = false): number {
+  const th = shulianThresholds(quality, benmen);
   return casts >= th[2] ? 3 : casts >= th[1] ? 2 : casts >= th[0] ? 1 : 0;
 }
 
 /** 第 k 式的倍率（含熟练与共鸣） */
-export function formMult(quality: Quality, k: number, casts: number, resonance: boolean): number {
+export function formMult(quality: Quality, k: number, casts: number, resonance: boolean, benmen = false): number {
   const p = QUALITY_PARAMS[quality];
-  return (p.mult0 + MULT_STEP * (k - 1)) * (1 + SHULIAN_STEP * shulianTier(quality, casts)) * (resonance ? RESONANCE_MULT : 1);
+  return (p.mult0 + MULT_STEP * (k - 1)) * (1 + SHULIAN_STEP * shulianTier(quality, casts, benmen))
+    * (resonance ? RESONANCE_MULT : 1);
 }
 
 /** 第 k 式是否带特效：门派独门每式都带，其余只在第 1 式与末式 */
@@ -146,14 +156,14 @@ export interface FormGateCheck {
  * 自带的式恒为已领悟，不走这里。
  */
 export function checkFormGate(
-  def: WuxueDef, k: number, realm: number, qiMax: number, hasScroll: boolean, prevCasts: number,
+  def: WuxueDef, k: number, realm: number, qiMax: number, hasScroll: boolean, prevCasts: number, benmen = false,
 ): FormGateCheck {
   const g = FORM_GATES[def.quality][k];
   const c = {
     realm: realm >= g.realm,
     qi: qiMax >= g.qi,
     scroll: !g.scroll || hasScroll,
-    prev: shulianTier(def.quality, prevCasts) >= 1,
+    prev: shulianTier(def.quality, prevCasts, benmen) >= 1,
   };
   return { ...c, ready: c.realm && c.qi && c.scroll && c.prev };
 }

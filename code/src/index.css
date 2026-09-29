@@ -1369,3 +1369,27 @@ button.wound-chip.soul-chip:hover { border-color: var(--ink-gold); }
   .wx-layout { grid-template-columns: 1fr; }
   .wx-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ===== 门派页（sect-neigong-prototype.html §5） ===== */
+.rumor { margin-top: 18px; padding: 10px 14px; border: 1px dashed var(--candle-gold); border-radius: var(--r-md); font-size: 13px; color: var(--ink-warm); line-height: 1.8; }
+.rumor .serif, .log-line .rumor-t .serif { color: var(--candle-gold); letter-spacing: 0.2em; }
+.log-line .rumor-t { color: var(--ink-warm); }
+.sect-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.sect-card { text-align: left; background: var(--night-surface-raised); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; color: var(--ink-warm); cursor: pointer; font: inherit; }
+.sect-card[aria-checked="true"] { border-color: var(--candle-gold); box-shadow: 0 0 0 1px var(--candle-gold) inset; }
+.sect-card .nm { font-size: 20px; font-weight: 700; letter-spacing: 0.3em; }
+.sect-card .origin { font-size: 12.5px; color: var(--candle-gold); }
+.sect-card .goods { font-size: 12.5px; color: var(--ink-muted); line-height: 1.8; }
+.sect-join-row { display: flex; gap: 12px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.sect-join-row .cap-note { margin: 0; flex: 1 1 240px; }
+.contrib { font-size: 13px; color: var(--ink-muted); }
+.contrib b { color: var(--candle-gold); font-size: 20px; font-variant-numeric: tabular-nums; }
+.task-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+.task { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; background: var(--night-surface-raised); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.task .tn { font-weight: 700; letter-spacing: 0.1em; }
+.task .td { font-size: 12.5px; color: var(--ink-muted); }
+.task .td b { color: var(--candle-gold); font-variant-numeric: tabular-nums; }
+.running { margin-top: 12px; border: 1px solid var(--candle-gold); border-radius: var(--r-md); padding: 12px 14px; }
+.running .rl { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; flex-wrap: wrap; gap: 6px; }
+.running .rl b { color: var(--ink-warm); }
+.sect-shop { grid-template-columns: 1fr; }

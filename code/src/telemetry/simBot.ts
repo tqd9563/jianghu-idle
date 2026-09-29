@@ -12,12 +12,15 @@
 import { vi } from 'vitest';
 import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
-import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost } from '../engine/neigong';
+import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
 import { WUXUE, slotCount } from '../engine/wuxue';
+import { SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
 import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
 import { REP_NODES, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
-import { nextStageOf, openFronts, retireKind, shopItemsOf, shopPriceOf, useGameStore, zhoutianN, type MapNo } from '../store/gameStore';
+import {
+  nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN, type MapNo,
+} from '../store/gameStore';
 import type { TierId } from '../engine/enemies';
 
 export const st = () => useGameStore.getState();
@@ -117,7 +120,7 @@ export function tend(route: RouteId): void {
     tryAcupoints();
     st().breakthrough();
     st().dismissCeremony();
-    if (st().realm >= 2 && st().neigong === null) st().selectNeigong(neigongOf(route, '寻常'));
+    if (st().realm >= 2 && st().neigong === null) st().selectNeigong(bestNeigong(route));
     if (st().realm === realm) break;
   }
   if (st().neigong) {
@@ -129,6 +132,36 @@ export function tend(route: RouteId): void {
       if (st().zhong === z) { skillBudget += zhongCost(z + 1); break; }
     }
     if (!process.env.PACE_NO_WUXUE) tendWuxue();
+    if (!process.env.PACE_NO_SECT) tendSect(route);
+  }
+}
+
+/** 每世开头选本路数已拥有的最高品质内功 */
+function bestNeigong(route: RouteId): NeigongId {
+  const owned = st().ownedNeigong;
+  return [...QUALITY_ORDER].reverse().map((q) => neigongOf(route, q)).find((id) => owned.includes(id))!;
+}
+
+/**
+ * 门派（标准玩家）：先拜本路数的门派，本派货架买齐后改拜下一派；
+ * 在线派短差，下线前改派长差（见 offline）；贡献按优先级依次换，换不起就攒着。
+ */
+function tendSect(route: RouteId): void {
+  const s = st();
+  if (s.realm < SECT_REALM) return;
+  if (s.sect === null) {
+    const order = [route, ...SECT_IDS.filter((id) => id !== route)];
+    st().joinSect(order.find((id) => sectShelfOf(s, id).some((it) => !it.owned)) ?? route);
+  }
+  // 剩下的在线时间跑得完一件短差才派，否则留给下线前的长差
+  if (st().sectTask === null && onlineLeftSec >= SECT_TASKS.short.hours * 3600) st().startSectTask('short');
+  // 先换绝学武学（直接进装配），再内功、招式秘籍、卷册
+  const rank = { wuxue: 0, neigong: 1, scroll: 2, juance: 3 } as const;
+  for (let guard = 0; guard < 12; guard++) {
+    const it = sectShelfOf(st(), st().sect!).filter((x) => !x.owned && x.lock === null)
+      .sort((a, b) => rank[a.kind] - rank[b.kind])[0];
+    if (!it || st().contrib < it.price) break;
+    st().buySectItem(it.id);
   }
 }
 
@@ -155,12 +188,20 @@ function tendWuxue(): void {
 }
 
 /** 在线 hours 小时：每 5 分钟看一眼 */
+/** 本次在线还剩几秒（门派任务派短差还是留给长差） */
+let onlineLeftSec = 0;
+
 export function online(route: RouteId, hours = ONLINE_H): void {
   const steps = Math.round((hours * 3600) / 300);
+  // 一上线先派差：在线 4 小时正好跑两件短差
+  onlineLeftSec = steps * 300;
+  if (st().neigong && !process.env.PACE_NO_SECT) tendSect(route);
   for (let i = 0; i < steps; i++) {
     advance(300);
+    onlineLeftSec = (steps - i - 1) * 300;
     tend(route);
   }
+  onlineLeftSec = 0;
 }
 
 /**
@@ -196,6 +237,8 @@ export function retireAndShop(): void {
 
 /** 离线 hours 小时：存档、拨快时钟、重新载入触发出关结算（闭关中寿终则直接进归隐演出） */
 export function offline(hours = OFFLINE_H): void {
+  // 下线前派长差（spec §5.2）
+  if (!process.env.PACE_NO_SECT && st().sect !== null && st().sectTask === null) st().startSectTask('long');
   saveGame(st());
   vi.setSystemTime(Date.now() + hours * 3600 * 1000);
   useGameStore.setState({ started: false });

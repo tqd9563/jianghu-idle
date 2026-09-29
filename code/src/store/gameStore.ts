@@ -17,6 +17,10 @@ import {
   type ShopItem, type WuxueId,
 } from '../engine/wuxue';
 import {
+  SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
+  type SectId, type SectItem, type SectTask, type SectTaskKind,
+} from '../engine/sect';
+import {
   getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackKey, trackLength,
   type EnemyDef, type MapId, type TierId,
 } from '../engine/enemies';
@@ -143,6 +147,14 @@ interface PersistedState {
   pastLearned: string[];
   /** 已领过首杀掉落的前沿 `{图}-{难度}`（跨世保留，spec §4.3） */
   dropsClaimed: string[];
+  /** 本世所拜门派（spec §5.1）：境界 3 起可拜，一世只拜一派，转世清空 */
+  sect: SectId | null;
+  /** 本世门派贡献（转世清零） */
+  contrib: number;
+  /** 正在跑的门派任务（同时只一件，到时自动结算） */
+  sectTask: SectTask | null;
+  /** 拜山传闻待说：突破入境界 2 时置上，下一场战斗的战斗记录说一次 */
+  rumorPending: boolean;
 }
 
 export interface BattleState {
@@ -160,6 +172,8 @@ export interface BattleState {
   chainStage: number | null;
   /** 胜利实际入账（收益行同源同值）；fame = 本场首通精英 / Boss 的名号声望 */
   reward: { neili: number; silver: number; refarm: boolean; fame?: number; drop?: string } | null;
+  /** 本场战斗记录开头说一句拜山传闻 */
+  rumor?: boolean;
 }
 
 export interface FailureInfo {
@@ -248,6 +262,12 @@ interface GameState extends PersistedState {
   unequipWuxue: (id: WuxueId) => void;
   /** 书肆购买（spec §4.2） */
   buyShopItem: (itemId: string) => void;
+  /** 拜入门派（spec §5.1）：境界 3 起，免费，不受路数限制，一世一派 */
+  joinSect: (id: SectId) => void;
+  /** 派门派任务（spec §5.2）：同时只一件 */
+  startSectTask: (kind: SectTaskKind) => void;
+  /** 贡献商店兑换（spec §5.3） */
+  buySectItem: (itemId: string) => void;
   selectMap: (m: MapNo) => void;
   selectTier: (t: TierId) => void;
   challengeStage: (map: MapNo, tier: TierId, stage: number) => void;
@@ -285,6 +305,7 @@ const FRESH: PersistedState = {
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
   ownedWuxue: [], ownedScrolls: [], equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
+  sect: null, contrib: 0, sectTask: null, rumorPending: false,
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -368,7 +389,7 @@ export function huohouMultOf(s: Pick<PersistedState, 'neigong'>): number {
 // ---------------------------------------------------------------- 武学（sect-neigong/spec.md §2）
 
 type WuxueState = Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'ownedWuxue' | 'ownedScrolls' | 'equipped'
-  | 'formCasts' | 'learnedForms' | 'pastLearned'>;
+  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect'>>;
 
 /** 当前真气上限（未选内功为 0） */
 export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'>): number {
@@ -393,7 +414,7 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
       id, name: d.name, cost: p.cost, cd: p.cd,
       forms: learnedFormsOf(s, id).map((k) => ({
         key: formKey(id, k), name: formName(k),
-        mult: formMult(d.quality, k, (s.formCasts ?? {})[formKey(id, k)] ?? 0, res),
+        mult: formMult(d.quality, k, (s.formCasts ?? {})[formKey(id, k)] ?? 0, res, isBenmen(s.sect ?? null, id)),
         effect: formHasEffect(d, k) ? d.effect : null,
       })),
     };
@@ -440,7 +461,7 @@ function settleWuxue(
     if (k > QUALITY_PARAMS[d.quality].forms) continue;
     const key = formKey(id, k);
     const gate = checkFormGate(d, k, s.realm, qi, (s.ownedScrolls ?? []).includes(key),
-      formCasts[formKey(id, k - 1)] ?? 0);
+      formCasts[formKey(id, k - 1)] ?? 0, isBenmen(s.sect ?? null, id));
     if (!gate.ready) continue;
     const p = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), shimen);
     for (let i = 0; i < n; i++) {
@@ -450,9 +471,43 @@ function settleWuxue(
   return { formCasts, learnedForms, learned };
 }
 
-/** 升重是否被台阶挡住（本版无卷册来源，归真一律缺卷册） */
-export function zhongGate(s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed'>) {
-  return s.neigong ? tierGate(NEIGONG[s.neigong].quality, s.zhong, s.tiersPassed) : null;
+/** 升重是否被台阶挡住；归真要先有本内功的归真卷册（门派贡献商店） */
+export function zhongGate(s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed'> & Partial<Pick<PersistedState, 'ownedScrolls'>>) {
+  return s.neigong ? tierGate(NEIGONG[s.neigong].quality, s.zhong, s.tiersPassed,
+    (s.ownedScrolls ?? []).includes(juanceKey(s.neigong))) : null;
+}
+
+// ---------------------------------------------------------------- 门派（sect-neigong/spec.md §5）
+
+export type SectShelfRow = SectItem & {
+  owned: boolean;
+  /** 陈列但还不能换的原因（先得前一件）；null = 可换 */
+  lock: string | null;
+};
+
+/** 本派货架逐件的状态：招式秘籍要先有该武学与前一式秘籍，归真卷册要先有本派绝学内功 */
+export function sectShelfOf(s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue' | 'ownedScrolls'>, id: SectId): SectShelfRow[] {
+  const ng = SECTS[id].neigong;
+  return sectShelf(id).map((it) => {
+    const scrolls = s.ownedScrolls ?? [];
+    if (it.kind === 'neigong') return { ...it, owned: (s.ownedNeigong ?? []).includes(ng), lock: null };
+    if (it.kind === 'wuxue') return { ...it, owned: (s.ownedWuxue ?? []).includes(it.wuxue!), lock: null };
+    if (it.kind === 'juance') {
+      return { ...it, owned: scrolls.includes(juanceKey(ng)),
+        lock: (s.ownedNeigong ?? []).includes(ng) ? null : `先得${NEIGONG[ng].name}` };
+    }
+    const w = it.wuxue!;
+    const lock = !(s.ownedWuxue ?? []).includes(w) ? `先得${WUXUE[w].name}`
+      : it.form! > 5 && !scrolls.includes(formKey(w, it.form! - 1)) ? `先得${formName(it.form! - 1)}` : null;
+    return { ...it, owned: scrolls.includes(formKey(w, it.form!)), lock };
+  });
+}
+
+/** 到点的门派任务结算入账；没到点或没任务返回 null */
+function settleSectTask(s: Pick<PersistedState, 'sectTask' | 'contrib'>, now: number): Partial<PersistedState> | null {
+  const t = s.sectTask;
+  if (!t || now < t.endsAt) return null;
+  return { sectTask: null, contrib: (s.contrib ?? 0) + SECT_TASKS[t.kind].contrib };
 }
 
 /**
@@ -460,7 +515,7 @@ export function zhongGate(s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPa
  * 一次最多跨一阶——跨过后要先升重才会撞上下一阶。返回新状态与是否顿悟。
  */
 function advanceDunwu(
-  s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed' | 'dunwuSec' | 'wuxing'>, dtSec: number, rand: () => number,
+  s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed' | 'dunwuSec' | 'wuxing' | 'ownedScrolls'>, dtSec: number, rand: () => number,
 ): { tiersPassed: number; dunwuSec: number; tier: string | null } {
   const gate = zhongGate(s);
   if (!gate || gate.needScroll) return { tiersPassed: s.tiersPassed, dunwuSec: 0, tier: null };
@@ -661,6 +716,14 @@ export const useGameStore = create<GameState>((set, get) => ({
           if (!r.silent) offlineSettlement = r;
         }
       }
+      // 门派任务离线照常计时（spec §5.2）：到点的在载入时入账
+      const sectDone = savedAt !== null && !merged.paused ? settleSectTask(merged, now) : null;
+      if (sectDone) {
+        track('sect_task_done', { run: merged.run, realm: merged.realm, route: merged.route }, {
+          sect: merged.sect, task: merged.sectTask!.kind, contrib: sectDone.contrib, offline: true,
+        });
+        Object.assign(merged, sectDone);
+      }
       set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, dunwuNotice });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
         // 闭关期间寿终正寝：自动归隐，出关结算屏不再有意义，直接进归隐演出
@@ -766,11 +829,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       const soulUnsettled = (s.soulUnsettled ?? false) && !soulSettles(age);
       // 卡在台阶上：挂机累计判顿悟（spec §1.3）
       const dw = advanceDunwu(s, dt, Math.random);
+      const sectDone = settleSectTask(s, now);
       set({
         dantian, chargeHighWater, runPlaySec, injuries, age, lifeWeightedHours, lifeMinutes, soulUnsettled,
         tiersPassed: dw.tiersPassed, dunwuSec: dw.dunwuSec,
         ...(dw.tier ? { dunwuNotice: dw.tier, lastProgressSec: runPlaySec } : {}),
+        ...sectDone,
       });
+      if (sectDone) {
+        track('sect_task_done', { run: s.run, realm: s.realm, route: s.route }, {
+          sect: s.sect, task: s.sectTask!.kind, contrib: sectDone.contrib, offline: false,
+        });
+      }
       if (dw.tier) {
         track('dunwu', { run: s.run, realm: s.realm, route: s.route }, {
           neigong: s.neigong, tier: dw.tier, zhong: s.zhong, wuxing: s.wuxing,
@@ -834,6 +904,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       acupointLog: newAcupointLog,
       // 首达新境界即得宿慧（economy.md §2），当场生效
       peakRealm: Math.max(s.peakRealm ?? 1, realmTo),
+      // 拜山传闻（spec §5.1）：入境界 2 时突破仪式说一次，下一场战斗记录再说一次
+      ...(realmTo === 2 ? { rumorPending: true } : {}),
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, {
       realm_to: realmTo, first_reach: firstReach,
@@ -995,6 +1067,36 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
+  joinSect: (id) => {
+    const s = get();
+    if (!s.started || s.sect !== null || s.realm < SECT_REALM || !SECTS[id]) return;
+    set({ sect: id, lastProgressSec: s.runPlaySec });
+    track('sect_joined', { run: s.run, realm: s.realm, route: s.route }, { sect: id, neigong: s.neigong });
+    persist(get());
+  },
+
+  startSectTask: (kind) => {
+    const s = get();
+    if (!s.started || s.sect === null || s.sectTask !== null || !SECT_TASKS[kind]) return;
+    set({ sectTask: { kind, endsAt: Date.now() + SECT_TASKS[kind].hours * 3600 * 1000 } });
+    persist(get());
+  },
+
+  buySectItem: (itemId) => {
+    const s = get();
+    if (s.sect === null) return;
+    const it = sectShelfOf(s, s.sect).find((x) => x.id === itemId);
+    if (!it || it.owned || it.lock !== null || (s.contrib ?? 0) < it.price) return;
+    const patch: Partial<PersistedState> =
+      it.kind === 'neigong' ? { ownedNeigong: [...(s.ownedNeigong ?? []), SECTS[s.sect].neigong] }
+      : it.kind === 'wuxue' ? { ownedWuxue: [...(s.ownedWuxue ?? []), it.wuxue!] }
+      : it.kind === 'juance' ? { ownedScrolls: [...(s.ownedScrolls ?? []), juanceKey(SECTS[s.sect].neigong)] }
+      : { ownedScrolls: [...(s.ownedScrolls ?? []), formKey(it.wuxue!, it.form!)] };
+    set({ ...patch, contrib: s.contrib - it.price, lastProgressSec: s.runPlaySec });
+    track('sect_shop_bought', { run: s.run, realm: s.realm, route: s.route }, { sect: s.sect, item: itemId, price: it.price });
+    persist(get());
+  },
+
   // 未解锁 / 封存的图与难度也可点开查看（显示解锁条件或「大周天未开」），只是打不了（长线原型 §1）
   selectMap: (m) => {
     const s = get();
@@ -1038,7 +1140,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         map, tier, stage, enemy, result,
         revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
         resolved: false, chainAt: null, chainStage: null, reward: null,
+        ...(s.rumorPending ? { rumor: true } : {}),
       },
+      ...(s.rumorPending ? { rumorPending: false } : {}),
     });
   },
 

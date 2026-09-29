@@ -13,6 +13,7 @@ import {
 } from '../engine/neigong';
 import { bossDmgBonus } from '../engine/prestige';
 import { ROUTES } from '../engine/routes';
+import { SECTS } from '../engine/sect';
 import { huohouMultOf, playerBuild, useGameStore, zhongGate } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
@@ -101,7 +102,7 @@ export function NeigongPane() {
           {gate?.needScroll && (
             <div className="ng-wait scroll">
               <span className="t serif">缺《归真卷册》</span>
-              <span className="d">已到第 <b>{s.zhong}</b> 重，归真需先得卷册（门派贡献商店）。得卷册后才开始判顿悟。</span>
+              <span className="d">已到第 <b>{s.zhong}</b> 重，归真需先得卷册（{SECTS[ng.route].name}贡献商店 500 贡献）。得卷册后才开始判顿悟。</span>
             </div>
           )}
         </div>

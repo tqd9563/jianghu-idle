@@ -6,9 +6,10 @@ import { useState } from 'react';
 import { NEIGONG, QUALITY_ORDER, type Quality } from '../engine/neigong';
 import {
   FORM_GATES, QUALITY_PARAMS, SHULIAN_NAMES, TRIGGER_RATE, WUXUE, checkFormGate, formDunwuChance, formHasEffect, formKey,
-  formMult, formName, shulianTier, slotCount, type WuxueId,
+  formMult, formName, shulianThresholds, shulianTier, slotCount, type WuxueId,
 } from '../engine/wuxue';
 import { hasNode } from '../engine/prestige';
+import { isBenmen } from '../engine/sect';
 import { learnedFormsOf, qiMaxOf, shopItemsOf, shopPriceOf, useGameStore } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
@@ -120,6 +121,8 @@ function WuxueDetail({ id }: { id: WuxueId }) {
   const qi = qiMaxOf(s);
   const casts = (k: number) => (s.formCasts ?? {})[formKey(id, k)] ?? 0;
   const nextK = learned.length + 1;
+  const benmen = isBenmen(s.sect ?? null, id);
+  const th = shulianThresholds(d.quality, benmen);
 
   return (
     <div className="wx-detail">
@@ -128,6 +131,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
         <span className={`qtag ${Q_CLS[d.quality]}`}>{d.quality}</span>
         {d.route && <span className={`tag route-tag-${d.route}`}>{LU_NAME[d.route]}</span>}
         {res && <span className="qtag res-tag">共鸣 · 招式 ×1.1</span>}
+        {benmen && <span className="qtag res-tag">本门 · 熟练快两成</span>}
         <button
           className={`btn small${on ? ' ghost' : ''}`}
           disabled={!on && full}
@@ -144,11 +148,11 @@ function WuxueDetail({ id }: { id: WuxueId }) {
       </div>
       {Array.from({ length: p.forms }, (_, i) => i + 1).map((k) => {
         const eff = formHasEffect(d, k) ? <span className="qtag eff">{d.effect}</span> : null;
-        const mult = Math.round(formMult(d.quality, k, casts(k), res) * 100);
+        const mult = Math.round(formMult(d.quality, k, casts(k), res, benmen) * 100);
         if (learned.includes(k)) {
-          const tier = shulianTier(d.quality, casts(k));
-          const nextAt = tier < 3 ? p.shulian[tier] : p.shulian[2];
-          const prevAt = tier === 0 ? 0 : p.shulian[tier - 1];
+          const tier = shulianTier(d.quality, casts(k), benmen);
+          const nextAt = tier < 3 ? th[tier] : th[2];
+          const prevAt = tier === 0 ? 0 : th[tier - 1];
           const pct = tier < 3 ? ((casts(k) - prevAt) / (nextAt - prevAt)) * 100 : 100;
           return (
             <div key={k} className="wx-form">
@@ -165,7 +169,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
             </div>
           );
         }
-        const g = checkFormGate(d, k, s.realm, qi, (s.ownedScrolls ?? []).includes(formKey(id, k)), casts(k - 1));
+        const g = checkFormGate(d, k, s.realm, qi, (s.ownedScrolls ?? []).includes(formKey(id, k)), casts(k - 1), benmen);
         const isNext = k === nextK;
         const gate = (id2: string, ok: boolean, text: string) => <span key={id2} className={ok ? 'ok' : 'no'}>{text}</span>;
         const need = FORM_GATES[d.quality][k];
@@ -180,7 +184,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
               <div className="cond">
                 {gate('r', g.realm, `境界 ${need.realm}`)}
                 {gate('q', g.qi, `真气 ≥ ${need.qi}`)}
-                {need.scroll && gate('s', g.scroll, '招式秘籍')}
+                {need.scroll && gate('s', g.scroll, d.quality === '绝学' ? `招式秘籍（${d.source}贡献）` : '招式秘籍（书肆）')}
                 {gate('p', g.prev, '前式熟练')}
                 {isNext && g.ready && <span className="wait">顿悟中 · 每出一招 {(chance * 100).toFixed(0)}%</span>}
                 {!isNext && <span className="no">先悟前一式</span>}

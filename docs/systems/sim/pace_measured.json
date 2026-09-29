@@ -21,8 +21,8 @@
         "2": 1,
         "3": 5,
         "4": 21.5,
-        "5": 40,
-        "6": 113.5
+        "5": 39,
+        "6": 96.5
       }
     },
     {
@@ -31,8 +31,8 @@
         "2": 1,
         "3": 5,
         "4": 21.5,
-        "5": 41,
-        "6": 108.5
+        "5": 40.8,
+        "6": 100.8
       }
     },
     {
@@ -41,8 +41,8 @@
         "2": 1,
         "3": 5,
         "4": 21,
-        "5": 41,
-        "6": 99.8
+        "5": 40.8,
+        "6": 98.3
       }
     }
   ],
@@ -54,22 +54,32 @@
         "2": 1,
         "3": 5,
         "4": 20,
+        "5": 38,
+        "6": 93
+      },
+      "lives": 35,
+      "sect": {
+        "firstJuexue": 22,
+        "ownShelf": 58,
+        "allShelves": null
+      }
+    },
+    {
+      "route": "huashan",
+      "seed": 42,
+      "firstDay": {
+        "2": 1,
+        "3": 5,
+        "4": 22,
         "5": 41,
-        "6": 110
+        "6": 101
       },
-      "lives": 41
-    },
-    {
-      "route": "huashan",
-      "seed": 42,
-      "firstDay": {
-        "2": 1,
-        "3": 5,
-        "4": 22,
-        "5": 36,
-        "6": 111
-      },
-      "lives": 41
+      "lives": 39,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 61,
+        "allShelves": null
+      }
     },
     {
       "route": "huashan",
@@ -78,10 +88,15 @@
         "2": 1,
         "3": 5,
         "4": 22,
-        "5": 44,
-        "6": 119
+        "5": 40,
+        "6": 95
       },
-      "lives": 43
+      "lives": 37,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 60,
+        "allShelves": null
+      }
     },
     {
       "route": "huashan",
@@ -90,10 +105,15 @@
         "2": 1,
         "3": 5,
         "4": 22,
-        "5": 39,
-        "6": 114
+        "5": 37,
+        "6": 97
       },
-      "lives": 42
+      "lives": 37,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 57,
+        "allShelves": null
+      }
     },
     {
       "route": "tangmen",
@@ -102,10 +122,15 @@
         "2": 1,
         "3": 5,
         "4": 22,
-        "5": 39,
-        "6": 114
+        "5": 43,
+        "6": 98
       },
-      "lives": 42
+      "lives": 38,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 63,
+        "allShelves": null
+      }
     },
     {
       "route": "tangmen",
@@ -117,7 +142,12 @@
         "5": 44,
         "6": 109
       },
-      "lives": 42
+      "lives": 41,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 64,
+        "allShelves": null
+      }
     },
     {
       "route": "tangmen",
@@ -126,10 +156,15 @@
         "2": 1,
         "3": 5,
         "4": 21,
-        "5": 42,
-        "6": 107
+        "5": 39,
+        "6": 94
       },
-      "lives": 41
+      "lives": 38,
+      "sect": {
+        "firstJuexue": 23,
+        "ownShelf": 59,
+        "allShelves": null
+      }
     },
     {
       "route": "tangmen",
@@ -138,10 +173,15 @@
         "2": 1,
         "3": 5,
         "4": 21,
-        "5": 39,
-        "6": 104
+        "5": 37,
+        "6": 102
       },
-      "lives": 40
+      "lives": 38,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 57,
+        "allShelves": null
+      }
     },
     {
       "route": "shaolin",
@@ -150,10 +190,15 @@
         "2": 1,
         "3": 5,
         "4": 21,
-        "5": 39,
-        "6": 99
+        "5": 41,
+        "6": 96
       },
-      "lives": 37
+      "lives": 37,
+      "sect": {
+        "firstJuexue": 23,
+        "ownShelf": 61,
+        "allShelves": null
+      }
     },
     {
       "route": "shaolin",
@@ -162,10 +207,15 @@
         "2": 1,
         "3": 5,
         "4": 21,
-        "5": 39,
-        "6": 109
+        "5": 40,
+        "6": 100
       },
-      "lives": 40
+      "lives": 37,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 60,
+        "allShelves": null
+      }
     },
     {
       "route": "shaolin",
@@ -174,10 +224,15 @@
         "2": 1,
         "3": 5,
         "4": 22,
-        "5": 44,
-        "6": 89
+        "5": 39,
+        "6": 94
       },
-      "lives": 36
+      "lives": 37,
+      "sect": {
+        "firstJuexue": 24,
+        "ownShelf": 59,
+        "allShelves": null
+      }
     },
     {
       "route": "shaolin",
@@ -186,10 +241,15 @@
         "2": 1,
         "3": 5,
         "4": 20,
-        "5": 42,
-        "6": 102
+        "5": 43,
+        "6": 103
       },
-      "lives": 38
+      "lives": 38,
+      "sect": {
+        "firstJuexue": 22,
+        "ownShelf": 63,
+        "allShelves": null
+      }
     }
   ]
 }

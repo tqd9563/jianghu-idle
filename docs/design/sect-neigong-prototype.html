@@ -71,20 +71,33 @@ h1, h2, h3 { text-wrap: balance; }
 .toggle button[aria-pressed="true"] { color: var(--ink); background: var(--surface-2); font-weight: 600; }
 [hidden] { display: none !important; }
 
-/* ===== 顶栏与标签 ===== */
-.topbar { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px 8px 0 0; padding: 12px 18px; flex-wrap: wrap; }
-.brand { font-size: 17px; font-weight: 700; letter-spacing: 0.14em; }
+/* ===== 侧边栏 + 顶栏（index.css .game-rail / .topbar 同构） ===== */
+.shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 12px; }
+.rail { background: var(--chrome); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; min-height: 320px; }
+.rail-identity { padding: 18px 18px 14px; border-bottom: 1px solid var(--line); }
+.rail-identity .title { font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+.rail-identity .title small { font-size: 11.5px; color: var(--muted); font-weight: 400; margin-left: 6px; font-family: -apple-system, "PingFang SC", system-ui, sans-serif; }
+.rail-identity .realm { font-size: 15px; color: var(--gold); margin-top: 6px; }
+.nav-group { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.nav-group button { text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 10px 16px; color: var(--muted); font-size: 14px; display: flex; align-items: center; }
+.nav-group button[aria-current="page"] { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+.nav-group button[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-right: 8px; }
+.nav-group button .fresh { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+.nav-group button.appear { animation: navIn .5s var(--ease-out) both; }
+@keyframes navIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+.topbar { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; flex-wrap: wrap; align-self: start; }
+.retire-chip { border: 1px solid var(--line); color: var(--faint); background: transparent; border-radius: 6px; padding: 6px 16px; font-size: 13px; }
 .res { display: flex; gap: 22px; margin-left: auto; align-items: baseline; flex-wrap: wrap; }
 .res .r { display: flex; align-items: baseline; gap: 7px; font-size: 12px; color: var(--muted); }
 .res .r b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
 .res .r.rep b { color: var(--gold); }
-.res .r.gone { text-decoration: line-through; color: var(--faint); }
-.res .r.gone b { color: var(--faint); }
-.tabs { display: flex; gap: 2px; background: var(--chrome); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; padding: 0 10px; overflow-x: auto; }
-.tabs button { background: transparent; border: 0; padding: 10px 16px; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
-.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold); font-weight: 600; }
-.tabs button .new { font-size: 10.5px; color: var(--gold); margin-left: 4px; font-weight: 600; }
-.tabs button .soon { font-size: 10.5px; color: var(--faint); margin-left: 4px; }
+.main-mock { margin-top: 12px; border: 1px dashed var(--line); border-radius: 8px; padding: 18px; color: var(--faint); font-size: 12.5px; text-align: center; }
+.unlock-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 12px; }
+.unlock-table th { text-align: left; font-weight: 500; color: var(--faint); padding: 5px 8px; border-bottom: 1px solid var(--line); }
+.unlock-table td { padding: 6px 8px; border-bottom: 1px dashed var(--line); color: var(--muted); }
+.unlock-table td:first-child { color: var(--ink); white-space: nowrap; }
+.rumor { font-size: 13px; color: var(--ink-gold); padding: 6px 0; }
+.rumor .serif { font-size: 14px; letter-spacing: 0.06em; }
 
 /* ===== 面板 / 通用 ===== */
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
@@ -328,6 +341,9 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 @media (max-width: 720px) {
+  .shell { grid-template-columns: 1fr; }
+  .rail { min-height: 0; }
+  .nav-group { flex-direction: row; overflow-x: auto; }
   .wx-layout { grid-template-columns: 1fr; }
   .slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .steps { grid-template-columns: repeat(5, minmax(56px, 1fr)); overflow-x: auto; }
@@ -350,28 +366,45 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
   <p>issue #36 第 3 步。数值出自 <code>docs/systems/sect-neigong/spec.md</code>，设定见同目录 <code>design.md</code>。本原型<b>只审结构与交互</b>：信息放在哪、怎么操作、各状态长什么样。视觉沿用现行 <code>DESIGN.md</code> token，视觉整改另走 issue #26。每节上方的切换按钮用来看不同状态。</p>
 </header>
 
-<!-- ============ 顶栏 ============ -->
-<section class="sec">
-  <h2>顶栏与标签</h2>
-  <p class="desc">「武学」一页拆成「内功」「武学」两页，新增「门派」页；秘籍阁入口删除。顶栏去掉阅历（冻结）。门派贡献只在门派页显示，不上顶栏：它每世清零、只在一处花。</p>
-  <div class="topbar">
-    <span class="brand serif">江湖无尽录</span>
-    <div class="res">
-      <span class="r">内力 <b>2.41亿</b></span>
-      <span class="r">银两 <b>1,286</b></span>
-      <span class="r gone" title="冻结，界面隐藏">阅历 <b>—</b></span>
-      <span class="r rep">声望 <b>8,420</b></span>
+<!-- ============ 侧边栏 ============ -->
+<section class="sec" id="s0">
+  <h2>侧边栏页签 · 解锁前不显示</h2>
+  <p class="desc">沿用现行左侧栏。「武学」拆成「内功」「武学」两个页签，新增「门派」，秘籍阁删除；顶栏去掉阅历（冻结）。<b>未解锁的页签一律不显示</b>，满足条件那一刻出现，带一个金点提示新开，点开后金点消失。门派贡献只在门派页显示。</p>
+  <div class="toggle" data-group="s0">
+    <button aria-pressed="false" data-state="r1">境界 1</button>
+    <button aria-pressed="false" data-state="r2">境界 2 · 首世</button>
+    <button aria-pressed="true" data-state="r3">境界 3 · 已归隐过</button>
+  </div>
+  <div class="shell">
+    <nav class="rail" aria-label="主页签（示意）">
+      <div class="rail-identity">
+        <div class="title serif">江湖无尽录<small id="s0-run">第 4 世</small></div>
+        <div class="realm serif" id="s0-realm">小有所成</div>
+      </div>
+      <div class="nav-group" id="s0-nav"></div>
+    </nav>
+    <div>
+      <div class="topbar">
+        <button class="retire-chip" disabled>挂剑归隐</button>
+        <div class="res">
+          <span class="r">内力 <b>2.41亿</b></span>
+          <span class="r">银两 <b>1,286</b></span>
+          <span class="r rep" id="s0-rep">声望 <b>8,420</b></span>
+        </div>
+      </div>
+      <div class="main-mock">主区域（各页内容见下文各节）</div>
+      <table class="unlock-table">
+        <thead><tr><th>页签</th><th>出现时机</th></tr></thead>
+        <tbody>
+          <tr><td>修炼 · 战斗</td><td>开局即有</td></tr>
+          <tr><td>内功 · 武学</td><td>突破入境界 2、选定入门内功后（§1）</td></tr>
+          <tr><td>门派</td><td>本世突破入境界 3</td></tr>
+          <tr><td>声望阁</td><td>首次归隐后（沿用现行）</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  <nav class="tabs" role="tablist" aria-label="主标签（示意）">
-    <button role="tab" aria-selected="false">修炼</button>
-    <button role="tab" aria-selected="false">战斗</button>
-    <button role="tab" aria-selected="true">内功<span class="new">新</span></button>
-    <button role="tab" aria-selected="false">武学<span class="new">改</span></button>
-    <button role="tab" aria-selected="false">门派<span class="soon">境界 3</span></button>
-    <button role="tab" aria-selected="false">声望阁</button>
-  </nav>
-  <p class="note">门派标签在境界 3 之前也显示，但小字写着开放条件，点进去是拜山预告（§5 状态一）。<b>不隐藏</b>：让玩家从第一天起知道有门派。</p>
+  <p class="note">每一世从境界 1 重爬，内功、武学、门派页签也随之重新隐藏、到点再出现；声望阁一经解锁常驻。页签隐藏以后，<b>拜山预告改为一句江湖传闻</b>：突破入境界 2 时落在战斗记录与突破仪式里（§5 状态一），不再占页签。</p>
 </section>
 
 <!-- ============ §1 入门内功 ============ -->
@@ -614,19 +647,17 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
 <!-- ============ §5 门派页 ============ -->
 <section class="sec" id="s5">
   <h2>§5 门派页 · 拜山预告 → 拜入 → 任务与商店</h2>
-  <p class="desc">三种状态依次出现。拜入不受路数限制；一世只拜一派，下一世重选。已拜入后，左边派任务，右边贡献商店。</p>
+  <p class="desc">三种状态依次出现：境界 2 听到传闻（此时还没有门派页签），境界 3 页签出现、进去拜入，拜入后左边派任务、右边贡献商店。拜入不受路数限制；一世只拜一派，下一世重选。</p>
   <div class="toggle" data-group="s5">
-    <button aria-pressed="true" data-state="omen">未到境界 3 · 拜山预告</button>
+    <button aria-pressed="true" data-state="omen">境界 2 · 江湖传闻</button>
     <button aria-pressed="false" data-state="join">拜入</button>
     <button aria-pressed="false" data-state="in">已拜入 · 华山</button>
   </div>
   <div class="panel" data-s5="omen">
+    <div class="panel-head">突破入境界 2 · 战斗记录与突破仪式里的一句传闻 <span class="sub">此时侧边栏还没有门派页签</span></div>
     <div class="panel-body">
-      <div class="omen">
-        <div class="t serif">山 门 未 开</div>
-        <div class="d">江湖三派，各有绝学。修为至<b style="color:var(--ink)">小有所成</b>（境界 3），可择一派拜入。<br>拜入不问你修哪一路功夫。</div>
-        <div class="sects serif"><span>华山</span><span>少林</span><span>唐门</span></div>
-      </div>
+      <div class="rumor"><span class="serif">江湖传闻</span>　华山、少林、唐门广开山门，修为至小有所成者，可往拜山。</div>
+      <div class="cap-note">只说一次，不做常驻入口。境界 3 那一刻门派页签出现并带金点，玩家自然会点进去。</div>
     </div>
   </div>
   <div class="panel" data-s5="join" hidden>
@@ -687,7 +718,7 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
       </div>
     </div>
   </div>
-  <p class="note">预告态用墨金虚线框，和长线原型里「封存」同一语汇：看得见，还没到。拜入卡片把「源流」写成一行图鉴文案（世界观 §8 的揭示）。<b>不称玩家为弟子</b>：拜入按钮写「拜入 华山」，页面不出现「华山弟子」。</p>
+  <p class="note">拜入卡片把「源流」写成一行图鉴文案（世界观 §8 的揭示）。<b>不称玩家为弟子</b>：拜入按钮写「拜入 华山」，页面不出现「华山弟子」。</p>
 </section>
 
 <!-- ============ §6 转世盘点 ============ -->
@@ -769,8 +800,31 @@ document.querySelectorAll('.toggle[data-group]').forEach((tg) => {
     const st = b.dataset.state;
     document.querySelectorAll(`[data-${g}]`).forEach((el) => { el.hidden = el.dataset[g] !== st; });
     if (g === 's2') renderNeigong(st);
+    if (g === 's0') renderNav(st);
   });
 });
+
+// ===== 侧边栏：按解锁状态渲染页签（未解锁不显示） =====
+const NAV = {
+  r1: { run: '第 1 世', realm: '江湖新丁', tabs: ['修炼', '战斗'], fresh: [], rep: false },
+  r2: { run: '第 1 世', realm: '初窥门径', tabs: ['修炼', '战斗', '内功', '武学'], fresh: ['内功', '武学'], rep: false },
+  r3: { run: '第 4 世', realm: '小有所成', tabs: ['修炼', '战斗', '内功', '武学', '门派', '声望阁'], fresh: ['门派'], rep: true },
+};
+let navPrev = [];
+function renderNav(st) {
+  const c = NAV[st];
+  document.getElementById('s0-run').textContent = c.run;
+  document.getElementById('s0-realm').textContent = c.realm;
+  const nav = document.getElementById('s0-nav');
+  nav.innerHTML = c.tabs.map((t, i) => `<button ${i === 0 ? 'aria-current="page"' : ''} class="${navPrev.length && !navPrev.includes(t) ? 'appear' : ''}" data-tab="${t}">${t}${c.fresh.includes(t) ? '<span class="fresh" aria-label="新开"></span>' : ''}</button>`).join('');
+  navPrev = c.tabs;
+  nav.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    nav.querySelectorAll('button').forEach((x) => x.removeAttribute('aria-current'));
+    b.setAttribute('aria-current', 'page');
+    const f = b.querySelector('.fresh'); if (f) f.remove();
+  }));
+}
+renderNav('r3');
 
 function toast(text) {
   const root = document.getElementById('toast-root');

@@ -15,7 +15,7 @@
 | `rules/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
-| `rules/manual-fragments.md` | 秘籍残页规则层 | fragmentLogic.ts, fragments.ts |
+| `rules/manual-fragments.md` | 秘籍残页规则层（**已废止**，门派 / 内功 / 武学实装一时删代码并归档，`systems/sect-neigong/spec.md` S7） | fragmentLogic.ts, fragments.ts |
 | `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, AgeLine.tsx, SoulChip.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 | `systems/sim/export_longline_fixtures.py` | 长线 golden 导出（招式 + 火候、关卡当量敌人、随当量放大的防御常数） | combat.longline.golden.test.ts |
@@ -38,7 +38,9 @@
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 + 转世节奏 → 寿元与年岁速率/境界成本/宿慧；按现行规则逐世推演，唯一数值源） | design.md §3、economy.md v2 由其生成 |
 | `systems/pacing/design.md` | 长线节奏落地设计（23 条裁决总账：多天一世、寿元与年岁、归隐门槛、离线、战斗长线化、战力预算、版本天花板；issue #22） | — |
 | `systems/sim/longline_sim.py` | 长线战斗侧求解器（前沿曲线 → 关卡当量/Boss 门槛/武学计价/首通声望，判据 5 条） | formulas.md §1.3/§3.4/§6.1、content.md §2.0、economy.md §1.3/§4 由其生成 |
-| `systems/sect-neigong/design.md` | 门派 / 内功 / 武学设定 v2.0（门径并入内功；未规格化） | — |
+| `systems/sect-neigong/design.md` | 门派 / 内功 / 武学设定（门径并入内功） | — |
+| `systems/sect-neigong/spec.md` | 门派 / 内功 / 武学规格（内功 / 真气 / 武学 / 悟性 / 获取 / 门派 / 迁移数值表，可进实现） | — |
+| `systems/sect-neigong/sim.py` | 门派 / 内功 / 武学 sim（扩展战斗：真气、冷却、出招；判据 9 条） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |

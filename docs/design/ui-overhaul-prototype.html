@@ -180,10 +180,10 @@ button { font: inherit; color: inherit; }
 .zt-read .eta { color: var(--faint); font-size: 12.5px; }
 
 /* 燃香进度：一炷香从右向左燃尽，香头一点火星 */
-/* 燃香进度：香从左往右燃，燃过的部分只剩淡灰香灰，未燃的是暗檀色细香；三段周天各一道刻痕 */
+/* 燃香进度：与关卡进度线同一规则——实线是已完成，虚线是剩余；香头一点火星，三段周天各一道刻痕 */
 .incense { width: min(420px, 100%); height: 14px; position: relative; }
-.incense .stick { position: absolute; right: 0; top: 6.5px; height: 1.5px; border-radius: 1px; background: oklch(0.44 0.045 55); transition: width .6s var(--ease); }
-.incense .ash { position: absolute; left: 0; top: 6.5px; height: 1.5px; background: repeating-linear-gradient(to right, oklch(0.52 0.008 262 / 0.55) 0 3px, transparent 3px 6px); transition: width .6s var(--ease); }
+.incense .stick { position: absolute; right: 0; top: 7px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.4 0.014 262 / 0.7) 0 3px, transparent 3px 6px); transition: width .6s var(--ease); }
+.incense .ash { position: absolute; left: 0; top: 6.5px; height: 1.5px; border-radius: 1px; background: oklch(0.5 0.045 70); transition: width .6s var(--ease); }
 .incense .tick { position: absolute; top: 3px; width: 1px; height: 8px; background: oklch(0.5 0.02 262 / 0.6); }
 .incense .ember {
   position: absolute; top: 4px; width: 6px; height: 6px; border-radius: 50%; transform: translateX(-50%);

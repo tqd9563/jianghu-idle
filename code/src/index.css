@@ -496,6 +496,7 @@ body {
 .rline.total { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); font-weight: 600; color: var(--ink-warm); }
 .rline.total .v.gold { color: var(--candle-gold); font-size: 15px; font-weight: 700; }
 .retire-confirm-text { font-size: 14px; line-height: 1.9; color: var(--ink-warm); }
+.retire-lifespan-warn { margin-top: 10px; font-size: 13.5px; line-height: 1.8; color: var(--blood-red); }
 
 /* 归隐结算演出：峰终仪式，允许辉光 */
 .modal-backdrop.ceremony { background: var(--ceremony-backdrop-bg); }

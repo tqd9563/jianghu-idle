@@ -45,7 +45,8 @@ import {
 } from '../save/storage';
 import { getEvents, resetTelemetry, track } from '../telemetry/telemetry';
 import {
-  AGE_YEARS_PER_MIN, INIT_AGE, ERA_START, ageAfter, isOldDeath, lifespanCap, nextLife, soulMult, type DeathCause,
+  INIT_AGE, ERA_START, ageAfter, isOldDeath, lifespanCap, minutesUntilAge, nextLife, soulMult, soulSettles,
+  type DeathCause,
 } from '../engine/reincarnation';
 
 export type MapNo = MapId;
@@ -104,8 +105,10 @@ interface PersistedState {
   age?: number;
   /** 本世出生时的江湖历年份（spec §6）：当前江湖历 = eraStart + (age − INIT_AGE)。跨世累进。 */
   eraStart?: number;
-  /** 魂魄未稳（spec §4.1）：强制转世后挂上，首次突破时解除。 */
+  /** 魂魄未稳（spec §4.1）：战死转世后挂上，年岁到 INIT_AGE + 10 时解除。 */
   soulUnsettled?: boolean;
+  /** 本世时长（游戏内分钟，在线 + 有效闭关）：结算演出的「历时」；年岁速率分档后不能再由年岁反推 */
+  lifeMinutes?: number;
   /** 历来到过的最高境界（跨世保留）：决定宿慧（economy.md §2） */
   peakRealm: number;
   /** 修行感悟等级（跨世保留，economy.md §3） */
@@ -173,11 +176,11 @@ export interface RetireCeremonyData {
   durationSec: number;
   clearedCount: number;
   maxMap: MapNo;
-  /** 强制转世的死因；主动归隐为 null（演出只在这里分岔，原型 reincarnation-prototype.html §3） */
+  /** 谢幕方式：主动归隐为 null；'old' 寿终正寝（自动归隐，不罚）；'battle' 战死（来世魂魄未稳） */
   cause: DeathCause | null;
-  /** 谢幕年岁（整岁取下），供死因行「{N} 岁 · 寿终 / 重伤不治」 */
+  /** 谢幕年岁（整岁取下），供卡顶行「{N} 岁 · 寿终正寝 / 重伤不治」 */
   deathAge: number;
-  /** 本世时长（分钟，在线 + 有效闭关）：由年岁反推，两者同一时钟 */
+  /** 本世时长（分钟，在线 + 有效闭关） */
   lifeMinutes: number;
   /** 本世通关的精英与 Boss 数 */
   strongFoes: number;
@@ -252,7 +255,7 @@ const FRESH: PersistedState = {
   shopPurchasesThisRun: 0,
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
-  age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false,
+  age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
   peakRealm: 1, ganwuLevel: 0, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
@@ -482,19 +485,28 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
         // <5 秒视为无离线时段（会话内热刷新），不入账不上报——A5 在线连续处理的实现下界
         if (r.rawSec >= 5) {
-          merged.dantian += r.neili;
-          merged.silver += r.silver;
-          merged.xp += r.xp;
+          // 闭关中寿终（reincarnation/spec.md §2.3）：结算到寿终那一刻为止，之后的离线时间不计
+          const peak = merged.peakRealm ?? 1;
+          const deathMin = minutesUntilAge(
+            merged.age ?? INIT_AGE, lifespanCap(merged.realm, merged.lifespanLost ?? 0), peak,
+          );
+          const k = r.effectiveMin > deathMin ? deathMin / r.effectiveMin : 1;
+          const liveMin = r.effectiveMin * k;
+          merged.dantian += r.neili * k;
+          merged.silver += Math.round(r.silver * k);
+          merged.xp += Math.round(r.xp * k);
           // 基础声望的离线部分：乘区加权时长按 60% 折算（economy.md §1.1）
           merged.lifeWeightedHours = (merged.lifeWeightedHours ?? 0)
-            + (r.effectiveMin / 60) * OFFLINE_EFFICIENCY * currentMult(merged);
+            + (liveMin / 60) * OFFLINE_EFFICIENCY * currentMult(merged);
           // 离线同样养伤（injury/spec.md §5）：按封顶后的结算时长恢复，
           // 且离线不打仗、不会新受伤——下线休息即安全静养。
           merged.injuries = healInjuries(
-            merged.injuries ?? freshInjuries(), r.effectiveMin, merged.realm,
+            merged.injuries ?? freshInjuries(), liveMin, merged.realm,
           );
           // 离线同样变老（reincarnation/spec.md §2.3）：与在线同速率，只受离线封顶截断
-          merged.age = ageAfter(merged.age ?? INIT_AGE, r.effectiveMin);
+          merged.age = ageAfter(merged.age ?? INIT_AGE, liveMin, peak);
+          merged.lifeMinutes = (merged.lifeMinutes ?? 0) + liveMin;
+          if (merged.soulUnsettled && soulSettles(merged.age)) merged.soulUnsettled = false;
           track('offline_settled', { run: merged.run, realm: merged.realm, route: merged.route }, {
             raw_offline_s: Math.round(r.rawSec),
             effective_min: Math.round(r.effectiveMin * 100) / 100,
@@ -511,8 +523,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
       set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement });
-      if (isOldDeath(merged.age ?? INIT_AGE, merged.lifespanLost ?? 0)) {
-        // 闭关期间寿终：资源随转世散去，出关结算屏不再有意义，直接进转世演出
+      if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
+        // 闭关期间寿终正寝：自动归隐，出关结算屏不再有意义，直接进归隐演出
         set({ offlineSettlement: null });
         rebirth(set, get, 'old');   // rebirth 自带持久化
       } else {
@@ -609,9 +621,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       const prevInj = s.injuries ?? freshInjuries();
       const injuries = isHurt(prevInj) ? healInjuries(prevInj, dt / 60, s.realm) : prevInj;
       // 年岁同一时钟（reincarnation/spec.md §2）：角色老一岁，江湖历走一年
-      const age = ageAfter(s.age ?? INIT_AGE, dt / 60);
-      set({ dantian, chargeHighWater, runPlaySec, injuries, age, lifeWeightedHours });
-      if (isOldDeath(age, s.lifespanLost ?? 0)) {
+      const age = ageAfter(s.age ?? INIT_AGE, dt / 60, s.peakRealm ?? 1);
+      const lifeMinutes = (s.lifeMinutes ?? 0) + dt / 60;
+      // 魂魄未稳：转世后前 10 年（spec §4.1）
+      const soulUnsettled = (s.soulUnsettled ?? false) && !soulSettles(age);
+      set({ dantian, chargeHighWater, runPlaySec, injuries, age, lifeWeightedHours, lifeMinutes, soulUnsettled });
+      if (isOldDeath(age, s.realm, s.lifespanLost ?? 0)) {
         rebirth(set, get, 'old');
         return;
       }
@@ -667,8 +682,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       lastProgressSec: s.runPlaySec,
       // 窍穴进度保留（D1 保留到归隐）；窍穴松动随 chargeHighWater 归零而重置
       acupointLog: newAcupointLog,
-      // 魂魄未稳在首次突破时解除（reincarnation/spec.md §4.1）
-      soulUnsettled: false,
       // 首达新境界即得宿慧（economy.md §2），当场生效
       peakRealm: Math.max(s.peakRealm ?? 1, realmTo),
     });
@@ -1043,10 +1056,11 @@ export const useGameStore = create<GameState>((set, get) => ({
  * 转世：主动归隐与强制转世共用（reincarnation/spec.md §4 / §6）。
  *
  * - cause = null：主动归隐。调用方已确认归隐可用。
- * - cause = 'old' | 'battle'：强制转世。声望同样**全额**结算（design.md §3.1 裁决），
- *   代价落在来世：挂上「魂魄未稳」，首次突破前产出 ×0.6。没有预览与二次确认——人已经没了。
+ * - cause = 'old'：寿终正寝，等于自动归隐（spec §4，pacing/design.md 裁决 19）：声望全额、不挂魂魄未稳。
+ * - cause = 'battle'：战死，被迫转世。声望同样**全额**结算（design.md §3.1 裁决），
+ *   代价落在来世：挂上「魂魄未稳」，前 10 年产出 ×0.6。没有预览与二次确认——人已经没了。
  *
- * 两条路的重置、继承、江湖历接续完全一致，只在埋点、死因与魂魄标记上分岔。
+ * 三条路的重置、继承、江湖历接续完全一致，只在埋点、死因与魂魄标记上分岔。
  */
 function rebirth(
   set: (partial: Partial<GameState>) => void,
@@ -1054,22 +1068,24 @@ function rebirth(
   cause: DeathCause | null,
 ) {
   const s = get();
-  // 强制转世可能发生在归隐门槛之前；声望同源同算法，全额结算
+  // 寿终与战死可能发生在归隐门槛之前；声望同源同算法，全额结算
   const settle = settleRetire({
     weightedHours: s.lifeWeightedHours ?? 0,
     clearedStages: s.clearedStages,
     deepestBossEver: s.deepestBossEver ?? 0,
     fameThisLife: s.fameThisLife ?? 0,
   });
-  // 老死按寿元封顶：tick 一次最多推进 300 秒（≈6.6 岁），不封顶会显示「121 岁 · 寿终」、江湖历也多走一截
+  // 寿终按寿元封顶：tick 一次最多推进 300 秒，不封顶会显示超出寿元的年岁、江湖历也多走一截
   const rawAge = s.age ?? INIT_AGE;
-  const age = cause === 'old' ? Math.min(rawAge, lifespanCap(s.lifespanLost ?? 0)) : rawAge;
+  const age = cause === 'old' ? Math.min(rawAge, lifespanCap(s.realm, s.lifespanLost ?? 0)) : rawAge;
   const next = nextLife(s.eraStart ?? ERA_START, age);
   const ctx = { run: s.run, realm: s.realm, route: s.route };
 
-  if (cause === null) {
+  // 主动归隐与寿终正寝都报 retire_confirmed（telemetry.md v2.4）；只有战死报 forced_reincarnation
+  if (cause !== 'battle') {
     track('retire_confirmed', ctx, {
-      kind: 'standard',
+      kind: cause === 'old' ? 'natural' : 'standard',
+      age_at_end: Math.round(age * 10) / 10,
       weighted_hours: Math.round(settle.weightedHours * 100) / 100,
       prestige_base: settle.base,
       front_mult: settle.frontMult,
@@ -1098,7 +1114,7 @@ function rebirth(
     runEnded: s.run, settle, durationSec: s.runPlaySec,
     clearedCount: s.clearedStages.length, maxMap,
     cause, deathAge: Math.floor(age),
-    lifeMinutes: (age - INIT_AGE) / AGE_YEARS_PER_MIN,
+    lifeMinutes: s.lifeMinutes ?? 0,
     strongFoes: s.clearedStages.filter((k) => isEliteKey(k) || isBossKey(k)).length,
     boss3: deepestBoss(s.clearedStages) >= 3,
   };
@@ -1126,7 +1142,7 @@ function rebirth(
     // 两个时钟（reincarnation/spec.md §6）：年岁重置，江湖历从谢幕年份接着算
     age: next.age,
     eraStart: next.eraStart,
-    soulUnsettled: cause !== null,
+    soulUnsettled: cause === 'battle',
     retireStep: null,
     retireCeremony: ceremonyData,
     tiersUnlocked: s.tiersUnlocked ?? ['1-0'],
@@ -1263,7 +1279,7 @@ function resolveBattle(
   }
   // 战死（reincarnation/spec.md §3.2）：伤势越过致死线，或重伤折寿后年岁已超剩余寿元。
   // 放在奖励与残页发放之后——惨胜也是胜，该拿的先拿到手，再走。
-  if (lethal || isOldDeath(get().age ?? INIT_AGE, lifespanLost)) {
+  if (lethal || isOldDeath(get().age ?? INIT_AGE, get().realm, lifespanLost)) {
     rebirth(set, get, 'battle');   // rebirth 自带持久化
     return;
   }

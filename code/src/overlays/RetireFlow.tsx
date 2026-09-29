@@ -1,12 +1,13 @@
 /**
  * 归隐流程：三栏预览 → 二次确认（规格书 §8.6-1/2 硬性要求）
- * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.0 §2/§3（冻结，不得改写）。
+ * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.1 §2/§3（冻结，不得改写）。
  */
 import { getStage, mapName, TIER_NAMES, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { deepestBoss, settleRetire, suhuiTotal } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';
 import { RetireHint } from '../components/RetireHint';
 import { fmtBig } from '../fmt';
+import { INIT_AGE, lifespanCap, outlivesADay } from '../engine/reincarnation';
 
 /** 深浅（难度 × 10 + 图序）→「图 · 难度 的 Boss 名」 */
 function bossName(depth: number): string {
@@ -27,6 +28,11 @@ export function RetireFlow() {
   const target = Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages));
 
   if (s.retireStep === 'confirm') {
+    // 寿元提示（retire.md §3）：剩余寿元够再活一天才显示——撑不到下次上线时，此时归隐正是时候
+    const age = s.age ?? INIT_AGE;
+    const lost = s.lifespanLost ?? 0;
+    const yearsLeft = Math.floor(lifespanCap(s.realm, lost) - age);
+    const warnLifespan = outlivesADay(age, s.realm, lost, s.peakRealm ?? 1);
     return (
       <div className="modal-backdrop open">
         <div className="modal" role="dialog" aria-label="归隐二次确认">
@@ -36,6 +42,11 @@ export function RetireFlow() {
               这一段江湖就到此为止：境界、武学、通关进度与所有资源都会散去。
               只有声望、修行感悟、宿慧、传承和你留下的江湖记录，随你归来。此去无回头。
             </p>
+            {warnLifespan && (
+              <p className="retire-lifespan-warn">
+                寿元尚有 {yearsLeft} 年。此时归隐，这一世的修为就此散去——活得越久，这一世爬得越高。
+              </p>
+            )}
             <div className="modal-actions">
               <button className="btn" onClick={s.confirmRetire}>挂剑，归隐</button>
               <button className="btn ghost" onClick={s.cancelRetire}>再闯一阵</button>

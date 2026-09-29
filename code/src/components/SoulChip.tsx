@@ -9,12 +9,12 @@ export function SoulChip({ onClick }: { onClick?: () => void }) {
       type="button"
       className="wound-chip soul-chip"
       onClick={onClick}
-      title="仓促离世，魂魄受创。首次突破后自复。"
-      aria-label="魂魄未稳：修炼六成，首次突破后自复"
+      title="仓促离世，魂魄受创。转世十年后自复。"
+      aria-label="魂魄未稳：修炼六成，十年后自复"
     >
       <span className="wlabel">魂魄</span>
       <span className="wname">未稳</span>
-      <span className="wcount">修炼六成 · 突破后自复</span>
+      <span className="wcount">修炼六成 · 十年后自复</span>
     </button>
   );
 }

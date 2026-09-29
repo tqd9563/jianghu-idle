@@ -1,5 +1,5 @@
 /**
- * 声望、宿慧与修行感悟 —— 权威来源：docs/rules/economy.md v2.2；
+ * 声望、宿慧与修行感悟 —— 权威来源：docs/rules/economy.md v2.3；
  * 玩家可见文案唯一冻结源：docs/rules/copy/retire.md。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
@@ -58,7 +58,7 @@ export const COUNTER_HINTS: Record<EnemyTag, string> = {
 // ---- 产出乘区：宿慧 + 修行感悟（economy.md §2 / §3） ----
 
 /** 宿慧：首达境界 X 的一次性永久产出加成，跨归隐保留（economy.md §2，pacing_sim 表二） */
-export const SUHUI: Readonly<Record<number, number>> = { 2: 1.2, 3: 2.8, 4: 5.8, 5: 10.0 };
+export const SUHUI: Readonly<Record<number, number>> = { 2: 1.6, 3: 3.7, 4: 7.6, 5: 13.4 };
 
 /** 历来到过的最高境界 peakRealm 对应的宿慧合计 */
 export function suhuiTotal(peakRealm: number): number {

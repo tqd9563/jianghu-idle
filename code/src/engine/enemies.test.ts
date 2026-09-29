@@ -7,21 +7,21 @@ import {
 } from './enemies';
 
 describe('长线关卡表', () => {
-  it('开放 9 条前沿、共 137 关；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
+  it('开放 9 条前沿、共 227 关；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
     const open = MAP_IDS.flatMap((m) => TIERS.filter((t) => !isSealed(m, t)).map((t) => `${m}-${t}`));
     expect(open).toEqual(['1-0', '1-1', '1-2', '2-0', '2-1', '2-2', '3-0', '3-1', '4-0']);
-    expect(allStages()).toHaveLength(137);
+    expect(allStages()).toHaveLength(227);
     expect(trackLength(5, 0)).toBe(0);
   });
 
-  it('每条前沿以 Boss 收尾；图 1 初入中段另有一个头目', () => {
+  it('每条前沿以 Boss 收尾，中段没有别的 Boss（多天一世后图 1 初入的头目取消）', () => {
     for (const m of MAP_IDS) {
       for (const t of TIERS) {
         const n = trackLength(m, t);
         if (n === 0) continue;
         expect(getStage(m, t, n).kind).toBe('boss');
         const midBosses = Array.from({ length: n - 1 }, (_, i) => getStage(m, t, i + 1)).filter((e) => e.kind === 'boss');
-        expect(midBosses.length).toBe(m === 1 && t === 0 ? 1 : 0);
+        expect(midBosses.length).toBe(0);
       }
     }
   });

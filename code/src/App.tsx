@@ -90,7 +90,7 @@ export default function App() {
           <div className="realm-chip">
             <span className="name serif">{realmDef.name}</span>
           </div>
-          <AgeLine age={s.age ?? INIT_AGE} eraStart={s.eraStart ?? ERA_START} lifespanLost={s.lifespanLost ?? 0} />
+          <AgeLine age={s.age ?? INIT_AGE} eraStart={s.eraStart ?? ERA_START} realm={s.realm} lifespanLost={s.lifespanLost ?? 0} />
         </div>
         <div className="nav-group">
           <button className={tabCls(tab, 'cultivate')} onClick={() => setTab('cultivate')}>修炼</button>

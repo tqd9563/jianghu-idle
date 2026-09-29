@@ -15,7 +15,7 @@ import { freshInjuries, isHurt } from '../engine/injury';
 import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
-import { INIT_AGE, ERA_START, AGE_YEARS_PER_MIN, LIFESPAN_CAP, SOUL_WEAK_MULT } from '../engine/reincarnation';
+import { INIT_AGE, ERA_START, LIFESPAN, SOUL_WEAK_MULT, ageYearsPerDay } from '../engine/reincarnation';
 
 function names() {
   return getEvents().map((e) => e.e);
@@ -29,29 +29,29 @@ describe('gameStore · 单钱包丹田模型', () => {
 
   it('挂机 tick 按境界速率入丹田；周天新高越段发 charge_segment_full，回落再越不重复', () => {
     const t0 = Date.now();
-    // 境界 1 速率 9/s、首段配额 23,267：tick 单次最多结算 300 秒，走 9 次 = 2,700 秒 → 24,300
-    for (let i = 1; i <= 9; i++) useGameStore.getState().tick(t0 + i * 300_000);
-    expect(useGameStore.getState().dantian).toBeCloseTo(24_300, 0);
+    // 境界 1 速率 9/s、首段配额 5,807：tick 单次最多结算 300 秒，走 3 次 = 900 秒 → 8,100
+    for (let i = 1; i <= 3; i++) useGameStore.getState().tick(t0 + i * 300_000);
+    expect(useGameStore.getState().dantian).toBeCloseTo(8_100, 0);
     expect(names().filter((n) => n === 'charge_segment_full')).toHaveLength(1);
 
     // 花钱回落（模拟升武学扣款）再涨回：不重复发段事件
-    useGameStore.setState({ dantian: 22_000 });
-    useGameStore.getState().tick(t0 + 9 * 300_000 + 300_000); // +2,700 → 24,700，重新越过 23,267
+    useGameStore.setState({ dantian: 5_000 });
+    useGameStore.getState().tick(t0 + 3 * 300_000 + 300_000); // +2,700 → 7,700，重新越过 5,807
     expect(names().filter((n) => n === 'charge_segment_full')).toHaveLength(1);
   });
 
   it('乘区加权时长随在线时间累计（基础声望口径，economy.md §1.1）', () => {
-    useGameStore.setState({ peakRealm: 3, ganwuLevel: 24 }); // 乘区 9.8×
+    useGameStore.setState({ peakRealm: 3, ganwuLevel: 24 }); // 乘区 1 + 4.8 + 宿慧 1.6 + 3.7 = 11.1×
     useGameStore.getState().tick(Date.now() + 300_000);
-    expect(useGameStore.getState().lifeWeightedHours).toBeCloseTo((300 / 3600) * 9.8, 6);
+    expect(useGameStore.getState().lifeWeightedHours).toBeCloseTo((300 / 3600) * 11.1, 6);
   });
 
   it('丹田不足时不能突破；足额突破扣全额、境界+1、发 realm_breakthrough', () => {
     useGameStore.getState().breakthrough();
     expect(useGameStore.getState().realm).toBe(1);
 
-    // 境界 1 教学脉：缴满 34.9 万但手太阴未贯通，仍不能突破
-    useGameStore.setState({ dantian: 349_000, chargeHighWater: 4 });
+    // 境界 1 教学脉：缴满 8.71 万但手太阴未贯通，仍不能突破
+    useGameStore.setState({ dantian: 87_100, chargeHighWater: 4 });
     useGameStore.getState().breakthrough();
     expect(useGameStore.getState().realm).toBe(1);
 
@@ -103,8 +103,10 @@ const upto = (map: MapId, tier: TierId, n = trackLength(map, tier)) =>
 const m1all = upto(1, 0);
 const m2all = upto(2, 0);
 const m3all = upto(3, 0);
-/** 图 1 初入中段的头目（kind = boss、非段末） */
-const HEADMAN = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'boss' && e.stage < trackLength(1, 0))!.stage;
+/** 图 1 初入的第一个精英 */
+const ELITE1 = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'elite')!.stage;
+/** 图 1 初入段末 Boss */
+const M1BOSS = trackLength(1, 0);
 
 describe('gameStore · 归隐与声望阁', () => {
   beforeEach(() => {
@@ -320,7 +322,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.paused).toBe(false);
   });
 
-  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、连续回刷衰减；首次击败 Boss 名号传开', () => {
+  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、连续回刷衰减；首次击败精英名号传开', () => {
     useGameStore.setState({ realm: 5, route: 'tangmen', skillLevel: 10, autoAdvance: false });
     const play = () => {
       const t0 = Date.now();
@@ -346,20 +348,20 @@ describe('gameStore · 归隐与声望阁', () => {
     const third = play();
     expect(third.reward!.silver).toBe(Math.round(Math.round(base.silver * 0.5) * 0.8));
 
-    // 首次击败图 1 初入中段的头目（kind = boss）：24 × 乘区 1 = 24 声望，跨世只领一次
-    useGameStore.setState({ clearedStages: m1all.slice(0, HEADMAN - 1) });
-    useGameStore.getState().challengeStage(1, 0, HEADMAN);
-    const boss = play();
-    expect(boss.result.win).toBe(true);
-    expect(boss.reward!.fame).toBe(24);
+    // 首次击败图 1 初入的第一个精英：6.4 × 乘区 1，向下取整 6 声望，跨世只领一次
+    useGameStore.setState({ clearedStages: m1all.slice(0, ELITE1 - 1) });
+    useGameStore.getState().challengeStage(1, 0, ELITE1);
+    const elite = play();
+    expect(elite.result.win).toBe(true);
+    expect(elite.reward!.fame).toBe(6);
     let s = useGameStore.getState();
-    expect(s.reputation).toBe(24);
-    expect(s.fameThisLife).toBe(24);
-    expect(s.fameClaimed).toEqual([`stage:${stageKey(1, 0, HEADMAN)}`]);
-    useGameStore.getState().challengeStage(1, 0, HEADMAN); // 重打不再给
+    expect(s.reputation).toBe(6);
+    expect(s.fameThisLife).toBe(6);
+    expect(s.fameClaimed).toEqual([`stage:${stageKey(1, 0, ELITE1)}`]);
+    useGameStore.getState().challengeStage(1, 0, ELITE1); // 重打不再给
     expect(play().reward!.fame).toBe(0);
     s = useGameStore.getState();
-    expect(s.reputation).toBe(24);
+    expect(s.reputation).toBe(6);
     expect(getEvents().filter((e) => e.e === 'fame_gained')).toHaveLength(1);
   });
 
@@ -392,9 +394,9 @@ describe('gameStore · 归隐与声望阁', () => {
 
   it('师门指引：择路免费获得机制节点一，不发 mech_node_bought；突破总额取「离开本境界」行', () => {
     useGameStore.setState({ realm: 2, ownedRepNodes: ['shimen_zhiyin'] });
-    expect(effBreakCost(useGameStore.getState())).toBe(2_700_000);
+    expect(effBreakCost(useGameStore.getState())).toBe(3_360_000);
     useGameStore.setState({ realm: 1 });
-    expect(effBreakCost(useGameStore.getState())).toBe(349_000);
+    expect(effBreakCost(useGameStore.getState())).toBe(87_100);
     useGameStore.setState({ realm: 6 });
     expect(effBreakCost(useGameStore.getState())).toBeNull(); // 本版终点
 
@@ -473,7 +475,7 @@ describe('gameStore · MVP-2 natural live-test window', () => {
 
   it('captures only existing objective snapshot decisions and stops in ended order', () => {
     useGameStore.setState({
-      realm: 2, route: 'tangmen', skillLevel: 3, dantian: 2_700_000,
+      realm: 2, route: 'tangmen', skillLevel: 3, dantian: 3_360_000,
       clearedStages: [...m1all, stageKey(2, 0, 1)], tiersUnlocked: ['1-0', '2-0', '1-1'],
     });
     useGameStore.getState().applyLiveTestSwitch(1);
@@ -671,11 +673,12 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(st().soulUnsettled).toBe(false);
   });
 
-  it('年岁随活跃时长增长：一分钟老 AGE_YEARS_PER_MIN 岁', () => {
+  it('年岁随活跃时长增长：速率按历来最高境界分档', () => {
     const t0 = Date.now();
     st().tick(t0 + 60_000);
     // hardReset 与 t0 之间可能隔出几毫秒，按 3 位小数比（每毫秒约 5e-7 岁）
-    expect(st().age).toBeCloseTo(INIT_AGE + AGE_YEARS_PER_MIN, 3);
+    expect(st().age).toBeCloseTo(INIT_AGE + ageYearsPerDay(1) / 1440, 3);
+    expect(st().lifeMinutes).toBeCloseTo(1, 2);
   });
 
   it('观察员暂停期间不变老（与挂机产出同一冻结口径）', () => {
@@ -684,24 +687,33 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(st().age).toBe(INIT_AGE);
   });
 
-  it('寿元将尽时再挂一会儿 → 老死：强制转世，声望全额，来世魂魄未稳', () => {
-    useGameStore.setState({ age: LIFESPAN_CAP - 0.01, reputation: 7 });
+  it('寿元将尽时再挂一会儿 → 寿终正寝：自动归隐，声望全额，来世魂魄安稳', () => {
+    useGameStore.setState({ age: LIFESPAN[1] - 0.01, reputation: 7 });
     st().tick(Date.now() + 60_000);
     const s = st();
     expect(s.run).toBe(2);
     expect(s.age).toBe(INIT_AGE);
-    expect(s.soulUnsettled).toBe(true);
+    expect(s.soulUnsettled).toBe(false);
     expect(s.retireCeremony?.cause).toBe('old');
-    expect(s.retireCeremony?.deathAge).toBe(LIFESPAN_CAP);
-    // 江湖历从谢幕年份接着算：出生 100 年，活到约 120 岁 → 下一世生于约 202 年
-    expect(s.eraStart).toBeGreaterThan(ERA_START + (LIFESPAN_CAP - INIT_AGE) - 0.1);
-    const ev = getEvents().find((e) => e.e === 'forced_reincarnation')!;
-    expect(ev.cause).toBe('old');
-    expect(getEvents().some((e) => e.e === 'retire_confirmed')).toBe(false);
+    expect(s.retireCeremony?.deathAge).toBe(LIFESPAN[1]);
+    // 江湖历从谢幕年份接着算
+    expect(s.eraStart).toBeGreaterThan(ERA_START + (LIFESPAN[1] - INIT_AGE) - 0.1);
+    const ev = getEvents().find((e) => e.e === 'retire_confirmed')!;
+    expect(ev.kind).toBe('natural');
+    expect(getEvents().some((e) => e.e === 'forced_reincarnation')).toBe(false);
   });
 
-  it('重伤折寿压低寿元：折了 15 年，105 岁即老死', () => {
-    useGameStore.setState({ age: 105.5, lifespanLost: 15 });
+  it('寿元随当前境界：境界 3 活到 85 岁仍在，境界 1 早已寿终', () => {
+    useGameStore.setState({ realm: 3, peakRealm: 3, age: 85 });
+    st().tick(Date.now() + 1_000);
+    expect(st().run).toBe(1);
+    useGameStore.setState({ realm: 1, age: 85 });
+    st().tick(Date.now() + 2_000);
+    expect(st().retireCeremony?.cause).toBe('old');
+  });
+
+  it('重伤折寿压低寿元：境界 1 折了 15 年，55 岁即寿终', () => {
+    useGameStore.setState({ age: 55.5, lifespanLost: 15 });
     st().tick(Date.now() + 1_000);
     expect(st().retireCeremony?.cause).toBe('old');
   });
@@ -712,7 +724,7 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(effIdleRate(st())).toBeCloseTo(base * SOUL_WEAK_MULT, 10);
   });
 
-  it('魂魄未稳在首次突破时解除', () => {
+  it('魂魄未稳不随突破解除，转世后前 10 年才解除', () => {
     const cost = effBreakCost(st())!;
     const open = { failCount: 0, opened: true };
     useGameStore.setState({
@@ -721,6 +733,9 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     });
     st().breakthrough();
     expect(st().realm).toBe(2);
+    expect(st().soulUnsettled).toBe(true);
+    useGameStore.setState({ age: INIT_AGE + 9.99 });
+    st().tick(Date.now() + 60_000);
     expect(st().soulUnsettled).toBe(false);
   });
 
@@ -745,10 +760,10 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     vi.setSystemTime(1_000_000_000);
     useGameStore.setState({
       realm: 1, route: null,
-      clearedStages: m1all.slice(0, HEADMAN - 1),
+      clearedStages: m1all.slice(0, M1BOSS - 1),
       injuries: heavyAll(), lifespanLost: 45,
     });
-    st().challengeStage(1, 0, HEADMAN);    // 境界 1 白身挑战头目，带三处重伤，必败
+    st().challengeStage(1, 0, M1BOSS);    // 境界 1 白身挑战山贼头目，带三处重伤，必败
     for (let i = 0; i < 400; i++) {
       const b = st().battle;
       if (!b || b.resolved) break;
@@ -766,17 +781,21 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(s.battle).toBeNull();
   });
 
-  it('离线同样变老；闭关期间寿终 → 回来直接进转世演出，出关结算屏不再出现', () => {
-    // 构造一份 119 岁、下线 1 小时（长线年岁速率约每小时 1.9 岁）的存档
-    saveGame({ ...st(), age: 119, run: 1 });
+  it('闭关中寿终 → 结算只算到寿终那一刻，回来直接进归隐演出', () => {
+    // 境界 1、69 岁，下线 1 小时：约 32 分钟后寿终（每天约 44.6 岁）
+    saveGame({ ...st(), age: LIFESPAN[1] - 1, run: 1 });
     backdateSavedAt(60 * 60);
     useGameStore.setState({ started: false });
     st().init();
     const s = st();
     expect(s.retireCeremony?.cause).toBe('old');
-    expect(s.retireCeremony?.deathAge).toBe(LIFESPAN_CAP);   // 按寿元封顶，不显示越界年岁
+    expect(s.retireCeremony?.deathAge).toBe(LIFESPAN[1]);   // 按寿元封顶，不显示越界年岁
     expect(s.offlineSettlement).toBeNull();
     expect(s.run).toBe(2);
+    const liveMin = (1 / ageYearsPerDay(1)) * 1440;
+    expect(s.retireCeremony!.lifeMinutes).toBeCloseTo(liveMin, 0);
+    // 基础声望只按活着的那段闭关算（离线 × 60%，乘区 1）
+    expect(s.retireCeremony!.settle.weightedHours).toBeCloseTo((liveMin / 60) * 0.6, 2);
   });
 
   it('存档不丢字段：FRESH 里的每个字段都能原样存取（修复前窍穴进度 / 图鉴 / 伤势 / 折寿刷新即丢）', () => {

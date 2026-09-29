@@ -11,17 +11,17 @@ import { allStages, stageKey, trackLength, type MapId, type TierId } from './ene
 const boss = (map: MapId, tier: TierId) => stageKey(map, tier, trackLength(map, tier));
 
 describe('宿慧（economy.md §2）', () => {
-  it('首达 2/3/4/5 依次 +1.2 / +2.8 / +5.8 / +10.0，累计', () => {
+  it('首达 2/3/4/5 依次 +1.6 / +3.7 / +7.6 / +13.4，累计', () => {
     expect(suhuiTotal(1)).toBe(0);
-    expect(suhuiTotal(2)).toBeCloseTo(1.2, 10);
-    expect(suhuiTotal(4)).toBeCloseTo(9.8, 10);
-    expect(suhuiTotal(6)).toBeCloseTo(19.8, 10);
+    expect(suhuiTotal(2)).toBeCloseTo(1.6, 10);
+    expect(suhuiTotal(4)).toBeCloseTo(12.9, 10);
+    expect(suhuiTotal(6)).toBeCloseTo(26.3, 10);
   });
-  it('达成后乘区与宿慧表一致（第 7 天 9.8×、第 21 天 26.8×，此时修行感悟按每天 4 级算）', () => {
-    // 第 7 天：修行感悟 24 级（+4.8×）+ 宿慧 1.2 + 2.8 + 基础 1
-    expect(outputMult(3, 24)).toBeCloseTo(9.8, 10);
-    // 第 21 天：80 级（+16.0×）+ 宿慧 9.8 + 基础 1
-    expect(outputMult(4, 80)).toBeCloseTo(26.8, 10);
+  it('达成后乘区与宿慧表一致（第 7 天 12.5×、第 21 天 34.9×，修行感悟级数取 pacing_sim 推演）', () => {
+    // 第 7 天：修行感悟 31 级（+6.2×）+ 宿慧 1.6 + 3.7 + 基础 1
+    expect(outputMult(3, 31)).toBeCloseTo(12.5, 10);
+    // 第 21 天：105 级（+21.0×）+ 宿慧 12.9 + 基础 1
+    expect(outputMult(4, 105)).toBeCloseTo(34.9, 10);
   });
 });
 
@@ -70,13 +70,13 @@ describe('归隐声望（economy.md §1）', () => {
 });
 
 describe('Boss 深浅与精英键（难度优先、同档比图序，economy.md §1.2）', () => {
-  it('只有段末 Boss 计深浅；图 1 初入中段的头目不计', () => {
+  it('只有段末 Boss 计深浅；精英不计', () => {
     expect(deepestBoss([boss(1, 0)])).toBe(1);
     expect(deepestBoss([boss(1, 0), boss(3, 0)])).toBe(3);
     expect(deepestBoss([boss(3, 0), boss(1, 1)])).toBe(11);   // 历练 · 图 1 深于 初入 · 图 3
-    const headman = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'boss' && e.stage < trackLength(1, 0))!;
-    expect(deepestBoss([stageKey(1, 0, headman.stage)])).toBe(0);
-    expect(isBossKey(stageKey(1, 0, headman.stage))).toBe(true);   // 头目照样给名号
+    const elite = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'elite')!;
+    expect(deepestBoss([stageKey(1, 0, elite.stage)])).toBe(0);
+    expect(isBossKey(stageKey(1, 0, elite.stage))).toBe(false);
   });
   it('精英、Boss 键可辨认，普通关都不是', () => {
     const elite = allStages().find((e) => e.kind === 'elite')!;

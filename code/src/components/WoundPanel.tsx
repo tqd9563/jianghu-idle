@@ -60,7 +60,7 @@ export function WoundPanel({ injuries, realm, soulUnsettled = false }: {
     <section className="panel wound-panel">
       <header>
         <h3>身体状况</h3>
-        <span className="hint">{hurt ? '挂机静养中 · 离线同样恢复' : '魂魄未稳 · 首次突破后自复'}</span>
+        <span className="hint">{hurt ? '挂机静养中 · 离线同样恢复' : '魂魄未稳 · 十年后自复'}</span>
       </header>
       <div className="body">
         {hurt && INJURY_IDS.map((id) => {

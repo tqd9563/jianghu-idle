@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>门派 · 内功 · 武学 · 交互原型</title>
+<style>
+:root {
+  /* 与 DESIGN.md frontmatter、longline-prototype.html 逐值一致，勿改 */
+  --bg: oklch(0.165 0.014 262);
+  --surface: oklch(0.215 0.016 262);
+  --surface-2: oklch(0.26 0.018 262);
+  --chrome: oklch(0.19 0.015 262);
+  --ink: oklch(0.90 0.012 85);
+  --muted: oklch(0.70 0.015 85);
+  --faint: oklch(0.56 0.015 262);
+  --line: oklch(0.32 0.02 262);
+  --line-strong: oklch(0.48 0.03 262);
+  --gold: oklch(0.76 0.13 78);
+  --gold-ink: oklch(0.18 0.03 78);
+  --gold-soft: oklch(0.76 0.13 78 / 0.12);
+  --ink-gold: oklch(0.74 0.075 76);
+  --cinnabar: oklch(0.68 0.09 38);
+  --cyan: oklch(0.74 0.10 215);
+  --cyan-soft: oklch(0.74 0.10 215 / 0.12);
+  --poison: oklch(0.72 0.14 145);
+  --poison-soft: oklch(0.72 0.14 145 / 0.12);
+  --blood: oklch(0.64 0.17 25);
+  --blood-soft: oklch(0.64 0.17 25 / 0.12);
+  --shield: oklch(0.70 0.10 240);
+  --ember: oklch(0.70 0.16 45);
+  --violet: oklch(0.66 0.11 310);
+  --bar-track: oklch(0.28 0.018 262);
+  --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
+  --glow-num: 0 0 12px oklch(0.76 0.13 78 / 0.35);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* 品质色：寻常用墨色、上乘用剑青、绝学用烛金（不新增色值，复用既有角色色） */
+  --q-common: var(--muted);
+  --q-fine: var(--cyan);
+  --q-peak: var(--gold);
+  /* z 轴：弹层 → 提示 */
+  --z-dialog: 30;
+  --z-toast: 40;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.55; padding: 0 0 80px;
+}
+.serif { font-family: "Songti SC", STSong, SimSun, serif; }
+.num { font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; }
+
+/* ===== 文档框架（仅原型用，非游戏 UI） ===== */
+.doc { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+.doc-head { padding: 36px 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.doc-head h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.08em; }
+.doc-head p { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 75ch; text-wrap: pretty; }
+.sec { margin: 48px 0; }
+.sec > h2 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.sec > .desc { color: var(--muted); font-size: 13px; margin-bottom: 16px; max-width: 75ch; text-wrap: pretty; }
+.state-label { font-size: 11.5px; color: var(--faint); margin: 18px 0 7px; }
+.note { font-size: 12.5px; color: var(--muted); margin-top: 10px; max-width: 75ch; line-height: 1.75; }
+.note b { color: var(--ink); font-weight: 600; }
+.toggle { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+.toggle button { background: var(--surface); border: 0; padding: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.toggle button + button { border-left: 1px solid var(--line); }
+.toggle button[aria-pressed="true"] { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+[hidden] { display: none !important; }
+
+/* ===== 侧边栏 + 顶栏（index.css .game-rail / .topbar 同构） ===== */
+.shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 12px; }
+.rail { background: var(--chrome); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; min-height: 320px; }
+.rail-identity { padding: 18px 18px 14px; border-bottom: 1px solid var(--line); }
+.rail-identity .title { font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+.rail-identity .title small { font-size: 11.5px; color: var(--muted); font-weight: 400; margin-left: 6px; font-family: -apple-system, "PingFang SC", system-ui, sans-serif; }
+.rail-identity .realm { font-size: 15px; color: var(--gold); margin-top: 6px; }
+.nav-group { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.nav-group button { text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 10px 16px; color: var(--muted); font-size: 14px; display: flex; align-items: center; }
+.nav-group button[aria-current="page"] { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+.nav-group button[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-right: 8px; }
+.nav-group button .fresh { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+.nav-group button.appear { animation: navIn .5s var(--ease-out) both; }
+@keyframes navIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+.topbar { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; flex-wrap: wrap; align-self: start; }
+.retire-chip { border: 1px solid var(--line); color: var(--faint); background: transparent; border-radius: 6px; padding: 6px 16px; font-size: 13px; }
+.res { display: flex; gap: 22px; margin-left: auto; align-items: baseline; flex-wrap: wrap; }
+.res .r { display: flex; align-items: baseline; gap: 7px; font-size: 12px; color: var(--muted); }
+.res .r b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.res .r.rep b { color: var(--gold); }
+.main-mock { margin-top: 12px; border: 1px dashed var(--line); border-radius: 8px; padding: 18px; color: var(--faint); font-size: 12.5px; text-align: center; }
+.unlock-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 12px; }
+.unlock-table th { text-align: left; font-weight: 500; color: var(--faint); padding: 5px 8px; border-bottom: 1px solid var(--line); }
+.unlock-table td { padding: 6px 8px; border-bottom: 1px dashed var(--line); color: var(--muted); }
+.unlock-table td:first-child { color: var(--ink); white-space: nowrap; }
+.rumor { font-size: 13px; color: var(--ink-gold); padding: 6px 0; }
+.rumor .serif { font-size: 14px; letter-spacing: 0.06em; }
+
+/* ===== 面板 / 通用 ===== */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.panel + .panel { margin-top: 12px; }
+.grid2 > .panel + .panel { margin-top: 0; }
+.panel-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; flex-wrap: wrap; }
+.panel-head .sub { font-size: 12px; font-weight: 400; color: var(--muted); }
+.panel-head .right { margin-left: auto; font-size: 12.5px; font-weight: 400; color: var(--muted); }
+.panel-head .right b { color: var(--gold); font-variant-numeric: tabular-nums; font-size: 15px; }
+.panel-body { padding: 14px; }
+.btn { display: inline-block; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--gold); background: var(--gold); color: var(--gold-ink); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; }
+.btn:hover { filter: brightness(1.06); }
+.btn.ghost { background: transparent; border-color: var(--line-strong); color: var(--ink); font-weight: 500; }
+.btn.small { padding: 4px 10px; font-size: 12px; }
+.btn:disabled { background: var(--bar-track); border-color: var(--bar-track); color: var(--faint); cursor: not-allowed; filter: none; }
+.btn.ghost:disabled { background: transparent; border-color: var(--line); }
+.tag { font-size: 11px; padding: 1px 7px; border-radius: 4px; font-weight: 500; border: 1px solid; white-space: nowrap; }
+.q-common { color: var(--q-common); border-color: var(--line-strong); }
+.q-fine { color: var(--q-fine); border-color: var(--cyan); background: var(--cyan-soft); }
+.q-peak { color: var(--q-peak); border-color: var(--gold); background: var(--gold-soft); }
+.lu { color: var(--muted); border-color: var(--line-strong); }   /* 路数标签 */
+.lu.jl { color: var(--ember); border-color: var(--ember); }
+.lu.zy { color: var(--shield); border-color: var(--shield); }
+.lu.sg { color: var(--poison); border-color: var(--poison); }
+.res-tag { color: var(--gold); border-color: oklch(0.76 0.13 78 / 0.5); }
+.cap-note { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.7; }
+.bar { height: 8px; border-radius: 4px; background: var(--bar-track); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 4px; background: var(--gold); }
+.bar.thin { height: 4px; }
+.bar.hp > i { background: var(--blood); }
+.bar.qi > i { background: var(--cyan); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+
+/* ===== §1 入门内功三选一 ===== */
+.pick-head { text-align: center; padding: 22px 16px 6px; }
+.pick-head .t { font-size: 22px; letter-spacing: 0.3em; }
+.pick-head .d { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 16px; }
+.ng-pick { text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.ng-pick:hover { border-color: var(--line-strong); }
+.ng-pick[aria-pressed="true"] { border-color: var(--gold); background: oklch(0.26 0.018 262); box-shadow: 0 0 0 1px var(--gold) inset; }
+.ng-pick .nm { font-size: 19px; font-weight: 700; letter-spacing: 0.14em; }
+.ng-pick .row { display: flex; gap: 6px; flex-wrap: wrap; }
+.ng-pick .mech { font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+.ng-pick .src { font-size: 12px; color: var(--faint); }
+.owned-group { padding: 0 16px 8px; }
+.owned-group .gl { font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+.owned-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.owned-list button { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; display: inline-flex; gap: 8px; align-items: center; }
+.owned-list button[aria-pressed="true"] { border-color: var(--gold); }
+.owned-list button:disabled { opacity: .45; cursor: not-allowed; }
+.pick-foot { display: flex; align-items: center; gap: 12px; padding: 12px 16px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.pick-foot .hint { font-size: 12.5px; color: var(--muted); }
+.pick-foot .btn { margin-left: auto; min-width: 160px; }
+
+/* ===== §2 内功页 ===== */
+.ng-hero { display: flex; gap: 18px; align-items: flex-end; flex-wrap: wrap; }
+.ng-hero .nm { font-size: 26px; font-weight: 700; letter-spacing: 0.18em; line-height: 1.1; }
+.ng-hero .meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.ng-hero .zhong { margin-left: auto; text-align: right; }
+.ng-hero .zhong .big { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.ng-hero .zhong .big small { font-size: 14px; color: var(--muted); font-weight: 400; margin-left: 3px; }
+.ng-hero .zhong .fold { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.up-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.up-row .btn { min-width: 220px; }
+.up-row .btn .sub { display: block; font-size: 11px; font-weight: 500; opacity: .85; }
+.up-row .why { font-size: 12.5px; color: var(--muted); }
+
+/* 台阶轨：五级，过了的实心、正在顿悟的呼吸、未到的空心、要卷册的虚线 */
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-top: 18px; position: relative; }
+.step { position: relative; padding: 0 6px; text-align: center; }
+.step::before { content: ""; position: absolute; top: 11px; left: -50%; width: 100%; height: 2px; background: var(--line); z-index: 0; }
+.step:first-child::before { display: none; }
+.step.done::before, .step.wait::before { background: var(--gold); }
+.step .dot { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; border: 2px solid var(--line-strong); background: var(--surface); display: grid; place-items: center; font-size: 11px; color: var(--faint); }
+.step.done .dot { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); font-weight: 700; }
+.step.wait .dot { border-color: var(--gold); color: var(--gold); animation: breathe 2.4s var(--ease-out) infinite; }
+.step.scroll .dot { border-style: dashed; border-color: var(--ink-gold); }
+.step.na { opacity: .42; }
+.step .sn { display: block; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; margin-top: 6px; }
+.step .sz { display: block; font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.step .se { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.step.done .sn { color: var(--gold); }
+.step.done .se { color: var(--ink); }
+@keyframes breathe { 0%, 100% { box-shadow: 0 0 0 0 oklch(0.76 0.13 78 / 0.0); } 50% { box-shadow: 0 0 0 6px oklch(0.76 0.13 78 / 0.18); } }
+.wait-card { margin-top: 16px; padding: 12px 14px; border: 1px solid oklch(0.76 0.13 78 / 0.45); border-radius: 8px; background: var(--gold-soft); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.wait-card .t { font-size: 15px; letter-spacing: 0.12em; color: var(--gold); }
+.wait-card .d { font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+.wait-card .d b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.wait-card.scroll { border-style: dashed; border-color: oklch(0.74 0.075 76 / 0.6); background: transparent; }
+.wait-card.scroll .t { color: var(--ink-gold); }
+
+.qi-box { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+.qi-box .big { font-size: 26px; font-weight: 700; color: var(--cyan); font-variant-numeric: tabular-nums; }
+.qi-formula { font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+.qi-formula b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.mech-list { display: grid; gap: 6px; font-size: 13px; }
+.mech-list .m { display: flex; gap: 10px; color: var(--muted); }
+.mech-list .m .k { color: var(--faint); min-width: 58px; }
+.mech-list .m.on { color: var(--ink); }
+.mech-list .m.on .k { color: var(--gold); }
+.lib-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); flex-wrap: wrap; }
+.lib-row:last-child { border-bottom: 0; }
+.lib-row .nm { font-weight: 600; font-size: 14px; min-width: 88px; }
+.lib-row .st { font-size: 12px; color: var(--muted); }
+.lib-row .btn { margin-left: auto; }
+.lib-row.cur .nm { color: var(--gold); }
+
+dialog { margin: auto; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); padding: 0; max-width: min(460px, calc(100vw - 32px)); box-shadow: 0 12px 40px oklch(0.05 0.01 262 / 0.7); z-index: var(--z-dialog); }
+dialog::backdrop { background: oklch(0.1 0.01 262 / 0.6); }
+dialog .dh { padding: 14px 18px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 16px; letter-spacing: 0.08em; }
+dialog .db { padding: 14px 18px; font-size: 13px; color: var(--muted); line-height: 1.8; }
+dialog .db b { color: var(--ink); font-variant-numeric: tabular-nums; }
+dialog .db .loss { color: var(--blood); }
+dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ===== §3 武学页 ===== */
+.slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.slot { min-height: 74px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface-2); text-align: left; display: flex; flex-direction: column; gap: 4px; }
+.slot .sn { font-weight: 700; font-size: 14px; letter-spacing: 0.06em; }
+.slot .ss { font-size: 11.5px; color: var(--muted); }
+.slot.empty { border-style: dashed; background: transparent; color: var(--faint); justify-content: center; align-items: center; font-size: 12px; }
+.slot.locked { border-style: dashed; background: transparent; color: var(--faint); justify-content: center; align-items: center; font-size: 12px; cursor: default; }
+.slot[aria-pressed="true"] { border-color: var(--gold); }
+.wx-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 12px; margin-top: 12px; }
+.wx-list { display: flex; flex-direction: column; }
+.wx-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; text-align: left; flex-wrap: wrap; }
+.wx-item:hover { background: var(--surface-2); }
+.wx-item[aria-current="true"] { border-color: var(--line-strong); background: var(--surface-2); }
+.wx-item .nm { font-weight: 600; min-width: 80px; }
+.wx-item .eq { margin-left: auto; font-size: 11.5px; color: var(--gold); }
+.wx-item .pg { font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.wx-detail .dh { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.wx-detail .dh .nm { font-size: 20px; font-weight: 700; letter-spacing: 0.12em; }
+.wx-detail .params { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); margin: 8px 0 12px; flex-wrap: wrap; }
+.wx-detail .params b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.form { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 9px 0; border-top: 1px dashed var(--line); }
+.form .fi { font-size: 12px; color: var(--faint); }
+.form .fn { font-weight: 600; }
+.form .fm { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.form .fx { grid-column: 2 / 4; }
+.form .fx .bar { margin-top: 3px; }
+.form .lvl { font-size: 11.5px; color: var(--muted); display: flex; justify-content: space-between; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.form .lvl b { color: var(--ink); font-weight: 600; }
+.form .eff { font-size: 11px; color: var(--ember); border-color: var(--ember); margin-left: 6px; }
+.form.locked .fn { color: var(--faint); }
+.cond { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin-top: 2px; }
+.cond span { color: var(--muted); }
+.cond span.ok::before { content: "✓ "; color: var(--poison); }
+.cond span.no { color: var(--faint); }
+.cond span.no::before { content: "· "; }
+.cond .wait { color: var(--gold); }
+.wuxing-chip { display: inline-flex; gap: 6px; align-items: baseline; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+.wuxing-chip b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.shop { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.good { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); flex-wrap: wrap; }
+.good .gn { font-weight: 600; }
+.good .gp { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 13px; }
+.good.owned { opacity: .6; }
+.good.owned .gp { color: var(--faint); }
+.good.locked { background: transparent; border-style: dashed; }
+.good.locked .gn, .good.locked .gp { color: var(--faint); }
+
+/* ===== §4 战斗页 ===== */
+.fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; }
+.fighter { padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+.fname { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.frealm { font-size: 12px; color: var(--muted); margin: 2px 0 8px; }
+.hp-num { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 6px 0 3px; }
+.vs { align-self: center; font-size: 15px; font-weight: 700; color: var(--faint); letter-spacing: 0.1em; }
+.cd-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.cd-chip { font-size: 11.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); font-variant-numeric: tabular-nums; }
+.cd-chip.ready { border-color: var(--cyan); color: var(--cyan); }
+.log { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.log-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.log-line { font-size: 12.5px; color: var(--muted); display: flex; gap: 10px; padding: 2px 0; }
+.log-line .t { color: var(--faint); min-width: 42px; font-variant-numeric: tabular-nums; }
+.log-line.cast { color: var(--ink); }
+.log-line.cast .sk { color: var(--cyan); font-weight: 600; }
+.log-line.crit .sk { color: var(--ember); }
+.log-line.burst { color: var(--ember); }
+.log-line.win { color: var(--poison); }
+.log-line.wu { color: var(--gold); }
+.log-line.wu .serif { font-size: 14px; letter-spacing: 0.08em; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+.stat-table th { text-align: left; font-weight: 500; color: var(--faint); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.stat-table td { padding: 5px 6px; border-bottom: 1px dashed var(--line); color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat-table td:first-child { color: var(--ink); }
+.stat-table .share { display: flex; align-items: center; gap: 8px; }
+.stat-table .share .bar { flex: 1; min-width: 60px; height: 5px; }
+.stat-table .share .bar > i { background: var(--cyan); }
+.stat-table tr.plain .share .bar > i { background: var(--line-strong); }
+.stat-table tr.mech .share .bar > i { background: var(--ember); }
+
+/* ===== §5 门派页 ===== */
+.omen { padding: 26px 20px; border: 1px dashed oklch(0.74 0.075 76 / 0.45); border-radius: 8px; text-align: center; }
+.omen .t { font-size: 19px; letter-spacing: 0.3em; color: var(--ink-gold); }
+.omen .d { font-size: 13px; color: var(--muted); margin-top: 8px; line-height: 1.9; }
+.omen .sects { display: flex; justify-content: center; gap: 28px; margin-top: 14px; flex-wrap: wrap; }
+.omen .sects span { font-size: 17px; letter-spacing: 0.2em; color: var(--ink); }
+.sect-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.sect { text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.sect[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.sect .nm { font-size: 20px; font-weight: 700; letter-spacing: 0.3em; }
+.sect .origin { font-size: 12.5px; color: var(--ink-gold); }
+.sect .goods { font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+.task-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.task { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--surface-2); display: flex; flex-direction: column; gap: 6px; }
+.task .tn { font-weight: 700; letter-spacing: 0.1em; }
+.task .td { font-size: 12.5px; color: var(--muted); }
+.task .td b { color: var(--gold); font-variant-numeric: tabular-nums; }
+.running { margin-top: 12px; border: 1px solid oklch(0.76 0.13 78 / 0.45); border-radius: 8px; padding: 12px 14px; }
+.running .rl { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; flex-wrap: wrap; gap: 6px; }
+.running .rl b { color: var(--ink); }
+.contrib { font-size: 13px; color: var(--muted); }
+.contrib b { color: var(--gold); font-size: 20px; font-variant-numeric: tabular-nums; text-shadow: var(--glow-num); }
+
+/* ===== §6 转世盘点 ===== */
+.ledger-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.ledger-col h3 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.ledger-col h3.keep { color: var(--poison); }
+.ledger-col h3.half { color: var(--gold); }
+.ledger-col h3.lose { color: var(--faint); }
+.ledger-col .li { font-size: 12.5px; color: var(--muted); padding: 4px 0; border-bottom: 1px dashed var(--line); display: flex; gap: 8px; }
+.ledger-col .li b { margin-left: auto; color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.roll { text-align: center; padding: 22px 16px; }
+.roll .t { font-size: 13px; color: var(--muted); }
+.roll .v { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; margin-top: 4px; }
+.roll .c { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+/* ===== §7 周天用词 ===== */
+.diff { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.diff .side { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.diff .side .h { font-size: 12px; color: var(--faint); margin-bottom: 6px; }
+.diff .side .l { font-size: 13px; padding: 3px 0; color: var(--muted); }
+.diff .side.new .l mark { background: var(--gold-soft); color: var(--gold); padding: 0 3px; border-radius: 3px; }
+.diff .side.old .l s { color: var(--faint); }
+
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--surface-2); border: 1px solid var(--gold); color: var(--gold); padding: 10px 18px; border-radius: 8px; font-size: 14px; letter-spacing: 0.08em; z-index: var(--z-toast); box-shadow: var(--shadow); animation: toastIn .4s var(--ease-out) both; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (max-width: 720px) {
+  .shell { grid-template-columns: 1fr; }
+  .rail { min-height: 0; }
+  .nav-group { flex-direction: row; overflow-x: auto; }
+  .wx-layout { grid-template-columns: 1fr; }
+  .slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .steps { grid-template-columns: repeat(5, minmax(56px, 1fr)); overflow-x: auto; }
+  .step .se { display: none; }
+  .fighters { grid-template-columns: 1fr; }
+  .vs { justify-self: center; }
+  .ng-hero .zhong { margin-left: 0; text-align: left; }
+  .res { margin-left: 0; gap: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header class="doc-head">
+  <h1 class="serif">门派 · 内功 · 武学 · 交互原型</h1>
+  <p>issue #36 第 3 步。数值出自 <code>docs/systems/sect-neigong/spec.md</code>，设定见同目录 <code>design.md</code>。本原型<b>只审结构与交互</b>：信息放在哪、怎么操作、各状态长什么样。视觉沿用现行 <code>DESIGN.md</code> token，视觉整改另走 issue #26。每节上方的切换按钮用来看不同状态。</p>
+</header>
+
+<!-- ============ 侧边栏 ============ -->
+<section class="sec" id="s0">
+  <h2>侧边栏页签 · 解锁前不显示</h2>
+  <p class="desc">沿用现行左侧栏。「武学」拆成「内功」「武学」两个页签，新增「门派」，秘籍阁删除；顶栏去掉阅历（冻结）。<b>未解锁的页签一律不显示</b>，满足条件那一刻出现，带一个金点提示新开，点开后金点消失。门派贡献只在门派页显示。</p>
+  <div class="toggle" data-group="s0">
+    <button aria-pressed="false" data-state="r1">境界 1</button>
+    <button aria-pressed="false" data-state="r2">境界 2 · 首世</button>
+    <button aria-pressed="true" data-state="r3">境界 3 · 已归隐过</button>
+  </div>
+  <div class="shell">
+    <nav class="rail" aria-label="主页签（示意）">
+      <div class="rail-identity">
+        <div class="title serif">江湖无尽录<small id="s0-run">第 4 世</small></div>
+        <div class="realm serif" id="s0-realm">小有所成</div>
+      </div>
+      <div class="nav-group" id="s0-nav"></div>
+    </nav>
+    <div>
+      <div class="topbar">
+        <button class="retire-chip" disabled>挂剑归隐</button>
+        <div class="res">
+          <span class="r">内力 <b>2.41亿</b></span>
+          <span class="r">银两 <b>1,286</b></span>
+          <span class="r rep" id="s0-rep">声望 <b>8,420</b></span>
+        </div>
+      </div>
+      <div class="main-mock">主区域（各页内容见下文各节）</div>
+      <table class="unlock-table">
+        <thead><tr><th>页签</th><th>出现时机</th></tr></thead>
+        <tbody>
+          <tr><td>修炼 · 战斗</td><td>开局即有</td></tr>
+          <tr><td>内功 · 武学</td><td>突破入境界 2、选定入门内功后（§1）</td></tr>
+          <tr><td>门派</td><td>本世突破入境界 3</td></tr>
+          <tr><td>声望阁</td><td>首次归隐后（沿用现行）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="note">每一世从境界 1 重爬，内功、武学、门派页签也随之重新隐藏、到点再出现；声望阁一经解锁常驻。页签隐藏以后，<b>拜山预告改为一句江湖传闻</b>：突破入境界 2 时落在战斗记录与突破仪式里（§5 状态一），不再占页签。</p>
+</section>
+
+<!-- ============ §1 入门内功 ============ -->
+<section class="sec" id="s1">
+  <h2>§1 选内功 · 境界 2 首次 / 每一世开头</h2>
+  <p class="desc">取代原「选路线」。首世只有三部寻常内功；之后每一世开头都在这里选，已拥有的高品质内功一并列出，按路数分组。每世开头选内功不收费、不折算（spec S8）。</p>
+  <div class="toggle" data-group="s1">
+    <button aria-pressed="true" data-state="first">首世：三选一</button>
+    <button aria-pressed="false" data-state="later">后世：从已有中选</button>
+  </div>
+  <div class="panel">
+    <div class="pick-head">
+      <div class="t serif">择 一 部 内 功</div>
+      <div class="d">隐世前辈各传一脉心法——习其艺，不列门墙。</div>
+    </div>
+    <div data-s1="first">
+      <div class="pick-grid" role="radiogroup" aria-label="入门内功">
+        <button class="ng-pick" aria-pressed="true" data-pick="惊雷诀">
+          <span class="nm serif">惊雷诀</span>
+          <span class="row"><span class="tag q-common">寻常</span><span class="tag lu jl">惊雷 · 爆发</span></span>
+          <span class="mech">暴击攒剑意，满五层自动一记剑招（攻击 × 400%）。开战首击必暴。</span>
+          <span class="src">快剑爆发 · 短战最强，看脸不稳</span>
+        </button>
+        <button class="ng-pick" aria-pressed="false" data-pick="镇岳功">
+          <span class="nm serif">镇岳功</span>
+          <span class="row"><span class="tag q-common">寻常</span><span class="tag lu zy">镇岳 · 护体</span></span>
+          <span class="mech">开场护盾 30% 气血，受击反伤 25%，防御 +20%。</span>
+          <span class="src">铁壁反震 · 打不死你，磨死对手</span>
+        </button>
+        <button class="ng-pick" aria-pressed="false" data-pick="蚀骨心法">
+          <span class="nm serif">蚀骨心法</span>
+          <span class="row"><span class="tag q-common">寻常</span><span class="tag lu sg">蚀骨 · 阴毒</span></span>
+          <span class="mech">命中叠毒，每回合毒伤；满层毒爆。普攻只有六成力，招式不受此限。</span>
+          <span class="src">叠毒后发 · 越拖越强，开局最软</span>
+        </button>
+      </div>
+    </div>
+    <div data-s1="later" hidden>
+      <div class="owned-group">
+        <div class="gl">惊雷一路</div>
+        <div class="owned-list">
+          <button aria-pressed="false"><span class="tag q-common">寻常</span>惊雷诀</button>
+          <button aria-pressed="true"><span class="tag q-fine">上乘</span>雷鸣剑经</button>
+          <button aria-pressed="false"><span class="tag q-peak">绝学</span>云台心法</button>
+        </div>
+        <div class="gl">镇岳一路</div>
+        <div class="owned-list">
+          <button aria-pressed="false"><span class="tag q-common">寻常</span>镇岳功</button>
+          <button disabled title="尚未获得：图 1 噩梦 Boss 首杀或书肆（境界 5）"><span class="tag q-fine">上乘</span>磐石功 · 未得</button>
+        </div>
+        <div class="gl">蚀骨一路</div>
+        <div class="owned-list">
+          <button aria-pressed="false"><span class="tag q-common">寻常</span>蚀骨心法</button>
+        </div>
+      </div>
+    </div>
+    <div class="pick-foot">
+      <span class="hint" id="s1-hint">选定后本世主修此功，一世之内转修须付代价（§2 转修）。</span>
+      <button class="btn" id="s1-confirm">主修 惊雷诀</button>
+    </div>
+  </div>
+  <p class="note">未得的内功以灰态列出并写明来路，玩家知道还有什么可追。机制说明只写一句「怎么打」，数值细节放内功页。</p>
+</section>
+
+<!-- ============ §2 内功页 ============ -->
+<section class="sec" id="s2">
+  <h2>§2 内功页 · 升重、台阶、顿悟、真气、转修</h2>
+  <p class="desc">上半是所修内功：重数与升重按钮、五级台阶轨；下半左侧是真气与当前机制，右侧是已拥有的内功与转修。三种状态看台阶卡在哪。</p>
+  <div class="toggle" data-group="s2">
+    <button aria-pressed="true" data-state="normal">正常升重</button>
+    <button aria-pressed="false" data-state="wait">新一世 · 卡在化境等顿悟</button>
+    <button aria-pressed="false" data-state="scroll">归真缺卷册</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <div class="ng-hero">
+        <div>
+          <div class="nm serif" id="s2-name">雷鸣剑经</div>
+          <div class="meta"><span class="tag q-fine" id="s2-q">上乘</span><span class="tag lu jl">惊雷 · 爆发</span><span class="wuxing-chip">悟性 <b>1.08</b></span></div>
+        </div>
+        <div class="zhong">
+          <div class="big num" id="s2-zhong">第 61<small>重</small></div>
+          <div class="fold" id="s2-fold">火候折合 2.60 个境界</div>
+        </div>
+      </div>
+      <div class="up-row" id="s2-up">
+        <button class="btn" id="s2-upbtn">精进一重</button>
+        <button class="btn ghost" id="s2-ff" hidden>（原型）快进到顿悟</button>
+        <span class="why">每重：气血 / 攻击 / 防御约 +2.7%，真气上限 +<span id="s2-per">1.1</span>。价格每重 ×1.08。</span>
+      </div>
+
+      <div class="steps" id="s2-steps" aria-label="台阶">
+        <div class="step done"><span class="dot">✓</span><span class="sn serif">登堂</span><span class="sz">第 2 重</span><span class="se">剑意需求 5 → 4</span></div>
+        <div class="step done"><span class="dot">✓</span><span class="sn serif">入室</span><span class="sz">第 4 重</span><span class="se">剑招 400% → 550%</span></div>
+        <div class="step done"><span class="dot">✓</span><span class="sn serif">大成</span><span class="sz">第 6 重</span><span class="se">剑意需求 → 3</span></div>
+        <div class="step" data-step="化境"><span class="dot">4</span><span class="sn serif">化境</span><span class="sz">第 20 重</span><span class="se">剑招 +50pp</span></div>
+        <div class="step na" data-step="归真"><span class="dot">5</span><span class="sn serif">归真</span><span class="sz">第 40 重 · 绝学</span><span class="se">暴伤 +20pp</span></div>
+      </div>
+
+      <div class="wait-card" id="s2-wait" hidden>
+        <span class="t serif">静候顿悟</span>
+        <span class="d">新一世早段，已到第 <b>20</b> 重，化境之关在前。挂机修炼每 10 分钟一判，此刻概率 <b>2.2%</b>（2% × 悟性 1.08），期望约 <b>8 小时</b>。离线照判。<br>卡在台阶上时不能再升重，内力照常积累，不会浪费。</span>
+      </div>
+      <div class="wait-card scroll" id="s2-scroll" hidden>
+        <span class="t serif">缺《归真卷册》</span>
+        <span class="d">已到第 <b>40</b> 重，归真需先得卷册。来路：华山贡献商店 <b>500</b> 贡献。得卷册后才开始判顿悟。</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div class="panel">
+      <div class="panel-head">真气 <span class="sub">战斗内的气条，开战满、打完清零</span></div>
+      <div class="panel-body">
+        <div class="qi-box"><span class="big" id="s2-qi">177</span><span class="sub" style="color:var(--muted);font-size:12.5px">真气上限</span></div>
+        <div class="qi-formula">(70 + 15 × (境界 <b id="s2-realm">4</b> − 2) + 重数 <b id="s2-qiz">61</b>) × <b id="s2-qq">上乘 1.1</b></div>
+        <div class="cap-note">真气够，才领悟得了后几式武学（§3 条件里的「真气上限」）。普攻回 20，出招扣耗气。</div>
+        <div style="margin-top:14px" class="mech-list">
+          <div class="m on" id="s2-mech-lu"><span class="k">路数</span>暴击攒剑意，满 3 层剑招 攻击 × 600%；开战首击必暴</div>
+          <div class="m on"><span class="k">第 1–10 重</span>攻击 +60%，暴击率 +25pp，暴伤 +80pp（已满十重）</div>
+          <div class="m" id="s2-mech-huajing"><span class="k">化境</span>剑招再 +50pp（未至）</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">已有内功 <span class="right">转修须付代价</span></div>
+      <div class="panel-body">
+        <div class="lib-row cur"><span class="nm serif">雷鸣剑经</span><span class="tag q-fine">上乘</span><span class="tag lu jl">惊雷</span><span class="st">主修中</span></div>
+        <div class="lib-row"><span class="nm serif">云台心法</span><span class="tag q-peak">绝学</span><span class="tag lu jl">惊雷</span><span class="st">同路数</span><button class="btn ghost small" data-switch="same">转修</button></div>
+        <div class="lib-row"><span class="nm serif">镇岳功</span><span class="tag q-common">寻常</span><span class="tag lu zy">镇岳</span><span class="st">跨路数</span><button class="btn ghost small" data-switch="cross">散功重修</button></div>
+        <div class="lib-row"><span class="nm serif">惊雷诀</span><span class="tag q-common">寻常</span><span class="tag lu jl">惊雷</span><span class="st">同路数</span><button class="btn ghost small" data-switch="down">转修</button></div>
+        <div class="cap-note">下一世开头换功不收费、不折算。一世之内要换，才看这里的代价。</div>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="dlg-switch">
+    <div class="dh serif" id="dlg-title">转修 · 云台心法</div>
+    <div class="db" id="dlg-body"></div>
+    <div class="df"><button class="btn ghost" data-close>再想想</button><button class="btn" data-close id="dlg-ok">转修</button></div>
+  </dialog>
+  <p class="note">台阶轨五格固定：寻常内功后两格灰掉并写明「上乘 / 绝学」，让玩家看见更高品质多出什么。<b>顿悟不弹窗</b>：跨阶那一刻落一行金色战报 + 轻提示（「新一世 · 卡在化境」状态下点「快进到顿悟」可以看到），挂机期间发生的在出关结算里补记。</p>
+</section>
+
+<!-- ============ §3 武学页 ============ -->
+<section class="sec" id="s3">
+  <h2>§3 武学页 · 装配、招式、熟练、领悟、书肆</h2>
+  <p class="desc">顶部是装配槽（境界 4：4 槽，第 5 槽写明境界 5 开）。下方左边是已有武学，右边是选中武学的招式明细：每一式的倍率、特效、熟练进度，未领悟的列出领悟条件。点左侧武学切换明细，点「装上 / 卸下」改装配。</p>
+  <div class="panel">
+    <div class="panel-head">装配 <span class="sub">出招：冷却好了、真气够了，按 55% 的机会随机出一门</span><span class="right">悟性 <b>1.08</b></span></div>
+    <div class="panel-body">
+      <div class="slots" id="slots"></div>
+      <div class="wx-layout">
+        <div class="wx-list" id="wx-list" aria-label="已有武学"></div>
+        <div class="wx-detail" id="wx-detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">书肆 <span class="sub">银两买秘籍；秘籍永久保留，银两每世清零</span><span class="right">银两 <b>1,286</b></span></div>
+    <div class="panel-body">
+      <div class="shop">
+        <div class="good owned"><span class="gn serif">流云剑</span><span class="tag q-common">寻常</span><span class="gp">已有</span></div>
+        <div class="good owned"><span class="gn serif">开山掌</span><span class="tag q-common">寻常</span><span class="gp">已有</span></div>
+        <div class="good"><span class="gn serif">袖里针</span><span class="tag q-common">寻常</span><span class="gp">250</span><button class="btn small">购入</button></div>
+        <div class="good"><span class="gn serif">行者棍</span><span class="tag q-common">寻常</span><span class="gp">300</span><button class="btn small">购入</button></div>
+        <div class="good"><span class="gn">惊鸿剑 · 第四式</span><span class="tag q-fine">招式秘籍</span><span class="gp">1,500</span><button class="btn small" disabled>银两不足</button></div>
+        <div class="good"><span class="gn">惊鸿剑 · 第五式</span><span class="tag q-fine">招式秘籍</span><span class="gp">1,500</span><button class="btn small" disabled>银两不足</button></div>
+        <div class="good locked"><span class="gn">上乘内功（未得的一部）</span><span class="gp">境界 5 上架</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">熟练只看出招次数，四档 <b>生疏 → 熟练 → 精通 → 圆熟</b>，每档 +7%。领悟条件逐条打勾：全满足后写「顿悟中 · 每出一招一判」，玩家知道只要继续打就行。<b>共鸣</b>在武学名旁用「共鸣」小标注明（与所修内功同路数，招式 ×1.1），不单独开区。</p>
+</section>
+
+<!-- ============ §4 战斗页 ============ -->
+<section class="sec" id="s4">
+  <h2>§4 战斗页 · 真气条、出招日志、武学触发统计</h2>
+  <p class="desc">玩家卡片在气血下加一条真气，下方一排装配武学的冷却。战斗记录里武学出招写成「施展某式」，顿悟金色一行。结算后给「武学触发统计」：每门出招几次、伤害占多少，失败诊断引用它。</p>
+  <div class="toggle" data-group="s4">
+    <button aria-pressed="true" data-state="fight">战斗中</button>
+    <button aria-pressed="false" data-state="after">战后统计</button>
+  </div>
+  <div class="panel">
+    <div class="panel-body">
+      <div class="fighters">
+        <div class="fighter">
+          <div class="fname">你 <span class="tag lu jl">雷鸣剑经 · 61 重</span></div>
+          <div class="frealm">炉火纯青</div>
+          <div class="hp-num"><span>气血</span><span>1,902 / 2,540</span></div>
+          <div class="bar hp"><i style="width:75%"></i></div>
+          <div class="hp-num"><span>真气</span><span>122 / 177</span></div>
+          <div class="bar qi thin"><i style="width:69%"></i></div>
+          <div class="cd-row">
+            <span class="cd-chip ready">惊鸿剑 可出</span>
+            <span class="cd-chip">伏虎拳 冷却 2</span>
+            <span class="cd-chip ready">苍崖剑诀 可出</span>
+            <span class="cd-chip">落星剑 冷却 1</span>
+          </div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="fighter">
+          <div class="fname">铁脊寨 · 刀疤三 <span class="tag" style="color:var(--gold);border-color:var(--gold)">精</span></div>
+          <div class="frealm">图 2 困难 · 第 12 关</div>
+          <div class="hp-num"><span>气血</span><span>2,210 / 5,860</span></div>
+          <div class="bar hp"><i style="width:38%"></i></div>
+        </div>
+      </div>
+      <div class="log" data-s4="fight">
+        <div class="log-title">战斗记录</div>
+        <div class="log-line"><span class="t">第 5 合</span>你普攻，造成 312 伤害（真气 +20）</div>
+        <div class="log-line cast crit"><span class="t">第 6 合</span><span>施展 <span class="sk">苍崖剑诀 · 第三式</span>，必暴，造成 1,046 伤害 · 剑意 3/3</span></div>
+        <div class="log-line burst"><span class="t"></span>剑意满，剑招一出，造成 2,380 伤害</div>
+        <div class="log-line cast"><span class="t">第 7 合</span><span>施展 <span class="sk">落星剑 · 第一式</span>（蓄势 ×1.3），造成 588 伤害</span></div>
+        <div class="log-line wu"><span class="t"></span><span class="serif">顿悟 · 惊鸿剑第三式</span></div>
+        <div class="log-line cast"><span class="t">第 8 合</span><span>施展 <span class="sk">惊鸿剑 · 第三式</span>，回气，造成 522 伤害</span></div>
+      </div>
+      <div class="log" data-s4="after" hidden>
+        <div class="log-title">胜 · 12 回合 · 武学触发统计</div>
+        <table class="stat-table">
+          <thead><tr><th>来源</th><th>出招</th><th>伤害占比</th></tr></thead>
+          <tbody>
+            <tr><td>苍崖剑诀</td><td>3</td><td><div class="share"><div class="bar"><i style="width:24%"></i></div>24%</div></td></tr>
+            <tr><td>落星剑</td><td>2</td><td><div class="share"><div class="bar"><i style="width:15%"></i></div>15%</div></td></tr>
+            <tr><td>惊鸿剑</td><td>1</td><td><div class="share"><div class="bar"><i style="width:7%"></i></div>7%</div></td></tr>
+            <tr><td>伏虎拳</td><td>1</td><td><div class="share"><div class="bar"><i style="width:6%"></i></div>6%</div></td></tr>
+            <tr class="mech"><td>剑招（路数）</td><td>2</td><td><div class="share"><div class="bar"><i style="width:31%"></i></div>31%</div></td></tr>
+            <tr class="plain"><td>普攻</td><td>5</td><td><div class="share"><div class="bar"><i style="width:17%"></i></div>17%</div></td></tr>
+          </tbody>
+        </table>
+        <div class="cap-note">出招 7 / 12 回合 · 本场顿悟 1 次 · 熟练进档 2 式</div>
+      </div>
+    </div>
+  </div>
+  <p class="note">冷却排在玩家卡片里，而不是另开区：玩家一眼就知道这回合谁可能出手。统计表把「路数机制」和「普攻」也列进来，玩家能看出装武学以后剑招并没有变少。</p>
+</section>
+
+<!-- ============ §5 门派页 ============ -->
+<section class="sec" id="s5">
+  <h2>§5 门派页 · 拜山预告 → 拜入 → 任务与商店</h2>
+  <p class="desc">三种状态依次出现：境界 2 听到传闻（此时还没有门派页签），境界 3 页签出现、进去拜入，拜入后左边派任务、右边贡献商店。拜入不受路数限制；一世只拜一派，下一世重选。</p>
+  <div class="toggle" data-group="s5">
+    <button aria-pressed="true" data-state="omen">境界 2 · 江湖传闻</button>
+    <button aria-pressed="false" data-state="join">拜入</button>
+    <button aria-pressed="false" data-state="in">已拜入 · 华山</button>
+  </div>
+  <div class="panel" data-s5="omen">
+    <div class="panel-head">突破入境界 2 · 战斗记录与突破仪式里的一句传闻 <span class="sub">此时侧边栏还没有门派页签</span></div>
+    <div class="panel-body">
+      <div class="rumor"><span class="serif">江湖传闻</span>　华山、少林、唐门广开山门，修为至小有所成者，可往拜山。</div>
+      <div class="cap-note">只说一次，不做常驻入口。境界 3 那一刻门派页签出现并带金点，玩家自然会点进去。</div>
+    </div>
+  </div>
+  <div class="panel" data-s5="join" hidden>
+    <div class="panel-head">择一派拜入 <span class="sub">本世有效；下一世重选</span></div>
+    <div class="panel-body">
+      <div class="sect-grid" role="radiogroup" aria-label="门派">
+        <button class="sect" aria-pressed="true" data-sect="华山">
+          <span class="nm serif">华山</span>
+          <span class="origin">惊雷剑意，相传源出华山。</span>
+          <span class="goods">绝学内功：云台心法（惊雷）<br>绝学武学：苍崖剑诀 · 落星剑（独门：蓄势，越打越快）</span>
+        </button>
+        <button class="sect" aria-pressed="false" data-sect="少林">
+          <span class="nm serif">少林</span>
+          <span class="origin">镇岳护体，相传源出少林。</span>
+          <span class="goods">绝学内功：菩提心功（镇岳）<br>绝学武学：罗汉伏魔棍 · 降魔杵法（独门：反震，攻防同算）</span>
+        </button>
+        <button class="sect" aria-pressed="false" data-sect="唐门">
+          <span class="nm serif">唐门</span>
+          <span class="origin">蚀骨毒功，相传源出唐门。</span>
+          <span class="goods">绝学内功：千蛊心诀（蚀骨）<br>绝学武学：落英飞针 · 牵机镖（独门：引爆，毒层一并结算）</span>
+        </button>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap">
+        <span class="cap-note" style="margin:0">本门绝学练得快两成（熟练阈值 ×0.8）。战力不因拜哪派而变。</span>
+        <button class="btn" style="margin-left:auto" id="s5-join">拜入 华山</button>
+      </div>
+    </div>
+  </div>
+  <div data-s5="in" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head">门派任务 <span class="sub">同时只跑一件，到时自动结算，离线照算</span></div>
+        <div class="panel-body">
+          <div class="contrib">本世贡献 <b id="contrib">340</b></div>
+          <div class="task-row" style="margin-top:10px">
+            <div class="task"><span class="tn serif">短差</span><span class="td">2 小时 · <b>+20</b> 贡献</span><button class="btn ghost small" data-task="短差" disabled>已有任务在跑</button></div>
+            <div class="task"><span class="tn serif">长差</span><span class="td">8 小时 · <b>+60</b> 贡献 · 下线前派</span><button class="btn ghost small" data-task="长差" disabled>已有任务在跑</button></div>
+          </div>
+          <div class="running">
+            <div class="rl"><span><b>长差</b> · 护送药材下山</span><span>剩 3 小时 12 分</span></div>
+            <div class="bar"><i style="width:60%"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">华山 · 贡献商店 <span class="right">贡献 <b>340</b></span></div>
+        <div class="panel-body">
+          <div class="shop">
+            <div class="good owned"><span class="gn serif">云台心法</span><span class="tag q-peak">绝学内功</span><span class="gp">已有</span></div>
+            <div class="good owned"><span class="gn serif">苍崖剑诀</span><span class="tag q-peak">绝学</span><span class="gp">已有</span></div>
+            <div class="good"><span class="gn serif">落星剑</span><span class="tag q-peak">绝学 · 独门</span><span class="gp">400</span><button class="btn small" disabled>差 60</button></div>
+            <div class="good"><span class="gn">苍崖剑诀 · 第五式</span><span class="tag q-peak">招式秘籍</span><span class="gp">250</span><button class="btn small">兑换</button></div>
+            <div class="good locked"><span class="gn">苍崖剑诀 · 第六式</span><span class="gp">350 · 先得第五式</span></div>
+            <div class="good"><span class="gn">归真卷册</span><span class="tag q-peak">云台心法</span><span class="gp">500</span><button class="btn small" disabled>差 160</button></div>
+          </div>
+          <div class="cap-note">贡献每世清零，换得的秘籍永久保留。单件最贵 600，一世的贡献买得起。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">拜入卡片把「源流」写成一行图鉴文案（世界观 §8 的揭示）。<b>不称玩家为弟子</b>：拜入按钮写「拜入 华山」，页面不出现「华山弟子」。</p>
+</section>
+
+<!-- ============ §6 转世盘点 ============ -->
+<section class="sec" id="s6">
+  <h2>§6 转世盘点 · 带走什么、留下什么、重掷悟性</h2>
+  <p class="desc">现有归隐盘点里加三块：秘籍全部带走；每式熟练带一半；悟性在新一世开头重掷，单独给一个时刻。</p>
+  <div class="panel">
+    <div class="panel-body">
+      <div class="ledger-list">
+        <div class="ledger-col">
+          <h3 class="keep">带走</h3>
+          <div class="li">内功 <b>5 部</b></div>
+          <div class="li">武学秘籍 <b>9 门</b></div>
+          <div class="li">招式秘籍 · 卷册 <b>6 本</b></div>
+          <div class="li">前世悟过的招式（重悟快三倍）<b>23 式</b></div>
+        </div>
+        <div class="ledger-col">
+          <h3 class="half">带一半</h3>
+          <div class="li">苍崖剑诀 · 第三式 熟练 <b>28 → 14</b></div>
+          <div class="li">惊鸿剑 · 第二式 熟练 <b>19 → 9</b></div>
+          <div class="li" style="color:var(--faint)">……其余 21 式</div>
+        </div>
+        <div class="ledger-col">
+          <h3 class="lose">散去</h3>
+          <div class="li">内功重数与台阶 <b>第 58 重</b></div>
+          <div class="li">已领悟的招式 <b>23 式</b></div>
+          <div class="li">门派身份 · 贡献 <b>华山 · 340</b></div>
+          <div class="li">装配 <b>4 门</b></div>
+        </div>
+      </div>
+      <div class="roll">
+        <div class="t">新一世 · 悟性</div>
+        <div class="v num" id="roll-v">0.94</div>
+        <div class="c">每一世天生不同，落在 0.8–1.2 之间 · 影响所有顿悟的快慢</div>
+        <button class="btn ghost small" id="roll-btn" style="margin-top:10px">（原型）重掷看效果</button>
+      </div>
+    </div>
+  </div>
+  <p class="note">悟性只在新一世开头出现一次，之后作为小芯片常驻内功页和武学页。它不能刷，所以这里不给按钮（原型里的重掷只为演示）。</p>
+</section>
+
+<!-- ============ §7 周天用词 ============ -->
+<section class="sec" id="s7">
+  <h2>§7 周天 · 「真气」改叫「内力」</h2>
+  <p class="desc">「真气」从此专指战斗气条。修炼面板里冲穴相关的提示改用「内力」，走文案冻结件发版。</p>
+  <div class="diff">
+    <div class="side old">
+      <div class="h">现行</div>
+      <div class="l"><s>真气</s>未足 · 蓄至 1.2亿 方可冲</div>
+      <div class="l">成功率 64% · 耗<s>真气</s> 1.2亿</div>
+      <div class="l"><s>真气</s>耗散 · 气海未通</div>
+      <div class="l"><s>真气</s>未至 · 运转周天</div>
+    </div>
+    <div class="side new">
+      <div class="h">改为</div>
+      <div class="l"><mark>内力</mark>未足 · 蓄至 1.2亿 方可冲</div>
+      <div class="l">成功率 64% · 耗<mark>内力</mark> 1.2亿</div>
+      <div class="l"><mark>内力</mark>耗散 · 气海未通</div>
+      <div class="l"><mark>内力</mark>未至 · 运转周天</div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div id="toast-root"></div>
+
+<script>
+const Q = { 寻常: 'q-common', 上乘: 'q-fine', 绝学: 'q-peak' };
+const LU = { 惊雷: 'jl', 镇岳: 'zy', 蚀骨: 'sg' };
+
+// ===== 状态切换（各节顶部的 toggle） =====
+document.querySelectorAll('.toggle[data-group]').forEach((tg) => {
+  const g = tg.dataset.group;
+  tg.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-state]');
+    if (!b) return;
+    tg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const st = b.dataset.state;
+    document.querySelectorAll(`[data-${g}]`).forEach((el) => { el.hidden = el.dataset[g] !== st; });
+    if (g === 's2') renderNeigong(st);
+    if (g === 's0') renderNav(st);
+  });
+});
+
+// ===== 侧边栏：按解锁状态渲染页签（未解锁不显示） =====
+const NAV = {
+  r1: { run: '第 1 世', realm: '江湖新丁', tabs: ['修炼', '战斗'], fresh: [], rep: false },
+  r2: { run: '第 1 世', realm: '初窥门径', tabs: ['修炼', '战斗', '内功', '武学'], fresh: ['内功', '武学'], rep: false },
+  r3: { run: '第 4 世', realm: '小有所成', tabs: ['修炼', '战斗', '内功', '武学', '门派', '声望阁'], fresh: ['门派'], rep: true },
+};
+let navPrev = [];
+function renderNav(st) {
+  const c = NAV[st];
+  document.getElementById('s0-run').textContent = c.run;
+  document.getElementById('s0-realm').textContent = c.realm;
+  const nav = document.getElementById('s0-nav');
+  nav.innerHTML = c.tabs.map((t, i) => `<button ${i === 0 ? 'aria-current="page"' : ''} class="${navPrev.length && !navPrev.includes(t) ? 'appear' : ''}" data-tab="${t}">${t}${c.fresh.includes(t) ? '<span class="fresh" aria-label="新开"></span>' : ''}</button>`).join('');
+  navPrev = c.tabs;
+  nav.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    nav.querySelectorAll('button').forEach((x) => x.removeAttribute('aria-current'));
+    b.setAttribute('aria-current', 'page');
+    const f = b.querySelector('.fresh'); if (f) f.remove();
+  }));
+}
+renderNav('r3');
+
+function toast(text) {
+  const root = document.getElementById('toast-root');
+  root.innerHTML = '';
+  const t = document.createElement('div');
+  t.className = 'toast serif';
+  t.textContent = text;
+  root.appendChild(t);
+  setTimeout(() => { if (t.parentNode) t.remove(); }, 2600);
+}
+
+// ===== §1 选内功 =====
+const s1Confirm = document.getElementById('s1-confirm');
+document.querySelectorAll('#s1 .ng-pick, #s1 .owned-list button:not(:disabled)').forEach((b) => {
+  b.addEventListener('click', () => {
+    const scope = b.closest('.pick-grid, .owned-group');
+    scope.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const nm = b.dataset.pick || b.textContent.replace(/^(寻常|上乘|绝学)/, '').trim();
+    s1Confirm.textContent = `主修 ${nm}`;
+  });
+});
+s1Confirm.addEventListener('click', () => toast(`${s1Confirm.textContent.replace('主修 ', '')} · 入门`));
+
+// ===== §2 内功页 =====
+// 三种状态各自的境界 / 重数 / 品质；读数全部按 spec §1.2–§1.4 现算
+const NG = {
+  normal: { nm: '雷鸣剑经', q: '上乘', realm: 4, z: 61, passed: 4 },
+  wait:   { nm: '雷鸣剑经', q: '上乘', realm: 2, z: 20, passed: 3 },   // 新一世早段：刚到化境门槛
+  scroll: { nm: '云台心法', q: '绝学', realm: 3, z: 40, passed: 4 },
+};
+const QMUL = { 寻常: 1.0, 上乘: 1.02, 绝学: 1.04 }, QQI = { 寻常: 1.0, 上乘: 1.1, 绝学: 1.2 };
+const COST0 = 3490;
+const fmt = (n) => n.toLocaleString('en-US');
+const fmtBig = (n) => n >= 1e8 ? (n / 1e8).toFixed(2) + '亿' : n >= 1e4 ? (n / 1e4).toFixed(1) + '万' : fmt(Math.round(n));
+let ngState = 'normal';
+let ng = { ...NG.normal };
+function setStep(el, cls, dot) { el.className = 'step ' + cls; el.querySelector('.dot').textContent = dot; }
+function renderNeigong(st) {
+  if (st) { ngState = st; ng = { ...NG[st] }; }
+  const steps = document.querySelectorAll('#s2-steps .step');
+  steps.forEach((el, i) => {
+    if (i < ng.passed) setStep(el, 'done', '✓');
+    else if (i === 4 && ng.q !== '绝学') setStep(el, 'na', '5');
+    else setStep(el, '', String(i + 1));
+  });
+  const wait = document.getElementById('s2-wait'), scroll = document.getElementById('s2-scroll');
+  wait.hidden = ngState !== 'wait'; scroll.hidden = ngState !== 'scroll';
+  if (ngState === 'wait') setStep(steps[3], 'wait', '4');
+  if (ngState === 'scroll') setStep(steps[4], 'scroll', '5');
+  document.getElementById('s2-name').textContent = ng.nm;
+  const q = document.getElementById('s2-q'); q.textContent = ng.q; q.className = 'tag ' + Q[ng.q];
+  const hj = document.getElementById('s2-mech-huajing');
+  hj.className = ng.passed >= 4 ? 'm on' : 'm';
+  hj.innerHTML = '<span class="k">化境</span>剑招再 +50pp' + (ng.passed >= 4 ? '' : '（未至）');
+  document.getElementById('s2-mech-lu').innerHTML = `<span class="k">路数</span>暴击攒剑意，满 3 层剑招 攻击 × ${ng.passed >= 4 ? 600 : 550}%；开战首击必暴`;
+  const up = document.getElementById('s2-upbtn');
+  const blocked = ngState !== 'normal';
+  up.disabled = blocked;
+  up.innerHTML = blocked ? '卡在台阶上<span class="sub">顿悟前不能再升重</span>'
+    : `精进一重<span class="sub">${fmtBig(COST0 * 1.08 ** ng.z)} 内力</span>`;
+  document.getElementById('s2-ff').hidden = ngState !== 'wait';
+  document.getElementById('s2-zhong').innerHTML = `第 ${ng.z}<small>重</small>`;
+  document.getElementById('s2-fold').textContent = `火候折合 ${(Math.max(0, ng.z - 10) / 20 * QMUL[ng.q]).toFixed(2)} 个境界`;
+  document.getElementById('s2-realm').textContent = ng.realm;
+  document.getElementById('s2-qiz').textContent = ng.z;
+  document.getElementById('s2-qq').textContent = `${ng.q} ${QQI[ng.q]}`;
+  document.getElementById('s2-qi').textContent = Math.round((70 + 15 * (ng.realm - 2) + ng.z) * QQI[ng.q]);
+  document.getElementById('s2-per').textContent = QQI[ng.q].toFixed(1);
+}
+document.getElementById('s2-upbtn').addEventListener('click', () => { ng.z += 1; renderNeigong(); });
+// 原型：快进到顿悟那一刻（化境跨阶），演示金色提示与台阶点亮
+document.getElementById('s2-ff').addEventListener('click', () => {
+  ngState = 'normal'; ng.passed = 4;
+  renderNeigong();
+  toast('顿悟 · 雷鸣剑经 · 化境');
+});
+renderNeigong('normal');
+
+const SWITCH = {
+  same: { t: '转修 · 云台心法', ok: '转修', b: '同为惊雷一路，功力可带过去大半。<br>起始重数：<b>第 61 重 → 第 58 重</b>（保留八成累计内力）<br>已过台阶：<span class="loss">需重新顿悟</span>（登堂 / 入室 / 大成约各 20 分钟）<br>手续费：<b>400</b> 银两<br><br>下一世开头换功免费；只有一世之内要换，才付这笔。' },
+  down: { t: '转修 · 惊雷诀', ok: '转修', b: '同为惊雷一路，但品质更低：火候每重折算变少，也没有化境。<br>起始重数：<b>第 61 重 → 第 58 重</b><br>手续费：<b>400</b> 银两' },
+  cross: { t: '散功重修 · 镇岳功', ok: '散功重修', b: '跨路数须散功：<span class="loss">重数归零</span>，台阶清空，从第 1 重练起。<br>剑意之法散去，改修护体反震。<br>手续费：<b>400</b> 银两<br><br>若只是想试试镇岳，<b>不如等下一世开头再选</b>，那时不收费、不折算。' },
+};
+const dlg = document.getElementById('dlg-switch');
+document.querySelectorAll('[data-switch]').forEach((b) => b.addEventListener('click', () => {
+  const s = SWITCH[b.dataset.switch];
+  document.getElementById('dlg-title').textContent = s.t;
+  document.getElementById('dlg-body').innerHTML = s.b;
+  document.getElementById('dlg-ok').textContent = s.ok;
+  dlg.showModal();
+}));
+dlg.addEventListener('click', (e) => { if (e.target.closest('[data-close]') || e.target === dlg) dlg.close(); });
+
+// ===== §3 武学页 =====
+const SH = ['生疏', '熟练', '精通', '圆熟'];
+const WX = [
+  { id: 'cy', nm: '苍崖剑诀', q: '绝学', lu: '惊雷', eff: '必暴', cost: 55, cd: 4, forms: [
+    { n: '裂云', m: 145, c: 32, th: [5, 12, 26], ok: true, eff: true },
+    { n: '穿崖', m: 149, c: 21, th: [5, 12, 26], ok: true },
+    { n: '倒峰', m: 153, c: 9, th: [5, 12, 26], ok: true },
+    { n: '孤松', m: 157, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 3', 1], ['真气 ≥ 140', 1], ['前式熟练', 1]], wait: true },
+    { n: '断石', m: 161, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 4', 1], ['真气 ≥ 170', 1], ['招式秘籍（华山 250 贡献）', 0], ['前式熟练', 0]] },
+    { n: '垂天', m: 165, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 5', 0], ['真气 ≥ 210', 0], ['招式秘籍', 0], ['前式熟练', 0]] },
+    { n: '归鸿', m: 169, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 5', 0], ['真气 ≥ 240', 0], ['招式秘籍', 0], ['前式熟练', 0]], eff: true },
+  ] },
+  { id: 'jh', nm: '惊鸿剑', q: '上乘', lu: '惊雷', eff: '回气', cost: 40, cd: 3, forms: [
+    { n: '点水', m: 150, c: 28, th: [5, 12, 28], ok: true, eff: true },
+    { n: '掠影', m: 154, c: 19, th: [5, 12, 28], ok: true },
+    { n: '回雪', m: 158, c: 3, th: [5, 12, 28], ok: true },
+    { n: '分光', m: 162, c: 0, th: [5, 12, 28], ok: false, cond: [['境界 4', 1], ['真气 ≥ 150', 1], ['招式秘籍（书肆 1,500 银两）', 0], ['前式熟练', 0]] },
+    { n: '惊鸿', m: 166, c: 0, th: [5, 12, 28], ok: false, cond: [['境界 4', 1], ['真气 ≥ 170', 1], ['招式秘籍', 0], ['前式熟练', 0]], eff: true },
+  ] },
+  { id: 'fh', nm: '伏虎拳', q: '上乘', lu: '镇岳', eff: '必暴', cost: 40, cd: 3, forms: [
+    { n: '擒虎', m: 150, c: 12, th: [5, 12, 28], ok: true, eff: true },
+    { n: '按虎', m: 154, c: 6, th: [5, 12, 28], ok: true },
+    { n: '伏虎', m: 158, c: 0, th: [5, 12, 28], ok: false, cond: [['境界 3', 1], ['真气 ≥ 120', 1], ['前式熟练', 1]], wait: true },
+    { n: '驯虎', m: 162, c: 0, th: [5, 12, 28], ok: false, cond: [['境界 4', 1], ['真气 ≥ 150', 1], ['招式秘籍', 0], ['前式熟练', 0]] },
+    { n: '啸虎', m: 166, c: 0, th: [5, 12, 28], ok: false, cond: [['境界 4', 1], ['真气 ≥ 170', 1], ['招式秘籍', 0], ['前式熟练', 0]], eff: true },
+  ] },
+  { id: 'lx', nm: '落星剑', q: '绝学', lu: '惊雷', eff: '蓄势', sig: true, cost: 55, cd: 4, forms: [
+    { n: '初星', m: 145, c: 14, th: [5, 12, 26], ok: true, eff: true },
+    { n: '连星', m: 149, c: 5, th: [5, 12, 26], ok: true, eff: true },
+    { n: '坠星', m: 153, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 3', 1], ['真气 ≥ 140', 1], ['前式熟练', 1]], wait: true },
+    { n: '流星', m: 157, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 3', 1], ['真气 ≥ 140', 1], ['前式熟练', 0]] },
+    { n: '追星', m: 161, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 4', 1], ['真气 ≥ 170', 1], ['招式秘籍（华山 250 贡献）', 0], ['前式熟练', 0]] },
+    { n: '摘星', m: 165, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 5', 0], ['真气 ≥ 210', 0], ['招式秘籍', 0], ['前式熟练', 0]] },
+    { n: '落星', m: 169, c: 0, th: [5, 12, 26], ok: false, cond: [['境界 5', 0], ['真气 ≥ 240', 0], ['招式秘籍', 0], ['前式熟练', 0]] },
+  ] },
+  { id: 'ly', nm: '流云剑', q: '寻常', lu: '惊雷', eff: '必暴', cost: 25, cd: 2, forms: [
+    { n: '起云', m: 130, c: 25, th: [4, 10, 25], ok: true, eff: true },
+    { n: '行云', m: 134, c: 25, th: [4, 10, 25], ok: true },
+    { n: '流云', m: 138, c: 25, th: [4, 10, 25], ok: true, eff: true },
+  ] },
+  { id: 'ks', nm: '开山掌', q: '寻常', lu: '镇岳', eff: '护体', cost: 25, cd: 2, forms: [
+    { n: '推山', m: 130, c: 11, th: [4, 10, 25], ok: true, eff: true },
+    { n: '劈山', m: 134, c: 4, th: [4, 10, 25], ok: true },
+    { n: '开山', m: 138, c: 0, th: [4, 10, 25], ok: false, cond: [['境界 2', 1], ['真气 ≥ 95', 1], ['前式熟练', 1]], wait: true, eff: true },
+  ] },
+];
+const MY_LU = '惊雷';
+let equipped = ['jh', 'fh', 'cy', 'lx'];
+let current = 'cy';
+const SLOT_N = 4, SLOT_MAX = 5;
+const shIdx = (f) => f.c >= f.th[2] ? 3 : f.c >= f.th[1] ? 2 : f.c >= f.th[0] ? 1 : 0;
+function renderSlots() {
+  const el = document.getElementById('slots');
+  let h = '';
+  for (let i = 0; i < SLOT_MAX; i++) {
+    const w = WX.find((x) => x.id === equipped[i]);
+    if (i >= SLOT_N) h += `<div class="slot locked">境界 5 开</div>`;
+    else if (!w) h += `<button class="slot empty">空槽</button>`;
+    else h += `<button class="slot" data-pick="${w.id}" aria-pressed="${w.id === current}"><span class="sn serif">${w.nm}</span><span class="ss">耗气 ${w.cost} · 冷却 ${w.cd}</span><span><span class="tag ${Q[w.q]}">${w.q}</span></span></button>`;
+  }
+  el.innerHTML = h;
+  el.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => { current = b.dataset.pick; renderWx(); }));
+}
+function renderList() {
+  const el = document.getElementById('wx-list');
+  el.innerHTML = WX.map((w) => {
+    const got = w.forms.filter((f) => f.ok).length;
+    const res = w.lu === MY_LU ? '<span class="tag res-tag">共鸣</span>' : '';
+    return `<button class="wx-item" data-id="${w.id}" aria-current="${w.id === current}"><span class="nm serif">${w.nm}</span><span class="tag ${Q[w.q]}">${w.q}</span>${res}<span class="pg">${got}/${w.forms.length} 式</span>${equipped.includes(w.id) ? '<span class="eq">已装</span>' : ''}</button>`;
+  }).join('');
+  el.querySelectorAll('.wx-item').forEach((b) => b.addEventListener('click', () => { current = b.dataset.id; renderWx(); }));
+}
+function renderDetail() {
+  const w = WX.find((x) => x.id === current);
+  const on = equipped.includes(w.id);
+  const full = equipped.length >= SLOT_N;
+  const res = w.lu === MY_LU;
+  let h = `<div class="dh"><span class="nm serif">${w.nm}</span><span class="tag ${Q[w.q]}">${w.q}</span><span class="tag lu ${LU[w.lu] || ''}">${w.lu}</span>${res ? '<span class="tag res-tag">共鸣 · 招式 ×1.1</span>' : ''}`;
+  h += `<button class="btn ${on ? 'ghost' : ''} small" style="margin-left:auto" id="eq-btn" ${!on && full ? 'disabled' : ''}>${on ? '卸下' : full ? '槽已满' : '装上'}</button></div>`;
+  h += `<div class="params"><span>耗气 <b>${w.cost}</b></span><span>冷却 <b>${w.cd}</b> 回合</span><span>特效 <b>${w.eff}</b>${w.sig ? '（独门，每式都带）' : '（第一式与末式）'}</span>${w.q === '绝学' ? '<span>本门绝学 · 熟练阈值 ×0.8</span>' : ''}</div>`;
+  w.forms.forEach((f, i) => {
+    const idx = shIdx(f);
+    const next = idx < 3 ? f.th[idx] : f.th[2];
+    const pct = idx < 3 ? Math.min(100, f.c / next * 100) : 100;
+    const mult = Math.round(f.m * (1 + 0.07 * idx) * (res ? 1.1 : 1));
+    const effTag = (f.eff || w.sig) ? `<span class="tag eff">${w.eff}</span>` : '';
+    if (f.ok) {
+      h += `<div class="form"><span class="fi">第${'一二三四五六七'[i]}式</span><span class="fn serif">${f.n}${effTag}</span><span class="fm">×${mult}%</span>`;
+      h += `<div class="fx"><div class="bar thin"><i style="width:${pct}%"></i></div><div class="lvl"><span><b>${SH[idx]}</b>${idx < 3 ? ` · 下一档 ${SH[idx + 1]}` : ' · 已至顶'}</span><span>${f.c}${idx < 3 ? ` / ${next}` : ''} 次</span></div></div></div>`;
+    } else {
+      const conds = f.cond.map(([t, ok]) => `<span class="${ok ? 'ok' : 'no'}">${t}</span>`).join('');
+      const tail = f.wait ? `<span class="wait">顿悟中 · 每出一招一判（约 ${w.q === '寻常' ? 3 : w.q === '上乘' ? 10 : 15} 小时）</span>` : '';
+      h += `<div class="form locked"><span class="fi">第${'一二三四五六七'[i]}式</span><span class="fn serif">${f.n}${effTag}</span><span class="fm">×${mult}%</span><div class="fx"><div class="cond">${conds}${tail}</div></div></div>`;
+    }
+  });
+  document.getElementById('wx-detail').innerHTML = h;
+  document.getElementById('eq-btn').addEventListener('click', () => {
+    if (on) equipped = equipped.filter((x) => x !== w.id);
+    else if (!full) equipped.push(w.id);
+    renderWx();
+  });
+}
+function renderWx() { renderSlots(); renderList(); renderDetail(); }
+renderWx();
+
+// ===== §5 门派 =====
+const joinBtn = document.getElementById('s5-join');
+document.querySelectorAll('#s5 .sect').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('#s5 .sect').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  joinBtn.textContent = `拜入 ${b.dataset.sect}`;
+}));
+joinBtn.addEventListener('click', () => toast(`${joinBtn.textContent} · 本世有效`));
+
+// ===== §6 悟性重掷（原型演示） =====
+document.getElementById('roll-btn').addEventListener('click', () => {
+  const v = document.getElementById('roll-v');
+  let n = 0;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const final = (0.8 + Math.random() * 0.4).toFixed(2);
+  if (reduce) { v.textContent = final; return; }
+  const it = setInterval(() => {
+    v.textContent = (0.8 + Math.random() * 0.4).toFixed(2);
+    if (++n > 12) { clearInterval(it); v.textContent = final; }
+  }, 60);
+});
+</script>
+</body>
+</html>

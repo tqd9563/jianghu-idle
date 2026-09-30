@@ -740,19 +740,19 @@ button { font: inherit; color: inherit; }
 .wform .fx::before { content: '◈ '; font-size: 10px; }
 .wform.locked .fx { color: oklch(0.55 0.05 215); }
 .wform { grid-template-columns: 200px minmax(0, 1fr) 64px; }
-/* 藏经：AI 卷轴图陈列（黑底已处理成透明），按品质换卷 */
-.scrolls { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 18px; margin-bottom: 18px; }
-.scroll-i { position: relative; border: 0; cursor: pointer; aspect-ratio: 4 / 1; padding: 0; background: url('../../code/public/art/scroll-q1.png') center / contain no-repeat;
-  display: grid; place-items: center; font-family: var(--serif); font-size: 17px; letter-spacing: 0.25em; color: oklch(0.25 0.02 60);
-  filter: brightness(0.82); transition: transform .25s var(--ease), filter .25s; }
-.scroll-i.q2 { background-image: url('../../code/public/art/scroll-q2.png'); color: oklch(0.22 0.03 220); }
-.scroll-i.q3 { background-image: url('../../code/public/art/scroll-q3.png'); color: oklch(0.2 0.03 60); }
-.scroll-i small { position: absolute; top: 100%; margin-top: 2px; font-family: var(--body, var(--sans)); font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
-.scroll-i .t { transform: translateY(-1px); }
-.scrolls { row-gap: 26px; }
-.scroll-i:hover { filter: brightness(0.95); transform: translateY(-2px); }
-.scroll-i[aria-current="true"] { filter: brightness(1.05) drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.35)); transform: translateY(-3px); }
-.scroll-i .on { position: absolute; top: 12%; right: 16%; font-size: 10.5px; letter-spacing: 0; padding: 1px 5px; border-radius: 3px; background: oklch(0.45 0.14 30); color: oklch(0.95 0.02 80); font-family: var(--body, var(--sans)); }
+/* 藏经：AI 线装书册封面陈列（黑底已处理成透明），书名竖写在题签上；按品质换封面 */
+.scrolls { display: flex; flex-wrap: wrap; gap: 26px 22px; margin-bottom: 22px; padding: 6px 4px 0; }
+.scroll-i { position: relative; width: 112px; aspect-ratio: 0.65; border: 0; padding: 0; cursor: pointer;
+  background: url('../../code/public/art/book-q1.png') center / 100% 100% no-repeat; filter: brightness(0.85) drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6));
+  transition: transform .25s var(--ease), filter .25s; }
+.scroll-i.q2 { background-image: url('../../code/public/art/book-q2.png'); }
+.scroll-i.q3 { background-image: url('../../code/public/art/book-q3.png'); }
+.scroll-i .t { position: absolute; left: 21%; top: 16%; width: 15%; height: 44%; display: grid; place-items: center;
+  writing-mode: vertical-rl; font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap; }
+.scroll-i small { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
+.scroll-i:hover { transform: translateY(-3px); filter: brightness(0.95) drop-shadow(0 10px 16px oklch(0.05 0.01 262 / 0.6)); }
+.scroll-i[aria-current="true"] { transform: translateY(-6px); filter: brightness(1.05) drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.45)); }
+.scroll-i .on { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.45 0.14 30); color: oklch(0.95 0.02 80); }
 .ngd-meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin: -4px 0 12px; }
 .ngd-meta b { color: var(--ink); font-weight: 600; }
 /* 战报：回合抬头 + 成段叙述 */
@@ -774,6 +774,19 @@ button { font: inherit; color: inherit; }
 .settings .st-opts button i { width: 18px; height: 18px; border-radius: 5px; flex: none; }
 .settings .st-opts button[aria-pressed="true"] { background: oklch(0.78 0.13 78 / 0.1); color: var(--ink); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.45); }
 .settings .st-note { font-size: 12px; color: var(--faint); }
+
+/* 破境卡：条件竖排、按钮占满 */
+.break-card .cond { display: grid; gap: 8px; justify-content: stretch; }
+.break-card .cond span { justify-content: flex-start; }
+.break-card .cond b { margin-left: auto; }
+.break-card .acu-ledger { justify-content: space-between; margin: 14px 0 16px; padding-top: 12px; border-top: 1px solid var(--hair); }
+.break-card .break-btn { width: 100%; }
+.cult aside .card + .card { margin-top: 14px; }
+/* 武学类别图标：AI 简笔图做遮罩，颜色跟随文字 */
+.cat-ico { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; background: currentColor;
+  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.cats .cat-ico { margin-right: 4px; }
+.book .bi { width: 22px; height: 22px; color: oklch(0.85 0.03 85 / 0.8); }
 
 /* ═══════ 手机宽度 ═══════ */
 .mob-top, .tabbar { display: none; }
@@ -916,11 +929,10 @@ button { font: inherit; color: inherit; }
     <div class="stage">
       <!-- ─────────── 修炼 ─────────── -->
       <section class="page on" id="p-cultivate">
-        <div class="page-art" style="--art:url('../../code/public/art/cultivate.jpg')"></div>
+        <div class="page-art js-cult-art" style="--art:url('../../code/public/art/cultivate.jpg'); background-size: auto 100%"></div>
         <header class="page-head">
           <div>
             <h1>运转周天</h1>
-            <div class="sub">初窥门径 → <b>小有所成</b></div>
           </div>
         </header>
 
@@ -953,13 +965,6 @@ button { font: inherit; color: inherit; }
             <div class="incense" data-tip-html="本段 <b>1,034,800</b> / 1,668,000 内力<br><span class='l'>三段周天逐段翻倍，突破共需 2,780,000</span>">
               <div class="ash js-ash"></div><div class="stick js-stick"></div><span class="tick" style="left:33.33%"></span><span class="tick" style="left:66.67%"></span><div class="smoke js-smoke"></div><div class="ember js-ember"></div>
             </div>
-
-            <div class="acu-ledger">
-              <span>窍穴<b>1/4</b></span><span>经脉<b>0/2</b></span><span>修炼加成<b class="gold">+4%</b></span>
-            </div>
-
-            <div class="cond js-cond"></div>
-            <button class="break-btn js-break" disabled>周天运转中 · 约 21 分钟后可突破</button>
           </div>
 
           <aside class="a-only">
@@ -968,7 +973,16 @@ button { font: inherit; color: inherit; }
               <div class="js-attrs"></div>
               <div class="attr-foot">内功 惊雷诀 · 第 3 重 · <a href="#" data-go="neigong">详情</a></div>
             </div>
-            <!-- 有伤才出现，排在身手下方，身手位置不随伤势变化 -->
+            <!-- 破境：突破条件、窍穴经脉与突破按钮，填满身手下方 -->
+            <div class="card break-card">
+              <div class="head"><span class="serif">破境</span><small>初窥门径 → 小有所成</small></div>
+              <div class="cond js-cond"></div>
+              <div class="acu-ledger">
+                <span>窍穴<b>1/4</b></span><span>经脉<b>0/2</b></span><span>修炼加成<b class="gold">+4%</b></span>
+              </div>
+              <button class="break-btn js-break" disabled>周天运转中 · 约 21 分钟后可突破</button>
+            </div>
+            <!-- 有伤才出现，排在最下方，身手与破境都不移位 -->
             <div class="card wounds js-wounds" hidden></div>
           </aside>
         </div>
@@ -1121,7 +1135,7 @@ button { font: inherit; color: inherit; }
               <div class="head"><span class="serif">贡献商店</span><small>持有 <b class="gold">320</b> 贡献</small></div>
               <div class="rows">
                 <div class="row-i"><div class="t"><span class="serif">苍崖剑诀</span><span class="qtag q3">绝学</span></div><div class="d">剑法 · 本门练得快两成</div><div class="a"><span class="buy"><button class="btn2" disabled>450 贡献</button><small>还差 130</small></span></div></div>
-                <div class="row-i"><div class="t"><span class="serif">云台心法</span><span class="qtag q3">绝学内功</span></div><div class="d">五级台阶</div><div class="a"><span class="buy"><button class="btn2" disabled>600 贡献</button><small>还差 280</small></span></div></div>
+                <div class="row-i"><div class="t"><span class="serif">云台心法</span><span class="qtag q3">绝学内功</span></div><div class="d">最高可至归真</div><div class="a"><span class="buy"><button class="btn2" disabled>600 贡献</button><small>还差 280</small></span></div></div>
                 <div class="row-i lock"><div class="t"><span class="serif">落星剑</span><span class="qtag q3">绝学 · 独门</span></div><div class="d">蓄势，越打越快</div><div class="a"><span class="price">境界 4 可换</span></div></div>
                 <div class="row-i"><div class="t"><span class="serif">招式秘籍 · 苍崖剑诀第四式</span></div><div class="d">领悟第四式所需</div><div class="a"><span class="buy"><button class="btn2">300 贡献</button></span></div></div>
               </div>
@@ -1155,7 +1169,7 @@ button { font: inherit; color: inherit; }
           <div class="rows">
             <div class="row-i"><div class="t"><span class="serif">行者棍</span><span class="qtag q1">寻常</span></div><div class="d">棍法 · 特效回气</div><div class="a"><span class="buy"><button class="btn2">1,800 两</button></span></div></div>
             <div class="row-i"><div class="t"><span class="serif">招式秘籍 · 流云剑第三式</span></div><div class="d">领悟第三式所需</div><div class="a"><span class="buy"><button class="btn2" disabled>4,500 两</button><small>还差 1,080</small></span></div></div>
-            <div class="row-i lock"><div class="t"><span class="serif">雷鸣剑经</span><span class="qtag q2">上乘内功</span></div><div class="d">惊雷一路 · 四级台阶</div><div class="a"><span class="price">境界 3 上架</span></div></div>
+            <div class="row-i lock"><div class="t"><span class="serif">雷鸣剑经</span><span class="qtag q2">上乘内功</span></div><div class="d">惊雷一路 · 最高可至化境</div><div class="a"><span class="price">境界 3 上架</span></div></div>
             <div class="row-i done"><div class="t"><span class="serif">流云剑</span><span class="qtag q1">寻常</span></div><div class="d">剑法 · 特效必暴</div><div class="a"><span class="price">已有</span></div></div>
           </div>
         </div>
@@ -1611,6 +1625,8 @@ const FX = {
   duanshui: ['为对方附毒 1 层', '', '', '', '附毒 3 层'],
   xiuli: ['为对方附毒 1 层', '', '附毒 2 层'],
 };
+const ICO = { 剑法: 'jian', 刀法: 'dao', 拳掌: 'quan', 暗器: 'anqi', 棍法: 'gun' };
+const ico = c => ICO[c] ? `<i class="cat-ico" style="--ico:url('../../code/public/art/icon-${ICO[c]}.png')"></i>` : '';
 const QP = { 1: { q: '寻常', cost: 25, cd: 2, m0: 130, th: [4, 10, 25] }, 2: { q: '上乘', cost: 40, cd: 3, m0: 150, th: [5, 12, 28] }, 3: { q: '绝学', cost: 55, cd: 4, m0: 145, th: [6, 15, 32] } };
 const TIER4 = ['生疏', '熟练', '精通', '圆满'];
 const wx = { equipped: ['liuyun'], cur: 'liuyun', cat: '全部', slots: 2 };
@@ -1625,15 +1641,15 @@ function renderSlots() {
 }
 function renderShelf() {
   const cats = ['全部', ...new Set(Object.values(WX).map(d => d.cat))];
-  $('.js-cats').innerHTML = cats.map(c => `<button data-cat="${c}" aria-pressed="${c === wx.cat}">${c}<small>${c === '全部' ? Object.keys(WX).length : Object.values(WX).filter(d => d.cat === c).length}</small></button>`).join('');
+  $('.js-cats').innerHTML = cats.map(c => `<button data-cat="${c}" aria-pressed="${c === wx.cat}">${ico(c)}${c}<small>${c === '全部' ? Object.keys(WX).length : Object.values(WX).filter(d => d.cat === c).length}</small></button>`).join('');
   $('.js-shelf').innerHTML = Object.entries(WX).filter(([, d]) => wx.cat === '全部' || d.cat === wx.cat).sort((a, b) => b[1].q - a[1].q).map(([id, d]) =>
-    `<button class="book q${d.q}" data-wx="${id}" aria-current="${id === wx.cur}" title="${d.n} · ${QP[d.q].q}${d.cat}">${wx.equipped.includes(id) ? '<span class="eq">装</span>' : ''}<span class="bt">${d.n}</span><span class="bq">${QP[d.q].q} · ${d.cat}</span></button>`).join('');
+    `<button class="book q${d.q}" data-wx="${id}" aria-current="${id === wx.cur}" title="${d.n} · ${QP[d.q].q}${d.cat}">${wx.equipped.includes(id) ? '<span class="eq">装</span>' : ''}<span class="bt">${d.n}</span><span class="bi">${ico(d.cat)}</span></button>`).join('');
 }
 function renderWxDetail() {
   const d = WX[wx.cur], p = QP[d.q], on = wx.equipped.includes(wx.cur), full = wx.equipped.length >= wx.slots;
     let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
-    <button class="${on ? 'btn2 quiet' : 'btn2'}" data-equip="${wx.cur}" ${!on && full ? 'disabled' : ''}>${on ? '卸下' : full ? '装配槽已满' : '装上'}</button></div>
-    <div class="params"><span>${d.cat}</span><span>真气消耗 <b>${p.cost}</b></span><span>冷却 <b>${p.cd}</b> 回合</span>
+    <button class="${on ? 'btn2 quiet' : 'btn2'}" data-equip="${wx.cur}" ${!on && full ? 'disabled' : ''}>${on ? '卸下' : full ? '装配槽已满' : '装配'}</button></div>
+    <div class="params"><span>${ico(d.cat)} ${d.cat}</span><span>真气消耗 <b>${p.cost}</b></span><span>冷却 <b>${p.cd}</b> 回合</span>
     <span data-tip="冷却已好、真气够用时，每回合有三成机会出这一门（与其它就绪的武学随机取一）">触发几率 <b>30%</b></span><span>特效 <b>${d.eff}</b></span></div>`;
   d.forms.forEach(([name, tier, casts, gate], k) => {
     const mul = Math.round((p.m0 / 100 + k * 0.12) * (1 + tier * 0.05) * (d.res ? 1.1 : 1) * 100);
@@ -1674,7 +1690,7 @@ const NG = {
   zhenyue:  { n: '镇岳功', q: 1, lu: '镇岳', mech: ['开战获得 <b>30% 气血</b>护盾', '受击反伤 <b>25%</b>', '防御 <b>+20%</b>'] },
   shigu:    { n: '蚀骨心法', q: 1, lu: '蚀骨', mech: ['开战为对方<b>施毒 2 层</b>，每次命中 <b>+1 层</b>', '毒伤 = 攻击 × <b>12%</b> × 层数，<b>无视防御</b>', '层数上限 <b>8</b>，满层触发<b>毒爆 50%</b>', '代价：普攻伤害 <b>×0.85</b>'] },
 };
-const NGQ = { 1: ['寻常', '第 6 重 · 大成', '1.0'], 2: ['上乘', '第 20 重 · 化境', '1.1'], 3: ['绝学', '第 40 重 · 归真', '1.2'] };
+const NGQ = { 1: ['寻常', '大成（第 6 重）', '1.0'], 2: ['上乘', '化境（第 20 重）', '1.1'], 3: ['绝学', '归真（第 40 重）', '1.2'] };
 const ng = { cur: 'leiming', cat: '全部' };
 function renderNg() {
   const cats = ['全部', '惊雷', '镇岳', '蚀骨'];
@@ -1684,7 +1700,7 @@ function renderNg() {
   const d = NG[ng.cur], q = NGQ[d.q];
   const act = d.cur ? '<span class="price ok">主修中</span>' : d.lu === '惊雷' ? '<button class="btn2">转修 · 保留八成功力</button>' : '<button class="btn2 quiet">散功重修</button>';
   $('.js-ngd').innerHTML = `<div class="head"><span style="display:flex;gap:8px;align-items:center"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${q[0]}</span></span>${act}</div>
-    <div class="ngd-meta"><span>台阶止于 <b>${q[1]}</b></span><span data-tip="真气上限的倍率">气海 <b>×${q[2]}</b></span></div>
+    <div class="ngd-meta"><span>最高可至 <b>${q[1]}</b></span><span data-tip="真气上限的倍率">气海 <b>×${q[2]}</b></span></div>
     <ul class="mech">${d.mech.map(m => `<li>${m}</li>`).join('')}<li>气海 <b>×${q[2]}</b>，每精进一重真气上限 <b>+1</b></li></ul>`;
 }
 document.addEventListener('click', e => {
@@ -1703,6 +1719,20 @@ $('#settings').addEventListener('click', e => {
   $$('#settings [data-card]').forEach(x => x.setAttribute('aria-pressed', x === b));
 });
 document.addEventListener('click', () => { $('#settings').hidden = true; });
+
+
+/* 修炼底图：宽幅图的月亮（图宽 50% 处）对齐到人物头顶，两张图接成一幅 */
+function alignCultArt() {
+  const art = $('.js-cult-art'), sc = $('#scene');
+  if (!art || !sc || !$('#p-cultivate').classList.contains('on')) return;
+  const a = art.getBoundingClientRect(), r = sc.getBoundingClientRect();
+  const imgW = a.height * 3;                       // 图是 3:1，按视口高铺
+  const x = (r.left + r.width / 2) - a.left - imgW / 2;
+  art.style.backgroundPosition = `${x}px ${Math.round(r.top + r.height * 0.22 - a.height * 0.36)}px`;
+}
+addEventListener('resize', alignCultArt);
+document.addEventListener('click', () => setTimeout(alignCultArt, 30));
+setTimeout(alignCultArt, 50);
 
 /* ───── 原型控制 ───── */
 const FONTS = {

@@ -96,7 +96,7 @@ button { font: inherit; color: inherit; }
 .jh-card { border-radius: 12px; padding: 16px 18px; background: var(--card); box-shadow: var(--card-edge); }
 .jh-card + .jh-card { margin-top: 14px; }
 .jh-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.jh-grid2 > .jh-card + .jh-card { margin-top: 0; }
+.jh-grid2 > .jh-card + .jh-card, .ngs-cards > .jh-card + .jh-card { margin-top: 0; }
 .jh-card .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
 .jh-card .head .serif { font-size: 15px; letter-spacing: 0.2em; }
 .jh-card .head .serif.big { font-size: 17px; }
@@ -242,3 +242,27 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .jh-page, .jh-ceremony > div > *, .jh-btn.breathe, .jh-settings { animation: none !important; }
 }
+
+/* ═══════ 选内功（境界 2 突破后整屏） ═══════ */
+.ngs-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 250px)); gap: 16px; justify-content: center; margin: 30px auto 28px; text-align: left; }
+.ngs-card { cursor: pointer; display: grid; gap: 8px; align-content: start; transition: box-shadow .25s var(--ease-sharp), transform .25s var(--ease-sharp); }
+.ngs-card:hover { transform: translateY(-2px); }
+.ngs-card.on { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.6), 0 0 26px oklch(0.78 0.13 78 / 0.12); }
+.ngs-name { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.2em; }
+.ngs-lu { color: var(--gold); font-size: 13px; }
+.ngs-motif { color: var(--muted); font-size: 13px; }
+.ngs-owned { display: flex; gap: 6px; flex-wrap: wrap; }
+.ngs-chip { display: inline-flex; gap: 6px; align-items: center; border: 0; background: var(--wash); border-radius: 7px; padding: 3px 9px 3px 4px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.ngs-chip.on { background: var(--wash-2); color: var(--ink); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.4); }
+.ngs-items { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.ngs-items b { color: var(--ink); font-weight: 600; }
+.ngs-cost { font-size: 12.5px; color: var(--faint); padding-top: 8px; border-top: 1px solid var(--hair); }
+@media (max-width: 860px) { .ngs-cards { grid-template-columns: 1fr; } }
+
+/* ═══════ 顿悟轻提示 / 测试暂停标签 ═══════ */
+.dunwu-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: var(--z-toast);
+  padding: 10px 20px; border-radius: 10px; font-family: var(--font-display); letter-spacing: 0.12em; color: var(--gold);
+  background: linear-gradient(to bottom, oklch(0.24 0.03 78 / 0.95), oklch(0.18 0.02 78 / 0.95)); border: 0;
+  box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5), 0 10px 30px oklch(0.05 0.01 262 / 0.6); }
+.paused-chip { border-radius: 8px; }
+@media (max-width: 860px) { .dunwu-toast { bottom: 76px; } }

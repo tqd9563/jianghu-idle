@@ -86,6 +86,15 @@ const PRESETS: Record<string, object> = {
     clearedStages: [], attempts: {}, autoAdvance: true,
     runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
   },
+  // 选内功弹窗：刚突破入境界 2、尚未主修内功（issue #26 视觉验收用）
+  pick: {
+    run: 2, realm: 2, route: null, neigong: null, zhong: 0, peakRealm: 2,
+    dantian: 0, silver: 0, xp: 0,
+    reputation: 130, repTotal: 130,
+    tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
+    clearedStages: [], attempts: {}, autoAdvance: true,
+    runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
+  },
   // 转世系统（reincarnation-prototype.html）：垂暮态——境界 3 寿元 90，80 岁时离寿元不足一次重伤
   dusk: {
     run: 3, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 5,

@@ -26,7 +26,7 @@ const CARD: Record<RouteId, { cls: string; lu: string; motif: string; items: Rea
     cost: '代价：普攻伤害 ×0.60，短战偏慢',
   },
 };
-const Q_CLS = { 寻常: 'q-common', 上乘: 'q-fine', 绝学: 'q-peak' } as const;
+const Q_CLS = { 寻常: 'q1', 上乘: 'q2', 绝学: 'q3' } as const;
 
 export function NeigongSelect() {
   const owned = useGameStore((s) => s.ownedNeigong);
@@ -38,48 +38,54 @@ export function NeigongSelect() {
   const multi = owned.some((id) => NEIGONG[id].quality !== '寻常');
 
   return (
-    <div className="route-select-overlay">
-      <div className="route-select-wrap">
-        <h1 className="serif">择 一 部 内 功</h1>
-        <p className="lede">隐世前辈各传一脉心法——习其艺，不列门墙。</p>
-        <p className="lede-sub">选定后本世主修此功；一世之内也能转修，但要付代价。下一世开头重选，不收费。</p>
-        <div className="route-cards">
+    <div className="jh-ceremony calm ngs" role="dialog" aria-label="择一部内功">
+      <div>
+        <div className="kick">择 一 部 内 功</div>
+        <h2 className="mid">隐世前辈 · 各传一脉</h2>
+        <div className="d">习其艺，不列门墙。本世主修此功，下一世开头可重选。</div>
+        <div className="ngs-cards" role="radiogroup" aria-label="内功">
           {ROUTE_ORDER.map((r) => {
             const list = byRoute(r);
             const c = CARD[r];
             const selected = NEIGONG[picked].route === r;
+            const shownId = selected ? picked : list[0];
             return (
               <div
                 key={r}
-                className={`route-card ${c.cls}${selected ? ' selected' : ''}`}
+                role="radio"
+                aria-checked={selected}
+                tabIndex={0}
+                className={`jh-card ngs-card${selected ? ' on' : ''}`}
                 onClick={() => { if (!selected && list[0]) setPicked(list[0]); }}
+                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !selected && list[0]) { e.preventDefault(); setPicked(list[0]); } }}
               >
-                <div className="rc-name serif">{NEIGONG[selected ? picked : list[0]].name}</div>
-                <div className="rc-style">{c.lu} · {c.motif}</div>
+                <div className="ngs-name">{NEIGONG[shownId].name}</div>
+                <div className="ngs-lu">{c.lu}</div>
+                <div className="ngs-motif">{c.motif}</div>
                 {multi && (
-                  <div className="ng-owned" role="radiogroup" aria-label={`${c.lu}一路已有内功`}>
+                  <div className="ngs-owned" role="radiogroup" aria-label={`${c.lu}一路已有内功`}>
                     {list.map((id) => (
                       <button
                         key={id}
-                        className={`ng-chip${picked === id ? ' on' : ''}`}
+                        type="button"
+                        className={`ngs-chip${picked === id ? ' on' : ''}`}
                         aria-pressed={picked === id}
                         onClick={(e) => { e.stopPropagation(); setPicked(id); }}
                       >
-                        <span className={`qtag ${Q_CLS[NEIGONG[id].quality]}`}>{NEIGONG[id].quality}</span>
+                        <span className={`jh-tag ${Q_CLS[NEIGONG[id].quality]}`}>{NEIGONG[id].quality}</span>
                         {NEIGONG[id].name}
                       </button>
                     ))}
                   </div>
                 )}
-                <div className="rc-grant">修习即得</div>
-                <ul>{c.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
-                <div className="rc-cost">{c.cost}</div>
+                <ul className="ngs-items">{c.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
+                <div className="ngs-cost">{c.cost}</div>
               </div>
             );
           })}
         </div>
-        <div className="route-confirm">
-          <button className="btn pulse" onClick={() => selectNeigong(picked)}>
+        <div className="acts">
+          <button type="button" className="jh-btn breathe" onClick={() => selectNeigong(picked)}>
             主修 {NEIGONG[picked].name}
           </button>
         </div>

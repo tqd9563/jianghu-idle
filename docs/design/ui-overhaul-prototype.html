@@ -295,7 +295,7 @@ button { font: inherit; color: inherit; }
   -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 52%, rgba(0,0,0,0.6) 72%, transparent 100%);
           mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 52%, rgba(0,0,0,0.6) 72%, transparent 100%);
 }
-.cs-backdrop { position: absolute; inset: 0; z-index: 1; background: url('../../code/public/zhoutian/figure-dark.png') center 28% / cover no-repeat; filter: brightness(0.62) saturate(0.45); transform-origin: 50% 64%; transition: transform 1s var(--ease), opacity 1s var(--ease), filter 1s var(--ease); }
+.cs-backdrop { position: absolute; inset: 0; z-index: 1; background: url('../../code/public/zhoutian/figure-dark.png') center 28% / cover no-repeat; filter: brightness(0.7) saturate(0.4) contrast(1.15); mix-blend-mode: screen; transform-origin: 50% 64%; transition: transform 1s var(--ease), opacity 1s var(--ease), filter 1s var(--ease); }
 .cs-scene.inner .cs-backdrop { transform: scale(2.9); opacity: 0; filter: brightness(0.35) blur(5px); }
 .cs-inkbg { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; background: radial-gradient(64% 50% at 50% 46%, oklch(0.10 0.012 262 / 0.72), oklch(0.08 0.01 262 / 0.42) 62%, oklch(0.06 0.008 262 / 0.80) 96%), url('../../code/public/zhoutian/void-bg.jpg') center / cover no-repeat, oklch(0.085 0.01 262); transition: opacity 1s var(--ease); }
 .cs-scene.inner .cs-inkbg { opacity: 1; }
@@ -397,12 +397,12 @@ button { font: inherit; color: inherit; }
 .all-stages button:disabled { color: oklch(0.40 0.012 262); cursor: default; }
 
 /* 对阵场：水墨远山做底，信息长在画里 */
-.arena { position: relative; margin-top: 22px; border-radius: 16px; overflow: hidden; padding: 28px 30px 26px; background: linear-gradient(to bottom, oklch(0.2 0.018 250), oklch(0.16 0.014 258)); }
+.arena { position: relative; margin-top: 30px; padding: 10px 0 6px; }
 .arena-art { position: absolute; inset: 0; background: url('../../code/public/art/battle-village.jpg') center 38% / cover no-repeat; opacity: 0.75; filter: brightness(0.62) saturate(0.55);
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 55%, transparent 92%); mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 55%, transparent 92%); }
 .arena.has-art svg.mtn { display: none; }
 .arena > :not(.arena-art):not(svg) { position: relative; }
-.arena svg.mtn { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 72%; pointer-events: none; }
+.arena svg.mtn { display: none; position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 72%; pointer-events: none; }
 .arena .moon-bg { position: absolute; left: calc(50% - 28px); top: 70px; width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, oklch(0.9 0.03 85 / 0.5), oklch(0.8 0.03 85 / 0.12) 60%, transparent 70%); filter: blur(0.5px); }
 .duel { position: relative; display: grid; grid-template-columns: 1fr 90px 1fr; align-items: start; gap: 12px; }
 .side .name { font-family: var(--serif); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -467,11 +467,14 @@ button { font: inherit; color: inherit; }
 /* ═══════ 第二轮：通用 ═══════ */
 /* 页头底图：AI 水墨横幅，椭圆羽化融进底色，不占版面 */
 .page { position: relative; }
+@media (max-width: 860px) { .page-art { left: 0; } }
 /* 每页同一规则：页头右上一幅横卷，同高、同羽化，切页时位置不跳 */
-.page-art { position: absolute; left: -48px; right: -48px; top: -30px; height: 380px; z-index: -1; pointer-events: none;
-  background: var(--art) center 35% / cover no-repeat; opacity: 0.55; filter: brightness(0.8) saturate(0.55);
-  -webkit-mask-image: radial-gradient(ellipse 60% 75% at 68% 22%, #000 28%, transparent 80%);
-          mask-image: radial-gradient(ellipse 60% 75% at 68% 22%, #000 28%, transparent 80%); }
+/* 底图：固定铺在整个舞台后面（侧栏右侧、视口高度），每页同位；上浓下淡，内容浮在画上 */
+.page-art { position: fixed; left: 248px; right: 0; top: 0; height: 100vh; z-index: -1; pointer-events: none;
+  background: var(--art) center top / cover no-repeat; opacity: 0.5; filter: brightness(0.75) saturate(0.5);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%); }
+.page:not(.on) .page-art { display: none; }
 .stage { position: relative; z-index: 0; isolation: isolate; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 .card .head .serif.big { font-size: 17px; }
@@ -707,7 +710,7 @@ button { font: inherit; color: inherit; }
 .ceremony .gold-line { color: var(--gold); margin: -10px 0 26px; }
 .ceremony .verdict { font-size: 18px; margin: 26px auto 18px; max-width: 30em; line-height: 1.7; }
 .ceremony .verdict small { display: block; font-size: 13.5px; color: var(--faint); margin-top: 4px; }
-.ceremony .duel-left { width: min(360px, 80vw); margin: 0 auto 30px; text-align: left; }
+.ceremony .duel-left { width: min(360px, 80vw); margin: 30px auto 30px; text-align: left; }
 .ceremony .duel-left .lbl { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
 .ceremony .acts-c { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .ceremony .ledger3 { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 50px; justify-content: center; margin: 30px auto 34px; text-align: left; }
@@ -722,6 +725,46 @@ button { font: inherit; color: inherit; }
   .ceremony .ledger3 { grid-template-columns: 1fr; gap: 20px; }
   .book { width: 50px; height: 190px; }
 }
+
+/* ═══════ 第四版增补 ═══════ */
+/* 熟练度：一条线四个节点 */
+.prof { position: relative; height: 34px; margin: 0 14px; cursor: help; }
+.prof-line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.4 0.014 262 / 0.7) 0 3px, transparent 3px 6px); }
+.prof-line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: oklch(0.5 0.045 70); }
+.pn { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 5px; }
+.pn b { width: 11px; height: 11px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.42 0.015 262); }
+.pn em { font-style: normal; font-size: 11.5px; color: oklch(0.46 0.012 262); white-space: nowrap; }
+.pn.p b { background: var(--ink-gold); box-shadow: none; } .pn.p em { color: var(--ink-gold); }
+.pn.c b { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.45); } .pn.c em { color: var(--gold); font-weight: 600; }
+.wform .fx { font-size: 12px; color: var(--qi); margin-top: 3px; line-height: 1.5; }
+.wform .fx::before { content: '◈ '; font-size: 10px; }
+.wform.locked .fx { color: oklch(0.55 0.05 215); }
+.wform { grid-template-columns: 200px minmax(0, 1fr) 64px; }
+/* 藏经：卷轴陈列 */
+.scrolls { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.scroll-i { position: relative; border: 0; cursor: pointer; color: oklch(0.22 0.02 262); height: 58px; min-width: 150px; padding: 0 30px;
+  display: grid; place-items: center; font-family: var(--serif); font-size: 16px; letter-spacing: 0.2em;
+  background: linear-gradient(to bottom, oklch(0.8 0.03 80), oklch(0.88 0.025 85) 45%, oklch(0.78 0.035 78)); border-radius: 2px;
+  box-shadow: 0 6px 14px oklch(0.05 0.01 262 / 0.5); transition: transform .25s var(--ease), box-shadow .25s; }
+.scroll-i::before, .scroll-i::after { content: ''; position: absolute; top: -5px; bottom: -5px; width: 12px; border-radius: 4px;
+  background: linear-gradient(to right, oklch(0.25 0.03 45), oklch(0.38 0.05 50), oklch(0.22 0.03 45)); }
+.scroll-i::before { left: -6px; } .scroll-i::after { right: -6px; }
+.scroll-i small { position: absolute; bottom: 4px; font-family: var(--body, var(--sans)); font-size: 10px; letter-spacing: 0.1em; color: oklch(0.4 0.02 262); }
+.scroll-i.q2 { background: linear-gradient(to bottom, oklch(0.72 0.05 210), oklch(0.82 0.04 205) 45%, oklch(0.7 0.05 212)); }
+.scroll-i.q3 { background: linear-gradient(to bottom, oklch(0.74 0.1 78), oklch(0.85 0.09 82) 45%, oklch(0.72 0.1 75)); }
+.scroll-i:hover { transform: translateY(-3px); }
+.scroll-i[aria-current="true"] { transform: translateY(-5px); box-shadow: 0 10px 22px oklch(0.05 0.01 262 / 0.6), 0 0 0 2px oklch(0.78 0.13 78 / 0.7); }
+.scroll-i .on { position: absolute; top: -10px; right: 8px; font-size: 10.5px; letter-spacing: 0; padding: 1px 5px; border-radius: 4px; background: var(--gold); color: var(--gold-ink); font-family: var(--body, var(--sans)); }
+.ngd-meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin: -4px 0 12px; }
+.ngd-meta b { color: var(--ink); font-weight: 600; }
+/* 战报：回合抬头 + 成段叙述 */
+.log .rh { font-family: var(--serif); color: var(--faint); letter-spacing: 0.15em; margin: 12px 0 4px; font-size: 13px; }
+.log .rh:first-child { margin-top: 0; }
+.log .p { color: var(--muted); line-height: 1.85; padding: 1px 0; animation: ll-in .35s var(--ease); }
+.log .p .me { color: var(--ink-gold); } .log .p .foe { color: oklch(0.72 0.12 30); } .log .p .sk { color: var(--qi); }
+.log .p .dm { color: var(--ink); font-weight: 600; } .log .p .cr { color: var(--crit); font-weight: 700; }
+.log .p.win { color: var(--ink-gold); margin-top: 10px; } .log .p.loot { color: var(--gold); }
+@media (max-width: 860px) { .wform { grid-template-columns: 1fr 56px; } .prof { margin: 4px 14px 0; } }
 
 /* ═══════ 手机宽度 ═══════ */
 .mob-top, .tabbar { display: none; }
@@ -781,7 +824,7 @@ button { font: inherit; color: inherit; }
   <div class="row"><span>按钮</span><button data-btn="gold" aria-pressed="true">描金</button><button data-btn="seal">朱印</button><button data-btn="ink">墨锭</button></div>
   <div class="row"><span>卡片</span><button data-card="gray" aria-pressed="true">冷灰</button><button data-card="teal">墨青</button><button data-card="wood">檀木</button><button data-card="lacquer">漆底描金</button></div>
   <div class="row"><span>门派</span><button data-sect="1" aria-pressed="true">已拜入</button><button data-sect="0">未拜入</button></div>
-  <div class="row"><span>弹窗</span><button data-dlg="break">突破</button><button data-dlg="offline">出关</button><button data-dlg="fail">战败</button><button data-dlg="retire">归隐</button></div>
+  <div class="row"><span>弹窗</span><button data-dlg="break">突破</button><button data-dlg="offline">出关</button><button data-dlg="fail">战败</button><button data-dlg="retire">转世</button></div>
   <div class="row"><span>身体</span><button data-hurt="0" aria-pressed="true">无伤</button><button data-hurt="1">带伤</button></div>
   <div class="row"><span>周天</span><button data-ready="0" aria-pressed="true">运转中</button><button data-ready="1">可突破</button></div>
   <div style="color:oklch(0.45 0 0)">手机宽度：把窗口拉到 860px 以下<br>为了能看全，六个页签都显示；数据不强求同一时刻对得上</div>
@@ -817,7 +860,7 @@ button { font: inherit; color: inherit; }
       <button data-go="rep">声望阁</button>
     </nav>
     <div class="scroll-foot">
-      <button class="ghost-btn" disabled data-tip="本世突破一次后可归隐">归隐</button>
+      <button class="ghost-btn" disabled data-tip="本世突破一次后可转世">转世</button>
       <button class="ghost-btn icon" data-tip="主题与设置" aria-label="设置">⚙</button>
     </div>
   </aside>
@@ -835,7 +878,7 @@ button { font: inherit; color: inherit; }
       <button data-go="rep">声望阁</button>
     </nav>
     <div class="foot">
-      <button disabled data-tip="本世突破一次后可归隐">归隐</button>
+      <button disabled data-tip="本世突破一次后可转世">转世</button>
       <button data-tip="主题与设置">设置</button>
     </div>
   </aside>
@@ -1005,7 +1048,7 @@ button { font: inherit; color: inherit; }
           <div class="card">
             <div class="head"><span class="serif">心法要诀</span></div>
             <ul class="mech">
-              <li>暴击率 <b>+5.0pp</b>，暴击伤害 <b>+20.0pp</b></li>
+              <li>暴击率 <b>+17.5pp</b>，暴击伤害 <b>+44.0pp</b></li>
               <li>开战首击<b>必定暴击</b></li>
               <li>每次暴击积 <b>1 层剑意</b></li>
               <li>剑意满 <b>4 层</b>，施展爆发剑招 <b>400%</b></li>
@@ -1027,15 +1070,12 @@ button { font: inherit; color: inherit; }
             <div class="qi-legend"><span>每格一招流云剑</span><span class="faint">流云剑第三式需真气 90 · 还差 17</span></div>
           </div>
         </div>
-        <div class="card" style="margin-top:14px">
-          <div class="head"><span class="serif">已有内功</span></div>
-          <div class="rows">
-            <div class="row-i"><div class="t"><span class="serif">惊雷诀</span><span class="qtag q1">寻常</span></div><div class="a"><span class="price ok">主修中</span></div></div>
-            <div class="row-i"><div class="t"><span class="serif">雷鸣剑经</span><span class="qtag q2">上乘</span></div><div class="a"><button class="btn2">转修</button></div></div>
-            <div class="row-i"><div class="t"><span class="serif">云台心法</span><span class="qtag q3">绝学</span></div><div class="a"><button class="btn2">转修</button></div></div>
-            <div class="row-i"><div class="t"><span class="serif">镇岳功</span><span class="qtag q1">寻常</span></div><div class="a"><button class="btn2 quiet">散功重修</button></div></div>
-          </div>
+        <div class="shelf-head" style="margin-top:34px">
+          <h2 class="sec-title" style="margin:0">藏经</h2>
+          <div class="cats js-ngcats"></div>
         </div>
+        <div class="scrolls js-ngshelf"></div>
+        <div class="card js-ngd"></div>
       </section>
 
       <!-- ─────────── 武学 ─────────── -->
@@ -1127,7 +1167,7 @@ button { font: inherit; color: inherit; }
         </header>
         <div class="grid2">
           <div class="card">
-            <div class="head"><span class="serif">修行感悟</span><small>永久 · 归隐不散</small></div>
+            <div class="head"><span class="serif">修行感悟</span><small>永久 · 转世不散</small></div>
             <div class="gw"><span class="lv">6<small>级</small></span><span class="info">每级挂机产出 +0.2× · 当前 <b>+1.2×</b></span></div>
             <div class="gw-btns">
               <button class="main-btn">传承一级<small>80 声望</small></button>
@@ -1210,13 +1250,12 @@ button { font: inherit; color: inherit; }
   <div>
     <div class="kick">出 关</div>
     <h2 class="mid">闭关三个时辰</h2>
-    <div class="d">离开 3 小时 12 分 · 丹田盈满前你回来了</div>
+    <div class="d">离开 3 小时 12 分</div>
     <div class="gains">
       <span>内力</span><span><b>+186,400</b></span>
       <span>银两</span><span><b>+1,120</b></span>
       <span>门派任务</span><span>巡守玉女峰已归 · <b>+40</b> 贡献</span>
     </div>
-    <div class="d gold-line">周天已圆满，突破要你亲手来</div>
     <button class="main-btn js-close" style="min-width:240px">回归江湖</button>
   </div>
 </div>
@@ -1226,9 +1265,8 @@ button { font: inherit; color: inherit; }
     <div class="kick">战 败</div>
     <h2 class="mid">黑风寨头目</h2>
     <div class="d">第 42 关 · 鏖战 31 回合</div>
-    <p class="verdict">对方气血太厚，你的输出跟不上。<small>你的命中也偏低，近三成攻击被闪开</small></p>
     <div class="duel-left">
-      <div class="lbl"><span>对方还剩</span><span>25%</span></div>
+      <div class="lbl"><span>剩余气血</span><span>25%</span></div>
       <div class="ink-bar hp"><i style="width:25%"></i></div>
     </div>
     <div class="acts-c">
@@ -1240,23 +1278,23 @@ button { font: inherit; color: inherit; }
 
 <div class="ceremony dusk js-dlg" id="d-retire">
   <div>
-    <div class="kick">归 隐</div>
-    <h2 class="mid">挂剑而去</h2>
-    <div class="d">看清得失，再做决定</div>
+    <div class="kick">转 世</div>
+    <h2 class="mid">此生至此</h2>
+    <div class="d">皮囊散去，不灭功法载魂而行，来世再入江湖</div>
     <div class="ledger3">
       <div>
-        <div class="lh g">带走</div>
+        <div class="lh g">随魂而去</div>
         <div class="big" data-tip="基础 412（本世乘区加权 18.6 小时）× 打到前沿 1.5">+618<small>声望</small></div>
         <p>修行感悟 6 级 · 宿慧 +5.3×<br>内功 4 部 · 传承 1 件<br>名号与通关印记</p>
       </div>
       <div>
-        <div class="lh l">散去</div>
+        <div class="lh l">随身而散</div>
         <p>境界回到江湖新丁<br>内功重数清零<br>各图通关进度<br>内力 1,284,300 · 银两 3,420<br>华山贡献 320</p>
       </div>
     </div>
     <div class="acts-c">
       <button class="main-btn quiet js-close">再闯一阵</button>
-      <button class="main-btn js-close">决意归隐</button>
+      <button class="main-btn js-close">就此转世</button>
     </div>
   </div>
 </div>
@@ -1454,16 +1492,45 @@ document.addEventListener('click', e => {
 });
 $('.js-all').onclick = () => { const g = $('.js-allgrid'); g.classList.toggle('on'); $('.js-all').textContent = g.classList.contains('on') ? '收起 ▴' : '全部关卡 ▾'; };
 
-/* 模拟一场战斗：逐回合揭示，固定文案模板 */
+/* 模拟一场战斗：每回合一个抬头，下面成段叙述；句式按出手类型从预设里随机取，武学每一式有专属句子 */
+const pick = a => a[Math.random() * a.length | 0];
+const ME = '<span class="me">你</span>', F = n => `<span class="foe">${n}</span>`, SK = n => `<span class="sk">${n}</span>`;
+const DM = d => `<span class="dm">${d}</span>`, CR = d => `<span class="cr">${d}</span>`;
+const SAY = {
+  hit: [
+    (e, d) => `${ME}踏步抢攻，剑尖直点${F(e)}胸前，逼得对方连退两步，造成${DM(d)}点伤害。`,
+    (e, d) => `${ME}身形一晃，反手一剑削向${F(e)}肩头，带起一蓬血花，造成${DM(d)}点伤害。`,
+    (e, d) => `${ME}虚晃一招，趁${F(e)}回防不及，一剑扫中其腰间，造成${DM(d)}点伤害。`,
+  ],
+  crit: [
+    (e, d) => `${ME}看准${F(e)}一个破绽，剑走偏锋直取要害，这一剑又快又狠，足足造成${CR(d)}点伤害！`,
+    (e, d) => `剑光一闪，${ME}这一刺正中${F(e)}空门，力透重围，造成${CR(d)}点伤害！`,
+  ],
+  miss: [
+    (e) => `${ME}一剑刺出，却被${F(e)}矮身躲过，剑锋只削下几缕毛发。`,
+    (e) => `${F(e)}猛地扑来，${ME}侧身一让，对方扑了个空。`,
+  ],
+  foe: [
+    (e, d) => `${F(e)}低吼一声扑上前来，利爪划过${ME}的臂膀，撕去${DM(d)}点气血。`,
+    (e, d) => `${F(e)}绕着${ME}游走半圈，冷不防一口咬来，${ME}躲闪稍慢，受到${DM(d)}点伤害。`,
+    (e, d) => `${F(e)}借势猛冲，撞得${ME}气血翻涌，受到${DM(d)}点伤害。`,
+  ],
+  // 流云剑：飘逸、借风、如云，每式一句
+  流云出岫: [(e, d) => `${ME}剑势舒展，如白云出岫，正是这招${SK('流云出岫')}，看似漫不经心，剑尖已至${F(e)}眼前，必中要害，造成${CR(d)}点伤害！`],
+  回风拂柳: [(e, d) => `${ME}回身一剑，轻柔如风拂柳枝，一招${SK('回风拂柳')}划过${F(e)}身侧，造成${DM(d)}点伤害；剑随气转，${ME}回复了 10 点真气。`],
+  // 惊雷诀路数机制
+  burst: [(e, d) => `剑意积满，${ME}周身隐有雷鸣，${SK('惊雷诀')}催动之下一剑轰然斩落，${F(e)}如遭雷击，受到${CR(d)}点伤害！`],
+  win: [(e) => `${F(e)}哀嚎一声，夹着尾巴逃进了竹林深处。此战，${ME}胜了。`],
+};
 let fighting = false;
 $('.js-fight').onclick = () => {
   if (fighting) return;
   fighting = true;
   const e = enemyOf(sel), log = $('.js-log'), b = $('.js-fight');
   log.innerHTML = '';
-  let php = 184, ehp = e.hp, qi = 73, rd = 0;
+  let php = 184, ehp = e.hp, qi = 73, rd = 0, sq = 0;
   b.disabled = true;
-  const add = (cls, r, x) => { log.insertAdjacentHTML('beforeend', `<div class="ll ${cls}"><span class="r">${r}</span><span class="x">${x}</span></div>`); log.scrollTop = log.scrollHeight; };
+  const say = (html, cls = '') => { log.insertAdjacentHTML('beforeend', `<div class="p ${cls}">${html}</div>`); log.scrollTop = log.scrollHeight; };
   const paint = () => {
     ehp = Math.max(0, ehp); php = Math.max(1, php);
     $('.js-ehp').textContent = ehp; $('.js-ehpbar').style.width = ehp / e.hp * 100 + '%';
@@ -1471,34 +1538,36 @@ $('.js-fight').onclick = () => {
     $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 73 * 100 + '%';
   };
   const win = () => {
-    add('win', '', `${e.name}败退。`);
-    add('loot', '', `收获银两 +${sel <= CLEARED ? 42 : 84}`);
+    say(pick(SAY.win)(e.name), 'win');
+    say(`此战得银两 ${sel <= CLEARED ? 42 : 84}。`, 'loot');
     $('.js-vs').textContent = '胜'; $('.js-rd').textContent = `${rd} 回合`;
     fighting = false;
     b.disabled = false; b.innerHTML = sel <= CLEARED ? `重打 · 第<span class="btn-n">${sel}</span>关` : `下一关 · 第<span class="btn-n">${sel + 1}</span>关`;
   };
   const enemyTurn = () => {
-    if (Math.random() < 0.15) add('miss', '', `${e.name}出手，被你闪过`);
-    else { const d = 6 + (Math.random() * 4 | 0); php -= d; add('', '', `${e.name}出手，你受到 <em>${d}</em> 点伤害`); }
+    if (Math.random() < 0.15) say(pick(SAY.miss.slice(1))(e.name));
+    else { const d = 6 + (Math.random() * 4 | 0); php -= d; say(pick(SAY.foe)(e.name, d)); }
     paint();
-    setTimeout(step, 800);
+    setTimeout(step, 900);
   };
   const step = () => {
     rd++;
     $('.js-vs').textContent = '交手'; $('.js-rd').textContent = `第 ${rd} 回合`;
     b.textContent = `交手中 · 第 ${rd} 回合`;
-    const r = `第${rd}回`;
-    if (qi >= 30 && rd % 3 === 0) { qi -= 30; const d = 32 + (Math.random() * 6 | 0); ehp -= d; add('cast', r, `你使出流云剑「回风拂柳」，造成 <em>${d}</em> 点伤害`); }
-    else if (Math.random() < 0.12) { const d = 22 + (Math.random() * 4 | 0); ehp -= d; add('crit', r, `你一剑刺中要害，暴击 <em>${d}</em>`); }
-    else { const d = 11 + (Math.random() * 4 | 0); ehp -= d; add('', r, `你出手命中，造成 <em>${d}</em> 点伤害`); }
+    log.insertAdjacentHTML('beforeend', `<div class="rh">【第 ${rd} 回合】</div>`);
+    if (rd === 1) { const d = 22 + (Math.random() * 4 | 0); ehp -= d; sq++; say(pick(SAY.crit)(e.name, d)); }
+    else if (sq >= 4) { sq = 0; const d = 48 + (Math.random() * 6 | 0); ehp -= d; say(pick(SAY.burst)(e.name, d)); }
+    else if (qi >= 25 && rd % 3 === 0) { qi -= 25; const form = rd % 2 ? '流云出岫' : '回风拂柳'; const d = form === '流云出岫' ? 30 + (Math.random() * 5 | 0) : 18 + (Math.random() * 4 | 0); ehp -= d; if (form === '流云出岫') sq++; else qi = Math.min(73, qi + 10); say(pick(SAY[form])(e.name, d)); }
+    else if (Math.random() < 0.25) { const d = 22 + (Math.random() * 4 | 0); ehp -= d; sq++; say(pick(SAY.crit)(e.name, d)); }
+    else if (Math.random() < 0.1) { say(pick(SAY.miss.slice(0, 1))(e.name)); }
+    else { const d = 11 + (Math.random() * 4 | 0); ehp -= d; say(pick(SAY.hit)(e.name, d)); }
     qi = Math.min(73, qi + 8);
     paint();
-    if (ehp <= 0) { setTimeout(win, 600); return; }
-    setTimeout(enemyTurn, 700);
+    if (ehp <= 0) { setTimeout(win, 700); return; }
+    setTimeout(enemyTurn, 900);
   };
   setTimeout(step, 400);
 };
-
 
 /* ───── 内功台阶 ───── */
 (function () {
@@ -1528,8 +1597,16 @@ const WX = {
   duanshui:{ n: '断水刀', q: 2, cat: '刀法', eff: '附毒', forms: [['抽刀', 0, 2], ['断流', 0, 0], ['逝水', 0, 0, ['n境界 3', 'n真气 ≥ 90', 'n前式熟练']], ['回澜', 0, 0, ['n境界 4', 'n真气 ≥ 110', 'n招式秘籍', 'n前式熟练']], ['东去', 0, 0, ['n境界 5', 'n真气 ≥ 140', 'n招式秘籍', 'n前式熟练']]] },
   xiuli:   { n: '袖里针', q: 1, cat: '暗器', eff: '附毒', forms: [['暗香', 1, 5], ['疏影', 0, 0, ['y境界 2', 'y真气 ≥ 60', 'n前式熟练']], ['落梅', 0, 0, ['n境界 3', 'n真气 ≥ 90', 'n招式秘籍', 'n前式熟练']]] },
 };
+const FX = {
+  liuyun: ['本招必定暴击', '命中后回复 10 点真气', '必定暴击，且无视对方两成防御'],
+  jinghong: ['', '命中后回复 12 点真气', '', '', '回复 20 点真气，下一招冷却减 1'],
+  cangya: ['本招必定暴击', '', '', '', '', '', '必定暴击，暴伤再 +50%'],
+  kaishan: ['为自己添一层护体，吸收 8% 气血', '', '护体翻倍'],
+  duanshui: ['为对方附毒 1 层', '', '', '', '附毒 3 层'],
+  xiuli: ['为对方附毒 1 层', '', '附毒 2 层'],
+};
 const QP = { 1: { q: '寻常', cost: 25, cd: 2, m0: 130, th: [4, 10, 25] }, 2: { q: '上乘', cost: 40, cd: 3, m0: 150, th: [5, 12, 28] }, 3: { q: '绝学', cost: 55, cd: 4, m0: 145, th: [6, 15, 32] } };
-const TIER4 = ['生疏', '熟练', '精通', '圆熟'];
+const TIER4 = ['生疏', '熟练', '精通', '圆满'];
 const wx = { equipped: ['liuyun'], cur: 'liuyun', cat: '全部', slots: 2 };
 function renderSlots() {
   $('.js-slots').innerHTML = Array.from({ length: 5 }, (_, i) => {
@@ -1537,7 +1614,7 @@ function renderSlots() {
     if (i >= wx.slots) return `<div class="slot locked">境界 ${i + 1} 开</div>`;
     if (!id) return `<div class="slot empty">空槽</div>`;
     const d = WX[id], p = QP[d.q];
-    return `<button class="slot" data-wx="${id}" aria-pressed="${id === wx.cur}"><span class="n">${d.n}</span><span class="m">耗气 ${p.cost} · 冷却 ${p.cd}</span><span class="x">已装</span></button>`;
+    return `<button class="slot" data-wx="${id}" aria-pressed="${id === wx.cur}"><span class="n">${d.n}</span><span class="m">真气消耗 ${p.cost} · 冷却 ${p.cd}</span><span class="x">已装</span></button>`;
   }).join('');
 }
 function renderShelf() {
@@ -1548,25 +1625,27 @@ function renderShelf() {
 }
 function renderWxDetail() {
   const d = WX[wx.cur], p = QP[d.q], on = wx.equipped.includes(wx.cur), full = wx.equipped.length >= wx.slots;
-  const learned = d.forms.filter(f => !f[3]).length;
-  let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
+    let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
     <button class="${on ? 'btn2 quiet' : 'btn2'}" data-equip="${wx.cur}" ${!on && full ? 'disabled' : ''}>${on ? '卸下' : full ? '装配槽已满' : '装上'}</button></div>
-    <div class="params"><span>${d.cat}</span><span>已悟 <b>${learned} / ${d.forms.length}</b> 式</span><span>耗气 <b>${p.cost}</b></span><span>冷却 <b>${p.cd}</b> 回合</span>
+    <div class="params"><span>${d.cat}</span><span>真气消耗 <b>${p.cost}</b></span><span>冷却 <b>${p.cd}</b> 回合</span>
     <span data-tip="冷却已好、真气够用时，每回合有三成机会出这一门（与其它就绪的武学随机取一）">触发几率 <b>30%</b></span><span>特效 <b>${d.eff}</b></span></div>`;
   d.forms.forEach(([name, tier, casts, gate], k) => {
     const mul = Math.round((p.m0 / 100 + k * 0.12) * (1 + tier * 0.05) * (d.res ? 1.1 : 1) * 100);
     const cn = ['一', '二', '三', '四', '五', '六', '七'][k];
+    const fx = (FX[wx.cur] || [])[k];
+    const fxHtml = fx ? `<span class="fx">${fx}</span>` : '';
     if (gate) {
-      h += `<div class="wform locked"><div class="nm"><span class="k">第${cn}式</span><span class="serif">${name}</span></div>
+      h += `<div class="wform locked"><div class="nm"><span class="k">第${cn}式</span><span class="serif">${name}</span>${fxHtml}</div>
         <div class="checks">${gate.map(g => `<span class="${g[0]}">${g.slice(1)}</span>`).join('')}</div><span class="mul">×${mul}%</span></div>`;
       return;
     }
-    const lo = tier === 0 ? 0 : p.th[tier - 1], hi = p.th[Math.min(tier, 2)];
-    const w = tier >= 3 ? 100 : Math.round((casts - lo) / (hi - lo) * 100);
-    h += `<div class="wform"><div class="nm"><span class="k">第${cn}式</span><span class="serif">${name}</span></div>
-      <div><div class="tiers4">${TIER4.map((t, i) => `<span class="${i < tier ? 'p' : i === tier ? 'c' : ''}">${t}</span>`).join('')}</div>
-      <div class="seg4">${TIER4.map((_, i) => `<i class="${i < tier ? 'p' : i === tier ? 'c' : ''}" style="--w:${w}%"></i>`).join('')}</div>
-      <div class="cnt">${tier >= 3 ? '已至圆熟' : `再出 ${hi - casts} 招到「${TIER4[tier + 1]}」`}</div></div>
+    // 熟练四档画成一条线上的四个节点：实线已走、虚线未走，与全站进度线同一规则
+    const th = [0, ...p.th];
+    const pos = tier >= 3 ? 100 : (tier + (casts - th[tier]) / (th[tier + 1] - th[tier])) / 3 * 100;
+    const tip = tier >= 3 ? `已出 ${casts} 招，已至圆满` : `已出 ${casts} 招 · ${th[tier + 1]} 招时入「${TIER4[tier + 1]}」`;
+    h += `<div class="wform"><div class="nm"><span class="k">第${cn}式</span><span class="serif">${name}</span>${fxHtml}</div>
+      <div class="prof" data-tip="${tip}"><div class="prof-line"><i style="width:${pos}%"></i></div>
+        ${TIER4.map((t, i) => `<span class="pn ${i < tier ? 'p' : i === tier ? 'c' : ''}" style="left:${i / 3 * 100}%"><b></b><em>${t}</em></span>`).join('')}</div>
       <span class="mul" data-tip="第${cn}式基础倍率 · ${TIER4[tier]}加成${d.res ? ' · 共鸣 ×1.1' : ''}">×${mul}%</span></div>`;
   });
   $('.js-wxd').innerHTML = h;
@@ -1579,6 +1658,34 @@ document.addEventListener('click', e => {
   if (q && !q.disabled) { const id = q.dataset.equip; wx.equipped = wx.equipped.includes(id) ? wx.equipped.filter(x => x !== id) : [...wx.equipped, id]; renderWx(); }
 });
 renderWx();
+
+
+/* ───── 内功藏经 ───── */
+const NG = {
+  jinglei:  { n: '惊雷诀', q: 1, lu: '惊雷', cur: true, mech: ['暴击率 <b>+17.5pp</b>，暴击伤害 <b>+44.0pp</b>', '开战首击<b>必定暴击</b>', '每次暴击积 <b>1 层剑意</b>', '剑意满 <b>4 层</b>，施展爆发剑招 <b>400%</b>'] },
+  leiming:  { n: '雷鸣剑经', q: 2, lu: '惊雷', mech: ['暴击率 <b>+10.0pp</b>，暴击伤害 <b>+20.0pp</b>', '开战首击<b>必定暴击</b>', '每次暴击积 <b>1 层剑意</b>', '剑意满 <b>5 层</b>，施展爆发剑招 <b>400%</b>'] },
+  yuntai:   { n: '云台心法', q: 3, lu: '惊雷', mech: ['暴击率 <b>+10.0pp</b>，暴击伤害 <b>+20.0pp</b>', '开战首击<b>必定暴击</b>', '每次暴击积 <b>1 层剑意</b>', '剑意满 <b>5 层</b>，施展爆发剑招 <b>400%</b>'] },
+  zhenyue:  { n: '镇岳功', q: 1, lu: '镇岳', mech: ['开战获得 <b>30% 气血</b>护盾', '受击反伤 <b>25%</b>', '防御 <b>+20%</b>'] },
+  shigu:    { n: '蚀骨心法', q: 1, lu: '蚀骨', mech: ['开战为对方<b>施毒 2 层</b>，每次命中 <b>+1 层</b>', '毒伤 = 攻击 × <b>12%</b> × 层数，<b>无视防御</b>', '层数上限 <b>8</b>，满层触发<b>毒爆 50%</b>', '代价：普攻伤害 <b>×0.85</b>'] },
+};
+const NGQ = { 1: ['寻常', 3, '1.0'], 2: ['上乘', 4, '1.1'], 3: ['绝学', 5, '1.2'] };
+const ng = { cur: 'leiming', cat: '全部' };
+function renderNg() {
+  const cats = ['全部', '惊雷', '镇岳', '蚀骨'];
+  $('.js-ngcats').innerHTML = cats.map(c => `<button data-ngcat="${c}" aria-pressed="${c === ng.cat}">${c}<small>${c === '全部' ? Object.keys(NG).length : Object.values(NG).filter(d => d.lu === c).length}</small></button>`).join('');
+  $('.js-ngshelf').innerHTML = Object.entries(NG).filter(([, d]) => ng.cat === '全部' || d.lu === ng.cat).sort((a, b) => b[1].q - a[1].q).map(([id, d]) =>
+    `<button class="scroll-i q${d.q}" data-ng="${id}" aria-current="${id === ng.cur}">${d.cur ? '<span class="on">主修</span>' : ''}${d.n}<small>${NGQ[d.q][0]} · ${d.lu}</small></button>`).join('');
+  const d = NG[ng.cur], q = NGQ[d.q];
+  const act = d.cur ? '<span class="price ok">主修中</span>' : d.lu === '惊雷' ? '<button class="btn2">转修 · 保留八成功力</button>' : '<button class="btn2 quiet">散功重修</button>';
+  $('.js-ngd').innerHTML = `<div class="head"><span style="display:flex;gap:8px;align-items:center"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${q[0]}</span></span>${act}</div>
+    <div class="ngd-meta"><span>${d.lu}一路</span><span>台阶 <b>${q[1]}</b> 级</span><span>真气系数 <b>${q[2]}</b></span>${d.cur ? '' : '<span>以下为第 0 重基础效果</span>'}</div>
+    <ul class="mech">${d.mech.map(m => `<li>${m}</li>`).join('')}</ul>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-ng]'); if (b) { ng.cur = b.dataset.ng; renderNg(); }
+  const c = e.target.closest('[data-ngcat]'); if (c) { ng.cat = c.dataset.ngcat; renderNg(); }
+});
+renderNg();
 
 /* ───── 原型控制 ───── */
 const FONTS = {

@@ -1,0 +1,102 @@
+/* 修炼页、伤势、突破演出（issue #26 视觉大改；基准 docs/design/ui-overhaul-prototype.html + DESIGN.md） */
+
+/* ═══════ 布局：左主栏（场景 + 周天读数 + 燃香），右侧栏（身手 / 破境 / 伤势） ═══════ */
+.cult { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: start; }
+.cult-main { display: grid; justify-items: center; gap: 14px; min-width: 0; }
+.cult-side { min-width: 0; }
+.cult-side .jh-card + .jh-card { margin-top: 14px; }
+
+/* ═══════ 周天读数：月相 + 进度 ═══════ */
+.zt-read { display: flex; align-items: center; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.moons { display: flex; gap: 8px; }
+.moons i { width: 14px; height: 14px; border-radius: 50%; background: oklch(0.24 0.014 262); box-shadow: inset 0 0 0 1px oklch(0.4 0.02 262 / 0.6); position: relative; overflow: hidden; }
+.moons i.full { background: oklch(0.86 0.05 80); box-shadow: 0 0 8px oklch(0.8 0.08 78 / 0.5); }
+.moons i.wax::after { content: ''; position: absolute; inset: 0; background: oklch(0.86 0.05 80); clip-path: inset(0 0 0 var(--fill-inv, 50%)); }
+.zt-read .t { font-family: var(--font-display); letter-spacing: 0.12em; }
+.zt-read .t b { font-family: var(--font-body); font-size: 18px; color: var(--gold); letter-spacing: 0; margin-left: 4px; }
+.zt-read .eta { color: var(--faint); font-size: 12.5px; }
+
+/* ═══════ 燃香：实线已完成、虚线剩余；香头火星 + 青烟，每段一道刻痕 ═══════ */
+.incense { width: min(420px, 100%); height: 14px; position: relative; }
+.incense .stick { position: absolute; right: 0; top: 7px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); transition: width .6s var(--ease-sharp); }
+.incense .ash { position: absolute; left: 0; top: 6.5px; height: 1.5px; border-radius: 1px; background: var(--done-line); transition: width .6s var(--ease-sharp); }
+.incense .tick { position: absolute; top: 3px; width: 1px; height: 8px; background: oklch(0.5 0.02 262 / 0.6); }
+.incense .ember {
+  position: absolute; top: 4px; width: 6px; height: 6px; border-radius: 50%; transform: translateX(-50%);
+  background: radial-gradient(circle, oklch(0.9 0.1 70), oklch(0.66 0.18 38) 60%, transparent 80%);
+  box-shadow: 0 0 8px 1px oklch(0.7 0.17 42 / 0.5); transition: left .6s var(--ease-sharp);
+  animation: cult-ember 2.4s ease-in-out infinite;
+}
+.incense .smoke { position: absolute; bottom: 8px; width: 2px; height: 22px; transform: translateX(-50%); opacity: 0.3; background: linear-gradient(to top, oklch(0.8 0.01 262 / 0.6), transparent); filter: blur(1.5px); animation: cult-smoke 3.2s ease-in-out infinite; transition: left .6s var(--ease-sharp); pointer-events: none; }
+.incense.done .ember, .incense.done .smoke { display: none; }
+@keyframes cult-ember { 50% { box-shadow: 0 0 12px 3px oklch(0.72 0.18 45 / 0.65); } }
+@keyframes cult-smoke { 0%,100% { transform: translateX(-50%) skewX(0); } 50% { transform: translateX(-30%) skewX(-12deg); } }
+
+/* ═══════ 身手 ═══════ */
+.attr-list { margin: 0; display: grid; gap: 9px; }
+.attr-list .r { display: flex; justify-content: space-between; align-items: baseline; }
+.attr-list dt { color: var(--muted); }
+.attr-list dd { margin: 0; font-size: 17px; font-weight: 600; }
+.attr-list dd.none { color: var(--faint); font-weight: 400; }
+.attr-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--faint); }
+.attr-foot button { border: 0; background: none; padding: 0; cursor: pointer; color: var(--ink-gold); font-size: inherit; }
+.attr-foot button:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ═══════ 破境：条件竖排、按钮占满 ═══════ */
+.break-card .cond { display: grid; gap: 8px; font-size: 13px; color: var(--muted); }
+.break-card .cond span { display: flex; align-items: center; gap: 6px; }
+.break-card .cond .ok { color: var(--ink-gold); }
+.break-card .cond .ok::before { content: '✓'; font-size: 12px; }
+.break-card .cond .no::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
+.break-card .cond b { margin-left: auto; color: var(--ink); font-weight: 600; }
+.break-card .acu-ledger { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; margin: 14px 0 16px; padding-top: 12px; border-top: 1px solid var(--hair); font-size: 13px; color: var(--muted); }
+.break-card .acu-ledger b { color: var(--ink); font-weight: 600; margin-left: 3px; }
+.break-card .acu-ledger .gold { color: var(--gold); }
+.break-card .jh-btn { width: 100%; padding: 13px 0; font-size: 17px; }
+.break-card .jh-btn:disabled { font-size: 14px; }
+.break-card .jh-btn + .jh-btn { margin-top: 10px; }
+.break-card .still { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+/* ═══════ 伤势：有伤才出现，血褐淡底 ═══════ */
+.jh-card.cult-wounds { display: grid; gap: 12px; box-shadow: none; background: linear-gradient(135deg, oklch(0.62 0.17 25 / 0.12), oklch(0.62 0.17 25 / 0.04)); }
+.cult-wounds .head { margin-bottom: 0; }
+.cult-wounds .head .serif { color: var(--hp); }
+.cult-wounds .wound { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
+.cult-wounds .wound .n { font-weight: 600; }
+.cult-wounds .wound .e { color: var(--muted); font-size: 12.5px; grid-column: 1; }
+.cult-wounds .wound .t { grid-row: 1 / span 2; grid-column: 2; text-align: right; font-size: 13px; }
+.cult-wounds .wound .t small { display: block; color: var(--faint); font-size: 11.5px; }
+.cult-wounds .heal { grid-column: 1 / -1; height: 3px; border-radius: 2px; background: oklch(0.3 0.02 262 / 0.7); overflow: hidden; }
+.cult-wounds .heal i { display: block; height: 100%; background: var(--hp); border-radius: 2px; transition: width .6s var(--ease-sharp); }
+.cult-wounds .src { font-size: 12.5px; color: var(--faint); padding-top: 10px; border-top: 1px solid oklch(0.62 0.17 25 / 0.18); }
+.cult-wounds .src b { color: var(--ink); font-weight: 600; }
+/* 悬停浮层里的淡字行（来源分解、燃香说明） */
+
+/* ═══════ 周天场景：去外框，人物融进底图 ═══════ */
+.page-cultivate .cs-wrap { width: 100%; }
+.page-cultivate .cs-scene { max-width: 500px; margin: 0 auto; }
+.page-cultivate .cs-backdrop, .page-cultivate .cs-inkbg {
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 52%, rgba(0,0,0,0.6) 72%, transparent 100%);
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 52%, rgba(0,0,0,0.6) 72%, transparent 100%);
+  -webkit-mask-composite: source-over; mask-composite: add;
+}
+.page-cultivate .cs-backdrop { filter: brightness(0.7) saturate(0.4) contrast(1.15); mix-blend-mode: screen; }
+.page-cultivate .cs-scene.inner .cs-backdrop { opacity: 0; filter: brightness(0.35) blur(5px); }
+.page-cultivate .cs-hint { background: none; padding: 0; bottom: 14px; font-size: 12px; color: var(--faint); white-space: nowrap; }
+.page-cultivate .cs-back { border: 0; border-radius: 6px; background: oklch(0.14 0.013 262 / 0.75); }
+.page-cultivate .cs-feedback { margin-top: 0; }
+/* 境界圆满：只剩人影，不再有丹田可点 */
+.page-cultivate .cs-scene.still .cs-hint { display: none; }
+
+/* ═══════ 突破演出：jh-ceremony（金）里的补充 ═══════ */
+.bt-ceremony .jh-btn { min-width: 240px; }
+.bt-ceremony .rumor { border: 0; border-radius: 0; padding: 0; margin-top: -14px; font-size: 13.5px; color: var(--muted); line-height: 1.7; text-wrap: balance; }
+.bt-ceremony .rumor .serif { font-family: var(--font-display); color: var(--ink-gold); letter-spacing: 0.2em; margin-right: 0.6em; }
+
+/* ═══════ 手机宽度 ═══════ */
+@media (max-width: 860px) {
+  .cult { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .incense .ember, .incense .smoke { animation: none !important; }
+}

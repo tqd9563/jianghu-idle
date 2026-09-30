@@ -28,7 +28,7 @@ const PRESETS: Record<string, object> = {
   // 突破就绪态：境界 4 · 六段周天缴清、任脉已贯通 · 图3 推进到第 8 关
   ready: {
     run: 1, realm: 4, route: 'tangmen', neigong: 'shiguxinfa', zhong: 7, peakRealm: 4,
-    dantian: 17_900_000, silver: 830, xp: 250,
+    dantian: 76_000_000, silver: 830, xp: 250,   // ≥ 境界 4 突破消耗 7520 万（content.ts）
     reputation: 0, repTotal: 0,
     tiersPassed: 3, chargeHighWater: 6,
     acupointProgress: {
@@ -80,6 +80,15 @@ const PRESETS: Record<string, object> = {
   // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证声望阁与节点购买
   run2: {
     run: 2, realm: 1, route: null, neigong: null, zhong: 0,
+    dantian: 0, silver: 0, xp: 0,
+    reputation: 130, repTotal: 130,
+    tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
+    clearedStages: [], attempts: {}, autoAdvance: true,
+    runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
+  },
+  // 选内功弹窗：刚突破入境界 2、尚未主修内功（issue #26 视觉验收用）
+  pick: {
+    run: 2, realm: 2, route: null, neigong: null, zhong: 0, peakRealm: 2,
     dantian: 0, silver: 0, xp: 0,
     reputation: 130, repTotal: 130,
     tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,

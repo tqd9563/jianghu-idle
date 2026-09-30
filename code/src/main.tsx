@@ -1,6 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './styles/shell.css'
+import './styles/cultivate.css'
+import './styles/battle.css'
+import './styles/gongfa.css'
+import './styles/jianghu.css'
 import App from './App.tsx'
 import { initTheme } from './theme/themePreference'
 

@@ -5,8 +5,8 @@
  * 取代 ZhoutianMandala 的内圈进度环与外圈冲穴交互。几何与状态一律出自
  * cultivationSceneModel，本组件只画不算。
  */
-import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, JSX } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties, JSX, RefObject } from 'react';
 import { effBreakCost, effIdleRate, useGameStore } from '../store/gameStore';
 
 /** 冲穴所需内力按内力缩写规则呈现（冻结文案 §1 的 {所需内力}） */
@@ -24,9 +24,41 @@ function prefersReducedMotion(): boolean {
   return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * 底图对齐（原型 alignCultArt）：修炼页底图是 3:1 宽幅图，按视口高铺开，
+ * 让图宽 50% 处的月亮落在人物头顶，两张图接成一幅。
+ */
+function useAlignCultArt(sceneRef: RefObject<HTMLDivElement | null>, still: boolean): void {
+  useLayoutEffect(() => {
+    const sc = sceneRef.current;
+    const art = document.querySelector<HTMLElement>('.jh-art.art-cultivate');
+    if (!sc || !art) return;
+    const align = (): void => {
+      const a = art.getBoundingClientRect();
+      const r = sc.getBoundingClientRect();
+      const imgW = a.height * 3;                          // 图是 3:1，按视口高铺
+      const x = r.left + r.width / 2 - a.left - imgW / 2;
+      const y = Math.round(r.top + r.height * 0.22 - a.top - a.height * 0.36);
+      art.style.backgroundSize = 'auto 100%';
+      art.style.backgroundPosition = `${x}px ${y}px`;
+    };
+    align();
+    const ro = new ResizeObserver(align);
+    ro.observe(sc);
+    addEventListener('resize', align);
+    return () => {
+      ro.disconnect();
+      removeEventListener('resize', align);
+      art.style.backgroundSize = '';
+      art.style.backgroundPosition = '';
+    };
+  }, [sceneRef, still]);
+}
+
 export function CultivationScene(): JSX.Element | null {
   const s = useGameStore();
   const [inner, setInner] = useState(false);
+  const sceneRef = useRef<HTMLDivElement>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const vidRef = useRef<HTMLVideoElement>(null);
   const reduced = useRef(prefersReducedMotion());
@@ -39,6 +71,8 @@ export function CultivationScene(): JSX.Element | null {
     acupointProgress: s.acupointProgress ?? {},
   });
 
+  useAlignCultArt(sceneRef, model === null);
+
   // 挂机速率 → 视频转速。reduced-motion 下暂停并回落到 poster 静帧
   // （index.css 的全局降级只作用于 animation/transition，对 <video> 无效）
   const rate = effIdleRate(s);
@@ -50,7 +84,14 @@ export function CultivationScene(): JSX.Element | null {
     void v.play().catch(() => { /* 自动播放被拦截时保持 poster，不影响可玩性 */ });
   }, [rate, inner]);
 
-  if (model === null) return null;
+  // 境界圆满：无周天可运转，只留人影
+  if (model === null) {
+    return (
+      <div className="cs-wrap">
+        <div className="cs-scene still" ref={sceneRef}><div className="cs-backdrop" /></div>
+      </div>
+    );
+  }
 
   const onAttempt = (m: SceneMeridian, star: SceneStar): void => {
     // 不可冲时按具体原因给话——三种原因玩家的下一步动作完全不同（冻结文案 §1）
@@ -71,11 +112,13 @@ export function CultivationScene(): JSX.Element | null {
     setFeedback(justThrough ? `${line} · 经脉贯通 · ${m.name}` : line);      // 冻结文案 §4
   };
 
+  // 全数圆满时模型的「本段进度」归零，会把丹田画成空的；圆满态按满液、满光画
+  const full = model.segmentsFull >= model.zhoutianCount;
   const cssVars = {
-    '--empty': `${model.emptyPct}%`,
+    '--empty': `${full ? 6 : model.emptyPct}%`,
     '--qi-speed': `${model.qiSpeedSec}s`,
     '--qi-op': model.qiOpacity,
-    '--vessel-glow': model.vesselGlow,
+    '--vessel-glow': full ? 0.64 : model.vesselGlow,
     '--aura': model.auraOpacity,
     '--bd-bright': model.backdropBrightness,
   } as CSSProperties;
@@ -84,7 +127,7 @@ export function CultivationScene(): JSX.Element | null {
 
   return (
     <div className="cs-wrap">
-      <div className={`cs-scene${inner ? ' inner' : ''}`} style={cssVars}>
+      <div className={`cs-scene${inner ? ' inner' : ''}`} style={cssVars} ref={sceneRef}>
         <div className="cs-backdrop" />
         <div className="cs-inkbg" />
 
@@ -115,7 +158,7 @@ export function CultivationScene(): JSX.Element | null {
         <div className="cs-read" aria-hidden={!inner}>
           {/* 全数圆满时不能再读作「第 N 转 0%」——那会被误读成刚起步，
               与顶栏「N/N · 圆满」自相矛盾。圆满态走冻结文案 §2。 */}
-          {model.segmentsFull >= model.zhoutianCount ? (
+          {full ? (
             <>
               <div className="n done">圆满</div>
               <div className="d">丹田已满 · 可突破</div>
@@ -179,7 +222,7 @@ export function CultivationScene(): JSX.Element | null {
         </svg>
 
         <button type="button" className="cs-back" onClick={() => setInner(false)}>收 功</button>
-        <div className="cs-hint">点<b>丹田</b>内视 · 冲穴与周天详情</div>
+        <div className="cs-hint">点<b>丹田</b>内视 · 冲穴</div>
       </div>
 
       <div className="cs-feedback" role="status">{feedback ?? ' '}</div>

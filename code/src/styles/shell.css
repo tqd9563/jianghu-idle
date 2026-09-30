@@ -1,0 +1,244 @@
+/*
+ * 外壳与通用组件 —— issue #26 视觉 + 骨架大改。
+ * 基准：docs/design/ui-overhaul-prototype.html（定稿）+ 根目录 DESIGN.md「月下水墨卷」。
+ * 页面专属样式见同目录 cultivate / battle / gongfa / jianghu.css。
+ */
+
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.6;
+  font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
+}
+/* 纸绢纹理：极淡噪点，让大面积暗底不像纯色后台 */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* ═══════ 骨架：人物卷侧栏 + 舞台 ═══════ */
+.jh-app {
+  position: relative; z-index: 1; display: grid; min-height: 100vh;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  background: linear-gradient(to right, var(--bg-deep) var(--rail-w), transparent var(--rail-w));
+}
+.jh-rail {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 2;
+  background: linear-gradient(to right, var(--bg-deep), oklch(0.14 0.012 262));
+  padding: 26px 22px 20px; display: flex; flex-direction: column; gap: 22px;
+}
+.jh-brand { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.3em; color: var(--faint); }
+.jh-who .realm { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: 0.1em; line-height: 1.2; }
+.jh-who .realm small { font-size: 13px; font-weight: 500; color: var(--ink-gold); letter-spacing: 0.15em; margin-left: 6px; vertical-align: 4px; }
+.jh-who .life { margin-top: 6px; color: var(--muted); font-size: 13px; }
+.jh-who .life b { color: var(--ink); font-weight: 600; }
+.jh-who .dusk { color: var(--hp); margin-left: 4px; }
+
+.jh-body { font-size: 13px; color: var(--faint); display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; text-align: left; }
+.jh-body::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.55 0.05 150); flex: none; }
+.jh-body.hurt { color: var(--hp); cursor: pointer; }
+.jh-body.hurt::before { background: var(--hp); }
+.jh-body.hurt:hover { text-decoration: underline; text-underline-offset: 3px; }
+.jh-body.soul { color: var(--ink-gold); cursor: pointer; }
+.jh-body.soul::before { background: var(--ink-gold); }
+
+.jh-res { display: grid; gap: 12px; }
+.jh-res .k { font-size: 12px; color: var(--faint); letter-spacing: 0.1em; }
+.jh-res .v { font-size: 22px; font-weight: 600; line-height: 1.25; }
+.jh-res .v.small { font-size: 17px; }
+.jh-res .rate { font-size: 12.5px; color: var(--gold); margin-left: 6px; font-weight: 500; }
+.jh-res .rate.down { color: var(--hp); }
+.jh-res-pair { display: flex; gap: 22px; }
+.jh-brush { height: 8px; width: 100%; opacity: 0.55; }
+
+.jh-nav { display: grid; gap: 2px; }
+.jh-nav button {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  border: 0; background: none; text-align: left; cursor: pointer;
+  font-family: var(--font-display); font-size: 18px; letter-spacing: 0.35em;
+  padding: 9px 12px; border-radius: 8px; color: var(--muted);
+  transition: color .2s var(--ease-sharp), background .2s var(--ease-sharp);
+}
+.jh-nav button:hover { color: var(--ink); background: oklch(0.2 0.014 262 / 0.6); }
+.jh-nav button[aria-current="page"] { color: var(--gold); background: oklch(0.78 0.13 78 / 0.09); }
+/* 侧栏是唯一允许出现提示点的位置：新开页签（DESIGN.md The Dot Lives In The Rail Rule） */
+.jh-fresh { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.jh-rail-foot { margin-top: auto; display: flex; gap: 8px; position: relative; }
+.jh-ghost {
+  flex: 1; border: 1px solid var(--hair); background: none; border-radius: 8px; cursor: pointer;
+  padding: 8px 0; font-family: var(--font-display); letter-spacing: 0.3em; color: var(--faint);
+}
+.jh-ghost.ready { color: var(--gold); border-color: oklch(0.78 0.13 78 / 0.5); }
+.jh-ghost:disabled { cursor: not-allowed; opacity: 0.7; }
+.jh-ghost.icon { flex: 0 0 40px; letter-spacing: 0; }
+
+.jh-stage-wrap { min-width: 0; position: relative; }
+.jh-stage { position: relative; z-index: 0; isolation: isolate; padding: 30px clamp(18px, 3.2vw, 48px) 60px; min-width: 0; }
+.jh-page { position: relative; max-width: 1080px; margin: 0 auto; animation: jh-page-in .45s var(--ease-sharp); }
+@keyframes jh-page-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* 底图：固定铺在整个舞台后面（侧栏右侧、视口高度），每页同位；上浓下淡，内容浮在画上 */
+.jh-art {
+  position: fixed; left: var(--rail-w); right: 0; top: 0; height: 100vh; z-index: -1; pointer-events: none;
+  background: var(--art) center top / cover no-repeat; opacity: 0.5; filter: brightness(0.75) saturate(0.5);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%);
+}
+
+/* ═══════ 页头 / 卡片 / 行 ═══════ */
+.jh-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.jh-head h1 { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; text-wrap: balance; }
+.jh-head .sub { color: var(--muted); margin-top: 4px; font-size: 13.5px; }
+.jh-head .sub b { color: var(--ink); font-weight: 600; }
+.jh-sec { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.25em; color: var(--ink); margin: 0 0 12px; font-weight: 600; }
+
+.jh-card { border-radius: 12px; padding: 16px 18px; background: var(--card); box-shadow: var(--card-edge); }
+.jh-card + .jh-card { margin-top: 14px; }
+.jh-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.jh-grid2 > .jh-card + .jh-card { margin-top: 0; }
+.jh-card .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.jh-card .head .serif { font-size: 15px; letter-spacing: 0.2em; }
+.jh-card .head .serif.big { font-size: 17px; }
+.jh-card .head small { color: var(--faint); font-size: 12px; }
+
+.jh-rows { display: grid; }
+.jh-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
+.jh-row:first-child { border-top: 0; padding-top: 2px; }
+.jh-row .t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.jh-row .t .serif { font-size: 15px; letter-spacing: 0.08em; }
+.jh-row .d { grid-column: 1; color: var(--muted); font-size: 12.5px; }
+.jh-row .a { grid-row: 1 / span 2; grid-column: 2; display: flex; align-items: center; gap: 12px; }
+.jh-row .price { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.jh-row .price.ok { color: var(--ink-gold); }
+.jh-row.done .serif { color: var(--muted); }
+.jh-row.lock .serif { color: var(--faint); }
+
+/* 买入：价格写在按钮上，买不起时下方一行「还差」 */
+.jh-buy { display: grid; justify-items: end; gap: 3px; }
+.jh-buy small { font-size: 11.5px; color: var(--faint); }
+
+/* ═══════ 按钮 ═══════ */
+.jh-btn {
+  position: relative; border: 0; cursor: pointer; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.16em;
+  padding: 11px 26px; border-radius: 10px; color: var(--gold);
+  background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.16), oklch(0.78 0.13 78 / 0.05));
+  box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55), inset 0 1px 0 oklch(0.92 0.08 82 / 0.18);
+  transition: background .2s, box-shadow .25s, color .2s;
+}
+.jh-btn:hover:not(:disabled) { background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.26), oklch(0.78 0.13 78 / 0.10)); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.85), 0 0 22px oklch(0.78 0.13 78 / 0.22); }
+.jh-btn:disabled { color: var(--faint); background: none; box-shadow: inset 0 0 0 1px var(--hair); cursor: default; font-size: 14px; letter-spacing: 0.12em; font-weight: 500; }
+.jh-btn small { display: block; font-family: var(--font-body); font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--muted); margin-top: 1px; }
+.jh-btn.quiet { color: var(--muted); background: none; box-shadow: inset 0 0 0 1px var(--hair); }
+.jh-btn.quiet:hover:not(:disabled) { color: var(--ink); background: oklch(0.3 0.016 262 / 0.3); box-shadow: inset 0 0 0 1px oklch(0.5 0.02 262); }
+.jh-btn.breathe:not(:disabled) { animation: jh-ready 2.4s var(--ease-sharp) infinite; }
+@keyframes jh-ready { 50% { filter: brightness(1.18) drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.35)); } }
+.jh-btn .n { letter-spacing: 0.02em; margin: 0 0.1em; }
+
+.jh-btn2 {
+  border: 0; background: none; cursor: pointer; font-family: var(--font-display); font-size: 13.5px; letter-spacing: 0.1em; color: var(--gold);
+  padding: 5px 14px; border-radius: 8px; box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.4); white-space: nowrap; transition: box-shadow .2s, background .2s;
+}
+.jh-btn2:hover:not(:disabled) { background: oklch(0.78 0.13 78 / 0.1); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.75); }
+.jh-btn2:disabled { color: var(--faint); box-shadow: inset 0 0 0 1px var(--hair); cursor: default; }
+.jh-btn2.quiet { color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
+
+/* ═══════ 标签 / 分段切换 / 勾选 ═══════ */
+.jh-tag { font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: oklch(0.3 0.016 262 / 0.6); color: var(--muted); white-space: nowrap; font-family: var(--font-body); letter-spacing: 0; font-weight: 400; }
+.jh-tag.q1 { color: var(--muted); background: oklch(0.3 0.014 262 / 0.55); }
+.jh-tag.q2 { color: oklch(0.8 0.08 210); background: oklch(0.74 0.10 215 / 0.10); box-shadow: inset 0 0 0 1px oklch(0.74 0.10 215 / 0.35); }
+.jh-tag.q3 { color: var(--gold); background: oklch(0.78 0.13 78 / 0.10); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); text-shadow: 0 0 8px oklch(0.78 0.13 78 / 0.4); }
+.jh-tag.res { color: var(--gold); background: oklch(0.78 0.13 78 / 0.12); }
+
+.jh-seg { display: inline-flex; background: var(--wash); border-radius: 9px; padding: 3px; flex-wrap: wrap; }
+.jh-seg button { border: 0; background: none; padding: 4px 13px; border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 13px; }
+.jh-seg button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+.jh-seg button:disabled { color: oklch(0.45 0.012 262); cursor: not-allowed; }
+.jh-seg button small { color: var(--faint); margin-left: 3px; }
+
+.jh-checks { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; }
+.jh-checks .y { color: var(--ink-gold); } .jh-checks .y::before { content: '✓ '; }
+.jh-checks .n { color: var(--faint); } .jh-checks .n::before { content: '· '; }
+
+/* ═══════ 进度线：实线已完成、虚线剩余（全站唯一规则） ═══════ */
+.jh-pline { position: relative; height: 3px; }
+.jh-pline::before { content: ''; position: absolute; left: 0; right: 0; top: 1px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
+.jh-pline i { position: absolute; left: 0; top: 0.5px; height: 1.5px; border-radius: 1px; background: var(--done-line); }
+
+/* 墨条：气血 / 真气，尾端羽化 */
+.jh-ink-bar { position: relative; height: 7px; margin-top: 5px; }
+.jh-ink-bar::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.7); }
+.jh-ink-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .5s var(--ease-sharp);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); }
+.jh-ink-bar.hp i { background: linear-gradient(to right, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); }
+.jh-ink-bar.qi { height: 5px; }
+.jh-ink-bar.qi i { background: linear-gradient(to right, oklch(0.5 0.08 220), var(--qi)); }
+
+/* ═══════ 悬停解释（替代把公式铺在界面上） ═══════ */
+.jh-tip {
+  position: fixed; z-index: var(--z-toast); pointer-events: none; opacity: 0;
+  background: oklch(0.24 0.016 262); color: var(--ink); font-size: 12.5px; line-height: 1.55;
+  padding: 8px 11px; border-radius: 8px; max-width: 280px;
+  box-shadow: 0 8px 26px oklch(0.05 0.01 262 / 0.6); transition: opacity .15s;
+}
+.jh-tip.on { opacity: 1; }
+[data-tip] { cursor: help; }
+.jh-dotted { position: relative; }
+.jh-dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: repeating-linear-gradient(to right, var(--ink-gold) 0 2px, transparent 2px 5px); }
+
+/* ═══════ 设置面板：侧栏齿轮弹出 ═══════ */
+.jh-settings { position: fixed; left: 22px; bottom: 70px; z-index: var(--z-modal); width: 260px; padding: 16px 16px 14px; border-radius: 12px;
+  background: oklch(0.2 0.015 262); box-shadow: 0 14px 40px oklch(0.05 0.01 262 / 0.7); animation: jh-pop .25s var(--ease-sharp); }
+@keyframes jh-pop { from { opacity: 0; transform: translateY(6px); } }
+.jh-settings .st-h { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.2em; margin-bottom: 12px; }
+.jh-settings .st-k { font-size: 12px; color: var(--faint); margin-bottom: 8px; }
+.jh-settings .st-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.jh-settings .st-opts button { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 7px 8px; border-radius: 8px; color: var(--muted); cursor: pointer; font-size: 13px; text-align: left; }
+.jh-settings .st-opts button i { width: 18px; height: 18px; border-radius: 5px; flex: none; }
+.jh-settings .st-opts button[aria-pressed="true"] { background: oklch(0.78 0.13 78 / 0.1); color: var(--ink); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.45); }
+.jh-settings .rail-foot { margin: 0; }
+
+/* ═══════ 整屏演出：突破 / 出关 / 战败 / 转世 共用 ═══════ */
+.jh-ceremony { position: fixed; inset: 0; z-index: var(--z-ceremony); display: grid; place-items: center; text-align: center; padding: 20px; overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 42%, oklch(0.28 0.05 78 / 0.95), oklch(0.10 0.012 262 / 0.98) 70%); }
+.jh-ceremony.calm { background: radial-gradient(ellipse at 50% 42%, oklch(0.26 0.03 230 / 0.95), oklch(0.10 0.012 262 / 0.98) 70%); }
+.jh-ceremony.cold { background: radial-gradient(ellipse at 50% 42%, oklch(0.25 0.06 25 / 0.92), oklch(0.09 0.012 262 / 0.98) 70%); }
+.jh-ceremony.dusk { background: radial-gradient(ellipse at 50% 42%, oklch(0.24 0.035 60 / 0.95), oklch(0.09 0.01 262 / 0.98) 72%); }
+.jh-ceremony > div > * { animation: jh-rise .8s var(--ease-sharp) both; }
+.jh-ceremony > div > *:nth-child(2) { animation-delay: .15s; } .jh-ceremony > div > *:nth-child(3) { animation-delay: .3s; }
+.jh-ceremony > div > *:nth-child(4) { animation-delay: .45s; } .jh-ceremony > div > *:nth-child(5) { animation-delay: .6s; } .jh-ceremony > div > *:nth-child(6) { animation-delay: .7s; }
+@keyframes jh-rise { from { opacity: 0; transform: translateY(12px); } }
+.jh-ceremony .kick { font-family: var(--font-display); letter-spacing: 0.6em; color: var(--ink-gold); font-size: 14px; }
+.jh-ceremony h2 { font-family: var(--font-display); font-size: clamp(40px, 7vw, 64px); letter-spacing: 0.25em; margin: 14px 0 6px; font-weight: 700; }
+.jh-ceremony h2.mid { font-size: clamp(32px, 5vw, 46px); letter-spacing: 0.2em; }
+.jh-ceremony .d { color: var(--muted); }
+.jh-ceremony .gains { display: grid; grid-template-columns: auto auto; gap: 8px 30px; justify-content: center; margin: 28px auto 30px; font-size: 15px; }
+.jh-ceremony .gains span:nth-child(odd) { color: var(--faint); text-align: right; }
+.jh-ceremony .gains span:nth-child(even) { text-align: left; }
+.jh-ceremony .gains b { color: var(--gold); font-weight: 600; }
+.jh-ceremony .acts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.jh-ceremony .rumor { color: var(--muted); font-size: 13.5px; margin: -14px auto 26px; max-width: 32em; }
+
+/* ═══════ 手机宽度 ═══════ */
+.jh-mob-top, .jh-tabbar { display: none; }
+@media (max-width: 860px) {
+  .jh-app { grid-template-columns: 1fr; background: none; }
+  .jh-rail { display: none; }
+  .jh-art { left: 0; }
+  .jh-mob-top { display: flex; position: sticky; top: 0; z-index: var(--z-nav); background: oklch(0.13 0.012 262 / 0.94); backdrop-filter: blur(8px); padding: 10px 16px; gap: 14px; align-items: center; justify-content: space-between; }
+  .jh-mob-top .realm { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: 0.1em; }
+  .jh-mob-top .realm small { display: block; font-family: var(--font-body); font-weight: 400; font-size: 11.5px; color: var(--faint); letter-spacing: 0; }
+  .jh-mob-top .mres { display: flex; gap: 14px; font-size: 12px; color: var(--faint); text-align: right; }
+  .jh-mob-top .mres b { display: block; color: var(--ink); font-size: 15px; }
+  .jh-mob-top .mres .rate { color: var(--gold); font-size: 11px; }
+  .jh-tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-nav); background: oklch(0.12 0.012 262 / 0.96); backdrop-filter: blur(8px); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); justify-content: space-around; overflow-x: auto; }
+  .jh-tabbar button { position: relative; border: 0; background: none; font-family: var(--font-display); font-size: 14px; letter-spacing: 0.1em; color: var(--muted); padding: 8px 6px; white-space: nowrap; }
+  .jh-tabbar button[aria-current="page"] { color: var(--gold); }
+  .jh-tabbar .jh-fresh { position: absolute; top: 6px; right: 0; }
+  .jh-stage { padding: 20px 16px 90px; }
+  .jh-grid2 { grid-template-columns: 1fr; }
+  .jh-head h1 { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jh-page, .jh-ceremony > div > *, .jh-btn.breathe, .jh-settings { animation: none !important; }
+}

@@ -4,7 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>江湖无尽录 · MVP-0</title>
+    <title>江湖无尽录</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet" />
     <script>
       (function() {
         var t = 'night';
@@ -17,6 +22,10 @@
           if (!(e instanceof DOMException)) throw e;
         }
         document.documentElement.setAttribute('data-theme', t);
+        try {
+          var c = localStorage.getItem('jianghu-idle:card:v1');
+          if (c === 'gray' || c === 'teal' || c === 'wood' || c === 'lacquer') document.documentElement.setAttribute('data-card', c);
+        } catch(e) {}
       })();
     </script>
   </head>

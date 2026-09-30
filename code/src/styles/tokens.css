@@ -5,30 +5,43 @@
  */
 :root {
   /* ============ 夜雨账台 (Night - Default) ============ */
-  --bg: oklch(0.165 0.014 262);
-  --surface: oklch(0.215 0.016 262);
-  --surface-2: oklch(0.26 0.018 262);
+  --bg: oklch(0.155 0.013 262);
+  --surface: oklch(0.19 0.014 262);
+  --surface-2: oklch(0.225 0.016 262);
   --chrome: oklch(0.19 0.015 262); /* custom surface for elements like chrome */
-  --nav: oklch(0.13 0.012 262);
-  --ink: oklch(0.90 0.012 85);
-  --muted: oklch(0.75 0.015 85);
-  --faint: oklch(0.65 0.015 262);
+  --nav: oklch(0.125 0.012 262);
+  --ink: oklch(0.91 0.012 85);
+  --muted: oklch(0.76 0.015 85);
+  --faint: oklch(0.64 0.014 262);
   --line: oklch(0.32 0.02 262);
   --line-strong: oklch(0.48 0.03 262);
-  --primary: oklch(0.76 0.13 78);
-  --primary-ink: oklch(0.18 0.03 78);
-  --primary-soft: oklch(0.76 0.13 78 / 0.12);
+  --primary: oklch(0.78 0.13 78);
+  --primary-ink: oklch(0.19 0.03 78);
+  --primary-soft: oklch(0.78 0.13 78 / 0.10);
   --accent: oklch(0.74 0.10 215);
   --accent-soft: oklch(0.74 0.10 215 / 0.14);
-  --gold: oklch(0.76 0.13 78);
+  --gold: oklch(0.78 0.13 78);
   --poison: oklch(0.72 0.14 145);
-  --hp: oklch(0.64 0.17 25);
+  --hp: oklch(0.62 0.17 25);
   --inner: oklch(0.66 0.11 310);   /* 淤紫·内伤（DESIGN.md §2 战斗组） */
   --hp-soft: oklch(0.64 0.17 25 / 0.15);
   --shield: oklch(0.70 0.10 240);
   --crit: oklch(0.70 0.16 45);
-  --cinnabar: oklch(0.68 0.09 38);   /* 朱砂：窍穴「可冲」态 */
-  --ink-gold: oklch(0.74 0.075 76);  /* 墨金：窍穴/周天「已成」态 */
+  --cinnabar: oklch(0.66 0.14 32);   /* 朱砂：窍穴「可冲」态、Boss、主修角标 */
+  --ink-gold: oklch(0.75 0.075 76);  /* 墨金：「已成」态 */
+
+  /* 视觉大改（issue #26，DESIGN.md「月下水墨卷」） */
+  --bg-deep: oklch(0.125 0.012 262);
+  --wash: oklch(0.19 0.014 262);
+  --wash-2: oklch(0.225 0.016 262);
+  --hair: oklch(0.30 0.016 262 / 0.7);
+  --done-line: oklch(0.50 0.045 70);
+  --todo-line: oklch(0.40 0.014 262 / 0.7);
+  --qi: oklch(0.74 0.10 215);
+  --crit-ember: oklch(0.72 0.16 50);
+  --card: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3));
+  --card-edge: none;
+  --rail-w: 248px;
   --bar-track-color: oklch(0.28 0.018 262);
 
   --shadow: 0 2px 8px oklch(0.08 0.01 262 / 0.5);
@@ -101,8 +114,8 @@
   --z-nav: 40; --z-modal-backdrop: 60; --z-modal: 61; --z-ceremony: 70; --z-toast: 80;
 
   /* 字体 */
-  --font-body: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-display: "Songti SC", "STSong", "SimSun", serif; /* The Serif-Is-Sacred Rule：仅限江湖专名 */
+  --font-body: "LXGW WenKai", -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", "STSong", serif; /* The Serif Is For Names Rule：标题、江湖专名与按钮 */
 }
 
 /* ============ 宣纸武谱 (Xuan) ============ */
@@ -313,3 +326,8 @@ html[data-theme='pomo'] {
   --settle-count-glow-100: none;
   --settle-cap-border: oklch(0.62 0.12 78 / 0.45);
 }
+
+/* ============ 卡片底色（设置面板可切换，默认冷灰） ============ */
+html[data-card='teal'] { --card: linear-gradient(160deg, oklch(0.26 0.032 215 / 0.55), oklch(0.19 0.02 228 / 0.32)); }
+html[data-card='wood'] { --card: linear-gradient(160deg, oklch(0.25 0.03 58 / 0.5), oklch(0.18 0.018 50 / 0.3)); }
+html[data-card='lacquer'] { --card: linear-gradient(to bottom, oklch(0.13 0.011 262 / 0.82), oklch(0.115 0.01 262 / 0.7)); --card-edge: inset 0 1px 0 oklch(0.75 0.075 76 / 0.32), inset 0 0 0 1px oklch(0.32 0.02 262 / 0.45); }

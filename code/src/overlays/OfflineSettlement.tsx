@@ -1,70 +1,71 @@
 /**
- * 出关结算（MVP-1）—— 实现基准：原型场景 11（合并一屏）+ 规格 §6 呈现裁决 ①–④。
+ * 出关演出 —— 定稿原型 docs/design/ui-overhaul-prototype.html `#d-offline`（jh-ceremony.calm）。
  * 资源已在 store.init 入账，本组件只呈现同一份 OfflineSettleResult（A1 三处同源之 UI 处）。
- * 构成公式行仅观察员通道显示（裁决 ②）；数值自零滚动入账，reduced-motion 降级为直接显示（裁决 ④）。
+ * 构成公式仅观察员通道显示，放进悬停（裁决 ②）；数值自零滚动入账，reduced-motion 降级为直接显示（裁决 ④）。
  */
 import { useEffect, useRef } from 'react';
-import { REALMS } from '../engine/content';
-import { getStage, mapName, TIER_NAMES, trackLength, type EnemyDef } from '../engine/enemies';
 import type { OfflineSettleResult } from '../engine/offlineRewards';
-import { effBreakCost, nextStageOf, openFronts, useGameStore, type MapNo } from '../store/gameStore';
-import type { TierId } from '../engine/enemies';
-
+import { SECTS, SECT_TASKS, type SectTaskKind } from '../engine/sect';
+import { useGameStore } from '../store/gameStore';
 import { fmtBig as fmt, fmtRate } from '../fmt';
 
-/** 时长：不足 1 小时写分钟，否则写小时（闭关上限 24 小时） */
-const durText = (min: number) => (min < 60 ? `${min.toFixed(1)} 分钟` : `${(min / 60).toFixed(1)} 小时`);
+const CN = ['零', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
 
-/** 离开时长的玩家侧措辞（原始时长，非截断值——截断在「有效闭关」行表达） */
+/** 有效闭关时长的武侠写法：一个时辰 = 2 小时，一刻 = 15 分钟；满十二个时辰写「一昼夜」 */
+function shichenText(min: number): string {
+  if (min < 15) return '闭关片刻';
+  if (min < 120) return `闭关${CN[Math.min(7, Math.round(min / 15))]}刻`;
+  const sc = Math.round(min / 120);
+  return sc >= 12 ? '闭关一昼夜' : `闭关${CN[sc]}个时辰`;
+}
+
+/** 离开时长的玩家侧措辞（原始时长，非截断值） */
 function awayText(rawSec: number): string {
   const min = Math.floor(rawSec / 60);
   if (min < 60) return `离开 ${min} 分钟`;
   return `离开 ${Math.floor(min / 60)} 小时 ${min % 60} 分`;
 }
 
+function fmtLeft(ms: number): string {
+  const min = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(min / 60);
+  return h > 0 ? `${h} 小时 ${min % 60} 分` : `${min} 分`;
+}
+
 export function OfflineSettlement(props: {
   result: OfflineSettleResult;
   observer: boolean;
+  /** 闭关期间到点结算的门派任务（store 目前未透出，接上后显示「已归」一行） */
+  sectDone?: { kind: SectTaskKind; contrib: number } | null;
   onClose: () => void;
 }) {
-  const { result: r } = props;
-  const s = useGameStore();
-
-  // 回归检查现状（与主界面同源：store + engine，不另行计算）
-  const realmDef = REALMS[s.realm - 1];
-  const breakCost = effBreakCost(s);
-  const breakReady = breakCost !== null && s.dantian >= breakCost;
-  // 最深的一条可推前沿
-  const fronts = openFronts(s);
-  const front = fronts[fronts.length - 1] ?? { map: s.selectedMap as MapNo, tier: s.selectedTier as TierId };
-  const curMap = front.map;
-  const nextStage = nextStageOf(front.map, front.tier, s.clearedStages);
-  const nextBoss: EnemyDef | null = nextStage !== null ? getStage(front.map, front.tier, trackLength(front.map, front.tier)) : null;
+  const { result: r, sectDone } = props;
+  const sect = useGameStore((s) => s.sect);
+  const sectTask = useGameStore((s) => s.sectTask);
+  const errand = (k: SectTaskKind) => (sect ? SECTS[sect].errands[k === 'short' ? 0 : 1] : SECT_TASKS[k].name);
 
   // count-up：直接写 textContent（等宽数字列不晃，不走 60fps 的 React 重渲染）
-  const durRef = useRef<HTMLSpanElement>(null);
-  const neiliRef = useRef<HTMLSpanElement>(null);
-  const silverRef = useRef<HTMLSpanElement>(null);
+  const neiliRef = useRef<HTMLElement>(null);
+  const silverRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const items = [
-      { el: durRef.current!, to: r.effectiveMin, f: durText, delay: 0 },
-      { el: neiliRef.current!, to: r.neili, f: (v: number) => `+${fmt(v)}`, delay: 150 },
-      { el: silverRef.current!, to: r.silver, f: (v: number) => `+${fmt(v)}`, delay: 280 },
+      { el: neiliRef.current!, to: r.neili, delay: 0 },
+      { el: silverRef.current!, to: r.silver, delay: 150 },
     ];
+    const f = (v: number) => `+${fmt(v)}`;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      for (const i of items) i.el.textContent = i.f(i.to);
+      for (const i of items) i.el.textContent = f(i.to);
       return;
     }
     const DUR = 850;
     const t0 = performance.now();
-    for (const i of items) { i.el.textContent = i.f(0); i.el.classList.add('counting'); }
+    for (const i of items) { i.el.textContent = f(0); i.el.classList.add('counting'); }
     let raf = 0;
     const frame = (t: number) => {
       let live = false;
       for (const i of items) {
-        const p = Math.min(Math.max((t - t0 - i.delay) / DUR, 0), 1);
-        const e = 1 - Math.pow(1 - p, 4);
-        i.el.textContent = i.f(i.to * e);
+        const p = Math.min(Math.max((t - t0 - 400 - i.delay) / DUR, 0), 1);
+        i.el.textContent = f(i.to * (1 - Math.pow(1 - p, 4)));
         if (p < 1) live = true; else i.el.classList.remove('counting');
       }
       if (live) raf = requestAnimationFrame(frame);
@@ -73,58 +74,35 @@ export function OfflineSettlement(props: {
     return () => cancelAnimationFrame(raf);
   }, [r]);
 
+  const obsTip = `${r.effectiveMin.toFixed(1)} 分${r.capped ? '（上限截断）' : ''} × ${fmtRate(r.neiliPerSec)} 内力/秒 × 60`
+    + ` × ${Math.round(r.efficiency * 100)}% 闭关折算 = ${fmt(r.neili)}`;
+
   return (
-    <div className="settle-overlay" role="dialog" aria-label="出关结算">
-      <div className="settle-card panel">
-        <div className="panel-head">
-          出关结算 <span className="sub">{awayText(r.rawSec)}</span>
+    <div className="jh-ceremony calm" role="dialog" aria-label="出关">
+      <div>
+        <div className="kick">出 关</div>
+        <h2 className="mid">{shichenText(r.effectiveMin)}</h2>
+        <div className="d">
+          {awayText(r.rawSec)}
+          {r.capped && ` · 收益以 ${Math.round(r.capMin / 60)} 小时计`}
         </div>
-        <div className="panel-body">
-          <div className="settle-row dur">
-            <span className="k">有效闭关</span>
-            <span>
-              <span className="v" ref={durRef} />
-              {r.capped && <span className="settle-cap-tag">已达上限 {durText(r.capMin)}</span>}
-              {r.debugCap && <span className="settle-cap-tag debug">调试上限</span>}
-            </span>
+        <div className="gains">
+          <span>内力</span><span><b ref={neiliRef} /></span>
+          <span>银两</span><span><b ref={silverRef} /></span>
+          {sectDone ? (
+            <><span>门派任务</span><span>{errand(sectDone.kind)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>
+          ) : sectTask && (
+            <><span>门派任务</span><span>{errand(sectTask.kind)} · 还剩 {fmtLeft(sectTask.endsAt - Date.now())}</span></>
+          )}
+        </div>
+        {props.observer && (
+          <div className="obs">
+            <span data-tip={obsTip}>观察员 · 内力构成</span>
+            {r.debugCap && ' · 调试上限'}
           </div>
-          <div className="settle-row neili"><span className="k">内力（入丹田）</span><span className="v" ref={neiliRef} /></div>
-          <div className="settle-row"><span className="k">银两</span><span className="v" ref={silverRef} /></div>
-          {r.capped && (
-            <div className="settle-cap-line">丹田盈满，闭关收益已达上限——早些回来，莫让修为白流。</div>
-          )}
-          <div className="settle-keep">闭关期间：未突破 · 未挑战 · 未归隐——一切如你离开时。</div>
-          {props.observer && (
-            <div className="settle-observer">
-              <span className="ob-tag">观察员</span>
-              {r.effectiveMin.toFixed(1)} 分{r.capped ? '（上限截断）' : ''} × {fmtRate(r.neiliPerSec)} 内力/秒 × 60
-              × {Math.round(r.efficiency * 100)}% 闭关折算 = {fmt(r.neili)}
-            </div>
-          )}
-          <div className="settle-sec">回归检查 · 你不在的这段江湖</div>
-          <div className="settle-row info">
-            <span className="k">境界</span>
-            <span className="v">
-              <span className="serif">{realmDef.name}</span> · 丹田{' '}
-              {breakCost !== null
-                ? <b className={breakReady ? 'gold' : undefined}>{fmt(s.dantian)} / {fmt(breakCost)}</b>
-                : <b>{fmt(s.dantian)}</b>}
-            </span>
-          </div>
-          <div className="settle-row info">
-            <span className="k">推进</span>
-            <span className="v">{mapName(curMap)} · {TIER_NAMES[front.tier]}{nextStage !== null ? ` 第 ${nextStage} 关` : ' 已全通'}</span>
-          </div>
-          {nextBoss && (
-            <div className="settle-row info">
-              <span className="k">下一强敌</span>
-              <span className="v">{nextBoss.name}（推荐境界 {nextBoss.recommendedRealm}）</span>
-            </div>
-          )}
-          {breakReady && (
-            <div className="settle-keep gold">周天圆满，突破就绪——闭关不会替你突破，这一下要你亲手来。</div>
-          )}
-          <button className="btn" style={{ marginTop: 14 }} onClick={props.onClose}>出关 · 回归江湖</button>
+        )}
+        <div className="acts">
+          <button type="button" className="jh-btn" style={{ minWidth: 240 }} onClick={props.onClose}>回归江湖</button>
         </div>
       </div>
     </div>

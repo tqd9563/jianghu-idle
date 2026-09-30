@@ -1,6 +1,6 @@
 /**
- * 声望阁 —— 乘区账、修行感悟、宿慧、五件传承（economy.md v2.2 §2–§4）；归隐落地页（§8.6-4）。
- * 结构按获批原型 docs/design/longline-prototype.html §2；文案逐字取自 docs/rules/copy/retire.md v2.0 §5（冻结）。
+ * 声望阁 —— 挂机倍率、修行感悟、宿慧、五件传承（economy.md v2.2 §2–§4）；转世后的落地页（§8.6-4）。
+ * 结构按定稿原型 docs/design/ui-overhaul-prototype.html「声望阁」`#p-rep`；文案逐字取自 docs/rules/copy/retire.md v2.3 §5。
  */
 import { REALMS } from '../engine/content';
 import { GANWU_GAIN, REP_NODES, SUHUI, ganwuAffordable, ganwuPrice, suhuiTotal } from '../engine/prestige';
@@ -16,104 +16,91 @@ export function RepPane() {
   const nextPrice = ganwuPrice(lv + 1);
   const canOne = s.reputation >= nextPrice;
   const all = ganwuAffordable(lv, s.reputation);
+  const multTip = `基础 1<br>+ 宿慧 ${suhui.toFixed(1)}×<br>+ 修行感悟 ${ganwu.toFixed(1)}×<br>三项相加即挂机产出倍率`;
 
   return (
-    <div className="pane-wrap wide">
-      <section className="panel">
-        <div className="panel-head">
-          声望阁 <span className="sub">归隐者的传承</span>
-          <span className="rep-balance">声望 <b>{fmtBig(s.reputation)}</b></span>
+    <>
+      <header className="jh-head">
+        <div>
+          <h1>声望阁</h1>
+          <div className="sub">持有 <b>{fmtBig(s.reputation)}</b> 声望</div>
         </div>
-        <div className="panel-body">
-          {s.repTotal > 0 && s.ownedRepNodes.length === 0 && lv === 0 && (
-            <div className="rep-guide">
-              你的声望可以换成传承，让下一世更快更远——先挑一件带走。
-            </div>
-          )}
-          <div className="rep-ledger">
-            <span className="k">挂机产出乘区</span>
-            <span>基础 <b>1</b></span><span className="op">+</span>
-            <span>宿慧 <b>{suhui.toFixed(1)}×</b></span><span className="op">+</span>
-            <span>修行感悟 <b>{ganwu.toFixed(1)}×</b></span><span className="op">=</span>
-            <span className="total"><b>{currentMult(s).toFixed(1)}×</b></span>
+        <div className="jh-mult">
+          <div className="v jh-dotted" data-tip={multTip}>{currentMult(s).toFixed(1)}×</div>
+          <div className="k">挂机产出</div>
+        </div>
+      </header>
+
+      {s.repTotal > 0 && s.ownedRepNodes.length === 0 && lv === 0 && (
+        <p className="jh-guide">你的声望可以换成传承，让下一世更快更远——先挑一件带走。</p>
+      )}
+
+      <div className="jh-grid2">
+        <section className="jh-card">
+          <div className="head">
+            <span className="serif">修行感悟</span>
+            <small data-tip="侠名在外，江湖自有人奉上资粮。价格每级 +10 声望，和每一世转世拿到的声望一起往上涨。">永久 · 转世不散</small>
           </div>
-
-          <div className="rep-top">
-            <div className="rep-card ganwu">
-              <div className="rc-head">
-                <span className="rc-name serif">修行感悟</span>
-                <span className="rc-sub">无限级 · 每级挂机产出 +0.2×</span>
-                <span className="rc-corner">永久 · 归隐不散</span>
-              </div>
-              <div className="gw-row">
-                <span className="gw-lv">{lv}<small>级</small></span>
-                <span className="gw-eff">当前 <b>+{ganwu.toFixed(1)}×</b></span>
-                <span className="gw-eff">下一级 <b>{fmtBig(nextPrice)}</b> 声望</span>
-              </div>
-              <div className="gw-buy">
-                <button className="btn" disabled={!canOne} onClick={() => s.buyGanwu('one')}>
-                  传承一级
-                  <span className="btn-sub">{canOne ? `${fmtBig(nextPrice)} 声望` : `还差 ${fmtBig(nextPrice - s.reputation)}`}</span>
-                </button>
-                <button className="btn ghost" disabled={all.levels < 2} onClick={() => s.buyGanwu('all')}>
-                  尽数传承
-                  <span className="btn-sub">{all.levels < 2 ? '至少够两级时可用' : `${all.levels} 级 · ${fmtBig(all.cost)} 声望`}</span>
-                </button>
-              </div>
-              <div className="rc-desc">侠名在外，江湖自有人奉上资粮。价格每级 +10 声望，和每天归隐拿到的声望一起往上涨。</div>
-            </div>
-
-            <div className="rep-card">
-              <div className="rc-head">
-                <span className="rc-name serif">宿慧</span>
-                <span className="rc-corner">首达境界自得 · 不耗声望</span>
-              </div>
-              <div className="suhui-list">
-                {Object.entries(SUHUI).map(([realm, v]) => {
-                  const got = Number(realm) <= peak;
-                  return (
-                    <div key={realm} className={`suhui-row${got ? '' : ' pending'}`}>
-                      首达 {REALMS[Number(realm) - 1].name}
-                      <b>{got ? `+${v.toFixed(1)}×` : `+${v.toFixed(1)}× · 未至`}</b>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="rc-desc">散功重修，然剑意不灭——身体忘了的，神魂记得。</div>
-            </div>
+          <div className="jh-gw">
+            <span className="lv">{lv}<small>级</small></span>
+            <span className="info">每级挂机产出 +0.2× · 当前 <b>+{ganwu.toFixed(1)}×</b></span>
           </div>
+          <div className="jh-gw-btns">
+            <button type="button" className="jh-btn" disabled={!canOne} onClick={() => s.buyGanwu('one')}>
+              传承一级
+              <small>{canOne ? `${fmtBig(nextPrice)} 声望` : `还差 ${fmtBig(Math.ceil(nextPrice - s.reputation))}`}</small>
+            </button>
+            <button type="button" className="jh-btn quiet" disabled={all.levels < 2} onClick={() => s.buyGanwu('all')}>
+              尽数传承
+              <small>{all.levels < 2 ? '至少够两级时可用' : `${all.levels} 级 · ${fmtBig(all.cost)} 声望`}</small>
+            </button>
+          </div>
+        </section>
 
-          <div className="rep-subhead">传承</div>
-          <div className="rep-grid qol">
-            {REP_NODES.map((n) => {
-              const owned = s.ownedRepNodes.includes(n.id);
-              const affordable = s.reputation >= n.price;
+        <section className="jh-card">
+          <div className="head">
+            <span className="serif">宿慧</span>
+            <small data-tip="不耗声望。散功重修，然剑意不灭——身体忘了的，神魂记得。">首达境界自得</small>
+          </div>
+          <div className="jh-suhui">
+            {Object.entries(SUHUI).map(([realm, v]) => {
+              const got = Number(realm) <= peak;
               return (
-                <div key={n.id} className={`rep-node${owned ? ' owned' : ''}`}>
-                  <div className="rn-head">
-                    <span className="rn-name serif">{n.name}</span>
-                    {owned ? <span className="rn-owned">已传承</span> : <span className="rn-type">{n.type}</span>}
-                  </div>
-                  <div className="rn-desc">{n.desc}</div>
-                  {!owned && (
-                    <div className="rn-foot">
-                      <button
-                        className={affordable ? 'btn small' : 'btn small ghost'}
-                        disabled={!affordable}
-                        onClick={() => s.buyRepNode(n.id)}
-                      >
-                        {affordable ? `传承（${fmtBig(n.price)} 声望）` : '声望不足'}
-                      </button>
-                      {!affordable && <div className="rn-lack">还差 {fmtBig(n.price - s.reputation)}</div>}
-                    </div>
-                  )}
+                <div key={realm} className={`r${got ? '' : ' no'}`}>
+                  <span>首达 {REALMS[Number(realm) - 1].name}</span>
+                  <b>{got ? `+${v.toFixed(1)}×` : `+${v.toFixed(1)}× · 未至`}</b>
                 </div>
               );
             })}
           </div>
-          <div className="cap-note">旧梦重温、快速入门、江湖熟路三件已废止，不再陈列。</div>
+        </section>
+      </div>
+
+      <section className="jh-card jh-card-gap">
+        <div className="head"><span className="serif">传承</span><small>一次购得，永久生效</small></div>
+        <div className="jh-rows">
+          {REP_NODES.map((n) => {
+            const owned = s.ownedRepNodes.includes(n.id);
+            const short = Math.ceil(n.price - s.reputation);
+            return (
+              <div key={n.id} className={`jh-row${owned ? ' done' : ''}`}>
+                <div className="t"><span className="serif">{n.name}</span><span className="jh-tag">{n.type}</span></div>
+                <div className="d">{n.desc}</div>
+                <div className="a">
+                  {owned ? <span className="price ok">已传承</span> : (
+                    <span className="jh-buy">
+                      <button type="button" className="jh-btn2" disabled={short > 0} onClick={() => s.buyRepNode(n.id)}>
+                        {fmtBig(n.price)} 声望
+                      </button>
+                      {short > 0 && <small>还差 {fmtBig(short)}</small>}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
-    </div>
+    </>
   );
 }

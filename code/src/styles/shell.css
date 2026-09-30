@@ -182,6 +182,7 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 8px 26px oklch(0.05 0.01 262 / 0.6); transition: opacity .15s;
 }
 .jh-tip.on { opacity: 1; }
+.jh-tip .l { color: var(--faint); }
 [data-tip] { cursor: help; }
 .jh-dotted { position: relative; }
 .jh-dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: repeating-linear-gradient(to right, var(--ink-gold) 0 2px, transparent 2px 5px); }

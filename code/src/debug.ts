@@ -28,7 +28,7 @@ const PRESETS: Record<string, object> = {
   // 突破就绪态：境界 4 · 六段周天缴清、任脉已贯通 · 图3 推进到第 8 关
   ready: {
     run: 1, realm: 4, route: 'tangmen', neigong: 'shiguxinfa', zhong: 7, peakRealm: 4,
-    dantian: 17_900_000, silver: 830, xp: 250,
+    dantian: 76_000_000, silver: 830, xp: 250,   // ≥ 境界 4 突破消耗 7520 万（content.ts）
     reputation: 0, repTotal: 0,
     tiersPassed: 3, chargeHighWater: 6,
     acupointProgress: {

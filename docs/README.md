@@ -15,7 +15,7 @@
 | `rules/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
-| `rules/copy/battle.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` | 冻结文案 | BattlePane.tsx, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, AgeLine.tsx, SoulChip.tsx |
+| `rules/copy/battle.md` + `rules/copy/battle-narration.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` | 冻结文案（battle-narration 为叙事战报句式与式名） | BattlePane.tsx, narration.ts, formNames.ts, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, App.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 | `systems/sim/export_longline_fixtures.py` | 长线 golden 导出（招式 + 火候、关卡当量敌人、随当量放大的防御常数） | combat.longline.golden.test.ts |
 | `systems/sim/export_stage_table.py` | 长线关卡表导出（图 × 难度 × 关的当量、精英 / Boss 摆放、名单与奖励） | enemies.ts（`data/longline-stages.json`） |

@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { computeAttributes } from './engine/attributes';
+import { REALM_ACUPOINTS, isMeridianComplete, totalAcupointBonus } from './engine/acupoints';
 import { REALMS } from './engine/content';
 import { effIdleRate, huohouMultOf, nextStageOf, retireKind, useGameStore } from './store/gameStore';
 import { fmtBig, fmtRate } from './fmt';
@@ -97,7 +98,14 @@ export default function App() {
 
   const realmDef = REALMS[s.realm - 1];
   const rate = effIdleRate(s);
-  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, 0, huohouMultOf(s));
+  // 窍穴 / 贯通加成与修炼页身手卡同一口径（CultivatePane），突破演出的前后对比才对得上页面
+  const acuPct = (realm: number): number => {
+    const opened = new Set(Object.entries(s.acupointProgress ?? {}).filter(([, a]) => a.opened).map(([id]) => id));
+    const data = REALM_ACUPOINTS[realm];
+    const through = data ? data.meridians.filter((m) => isMeridianComplete(m, opened)).length : 0;
+    return totalAcupointBonus(realm, opened.size, through);
+  };
+  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s));
   const neigongSelectOpen = s.realm >= 2 && s.neigong === null && s.retireCeremony === null;
   const retire = retireKind(s);
   const repUnlocked = s.repTotal > 0 || s.run > 1;
@@ -234,7 +242,7 @@ export default function App() {
       {s.ceremony !== null && (
         <BreakthroughCeremony
           realmTo={s.ceremony}
-          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, 0, huohouMultOf(s))}
+          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, acuPct(s.ceremony - 1), huohouMultOf(s))}
           nextAttrs={attrs}
           onClose={s.dismissCeremony}
         />
@@ -242,6 +250,7 @@ export default function App() {
       {s.offlineSettlement && (
         <OfflineSettlement
           result={s.offlineSettlement}
+          sectDone={s.offlineSectDone}
           observer={observerOpen}
           onClose={s.dismissOfflineSettlement}
         />

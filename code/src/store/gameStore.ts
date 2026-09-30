@@ -157,6 +157,24 @@ interface PersistedState {
   rumorPending: boolean;
 }
 
+/**
+ * 战报揭示节拍（issue #26 原型）：你出手后停 1.3 秒、对方出手后停 1.4 秒，
+ * 反伤 / 毒发这类附带事件 0.5 秒，胜负那一句前停 1 秒。按「刚揭示的那条事件」决定下一次间隔。
+ */
+const REVEAL_AFTER_PLAYER_MS = 1300;
+const REVEAL_AFTER_ENEMY_MS = 1400;
+const REVEAL_AFTER_MINOR_MS = 500;
+const REVEAL_BEFORE_END_MS = 1000;
+const REVEAL_FIRST_MS = 400;
+const MAIN_KINDS = new Set(['attack', 'crit', 'miss', 'cast', 'burst']);
+function revealDelay(turns: FightResult['turns'], i: number): number {
+  const next = turns[i + 1];
+  if (next && next.side === 'end') return REVEAL_BEFORE_END_MS;
+  const t = turns[i];
+  if (!t || !MAIN_KINDS.has(t.kind)) return REVEAL_AFTER_MINOR_MS;
+  return t.side === 'enemy' ? REVEAL_AFTER_ENEMY_MS : REVEAL_AFTER_PLAYER_MS;
+}
+
 export interface BattleState {
   map: MapNo;
   tier: TierId;
@@ -165,7 +183,10 @@ export interface BattleState {
   result: FightResult;
   revealed: number;
   nextRevealAt: number;
+  /** 平均每条事件的揭示间隔（暂停恢复时顺延用） */
   intervalMs: number;
+  /** 揭示节拍的缩放：精英 / Boss 把整场压进 15–30 秒（§7.1），普通关为 1 */
+  revealScale?: number;
   resolved: boolean;
   chainAt: number | null;
   /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
@@ -234,6 +255,8 @@ interface GameState extends PersistedState {
   retireCeremony: RetireCeremonyData | null;
   /** 出关结算待呈现数据（MVP-1 §6；资源已在 init 入账，此处只驱动结算屏；非持久化） */
   offlineSettlement: OfflineSettleResult | null;
+  /** 出关时顺带结算的门派任务（只供出关演出展示，不持久化） */
+  offlineSectDone: { kind: SectTaskKind; contrib: number } | null;
   /** 独立持久化的自然测试窗口；不进入游戏存档。 */
   liveTestWindow: LiveTestWindowRecord | null;
   /** 刚发生的顿悟（台阶名），供一次性轻提示；非持久化 */
@@ -636,6 +659,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   retireStep: null,
   retireCeremony: null,
   offlineSettlement: null,
+  offlineSectDone: null,
   liveTestWindow: null,
 
   init: () => {
@@ -718,13 +742,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       // 门派任务离线照常计时（spec §5.2）：到点的在载入时入账
       const sectDone = savedAt !== null && !merged.paused ? settleSectTask(merged, now) : null;
+      // sectDone.contrib 是入账后的总额；演出要的是这趟任务挣了多少
+      const offlineSectDone = sectDone ? { kind: merged.sectTask!.kind, contrib: SECT_TASKS[merged.sectTask!.kind].contrib } : null;
       if (sectDone) {
         track('sect_task_done', { run: merged.run, realm: merged.realm, route: merged.route }, {
           sect: merged.sect, task: merged.sectTask!.kind, contrib: sectDone.contrib, offline: true,
         });
         Object.assign(merged, sectDone);
       }
-      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, dunwuNotice });
+      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, offlineSectDone, dunwuNotice });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
         // 闭关期间寿终正寝：自动归隐，出关结算屏不再有意义，直接进归隐演出
         set({ offlineSettlement: null });
@@ -865,7 +891,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const b = get().battle;
     if (b) {
       if (!b.resolved && b.revealed < b.result.turns.length && now >= b.nextRevealAt) {
-        set({ battle: { ...b, revealed: b.revealed + 1, nextRevealAt: now + b.intervalMs } });
+        set({ battle: { ...b, revealed: b.revealed + 1, nextRevealAt: now + revealDelay(b.result.turns, b.revealed) * (b.revealScale ?? 1) } });
         const nb = get().battle!;
         if (nb.revealed >= nb.result.turns.length) resolveBattle(set, get, now);
       } else if (b.resolved && b.chainAt !== null && now >= b.chainAt) {
@@ -1128,17 +1154,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
     const key = enemy.kind !== 'normal';
     const turnCount = result.turns.length;
-    // Boss/精英演出 15–30 秒不可跳过（§7.1）；普通关快节奏
-    const intervalMs = key
-      ? Math.min(Math.max(15000 / turnCount, 900), 30000 / turnCount)
-      : 650;
+    // 普通关按原型节拍逐条揭示；Boss/精英演出 15–30 秒不可跳过（§7.1），节拍整体缩放进这个区间
+    let totalMs = REVEAL_FIRST_MS;
+    for (let i = 0; i < turnCount - 1; i++) totalMs += revealDelay(result.turns, i);
+    const revealScale = key ? Math.min(Math.max(totalMs, 15000), 30000) / totalMs : 1;
+    const intervalMs = (totalMs * revealScale) / Math.max(1, turnCount);
     set({
       failure: null,
       selectedMap: map,
       selectedTier: tier,
       battle: {
         map, tier, stage, enemy, result,
-        revealed: 0, nextRevealAt: Date.now() + intervalMs, intervalMs,
+        revealed: 0, nextRevealAt: Date.now() + REVEAL_FIRST_MS * revealScale, intervalMs, revealScale,
         resolved: false, chainAt: null, chainStage: null, reward: null,
         ...(s.rumorPending ? { rumor: true } : {}),
       },

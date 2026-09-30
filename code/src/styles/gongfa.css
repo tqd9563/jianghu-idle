@@ -1,1 +1,163 @@
 /* 内功页、武学页（issue #26 视觉大改；基准 docs/design/ui-overhaul-prototype.html + DESIGN.md） */
+
+/* ═══════ 两页共用：陈列区抬头（区标题 + 分段筛选） ═══════ */
+.gf-shelf-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.gf-shelf-head .jh-sec { margin: 0; }
+.jh-seg .cat-ico { margin-right: 4px; }
+
+/* 武学类别图标：AI 简笔图做遮罩，颜色跟随文字 */
+.cat-ico { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; background: currentColor;
+  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+
+/* ═══════ 内功 ═══════ */
+.ng-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; margin-bottom: 26px; }
+.ng-top .jh-head { margin: 0; }
+.ng-lv { text-align: right; }
+.ng-lv .z { font-family: var(--font-display); font-size: 44px; font-weight: 700; line-height: 1; }
+.ng-lv .z small { font-size: 18px; margin-left: 4px; color: var(--muted); }
+
+/* 五关节点路：实线已走、虚线未走；已过金点、当前金圈、品质不可达淡显 */
+.ng-ladder { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); margin: 8px 0 30px; }
+.ng-ladder::before { content: ''; position: absolute; left: 10%; right: 10%; top: 10px; height: 1px;
+  background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
+.ng-ladder .walked { position: absolute; left: 10%; top: 9.5px; height: 1.5px; background: var(--done-line); }
+.ng-node { position: relative; text-align: center; display: grid; justify-items: center; align-content: start; gap: 4px; padding: 0 6px; }
+.ng-node .k { width: 21px; height: 21px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 262);
+  display: grid; place-items: center; font-size: 11px; color: var(--faint); }
+.ng-node.done .k { background: var(--ink-gold); box-shadow: none; color: var(--primary-ink); }
+.ng-node.wait .k { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 12px oklch(0.78 0.13 78 / 0.35); color: var(--gold); }
+.ng-node .n { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.2em; margin-top: 4px; }
+.ng-node .z { font-size: 12px; color: var(--faint); }
+.ng-node .e { font-size: 12.5px; color: var(--muted); max-width: 150px; }
+.ng-node.done .n { color: var(--ink-gold); }
+.ng-node.na { opacity: 0.45; }
+
+.ng-act { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
+.ng-act .note { color: var(--faint); font-size: 12.5px; }
+
+.ng-mech { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.ng-mech li { color: var(--muted); }
+.ng-mech li b { color: var(--ink); font-weight: 600; }
+.jh-card .head small.jh-dotted { cursor: help; }
+
+/* 藏经：线装书册封面陈列（透明底 AI 图），书名竖写在题签上；按品质换封面 */
+.gf-shelf-head:has(+ .ng-scrolls) { margin-top: 34px; }
+.ng-scrolls { display: flex; flex-wrap: wrap; gap: 26px 22px; margin-bottom: 36px; padding: 6px 4px 0; }
+.ng-book { position: relative; width: 112px; aspect-ratio: 0.65; border: 0; padding: 0; cursor: pointer; color: inherit;
+  background: url('/art/book-q1.png') center / 100% 100% no-repeat;
+  filter: brightness(0.85) drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6));
+  transition: transform .25s var(--ease-sharp), filter .25s; }
+.ng-book.q2 { background-image: url('/art/book-q2.png'); }
+.ng-book.q3 { background-image: url('/art/book-q3.png'); }
+.ng-book .t { position: absolute; left: 21%; top: 16%; width: 15%; height: 44%; display: grid; place-items: center;
+  writing-mode: vertical-rl; font-family: var(--font-display); font-size: 13.5px; letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap; }
+.ng-book small { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
+.ng-book:hover { transform: translateY(-3px); filter: brightness(0.95) drop-shadow(0 10px 16px oklch(0.05 0.01 262 / 0.6)); }
+.ng-book[aria-current="true"] { transform: translateY(-6px); filter: brightness(1.05) drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.45)); }
+.ng-book .on { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.45 0.14 30); color: oklch(0.95 0.02 80); }
+
+.ng-detail .head, .wx-card .head { flex-wrap: wrap; align-items: center; }
+.ng-detail .ttl, .wx-card .ttl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ng-cur { font-size: 13px; color: var(--ink-gold); white-space: nowrap; }
+.ng-facts { display: flex; gap: 18px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin: -4px 0 12px; }
+.ng-facts b { color: var(--ink); font-weight: 600; }
+
+/* 转修 / 散功重修：轻量对话框（不是整屏演出） */
+.gf-veil { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 20px;
+  background: oklch(0.08 0.01 262 / 0.78); backdrop-filter: blur(3px); animation: gf-veil-in .3s var(--ease-sharp); }
+@keyframes gf-veil-in { from { opacity: 0; } }
+.gf-dlg { width: min(480px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; border-radius: 16px; padding: 26px 28px 24px;
+  background: linear-gradient(170deg, oklch(0.22 0.016 262), oklch(0.17 0.014 262)); box-shadow: 0 20px 60px oklch(0.05 0.01 262 / 0.7);
+  animation: gf-dlg-in .35s var(--ease-sharp); }
+@keyframes gf-dlg-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+.gf-dlg h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.2em; font-weight: 700; }
+.gf-dlg .sub { color: var(--muted); font-size: 13.5px; margin-bottom: 18px; }
+.gf-kv { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 9px 0; border-top: 1px solid var(--hair); }
+.gf-kv:first-of-type { border-top: 0; }
+.gf-kv .k { color: var(--muted); }
+.gf-kv .v { font-weight: 600; text-align: right; }
+.gf-kv .v.loss { color: oklch(0.72 0.12 30); }
+.gf-kv .v small { display: block; font-size: 11.5px; font-weight: 400; color: var(--faint); }
+.gf-dlg .note { margin: 14px 0 0; font-size: 13px; color: var(--faint); }
+.gf-dlg .acts { display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; flex-wrap: wrap; }
+
+/* ═══════ 武学 ═══════ */
+.wx-seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 26px; }
+.wx-seat { position: relative; border: 0; text-align: left; border-radius: 10px; padding: 12px 14px; cursor: pointer; min-height: 70px; color: inherit;
+  background: var(--card); box-shadow: var(--card-edge); }
+.wx-seat .n { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; display: block; }
+.wx-seat .m { font-size: 12px; color: var(--faint); }
+.wx-seat .x { position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--faint); opacity: 0; transition: opacity .2s; }
+.wx-seat:hover .x { opacity: 1; }
+.wx-seat[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+.wx-seat.empty { background: none; box-shadow: inset 0 0 0 1px var(--hair); color: var(--faint); font-size: 13px; display: grid; place-items: center; cursor: default; }
+.wx-seat.locked { background: none; color: oklch(0.45 0.012 262); font-size: 12.5px; display: grid; place-items: center; cursor: default;
+  box-shadow: inset 0 0 0 1px oklch(0.25 0.012 262 / 0.6); }
+
+.wx-empty { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--muted); }
+.wx-empty p { margin: 0; }
+
+/* 藏书：线装书脊陈列，按品质换布色，底部类别图标 */
+.wx-shelf { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; padding: 12px 4px 16px; margin-bottom: 18px; position: relative; }
+.wx-shelf::after { content: ''; position: absolute; left: 0; right: 0; bottom: 6px; height: 4px; border-radius: 2px;
+  background: linear-gradient(to bottom, oklch(0.3 0.02 60 / 0.8), oklch(0.18 0.015 50 / 0.6)); }
+.wx-book { position: relative; z-index: 1; width: 58px; height: 206px; border: 0; cursor: pointer; border-radius: 3px 5px 5px 3px; padding: 14px 0 10px; color: inherit;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; transition: transform .25s var(--ease-sharp), box-shadow .25s;
+  background: linear-gradient(to right, oklch(0.2 0.02 255), oklch(0.27 0.025 255) 30%, oklch(0.23 0.022 255)); box-shadow: 0 6px 14px oklch(0.05 0.01 262 / 0.5); }
+.wx-book::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 1px;
+  background: repeating-linear-gradient(to bottom, oklch(0.6 0.02 80 / 0.5) 0 6px, transparent 6px 22px); }
+.wx-book .bt { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.18em; white-space: nowrap; padding: 8px 4px;
+  background: oklch(0.88 0.03 85 / 0.9); color: oklch(0.2 0.02 262); border-radius: 2px; }
+.wx-book.q2 { background: linear-gradient(to right, oklch(0.2 0.035 215), oklch(0.29 0.045 215) 30%, oklch(0.24 0.04 215)); }
+.wx-book.q3 { background: linear-gradient(to right, oklch(0.22 0.04 55), oklch(0.32 0.06 60) 30%, oklch(0.26 0.05 58)); }
+.wx-book.q3 .bt { background: oklch(0.8 0.1 80); }
+.wx-book .bi { display: grid; place-items: center; width: 22px; height: 22px; color: oklch(0.85 0.03 85 / 0.8); }
+.wx-book .bi .cat-ico { width: 22px; height: 22px; }
+.wx-book:hover { transform: translateY(-6px); }
+.wx-book[aria-current="true"] { transform: translateY(-10px); box-shadow: 0 10px 22px oklch(0.05 0.01 262 / 0.6), 0 0 0 1px oklch(0.78 0.13 78 / 0.6); }
+.wx-book .eq { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 4px; background: var(--gold); color: var(--primary-ink); }
+
+/* 武学详情：参数行 + 每一式一行 */
+.wx-card .params { display: flex; gap: 18px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin-bottom: 4px; }
+.wx-card .params b { color: var(--ink); font-weight: 600; }
+.wx-shi { display: grid; grid-template-columns: 200px minmax(0, 1fr) 64px; gap: 6px 18px; align-items: center; padding: 13px 0; border-top: 1px solid var(--hair); }
+.wx-shi .nm { display: grid; }
+.wx-shi .nm .k { font-size: 11.5px; color: var(--faint); }
+.wx-shi .nm .serif { font-size: 15.5px; letter-spacing: 0.1em; }
+.wx-shi .fx { font-size: 12px; color: var(--qi); margin-top: 3px; line-height: 1.5; }
+.wx-shi .fx::before { content: '◈ '; font-size: 10px; }
+.wx-shi .mul { text-align: right; font-weight: 600; }
+.wx-shi.locked .nm .serif, .wx-shi.locked .mul { color: var(--faint); }
+.wx-shi.locked .fx { color: oklch(0.55 0.05 215); }
+.wx-shi .dunwu { color: var(--gold); }
+
+/* 熟练度：一条线四个节点（生疏 · 熟练 · 精通 · 圆满） */
+.prof { position: relative; height: 34px; margin: 0 14px; cursor: help; }
+.prof-line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
+.prof-line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: var(--done-line); }
+.pn { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 5px; }
+.pn b { width: 11px; height: 11px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.42 0.015 262); }
+.pn em { font-style: normal; font-size: 11.5px; color: oklch(0.46 0.012 262); white-space: nowrap; }
+.pn.p b { background: var(--ink-gold); box-shadow: none; }
+.pn.p em { color: var(--ink-gold); }
+.pn.c b { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.45); }
+.pn.c em { color: var(--gold); font-weight: 600; }
+
+/* ═══════ 手机宽度 ═══════ */
+@media (max-width: 860px) {
+  .ng-top { grid-template-columns: 1fr; gap: 10px; }
+  .ng-lv { text-align: left; }
+  .ng-ladder { grid-template-columns: repeat(5, minmax(56px, 1fr)); overflow-x: auto; }
+  .ng-node .e { display: none; }
+  .ng-scrolls { gap: 26px 16px; }
+  .ng-book { width: 96px; }
+  .wx-seats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .wx-book { width: 50px; height: 190px; }
+  .wx-shi { grid-template-columns: 1fr 56px; }
+  .wx-shi > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .prof { margin: 4px 14px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gf-veil, .gf-dlg { animation: none; }
+  .ng-book, .wx-book { transition: none; }
+}

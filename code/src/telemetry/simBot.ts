@@ -62,7 +62,7 @@ export function advance(seconds: number): void {
 export function playBattle(): void {
   let guard = 200;
   while (st().battle && !st().battle!.resolved && guard-- > 0) {
-    vi.setSystemTime(Date.now() + st().battle!.intervalMs);
+    vi.setSystemTime(Math.max(Date.now() + 1, st().battle!.nextRevealAt));   // 揭示节拍按事件而定，直接跳到下一次揭示
     st().tick(Date.now());
     afterTick();
   }

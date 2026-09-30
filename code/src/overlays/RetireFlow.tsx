@@ -1,6 +1,7 @@
 /**
- * 归隐流程：三栏预览 → 二次确认（规格书 §8.6-1/2 硬性要求）
- * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.1 §2/§3（冻结，不得改写）。
+ * 转世演出（盘点即演出，规格书 §8.6-1/2）：定稿原型 docs/design/ui-overhaul-prototype.html `#d-retire`（jh-ceremony.dusk）。
+ * 「随魂而去 / 随身而散」两栏看清得失，「就此转世」直接确认；结算构成放进声望大字的悬停。
+ * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.3 §2（单源）。
  */
 import { getStage, mapName, TIER_NAMES, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { SECTS } from '../engine/sect';
@@ -17,6 +18,13 @@ function bossName(depth: number): string {
   return `${mapName(map)} · ${TIER_NAMES[tier]}的${getStage(map, tier, trackLength(map, tier)).name}`;
 }
 
+/** 「就此转世」：演出即盘点，直接走完 store 的两步（preview → confirm → 结算） */
+function commitRetire() {
+  const st = useGameStore.getState();
+  if (st.retireStep === 'preview') st.proceedRetire();
+  useGameStore.getState().confirmRetire();
+}
+
 export function RetireFlow() {
   const s = useGameStore();
   if (retireKind(s) === null || s.retireStep === null) return null;
@@ -28,98 +36,56 @@ export function RetireFlow() {
   });
   const target = Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages));
 
-  if (s.retireStep === 'confirm') {
-    // 寿元提示（retire.md §3）：剩余寿元够再活一天才显示——撑不到下次上线时，此时归隐正是时候
-    const age = s.age ?? INIT_AGE;
-    const lost = s.lifespanLost ?? 0;
-    const yearsLeft = Math.floor(lifespanCap(s.realm, lost) - age);
-    const warnLifespan = outlivesADay(age, s.realm, lost, s.peakRealm ?? 1);
-    return (
-      <div className="modal-backdrop open">
-        <div className="modal" role="dialog" aria-label="归隐二次确认">
-          <div className="modal-head"><span className="serif">就此归隐？</span></div>
-          <div className="modal-body">
-            <p className="retire-confirm-text">
-              这一段江湖就到此为止：境界、内功重数、通关进度与所有资源都会散去。
-              只有声望、修行感悟、宿慧、传承和你留下的江湖记录，随你归来。此去无回头。
-            </p>
-            {warnLifespan && (
-              <p className="retire-lifespan-warn">
-                寿元尚有 {yearsLeft} 年。此时归隐，这一世的修为就此散去——活得越久，这一世爬得越高。
-              </p>
-            )}
-            <div className="modal-actions">
-              <button className="btn" onClick={s.confirmRetire}>挂剑，归隐</button>
-              <button className="btn ghost" onClick={s.cancelRetire}>再闯一阵</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // 寿元提示（retire.md §2.3）：剩余寿元够再活一天才显示——撑不到下次上线时，此时转世正是时候
+  const age = s.age ?? INIT_AGE;
+  const lost = s.lifespanLost ?? 0;
+  const yearsLeft = Math.floor(lifespanCap(s.realm, lost) - age);
+  const warnLifespan = outlivesADay(age, s.realm, lost, s.peakRealm ?? 1);
+
+  // 结算构成悬停（retire.md §2.1）
+  const tip = [
+    `基础声望 ${fmtBig(settle.base)}（本世挂机加权 ${settle.weightedHours.toFixed(1)} 小时，闭关按六成计）`,
+    target === 0 ? '× 1.0 尚未击败任何 Boss'
+      : settle.frontReached ? `× ${settle.frontMult.toFixed(1)} 再败${bossName(target)} · 历来最深`
+        : `× 1.0 今天还没再败${bossName(target)}`,
+    ...(settle.fameThisLife > 0 ? [`名号与经脉 +${fmtBig(settle.fameThisLife)} 已随战随得，入账在先`] : []),
+    `现有声望 ${fmtBig(s.reputation)}`,
+  ].join('<br>');
 
   return (
-    <div className="modal-backdrop open">
-      <div className="modal wide" role="dialog" aria-label="归隐盘点">
-        <div className="modal-head">
-          <span className="serif">归隐盘点</span>
-          <span className="modal-sub">看清得失，再做决定</span>
+    <div className="jh-ceremony dusk" role="dialog" aria-label="转世">
+      <div>
+        <div className="kick">转 世</div>
+        <h2 className="mid">此生至此</h2>
+        <div className="d">皮囊散去，不灭功法载魂而行，来世再入江湖</div>
+        <div className="ledger3">
+          <div>
+            <div className="lh g">随魂而去</div>
+            <div className="big jh-dotted" data-tip={tip}>+{fmtBig(settle.total)}<small>声望</small></div>
+            <p>
+              修行感悟 {s.ganwuLevel ?? 0} 级 · 宿慧 +{suhuiTotal(s.peakRealm ?? 1).toFixed(1)}×<br />
+              内功 {(s.ownedNeigong ?? []).length} 部 · 传承 {s.ownedRepNodes.length} 件<br />
+              名号与通关印记
+            </p>
+            <RetireHint />
+          </div>
+          <div className="lost">
+            <div className="lh l">随身而散</div>
+            <p>
+              境界回到江湖新丁<br />
+              内功重数清零<br />
+              各图通关进度<br />
+              内力 {fmtBig(s.dantian)} · 银两 {fmtBig(s.silver)}
+              {s.sect && <><br />{SECTS[s.sect].name}贡献 {fmtBig(s.contrib ?? 0)}</>}
+            </p>
+          </div>
         </div>
-        <div className="modal-body">
-          <div className="retire-cols">
-            <div className="rcol gain">
-              <div className="rcol-head">你将获得</div>
-              <div className="rline">
-                <span>基础声望<small className="why">本世乘区加权 {settle.weightedHours.toFixed(1)} 小时（闭关按六成计）</small></span>
-                <span className="v">{fmtBig(settle.base)}</span>
-              </div>
-              <div className={`rline${settle.frontReached ? '' : ' na'}`}>
-                <span>
-                  打到自己的前沿
-                  <small className="why">
-                    {target === 0 ? '尚未击败任何 Boss'
-                      : settle.frontReached ? `再败${bossName(target)} · 历来最深`
-                        : `今天还没再败${bossName(target)}`}
-                  </small>
-                </span>
-                <span className="v">×{settle.frontMult.toFixed(1)}</span>
-              </div>
-              {settle.fameThisLife > 0 && (
-                <div className="rline na">
-                  <span>名号与经脉<small className="why">已随战随得，入账在先</small></span>
-                  <span className="v">+{fmtBig(settle.fameThisLife)}</span>
-                </div>
-              )}
-              <div className="rline total">
-                <span>本次归隐声望</span><span className="v gold">+{fmtBig(settle.total)}</span>
-              </div>
-            </div>
-            <div className="rcol lose">
-              <div className="rcol-head">你将失去</div>
-              <div className="rline"><span>境界</span><span className="v">回到「江湖新丁」</span></div>
-              <div className="rline"><span>内功</span><span className="v">重数与台阶清零，下一世重选</span></div>
-              <div className="rline"><span>通关进度</span><span className="v">各图重推</span></div>
-              <div className="rline"><span>内力</span><span className="v">{fmtBig(s.dantian)}　散去</span></div>
-              <div className="rline"><span>银两</span><span className="v">{fmtBig(s.silver)}　散去</span></div>
-              {s.sect && (
-                <div className="rline"><span>门派 · 贡献</span><span className="v">{SECTS[s.sect].name} · {s.contrib ?? 0}　散去</span></div>
-              )}
-            </div>
-            <div className="rcol keep">
-              <div className="rcol-head">你将保留</div>
-              <div className="rline"><span>声望</span><span className="v">现有 {fmtBig(s.reputation)} + 本次 {fmtBig(settle.total)}</span></div>
-              <div className="rline"><span>修行感悟</span><span className="v">{s.ganwuLevel ?? 0} 级</span></div>
-              <div className="rline"><span>宿慧</span><span className="v">+{suhuiTotal(s.peakRealm ?? 1).toFixed(1)}×</span></div>
-              <div className="rline"><span>内功</span><span className="v">已有 {(s.ownedNeigong ?? []).length} 部，下一世可任选</span></div>
-              <div className="rline"><span>传承</span><span className="v">已购 {s.ownedRepNodes.length} 件，永久生效</span></div>
-              <div className="rline"><span>江湖记录</span><span className="v">名号与通关印记</span></div>
-              <RetireHint />
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button className="btn" onClick={s.proceedRetire}>决意归隐</button>
-            <button className="btn ghost" onClick={s.cancelRetire}>返回江湖</button>
-          </div>
+        {warnLifespan && (
+          <p className="warn">寿元尚有 {yearsLeft} 年。此时转世，这一世的修为就此散去——活得越久，这一世爬得越高。</p>
+        )}
+        <div className="acts">
+          <button type="button" className="jh-btn quiet" onClick={s.cancelRetire}>再闯一阵</button>
+          <button type="button" className="jh-btn" onClick={commitRetire}>就此转世</button>
         </div>
       </div>
     </div>

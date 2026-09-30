@@ -1,7 +1,4 @@
+/** 转世演出「随魂而去」栏尾的一行小字（retire.md v2.3 §2.1） */
 export function RetireHint() {
-  return (
-    <div className="rline-note plain" style={{ marginTop: '8px' }}>
-      * 归隐后，你可再度于江湖中寻访已错过的秘籍残页。
-    </div>
-  );
+  return <div className="hint">转世后，错过的秘籍残页仍可在江湖中再度寻访。</div>;
 }

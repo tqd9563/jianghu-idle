@@ -107,6 +107,13 @@ export interface TurnEvent {
   ePoison: number;
   /** 当前真气（装了武学才有，spec §1.4） */
   pQi: number;
+  /** 叙事战报用的补充信息（只读展示，不参与结算）：出招的招式键 `武学 id:式序`、本招是否暴击 / 被闪、
+   *  敌方攻击被护盾吸收的量、牵机镖引爆的毒伤 */
+  form?: string;
+  crit?: boolean;
+  missed?: boolean;
+  absorb?: number;
+  detonate?: number;
 }
 
 /** 战斗统计 —— 纯累加器，不参与结算；失败战报（战斗文案冻结件）与诊断规则消费 */
@@ -213,8 +220,9 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     phpPct: Math.max(php, 0) / build.hp, ehpPct: Math.max(ehp, 0) / enemy.hp,
     pSq: sq, pShield: Math.max(pshield, 0), ePoison: elayers, pQi: qi,
   });
-  const push = (rd: number, side: TurnEvent['side'], kind: TurnEvent['kind'], text: string, dmg?: number) =>
-    turns.push({ rd, side, kind, text, dmg, ...pct() });
+  type TurnExtra = Pick<TurnEvent, 'form' | 'crit' | 'missed' | 'absorb' | 'detonate'>;
+  const push = (rd: number, side: TurnEvent['side'], kind: TurnEvent['kind'], text: string, dmg?: number, extra?: TurnExtra) =>
+    turns.push({ rd, side, kind, text, dmg, ...pct(), ...extra });
 
   const finish = (win: boolean, rounds: number): FightResult => {
     if (!ev) stats.pHitRate = pAttempts > 0 ? pHits / pAttempts : pHit;
@@ -299,7 +307,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         hitRoll === 0
           ? `施展「${skill.name} · ${form.name}」，被闪避`
           : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}${build.sqNeed < 99 && crit ? `，剑意 ${sq}/${build.sqNeed}` : ''}`,
-        f1(dealt));
+        f1(dealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}) });
     } else if (!ev && hitRoll === 0) {
       push(rd, 'player', 'miss', '你的攻击被闪避');
     } else if (dealt > 0) {
@@ -341,7 +349,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     } else if (edmg > 0) {
       push(rd, 'enemy', 'attack',
         `${enemy.name}${tags.includes('破甲') ? '破甲一击' : '攻击'}，你受到 ${f1(edmg - absorb)} 伤害${absorb > 0 ? `（护盾吸收 ${f1(absorb)}）` : ''}`,
-        f1(edmg - absorb));
+        f1(edmg - absorb), absorb > 0 ? { absorb: f1(absorb) } : undefined);
     }
     // 反伤按减免后、护盾吸收前伤害计（§7.2），单向截断
     if (build.thorns && edmg > 0) {

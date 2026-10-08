@@ -40,6 +40,7 @@
 | `systems/sect-neigong/design.md` | 门派 / 内功 / 武学设定（门径并入内功） | — |
 | `systems/sect-neigong/spec.md` | 门派 / 内功 / 武学规格（内功 / 真气 / 武学 / 悟性 / 获取 / 门派 / 迁移数值表，可进实现） | neigong.ts, wuxue.ts, NeigongPane.tsx, NeigongSelect.tsx, WuxuePane.tsx, combat.ts（武学出招）, storage.ts（v8 迁移） |
 | `systems/sect-neigong/sim.py` | 门派 / 内功 / 武学 sim（扩展战斗：真气、冷却、出招；判据 9 条） | — |
+| `systems/wuxue-catalog/design.md` | 武学名录扩版（按刀枪剑棍 / 拳掌指腿 / 暗器归类，14 门扩至 24 门；草案） | — |
 | `systems/battle-loot/design.md` | 战斗挂机：掉落与装备设定（挂机入口、装备三部位五品阶与词条、武学整式 / 残页掉落、境界 1 内功教学关；已定稿，数值待 sim） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |

@@ -90,7 +90,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
 
   const narrCtx: NarrCtx | null = enemy ? {
     enemy, route: s.route ?? null, neigongName: s.neigong ? NEIGONG[s.neigong].name : null,
-    sqNeed: build.sqNeed, poisonCap: build.poison.cap,
+    sqNeed: build.sqNeed, poisonCap: build.poison.cap, seed: battle?.seed ?? 0,
   } : null;
 
   // 战报跟随最新一段滚动

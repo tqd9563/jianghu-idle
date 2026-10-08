@@ -82,8 +82,21 @@ describe('确定性', () => {
   it('同一输入永远同一输出；不同回合可换变体', () => {
     const t = turn({ kind: 'attack', side: 'enemy' });
     expect(narrateTurn(t, ctx)).toEqual(narrateTurn(t, ctx));
-    const variants = new Set([1, 2, 3].map((rd) => text(narrateTurn(turn({ kind: 'attack', side: 'enemy', rd }), ctx))));
-    expect(variants.size).toBe(3);
+    const rds = Array.from({ length: 30 }, (_, i) => i + 1);
+    const seq = (seed: number) => rds.map((rd) => text(narrateTurn(turn({ kind: 'attack', side: 'enemy', rd }), { ...ctx, seed })));
+    const a = seq(7);
+    expect(new Set(a).size).toBe(3);
+    // 相邻回合不重复
+    for (let i = 1; i < a.length; i++) expect(a[i], `第 ${i + 1} 回合`).not.toBe(a[i - 1]);
+  });
+
+  it('变体随机：不再是固定轮换，换种子换顺序', () => {
+    const rds = Array.from({ length: 30 }, (_, i) => i + 1);
+    const seq = (seed: number) => rds.map((rd) => text(narrateTurn(turn({ kind: 'attack', side: 'enemy', rd }), { ...ctx, seed })));
+    const a = seq(7);
+    // 三条变体固定轮换时，第 N 与第 N+3 回合必同句；随机时不应处处如此
+    expect(rds.slice(0, -3).some((_, i) => a[i] !== a[i + 3])).toBe(true);
+    expect(seq(8)).not.toEqual(a);
   });
 
   it('整场战斗重放文字一致', () => {

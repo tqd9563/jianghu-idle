@@ -906,10 +906,19 @@ button { font: inherit; color: inherit; }
 .pages i.got { background: var(--qi); box-shadow: none; }
 .pages small { font-size: 11px; color: var(--faint); margin-left: 4px; }
 
-/* 武学藏书：改用与藏经相同的 AI 书封 */
+/* 武学藏书：同一套 AI 书封，封面按品阶换色，类目盖印 */
 .shelf.covers { gap: 26px 22px; align-items: flex-start; padding: 6px 4px 30px; margin-bottom: 10px; }
 .shelf.covers::after { display: none; }
-.shelf.covers .scroll-i.ghost { filter: grayscale(0.7) brightness(0.55) drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); }
+.scroll-i.wx { background: none !important; filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); }
+.scroll-i.wx .cv { position: absolute; inset: 0; background: url('../../code/public/art/book-q1.png') center / 100% 100% no-repeat; filter: sepia(0.7) saturate(0.55) brightness(0.8); }
+.scroll-i.wx.q2 .cv { background-image: url('../../code/public/art/book-q1.png'); filter: hue-rotate(60deg) saturate(0.85) brightness(0.8); }
+.scroll-i.wx.q3 .cv { background-image: url('../../code/public/art/book-q3.png'); filter: hue-rotate(-28deg) saturate(1.5) brightness(0.9); }
+.scroll-i.wx .t { left: 12%; width: 16%; top: 11%; height: 54%; background: oklch(0.88 0.035 85); box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45), 0 1px 2px oklch(0.05 0.01 262 / 0.4); }
+.scroll-i.wx.q3 .t { left: 13%; width: 18%; top: 7%; height: 60%; }
+.scroll-i.wx .seal { position: absolute; right: 13%; bottom: 10%; width: 24px; height: 24px; display: grid; place-items: center; font-family: var(--serif); font-size: 14px; line-height: 1; color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px; box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.75), 0 1px 3px oklch(0.05 0.01 262 / 0.5); transform: rotate(-6deg); }
+.scroll-i.wx:hover, .scroll-i.wx[aria-current="true"] { filter: drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.45)); }
+.scroll-i.wx.ghost .cv { filter: grayscale(0.8) brightness(0.45); }
+.scroll-i.wx.ghost .seal { opacity: 0.5; }
 .shelf.covers .scroll-i .pg { color: var(--qi); }
 .shelf.covers .scroll-i .need { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.42 0.02 262); color: var(--ink); filter: none; }
 .shelf.covers .scroll-i .eq { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: var(--gold); color: var(--gold-ink); }
@@ -1850,7 +1859,8 @@ function renderShelf() {
     const tag = d.ghost ? (d.q === 1 ? '<span class="need">缺第一式</span>' : '<span class="need">未拼齐</span>') : (wx.equipped.includes(id) ? '<span class="eq">装</span>' : '');
     const pgTag = d.pages && pg ? `<span class="pg">残页 ${pg}</span>` : (d.own && d.q === 1 ? `<span class="pg">全本 ${d.own.length} / ${d.forms.length}</span>` : '');
     const sub = pgTag || `${QP[d.q].q} · ${d.cat}`;
-    return `<button class="scroll-i q${d.q} ${d.ghost ? 'ghost' : ''}" data-wx="${id}" aria-current="${id === wx.cur}" title="${d.n} · ${QP[d.q].q}${d.cat}">${tag}<span class="t">${d.n}</span><small>${sub}</small></button>`;
+    const SEAL = { 暗器: '镖' };
+    return `<button class="scroll-i wx q${d.q} ${d.ghost ? 'ghost' : ''}" data-wx="${id}" aria-current="${id === wx.cur}" title="${d.n} · ${QP[d.q].q}${d.cat}"><i class="cv"></i>${tag}<span class="t">${d.n}</span><span class="seal">${SEAL[d.cat] || d.cat}</span><small>${sub}</small></button>`;
   }).join('');
   $('.js-shelf').classList.add('covers');
 }const WORN = { 兵器: '剑', 暗器: true };

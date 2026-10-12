@@ -849,7 +849,7 @@ button { font: inherit; color: inherit; }
 .log .p.loot .pg { color: var(--qi); }
 
 /* 行囊：四部位穿戴 + 背包 */
-.bag { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(260px, 300px); gap: 28px; align-items: start; }
+.bag { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 28px; align-items: start; }
 .worn { display: grid; }
 .worn-i { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 4px 14px; padding: 14px 6px; border-top: 1px solid var(--hair); cursor: pointer; border-radius: 8px; }
 .worn-i:first-child { border-top: 0; }
@@ -868,18 +868,21 @@ button { font: inherit; color: inherit; }
 .worn-sum b { color: var(--ink); font-weight: 600; }
 .bag-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
 .bag-head .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.bag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.item { position: relative; border: 0; text-align: left; color: inherit; cursor: pointer; border-radius: 10px; padding: 10px 12px; background: oklch(0.22 0.015 262 / 0.5); display: grid; gap: 3px; align-content: start; transition: background .2s, box-shadow .2s; }
+.bag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px 8px; }
+.item { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 10px; padding: 8px 4px 6px; background: oklch(0.22 0.015 262 / 0.5); display: grid; gap: 6px; justify-items: center; align-content: start; transition: background .2s, box-shadow .2s; }
 .item:hover { background: oklch(0.27 0.017 262 / 0.6); }
 .item[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55), 0 0 12px oklch(0.78 0.13 78 / 0.2); }
-.item .nm { font-family: var(--serif); font-size: 14px; letter-spacing: 0.05em; line-height: 1.4; padding-right: 36px; }
-.item .m { font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.item .up { position: absolute; top: 8px; right: 9px; font-size: 11px; color: var(--gold); }
+.item .th { width: 52px; height: 52px; border-radius: 8px; display: grid; place-items: center; background: oklch(0.17 0.012 262 / 0.8); box-shadow: inset 0 0 0 1px currentColor; }
+.item .th img { width: 34px; height: 34px; filter: invert(0.88); opacity: 0.9; }
+.item .th .gl { font-family: var(--serif); font-size: 22px; font-weight: 400; letter-spacing: 0; }
+.item .nm { font-family: var(--serif); font-size: 12.5px; letter-spacing: 0.04em; line-height: 1.3; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .up { position: absolute; top: 4px; right: 6px; font-size: 11px; color: var(--gold); }
+.item .fresh { position: absolute; top: 7px; left: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .item.dim { opacity: 0.55; }
 .bag-foot { margin-top: 12px; font-size: 12.5px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .bag-foot b { color: var(--muted); }
 /* 比较面板 */
-.cmp { margin-top: 0; position: sticky; top: 16px; }
+.cmp { margin-top: 18px; }
 .cmp-empty { font-size: 12.5px; color: var(--faint); line-height: 1.7; text-align: center; padding: 28px 8px; }
 .cmp .cmp-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cmp .cmp-h .nm { font-family: var(--serif); font-size: 17px; letter-spacing: 0.08em; }
@@ -923,14 +926,8 @@ button { font: inherit; color: inherit; }
 .toast.on { display: block; }
 .toast .serif { color: var(--gold); }
 
-@media (max-width: 1180px) {
-  .bag { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
-  .bag > div:last-child { grid-column: 1 / -1; }
-  .cmp { position: static; }
-}
 @media (max-width: 860px) {
   .bag { grid-template-columns: 1fr; }
-  .cmp { position: static; }
   .ng-pick { grid-template-columns: 1fr; }
   .act2 .btns { width: 100%; } .act2 .btns .main-btn { flex: 1; min-width: 0; }
 }
@@ -938,6 +935,11 @@ button { font: inherit; color: inherit; }
   .tabbar button { font-size: 13.5px; letter-spacing: 0.04em; padding: 8px 4px; }
   .tabbar { justify-content: space-between; padding-left: 6px; padding-right: 6px; }
 }
+
+/* 藏经题签：书名对齐封面上的题签（按三张封面实测） */
+.scroll-i .t { left: 12%; width: 16%; top: 11%; height: 54%; }
+.scroll-i.q2 .t { left: 16%; width: 17%; top: 2%; height: 64%; }
+.scroll-i.q3 .t { left: 13%; width: 18%; top: 7%; height: 60%; }
 </style>
 </head>
 <body>
@@ -1180,14 +1182,11 @@ button { font: inherit; color: inherit; }
               <h2 class="sec-title" style="margin:0">背包 <small class="faint js-bagn"></small></h2>
               <div class="tools">
                 <div class="cats js-bagsort"><button data-sort="new" aria-pressed="true">新得</button><button data-sort="grade">品阶</button><button data-sort="slot">部位</button></div>
-                <button class="btn2 quiet js-sellbelow" data-tip="卖掉背包里蓝以下的装备：白 1 两 · 绿 3 两">一键出售 蓝以下</button>
+                <button class="btn2 quiet js-sellbelow" data-tip="卖掉背包里上乘以下的装备：凡品 1 两 · 精良 3 两">一键出售 上乘以下</button>
               </div>
             </div>
             <div class="bag-grid js-bag"></div>
             <div class="bag-foot"><span class="js-bagfoot"></span><span>背包 <b>40</b> 格 · 满了离线会自动卖掉比身上差的</span></div>
-          </div>
-          <div>
-            <h2 class="sec-title">比较</h2>
             <div class="card cmp js-cmp"></div>
           </div>
         </div>
@@ -1286,7 +1285,7 @@ button { font: inherit; color: inherit; }
             </div>
           </header>
           <div class="js-sectmaps"></div>
-          <div class="sect-foot"><span class="faint" style="font-size:12.5px">战力不因拜哪派而变，本门绝学练得快两成；各派绝学只在本派商店与声望阁换残页</span><button class="main-btn js-join">拜入 华山</button></div>
+          <div class="sect-foot"><span></span><button class="main-btn js-join">拜入 华山</button></div>
         </div>
       </section>
 
@@ -1409,7 +1408,7 @@ button { font: inherit; color: inherit; }
       <span>银两</span><span><b>+1,120</b></span>
       <span>门派任务</span><span>巡守玉女峰已归 · <b>+40</b> 贡献</span>
       <span>挂机</span><span>第 38 关 · <b>412</b> 场 · 胜 398</span>
-      <span>装备</span><span><b class="g3">蓝 2</b> · <b class="g2">绿 7</b> · 白 13 → 比身上差的已卖 <b>61</b> 两</span>
+      <span>装备</span><span><b class="g3">上乘 2</b> · <b class="g2">精良 7</b> · 凡品 13 → 比身上差的已卖 <b>61</b> 两</span>
       <span>武学</span><span>青萍剑法 第二式<b>全本</b> · 飞瀑断崖剑 第三式残页 <b>+4</b></span>
     </div>
     <button class="main-btn js-close" style="min-width:240px">回归江湖</button>
@@ -1453,14 +1452,14 @@ button { font: inherit; color: inherit; }
   <div>
     <div class="kick">传 功</div>
     <h2 class="mid">择一门心法</h2>
-    <div class="d">老者说，三门心法各走一路，日后转修要费功夫，先想清楚</div>
+    <div class="d">三门心法各走一路；日后转修心法，须耗额外代价</div>
     <div class="ng-pick" role="radiogroup">
       <button class="sect-opt" role="radio" aria-checked="true"><span class="n">惊雷诀</span><span class="o">快剑爆发 · 以会心积剑意，剑意满则一击如雷</span><span class="g">开战首击必中要害<br>路子险，起手慢，后劲足<br>相传源出华山</span></button>
       <button class="sect-opt" role="radio" aria-checked="false"><span class="n">镇岳功</span><span class="o">以守为攻 · 开场护体，受击反伤</span><span class="g">护体真气三成气血<br>打法稳，开局最硬<br>相传源出少林</span></button>
       <button class="sect-opt" role="radio" aria-checked="false"><span class="n">蚀骨心法</span><span class="o">叠毒入骨 · 每次命中添一层毒，满层毒爆</span><span class="g">毒伤无视防御<br>打法阴，越拖越狠<br>相传源出唐门</span></button>
     </div>
     <div class="acts-c"><button class="main-btn js-close js-teachok">修习 惊雷诀</button></div>
-    <div class="teach-foot">修了心法才有真气，才能装一门武学；从此路上的对手身上也能搜出东西来</div>
+    <div class="teach-foot">修习心法后，方可装配武学招式</div>
   </div>
 </div>
 <div class="toast js-toast"></div>
@@ -1744,8 +1743,8 @@ document.addEventListener('click', ev => {
     $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 73 * 100 + '%';
   };
   const LOOT = [
-    () => `拾得：<span class="g3">锋锐眼明的青锋剑</span>（蓝 · 兵器）`,
-    () => `拾得：<span class="g1">粗布短打</span>（白 · 衣甲）`,
+    () => `拾得：<span class="g3">锋锐眼明的青锋剑</span>（上乘 · 兵器）`,
+    () => `拾得：<span class="g1">粗布短打</span>（凡品 · 衣甲）`,
     () => `拾得：<span class="pg">青萍剑法 · 第二式</span>全本，已学会`,
     () => `拾得：<span class="pg">飞瀑断崖剑 · 第三式</span>残页，已集 4 / 5`,
     () => `拾得：<span class="g2">厚实的皮甲</span>（绿 · 衣甲）`,
@@ -1899,7 +1898,7 @@ renderWx();
 /* ───── 行囊 ───── */
 const PRE = { atk: '锋锐', crit: '狠辣', cd: '透骨', hit: '眼明', boss: '遇强则强', hp: '厚实', def: '坚韧', dodge: '轻灵', qi: '蕴气', wx: '凝神' };
 const AFX = { atk: ['攻击', '%'], crit: ['会心率', 'pp'], cd: ['会心伤害', 'pp'], hit: ['命中', ''], boss: ['对精英 / Boss 伤害', '%'], hp: ['气血', '%'], def: ['防御', '%'], dodge: ['闪避', ''], qi: ['真气上限', ''], wx: ['武学伤害', '%'] };
-const GN = ['', '白', '绿', '蓝', '紫', '橙'];
+const GN = ['', '凡品', '精良', '上乘', '珍品', '极品'];
 const SELL = [0, 1, 3, 12, 40, 150];
 let ITEMS = [
   { id: 1, slot: '兵器', cat: '剑', g: 3, lv: 2.6, obj: '青锋剑', base: { 攻击: 1.9 }, afx: [['atk', 4.8], ['hit', 2.9]], worn: true },
@@ -1920,6 +1919,8 @@ let ITEMS = [
 const bag = { sel: 5, sort: 'new' };
 const fmt = v => Number.isInteger(v) ? v : v.toFixed(1);
 const itemName = it => (it.afx.length ? `<span class="pre">${it.afx.map(a => PRE[a[0]]).join('')}的</span>` : '') + it.obj;
+const THUMB = { 剑: 'jian', 刀: 'dao', 棍: 'gun', 暗器: 'anqi' };
+const thumb = it => { const k = THUMB[it.cat || it.slot]; return k ? `<img src="../../code/public/art/icon-${k}.png" alt="">` : `<b class="gl">${{ 枪: '枪', 衣甲: '甲', 佩饰: '佩' }[it.cat || it.slot]}</b>`; };
 const afxText = (k, v) => `${AFX[k][0]} +${fmt(v)}${AFX[k][1]}`;
 function renderWorn() {
   const SL = ['兵器', '暗器', '衣甲', '佩饰'];
@@ -1945,11 +1946,11 @@ function renderBag() {
   $('.js-bag').innerHTML = list.map(it => {
     const cur = ITEMS.find(i => i.worn && i.slot === it.slot);
     const better = cur && it.g > cur.g;
-    return `<button class="item ${it.g <= 2 && !better ? 'dim' : ''}" data-item="${it.id}" aria-pressed="${bag.sel === it.id}">${better ? '<span class="up">▲ 更好</span>' : ''}
-      <span class="nm g${it.g}">${itemName(it)}</span><span class="m"><span class="gtag g${it.g}">${GN[it.g]}</span>${it.slot}${it.cat ? ' · ' + it.cat : ''}${it.fresh ? ' · <span class="gold">新</span>' : ''}</span></button>`;
+    return `<button class="item ${it.g <= 2 && !better ? 'dim' : ''}" data-item="${it.id}" aria-pressed="${bag.sel === it.id}" data-tip="${itemName(it).replace(/<[^>]+>/g, '')} · ${GN[it.g]} · ${it.slot}${it.cat ? ' · ' + it.cat : ''}">${better ? '<span class="up">▲</span>' : ''}${it.fresh ? '<span class="fresh"></span>' : ''}
+      <span class="th g${it.g}">${thumb(it)}</span><span class="nm g${it.g}">${it.obj}</span></button>`;
   }).join('');
   const low = list.filter(i => i.g <= 2);
-  $('.js-bagfoot').innerHTML = `蓝以下 <b>${low.length}</b> 件，可卖 <b>${low.reduce((a, i) => a + SELL[i.g], 0)}</b> 两`;
+  $('.js-bagfoot').innerHTML = `上乘以下 <b>${low.length}</b> 件，可卖 <b>${low.reduce((a, i) => a + SELL[i.g], 0)}</b> 两`;
   $$('.js-bagsort button').forEach(b => b.setAttribute('aria-pressed', b.dataset.sort === bag.sort));
 }
 function renderCmp() {
@@ -1982,21 +1983,21 @@ renderAll();
 /* ───── 门派：九派按地图分组 ───── */
 const SECTS = [
   { map: '村外小径', note: '开局 · 境界 3 起可拜', list: [
-    ['华山', '惊雷剑意，相传源出华山。', ['剑'], '苍崖九叠剑 · 落星沉海剑 · 长虹贯日剑', '独门：蓄势，越打越快'],
-    ['少林', '镇岳护体，相传源出少林。', ['棍', '腿'], '罗汉伏魔棍 · 金刚降魔杵 · 罗汉十八腿', '独门：反震，攻防同算'],
-    ['唐门', '蚀骨毒功，相传源出唐门。', ['暗器'], '落英缤纷针 · 牵机引魂镖 · 千丝万缕针', '独门：引爆，毒层一并结算']] },
+    ['华山', '惊雷剑意，相传源出华山。', ['剑'], '苍崖九叠剑 · 落星沉海剑 · 长虹贯日剑', '剑走轻灵，蓄势连斩，越打越快'],
+    ['少林', '镇岳护体，相传源出少林。', ['棍', '腿'], '罗汉伏魔棍 · 金刚降魔杵 · 罗汉十八腿', '棍腿刚猛，护体反震，攻守一体'],
+    ['唐门', '蚀骨毒功，相传源出唐门。', ['暗器'], '落英缤纷针 · 牵机引魂镖 · 千丝万缕针', '暗器淬毒，叠毒引爆，远攻为先']] },
   { map: '洛阳近郊', note: '打通村外小径 · 初入 Boss 后，三派弟子行走江湖', list: [
-    ['丐帮', '草莽豪侠，醉里狂歌。', ['棍', '拳'], '莲花落地棍 · 横扫六合拳 · 醉里挑灯拳', ''],
-    ['武当', '道家功夫，以柔克刚。', ['拳', '腿'], '真武荡魔拳 · 鹤翔紫霄腿 · 踏罡步斗腿', ''],
-    ['峨眉', '佛门清修，清冷点穴。', ['掌', '指'], '寒蝉凄切掌 · 九曲封脉指 · 金顶佛光指', '']] },
+    ['丐帮', '草莽豪侠，醉里狂歌。', ['棍', '拳'], '莲花落地棍 · 横扫六合拳 · 醉里挑灯拳', '棍拳泼辣，招式质朴，耐打耐缠'],
+    ['武当', '道家功夫，以柔克刚。', ['拳', '腿'], '真武荡魔拳 · 鹤翔紫霄腿 · 踏罡步斗腿', '拳腿绵柔，以静制动，借力卸力'],
+    ['峨眉', '佛门清修，清冷点穴。', ['掌', '指'], '寒蝉凄切掌 · 九曲封脉指 · 金顶佛光指', '掌指清冷，点穴封脉，先手制敌']] },
   { map: '华山古道', note: '打通洛阳近郊 · 初入 Boss 后', far: true, list: [
-    ['崆峒', '西陲刀客，大漠风沙。', ['刀'], '天河倒悬刀 · 风雷激荡刀 · 大漠孤烟刀', ''],
-    ['雁门世家', '边关将门，枪马世家。', ['枪'], '霸王卸甲枪 · 百鸟朝凤枪 · 七进七出枪', ''],
-    ['百蛊门', '苗疆蛊毒。', ['掌', '指'], '千蛇噬心掌 · 万毒归宗掌 · 七虫断魂指', '']] },
+    ['崆峒', '西陲刀客，大漠风沙。', ['刀'], '天河倒悬刀 · 风雷激荡刀 · 大漠孤烟刀', '刀法狂放，大开大合，势大力沉'],
+    ['雁门世家', '边关将门，枪马世家。', ['枪'], '霸王卸甲枪 · 百鸟朝凤枪 · 七进七出枪', '枪出如龙，长攻远刺，一往无前'],
+    ['百蛊门', '苗疆蛊毒。', ['掌', '指'], '千蛇噬心掌 · 万毒归宗掌 · 七虫断魂指', '掌指带蛊，毒入经脉，缠绵不绝']] },
 ];
 $('.js-sectmaps').innerHTML = SECTS.map(m => `<div class="sect-map"><div class="mh"><span class="serif">${m.map}</span><small>${m.far ? '未到此地 · ' : ''}${m.note}</small></div>
   <div class="sect-pick" role="radiogroup">${m.list.map(([n, o, cats, jx, sig]) => `<button class="sect-opt ${m.far ? 'far' : ''}" role="radio" aria-checked="${n === '华山'}" ${m.far ? 'disabled data-tip="到了华山古道才能遇上"' : ''}>
-    <span class="n">${n}</span><span class="o">${o}</span><span class="cat">${cats.map(c => `<span class="wtag">${c}</span>`).join('')}</span><span class="g">绝学 ${jx}${sig ? '<br>' + sig : ''}<br>残页只在本派商店与声望阁换</span></button>`).join('')}</div></div>`).join('');
+    <span class="n">${n}</span><span class="o">${o}</span><span class="cat">${cats.map(c => `<span class="wtag">${c}</span>`).join('')}</span><span class="g">所长 ${sig}<br>绝学 ${jx}</span></button>`).join('')}</div></div>`).join('');
 document.addEventListener('click', e => {
   const o = e.target.closest('.sect-opt[role="radio"]:not(.far)'); if (!o) return;
   const grp = o.closest('[role="radiogroup"]').parentElement;

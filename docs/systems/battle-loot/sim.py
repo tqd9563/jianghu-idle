@@ -617,7 +617,7 @@ PAGES = {"上乘": 5, "绝学": 7}                                      # 每式
 SEC_PER_ROUND = 2.7                                                # 战报节拍（BattlePane：约 2.7 秒一回合）
 SEC_OVERHEAD = 2.5                                                 # 开场 / 收尾 / 连战间隔
 OFFLINE_H, OFFLINE_EFF, OFFLINE_CAP_H = 24 - ps.ONLINE_H, ps.OFFLINE_EFF, 24
-INTRO_DROP_AFTER_TEACH = False                                     # 裁决 19：入门关不掉落；True = 传功后入门关也掉（只出白绿），供对照
+INTRO_DROP_AFTER_TEACH = True                                      # 裁决 19（2026-10-12 改）：传功前不掉，传功后入门关掉白绿；False 为旧规则对照
 
 
 def grade_dist(pos: float, kind: str) -> dict:
@@ -1009,8 +1009,8 @@ def main():
         print(f"  刚选{ROUTE_NAME[r]}（0 重、无装备、无武学）打 1-7：胜率 {winrate(b0, x7, (), n=300):.1%}")
     ok6b = ok6c = True
     firsts = []
-    for intro_drop in (False, True):
-        print(f"  —— {'对照：传功后入门关也掉落（白绿）' if intro_drop else '按裁决 19：入门关不掉落'} ——")
+    for intro_drop in (INTRO_DROP_AFTER_TEACH, not INTRO_DROP_AFTER_TEACH):
+        print(f"  —— {'裁决 19：传功后入门关掉白绿' if intro_drop else '对照：入门关不掉落（旧规则）'} ——")
         for r in ROUTES:
             outs = [realm1_session(r, params, seed=s_, intro_drop=intro_drop) for s_ in range(1, 4 if QUICK else 7)]
             cleared = [o["cleared"] for o in outs]
@@ -1022,7 +1022,7 @@ def main():
                 gaps += [b - a for a, b in zip(ts, ts[1:])]
             gap = sum(gaps) / len(gaps) if gaps else float("nan")
             t7 = [t for o in outs for t, c in o["timeline"] if c == 7]
-            if not intro_drop:
+            if intro_drop == INTRO_DROP_AFTER_TEACH:
                 ok6b &= 7 + 6 <= avg_c
                 ok6c &= 0.25 <= gap <= 0.6
                 firsts += fl

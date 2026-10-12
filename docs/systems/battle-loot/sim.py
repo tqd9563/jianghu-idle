@@ -1024,7 +1024,8 @@ def main():
             t7 = [t for o in outs for t, c in o["timeline"] if c == 7]
             if intro_drop == INTRO_DROP_AFTER_TEACH:
                 ok6b &= 7 + 6 <= avg_c
-                ok6c &= 0.25 <= gap <= 0.6
+                if r == "huashan":            # 节奏只约束惊雷：镇岳 / 蚀骨开局稳是路数性格（2026-10-12 裁决）
+                    ok6c &= 0.25 <= gap <= 0.6
                 firsts += fl
             print(f"  {ROUTE_NAME[r]}：{len(outs)} 个种子 境界 1 末推到第 {min(cleared)}–{max(cleared)} 关（平均 {avg_c:.1f}）· "
                   f"过 1-7 在 {min(t7) * 60 if t7 else float('nan'):.0f}–{max(t7) * 60 if t7 else float('nan'):.0f} 分钟 · "
@@ -1033,7 +1034,7 @@ def main():
             print("    样本时间线：" + " → ".join(f"{t:.1f}h 第{c}关" for t, c in o["timeline"][6::2][:8]))
             print("    样本事件：" + "；".join(f"{t:.1f}h {e}" for t, e in o["events"][:7]))
     crit.append(("境界 1 末至少推到 1-7 之后 6 关（第 13 关）", ok6b, ""))
-    crit.append(("1-7 之后平均每 15–36 分钟推进一关", ok6c, ""))
+    crit.append(("惊雷 1-7 之后平均每 15–36 分钟推进一关（镇岳 / 蚀骨更快已接受）", ok6c, ""))
     x_book = sorted(firsts)[len(firsts) // 2] if firsts else None
     print(f"  书肆开张关 X（首次卡关的中位数）：第 {x_book} 关")
 

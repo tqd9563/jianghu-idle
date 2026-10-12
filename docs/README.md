@@ -43,7 +43,7 @@
 | `systems/wuxue-catalog/design.md` | 武学名录扩版（九类目 171 门、五项参数与触发求和、特效池、九派绝学分配、起名规则；已定稿，数值待 sim） | — |
 | `rules/copy/wuxue-forms.md` | 第一批 52 门新武学的式名与每式战报句子、新特效追加句（草案，实装时并入 battle-narration.md） | — |
 | `systems/battle-loot/design.md` | 战斗挂机：掉落与装备设定（挂机入口、装备四部位五品阶与词条、武学整式 / 残页掉落、境界 1 内功教学关；已定稿） | — |
-| `systems/battle-loot/spec.md` | 战斗挂机：掉落与装备规格（装备基础 / 品阶 / 词条 / 余量、掉落概率、171 门武学五项参数与特效分档、触发求和 75%、境界 1 三路数节奏待裁决；sim 生成） | 待实装（`wuxue-params.json` 供代码读表） |
+| `systems/battle-loot/spec.md` | 战斗挂机：掉落与装备规格（装备基础 / 品阶 / 词条 / 余量、掉落概率、171 门武学五项参数与特效分档、触发求和 75%、境界 1 推关；sim 生成，14 条判据全过） | 待实装（`wuxue-params.json` 供代码读表） |
 | `systems/battle-loot/sim.py` | 战斗挂机 sim（fight_y：装备 / 新特效 / 触发求和；14 条判据；写出 `wuxue-params.json`） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |

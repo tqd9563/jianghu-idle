@@ -849,14 +849,13 @@ button { font: inherit; color: inherit; }
 .log .p.loot .pg { color: var(--qi); }
 
 /* 行囊：四部位穿戴 + 背包 */
-.bag { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.bag { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(260px, 300px); gap: 28px; align-items: start; }
 .worn { display: grid; }
 .worn-i { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 4px 14px; padding: 14px 6px; border-top: 1px solid var(--hair); cursor: pointer; border-radius: 8px; }
 .worn-i:first-child { border-top: 0; }
 .worn-i:hover { background: oklch(0.3 0.016 262 / 0.2); }
 .worn-i .slot-k { font-family: var(--serif); letter-spacing: 0.3em; color: var(--faint); font-size: 13px; padding-top: 3px; grid-row: 1 / span 3; }
 .worn-i .nm { font-family: var(--serif); font-size: 16px; letter-spacing: 0.08em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.nm .pre { color: var(--muted); font-weight: 400; }
 .worn-i .base { font-size: 12.5px; color: var(--muted); }
 .worn-i .base b { color: var(--ink); font-weight: 600; }
 .worn-i .afx { display: flex; gap: 6px 12px; flex-wrap: wrap; font-size: 12px; color: var(--faint); }
@@ -880,7 +879,8 @@ button { font: inherit; color: inherit; }
 .bag-foot { margin-top: 12px; font-size: 12.5px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .bag-foot b { color: var(--muted); }
 /* 比较面板 */
-.cmp { margin-top: 18px; }
+.cmp { margin-top: 0; position: sticky; top: 16px; }
+.cmp-empty { font-size: 12.5px; color: var(--faint); line-height: 1.7; text-align: center; padding: 28px 8px; }
 .cmp .cmp-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cmp .cmp-h .nm { font-family: var(--serif); font-size: 17px; letter-spacing: 0.08em; }
 .cmp .diff { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 12px 0 4px; align-items: baseline; }
@@ -923,8 +923,14 @@ button { font: inherit; color: inherit; }
 .toast.on { display: block; }
 .toast .serif { color: var(--gold); }
 
+@media (max-width: 1180px) {
+  .bag { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
+  .bag > div:last-child { grid-column: 1 / -1; }
+  .cmp { position: static; }
+}
 @media (max-width: 860px) {
   .bag { grid-template-columns: 1fr; }
+  .cmp { position: static; }
   .ng-pick { grid-template-columns: 1fr; }
   .act2 .btns { width: 100%; } .act2 .btns .main-btn { flex: 1; min-width: 0; }
 }
@@ -1168,7 +1174,6 @@ button { font: inherit; color: inherit; }
             <h2 class="sec-title">穿戴</h2>
             <div class="worn js-worn"></div>
             <div class="worn-sum js-wornsum"></div>
-            <div class="card cmp js-cmp" hidden></div>
           </div>
           <div>
             <div class="bag-head">
@@ -1180,6 +1185,10 @@ button { font: inherit; color: inherit; }
             </div>
             <div class="bag-grid js-bag"></div>
             <div class="bag-foot"><span class="js-bagfoot"></span><span>背包 <b>40</b> 格 · 满了离线会自动卖掉比身上差的</span></div>
+          </div>
+          <div>
+            <h2 class="sec-title">比较</h2>
+            <div class="card cmp js-cmp"></div>
           </div>
         </div>
       </section>
@@ -1675,11 +1684,11 @@ function renderAct() {
   const refarm = sel <= CLEARED, el = $('.js-act2');
   if (bt.mode === 'idle') {
     el.innerHTML = `<div class="idle-bar"><span class="pulse"></span><span class="serif">挂机中</span><span>第 <b>${bt.idleAt}</b> 关 · 已 <b>${bt.fights}</b> 场 · 拾得 <b>${bt.drops}</b> 件</span><button class="btn2 quiet js-stopidle">收手</button></div>
-      <div class="btns"><button class="main-btn js-fight">挑战 · 第<span class="btn-n">${CLEARED + 1}</span>关<small>推关赢了接着往前；输了退回第 ${bt.idleAt} 关继续挂</small></button></div>`;
+      <div class="btns"><button class="main-btn js-fight">挑战 · 第<span class="btn-n">${CLEARED + 1}</span>关</button></div>`;
     return;
   }
   el.innerHTML = refarm
-    ? `<div class="btns"><button class="main-btn js-idle">在此挂机<small>第 ${sel} 关 · 反复打，拾装备与武学</small></button><button class="main-btn quiet js-fight">重打一次</button></div>
+    ? `<div class="btns"><button class="main-btn js-idle">在此挂机</button><button class="main-btn quiet js-fight">重打一次</button></div>
        <div class="hint">已通关卡只掉五成银两；装备与武学的掉落不打折</div>`
     : `<div class="btns"><button class="main-btn js-fight">挑战 · 第<span class="btn-n">${sel}</span>关</button></div>
        <div class="hint">输了会退回第 ${CLEARED} 关挂机，不会停下</div>`;
@@ -1841,10 +1850,10 @@ function renderShelf() {
 function usable(d) { return BIG[d.cat] === '肉身' || (BIG[d.cat] === '暗器' ? !!WORN.暗器 : WORN.兵器 === d.cat); }
 function renderWxDetail() {
   const d = WX[wx.cur], p = QP[d.q], on = wx.equipped.includes(wx.cur), full = wx.equipped.length >= wx.slots, ok = usable(d) && !d.ghost;
-  const needLine = d.ghost ? (d.q === 1 ? `<div class="wx-need">还没捡到第一式的全本，先收在书匣里</div>` : `<div class="wx-need">第一式口诀未拼齐，残页 ${d.pages[1] || 0} / ${p.pg}</div>`)
-    : BIG[d.cat] === '肉身' ? `<div class="wx-need ok">肉身功夫，拿什么兵器都能装</div>`
-    : BIG[d.cat] === '暗器' ? `<div class="wx-need ${WORN.暗器 ? 'ok' : ''}">${WORN.暗器 ? '暗器槽里有柳叶镖囊，可装' : '暗器槽空着，装上暗器才能用'}</div>`
-    : `<div class="wx-need ${WORN.兵器 === d.cat ? 'ok' : ''}">${WORN.兵器 === d.cat ? `手里拿的是${d.cat}，可装` : `要拿${d.cat}才能装，手里现在是${WORN.兵器}`}</div>`;
+  const needLine = d.ghost ? (d.q === 1 ? `<div class="wx-need">尚未得第一式全本 · 暂收书匣</div>` : `<div class="wx-need">第一式口诀未拼齐 · 残页 ${d.pages[1] || 0} / ${p.pg}</div>`)
+    : BIG[d.cat] === '肉身' ? `<div class="wx-need ok">肉身功夫 · 不拘兵器</div>`
+    : BIG[d.cat] === '暗器' ? `<div class="wx-need ${WORN.暗器 ? 'ok' : ''}">${WORN.暗器 ? '暗器槽已备柳叶镖囊 · 可装配' : '暗器槽空置 · 须备暗器方可装配'}</div>`
+    : `<div class="wx-need ${WORN.兵器 === d.cat ? 'ok' : ''}">${WORN.兵器 === d.cat ? `现持${d.cat} · 可装配` : `须持${d.cat}方可装配 · 现持${WORN.兵器}`}</div>`;
   let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span><span class="wtag">${BIG[d.cat]} · ${d.cat}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
     <button class="${on ? 'btn2 quiet' : 'btn2'}" data-equip="${wx.cur}" ${!on && (full || !ok) ? 'disabled' : ''}>${on ? '卸下' : full ? '装配槽已满' : ok ? '装配' : '不能装'}</button></div>
     ${needLine}
@@ -1926,8 +1935,7 @@ function renderWorn() {
   const sum = { 攻击: 0, 气血: 0, 防御: 0, 命中: 0, 闪避: 0 };
   w.forEach(i => Object.entries(i.base).forEach(([k, v]) => sum[k] += v));
   const wpn = w.find(i => i.slot === '兵器');
-  $('.js-wornsum').innerHTML = `<div>合计：${Object.entries(sum).filter(([, v]) => v).map(([k, v]) => `${k} <b>+${fmt(v)}</b>`).join(' · ')}</div>
-    <div>手里拿的是<b>${wpn ? wpn.cat : '空手'}</b>：装着 <b>流云剑法、青萍剑法</b> 两门剑法；暗器槽有镖囊，可装暗器武学</div>`;
+  $('.js-wornsum').innerHTML = `<div>合计：${Object.entries(sum).filter(([, v]) => v).map(([k, v]) => `${k} <b>+${fmt(v)}</b>`).join(' · ')}</div>`;
 }
 function renderBag() {
   const list = ITEMS.filter(i => !i.worn);
@@ -1946,14 +1954,13 @@ function renderBag() {
 }
 function renderCmp() {
   const it = ITEMS.find(i => i.id === bag.sel), el = $('.js-cmp');
-  if (!it) { el.hidden = true; return; }
-  el.hidden = false;
+  if (!it) { el.innerHTML = '<div class="cmp-empty">点背包里的装备，在此与身上的比较</div>'; return; }
   const cur = ITEMS.find(i => i.worn && i.slot === it.slot);
   const keys = [...new Set([...Object.keys(it.base), ...(cur ? Object.keys(cur.base) : [])])];
   const diff = keys.map(k => { const a = it.base[k] || 0, c = cur ? cur.base[k] || 0 : 0, d = a - c; return `<span class="k">${k}</span><span class="v">+${fmt(a)}</span><span class="d ${d > 0 ? 'up' : d < 0 ? 'dn' : ''}">${it.worn ? '' : d > 0 ? '▲ ' + fmt(d) : d < 0 ? '▼ ' + fmt(-d) : '—'}</span>`; }).join('');
   const afx = it.afx.map(([k, v]) => `<span class="k">${PRE[k]}</span><span class="v">${afxText(k, v)}</span><span class="d"></span>`).join('');
   let note = '';
-  if (it.slot === '兵器' && cur && it.cat !== cur.cat) note = `<div class="note warn">换成${it.cat}会卸下手里的两门剑法（流云剑法、青萍剑法）；通臂拳是肉身功夫，照旧能用。</div>`;
+  if (it.slot === '兵器' && cur && it.cat !== cur.cat) note = `<div class="note warn">换持${it.cat}，将卸下流云剑法、青萍剑法两门剑法；通臂拳属肉身功夫，不受影响。</div>`;
   else if (it.worn) note = `<div class="note">正穿着</div>`;
   el.innerHTML = `<div class="cmp-h"><span class="nm g${it.g}">${itemName(it)} <span class="gtag g${it.g}">${GN[it.g]}</span></span><span class="faint" style="font-size:12px">${it.slot}${it.cat ? ' · ' + it.cat : ''} · 等级 ${it.lv.toFixed(1)} · 掉自第 ${Math.round((it.lv - 2.5) / 0.05 + 7)} 关</span></div>
     <div class="diff">${diff}${afx}</div>

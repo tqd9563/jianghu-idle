@@ -87,26 +87,50 @@ MULT_STEP = W.MULT_STEP
 NFORMS = {q: W.WX[q]["n"] for q in QUAL}
 REGEN = W.REGEN
 
-# 新特效的强弱随品质分档（寻常 / 上乘 / 绝学）；现有四种（必暴 / 回气 / 护体 8% / 附毒 +2）不分档，保持已实装值
+# 特效每一式都带（裁决 W17，2026-10-12）：数值分四档 Ⅰ–Ⅳ，第 1 式到末式按品质跨档（TIER_SPAN）线性插值，
+# 式之间的差别 = 倍率 +0.04 与特效数值；熟练度不再加倍率（SHU）。现有四种也分档（必暴加会心伤害、回气改返还比例）。
 EFF = {
-    "运劲": dict(atk=(0.15, 0.20, 0.25), n=3),
-    "凝眸": dict(crit=(0.15, 0.20, 0.25), n=3),
-    "轻身": dict(dodge=(20, 30, 40), n=3),
-    "回元": dict(qi=(20, 30, 40)),
-    "连击": dict(),
-    "透劲": dict(pen=(0.30, 0.40, 0.50)),
-    "封穴": dict(p=(0.25, 0.35, 0.45)),
-    "卸力": dict(atk=(0.15, 0.20, 0.25), n=3),
-    "迷目": dict(hit=(20, 30, 40), n=3),
-    "破绽": dict(dfs=(0.20, 0.30, 0.40), n=3),
+    "运劲": dict(atk=(0.12, 0.16, 0.20, 0.25), n=3),
+    "凝眸": dict(crit=(0.12, 0.16, 0.20, 0.25), n=3),
+    "轻身": dict(dodge=(16, 24, 32, 40), n=3),
+    "回元": dict(qi=(16, 24, 32, 40)),
+    "连击": dict(chance=(0.35, 0.50, 0.65, 0.80)),   # 追加一次普攻的几率
+    "透劲": dict(pen=(0.25, 0.35, 0.45, 0.55)),
+    "封穴": dict(p=(0.20, 0.30, 0.40, 0.50)),
+    "卸力": dict(atk=(0.12, 0.16, 0.20, 0.25), n=3),
+    "迷目": dict(hit=(16, 24, 32, 40), n=3),
+    "破绽": dict(dfs=(0.16, 0.24, 0.32, 0.40), n=3),
+    "必暴": dict(cdmg=(0.00, 0.05, 0.10, 0.15)),      # 必定会心，会心伤害再 +x
+    "回气": dict(refund=(0.50, 0.75, 1.00, 1.25)),    # 返还本式耗气的比例（Ⅳ 档倒赚）
+    "护体": dict(shield=(0.03, 0.04, 0.05, 0.06)),    # 护盾 = 气血 × x
+    "附毒": dict(extra=(0.00, 0.25, 0.50, 0.75)),    # 额外叠毒 +1 层，另有 x 几率再 +1
 }
-SHIELD_PCT = 0.08
-POISON_ADD = 2
+TIER_SPAN = {"寻常": (0, 1), "上乘": (0, 2), "绝学": (1, 3)}   # 第 1 式 → 末式 的档位下标
+INT_KEYS = set()
+# 熟练度四档（生疏 / 熟练 / 精通 / 圆熟）：耗气系数、触发几率加成（相对）、冷却缩短（回合，最低 1）
+SHU = {0: (1.00, 0.00, 0), 1: (0.92, 0.04, 0), 2: (0.84, 0.08, 0), 3: (0.75, 0.12, 1)}
+POISON_CAP_K = 0.8   # 解析里毒层的折扣：8 层上限与强者速胜让后几层打不满（v1.2 MC 复核附毒偏弱 10–20%）
 
 
-def tier(effect: str, key: str, q: str):
+def eff_value(effect: str, key: str, q: str, k: int, n: int):
+    """第 k 式（1 起）的特效数值：按品质跨档线性插值；整数型四舍五入"""
     v = EFF[effect][key]
-    return v[QI[q]] if isinstance(v, tuple) else v
+    lo, hi = TIER_SPAN[q]
+    t = lo + (hi - lo) * (k - 1) / (n - 1) if n > 1 else lo
+    i = min(int(math.floor(t)), 3)
+    val = v[i] + (v[min(i + 1, 3)] - v[i]) * (t - i)
+    return int(math.floor(val + 0.5)) if key in INT_KEYS else val
+
+
+def eff_avg(effect: str, key: str, q: str) -> float:
+    n = NFORMS[q]
+    return sum(eff_value(effect, key, q, k, n) for k in range(1, n + 1)) / n
+
+
+def eff_vals(effect: str, q: str, k: int, n: int) -> dict:
+    if effect not in EFF:
+        return {}
+    return {key: eff_value(effect, key, q, k, n) for key in EFF[effect] if key != "n"}
 
 
 def base_params(row: dict) -> dict:
@@ -134,9 +158,9 @@ def cast_fraction(cost: float, p: float, cd: int, s: float, effect: str | None, 
     f_cd = 1.0 / (cd + 1.0 / p)
     eff_cost = cost
     if effect == "回气":
-        eff_cost = cost * (1 - s)
+        eff_cost = cost * (1 - s * eff_avg("回气", "refund", q))
     elif effect == "回元":
-        eff_cost = cost - s * tier("回元", "qi", q)
+        eff_cost = cost - s * eff_avg("回元", "qi", q)
     f_qi = 1.0 if eff_cost <= 0 else REGEN / (K_CTX * eff_cost + REGEN)
     return min(f_cd, f_qi)
 
@@ -144,7 +168,7 @@ def cast_fraction(cost: float, p: float, cd: int, s: float, effect: str | None, 
 def strength(params: dict, effect: str | None, q: str) -> float:
     """强度 = 每回合期望输出（相对只普攻）÷ (1 − 受击减免)。防御类特效折成受击减免。"""
     n = NFORMS[q]
-    s = 2.0 / n                                   # 带特效的式占比（第 1 式与末式）
+    s = 1.0                                       # 每一式都带特效（W17）；数值取各式平均
     f = cast_fraction(params["cost"], params["p"], params["cd"], s, effect, q)
     mult_avg = params["mult0"] + MULT_STEP * (n - 1) / 2
     out = (1 - f) + f * mult_avg
@@ -153,46 +177,48 @@ def strength(params: dict, effect: str | None, q: str) -> float:
     mit0 = REF["def_k"] / (REF["def_k"] + REF["e_dfs"])
     if effect == "必暴":
         base_c = 1 + REF["crit"] * (REF["cd"] - 1)
-        out += f * s * mult_avg * (REF["cd"] / base_c - 1)
+        out += f * s * mult_avg * (REF["cd"] * (1 + eff_avg("必暴", "cdmg", q)) / base_c - 1)
     elif effect == "连击":
-        out += f * s * 1.0
+        out += f * s * eff_avg("连击", "chance", q)
     elif effect == "附毒":
-        out += f * s * POISON_ADD * REF["poison_coef"] * REF["rounds"] / 2
+        out += f * s * (1 + eff_avg("附毒", "extra", q)) * REF["poison_coef"] * REF["rounds"] / 2 * POISON_CAP_K
     elif effect == "透劲":
-        mit1 = REF["def_k"] / (REF["def_k"] + REF["e_dfs"] * (1 - tier("透劲", "pen", q)))
+        mit1 = REF["def_k"] / (REF["def_k"] + REF["e_dfs"] * (1 - eff_avg("透劲", "pen", q)))
         out += f * s * mult_avg * (mit1 / mit0 - 1)
     elif effect == "破绽":
-        u = min(1.0, f * s * EFF["破绽"]["n"])
-        mit1 = REF["def_k"] / (REF["def_k"] + REF["e_dfs"] * (1 - tier("破绽", "dfs", q)))
+        u = 1 - (1 - f * s) ** EFF["破绽"]["n"]
+        mit1 = REF["def_k"] / (REF["def_k"] + REF["e_dfs"] * (1 - eff_avg("破绽", "dfs", q)))
         out *= 1 + u * (mit1 / mit0 - 1)
     elif effect == "运劲":
-        u = min(1.0, f * s * EFF["运劲"]["n"])
-        out *= 1 + u * tier("运劲", "atk", q)
+        u = 1 - (1 - f * s) ** EFF["运劲"]["n"]
+        out *= 1 + u * eff_avg("运劲", "atk", q)
     elif effect == "凝眸":
-        u = min(1.0, f * s * EFF["凝眸"]["n"])
+        u = 1 - (1 - f * s) ** EFF["凝眸"]["n"]
         base_c = 1 + REF["crit"] * (REF["cd"] - 1)
-        out *= 1 + u * tier("凝眸", "crit", q) * (REF["cd"] - 1) / base_c
+        out *= 1 + u * eff_avg("凝眸", "crit", q) * (REF["cd"] - 1) / base_c
     elif effect == "护体":
-        r = min(0.5, f * s * SHIELD_PCT * REF["rounds"])
+        r = min(0.5, f * s * eff_avg("护体", "shield", q) * REF["rounds"])
     elif effect == "轻身":
-        u = min(1.0, f * s * EFF["轻身"]["n"])
-        e1 = REF["e_hit"] / (REF["e_hit"] + REF["p_dodge"] + tier("轻身", "dodge", q))
+        u = 1 - (1 - f * s) ** EFF["轻身"]["n"]
+        e1 = REF["e_hit"] / (REF["e_hit"] + REF["p_dodge"] + eff_avg("轻身", "dodge", q))
         r = u * (1 - e1 / e_hit0)
     elif effect == "卸力":
-        r = min(1.0, f * s * EFF["卸力"]["n"]) * tier("卸力", "atk", q)
+        r = (1 - (1 - f * s) ** EFF["卸力"]["n"]) * eff_avg("卸力", "atk", q)
     elif effect == "迷目":
-        u = min(1.0, f * s * EFF["迷目"]["n"])
-        h = REF["e_hit"] - tier("迷目", "hit", q)
+        u = 1 - (1 - f * s) ** EFF["迷目"]["n"]
+        h = REF["e_hit"] - eff_avg("迷目", "hit", q)
         r = u * (1 - (h / (h + REF["p_dodge"])) / e_hit0)
     elif effect == "封穴":
-        r = f * s * tier("封穴", "p", q)
+        r = f * s * eff_avg("封穴", "p", q)
     return out / (1 - r)
 
 
+ANCHOR = {"寻常": 1.166, "上乘": 1.140, "绝学": 1.094}   # v1.2 的品质锚（中/中/中/中 配四种旧特效、特效只挂首末式时的平均强度）
+
+
 def quality_target(q: str) -> float:
-    """品质锚：现行参数（中 / 中 / 中 / 中）配现有四种特效的平均强度；现有 14 门就在这个锚附近"""
-    canon = dict(mult0=MULT_BASE[q], cost=COST_BASE[q], p=TRIGGER_P["中"], cd=CD_BASE[q])
-    return sum(strength(canon, e, q) for e in ("必暴", "回气", "护体", "附毒")) / 4
+    """品质锚固定为 v1.2 的数值：特效改为每式都带后，总强度不变，由倍率吸收（否则武学整体变强、装+武满配破 1.2）"""
+    return ANCHOR[q]
 
 
 def calibrate(row: dict) -> dict:
@@ -205,7 +231,7 @@ def calibrate(row: dict) -> dict:
         return p
     target = quality_target(q)
     p["p_cut"] = 0
-    while strength(dict(p, mult0=1.0), eff, q) > target * (1 + BAND) and p["p"] > 0.08:
+    while strength(dict(p, mult0=1.0), eff, q) > target and p["p"] > 0.08:
         p["p"] = round(p["p"] - 0.02, 2)
         p["p_cut"] += 1
     lo, hi = 1.0, 4.0
@@ -234,15 +260,16 @@ def style_mult(row: dict) -> float:
 
 
 def make_skill(row: dict, params: dict, unlocked: int | None = None, shulian: int = 3) -> dict:
+    """已领悟 unlocked 式（缺省全部），每式熟练 shulian 档。每一式都带特效，数值随式递增（eff_value）；
+    熟练改作用于耗气 / 触发 / 冷却（SHU），不再加倍率。sim 里各式熟练同档，故耗气与冷却挂在武学上。"""
     q = row["quality"]
-    n = NFORMS[q] if unlocked is None else unlocked
-    forms = []
-    for k in range(1, n + 1):
-        mult = (params["mult0"] + MULT_STEP * (k - 1)) * (1 + W.SHULIAN_STEP * shulian)
-        eff = row["effect"] if (row["effect"] in SIGNATURE or k in W.effect_forms(NFORMS[q])) else None
-        forms.append(dict(mult=mult, effect=eff))
-    return dict(name=row["name"], quality=q, tag=row["route"] or "_", cost=params["cost"], cd=params["cd"],
-                p=params["p"], forms=forms)
+    n_all = NFORMS[q]
+    n = n_all if unlocked is None else unlocked
+    cost_k, p_bonus, cd_cut = SHU[shulian]
+    forms = [dict(mult=params["mult0"] + MULT_STEP * (k - 1), effect=row["effect"],
+                  val=eff_vals(row["effect"], q, k, n_all)) for k in range(1, n + 1)]
+    return dict(name=row["name"], quality=q, tag=row["route"] or "_", cost=round(params["cost"] * cost_k),
+                cd=max(1, params["cd"] - cd_cut), p=params["p"] * (1 + p_bonus), forms=forms)
 
 
 def equip(route: str, skills) -> list:
@@ -418,8 +445,8 @@ def fight_y(build: dict, enemy: dict, loadout=(), def_k=None, rng: random.Random
                         break
                 s = loadout[i]
                 form = rng.choice(s["forms"])
-                if form["effect"] != "回气":
-                    qi -= s["cost"]
+                qi -= s["cost"] * (1 - form["val"]["refund"] if form["effect"] == "回气" else 1)
+                qi = min(qmax, qi)
                 cds[i] = s["cd"] + 1
                 st["casts"] += 1
         for j in range(len(cds)):
@@ -437,23 +464,23 @@ def fight_y(build: dict, enemy: dict, loadout=(), def_k=None, rng: random.Random
             crit = 1.0 if forced else build["crit"]
         else:
             crit = 1.0 if (forced or eff == "必暴") else roll(p_crit)
-            crit_ev = build["cd"] if crit else 1.0
+            crit_ev = build["cd"] * (1 + form["val"]["cdmg"] if eff == "必暴" else 1.0) if crit else 1.0
         plain = 1.0 if form else build.get("plain_mult", 1.0)
         base_atk = p_atk + (build["dfs"] if eff == "反震" else 0.0)
-        dfs_eff = e_dfs * (1 - tier("透劲", "pen", q)) if eff == "透劲" else e_dfs
+        dfs_eff = e_dfs * (1 - form["val"]["pen"]) if eff == "透劲" else e_dfs
         dealt = base_atk * mult * crit_ev * m.mitig(dfs_eff, def_k) * hit * dmg_mult * plain * spread()
         if eff == "引爆" and elayers > 0:
             dealt += elayers * build["atk"] * coef * 3 * dmg_mult
             elayers = 0
-        if eff == "连击":
+        if eff == "连击" and roll(form["val"]["chance"]):
             h2 = roll(p_hit)
             c2 = build["cd"] if roll(p_crit) else 1.0
             dealt += p_atk * c2 * m.mitig(e_dfs, def_k) * h2 * dmg_mult * build.get("plain_mult", 1.0) * spread()
-            st["sq_gain"] += 0  # 连击的普攻不攒剑意 / 不叠毒（简化）
+            # 连击的普攻不攒剑意 / 不叠毒（简化）
         if not form:
             qi = min(qmax, qi + REGEN)
         if eff == "回元":
-            qi = min(qmax, qi + tier("回元", "qi", q))
+            qi = min(qmax, qi + form["val"]["qi"])
         if build["sq_need"] < 99:
             st["sq_gain"] += (p_hit * crit) if ev else (hit * crit)
             sq += (p_hit * crit) if ev else (hit * crit)
@@ -461,19 +488,19 @@ def fight_y(build: dict, enemy: dict, loadout=(), def_k=None, rng: random.Random
                 sq -= build["sq_need"]
                 dealt += p_atk * build["burst_mult"] * m.mitig(e_dfs, def_k) * dmg_mult * spread()
                 st["bursts"] += 1
-        per_hit = pz["per_hit"] + (POISON_ADD if eff == "附毒" else 0)
+        per_hit = pz["per_hit"] + ((1 + roll(form["val"]["extra"])) if eff == "附毒" else 0)
         if per_hit:
             st["layer_gain"] += (p_hit if ev else hit) * per_hit
             elayers = min(cap, elayers + (p_hit if ev else hit) * per_hit)
         if eff == "护体":
-            pshield += SHIELD_PCT * build["hp"]
+            pshield += form["val"]["shield"] * build["hp"]
         if eff in ("运劲", "凝眸", "轻身") and hit:
             key = {"运劲": "atk", "凝眸": "crit", "轻身": "dodge"}[eff]
-            pb[eff] = [EFF[eff]["n"], tier(eff, key, q)]
+            pb[eff] = [EFF[eff]["n"], form["val"][key]]
         if eff in ("卸力", "迷目", "破绽") and hit:
             key = {"卸力": "atk", "迷目": "hit", "破绽": "dfs"}[eff]
-            eb[eff] = [EFF[eff]["n"], tier(eff, key, q)]
-        if eff == "封穴" and hit and roll(tier("封穴", "p", q)):
+            eb[eff] = [EFF[eff]["n"], form["val"][key]]
+        if eff == "封穴" and hit and roll(form["val"]["p"]):
             skip = True
         ehp -= dealt
         if "反伤" in tags and dealt > 0:
@@ -835,9 +862,10 @@ def main():
              if r["exist"] and r["effect"] not in SIGNATURE]
     print("  现有武学倍率变动：" + " · ".join(f"{n} {a:.2f}→{b:.2f}" for n, a, b in moved))
     # 特效按品质分档
-    print("  新特效分档（寻常 / 上乘 / 绝学）：" + " · ".join(
-        f"{k} " + "/".join(str(v[key][i]) for i in range(3)) + (f"（{v['n']} 回合）" if "n" in v else "")
-        for k, v in EFF.items() for key in v if isinstance(v[key], tuple)))
+    print("  特效四档 Ⅰ–Ⅳ（第 1 式 → 末式：寻常 Ⅰ→Ⅱ、上乘 Ⅰ→Ⅲ、绝学 Ⅱ→Ⅳ，中间式插值）：" + " · ".join(
+        f"{e} {'/'.join(str(v) for v in next(iter(x for k, x in d.items() if k != 'n')))}" + (f"（{d['n']} 回合）" if 'n' in d else "")
+        for e, d in EFF.items()))
+    print("  熟练四档（耗气系数 / 触发系数 / 冷却缩短）：" + " · ".join(f"{['生疏', '熟练', '精通', '圆熟'][k]} {v[0]}/{1 + v[1]:.2f}/−{v[2]}" for k, v in SHU.items()))
 
     cps = checkpoints()
     print("\n检查点：" + " · ".join(f"第{d}天 境界{r} {lv}重" for d, r, lv in cps))
@@ -1067,7 +1095,8 @@ def main():
     out = [dict(name=r["name"], quality=r["quality"], cat=r["cat"], route=r["route"], effect=r["effect"],
                 batch=r["batch"], **params[r["name"]]) for r in CATALOG]
     with open(os.path.join(HERE, "wuxue-params.json"), "w", encoding="utf-8") as f:
-        json.dump(dict(source="battle-loot/sim.py", trigger_cap=TRIGGER_CAP, effects=EFF, pages=PAGES,
+        json.dump(dict(source="battle-loot/sim.py", trigger_cap=TRIGGER_CAP, effects=EFF, tier_span=TIER_SPAN,
+                       shulian=SHU, pages=PAGES,
                        drop_p=DROP_P, wx_p=WX_P, wuxue=out), f, ensure_ascii=False, indent=1)
     print(f"\n已写出 {len(out)} 门武学参数 → battle-loot/wuxue-params.json")
     return crit

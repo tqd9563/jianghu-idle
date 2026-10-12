@@ -906,6 +906,8 @@ button { font: inherit; color: inherit; }
 .pages i.got { background: var(--qi); box-shadow: none; }
 .pages small { font-size: 11px; color: var(--faint); margin-left: 4px; }
 
+.qtag.tag { color: var(--ink-gold); background: oklch(0.78 0.13 78 / 0.08); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.35); }
+
 /* 武学藏书：同一套 AI 书封，封面按品阶换色，类目盖印 */
 .shelf.covers { gap: 26px 22px; align-items: flex-start; padding: 6px 4px 30px; margin-bottom: 10px; }
 .shelf.covers::after { display: none; }
@@ -1835,7 +1837,7 @@ const WX = {
   liuye:   { n: '柳叶镖', q: 1, cat: '暗器', eff: '透劲', p: [138, 15, 33, 1], forms: [['柳叶飘零', 0, 0], ['一叶穿杨', 0, 0], ['拂柳飞刃', 0, 0]], own: [2], ghost: true },
 };
 const BIG = { 刀: '器械', 枪: '器械', 剑: '器械', 棍: '器械', 拳: '肉身', 掌: '肉身', 指: '肉身', 腿: '肉身', 暗器: '暗器' };
-const EFFSAY = { 必暴: '本招必定会心', 回气: '本招不耗真气', 护体: '添一层护体真气，吸收 8% 气血', 附毒: '为对方添两层毒', 运劲: '之后 3 回合攻击 +15%', 连击: '招后顺手补一记普攻', 透劲: '无视对方三成防御', 凝眸: '之后 3 回合会心率 +15pp' };const ICO = { 剑: 'jian', 刀: 'dao', 拳: 'quan', 掌: 'quan', 暗器: 'anqi', 棍: 'gun' };
+const EFFSAY = { 必暴: '本招必定会心', 回气: '返还本招耗气', 护体: '添一层护体真气', 附毒: '为对方添毒', 运劲: '之后 3 回合攻击提高', 连击: '有几率顺手补一记普攻', 透劲: '无视对方部分防御', 凝眸: '之后 3 回合会心率提高', 蓄势: '本场每出过一招，本式倍率 +10%', 反震: '按攻击加防御计伤', 引爆: '引爆对方身上毒层' };const ICO = { 剑: 'jian', 刀: 'dao', 拳: 'quan', 掌: 'quan', 暗器: 'anqi', 棍: 'gun' };
 const ico = c => ICO[c] ? `<i class="cat-ico" style="--ico:url('../../code/public/art/icon-${ICO[c]}.png')"></i>` : '';
 const QP = { 1: { q: '寻常', th: [4, 10, 25], pg: 0 }, 2: { q: '上乘', th: [5, 12, 28], pg: 5 }, 3: { q: '绝学', th: [6, 15, 32], pg: 7 } };
 const TIER4 = ['生疏', '熟练', '精通', '圆满'];
@@ -1861,12 +1863,19 @@ function renderShelf() {
     const pg = d.pages ? Object.values(d.pages).reduce((x, y) => x + y, 0) : 0;
     const tag = d.ghost ? (d.q === 1 ? '<span class="need">缺第一式</span>' : '<span class="need">未拼齐</span>') : (wx.equipped.includes(id) ? '<span class="eq">装</span>' : '');
     const pgTag = d.pages && pg ? `<span class="pg">残页 ${pg}</span>` : (d.own && d.q === 1 ? `<span class="pg">全本 ${d.own.length} / ${d.forms.length}</span>` : '');
-    const sub = pgTag || `${QP[d.q].q} · ${d.cat}`;
+    const sub = pgTag || `${QP[d.q].q} · ${TAG[d.eff]}`;
     const SEAL = { 暗器: '镖' };
     return `<button class="scroll-i wx q${d.q} ${d.ghost ? 'ghost' : ''}" data-wx="${id}" aria-current="${id === wx.cur}" title="${d.n} · ${QP[d.q].q}${d.cat}"><i class="cv"></i>${tag}<span class="t">${d.n}</span><span class="seal">${SEAL[d.cat] || d.cat}</span><small>${sub}</small></button>`;
   }).join('');
   $('.js-shelf').classList.add('covers');
 }const WORN = { 兵器: '剑', 暗器: true };
+const EFF4 = { 必暴: ['必定会心 · 会心伤害 +{}%', [0, 5, 10, 15]], 回气: ['返还耗气 {}%', [50, 75, 100, 125]], 护体: ['护体 {}% 气血', [3, 4, 5, 6]], 附毒: ['叠毒 +1 层 · {}% 再 +1', [0, 25, 50, 75]],
+  运劲: ['3 回合攻击 +{}%', [12, 16, 20, 25]], 凝眸: ['3 回合会心 +{} pp', [12, 16, 20, 25]], 轻身: ['3 回合闪避 +{}', [16, 24, 32, 40]], 回元: ['回真气 {}', [16, 24, 32, 40]],
+  连击: ['{}% 追加一次普攻', [35, 50, 65, 80]], 透劲: ['无视防御 {}%', [25, 35, 45, 55]], 封穴: ['{}% 封穴', [20, 30, 40, 50]], 卸力: ['3 回合敌攻击 −{}%', [12, 16, 20, 25]], 迷目: ['3 回合敌命中 −{}', [16, 24, 32, 40]], 破绽: ['3 回合敌防御 −{}%', [16, 24, 32, 40]] };
+const SPAN = { 1: [0, 1], 2: [0, 2], 3: [1, 3] };
+function effAt(d, k) { const e = EFF4[d.eff]; if (!e) return EFFSAY[d.eff] || d.eff; const n = d.forms.length, [lo, hi] = SPAN[d.q]; const t = n > 1 ? lo + (hi - lo) * k / (n - 1) : lo; const i = Math.min(Math.floor(t), 3); const v = e[1][i] + (e[1][Math.min(i + 1, 3)] - e[1][i]) * (t - i); const r = Math.floor(v + 0.5); return d.eff === '附毒' && !r ? '叠毒 +1 层' : e[0].replace('{}', r); }
+const TAG = { 必暴: '刚猛', 透劲: '刚猛', 连击: '刚猛', 蓄势: '刚猛', 反震: '刚猛', 运劲: '绵长', 凝眸: '绵长', 轻身: '绵长', 回气: '守御', 回元: '守御', 护体: '守御', 封穴: '诡谲', 卸力: '诡谲', 迷目: '诡谲', 破绽: '诡谲', 附毒: '阴毒', 引爆: '阴毒' };
+const SHU = ['', '耗气 ×0.92 · 触发 ×1.04', '耗气 ×0.84 · 触发 ×1.08', '耗气 ×0.75 · 触发 ×1.12 · 冷却 −1'];
 function usable(d) { return BIG[d.cat] === '肉身' || (BIG[d.cat] === '暗器' ? !!WORN.暗器 : WORN.兵器 === d.cat); }
 function renderWxDetail() {
   const d = WX[wx.cur], p = QP[d.q], on = wx.equipped.includes(wx.cur), full = wx.equipped.length >= wx.slots, ok = usable(d) && !d.ghost;
@@ -1874,16 +1883,15 @@ function renderWxDetail() {
     : BIG[d.cat] === '肉身' ? `<div class="wx-need ok">肉身功夫 · 不拘兵器</div>`
     : BIG[d.cat] === '暗器' ? `<div class="wx-need ${WORN.暗器 ? 'ok' : ''}">${WORN.暗器 ? '暗器槽已备柳叶镖囊 · 可装配' : '暗器槽空置 · 须备暗器方可装配'}</div>`
     : `<div class="wx-need ${WORN.兵器 === d.cat ? 'ok' : ''}">${WORN.兵器 === d.cat ? `现持${d.cat} · 可装配` : `须持${d.cat}方可装配 · 现持${WORN.兵器}`}</div>`;
-  let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span><span class="wtag">${BIG[d.cat]} · ${d.cat}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
+  let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span><span class="qtag tag">${TAG[d.eff]}</span><span class="wtag">${BIG[d.cat]} · ${d.cat}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
     <button class="${on ? 'btn2 quiet' : 'btn2'}" data-equip="${wx.cur}" ${!on && (full || !ok) ? 'disabled' : ''}>${on ? '卸下' : full ? '装配槽已满' : ok ? '装配' : '不能装'}</button></div>
     ${needLine}
     <div class="params"><span data-tip="第一式倍率；每门武学各不相同，同品质总强度相当">倍率 <b>×${d.p[0]}%</b></span><span>耗气 <b>${d.p[1]}</b></span><span>冷却 <b>${d.p[3]}</b> 回合</span>
     <span data-tip="已装各门的触发几率相加就是每回合出招的机会，最多 75%；出招时再按各门几率挑一门">触发 <b>${d.p[2]}%</b></span><span>特效 <b>${d.eff}</b> · ${EFFSAY[d.eff] || ''}</span></div>`;
   d.forms.forEach(([name, tier, casts, gate], k) => {
-    const mul = Math.round((d.p[0] / 100 + k * 0.04) * (1 + tier * 0.07) * (d.res ? 1.1 : 1) * 100);
+    const mul = Math.round((d.p[0] / 100 + k * 0.04) * (d.res ? 1.1 : 1) * 100);
     const cn = ['一', '二', '三', '四', '五', '六', '七'][k];
-    const isFx = k === 0 || k === d.forms.length - 1;
-    const fxHtml = isFx ? `<span class="fx">${EFFSAY[d.eff] || d.eff}</span>` : '';
+    const fxHtml = `<span class="fx">${effAt(d, k)}</span>`;
     const pg = d.pages ? (d.pages[k + 1] ?? null) : null;
     const pagesHtml = d.q > 1 && pg !== null ? `<div class="pages">${Array.from({ length: p.pg }, (_, i) => `<i class="${i < pg ? 'got' : ''}"></i>`).join('')}<small>口诀 ${pg} / ${p.pg} 页</small></div>` : '';
     const ownedBook = d.q === 1 && d.own && d.own.includes(k + 1);
@@ -1899,11 +1907,11 @@ function renderWxDetail() {
     }
     const th = [0, ...p.th];
     const pos = tier >= 3 ? 100 : (tier + (casts - th[tier]) / (th[tier + 1] - th[tier])) / 3 * 100;
-    const tip = tier >= 3 ? `已出 ${casts} 招，已至圆满` : `已出 ${casts} 招 · ${th[tier + 1]} 招时入「${TIER4[tier + 1]}」`;
+    const tip = (tier >= 3 ? `已出 ${casts} 招，已至圆满` : `已出 ${casts} 招 · ${th[tier + 1]} 招时入「${TIER4[tier + 1]}」`) + (SHU[tier] ? ` · ${SHU[tier]}` : '');
     h += `<div class="wform"><div class="nm"><span class="k">第${cn}式</span><span class="serif">${name}</span>${fxHtml}</div>
       <div class="prof" data-tip="${tip}"><div class="prof-line"><i style="width:${pos}%"></i></div>
         ${TIER4.map((t, i) => `<span class="pn ${i < tier ? 'p' : i === tier ? 'c' : ''}" style="left:${i / 3 * 100}%"><b></b><em>${t}</em></span>`).join('')}</div>
-      <span class="mul" data-tip="第${cn}式基础倍率 · ${TIER4[tier]}加成${d.res ? ' · 共鸣 ×1.1' : ''}">×${mul}%</span></div>`;
+      <span class="mul" data-tip="第${cn}式基础倍率${d.res ? ' · 共鸣 ×1.1' : ''}">×${mul}%</span></div>`;
   });
   $('.js-wxd').innerHTML = h;
 }function renderWx() { renderSlots(); renderShelf(); renderWxDetail(); }

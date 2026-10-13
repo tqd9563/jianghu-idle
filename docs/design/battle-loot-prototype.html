@@ -906,7 +906,14 @@ button { font: inherit; color: inherit; }
 .pages i.got { background: var(--qi); box-shadow: none; }
 .pages small { font-size: 11px; color: var(--faint); margin-left: 4px; }
 
-.qtag.tag { color: var(--ink-gold); background: oklch(0.78 0.13 78 / 0.08); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.35); }
+/* 路数标签：描边 + 左色条，和品阶的填充章区分；色相避开品阶的灰 / 青 210 / 金 78 与装备品阶的绿 145 / 青 215 / 紫 300 / 橙 */
+.qtag.tag { --tc: var(--muted); color: var(--tc); background: none; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); border-left: 3px solid var(--tc); border-radius: 3px; padding-left: 6px; }
+.qtag.tag.t-刚猛 { --tc: oklch(0.72 0.16 28); }
+.qtag.tag.t-绵长 { --tc: oklch(0.76 0.11 135); }
+.qtag.tag.t-守御 { --tc: oklch(0.74 0.10 245); }
+.qtag.tag.t-诡谲 { --tc: oklch(0.74 0.11 320); }
+.qtag.tag.t-阴毒 { --tc: oklch(0.70 0.10 175); }
+.tagc-刚猛 { color: oklch(0.72 0.16 28); } .tagc-绵长 { color: oklch(0.76 0.11 135); } .tagc-守御 { color: oklch(0.74 0.10 245); } .tagc-诡谲 { color: oklch(0.74 0.11 320); } .tagc-阴毒 { color: oklch(0.70 0.10 175); }
 
 /* 武学藏书：同一套 AI 书封，封面按品阶换色，类目盖印 */
 .shelf.covers { gap: 26px 22px; align-items: flex-start; padding: 6px 4px 30px; margin-bottom: 10px; }
@@ -1863,7 +1870,7 @@ function renderShelf() {
     const pg = d.pages ? Object.values(d.pages).reduce((x, y) => x + y, 0) : 0;
     const tag = d.ghost ? (d.q === 1 ? '<span class="need">缺第一式</span>' : '<span class="need">未拼齐</span>') : (wx.equipped.includes(id) ? '<span class="eq">装</span>' : '');
     const pgTag = d.pages && pg ? `<span class="pg">残页 ${pg}</span>` : (d.own && d.q === 1 ? `<span class="pg">全本 ${d.own.length} / ${d.forms.length}</span>` : '');
-    const sub = pgTag || `${QP[d.q].q} · ${TAG[d.eff]}`;
+    const sub = pgTag || `${QP[d.q].q} · <span class="tagc-${TAG[d.eff]}">${TAG[d.eff]}</span>`;
     const SEAL = { 暗器: '镖' };
     return `<button class="scroll-i wx q${d.q} ${d.ghost ? 'ghost' : ''}" data-wx="${id}" aria-current="${id === wx.cur}" title="${d.n} · ${QP[d.q].q}${d.cat}"><i class="cv"></i>${tag}<span class="t">${d.n}</span><span class="seal">${SEAL[d.cat] || d.cat}</span><small>${sub}</small></button>`;
   }).join('');
@@ -1883,7 +1890,7 @@ function renderWxDetail() {
     : BIG[d.cat] === '肉身' ? `<div class="wx-need ok">肉身功夫 · 不拘兵器</div>`
     : BIG[d.cat] === '暗器' ? `<div class="wx-need ${WORN.暗器 ? 'ok' : ''}">${WORN.暗器 ? '暗器槽已备柳叶镖囊 · 可装配' : '暗器槽空置 · 须备暗器方可装配'}</div>`
     : `<div class="wx-need ${WORN.兵器 === d.cat ? 'ok' : ''}">${WORN.兵器 === d.cat ? `现持${d.cat} · 可装配` : `须持${d.cat}方可装配 · 现持${WORN.兵器}`}</div>`;
-  let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span><span class="qtag tag">${TAG[d.eff]}</span><span class="wtag">${BIG[d.cat]} · ${d.cat}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
+  let h = `<div class="head"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="serif big">${d.n}</span><span class="qtag q${d.q}">${p.q}</span><span class="qtag tag t-${TAG[d.eff]}">${TAG[d.eff]}</span><span class="wtag">${BIG[d.cat]} · ${d.cat}</span>${d.res ? '<span class="qtag res" data-tip="与所修内功同为惊雷一路，招式伤害 ×1.1">共鸣</span>' : ''}</span>
     <button class="${on ? 'btn2 quiet' : 'btn2'}" data-equip="${wx.cur}" ${!on && (full || !ok) ? 'disabled' : ''}>${on ? '卸下' : full ? '装配槽已满' : ok ? '装配' : '不能装'}</button></div>
     ${needLine}
     <div class="params"><span data-tip="第一式倍率；每门武学各不相同，同品质总强度相当">倍率 <b>×${d.p[0]}%</b></span><span>耗气 <b>${d.p[1]}</b></span><span>冷却 <b>${d.p[3]}</b> 回合</span>

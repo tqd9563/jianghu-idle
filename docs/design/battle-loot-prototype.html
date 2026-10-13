@@ -851,7 +851,7 @@ button { font: inherit; color: inherit; }
 /* 行囊：四部位穿戴 + 背包 */
 .bag { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 28px; align-items: start; }
 .worn { display: grid; }
-.worn-i { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 4px 14px; padding: 14px 6px; border-top: 1px solid var(--hair); cursor: pointer; border-radius: 8px; }
+.worn-i { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 4px 14px; padding: 14px 6px; border-top: 1px solid var(--hair); cursor: pointer; border-radius: 8px; }
 .worn-i:first-child { border-top: 0; }
 .worn-i:hover { background: oklch(0.3 0.016 262 / 0.2); }
 .worn-i .slot-k { font-family: var(--serif); letter-spacing: 0.3em; color: var(--faint); font-size: 13px; padding-top: 3px; grid-row: 1 / span 3; }
@@ -868,17 +868,19 @@ button { font: inherit; color: inherit; }
 .worn-sum b { color: var(--ink); font-weight: 600; }
 .bag-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
 .bag-head .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.bag-grid { display: grid; grid-template-columns: repeat(auto-fill, 72px); gap: 6px; justify-content: start; }
-.item { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 8px; padding: 6px 2px 5px; background: oklch(0.22 0.015 262 / 0.5); display: grid; gap: 4px; justify-items: center; align-content: start; transition: background .2s, box-shadow .2s; }
-.item:hover { background: oklch(0.27 0.017 262 / 0.6); }
-.item[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55), 0 0 12px oklch(0.78 0.13 78 / 0.2); }
-.item .th { width: 50px; height: 50px; border-radius: 7px; display: grid; place-items: center; background: oklch(0.17 0.012 262 / 0.8); box-shadow: inset 0 0 0 1px currentColor; }
-.item .th img { width: 32px; height: 32px; filter: invert(0.88); opacity: 0.9; }
-.item .th .gl { font-family: var(--serif); font-size: 22px; font-weight: 400; letter-spacing: 0; }
-.item .nm { font-family: var(--serif); font-size: 11.5px; letter-spacing: 0.04em; line-height: 1.3; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item .up { position: absolute; top: 4px; right: 6px; font-size: 11px; color: var(--gold); }
-.item .fresh { position: absolute; top: 7px; left: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
-.item.dim { opacity: 0.55; }
+/* 形态格：按部位占格（兵器 1×3、暗器 1×2、衣甲 2×2、佩饰 1×1），游戏自动紧凑摆放，玩家不拖动 */
+.bag-grid { --cell: 46px; display: grid; grid-template-columns: repeat(10, var(--cell)); grid-auto-rows: var(--cell); grid-auto-flow: dense; gap: 4px; justify-content: start;
+  padding: 0; }
+.bag-grid .cell { border-radius: 5px; box-shadow: inset 0 0 0 1px oklch(0.3 0.014 262 / 0.5); background: oklch(0.18 0.012 262 / 0.35); }
+.item { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 6px; padding: 3px; background: oklch(0.22 0.015 262 / 0.55); box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 45%, transparent); display: grid; place-items: center; transition: background .2s, box-shadow .2s; min-width: 0; min-height: 0; }
+.item:hover { background: oklch(0.27 0.017 262 / 0.65); }
+.item[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.7), 0 0 12px oklch(0.78 0.13 78 / 0.25); }
+.item .ink { width: 100%; height: 100%; object-fit: contain; filter: invert(0.92) brightness(1.05); opacity: 0.95; pointer-events: none; }
+.item .up { position: absolute; top: 2px; right: 5px; font-size: 11px; color: var(--gold); }
+.item .fresh { position: absolute; top: 6px; left: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.item.dim { opacity: 0.5; }
+.worn-i .slot-k { display: grid; gap: 6px; justify-items: start; }
+.worn-i .slot-k .ink { width: 44px; height: 54px; object-fit: contain; filter: invert(0.9); opacity: 0.85; }
 .bag-foot { margin-top: 12px; font-size: 12.5px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .bag-foot b { color: var(--muted); }
 /* 比较面板 */
@@ -957,6 +959,7 @@ button { font: inherit; color: inherit; }
 
 @media (max-width: 860px) {
   .bag { grid-template-columns: 1fr; }
+  .bag-grid { --cell: 32px; grid-template-columns: repeat(10, var(--cell)); }
   .ng-pick { grid-template-columns: 1fr; }
   .act2 .btns { width: 100%; } .act2 .btns .main-btn { flex: 1; min-width: 0; }
 }
@@ -1955,7 +1958,10 @@ let ITEMS = [
 const bag = { sel: 5, sort: 'new' };
 const fmt = v => Number.isInteger(v) ? v : v.toFixed(1);
 const itemName = it => (it.afx.length ? `<span class="pre">${it.afx.map(a => PRE[a[0]]).join('')}的</span>` : '') + it.obj;
-const THUMB = { 剑: 'jian', 刀: 'dao', 棍: 'gun', 暗器: 'anqi' };
+const THUMB = { 剑: 'jian', 刀: 'dao', 枪: 'qiang', 棍: 'gun', 暗器: 'anqi', 衣甲: 'jia', 佩饰: 'pei' };
+const SHAPE = { 兵器: [1, 3], 暗器: [1, 2], 衣甲: [2, 2], 佩饰: [1, 1] };   // 列 × 行
+const BAG_CELLS = 80;
+const ink = it => `<img class="ink" src="../../code/public/art/ink-${THUMB[it.cat || it.slot]}.png" alt="">`;
 const thumb = it => { const k = THUMB[it.cat || it.slot]; return k ? `<img src="../../code/public/art/icon-${k}.png" alt="">` : `<b class="gl">${{ 枪: '枪', 衣甲: '甲', 佩饰: '佩' }[it.cat || it.slot]}</b>`; };
 const afxText = (k, v) => `${AFX[k][0]} +${fmt(v)}${AFX[k][1]}`;
 function renderWorn() {
@@ -1963,7 +1969,7 @@ function renderWorn() {
   $('.js-worn').innerHTML = SL.map(sl => {
     const it = ITEMS.find(i => i.worn && i.slot === sl);
     if (!it) return `<div class="worn-i empty"><span class="slot-k">${sl}</span><span class="nm">空着</span></div>`;
-    return `<div class="worn-i" data-item="${it.id}"><span class="slot-k">${sl}</span>
+    return `<div class="worn-i" data-item="${it.id}"><span class="slot-k">${sl}${ink(it)}</span>
       <span class="nm"><span class="g${it.g}">${itemName(it)}</span><span class="gtag g${it.g}">${GN[it.g]}</span>${it.cat ? `<span class="wtag">${it.cat}</span>` : ''}</span>
       <span class="base">${Object.entries(it.base).map(([k, v]) => `${k} <b>+${fmt(v)}</b>`).join(' · ')}<span class="faint"> · 等级 ${it.lv.toFixed(1)}</span></span>
       ${it.afx.length ? `<span class="afx">${it.afx.map(([k, v]) => `<span>${afxText(k, v)}</span>`).join('')}</span>` : ''}</div>`;
@@ -1978,13 +1984,14 @@ function renderBag() {
   const list = ITEMS.filter(i => !i.worn);
   const G = { new: (a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0) || b.g - a.g, grade: (a, b) => b.g - a.g, slot: (a, b) => a.slot.localeCompare(b.slot) || b.g - a.g };
   list.sort(G[bag.sort]);
-  $('.js-bagn').textContent = `${list.length} / 40`;
+  const used = list.reduce((a, i) => a + SHAPE[i.slot][0] * SHAPE[i.slot][1], 0);
+  $('.js-bagn').textContent = `${used} / ${BAG_CELLS} 格`;
   $('.js-bag').innerHTML = list.map(it => {
     const cur = ITEMS.find(i => i.worn && i.slot === it.slot);
     const better = cur && it.g > cur.g;
-    return `<button class="item ${it.g <= 2 && !better ? 'dim' : ''}" data-item="${it.id}" aria-pressed="${bag.sel === it.id}" data-tip="${itemName(it).replace(/<[^>]+>/g, '')} · ${GN[it.g]} · ${it.slot}${it.cat ? ' · ' + it.cat : ''}">${better ? '<span class="up">▲</span>' : ''}${it.fresh ? '<span class="fresh"></span>' : ''}
-      <span class="th g${it.g}">${thumb(it)}</span><span class="nm g${it.g}">${it.obj}</span></button>`;
-  }).join('');
+    const [c, r] = SHAPE[it.slot];
+    return `<button class="item g${it.g} ${it.g <= 2 && !better ? 'dim' : ''}" style="grid-column:span ${c};grid-row:span ${r}" data-item="${it.id}" aria-pressed="${bag.sel === it.id}" data-tip="${itemName(it).replace(/<[^>]+>/g, '')} · ${GN[it.g]} · ${it.slot}${it.cat ? ' · ' + it.cat : ''}">${better ? '<span class="up">▲</span>' : ''}${it.fresh ? '<span class="fresh"></span>' : ''}${ink(it)}</button>`;
+  }).join('') + '<i class="cell"></i>'.repeat(Math.max(0, BAG_CELLS - used));
   const low = list.filter(i => i.g <= 2);
   $('.js-bagfoot').innerHTML = `上乘以下 <b>${low.length}</b> 件，可卖 <b>${low.reduce((a, i) => a + SELL[i.g], 0)}</b> 两`;
   $$('.js-bagsort button').forEach(b => b.setAttribute('aria-pressed', b.dataset.sort === bag.sort));

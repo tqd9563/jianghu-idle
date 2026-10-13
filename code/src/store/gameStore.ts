@@ -195,6 +195,8 @@ export interface BattleState {
   reward: { neili: number; silver: number; refarm: boolean; fame?: number; drop?: string } | null;
   /** 本场战斗记录开头说一句拜山传闻 */
   rumor?: boolean;
+  /** 战报变体种子（narration.ts pick），开战时掷定 */
+  seed?: number;
 }
 
 export interface FailureInfo {
@@ -1167,6 +1169,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         map, tier, stage, enemy, result,
         revealed: 0, nextRevealAt: Date.now() + REVEAL_FIRST_MS * revealScale, intervalMs, revealScale,
         resolved: false, chainAt: null, chainStage: null, reward: null,
+        seed: Math.floor(Math.random() * 2 ** 31),
         ...(s.rumorPending ? { rumor: true } : {}),
       },
       ...(s.rumorPending ? { rumorPending: false } : {}),

@@ -33,6 +33,8 @@ export interface NarrCtx {
   sqNeed: number;
   /** 毒层上限（唐门）；0 = 不叠毒 */
   poisonCap: number;
+  /** 本场战斗的随机种子（开战时掷定）：决定变体顺序，同一场重放文字不变；缺省为 0 */
+  seed?: number;
 }
 
 // ---------------------------------------------------------------- 敌人类型推断（§1）
@@ -444,9 +446,28 @@ export function fill(tpl: string, v: Vars): Seg[] {
   return out;
 }
 
-/** 按回合号挑变体；salt 让不同类句子不总落在同一序号上 */
-function pick(lines: Lines, rd: number, salt: number): string {
-  return lines[(Math.max(0, rd) + salt) % lines.length];
+/** (种子, 回合, salt) → [0, 1) 的固定散列 */
+function hash01(seed: number, rd: number, salt: number): number {
+  let h = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(rd + 1, 0xc2b2ae35) ^ Math.imul(salt + 1, 0x27d4eb2f);
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39);
+  return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+}
+
+/**
+ * 按种子随机挑变体，相邻两回合不取同一条（battle-narration.md §0）。
+ * 只由 (种子, 回合, salt) 决定，同一场战斗重放文字不变；salt 区分不同类句子。
+ */
+function pick(lines: Lines, rd: number, salt: number, seed: number): string {
+  const n = lines.length;
+  let prev = -1;
+  let idx = 0;
+  for (let r = 0; r <= Math.max(0, rd); r++) {
+    idx = Math.floor(hash01(seed, r, salt) * n);
+    if (idx === prev) idx = (idx + 1 + Math.floor(hash01(seed, r, salt + 7) * (n - 1))) % n;
+    prev = idx;
+  }
+  return lines[idx];
 }
 
 /** 招式键 `武学 id:式序` → [武学, 式序]；认不出返回 null */
@@ -466,7 +487,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const rd = t.rd;
   const route: PlainRoute = ctx.route ?? 'none';
   const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '剑意' };
-  const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt), { ...base, ...v });
+  const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
 
   switch (t.kind) {
     case 'attack': {

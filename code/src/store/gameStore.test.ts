@@ -1,7 +1,7 @@
 /**
  * store 行为测试：单钱包丹田模型 + 埋点事件发射（对齐规格书 §6.1 v0.9 / 埋点规格 §1.2）
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { REALMS } from '../engine/content';
 import { zhongCost } from '../engine/neigong';
 import {
@@ -10,9 +10,10 @@ import {
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
-  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, resetLiveTestVisitForTests, retireKind, tierUnlocked,
-  useGameStore, zhongGate,
+  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind,
+  rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
+import { rollGear, type GearItem } from '../engine/gear';
 import { freshInjuries, isHurt } from '../engine/injury';
 import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
@@ -336,7 +337,7 @@ describe('gameStore · 归隐与声望阁', () => {
     const first = play();
     expect(first.result.win).toBe(true);
     const base = first.enemy.reward;
-    expect(first.reward).toEqual({ neili: 0, silver: base.silver, refarm: false, fame: 0 });
+    expect(first.reward).toMatchObject({ neili: 0, silver: base.silver, refarm: false, fame: 0 });   // 可能另带 6% 的装备掉落
     expect(useGameStore.getState().xp).toBe(0); // 阅历冻结：关卡不再发
 
     useGameStore.getState().challengeStage(1, 0, 1); // 回刷同一关
@@ -1055,5 +1056,122 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     st().challengeStage(1, 0, 1);
     expect(st().battle?.rumor).toBe(true);
     expect(st().rumorPending).toBe(false);
+  });
+});
+
+describe('gameStore · 装备与行囊（battle-loot/design.md §3）', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  const play = () => {
+    const t0 = Date.now();
+    for (let i = 1; i <= 300 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+      useGameStore.getState().tick(t0 + i * 700);
+    }
+    return useGameStore.getState().battle!;
+  };
+  const seq = (vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]; };
+  const mk = (slot: GearItem['slot'], grade: GearItem['grade'], sell = 10) =>
+    ({ ...rollGear({ slot, grade, level: 2, clearSilver: 1 }, seq([0.3, 0.6, 0.5])), sell });
+
+  it('传功前不掉装备；传功后每场胜利掷一次掉落，掉了进背包、记埋点、挂机计拾得', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);   // 必掉（0 < 6%）、必白；战斗全中
+    useGameStore.setState({ realm: 5, route: null, neigong: null, zhong: 0, tiersPassed: 0 });
+    useGameStore.getState().challengeStage(1, 0, 1);
+    expect(play().reward!.gear).toBeUndefined();
+    expect(useGameStore.getState().bag).toEqual([]);
+
+    useGameStore.setState({ route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: [stageKey(1, 0, 1)] });
+    useGameStore.getState().idleAt(1, 0, 1);
+    const b = play();
+    expect(b.reward!.gear).toBeDefined();
+    expect(b.reward!.gear!.grade).toBe(1);   // 入门关只出凡品 / 精良
+    expect(b.reward!.gear!.level).toBe(b.enemy.x);
+    const s = useGameStore.getState();
+    expect(s.bag).toHaveLength(1);
+    expect(s.bag[0].fresh).toBe(true);
+    expect(s.idle!.loot).toBe(1);
+    const ev = getEvents().find((e) => e.e === 'gear_dropped')!;
+    expect(ev).toMatchObject({ stage: stageKey(1, 0, 1), grade: 1, sold: 0, offline: false });
+  });
+
+  it('穿戴进构筑：攻击按基础值相加再乘百分比；卸下回背包；卖出得银两；一键出售只卖上乘以下', () => {
+    useGameStore.setState({ realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 5, tiersPassed: 2, silver: 100 });
+    const sword = { ...mk('兵器', 3), base: { 攻击: 4 }, afx: [['atk', 5]] as GearItem['afx'] };
+    const low = mk('佩饰', 1, 3);
+    const mid = mk('暗器', 2, 7);
+    const high = mk('衣甲', 4, 50);
+    useGameStore.setState({ bag: [sword, low, mid, high] });
+    const before = playerBuild(useGameStore.getState());
+
+    useGameStore.getState().wearGear(sword.id);
+    let s = useGameStore.getState();
+    expect(s.worn.兵器?.id).toBe(sword.id);
+    expect(s.bag.map((g) => g.id)).toEqual([low.id, mid.id, high.id]);
+    expect(playerBuild(s).atk).toBeCloseTo((before.atk + 4) * 1.05, 9);
+    expect(getEvents().some((e) => e.e === 'gear_equipped')).toBe(true);
+
+    useGameStore.getState().sellGear(mid.id);
+    s = useGameStore.getState();
+    expect(s.silver).toBe(107);
+    expect(s.bag.map((g) => g.id)).toEqual([low.id, high.id]);
+
+    useGameStore.getState().sellGearBelow(3);
+    s = useGameStore.getState();
+    expect(s.silver).toBe(110);
+    expect(s.bag.map((g) => g.id)).toEqual([high.id]);
+
+    useGameStore.getState().unwearGear('兵器');
+    s = useGameStore.getState();
+    expect(s.worn.兵器).toBeUndefined();
+    expect(s.bag.map((g) => g.id)).toEqual([high.id, sword.id]);
+    expect(playerBuild(s).atk).toBeCloseTo(before.atk, 9);
+    // 存档里带着行囊
+    expect((loadGame() as { bag: GearItem[] }).bag).toHaveLength(2);
+  });
+
+  it('行囊满了：不比身上强的直接卖掉；比身上强的卖掉最差的腾位', () => {
+    const full = Array.from({ length: 20 }, () => mk('衣甲', 1, 2));   // 20 × 4 = 80 格
+    const worn = { 佩饰: mk('佩饰', 2) };
+    const weak = mk('佩饰', 1, 9);
+    expect(putInBag(full, worn, weak)).toEqual({ bag: full, sold: 9 });
+    const strong = mk('佩饰', 3, 30);
+    const r = putInBag(full, worn, strong);
+    expect(r.sold).toBe(2);
+    expect(r.bag).toHaveLength(20);
+    expect(r.bag[19].id).toBe(strong.id);
+    // 背包里全是比它好的：腾不出位，只能卖掉它自己
+    const better = Array.from({ length: 20 }, () => mk('衣甲', 4, 2));
+    expect(putInBag(better, {}, strong)).toEqual({ bag: better, sold: 30 });
+  });
+
+  it('转世清空行囊与穿戴（裁决 8）', () => {
+    useGameStore.setState({
+      realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, peakRealm: 5,
+      bag: [mk('佩饰', 2)], worn: { 兵器: mk('兵器', 3) },
+      clearedStages: allStages().filter((e) => e.tier === 0 && e.map <= 3).map((e) => stageKey(e.map, e.tier, e.stage)),
+      tiersUnlocked: ['1-0', '2-0', '3-0', '4-0'],
+    });
+    useGameStore.getState().openRetire();
+    useGameStore.getState().proceedRetire();
+    useGameStore.getState().confirmRetire();
+    const s = useGameStore.getState();
+    expect(s.run).toBe(2);
+    expect(s.bag).toEqual([]);
+    expect(s.worn).toEqual({});
+  });
+
+  it('rollDropFor：普通关 6%、精英 20%、Boss 必掉；品阶按本段位置取权重', () => {
+    const normal = allStages().find((e) => e.kind === 'normal')!;
+    const boss = allStages().find((e) => e.kind === 'boss')!;
+    expect(rollDropFor(normal, seq([0.07]))).toBeNull();
+    expect(rollDropFor(normal, seq([0.05, 0, 0, 0, 0, 0, 0]))).not.toBeNull();
+    const d = rollDropFor(boss, seq([0.99, 0, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5]))!;
+    expect(d.grade).toBe(2);   // Boss 必 +1
+    expect(d.level).toBe(boss.x);
+    expect(d.sell).toBe(Math.round(boss.reward.silver * 1));
   });
 });

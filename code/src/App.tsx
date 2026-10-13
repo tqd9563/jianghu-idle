@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { gearBonusOf } from './engine/gear';
 import { computeAttributes } from './engine/attributes';
 import { REALM_ACUPOINTS, isMeridianComplete, totalAcupointBonus } from './engine/acupoints';
 import { REALMS } from './engine/content';
@@ -13,6 +14,7 @@ import { freshInjuries, isHurt, worstInjury, INJURY_DEFS, SEVERITY_NAME } from '
 import { SettingsPanel } from './components/SettingsPanel';
 import { TipLayer } from './components/TipLayer';
 import { applyDebugHash } from './debug';
+import { BagPane } from './panes/BagPane';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
 import { RepPane } from './panes/RepPane';
@@ -32,11 +34,11 @@ import { NEIGONG } from './engine/neigong';
 
 const NEIGONG_NAME = (id: keyof typeof NEIGONG) => NEIGONG[id].name;
 
-type TabId = 'cultivate' | 'battle' | 'neigong' | 'wuxue' | 'sect' | 'shop' | 'rep';
+type TabId = 'cultivate' | 'battle' | 'bag' | 'neigong' | 'wuxue' | 'sect' | 'shop' | 'rep';
 
 /** 每页一幅底图（code/public/art/，莉刻生成） */
 const PAGE_ART: Record<TabId, string> = {
-  cultivate: 'cultivate.jpg', battle: 'battle-village.jpg', neigong: 'neigong.jpg', wuxue: 'wuxue.jpg',
+  cultivate: 'cultivate.jpg', battle: 'battle-village.jpg', bag: 'wuxue.jpg', neigong: 'neigong.jpg', wuxue: 'wuxue.jpg',
   sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep.jpg',
 };
 const REALM_CN = ['', '第一境', '第二境', '第三境', '第四境', '第五境', '第六境', '第七境'];
@@ -76,7 +78,7 @@ export default function App() {
 
   // 新一世内功页签随之隐藏：停在内功页的玩家退回修炼页
   useEffect(() => {
-    if ((tab === 'neigong' || tab === 'wuxue' || tab === 'shop') && s.started && s.neigong === null) setTabRaw('cultivate');
+    if ((tab === 'bag' || tab === 'neigong' || tab === 'wuxue' || tab === 'shop') && s.started && s.neigong === null) setTabRaw('cultivate');
     if (tab === 'sect' && s.started && s.realm < SECT_REALM) setTabRaw('cultivate');
   }, [tab, s.started, s.neigong, s.realm]);
 
@@ -105,7 +107,7 @@ export default function App() {
     const through = data ? data.meridians.filter((m) => isMeridianComplete(m, opened)).length : 0;
     return totalAcupointBonus(realm, opened.size, through);
   };
-  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s));
+  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s), gearBonusOf(s.worn));
   const neigongSelectOpen = s.realm >= 2 && s.neigong === null && s.retireCeremony === null;
   const retire = retireKind(s);
   const repUnlocked = s.repTotal > 0 || s.run > 1;
@@ -122,6 +124,7 @@ export default function App() {
   const tabs: { id: TabId; name: string; short?: string; show: boolean; fresh: boolean }[] = [
     { id: 'cultivate', name: '修炼', show: true, fresh: false },
     { id: 'battle', name: '战斗', show: true, fresh: false },
+    { id: 'bag', name: '行囊', show: !!s.neigong, fresh: !seen.includes('bag') },
     { id: 'neigong', name: '内功', show: !!s.neigong, fresh: !seen.includes('neigong') },
     { id: 'wuxue', name: '武学', show: !!s.neigong, fresh: !seen.includes('wuxue') },
     { id: 'sect', name: '门派', show: s.realm >= SECT_REALM, fresh: !seen.includes('sect') },
@@ -213,6 +216,7 @@ export default function App() {
           <div key={`p-${tab}`} className={`jh-page page-${tab}`}>
             {tab === 'cultivate' && <CultivatePane />}
             {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
+            {tab === 'bag' && s.neigong && <BagPane />}
             {tab === 'neigong' && s.neigong && <NeigongPane />}
             {tab === 'wuxue' && s.neigong && <WuxuePane />}
             {tab === 'sect' && s.realm >= SECT_REALM && <SectPane />}
@@ -242,7 +246,7 @@ export default function App() {
       {s.ceremony !== null && (
         <BreakthroughCeremony
           realmTo={s.ceremony}
-          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, acuPct(s.ceremony - 1), huohouMultOf(s))}
+          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, acuPct(s.ceremony - 1), huohouMultOf(s), gearBonusOf(s.worn))}
           nextAttrs={attrs}
           onClose={s.dismissCeremony}
         />
@@ -251,6 +255,7 @@ export default function App() {
         <OfflineSettlement
           result={s.offlineSettlement}
           sectDone={s.offlineSectDone}
+          loot={s.offlineLoot}
           observer={observerOpen}
           onClose={s.dismissOfflineSettlement}
         />

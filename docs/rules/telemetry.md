@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.8
+> **版本**：v2.9
 >
 > **日期**：2026-09-29
 >
@@ -58,6 +58,9 @@
 | `offline_settled` | 出关结算完成 | `idle_sec`, `neili`, `silver`, `cap_hit`, `cap_min`, `debug_cap`, `idle_stage`, `idle_fights`, `idle_wins` |
 | `idle_start` | 在此挂机 | `map`, `tier`, `stage` |
 | `idle_stop` | 收手 | `map`, `tier`, `stage`, `fights` |
+| `gear_dropped` | 装备掉落（在线每件一条；离线一次挂机结算一条） | 在线：`stage`, `slot`, `grade`, `level`, `sold`（行囊满了卖得的银两）, `offline: false`；离线：`stage`, `count`, `best_grade`, `sold`, `offline: true` |
+| `gear_equipped` | 穿戴一件装备 | `slot`, `grade`, `level`, `afx`（词条数） |
+| `gear_sold` | 卖出装备（单件或一键） | `count`, `silver`, `grade`（单件）/ `below`（一键：卖掉低于此品阶） |
 | `offline_tax_revealed` | 出关结算税率条展示 | `efficiency_pct` |
 | `session_start` | 页面激活（会话开始） | — |
 | `session_end` | 页面关闭/失焦 | `reason`, `duration_sec` |
@@ -108,6 +111,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.9 | 2026-10-13 | battle-loot 实装二：新增 `gear_dropped` / `gear_equipped` / `gear_sold`。 |
 | v2.8 | 2026-10-13 | battle-loot 实装一：新增 `idle_start` / `idle_stop`，`offline_settled` 加挂机折算三字段。 |
 | v2.7 | 2026-09-29 | 门派实装：新增 `sect_joined` / `sect_task_done` / `sect_shop_bought`。 |
 | v2.6 | 2026-09-29 | 武学实装：新增 `wuxue_equipped` / `form_learned` / `shop_bought` / `boss_drop`。 |

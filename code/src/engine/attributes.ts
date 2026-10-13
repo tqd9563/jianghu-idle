@@ -6,6 +6,7 @@
  */
 import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouRealms, zhaoshiLevel, type RouteId } from './content';
 import { ROUTES } from './routes';
+import type { GearBonus } from './gear';
 
 export interface FinalAttributes {
   hp: number;
@@ -42,6 +43,8 @@ export function computeAttributes(
   acupointPct = 0,
   /** 内功品质的火候倍率（neigong.HUOHOU_MULT：寻常 1.0 · 上乘 1.02 · 绝学 1.04） */
   huohouMult = 1,
+  /** 一身装备的合计加成（battle-loot/spec.md §6：百分比乘进基础值，命中 / 闪避相加，会心封顶 80%） */
+  gear?: GearBonus,
 ): FinalAttributes {
   const base = REALMS[realm - 1];
   const def = route ? ROUTES[route] : null;
@@ -57,14 +60,15 @@ export function computeAttributes(
   const defTempPct = (g.defPct ?? 0) + (p.defPct ?? 0) * L + acupointPct;
   const hpTempPct = (p.hpPct ?? 0) * L + acupointPct;
 
+  const ge = gear ?? { atk: 0, hp: 0, def: 0, hit: 0, dodge: 0, atkPct: 0, hpPct: 0, defPct: 0, critPP: 0, cdPP: 0 };
   return {
-    hp: Math.round(base.hp * (1 + permPct) * (1 + hpTempPct) * hh.statMult),
-    atk: round1(base.atk * (1 + permPct) * (1 + atkTempPct) * hh.statMult),
-    def: round1(base.def * (1 + permPct) * (1 + defTempPct) * hh.statMult),
-    accuracy: round1(base.accuracy * (1 + permPct) + hh.hit),
-    evasion: round1(base.evasion * (1 + permPct) + hh.dodge),
-    critRate: (BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L) * (1 + permPct),
-    critDmg: (BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L) * (1 + permPct),
+    hp: Math.round((base.hp * (1 + permPct) * (1 + hpTempPct) * hh.statMult + ge.hp) * (1 + ge.hpPct)),
+    atk: round1((base.atk * (1 + permPct) * (1 + atkTempPct) * hh.statMult + ge.atk) * (1 + ge.atkPct)),
+    def: round1((base.def * (1 + permPct) * (1 + defTempPct) * hh.statMult + ge.def) * (1 + ge.defPct)),
+    accuracy: round1(base.accuracy * (1 + permPct) + hh.hit + ge.hit),
+    evasion: round1(base.evasion * (1 + permPct) + hh.dodge + ge.dodge),
+    critRate: Math.min(0.8, (BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L) * (1 + permPct) + ge.critPP / 100),
+    critDmg: (BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L) * (1 + permPct) + ge.cdPP / 100,
     basicAtkMult: g.basicAtkMult ?? 1,
     poisonCoef: g.poisonCoef ? g.poisonCoef + (p.poisonCoefPP ?? 0) * L : 0,
     zones: { atkBase: base.atk, atkPermPct: permPct, atkTempPct, defTempPct, hpTempPct },

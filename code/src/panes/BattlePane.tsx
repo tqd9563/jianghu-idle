@@ -22,6 +22,7 @@ import {
   qiMaxOf, useGameStore, type MapNo,
 } from '../store/gameStore';
 import { fmtBig } from '../fmt';
+import { gearFullName } from '../engine/gear';
 
 const f0 = (n: number) => fmtBig(Math.round(n));
 /** data-tip 走 innerHTML：拼进去的名字统一转义 */
@@ -286,7 +287,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                   <div className="idle-bar">
                     <span className="pulse" />
                     <span className="serif">挂机中</span>
-                    <span>第 <b>{idling.stage}</b> 关 · 已 <b>{idling.fights}</b> 场</span>
+                    <span>第 <b>{idling.stage}</b> 关 · 已 <b>{idling.fights}</b> 场{(idling.loot ?? 0) > 0 && <> · 拾得 <b>{idling.loot}</b> 件</>}</span>
                     <button type="button" className="jh-btn2 quiet" onClick={() => s.stopIdle()}>收手</button>
                   </div>
                 )}
@@ -330,6 +331,12 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             <>
               <div className="p loot">获得：银两 {f0(battle.reward.silver)}{battle.reward.refarm ? '（回刷五成）' : ''}</div>
               {battle.reward.drop && <div className="p loot">首杀掉落：{battle.reward.drop}</div>}
+              {battle.reward.gear && (
+                <div className="p loot">
+                  拾得：<span className={`serif g${battle.reward.gear.grade}`}>{gearFullName(battle.reward.gear)}</span>
+                  {battle.reward.gearSold ? `（行囊已满，卖得 ${battle.reward.gearSold} 两）` : ''}
+                </div>
+              )}
               {(battle.reward.fame ?? 0) > 0 && (
                 <div className="p loot">名号传开：挑落{battle.enemy.name}，声望 +{fmtBig(battle.reward.fame!)}</div>
               )}

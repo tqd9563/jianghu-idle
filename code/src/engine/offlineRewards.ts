@@ -109,8 +109,26 @@ export function shouldShowOfflineSettlement(effectiveMin: number, minSettleMin: 
   return effectiveMin * 60 >= minSettleMin * 60;
 }
 
+/** 挂机关卡的离线折算口径（battle-loot/design.md §2.3）：下线那一刻按当时战力算一次，离线期间不变 */
+export interface IdleBasis {
+  /** 挂机关卡键 */
+  stageKey: string;
+  /** 一场的胜率（0–1） */
+  winRate: number;
+  /** 一场平均耗时（秒，含开场 / 收尾），spec §6 口径：2.7 秒一回合 + 2.5 秒 */
+  fightSec: number;
+  /** 每场胜利的银两（回刷五成） */
+  silverPerWin: number;
+}
+
+/** 战报节拍（battle-loot/spec.md §6）：一回合约 2.7 秒，开场 / 收尾 / 连战间隔约 2.5 秒 */
+export const IDLE_SEC_PER_ROUND = 2.7;
+export const IDLE_SEC_OVERHEAD = 2.5;
+
 export interface OfflineSettleInput {
   currentMaxIdleStage: number;
+  /** 挂机中：离线按这一关折算场次，银两改由场次给，不再按表 A 档位 */
+  idle?: IdleBasis | null;
   lastSeenAt: number;
   now: number;
   /** A4 验收调试覆盖上限（分钟）；null/undefined = 用正式上限 24 小时 */
@@ -137,12 +155,15 @@ export interface OfflineSettleResult {
   silent: boolean;
   /** 本次是否使用了调试覆盖上限（A4；正式验收记录须裸露该位） */
   debugCap: boolean;
+  /** 挂机折算（有挂机关卡时）：有效离线秒 × 60% ÷ 一场耗时 = 场次，× 胜率 = 胜场；银两 = 胜场 × 每场银两 */
+  idle: { stageKey: string; fights: number; wins: number } | null;
 }
 
 /**
- * 主公式（offline-rewards.md §1.1 v2.0）：
+ * 主公式（offline-rewards.md §1.1 v2.2）：
  *   离线内力 = 在线挂机速率 × 有效闭关分钟 × 60 × 60%
- *   离线银两 / 阅历 = 表 A 档位每分钟产出 × 有效闭关分钟 × 60%
+ *   挂机中：离线场次 = 有效闭关秒 × 60% ÷ 一场耗时，胜场 = 场次 × 胜率，银两 = 胜场 × 回刷银两
+ *   未挂机：离线银两 / 阅历 = 表 A 档位每分钟产出 × 有效闭关分钟 × 60%
  * 有效闭关分钟封顶 24 小时。
  */
 export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettleResult {
@@ -151,6 +172,14 @@ export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettl
   const capMin = debugCap ? input.capOverrideMin! : OFFLINE_CAP_MIN;
   const { rawSec, effectiveMin, capped } = getEffectiveOfflineMinutes(input.lastSeenAt, input.now, capMin);
   const grant = (perMin: number) => Math.floor(perMin * effectiveMin * OFFLINE_EFFICIENCY);
+  let idle: OfflineSettleResult['idle'] = null;
+  let silver = grant(tier.silverPerMin);
+  if (input.idle && input.idle.fightSec > 0) {
+    const fights = Math.floor((effectiveMin * 60 * OFFLINE_EFFICIENCY) / input.idle.fightSec);
+    const wins = Math.round(fights * Math.min(1, Math.max(0, input.idle.winRate)));
+    idle = { stageKey: input.idle.stageKey, fights, wins };
+    silver = wins * input.idle.silverPerWin;
+  }
   return {
     stageBasis: Math.max(1, Math.min(TOTAL_GLOBAL_STAGES, Math.floor(input.currentMaxIdleStage))),
     tier,
@@ -161,11 +190,12 @@ export function calculateOfflineRewards(input: OfflineSettleInput): OfflineSettl
     efficiency: OFFLINE_EFFICIENCY,
     neiliPerSec: input.neiliPerSec,
     neili: grant(input.neiliPerSec * 60),
-    silver: grant(tier.silverPerMin),
+    silver,
     xp: grant(tier.experiencePerMin),
     // 静默判定按原始离线秒（表 C min_settle_sec 语义：短离线/会话内刷新按在线连续处理），
     // 不用截断后的 effectiveMin——调试压低上限（A4）不得把长离线误判为静默。
     silent: rawSec < OFFLINE_SETTLEMENT_RULE.minSettleSec,
     debugCap,
+    idle,
   };
 }

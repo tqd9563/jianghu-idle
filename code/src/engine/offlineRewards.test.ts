@@ -9,7 +9,7 @@ import {
   OFFLINE_CAP_MIN, calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
   maxIdleStage, shouldShowOfflineSettlement,
 } from './offlineRewards';
-import { stageKey, trackLength } from './enemies';
+import { getStage, stageKey, trackLength } from './enemies';
 
 const MIN = 60_000;
 
@@ -62,6 +62,17 @@ describe('offlineRewards · v2.0 长线规则（offline-rewards.md §1.1）', ()
     const r = calculateOfflineRewards({ currentMaxIdleStage: 1, lastSeenAt: 0, now: 10 * MIN, neiliPerSec: RATE });
     expect(r.silver).toBe(Math.floor(4 * 10 * 0.60));
     expect(r.xp).toBe(Math.floor(0.6 * 10 * 0.60));
+  });
+
+  it('挂机中：场次 = 有效秒 × 60% ÷ 一场耗时，胜场 × 每场银两代替表 A 银两（battle-loot/design.md §2.3）', () => {
+    const idle = { stageKey: 'm1t0s8', winRate: 0.95, fightSec: 30, silverPerWin: 21 };
+    const r = calculateOfflineRewards({ currentMaxIdleStage: 8, idle, lastSeenAt: 0, now: 100 * MIN, neiliPerSec: RATE });
+    const fights = Math.floor((100 * 60 * 0.60) / 30);   // 120 场
+    expect(r.idle).toEqual({ stageKey: 'm1t0s8', fights, wins: Math.round(fights * 0.95) });
+    expect(r.silver).toBe(Math.round(fights * 0.95) * 21);
+    expect(r.neili).toBe(Math.floor(RATE * 60 * 100 * 0.60));   // 内力不受影响
+    // 没挂机：照旧表 A
+    expect(calculateOfflineRewards({ currentMaxIdleStage: 8, idle: null, lastSeenAt: 0, now: 100 * MIN, neiliPerSec: RATE }).idle).toBeNull();
   });
 
   it('上限 24 小时，与关卡档位无关', () => {
@@ -156,9 +167,32 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     expect(s.offlineSettlement).not.toBeNull();
   });
 
+  it('挂机中离线：按挂机关折算场次计入本世场次，银两按胜场给；出关结算带挂机行', () => {
+    const cleared = [1, 2, 3, 4, 5, 6, 7, 8].map((st) => stageKey(1, 0, st));
+    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: cleared, silver: 0 });
+    useGameStore.setState({ idle: { map: 1, tier: 0, stage: 8, fights: 3 } });
+    useGameStore.getState().stopIdle();
+    useGameStore.setState({ idle: { map: 1, tier: 0, stage: 8, fights: 3 } });
+    useGameStore.getState().idleAt(1, 0, 8);   // 境界 5 打第 8 关必胜；persist
+    useGameStore.setState({ battle: null });
+    reopenAfter(100 * MIN);
+    const s = useGameStore.getState();
+    const r = s.offlineSettlement!;
+    expect(r.idle).not.toBeNull();
+    expect(r.idle!.stageKey).toBe(stageKey(1, 0, 8));
+    expect(r.idle!.fights).toBeGreaterThan(0);
+    expect(r.idle!.wins).toBe(r.idle!.fights);   // 必胜
+    expect(s.silver).toBe(r.silver);
+    expect(r.silver).toBe(r.idle!.wins * Math.round(getStage(1, 0, 8).reward.silver * 0.5));
+    expect(s.idle!.fights).toBe(3 + r.idle!.fights);
+    const ev = getEvents().find((e) => e.e === 'offline_settled')!;
+    expect([ev.idle_stage, ev.idle_fights, ev.idle_wins]).toEqual([stageKey(1, 0, 8), r.idle!.fights, r.idle!.wins]);
+  });
+
   it('A2 决策保留：不自动突破/不推进关卡/不动停滞计时；除资源外状态与离线前一致', () => {
     useGameStore.setState({ dantian: 2700, runPlaySec: 500, lastProgressSec: 100 });
-    useGameStore.getState().setAutoAdvance(true); // 触发 persist，写入上述状态
+    useGameStore.setState({ idle: { map: 1, tier: 0, stage: 1, fights: 0 } });
+    useGameStore.getState().stopIdle(); // 触发 persist，写入上述状态
     reopenAfter(20 * MIN);
     const s = useGameStore.getState();
     expect(s.dantian).toBe(2700 + OFF(20));

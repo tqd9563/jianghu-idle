@@ -10,7 +10,7 @@ import {
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
-  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, playerBuild, resetLiveTestVisitForTests, retireKind, tierUnlocked,
+  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, resetLiveTestVisitForTests, retireKind, tierUnlocked,
   useGameStore, zhongGate,
 } from './gameStore';
 import { freshInjuries, isHurt } from '../engine/injury';
@@ -323,8 +323,8 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.paused).toBe(false);
   });
 
-  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、连续回刷衰减；首次击败精英名号传开', () => {
-    useGameStore.setState({ realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, tiersPassed: 3, autoAdvance: false });
+  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、重打不递减；首次击败精英名号传开', () => {
+    useGameStore.setState({ realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, tiersPassed: 3 });
     const play = () => {
       const t0 = Date.now();
       for (let i = 1; i <= 200 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
@@ -345,9 +345,10 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(second.reward!.neili).toBe(0);
     expect(second.reward!.silver).toBe(Math.round(base.silver * 0.5));
 
-    useGameStore.getState().challengeStage(1, 0, 1); // 连续第 2 次回刷：×0.8 衰减（公式表 §6）
+    useGameStore.getState().challengeStage(1, 0, 1); // 连续重打：不再递减（battle-loot 裁决 14）
     const third = play();
-    expect(third.reward!.silver).toBe(Math.round(Math.round(base.silver * 0.5) * 0.8));
+    expect(third.reward!.silver).toBe(Math.round(base.silver * 0.5));
+    expect(third.chainStage).toBeNull(); // 重打一次：打完就停
 
     // 首次击败图 1 初入的第一个精英：6.4 × 乘区 1，向下取整 6 声望，跨世只领一次
     useGameStore.setState({ clearedStages: m1all.slice(0, ELITE1 - 1) });
@@ -368,7 +369,7 @@ describe('gameStore · 归隐与声望阁', () => {
 
   it('难度解锁：打通段末 Boss 开本图下一档与下一图初入，跨世保留；封存的前沿打不了', () => {
     const st = () => useGameStore.getState();
-    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3, autoAdvance: false });
+    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3 });
     const n = trackLength(1, 0);
     useGameStore.setState({ clearedStages: m1all.slice(0, n - 1) });
     expect(tierUnlocked(1, 1, st().tiersUnlocked)).toBe(false);
@@ -403,33 +404,71 @@ describe('gameStore · 归隐与声望阁', () => {
 
   });
 
-  it('回刷胜利后自动连战回到同一关（回退挂机）；收益标记 refarm', () => {
+  it('在此挂机：胜后原地再打、场次累计；收手后这一场打完就停', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
-    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: [stageKey(1, 0, 1)], autoAdvance: true });
-    useGameStore.getState().challengeStage(1, 0, 1); // 已通关 → 回刷
-
-    // 推进回放至结算（境界 5 打第 1 关必胜，普通关 650ms/回合）
-    for (let i = 0; i < 300; i++) {
-      const b = useGameStore.getState().battle;
-      if (!b || b.resolved) break;
-      vi.setSystemTime(Date.now() + 700);
-      useGameStore.getState().tick(Date.now());
-    }
-    const b1 = useGameStore.getState().battle!;
-    expect(b1.resolved).toBe(true);
+    useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: [stageKey(1, 0, 1)] });
+    const playOut = () => {
+      for (let i = 0; i < 300; i++) {
+        const b = useGameStore.getState().battle;
+        if (!b || b.resolved) break;
+        vi.setSystemTime(Date.now() + 700);
+        useGameStore.getState().tick(Date.now());
+      }
+      return useGameStore.getState().battle!;
+    };
+    useGameStore.getState().idleAt(1, 0, 1);
+    expect(useGameStore.getState().idle).toEqual({ map: 1, tier: 0, stage: 1, fights: 0 });
+    const b1 = playOut();
     expect(b1.result.win).toBe(true);
     expect(b1.reward!.refarm).toBe(true);
-    expect(b1.chainStage).toBe(1); // 回刷 → 原关，不是下一关
+    expect(b1.chainStage).toBe(1); // 挂机 → 原关
+    expect(b1.chainMode).toBe('idle');
+    expect(useGameStore.getState().idle!.fights).toBe(1);
 
-    // 越过 chainAt：自动开下一场，仍是第 1 关
+    // 越过 chainAt：自动开下一场，仍是第 1 关、仍是挂机
     vi.setSystemTime(Date.now() + 1_000);
     useGameStore.getState().tick(Date.now());
     const b2 = useGameStore.getState().battle!;
-    expect(b2).not.toBeNull();
     expect(b2.stage).toBe(1);
+    expect(b2.mode).toBe('idle');
     expect(b2.resolved).toBe(false);
+
+    // 收手：这一场打完不再接
+    useGameStore.getState().stopIdle();
+    expect(useGameStore.getState().idle).toBeNull();
+    const b3 = playOut();
+    expect(b3.chainStage).toBeNull();
+    expect(getEvents().map((e) => e.e)).toEqual(expect.arrayContaining(['idle_start', 'idle_stop']));
     vi.useRealTimers();
+  });
+
+  it('推关：输了退回最近已通关处挂机；挂机中输了退一关继续；退无可退才停（纯函数）', () => {
+    const cleared = [1, 2, 3, 4, 5, 6].map((st) => stageKey(1, 0, st));
+    // 境界 1 裸属性打 1-7 必败（battle-loot/spec.md 判据 12）：推关败 → 退回第 6 关挂机
+    useGameStore.setState({ realm: 1, clearedStages: cleared, idle: null });
+    useGameStore.getState().challengeStage(1, 0, 7);
+    const t0 = Date.now();
+    for (let i = 1; i <= 400 && !(useGameStore.getState().battle?.resolved ?? false); i++) useGameStore.getState().tick(t0 + i * 700);
+    const b = useGameStore.getState().battle!;
+    expect(b.mode).toBe('push');
+    expect(b.result.win).toBe(false);
+    expect(b.chainStage).toBe(6);
+    expect(b.chainMode).toBe('idle');
+    expect(useGameStore.getState().idle).toEqual({ map: 1, tier: 0, stage: 6, fights: 0 });
+
+    // 挂机中输了：退一关；第 1 关输了退无可退 → 停
+    const idle6 = { map: 1 as const, tier: 0 as const, stage: 6, fights: 9 };
+    expect(nextAfterBattle(idle6, { map: 1, tier: 0, stage: 6, mode: 'idle' }, false, cleared))
+      .toEqual({ idle: { map: 1, tier: 0, stage: 5, fights: 9 }, chainStage: 5, chainMode: 'idle' });
+    expect(nextAfterBattle({ ...idle6, stage: 1 }, { map: 1, tier: 0, stage: 1, mode: 'idle' }, false, cleared))
+      .toEqual({ idle: null, chainStage: null, chainMode: null });
+    // 推关胜：接着打下一关；本段打穿则在末关挂着
+    expect(nextAfterBattle(null, { map: 1, tier: 0, stage: 7, mode: 'push' }, true, [...cleared, stageKey(1, 0, 7)]).chainStage).toBe(8);
+    const n = trackLength(1, 0);
+    const all = Array.from({ length: n }, (_, i) => stageKey(1, 0, i + 1));
+    expect(nextAfterBattle(null, { map: 1, tier: 0, stage: n, mode: 'push' }, true, all))
+      .toEqual({ idle: { map: 1, tier: 0, stage: n, fights: 0 }, chainStage: n, chainMode: 'idle' });
   });
 });
 
@@ -861,7 +900,7 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
     useGameStore.setState({
-      realm: 5, route: 'huashan', neigong: 'jingleijue', zhong: 40, tiersPassed: 3, autoAdvance: false,
+      realm: 5, route: 'huashan', neigong: 'jingleijue', zhong: 40, tiersPassed: 3,
       ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], formCasts: { 'liuyunjian:1': 4 }, wuxing: 1.2,
       clearedStages: m1all,
     });
@@ -904,7 +943,7 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     vi.setSystemTime(1_000_000_000);
     const n = trackLength(1, 0);
     useGameStore.setState({
-      realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3, autoAdvance: false,
+      realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3,
       clearedStages: m1all.slice(0, n - 1),
     });
     const play = () => {
@@ -1012,7 +1051,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
   });
 
   it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次', () => {
-    useGameStore.setState({ rumorPending: true, autoAdvance: false });
+    useGameStore.setState({ rumorPending: true });
     st().challengeStage(1, 0, 1);
     expect(st().battle?.rumor).toBe(true);
     expect(st().rumorPending).toBe(false);

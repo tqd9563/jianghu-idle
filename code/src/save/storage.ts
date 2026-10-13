@@ -22,7 +22,7 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -101,7 +101,20 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 3) out = migrateAcupointIdsV2ToV3(out);
   if (fromVer < 7) out = migrateIntroStagesV6ToV7(out);
   if (fromVer < 8) out = migrateNeigongV7ToV8(out);
+  if (fromVer < 9) out = migrateIdleV8ToV9(out);
   return out;
+}
+
+/**
+ * v8 → v9（battle-loot 实装一）：自动连战开关与连续回刷衰减三字段废止，挂机状态改由 idle 字段承载（缺省 null，
+ * 由 {...FRESH, ...saved} 合并补上）。只删旧键，不补新键。
+ */
+function migrateIdleV8ToV9<T>(state: T): T {
+  const s = state as Record<string, unknown>;
+  if (!s || typeof s !== 'object') return state;
+  const out = { ...s };
+  for (const k of ['autoAdvance', 'refarmKey', 'refarmCount', 'refarmAt']) delete out[k];
+  return out as T;
 }
 
 /** v7 在图 1 初入最前面插入的入门关数（迁移专用，冻结在 v7 口径，不随关卡表变化） */

@@ -26,6 +26,9 @@ function awayText(rawSec: number): string {
   return `离开 ${Math.floor(min / 60)} 小时 ${min % 60} 分`;
 }
 
+/** 关卡键里的关数（'m1t0s38' → 38） */
+const idleStageNo = (key: string) => key.match(/s(\d+)$/)?.[1] ?? key;
+
 function fmtLeft(ms: number): string {
   const min = Math.max(0, Math.ceil(ms / 60000));
   const h = Math.floor(min / 60);
@@ -89,6 +92,9 @@ export function OfflineSettlement(props: {
         <div className="gains">
           <span>内力</span><span><b ref={neiliRef} /></span>
           <span>银两</span><span><b ref={silverRef} /></span>
+          {r.idle && (
+            <><span>挂机</span><span>第 {idleStageNo(r.idle.stageKey)} 关 · <b>{r.idle.fights}</b> 场 · 胜 {r.idle.wins}</span></>
+          )}
           {sectDone ? (
             <><span>门派任务</span><span>{errand(sectDone.kind)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>
           ) : sectTask && (

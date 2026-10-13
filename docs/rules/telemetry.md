@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v2.7
+> **版本**：v2.8
 >
 > **日期**：2026-09-29
 >
@@ -55,7 +55,9 @@
 
 | 事件名 | 触发时机 | 关键字段 |
 |---|---|---|
-| `offline_settled` | 出关结算完成 | `idle_sec`, `neili`, `silver`, `cap_hit`, `cap_min`, `debug_cap` |
+| `offline_settled` | 出关结算完成 | `idle_sec`, `neili`, `silver`, `cap_hit`, `cap_min`, `debug_cap`, `idle_stage`, `idle_fights`, `idle_wins` |
+| `idle_start` | 在此挂机 | `map`, `tier`, `stage` |
+| `idle_stop` | 收手 | `map`, `tier`, `stage`, `fights` |
 | `offline_tax_revealed` | 出关结算税率条展示 | `efficiency_pct` |
 | `session_start` | 页面激活（会话开始） | — |
 | `session_end` | 页面关闭/失焦 | `reason`, `duration_sec` |
@@ -106,6 +108,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v2.8 | 2026-10-13 | battle-loot 实装一：新增 `idle_start` / `idle_stop`，`offline_settled` 加挂机折算三字段。 |
 | v2.7 | 2026-09-29 | 门派实装：新增 `sect_joined` / `sect_task_done` / `sect_shop_bought`。 |
 | v2.6 | 2026-09-29 | 武学实装：新增 `wuxue_equipped` / `form_learned` / `shop_bought` / `boss_drop`。 |
 | v2.5 | 2026-09-29 | 门径并入内功（issue #36）：`route_selected` / `route_switch` / `skill_upgrade` / `mech_node_bought` 改为 `neigong_selected` / `neigong_switched` / `zhong_upgraded`，新增 `dunwu`；秘籍阁废止，`page_acquired` 等残页事件删除；阅历冻结，`run_start.carry_xp` 与 `offline_settled.xp` 删除。 |

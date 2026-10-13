@@ -59,7 +59,6 @@ function playLongline(route: RouteId, seed: number): Sample {
   vi.setSystemTime(Date.UTC(2026, 8, 29, 8, 0, 0));
   st().hardReset();
   useGameStore.setState({ started: true });
-  st().setAutoAdvance(false);
   resetBot();
   const firstDay: Record<number, number> = {};
   const sect: Sample['sect'] = { firstJuexue: null, ownShelf: null, allShelves: null };

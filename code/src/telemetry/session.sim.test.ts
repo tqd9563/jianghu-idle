@@ -62,8 +62,7 @@ describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
     useGameStore.setState({ started: true });
     resetBot();
     st().startSession('T90');
-    st().setAutoAdvance(false);
-
+  
     // 第一世第 1 天：在线 4 小时入境界 2、择路唐门，推图 1
     online(R);
     pushFronts();
@@ -100,8 +99,7 @@ describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
     useGameStore.setState({ started: true });
     resetBot();
     st().startSession('T91');
-    st().setAutoAdvance(false);
-    online(R, 1);
+      online(R, 1);
     pushFronts({ stopAfterFirstLoss: true });
     // 纯重试三次（不做任何调整）→ §10.2「无脑连点」信号
     for (let i = 0; i < 3; i++) {

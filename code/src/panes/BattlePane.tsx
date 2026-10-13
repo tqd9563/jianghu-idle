@@ -1,6 +1,7 @@
 /**
  * 战斗页 —— 基准：docs/design/ui-overhaul-prototype.html `#p-battle` / `#d-fail` + DESIGN.md（issue #26 视觉大改）。
- * 结构：页头（地图名 + 难度进度 + 难度切换）→ 江湖路驿站 → 关卡进度线与眼前一段 → 对阵（无底框）→ 挑战按钮 → 叙事战报。
+ * 结构：页头（地图名 + 难度进度 + 难度切换）→ 江湖路驿站 → 关卡进度线与眼前一段 → 对阵（无底框）→ 推关 / 挂机按钮 → 叙事战报。
+ * 挂机入口按 docs/design/battle-loot-prototype.html `.act2`（battle-loot/design.md §2.1）：已通关卡「在此挂机」+「重打一次」，下一关「挑战」；挂机中顶上一条状态栏。
  * 战报句子来自 engine/narration.ts（冻结文案 docs/rules/copy/battle-narration.md），收获行见其 §7。
  */
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -60,6 +61,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   useEffect(() => setViewStage(null), [viewMap, viewTier]);
   const idleStage = viewStage ?? next ?? total;
   const isRefarmTarget = isDone(idleStage);
+  // 挂机中（只显示本图本难度的）
+  const idling = s.idle && s.idle.map === viewMap && s.idle.tier === viewTier ? s.idle : null;
 
   const turns = battle ? battle.result.turns.slice(0, battle.revealed) : [];
   const last = turns[turns.length - 1];
@@ -278,24 +281,39 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                 </div>
               </div>
 
-              <div className="act">
-                {fighting ? (
-                  <button type="button" className="jh-btn fight" disabled>交手中 · 第 {Math.max(1, last?.rd ?? 1)} 回合</button>
-                ) : (
-                  <button
-                    type="button" className="jh-btn fight"
-                    data-tip={isRefarmTarget
-                      ? '已通关的关卡只掉五成银两，连续重打同一关逐次递减（间隔 10 分钟重置）'
-                      : idleEnemy && idleEnemy.kind !== 'normal' ? '精英与 Boss 之战有 15–30 秒演出，不可跳过' : undefined}
-                    onClick={() => s.challengeStage(viewMap, viewTier, idleStage)}
-                  >
-                    {isRefarmTarget ? '重打' : '挑战'} · 第<span className="n">{idleStage}</span>关
-                  </button>
+              <div className="act2">
+                {idling && (
+                  <div className="idle-bar">
+                    <span className="pulse" />
+                    <span className="serif">挂机中</span>
+                    <span>第 <b>{idling.stage}</b> 关 · 已 <b>{idling.fights}</b> 场</span>
+                    <button type="button" className="jh-btn2 quiet" onClick={() => s.stopIdle()}>收手</button>
+                  </div>
                 )}
-                <label className="bt-switch" data-tip="胜后自动打下一关；重打的关胜后原地再打；输了自动停下">
-                  <input type="checkbox" checked={s.autoAdvance} onChange={(e) => s.setAutoAdvance(e.target.checked)} />
-                  自动连战
-                </label>
+                <div className="btns">
+                  {fighting ? (
+                    <button type="button" className="jh-btn fight" disabled>交手中 · 第 {Math.max(1, last?.rd ?? 1)} 回合</button>
+                  ) : idling ? (
+                    next !== null && (
+                      <button type="button" className="jh-btn fight" onClick={() => s.challengeStage(viewMap, viewTier, next)}>
+                        挑战 · 第<span className="n">{next}</span>关
+                      </button>
+                    )
+                  ) : isRefarmTarget ? (
+                    <>
+                      <button type="button" className="jh-btn fight" onClick={() => s.idleAt(viewMap, viewTier, idleStage)}>在此挂机</button>
+                      <button type="button" className="jh-btn fight quiet" onClick={() => s.challengeStage(viewMap, viewTier, idleStage)}>重打一次</button>
+                    </>
+                  ) : (
+                    <button
+                      type="button" className="jh-btn fight"
+                      data-tip={idleEnemy && idleEnemy.kind !== 'normal' ? '精英与 Boss 之战有 15–30 秒演出，不可跳过' : undefined}
+                      onClick={() => s.challengeStage(viewMap, viewTier, idleStage)}
+                    >
+                      挑战 · 第<span className="n">{idleStage}</span>关
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -993,22 +993,9 @@ button { font: inherit; color: inherit; }
 .stall-it .nm { font-family: var(--serif); font-size: 14.5px; letter-spacing: 0.06em; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .stall-it .st { font-size: 12px; color: var(--faint); }
 .stall-it .btn2 { justify-self: start; margin-top: 4px; padding: 3px 10px; font-size: 12.5px; }
-/* 暗门：一扇挂帘的窄门，门边一盏灯；帘后有灯 = 可进 */
-.mk-door { position: relative; margin-top: 22px; height: 110px; border-radius: 10px; overflow: hidden; display: flex; align-items: flex-end; padding: 14px 18px; color: var(--faint); background: oklch(0.12 0.012 262); box-shadow: inset 0 0 0 1px oklch(0.28 0.014 262 / 0.6); }
-.mk-door .curtain { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, oklch(0.17 0.012 262) 0 18px, oklch(0.21 0.014 262) 18px 30px, oklch(0.15 0.012 262) 30px 44px); mask: linear-gradient(to bottom, #000 70%, transparent); opacity: 0.9; transition: opacity .4s; }
-.mk-door .lantern { position: absolute; right: 36px; top: 14px; width: 22px; height: 34px; border-radius: 11px / 14px; background: oklch(0.26 0.02 262); box-shadow: inset 0 0 0 1px oklch(0.4 0.02 262 / 0.6); }
-.mk-door .lantern::before { content: ''; position: absolute; left: 50%; top: -8px; width: 2px; height: 8px; background: oklch(0.4 0.02 262); transform: translateX(-50%); }
-.mk-door .lantern i { position: absolute; inset: 6px 5px; border-radius: 50%; background: oklch(0.3 0.02 262); }
-.mk-door .door-t { position: relative; display: flex; align-items: center; gap: 14px; width: 100%; }
-.mk-door .door-t .serif { letter-spacing: 0.25em; font-size: 15px; }
-.mk-door .bar { flex: 1; max-width: 220px; height: 2px; background: oklch(0.28 0.014 262); overflow: hidden; }
-.mk-door .bar i { display: block; height: 100%; background: oklch(0.5 0.03 262); }
-.mk-door.open { cursor: pointer; color: var(--ink); box-shadow: inset 0 0 0 1px oklch(0.5 0.1 300 / 0.5); }
-.mk-door.open .curtain { background: repeating-linear-gradient(90deg, oklch(0.2 0.03 300) 0 18px, oklch(0.26 0.04 300) 18px 30px, oklch(0.17 0.03 300) 30px 44px); }
-.mk-door.open .lantern { background: oklch(0.45 0.12 40); box-shadow: 0 0 24px oklch(0.7 0.15 45 / 0.6), 0 0 60px oklch(0.6 0.14 40 / 0.35); }
-.mk-door.open .lantern i { background: oklch(0.85 0.14 70); animation: pulse 2.2s ease-in-out infinite alternate; }
-.mk-door.open .door-t .serif { color: oklch(0.85 0.1 70); }
-.mk-door.open:hover .curtain { opacity: 0.6; }
+/* 黑市入口：解锁后摊位条末尾多一个暗色页签 */
+.cats button.blk { margin-left: 10px; color: oklch(0.72 0.1 300); box-shadow: inset 0 0 0 1px oklch(0.5 0.1 300 / 0.45); }
+.cats button.blk:hover { background: oklch(0.25 0.04 300 / 0.6); }
 /* 进门：整页从左向右拉黑 */
 #p-market { position: relative; }
 #p-market.wipe::after { content: ''; position: absolute; inset: 0; z-index: 5; background: oklch(0.08 0.02 300); animation: wipe-in .45s var(--ease) both; }
@@ -1020,15 +1007,20 @@ button { font: inherit; color: inherit; }
 .black { --wash: oklch(0.16 0.02 300 / 0.7); --wash-2: oklch(0.24 0.03 300 / 0.7); }
 .black .page-head h1 { color: oklch(0.82 0.09 300); }
 .black .card { background: oklch(0.13 0.02 300 / 0.75); box-shadow: inset 0 0 0 1px oklch(0.4 0.08 300 / 0.35); }
-.black-card { max-width: 720px; }
-.masked { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 6px; }
-.mask-it { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 10px; padding: 18px 12px 16px; min-height: 190px; display: grid; justify-items: center; align-content: center; gap: 6px; background: oklch(0.18 0.03 300 / 0.8); box-shadow: inset 0 0 0 1px oklch(0.45 0.08 300 / 0.4); transition: transform .3s var(--ease), box-shadow .3s; }
+.bk-right { display: flex; align-items: center; gap: 16px; }
+.bk-clock { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: oklch(0.8 0.08 70); font-variant-numeric: tabular-nums; }
+.bk-clock i { width: 10px; height: 14px; border-radius: 2px 2px 5px 5px; background: linear-gradient(to top, oklch(0.75 0.1 70), oklch(0.75 0.1 70) 45%, oklch(0.3 0.03 300) 45%); box-shadow: inset 0 0 0 1px oklch(0.6 0.08 70 / 0.6); }
+.coins { display: flex; gap: 8px; margin-top: 16px; }
+.coins i { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, transparent 3px, oklch(0.72 0.1 70) 3.5px, oklch(0.6 0.09 60) 7px, oklch(0.5 0.07 55) 8px); box-shadow: 0 1px 2px oklch(0.05 0.01 262 / 0.6); }
+.coins i.spent { background: radial-gradient(circle, transparent 3px, oklch(0.3 0.02 300) 3.5px, oklch(0.26 0.02 300) 8px); box-shadow: inset 0 0 0 1px oklch(0.4 0.03 300 / 0.5); }
+.masked { display: grid; grid-template-columns: repeat(3, 200px); gap: 14px; }
+.mask-it { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 10px; padding: 10px 8px 10px; min-height: 0; display: grid; justify-items: center; align-content: center; gap: 6px; background: oklch(0.18 0.03 300 / 0.8); box-shadow: inset 0 0 0 1px oklch(0.45 0.08 300 / 0.4); transition: transform .3s var(--ease), box-shadow .3s; }
 .mask-it:hover { box-shadow: inset 0 0 0 1px oklch(0.6 0.12 300 / 0.7); }
-.mask-it .mveil { width: 54px; height: 70px; border-radius: 6px; background: linear-gradient(160deg, oklch(0.3 0.04 300), oklch(0.18 0.03 300)); box-shadow: inset 0 0 0 1px oklch(0.5 0.08 300 / 0.5); display: grid; place-items: center; font-family: var(--serif); font-size: 22px; color: oklch(0.6 0.08 300); }
-.mask-it .nm { font-family: var(--serif); font-size: 14px; letter-spacing: 0.08em; text-align: center; }
+.mask-it .mveil { width: 120px; height: 150px; font-size: 40px; border-radius: 6px; background: linear-gradient(160deg, oklch(0.3 0.04 300), oklch(0.18 0.03 300)); box-shadow: inset 0 0 0 1px oklch(0.5 0.08 300 / 0.5); display: grid; place-items: center; font-family: var(--serif); font-size: 22px; color: oklch(0.6 0.08 300); }
+.mask-it .nm { font-family: var(--serif); font-size: 15px; letter-spacing: 0.08em; text-align: center; }
 .mask-it .pr { font-size: 12.5px; color: var(--muted); }
 .mask-it.sold { cursor: default; }
-.mask-it.sold .ink { width: 54px; height: 70px; object-fit: contain; filter: invert(0.92); animation: dlg-in .5s var(--ease); }
+.mask-it.sold .ink { width: 150px; height: 150px; object-fit: contain; filter: invert(0.92); animation: dlg-in .5s var(--ease); }
 .mask-it.sold .nm { animation: dlg-in .6s var(--ease); }
 .mask-it.gone { opacity: 0.35; cursor: default; }
 .odds { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 12px; }
@@ -1391,21 +1383,17 @@ button { font: inherit; color: inherit; }
             <div class="mk-silver">持有 <b class="gold">3,420</b> 两</div>
           </header>
           <div class="mk-head">
-            <div class="cats js-stalls"><button data-stall="wuguan" aria-pressed="true">武馆</button><button data-stall="arms">兵器铺</button><button data-stall="wear">衣饰铺</button><button data-stall="herb" disabled>药铺</button></div>
+            <div class="cats js-stalls"><button data-stall="wuguan" aria-pressed="true">武馆</button><button data-stall="arms">兵器铺</button><button data-stall="wear">衣饰铺</button><button data-stall="herb" disabled>药铺</button><button data-stall="black" class="blk js-blacktab" hidden>黑市</button></div>
           </div>
           <div class="card js-stall"></div>
-          <div class="mk-door js-door"></div>
         </div>
         <div class="js-mk-black black" hidden>
           <header class="page-head">
             <div><h1>黑市</h1></div>
-            <button class="btn2 quiet js-mk-back">回到市集</button>
+            <div class="bk-right"><span class="bk-clock"><i></i><b class="js-clock">03:42:10</b></span><button class="btn2 quiet js-mk-back">回到市集</button></div>
           </header>
-          <div class="card black-card">
-            <div class="head"><span class="serif">蒙面货</span><small>今夜 <b>2</b> / 3 · 本世 <b>4</b> / 10</small></div>
-            <div class="masked js-masked"></div>
-            <div class="odds"><span>凡品 30%</span><span class="g2">精良 40%</span><span class="g3">上乘 22%</span><span class="g4">珍品 7%</span><span class="g5">极品 1%</span></div>
-          </div>
+          <div class="masked js-masked"></div>
+          <div class="coins js-coins"></div>
         </div>
       </section>
 
@@ -2129,7 +2117,7 @@ document.addEventListener('click', e => {
 /* 传功：选完心法 → 书肆开张提示 */
 document.addEventListener('click', e => { if (e.target.closest('.js-teachok')) { go('battle'); setTimeout(() => toast('老者传功已毕，从此对手身上能搜出东西；<span class="serif">再往前卡住时，镇上的市集会开张</span>'), 400); } });
 /* ───── 市集：四摊位 + 暗门 → 黑市 ───── */
-const mk = { stall: 'wuguan', door: 'locked', spent: 1260, need: 2000, seen: false };
+const mk = { stall: 'wuguan', door: 'locked', spent: 1260, need: 2000 };
 const STALLS = {
   wuguan: [
     ['流云剑法', 1, '剑', '刚猛', 0, true], ['开山掌', 1, '掌', '守御', 200], ['袖里针', 1, '暗器', '阴毒', 250], ['行者棍', 1, '棍', '守御', 300]],
@@ -2155,27 +2143,26 @@ function renderStall() {
     `<div class="stall-it">${ink(it)}<span class="nm g${it.g}">${it.obj}<span class="gtag g${it.g}">${GN[it.g]}</span>${it.cat ? `<span class="wtag">${it.cat}</span>` : ''}</span><span class="st">${it.base}</span><button class="btn2" data-buy="${it.pr}">${it.pr} 两</button></div>`).join('') + '</div>';
 }
 function enterBlack() { const p = $('#p-market'); p.classList.add('wipe'); setTimeout(() => { $('.js-mk-fair').hidden = true; $('.js-mk-black').hidden = false; p.classList.add('night'); p.scrollTop = 0; p.classList.remove('wipe'); }, 420); }
-function renderDoor() {
-  const d = $('.js-door');
-  d.classList.toggle('open', mk.door === 'open');
-  d.innerHTML = `<div class="curtain"></div><div class="lantern"><i></i></div><div class="door-t"><span class="serif">${mk.door === 'open' ? '帘后有灯' : '帘后无人'}</span>${mk.door === 'open' ? '' : `<span class="bar"><i style="width:${Math.min(100, mk.spent / mk.need * 100)}%"></i></span>`}</div>`;
-}
+function renderDoor() { $('.js-blacktab').hidden = mk.door !== 'open'; }
 const MASKED = [
-  { k: '一柄剑', hint: '来路不明', pr: 300, slot: '兵器', cat: '剑', reveal: { g: 3, name: '锋锐穿心的青锋剑' } },
-  { k: '一件衣甲', hint: '血迹洗过', pr: 260, slot: '衣甲', reveal: { g: 2, name: '坚韧的皮甲' } },
-  { k: '半卷残谱', hint: '刀法', pr: 400, slot: '谱', reveal: { g: 3, name: '大江断流刀 · 第三式残页 ×2' } },
+  { k: '一柄剑', hint: '来路不明', pr: 1800, slot: '兵器', cat: '剑', reveal: { g: 3, name: '锋锐穿心的青锋剑' } },
+  { k: '一件衣甲', hint: '血迹洗过', pr: 1500, slot: '衣甲', reveal: { g: 2, name: '坚韧的皮甲' } },
+  { k: '半卷残谱', hint: '刀法', pr: 2400, slot: '谱', reveal: { g: 3, name: '大江断流刀 · 第三式残页 ×2' } },
 ];
 const mkBought = new Set([1]);
 function renderMasked() {
   $('.js-masked').innerHTML = MASKED.map((m, i) => mkBought.has(i)
     ? `<div class="mask-it sold g${m.reveal.g}">${m.slot === '谱' ? '<span class="mveil">谱</span>' : ink(m)}<span class="nm g${m.reveal.g}">${m.reveal.name}</span><span class="pr"><span class="gtag g${m.reveal.g}">${GN[m.reveal.g]}</span></span></div>`
-    : `<button class="mask-it" data-mask="${i}"><span class="mveil">？</span><span class="nm">${m.k}</span><span class="pr">${m.hint} · ${m.pr} 两</span></button>`).join('');
+    : `<button class="mask-it" data-mask="${i}"><span class="mveil">？</span><span class="nm">${m.k}</span><span class="pr">${m.hint} · ${m.pr.toLocaleString()} 两</span></button>`).join('');
+  const used = 3 + mkBought.size;
+  $('.js-coins').innerHTML = Array.from({ length: 10 }, (_, i) => `<i class="${i < used ? 'spent' : ''}"></i>`).join('');
 }
+let clockT = 3 * 3600 + 42 * 60 + 10;
+setInterval(() => { clockT = Math.max(0, clockT - 1); const h = Math.floor(clockT / 3600), m = Math.floor(clockT % 3600 / 60), s = clockT % 60; const el = $('.js-clock'); if (el) el.textContent = [h, m, s].map(x => String(x).padStart(2, '0')).join(':'); }, 1000);
 document.addEventListener('click', e => {
-  const st = e.target.closest('[data-stall]'); if (st && !st.disabled) { mk.stall = st.dataset.stall; renderStall(); }
-  const b = e.target.closest('[data-buy]'); if (b) { mk.spent += +b.dataset.buy; if (mk.spent >= mk.need && mk.door === 'locked') { mk.door = 'open'; toast('<span class="serif">摊后有人冲你招了招手</span>'); } renderDoor(); }
-  if (e.target.closest('.js-door.open')) { if (!mk.seen) { openDlg('black'); } else { enterBlack(); } }
-  if (e.target.closest('.js-black-in')) { mk.seen = true; setTimeout(enterBlack, 150); }
+  const st = e.target.closest('[data-stall]'); if (st && !st.disabled) { if (st.dataset.stall === 'black') { enterBlack(); } else { mk.stall = st.dataset.stall; renderStall(); } }
+  const b = e.target.closest('[data-buy]'); if (b) { mk.spent += +b.dataset.buy; if (mk.spent >= mk.need && mk.door === 'locked') { mk.door = 'open'; renderDoor(); setTimeout(() => openDlg('black'), 500); } }
+  if (e.target.closest('.js-black-in')) { setTimeout(enterBlack, 150); }
   if (e.target.closest('.js-mk-back')) { $('.js-mk-fair').hidden = false; $('.js-mk-black').hidden = true; $('#p-market').classList.remove('night'); }
   const m = e.target.closest('[data-mask]'); if (m) { const i = +m.dataset.mask; mkBought.add(i); renderMasked(); const r = MASKED[i].reveal; toast(`开出 <span class="g${r.g}">${r.name}</span>`); }
   const dm = e.target.closest('[data-door]'); if (dm) { mk.door = dm.dataset.door; renderDoor(); $('.js-mk-fair').hidden = false; $('.js-mk-black').hidden = true; $('#p-market').classList.remove('night'); go('market'); }

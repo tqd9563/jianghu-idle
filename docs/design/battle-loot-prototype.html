@@ -1229,7 +1229,6 @@ button { font: inherit; color: inherit; }
               </div>
             </div>
             <div class="bag-grid js-bag"></div>
-            <div class="bag-foot"><span class="js-bagfoot"></span></div>
             <div class="card cmp js-cmp"></div>
           </div>
         </div>
@@ -2003,8 +2002,6 @@ function renderBag() {
     const [c, r] = SHAPE[it.slot];
     return `<button class="item g${it.g} ${it.g <= 2 && !better ? 'dim' : ''}" style="grid-column:span ${c};grid-row:span ${r}" data-item="${it.id}" aria-pressed="${bag.sel === it.id}" data-tip="${itemName(it).replace(/<[^>]+>/g, '')} · ${GN[it.g]} · ${it.slot}${it.cat ? ' · ' + it.cat : ''}">${better ? '<span class="up">▲</span>' : ''}${it.fresh ? '<span class="fresh"></span>' : ''}${ink(it)}</button>`;
   }).join('') + '<i class="cell"></i>'.repeat(Math.max(0, BAG_CELLS - used));
-  const low = list.filter(i => i.g <= 2);
-  $('.js-bagfoot').innerHTML = `上乘以下 <b>${low.length}</b> 件，可卖 <b>${low.reduce((a, i) => a + SELL[i.g], 0)}</b> 两`;
   $$('.js-bagsort button').forEach(b => b.setAttribute('aria-pressed', b.dataset.sort === bag.sort));
 }
 function renderCmp() {
@@ -2017,7 +2014,7 @@ function renderCmp() {
   let note = '';
   if (it.slot === '兵器' && cur && it.cat !== cur.cat) note = `<div class="note warn">换持${it.cat}，将卸下流云剑法、青萍剑法两门剑法；通臂拳属肉身功夫，不受影响。</div>`;
   else if (it.worn) note = `<div class="note">正穿着</div>`;
-  el.innerHTML = `<div class="cmp-art g${it.g}">${ink(it)}</div><div class="cmp-body"><div class="cmp-h"><span class="nm g${it.g}">${itemName(it)} <span class="gtag g${it.g}">${GN[it.g]}</span></span><span class="faint" style="font-size:12px">${it.slot}${it.cat ? ' · ' + it.cat : ''} · 等级 ${it.lv.toFixed(1)} · 掉自第 ${Math.round((it.lv - 2.5) / 0.05 + 7)} 关</span></div>
+  el.innerHTML = `<div class="cmp-art g${it.g}">${ink(it)}</div><div class="cmp-body"><div class="cmp-h"><span class="nm g${it.g}">${itemName(it)} <span class="gtag g${it.g}">${GN[it.g]}</span></span></div>
     <div class="diff">${diff}${afx}</div>
     ${note}
     <div class="acts">${it.worn ? '<button class="btn2 quiet" data-unwear>卸下</button>' : `<button class="btn2" data-wear="${it.id}">穿上</button><button class="btn2 quiet" data-sell="${it.id}">卖 ${SELL[it.g]} 两</button>`}</div></div>`;

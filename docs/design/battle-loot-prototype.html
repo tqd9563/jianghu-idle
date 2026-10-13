@@ -1770,11 +1770,11 @@ document.addEventListener('click', ev => {
     $('.js-pqi').textContent = qi; $('.js-pqibar').style.width = qi / 73 * 100 + '%';
   };
   const LOOT = [
-    () => `拾得：<span class="g3">锋锐眼明的青锋剑</span>（上乘 · 兵器）`,
+    () => `拾得：<span class="g3">锋锐精准的青锋剑</span>（上乘 · 兵器）`,
     () => `拾得：<span class="g1">粗布短打</span>（凡品 · 衣甲）`,
     () => `拾得：<span class="pg">青萍剑法 · 第二式</span>全本，已学会`,
     () => `拾得：<span class="pg">飞瀑断崖剑 · 第三式</span>残页，已集 4 / 5`,
-    () => `拾得：<span class="g2">厚实的皮甲</span>（绿 · 衣甲）`,
+    () => `拾得：<span class="g2">强健的皮甲</span>（精良 · 衣甲）`,
   ];
   const win = () => {
     say(pick(SAY.win)(e.name), 'win');
@@ -1932,7 +1932,7 @@ renderWx();
 
 
 /* ───── 行囊 ───── */
-const PRE = { atk: '锋锐', crit: '狠辣', cd: '透骨', hit: '眼明', boss: '遇强则强', hp: '厚实', def: '坚韧', dodge: '轻灵', qi: '蕴气', wx: '凝神' };
+const PRE = { atk: '锋锐', crit: '凌厉', cd: '穿心', hit: '精准', boss: '破军', hp: '强健', def: '坚韧', dodge: '轻灵', qi: '蕴气', wx: '通玄' };
 const AFX = { atk: ['攻击', '%'], crit: ['会心率', 'pp'], cd: ['会心伤害', 'pp'], hit: ['命中', ''], boss: ['对精英 / Boss 伤害', '%'], hp: ['气血', '%'], def: ['防御', '%'], dodge: ['闪避', ''], qi: ['真气上限', ''], wx: ['武学伤害', '%'] };
 const GN = ['', '凡品', '精良', '上乘', '珍品', '极品'];
 const SELL = [0, 1, 3, 12, 40, 150];

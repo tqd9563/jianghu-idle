@@ -919,7 +919,8 @@ button { font: inherit; color: inherit; }
 .pages small { font-size: 11px; color: var(--faint); margin-left: 4px; }
 
 /* 路数标签：描边 + 左色条，和品阶的填充章区分；色相避开品阶的灰 / 青 210 / 金 78 与装备品阶的绿 145 / 青 215 / 紫 300 / 橙 */
-.qtag.tag { --tc: var(--muted); color: var(--tc); background: none; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); border-left: 3px solid var(--tc); border-radius: 3px; padding-left: 6px; }
+.qtag.tag { --tc: var(--muted); color: var(--tc); background: none; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); border-radius: 3px; display: inline-flex; align-items: center; gap: 5px; }
+.qtag.tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tc); box-shadow: 0 0 6px color-mix(in oklch, var(--tc) 60%, transparent); }
 .qtag.tag.t-刚猛 { --tc: oklch(0.72 0.16 28); }
 .qtag.tag.t-绵长 { --tc: oklch(0.76 0.11 135); }
 .qtag.tag.t-守御 { --tc: oklch(0.74 0.10 245); }

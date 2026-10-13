@@ -889,7 +889,12 @@ button { font: inherit; color: inherit; }
 .bag-foot { margin-top: 12px; font-size: 12.5px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .bag-foot b { color: var(--muted); }
 /* 比较面板 */
-.cmp { margin-top: 18px; }
+.cmp { margin-top: 18px; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; align-items: start; }
+.cmp:has(.cmp-empty) { display: block; }
+.cmp-art { position: relative; height: 210px; border-radius: 10px; display: grid; place-items: center; padding: 12px; background: radial-gradient(ellipse at 50% 60%, color-mix(in oklch, currentColor 22%, transparent), transparent 70%), oklch(0.17 0.012 262 / 0.8); box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 40%, transparent); color: oklch(0.45 0.012 262); }
+.cmp-art.g2 { color: oklch(0.78 0.12 145); } .cmp-art.g3 { color: oklch(0.78 0.09 215); } .cmp-art.g4 { color: oklch(0.76 0.13 300); } .cmp-art.g5 { color: var(--crit); }
+.cmp-art .ink { width: 100%; height: 100%; object-fit: contain; filter: invert(0.92) brightness(1.05); opacity: 0.95; }
+.cmp-body { min-width: 0; }
 .cmp-empty { font-size: 12.5px; color: var(--faint); line-height: 1.7; text-align: center; padding: 28px 8px; }
 .cmp .cmp-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cmp .cmp-h .nm { font-family: var(--serif); font-size: 17px; letter-spacing: 0.08em; }
@@ -965,6 +970,7 @@ button { font: inherit; color: inherit; }
 @media (max-width: 860px) {
   .bag { grid-template-columns: 1fr; }
   .bag-grid { --cell: 32px; grid-template-columns: repeat(10, var(--cell)); }
+  .cmp { grid-template-columns: 110px minmax(0, 1fr); gap: 14px; } .cmp-art { height: 150px; }
   .ng-pick { grid-template-columns: 1fr; }
   .act2 .btns { width: 100%; } .act2 .btns .main-btn { flex: 1; min-width: 0; }
 }
@@ -2011,10 +2017,10 @@ function renderCmp() {
   let note = '';
   if (it.slot === '兵器' && cur && it.cat !== cur.cat) note = `<div class="note warn">换持${it.cat}，将卸下流云剑法、青萍剑法两门剑法；通臂拳属肉身功夫，不受影响。</div>`;
   else if (it.worn) note = `<div class="note">正穿着</div>`;
-  el.innerHTML = `<div class="cmp-h"><span class="nm g${it.g}">${itemName(it)} <span class="gtag g${it.g}">${GN[it.g]}</span></span><span class="faint" style="font-size:12px">${it.slot}${it.cat ? ' · ' + it.cat : ''} · 等级 ${it.lv.toFixed(1)} · 掉自第 ${Math.round((it.lv - 2.5) / 0.05 + 7)} 关</span></div>
+  el.innerHTML = `<div class="cmp-art g${it.g}">${ink(it)}</div><div class="cmp-body"><div class="cmp-h"><span class="nm g${it.g}">${itemName(it)} <span class="gtag g${it.g}">${GN[it.g]}</span></span><span class="faint" style="font-size:12px">${it.slot}${it.cat ? ' · ' + it.cat : ''} · 等级 ${it.lv.toFixed(1)} · 掉自第 ${Math.round((it.lv - 2.5) / 0.05 + 7)} 关</span></div>
     <div class="diff">${diff}${afx}</div>
     ${note}
-    <div class="acts">${it.worn ? '<button class="btn2 quiet" data-unwear>卸下</button>' : `<button class="btn2" data-wear="${it.id}">穿上</button><button class="btn2 quiet" data-sell="${it.id}">卖 ${SELL[it.g]} 两</button>`}</div>`;
+    <div class="acts">${it.worn ? '<button class="btn2 quiet" data-unwear>卸下</button>' : `<button class="btn2" data-wear="${it.id}">穿上</button><button class="btn2 quiet" data-sell="${it.id}">卖 ${SELL[it.g]} 两</button>`}</div></div>`;
 }
 function renderAll() { renderWorn(); renderBag(); renderCmp(); }
 document.addEventListener('click', e => {

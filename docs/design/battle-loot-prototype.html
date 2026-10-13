@@ -880,12 +880,12 @@ button { font: inherit; color: inherit; }
 .item.g5 { box-shadow: inset 0 0 0 1.5px currentColor, 0 0 10px color-mix(in oklch, currentColor 45%, transparent); }
 .item:hover { background: oklch(0.27 0.017 262 / 0.65); }
 .item[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.7), 0 0 12px oklch(0.78 0.13 78 / 0.25); }
-.item .ink { width: 100%; height: 100%; object-fit: contain; filter: invert(0.92) brightness(1.05); opacity: 0.95; pointer-events: none; }
+.item .ink { width: 100%; height: 100%; object-fit: contain; opacity: 0.95; pointer-events: none; }
 .item .up { position: absolute; top: 2px; right: 5px; font-size: 11px; color: var(--gold); }
 .item .fresh { position: absolute; top: 6px; left: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .item.dim { opacity: 0.5; }
 .worn-i .slot-k { display: grid; gap: 6px; justify-items: start; }
-.worn-i .slot-k .ink { width: 44px; height: 54px; object-fit: contain; filter: invert(0.9); opacity: 0.85; }
+.worn-i .slot-k .ink { width: 44px; height: 54px; object-fit: contain; opacity: 0.85; }
 .bag-foot { margin-top: 12px; font-size: 12.5px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .bag-foot b { color: var(--muted); }
 /* 比较面板 */
@@ -893,7 +893,7 @@ button { font: inherit; color: inherit; }
 .cmp:has(.cmp-empty) { display: block; }
 .cmp-art { position: relative; height: 210px; border-radius: 10px; display: grid; place-items: center; padding: 12px; background: radial-gradient(ellipse at 50% 60%, color-mix(in oklch, currentColor 22%, transparent), transparent 70%), oklch(0.17 0.012 262 / 0.8); box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 40%, transparent); color: oklch(0.45 0.012 262); }
 .cmp-art.g2 { color: oklch(0.78 0.12 145); } .cmp-art.g3 { color: oklch(0.78 0.09 215); } .cmp-art.g4 { color: oklch(0.76 0.13 300); } .cmp-art.g5 { color: var(--crit); }
-.cmp-art .ink { width: 100%; height: 100%; object-fit: contain; filter: invert(0.92) brightness(1.05); opacity: 0.95; }
+.cmp-art .ink { width: 100%; height: 100%; object-fit: contain; opacity: 0.95; }
 .cmp-body { min-width: 0; }
 .cmp-empty { font-size: 12.5px; color: var(--faint); line-height: 1.7; text-align: center; padding: 28px 8px; }
 .cmp .cmp-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -989,7 +989,7 @@ button { font: inherit; color: inherit; }
 .mk-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
 .stall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .stall-it { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: 10px; background: oklch(0.22 0.015 262 / 0.5); align-items: center; }
-.stall-it .ink { grid-row: 1 / span 3; width: 54px; height: 70px; object-fit: contain; filter: invert(0.9); opacity: 0.85; }
+.stall-it .ink { grid-row: 1 / span 3; width: 54px; height: 70px; object-fit: contain; opacity: 0.85; }
 .stall-it .nm { font-family: var(--serif); font-size: 14.5px; letter-spacing: 0.06em; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .stall-it .st { font-size: 12px; color: var(--faint); }
 .stall-it .btn2 { justify-self: start; margin-top: 4px; padding: 3px 10px; font-size: 12.5px; }
@@ -1020,7 +1020,7 @@ button { font: inherit; color: inherit; }
 .mask-it .nm { font-family: var(--serif); font-size: 15px; letter-spacing: 0.08em; text-align: center; }
 .mask-it .pr { font-size: 12.5px; color: var(--muted); }
 .mask-it.sold { cursor: default; }
-.mask-it.sold .ink { width: 150px; height: 150px; object-fit: contain; filter: invert(0.92); animation: dlg-in .5s var(--ease); }
+.mask-it.sold .ink { width: 150px; height: 150px; object-fit: contain; animation: dlg-in .5s var(--ease); }
 .mask-it.sold .nm { animation: dlg-in .6s var(--ease); }
 .mask-it.gone { opacity: 0.35; cursor: default; }
 .odds { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 12px; }

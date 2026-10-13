@@ -983,6 +983,42 @@ button { font: inherit; color: inherit; }
 .scroll-i .t { left: 12%; width: 16%; top: 11%; height: 54%; }
 .scroll-i.q2 .t { left: 16%; width: 17%; top: 2%; height: 64%; }
 .scroll-i.q3 .t { left: 13%; width: 18%; top: 7%; height: 60%; }
+
+/* ═══════ 市集 / 黑市 ═══════ */
+.mk-silver { font-size: 13px; color: var(--muted); align-self: center; }
+.mk-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.stall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.stall-it { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: 10px; background: oklch(0.22 0.015 262 / 0.5); align-items: center; }
+.stall-it .ink { grid-row: 1 / span 3; width: 54px; height: 70px; object-fit: contain; filter: invert(0.9); opacity: 0.85; }
+.stall-it .nm { font-family: var(--serif); font-size: 14.5px; letter-spacing: 0.06em; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.stall-it .st { font-size: 12px; color: var(--faint); }
+.stall-it .btn2 { justify-self: start; margin-top: 4px; padding: 3px 10px; font-size: 12.5px; }
+/* 暗门 */
+.mk-door { margin-top: 18px; padding: 14px 18px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--faint); background: oklch(0.14 0.012 262 / 0.6); box-shadow: inset 0 0 0 1px oklch(0.3 0.014 262 / 0.5); }
+.mk-door .serif { letter-spacing: 0.15em; }
+.mk-door .bar { flex: 1; min-width: 140px; height: 3px; border-radius: 2px; background: oklch(0.28 0.014 262); overflow: hidden; }
+.mk-door .bar i { display: block; height: 100%; background: oklch(0.55 0.04 262); }
+.mk-door.open { color: var(--ink); cursor: pointer; background: linear-gradient(90deg, oklch(0.2 0.03 300 / 0.6), oklch(0.14 0.012 262 / 0.7)); box-shadow: inset 0 0 0 1px oklch(0.5 0.1 300 / 0.5); }
+.mk-door.open .serif { color: oklch(0.8 0.1 300); }
+.mk-door.open:hover { box-shadow: inset 0 0 0 1px oklch(0.6 0.12 300 / 0.8), 0 0 18px oklch(0.5 0.12 300 / 0.25); }
+/* 黑市：整页换暗调 */
+#p-market.night .page-art { filter: brightness(0.45) saturate(0.4) hue-rotate(30deg); }
+.black { --wash: oklch(0.16 0.02 300 / 0.7); --wash-2: oklch(0.24 0.03 300 / 0.7); }
+.black .page-head h1 { color: oklch(0.82 0.09 300); }
+.black .card { background: oklch(0.13 0.02 300 / 0.75); box-shadow: inset 0 0 0 1px oklch(0.4 0.08 300 / 0.35); }
+.black-grid { gap: 14px; }
+.masked { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+.mask-it { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 10px; padding: 14px 10px 12px; min-height: 150px; display: grid; justify-items: center; align-content: center; gap: 6px; background: oklch(0.18 0.03 300 / 0.8); box-shadow: inset 0 0 0 1px oklch(0.45 0.08 300 / 0.4); transition: transform .3s var(--ease), box-shadow .3s; }
+.mask-it:hover { box-shadow: inset 0 0 0 1px oklch(0.6 0.12 300 / 0.7); }
+.mask-it .mveil { width: 54px; height: 70px; border-radius: 6px; background: linear-gradient(160deg, oklch(0.3 0.04 300), oklch(0.18 0.03 300)); box-shadow: inset 0 0 0 1px oklch(0.5 0.08 300 / 0.5); display: grid; place-items: center; font-family: var(--serif); font-size: 22px; color: oklch(0.6 0.08 300); }
+.mask-it .nm { font-family: var(--serif); font-size: 14px; letter-spacing: 0.08em; text-align: center; }
+.mask-it .pr { font-size: 12.5px; color: var(--muted); }
+.mask-it.sold { cursor: default; }
+.mask-it.sold .ink { width: 54px; height: 70px; object-fit: contain; filter: invert(0.92); animation: dlg-in .5s var(--ease); }
+.mask-it.sold .nm { animation: dlg-in .6s var(--ease); }
+.mask-it.gone { opacity: 0.35; cursor: default; }
+.odds { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 12px; }
+@media (max-width: 860px) { .masked { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -997,6 +1033,7 @@ button { font: inherit; color: inherit; }
   <div class="row"><span>门派</span><button data-sect="1" aria-pressed="true">已拜入</button><button data-sect="0">未拜入</button></div>
   <div class="row"><span>弹窗</span><button data-dlg="break">突破</button><button data-dlg="offline">出关</button><button data-dlg="fail">战败</button><button data-dlg="retire">转世</button><button data-dlg="fail1">1-7 战败→传功</button></div>
   <div class="row"><span>战斗</span><button data-mode="push" aria-pressed="true">推关</button><button data-mode="idle">挂机中</button></div>
+  <div class="row"><span>市集</span><button data-door="locked" aria-pressed="true">暗门未开</button><button data-door="open">暗门已开</button></div>
   <div class="row"><span>身体</span><button data-hurt="0" aria-pressed="true">无伤</button><button data-hurt="1">带伤</button></div>
   <div class="row"><span>周天</span><button data-ready="0" aria-pressed="true">运转中</button><button data-ready="1">可突破</button></div>
   <div style="color:oklch(0.45 0 0)">手机宽度：把窗口拉到 860px 以下<br>为了能看全，六个页签都显示；数据不强求同一时刻对得上</div>
@@ -1041,7 +1078,7 @@ button { font: inherit; color: inherit; }
       <button data-go="neigong">内功</button>
       <button data-go="wuxue">武学</button>
       <button data-go="sect">门派<span class="fresh" aria-label="新开"></span></button>
-      <button data-go="market">书肆</button>
+      <button data-go="market">市集</button>
       <button data-go="rep">声望阁</button>
     </nav>
     <div class="scroll-foot">
@@ -1331,19 +1368,39 @@ button { font: inherit; color: inherit; }
         </div>
       </section>
 
-      <!-- ─────────── 书肆 ─────────── -->
+      <!-- ─────────── 市集 ─────────── -->
       <section class="page" id="p-market">
         <div class="page-art" style="--art:url('../../code/public/art/battle-village.jpg')"></div>
-        <header class="page-head">
-          <div><h1>书肆</h1><div class="sub">银两每世清零，买下的秘籍永久保留</div></div>
-        </header>
-        <div class="card">
-          <div class="head"><span class="serif">秘籍</span><small>持有 <b class="gold">3,420</b> 两</small></div>
-          <div class="rows">
-            <div class="row-i"><div class="t"><span class="serif">行者棍</span><span class="qtag q1">寻常</span></div><div class="d">棍法 · 特效回气</div><div class="a"><span class="buy"><button class="btn2">1,800 两</button></span></div></div>
-            <div class="row-i"><div class="t"><span class="serif">招式秘籍 · 流云剑第三式</span></div><div class="d">领悟第三式所需</div><div class="a"><span class="buy"><button class="btn2" disabled>4,500 两</button><small>还差 1,080</small></span></div></div>
-            <div class="row-i lock"><div class="t"><span class="serif">雷鸣剑经</span><span class="qtag q2">上乘内功</span></div><div class="d">惊雷一路 · 最高可至化境</div><div class="a"><span class="price">境界 3 上架</span></div></div>
-            <div class="row-i done"><div class="t"><span class="serif">流云剑</span><span class="qtag q1">寻常</span></div><div class="d">剑法 · 特效必暴</div><div class="a"><span class="price">已有</span></div></div>
+        <div class="js-mk-fair">
+          <header class="page-head">
+            <div><h1>市集</h1></div>
+            <div class="mk-silver">持有 <b class="gold">3,420</b> 两</div>
+          </header>
+          <div class="mk-head">
+            <div class="cats js-stalls"><button data-stall="wuguan" aria-pressed="true">武馆</button><button data-stall="arms">兵器铺</button><button data-stall="wear">衣饰铺</button><button data-stall="herb" disabled>药铺</button></div>
+          </div>
+          <div class="card js-stall"></div>
+          <div class="mk-door js-door"></div>
+        </div>
+        <div class="js-mk-black black" hidden>
+          <header class="page-head">
+            <div><h1>黑市</h1><div class="sub">今夜开市 · 蒙面货剩 <b>2</b> / 3 件 · 本世已开 <b>4</b> / 10 次</div></div>
+            <button class="btn2 quiet js-mk-back">回到市集</button>
+          </header>
+          <div class="grid2 black-grid">
+            <div class="card">
+              <div class="head"><span class="serif">暗货</span><small>明码 · 常年有</small></div>
+              <div class="rows">
+                <div class="row-i"><div class="t"><span class="serif">惊鸿照影剑 · 第四式残页</span><span class="qtag q2">上乘</span><span class="wtag">剑</span></div><div class="d">已集 <b>1</b> / 5</div><div class="a"><span class="buy"><button class="btn2">120 两 / 页</button></span></div></div>
+                <div class="row-i"><div class="t"><span class="serif">飞瀑断崖剑 · 第一式残页</span><span class="qtag q2">上乘</span><span class="wtag">剑</span></div><div class="d">已集 <b>3</b> / 5</div><div class="a"><span class="buy"><button class="btn2">120 两 / 页</button></span></div></div>
+                <div class="row-i lock"><div class="t"><span class="serif">雷鸣剑经</span><span class="qtag q2">上乘内功</span></div><div class="d">惊雷一路 · 最高可至化境</div><div class="a"><span class="price">境界 5 上架</span></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="head"><span class="serif">蒙面货</span><small>买定离手</small></div>
+              <div class="masked js-masked"></div>
+              <div class="odds"><span>凡品 30%</span><span class="g2">精良 40%</span><span class="g3">上乘 22%</span><span class="g4">珍品 7%</span><span class="g5">极品 1%</span><span class="faint">· 连开三件凡品，下一件必精良以上</span></div>
+            </div>
           </div>
         </div>
       </section>
@@ -1381,7 +1438,7 @@ button { font: inherit; color: inherit; }
           <div class="head"><span class="serif">传承</span><small>一次购得，永久生效</small></div>
           <div class="rows">
             <div class="row-i done"><div class="t"><span class="serif">再入江湖</span><span class="qtag">信息</span></div><div class="d">开战前，敌人的每个机制标签都附上一条克制提示</div><div class="a"><span class="price ok">已传承</span></div></div>
-            <div class="row-i"><div class="t"><span class="serif">轻装上路</span><span class="qtag">策略</span></div><div class="d">书肆的秘籍一律八折</div><div class="a"><span class="buy"><button class="btn2">220 声望</button></span></div></div>
+            <div class="row-i"><div class="t"><span class="serif">轻装上路</span><span class="qtag">策略</span></div><div class="d">市集一律八折</div><div class="a"><span class="buy"><button class="btn2">220 声望</button></span></div></div>
             <div class="row-i"><div class="t"><span class="serif">武道笔记</span><span class="qtag">资源</span></div><div class="d">每一世悟性 +0.1，领悟得更快</div><div class="a"><span class="buy"><button class="btn2">440 声望</button></span></div></div>
             <div class="row-i"><div class="t"><span class="serif">师门指引</span><span class="qtag">策略</span></div><div class="d">武学领悟新招的顿悟概率翻倍</div><div class="a"><span class="buy"><button class="btn2">660 声望</button></span></div></div>
             <div class="row-i"><div class="t"><span class="serif">破关心得</span><span class="qtag">战斗</span></div><div class="d">对各图头目（Boss）造成的伤害提高 10%</div><div class="a"><span class="buy"><button class="btn2">1,100 声望</button></span></div></div>
@@ -1418,7 +1475,7 @@ button { font: inherit; color: inherit; }
       <button data-go="neigong">内功</button>
     <button data-go="wuxue">武学</button>
     <button data-go="sect">门派<span class="fresh" aria-label="新开"></span></button>
-    <button data-go="market">书肆</button>
+    <button data-go="market">市集</button>
     <button data-go="rep">声望</button>
   </nav>
 </div>
@@ -2058,7 +2115,60 @@ document.addEventListener('click', e => {
   if (o.closest('.ng-pick')) $('.js-teachok').textContent = '修习 ' + nm; else $('.js-join').textContent = '拜入 ' + nm;
 });
 /* 传功：选完心法 → 书肆开张提示 */
-document.addEventListener('click', e => { if (e.target.closest('.js-teachok')) { go('battle'); setTimeout(() => toast('老者传功已毕，从此对手身上能搜出东西；<span class="serif">再往前卡住时，镇上的书肆会开张</span>'), 400); } });
+document.addEventListener('click', e => { if (e.target.closest('.js-teachok')) { go('battle'); setTimeout(() => toast('老者传功已毕，从此对手身上能搜出东西；<span class="serif">再往前卡住时，镇上的市集会开张</span>'), 400); } });
+/* ───── 市集：四摊位 + 暗门 → 黑市 ───── */
+const mk = { stall: 'wuguan', door: 'locked', spent: 1260, need: 2000 };
+const STALLS = {
+  wuguan: [
+    ['流云剑法', 1, '剑', '刚猛', 0, true], ['开山掌', 1, '掌', '守御', 200], ['袖里针', 1, '暗器', '阴毒', 250], ['行者棍', 1, '棍', '守御', 300]],
+  arms: [
+    { slot: '兵器', cat: '剑', g: 1, obj: '青锋剑', base: '攻击 +1.6', pr: 60 }, { slot: '兵器', cat: '刀', g: 1, obj: '柳叶刀', base: '攻击 +1.6', pr: 60 },
+    { slot: '兵器', cat: '枪', g: 1, obj: '白蜡枪', base: '攻击 +1.6', pr: 60 }, { slot: '兵器', cat: '棍', g: 1, obj: '齐眉棍', base: '攻击 +1.6', pr: 60 },
+    { slot: '暗器', g: 1, obj: '梅花针筒', base: '攻击 +0.7 · 命中 +1.4', pr: 50 }, { slot: '兵器', cat: '剑', g: 2, obj: '青锋剑', base: '攻击 +1.8 · 一条词条', pr: 180 },
+    { slot: '兵器', cat: '刀', g: 2, obj: '雁翎刀', base: '攻击 +1.8 · 一条词条', pr: 180 }, { slot: '暗器', g: 2, obj: '柳叶镖囊', base: '攻击 +0.8 · 命中 +1.6 · 一条词条', pr: 150 }],
+  wear: [
+    { slot: '衣甲', g: 1, obj: '粗布短打', base: '气血 +15 · 防御 +0.8', pr: 55 }, { slot: '衣甲', g: 2, obj: '皮甲', base: '气血 +17 · 防御 +0.9 · 一条词条', pr: 170 },
+    { slot: '佩饰', g: 1, obj: '铜钱串', base: '命中 +1.9', pr: 45 }, { slot: '佩饰', g: 2, obj: '香囊', base: '命中 +1.6 · 一条词条', pr: 140 }],
+};
+function renderStall() {
+  $$('.js-stalls button').forEach(b => b.setAttribute('aria-pressed', b.dataset.stall === mk.stall));
+  const el = $('.js-stall');
+  if (mk.stall === 'wuguan') {
+    el.innerHTML = `<div class="head"><span class="serif">武馆</span><small>交束脩，学全本</small></div><div class="rows">` + STALLS.wuguan.map(([n, q, c, t, pr, own]) =>
+      `<div class="row-i ${own ? 'done' : ''}"><div class="t"><span class="serif">${n}</span><span class="qtag q${q}">寻常</span><span class="qtag tag t-${t}">${t}</span><span class="wtag">${c}</span></div><div class="d">第一式全本 · 三式</div><div class="a">${own ? '<span class="price">已学</span>' : `<span class="buy"><button class="btn2" data-buy="${pr}">${pr} 两</button></span>`}</div></div>`).join('') + '</div>';
+    return;
+  }
+  const nm = { arms: '兵器铺', wear: '衣饰铺' }[mk.stall];
+  el.innerHTML = `<div class="head"><span class="serif">${nm}</span><small>凡品、精良常年有货</small></div><div class="stall-grid">` + STALLS[mk.stall].map(it =>
+    `<div class="stall-it">${ink(it)}<span class="nm g${it.g}">${it.obj}<span class="gtag g${it.g}">${GN[it.g]}</span>${it.cat ? `<span class="wtag">${it.cat}</span>` : ''}</span><span class="st">${it.base}</span><button class="btn2" data-buy="${it.pr}">${it.pr} 两</button></div>`).join('') + '</div>';
+}
+function renderDoor() {
+  const d = $('.js-door');
+  d.classList.toggle('open', mk.door === 'open');
+  d.innerHTML = mk.door === 'open'
+    ? `<span class="serif">摊后有人招手</span><span>「这边请」</span>`
+    : `<span class="serif">摊后有人影</span><span class="bar"><i style="width:${Math.min(100, mk.spent / mk.need * 100)}%"></i></span><span>${mk.spent.toLocaleString()} / ${mk.need.toLocaleString()} 两</span>`;
+}
+const MASKED = [
+  { k: '一柄剑', hint: '来路不明', pr: 300, slot: '兵器', cat: '剑', reveal: { g: 3, name: '锋锐穿心的青锋剑' } },
+  { k: '一件衣甲', hint: '血迹洗过', pr: 260, slot: '衣甲', reveal: { g: 2, name: '坚韧的皮甲' } },
+  { k: '半卷残谱', hint: '刀法', pr: 400, slot: '谱', reveal: { g: 3, name: '大江断流刀 · 第三式残页 ×2' } },
+];
+const mkBought = new Set([1]);
+function renderMasked() {
+  $('.js-masked').innerHTML = MASKED.map((m, i) => mkBought.has(i)
+    ? `<div class="mask-it sold g${m.reveal.g}">${m.slot === '谱' ? '<span class="mveil">谱</span>' : ink(m)}<span class="nm g${m.reveal.g}">${m.reveal.name}</span><span class="pr"><span class="gtag g${m.reveal.g}">${GN[m.reveal.g]}</span></span></div>`
+    : `<button class="mask-it" data-mask="${i}"><span class="mveil">？</span><span class="nm">${m.k}</span><span class="pr">${m.hint} · ${m.pr} 两</span></button>`).join('');
+}
+document.addEventListener('click', e => {
+  const st = e.target.closest('[data-stall]'); if (st && !st.disabled) { mk.stall = st.dataset.stall; renderStall(); }
+  const b = e.target.closest('[data-buy]'); if (b) { mk.spent += +b.dataset.buy; if (mk.spent >= mk.need && mk.door === 'locked') { mk.door = 'open'; toast('<span class="serif">摊后有人冲你招了招手</span>'); } renderDoor(); }
+  if (e.target.closest('.js-door.open')) { $('.js-mk-fair').hidden = true; $('.js-mk-black').hidden = false; $('#p-market').classList.add('night'); $('#p-market').scrollTop = 0; }
+  if (e.target.closest('.js-mk-back')) { $('.js-mk-fair').hidden = false; $('.js-mk-black').hidden = true; $('#p-market').classList.remove('night'); }
+  const m = e.target.closest('[data-mask]'); if (m) { const i = +m.dataset.mask; mkBought.add(i); renderMasked(); const r = MASKED[i].reveal; toast(`开出 <span class="g${r.g}">${r.name}</span>`); }
+  const dm = e.target.closest('[data-door]'); if (dm) { mk.door = dm.dataset.door; renderDoor(); $('.js-mk-fair').hidden = false; $('.js-mk-black').hidden = true; $('#p-market').classList.remove('night'); go('market'); }
+});
+renderStall(); renderDoor(); renderMasked();
 
 /* ───── 内功藏经 ───── */
 const NG = {
@@ -2132,7 +2242,7 @@ proto.addEventListener('click', e => {
   if (b.dataset.sect) { $('.js-sect-home').hidden = b.dataset.sect === '0'; $('.js-sect-join').hidden = b.dataset.sect === '1'; go('sect'); }
   if (b.dataset.hurt) { st.hurt = b.dataset.hurt === '1'; renderBody(); }
   if (b.dataset.ready) { st.ready = b.dataset.ready === '1'; renderZhoutian(); }
-  for (const k of ['skel', 'hurt', 'ready', 'font', 'body', 'btn', 'sect', 'mode']) if (b.dataset[k] !== undefined) $$(`[data-${k}]`, proto).forEach(x => x.setAttribute('aria-pressed', x === b));
+  for (const k of ['skel', 'hurt', 'ready', 'font', 'body', 'btn', 'sect', 'mode', 'door']) if (b.dataset[k] !== undefined) $$(`[data-${k}]`, proto).forEach(x => x.setAttribute('aria-pressed', x === b));
 });
 
 renderAttrs(); renderBody(); renderZhoutian(); renderRoad(); renderTrack(); renderEnemy();

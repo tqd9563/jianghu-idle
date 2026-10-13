@@ -52,6 +52,10 @@ import {
 } from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 import {
+  DROP_RATE, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade,
+  type GearGrade, type GearItem, type GearSlot, type Worn,
+} from '../engine/gear';
+import {
   INIT_AGE, ERA_START, ageAfter, isOldDeath, lifespanCap, minutesUntilAge, nextLife, soulMult, soulSettles,
   type DeathCause,
 } from '../engine/reincarnation';
@@ -152,6 +156,10 @@ interface PersistedState {
   sectTask: SectTask | null;
   /** 拜山传闻待说：突破入境界 2 时置上，下一场战斗的战斗记录说一次 */
   rumorPending: boolean;
+  /** 行囊（battle-loot/design.md §3.5）：背包里的装备；每世清零（裁决 8） */
+  bag: GearItem[];
+  /** 身上穿着的装备，按部位各一件；每世清零 */
+  worn: Worn;
 }
 
 /**
@@ -180,6 +188,8 @@ export interface IdleState {
   stage: number;
   /** 本世在此挂机已打的场次（在线 + 离线折算） */
   fights: number;
+  /** 在此挂机拾得的装备件数（在线 + 离线折算） */
+  loot?: number;
 }
 
 export interface BattleState {
@@ -202,7 +212,11 @@ export interface BattleState {
   chainStage: number | null;
   chainMode: BattleMode | null;
   /** 胜利实际入账（收益行同源同值）；fame = 本场首通精英 / Boss 的名号声望 */
-  reward: { neili: number; silver: number; refarm: boolean; fame?: number; drop?: string } | null;
+  reward: {
+    neili: number; silver: number; refarm: boolean; fame?: number; drop?: string;
+    /** 本场拾得的装备；行囊满了放不下时直接卖掉，gearSold = 卖得银两 */
+    gear?: GearItem; gearSold?: number;
+  } | null;
   /** 本场战斗记录开头说一句拜山传闻 */
   rumor?: boolean;
   /** 战报变体种子（narration.ts pick），开战时掷定 */
@@ -269,6 +283,8 @@ interface GameState extends PersistedState {
   offlineSettlement: OfflineSettleResult | null;
   /** 出关时顺带结算的门派任务（只供出关演出展示，不持久化） */
   offlineSectDone: { kind: SectTaskKind; contrib: number } | null;
+  /** 闭关期间挂机拾得（只供出关演出展示，不持久化）：件数、最好的一件、放不下卖掉的银两 */
+  offlineLoot: { count: number; best: GearItem | null; sold: number } | null;
   /** 独立持久化的自然测试窗口；不进入游戏存档。 */
   liveTestWindow: LiveTestWindowRecord | null;
   /** 刚发生的顿悟（台阶名），供一次性轻提示；非持久化 */
@@ -311,6 +327,16 @@ interface GameState extends PersistedState {
   idleAt: (map: MapNo, tier: TierId, stage: number) => void;
   /** 收手：这一场打完就停，不再接着打 */
   stopIdle: () => void;
+  /** 穿戴背包里的一件（同部位原来那件回背包） */
+  wearGear: (id: string) => void;
+  /** 卸下身上某部位的装备回背包（背包放不下则不卸） */
+  unwearGear: (slot: GearSlot) => void;
+  /** 卖掉背包里的一件换银两 */
+  sellGear: (id: string) => void;
+  /** 一键出售：卖掉背包里低于某品阶的装备 */
+  sellGearBelow: (grade: GearGrade) => void;
+  /** 离开行囊页：这一趟看过的都不再算「新得」 */
+  markBagSeen: () => void;
   dismissFailure: () => void;
   openRetire: () => void;
   proceedRetire: () => void;
@@ -344,6 +370,7 @@ const FRESH: PersistedState = {
   tiersUnlocked: ['1-0'],
   ownedWuxue: [], ownedScrolls: [], equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
   sect: null, contrib: 0, sectTask: null, rumorPending: false,
+  bag: [], worn: {},
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -402,7 +429,7 @@ export function openFronts(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedSta
 }
 
 export function playerBuild(
-  s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'tiersPassed' | 'injuries'>,
+  s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'tiersPassed' | 'injuries'> & Partial<Pick<PersistedState, 'worn'>>,
 ): Build {
   const base = s.neigong
     ? neigongBuild(s.neigong, s.realm, s.zhong, s.tiersPassed)
@@ -415,8 +442,9 @@ export function playerBuild(
         poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
         sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan' as RouteId,
       };
-  // 伤势在最后一层叠加（injury/spec.md §0 红线：只改喂进 fight() 的 Build，不碰 fight()）
-  return applyInjuriesToBuild(base, s.injuries ?? freshInjuries());
+  // 装备在开战前叠进构筑（battle-loot/spec.md §6），伤势在最后一层叠加
+  // （injury/spec.md §0 红线：只改喂进 fight() 的 Build，不碰 fight()）
+  return applyInjuriesToBuild(applyGearToBuild(base, gearBonusOf(s.worn)), s.injuries ?? freshInjuries());
 }
 
 /** 所修内功的火候品质倍率（未选内功为 1），供 computeAttributes 展示用 */
@@ -427,11 +455,12 @@ export function huohouMultOf(s: Pick<PersistedState, 'neigong'>): number {
 // ---------------------------------------------------------------- 武学（sect-neigong/spec.md §2）
 
 type WuxueState = Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'ownedWuxue' | 'ownedScrolls' | 'equipped'
-  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect'>>;
+  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect' | 'worn'>>;
 
 /** 当前真气上限（未选内功为 0） */
-export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'>): number {
-  return s.neigong ? qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) : 0;
+export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'> & Partial<Pick<PersistedState, 'worn'>>): number {
+  // 蕴气词条加真气上限（battle-loot/design.md §3.2）
+  return s.neigong ? qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) + gearBonusOf(s.worn).qi : 0;
 }
 
 /** 这门武学已领悟的式：秘籍自带前几式 + 本世顿悟的式 */
@@ -444,6 +473,8 @@ export function learnedFormsOf(s: Pick<PersistedState, 'learnedForms'>, id: Wuxu
 /** 装配转成战斗用的武学表：只列已领悟的式，倍率含熟练与共鸣 */
 export function buildLoadout(s: WuxueState): CombatSkill[] {
   const route = s.neigong ? NEIGONG[s.neigong].route : null;
+  // 通玄词条只加招式伤害，不加普攻（battle-loot/design.md §3.2）
+  const wxMult = 1 + gearBonusOf(s.worn).wxPct;
   return (s.equipped ?? []).map((id) => {
     const d = WUXUE[id];
     const p = QUALITY_PARAMS[d.quality];
@@ -452,7 +483,7 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
       id, name: d.name, cost: p.cost, cd: p.cd,
       forms: learnedFormsOf(s, id).map((k) => ({
         key: formKey(id, k), name: formName(k),
-        mult: formMult(d.quality, k, (s.formCasts ?? {})[formKey(id, k)] ?? 0, res, isBenmen(s.sect ?? null, id)),
+        mult: formMult(d.quality, k, (s.formCasts ?? {})[formKey(id, k)] ?? 0, res, isBenmen(s.sect ?? null, id)) * wxMult,
         effect: formHasEffect(d, k) ? d.effect : null,
       })),
     };
@@ -674,6 +705,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   retireStep: null,
   retireCeremony: null,
   offlineSettlement: null,
+  offlineLoot: null,
   offlineSectDone: null,
   liveTestWindow: null,
 
@@ -701,6 +733,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 观察员暂停中的存档不结算（暂停冻结一切结算，与 tick 口径一致），时间戳照常消费。
       // 离线只发三资源（A2 决策保留）：不触碰 runPlaySec / lastProgressSec / 战斗 / 归隐 / 关卡。
       let offlineSettlement: OfflineSettleResult | null = null;
+      let offlineLoot: GameState['offlineLoot'] = null;
       let dunwuNotice: string | null = null;
       if (savedAt !== null && !merged.paused) {
         const r = calculateOfflineRewards({
@@ -723,8 +756,33 @@ export const useGameStore = create<GameState>((set, get) => ({
           const liveMin = r.effectiveMin * k;
           merged.dantian += r.neili * k;
           merged.silver += Math.round(r.silver * k);
-          // 挂机场次记进本世计数（battle-loot/design.md §2.3）；掉落随实装二接在 r.idle.wins 上
-          if (r.idle && merged.idle) merged.idle = { ...merged.idle, fights: merged.idle.fights + Math.round(r.idle.fights * k) };
+          // 挂机场次记进本世计数（battle-loot/design.md §2.3）；掉落接在胜场上，每胜一场掷一次
+          if (r.idle && merged.idle) {
+            const wins = Math.round(r.idle.wins * k);
+            merged.idle = { ...merged.idle, fights: merged.idle.fights + Math.round(r.idle.fights * k) };
+            if (merged.neigong) {
+              const enemy = getStage(merged.idle.map, merged.idle.tier, merged.idle.stage);
+              let bag = merged.bag ?? [];
+              let count = 0, sold = 0;
+              let best: GearItem | null = null;
+              for (let i = 0; i < wins; i++) {
+                const drop = rollDropFor(enemy, Math.random);
+                if (!drop) continue;
+                const put = putInBag(bag, merged.worn ?? {}, drop);
+                bag = put.bag; sold += put.sold; count++;
+                if (!best || drop.grade > best.grade) best = drop;
+              }
+              if (count > 0) {
+                merged.bag = bag;
+                merged.silver += sold;
+                merged.idle = { ...merged.idle, loot: (merged.idle.loot ?? 0) + count };
+                offlineLoot = { count, best, sold };
+                track('gear_dropped', { run: merged.run, realm: merged.realm, route: merged.route }, {
+                  stage: r.idle.stageKey, count, best_grade: best?.grade ?? 0, sold, offline: true,
+                });
+              }
+            }
+          }
           // 阅历冻结（sect-neigong/spec.md §4.4）：离线不再产出
           // 卡在台阶上时，闭关同样判顿悟（spec §1.3「在线离线都算」）
           const dw = advanceDunwu(merged, liveMin * 60, Math.random);
@@ -769,7 +827,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
         Object.assign(merged, sectDone);
       }
-      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, offlineSectDone, dunwuNotice });
+      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, offlineSectDone, offlineLoot, dunwuNotice });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
         // 闭关期间寿终正寝：自动归隐，出关结算屏不再有意义，直接进归隐演出
         set({ offlineSettlement: null });
@@ -1185,6 +1243,51 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   dismissFailure: () => set({ failure: null }),
 
+  // ---- 行囊（battle-loot/design.md §3.5）----
+  wearGear: (id) => {
+    const s = get();
+    const it = (s.bag ?? []).find((g) => g.id === id);
+    if (!it) return;
+    const prev = (s.worn ?? {})[it.slot];
+    const bag = (s.bag ?? []).filter((g) => g.id !== id);
+    if (prev) bag.push({ ...prev, fresh: false });
+    set({ bag, worn: { ...(s.worn ?? {}), [it.slot]: { ...it, fresh: false } } });
+    track('gear_equipped', { run: s.run, realm: s.realm, route: s.route }, { slot: it.slot, grade: it.grade, level: it.level, afx: it.afx.length });
+    persist(get());
+  },
+  unwearGear: (slot) => {
+    const s = get();
+    const it = (s.worn ?? {})[slot];
+    if (!it || !bagFits(s.bag ?? [], it)) return;
+    const worn = { ...(s.worn ?? {}) };
+    delete worn[slot];
+    set({ bag: [...(s.bag ?? []), it], worn });
+    persist(get());
+  },
+  sellGear: (id) => {
+    const s = get();
+    const it = (s.bag ?? []).find((g) => g.id === id);
+    if (!it) return;
+    set({ bag: (s.bag ?? []).filter((g) => g.id !== id), silver: s.silver + it.sell });
+    track('gear_sold', { run: s.run, realm: s.realm, route: s.route }, { count: 1, silver: it.sell, grade: it.grade });
+    persist(get());
+  },
+  sellGearBelow: (grade) => {
+    const s = get();
+    const low = (s.bag ?? []).filter((g) => g.grade < grade);
+    if (low.length === 0) return;
+    const silver = low.reduce((n, g) => n + g.sell, 0);
+    set({ bag: (s.bag ?? []).filter((g) => g.grade >= grade), silver: s.silver + silver });
+    track('gear_sold', { run: s.run, realm: s.realm, route: s.route }, { count: low.length, silver, below: grade });
+    persist(get());
+  },
+  markBagSeen: () => {
+    const s = get();
+    if (!(s.bag ?? []).some((g) => g.fresh)) return;
+    set({ bag: (s.bag ?? []).map((g) => (g.fresh ? { ...g, fresh: false } : g)) });
+    persist(get());
+  },
+
   // ---- 归隐流程（§8.6：预览 → 二次确认 → 结算演出 → 声望阁落地） ----
 
   openRetire: () => {
@@ -1427,7 +1530,10 @@ export function idleBasisOf(s: PersistedState): IdleBasis | null {
   const rng = () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; };
   let wins = 0, rounds = 0;
   for (let i = 0; i < IDLE_TRIALS; i++) {
-    const r = fight(build, enemy, { mode: 'rng', rng, bossDmgBonus: bossDmgBonus(s.ownedRepNodes), loadout: buildLoadout(s), qiMax: qiMaxOf(s) });
+    const r = fight(build, enemy, {
+      mode: 'rng', rng, bossDmgBonus: bossDmgBonus(s.ownedRepNodes), hardDmgBonus: gearBonusOf(s.worn).hardPct,
+      loadout: buildLoadout(s), qiMax: qiMaxOf(s),
+    });
     if (r.win) wins++;
     rounds += r.rounds;
   }
@@ -1489,7 +1595,8 @@ function startBattle(
   const enemy = getStage(map, tier, stage);
   const build = playerBuild(s);
   const result = fight(build, enemy, {
-    mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes), loadout: buildLoadout(s), qiMax: qiMaxOf(s),
+    mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes), hardDmgBonus: gearBonusOf(s.worn).hardPct,
+    loadout: buildLoadout(s), qiMax: qiMaxOf(s),
   });
   const key = enemy.kind !== 'normal';
   const turnCount = result.turns.length;
@@ -1513,6 +1620,31 @@ function startBattle(
   });
 }
 
+/** 一场胜利掷一次装备掉落（battle-loot/spec.md §2.1）：品阶按关卡在本段里的位置取权重，入门关只出凡品 / 精良 */
+export function rollDropFor(enemy: EnemyDef, rng: () => number): GearItem | null {
+  if (rng() >= DROP_RATE[enemy.kind]) return null;
+  const n = trackLength(enemy.map, enemy.tier);
+  const pos = n > 1 ? (enemy.stage - 1) / (n - 1) : 0;
+  const grade = rollGrade(pos, enemy.kind, rng, isIntroStage(enemy.map, enemy.tier, enemy.stage));
+  return rollGear({ grade, level: enemy.x ?? 1, clearSilver: enemy.reward.silver }, rng);
+}
+
+/** 放进背包；放不下时（design.md §3.5）：不比身上强的直接卖掉，比身上强的卖掉背包里最差的腾位 */
+export function putInBag(bag: readonly GearItem[], worn: Worn, it: GearItem): { bag: GearItem[]; sold: number } {
+  if (bagFits(bag, it)) return { bag: [...bag, it], sold: 0 };
+  const cur = worn[it.slot];
+  if (cur && it.grade <= cur.grade) return { bag: [...bag], sold: it.sell };
+  const rest = [...bag].sort((a, b) => a.grade - b.grade || a.sell - b.sell);
+  let sold = 0;
+  while (rest.length > 0 && !bagFits(rest, it)) {
+    const worst = rest.shift()!;
+    if (worst.grade > it.grade) { rest.unshift(worst); break; }
+    sold += worst.sell;
+  }
+  if (!bagFits(rest, it)) return { bag: [...bag], sold: it.sell };
+  return { bag: [...rest, it], sold };
+}
+
 function resolveBattle(
   set: (partial: Partial<GameState>) => void,
   get: () => GameState,
@@ -1530,6 +1662,7 @@ function resolveBattle(
   const isKeyBattle = enemy.kind !== 'normal';
 
   let { silver, lastProgressSec } = s;
+  let bag = s.bag ?? [];
   let fameState: Partial<PersistedState> = {};
   let fameGained = 0;
   let clearedStages = s.clearedStages;
@@ -1548,6 +1681,17 @@ function resolveBattle(
       if (fame > 0) fameState = rest;
     }
     rewardApplied = { neili: 0, silver: reward.silver, refarm: !firstClear, fame: fameGained };
+    // 装备掉落（battle-loot/spec.md §2.1）：传功（选内功）之后才开始掉（裁决 13 / 19）
+    const drop = s.neigong ? rollDropFor(enemy, Math.random) : null;
+    if (drop) {
+      const put = putInBag(s.bag ?? [], s.worn ?? {}, drop);
+      bag = put.bag;
+      silver += put.sold;
+      rewardApplied = { ...rewardApplied, gear: drop, ...(put.sold > 0 ? { gearSold: put.sold } : {}) };
+      track('gear_dropped', { run: s.run, realm: s.realm, route: s.route }, {
+        stage: key, slot: drop.slot, grade: drop.grade, level: drop.level, sold: put.sold, offline: false,
+      });
+    }
     if (firstClear) {
       clearedStages = [...clearedStages, key];
       lastProgressSec = s.runPlaySec;
@@ -1609,9 +1753,10 @@ function resolveBattle(
   //   推关：赢了接着往前，到头了就在这一关挂着；输了退回挂机关（没有就退回本段最后一个已通关）
   //   挂机：赢了原地再打；输了退一关继续挂，退无可退才停
   //   单打一次：打完就停
-  const { idle, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
+  const { idle: idle0, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
+  const idle = idle0 && b.mode === 'idle' && rewardApplied?.gear ? { ...idle0, loot: (idle0.loot ?? 0) + 1 } : idle0;
   set({
-    silver, clearedStages, attempts, failure, lastProgressSec,
+    silver, bag, clearedStages, attempts, failure, lastProgressSec,
     injuries, lifespanLost, ...fameState, idle,
     formCasts: wx.formCasts, learnedForms: wx.learnedForms,
     ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),

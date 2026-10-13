@@ -7,6 +7,7 @@ import type { CSSProperties } from 'react';
 import { WoundPanel } from '../components/WoundPanel';
 import { freshInjuries } from '../engine/injury';
 import { computeAttributes, type FinalAttributes } from '../engine/attributes';
+import { gearBonusOf } from '../engine/gear';
 import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouRealms } from '../engine/content';
 import { paidThrough, segmentQuotas, zhoutianProgress } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
@@ -127,7 +128,7 @@ function ZhoutianRead({ s, breakCost }: { s: State; breakCost: number }) {
 
 function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
   const hhMult = huohouMultOf(s);
-  const a = computeAttributes(s.realm, s.route, s.zhong, 0, acupointPct, hhMult);
+  const a = computeAttributes(s.realm, s.route, s.zhong, 0, acupointPct, hhMult, gearBonusOf(s.worn));
   const base = REALMS[s.realm - 1];
   const ng = s.neigong ? NEIGONG[s.neigong] : null;
   const route = s.route ? ROUTES[s.route] : null;

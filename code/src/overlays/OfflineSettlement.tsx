@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef } from 'react';
 import type { OfflineSettleResult } from '../engine/offlineRewards';
+import { gearFullName, type GearItem } from '../engine/gear';
 import { SECTS, SECT_TASKS, type SectTaskKind } from '../engine/sect';
 import { useGameStore } from '../store/gameStore';
 import { fmtBig as fmt, fmtRate } from '../fmt';
@@ -40,9 +41,11 @@ export function OfflineSettlement(props: {
   observer: boolean;
   /** 闭关期间到点结算的门派任务（store 目前未透出，接上后显示「已归」一行） */
   sectDone?: { kind: SectTaskKind; contrib: number } | null;
+  /** 闭关期间挂机拾得的装备 */
+  loot?: { count: number; best: GearItem | null; sold: number } | null;
   onClose: () => void;
 }) {
-  const { result: r, sectDone } = props;
+  const { result: r, sectDone, loot } = props;
   const sect = useGameStore((s) => s.sect);
   const sectTask = useGameStore((s) => s.sectTask);
   const errand = (k: SectTaskKind) => (sect ? SECTS[sect].errands[k === 'short' ? 0 : 1] : SECT_TASKS[k].name);
@@ -94,6 +97,9 @@ export function OfflineSettlement(props: {
           <span>银两</span><span><b ref={silverRef} /></span>
           {r.idle && (
             <><span>挂机</span><span>第 {idleStageNo(r.idle.stageKey)} 关 · <b>{r.idle.fights}</b> 场 · 胜 {r.idle.wins}</span></>
+          )}
+          {loot && loot.count > 0 && (
+            <><span>拾得</span><span><b>{loot.count}</b> 件{loot.best && <> · <span className={`g${loot.best.grade}`}>{gearFullName(loot.best)}</span></>}{loot.sold > 0 && ` · 放不下的卖得 ${loot.sold} 两`}</span></>
           )}
           {sectDone ? (
             <><span>门派任务</span><span>{errand(sectDone.kind)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>

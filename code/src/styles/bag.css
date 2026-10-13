@@ -1,0 +1,72 @@
+/* 行囊页 —— docs/design/battle-loot-prototype.html `#p-bag`（DESIGN.md「行囊（形态格背包）」「Tags（装备品阶）」） */
+.g1 { color: var(--muted); } .g2 { color: oklch(0.78 0.12 145); } .g3 { color: oklch(0.78 0.09 215); } .g4 { color: oklch(0.76 0.13 300); } .g5 { color: var(--crit); }
+.gtag { font-size: 11px; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.05em; white-space: nowrap; }
+.gtag.g1 { background: oklch(0.3 0.014 262 / 0.55); } .gtag.g2 { background: oklch(0.72 0.14 145 / 0.12); } .gtag.g3 { background: oklch(0.74 0.10 215 / 0.12); } .gtag.g4 { background: oklch(0.7 0.14 300 / 0.14); } .gtag.g5 { background: oklch(0.72 0.16 50 / 0.14); box-shadow: inset 0 0 0 1px oklch(0.72 0.16 50 / 0.5); }
+.wtag { font-size: 11px; color: var(--faint); padding: 1px 6px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+
+.bag { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.bag .faint { color: var(--faint); font-weight: 400; letter-spacing: 0; font-family: var(--font-body); font-size: 12px; }
+.worn { display: grid; }
+.worn-i { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 4px 14px; padding: 14px 6px; border-top: 1px solid var(--hair); cursor: pointer; border-radius: 8px; }
+.worn-i:first-child { border-top: 0; }
+.worn-i:hover { background: oklch(0.3 0.016 262 / 0.2); }
+.worn-i[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+.worn-i .slot-k { font-family: var(--font-display); letter-spacing: 0.3em; color: var(--faint); font-size: 13px; padding-top: 3px; grid-row: 1 / span 3; display: grid; gap: 6px; justify-items: start; }
+.worn-i .slot-k .ink { width: 44px; height: 54px; object-fit: contain; opacity: 0.85; }
+.worn-i .nm, .cmp .nm { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.08em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.worn-i .base { font-size: 12.5px; color: var(--muted); }
+.worn-i .base b { color: var(--ink); font-weight: 600; }
+.worn-i .afx { display: flex; gap: 6px 12px; flex-wrap: wrap; font-size: 12px; color: var(--faint); }
+.worn-i .afx span::before { content: '◇ '; font-size: 9px; }
+.worn-i.empty { cursor: default; }
+.worn-i.empty .nm { color: var(--faint); font-size: 14px; }
+.worn-i.empty .slot-k { grid-row: auto; }
+.worn-sum { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--muted); display: grid; gap: 6px; line-height: 1.6; }
+.worn-sum b { color: var(--ink); font-weight: 600; }
+
+.bag-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+.bag-head .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.jh-cats { display: inline-flex; background: var(--wash); border-radius: 9px; padding: 3px; flex-wrap: wrap; }
+.jh-cats button { border: 0; background: none; padding: 4px 13px; border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 13px; font-family: inherit; }
+.jh-cats button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+
+/* 形态格：按部位占格（兵器 1×3、暗器 1×2、衣甲 2×2、佩饰 1×1），自动紧凑摆放，玩家不拖动 */
+.bag-grid { --cell: 46px; display: grid; grid-template-columns: repeat(10, var(--cell)); grid-auto-rows: var(--cell); grid-auto-flow: dense; gap: 4px; justify-content: start; }
+.bag-grid .cell { border-radius: 5px; box-shadow: inset 0 0 0 1px oklch(0.3 0.014 262 / 0.5); background: oklch(0.18 0.012 262 / 0.35); }
+.bag-grid .item { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 6px; padding: 3px; background: oklch(0.22 0.015 262 / 0.55); box-shadow: inset 0 0 0 1px oklch(0.35 0.014 262 / 0.7); display: grid; place-items: center; transition: background .2s, box-shadow .2s; min-width: 0; min-height: 0; overflow: hidden; }
+/* 品阶一眼可见：描边 + 底部品阶色晕 + 右下角标；凡品素色 */
+.bag-grid .item.g2 { color: oklch(0.78 0.12 145); } .bag-grid .item.g3 { color: oklch(0.78 0.09 215); } .bag-grid .item.g4 { color: oklch(0.76 0.13 300); } .bag-grid .item.g5 { color: var(--crit); }
+.bag-grid .item.g2, .bag-grid .item.g3, .bag-grid .item.g4, .bag-grid .item.g5 { box-shadow: inset 0 0 0 1.5px color-mix(in oklch, currentColor 70%, transparent); background: linear-gradient(to top, color-mix(in oklch, currentColor 28%, transparent), transparent 55%), oklch(0.22 0.015 262 / 0.55); }
+.bag-grid .item.g2::after, .bag-grid .item.g3::after, .bag-grid .item.g4::after, .bag-grid .item.g5::after { content: ''; position: absolute; right: 0; bottom: 0; width: 0; height: 0; border-style: solid; border-width: 0 0 12px 12px; border-color: transparent transparent currentColor transparent; opacity: 0.9; }
+.bag-grid .item.g5 { box-shadow: inset 0 0 0 1.5px currentColor, 0 0 10px color-mix(in oklch, currentColor 45%, transparent); }
+.bag-grid .item:hover { background: oklch(0.27 0.017 262 / 0.65); }
+.bag-grid .item[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.7), 0 0 12px oklch(0.78 0.13 78 / 0.25); }
+.bag-grid .item .ink { width: 100%; height: 100%; object-fit: contain; opacity: 0.95; pointer-events: none; }
+.bag-grid .item .up { position: absolute; top: 2px; right: 5px; font-size: 11px; color: var(--gold); }
+.bag-grid .item .fresh { position: absolute; top: 6px; left: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.bag-grid .item.dim { opacity: 0.5; }
+
+/* 比较面板 */
+.cmp { margin-top: 18px; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; align-items: start; }
+.cmp.none { display: block; }
+.cmp-art { position: relative; height: 210px; overflow: hidden; border-radius: 10px; display: grid; place-items: center; padding: 12px; background: radial-gradient(ellipse at 50% 60%, color-mix(in oklch, currentColor 22%, transparent), transparent 70%), oklch(0.17 0.012 262 / 0.8); box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 40%, transparent); color: oklch(0.45 0.012 262); }
+.cmp-art.g2 { color: oklch(0.78 0.12 145); } .cmp-art.g3 { color: oklch(0.78 0.09 215); } .cmp-art.g4 { color: oklch(0.76 0.13 300); } .cmp-art.g5 { color: var(--crit); }
+.cmp-art .ink { height: 186px; width: 126px; object-fit: contain; }
+.cmp-body { min-width: 0; }
+.cmp-empty { font-size: 12.5px; color: var(--faint); line-height: 1.7; text-align: center; padding: 28px 8px; }
+.cmp .cmp-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cmp .cmp-h .nm { font-size: 17px; }
+.cmp .diff { display: grid; gap: 6px; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+.cmp .diff .r { display: grid; grid-template-columns: auto 1fr auto; gap: 0 16px; align-items: baseline; }
+.cmp .diff .k { color: var(--faint); } .cmp .diff .v { color: var(--ink); font-weight: 600; text-align: right; }
+.cmp .diff .d { font-size: 12px; min-width: 3em; } .cmp .diff .d.up { color: var(--ink-gold); } .cmp .diff .d.dn { color: oklch(0.72 0.12 30); }
+.cmp .acts { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+/* 战报拾得行：装备名按品阶着色，压过拾得行的金字 */
+.page-battle .bt-log .p.loot .g1 { color: var(--muted); } .page-battle .bt-log .p.loot .g2 { color: oklch(0.78 0.12 145); } .page-battle .bt-log .p.loot .g3 { color: oklch(0.78 0.09 215); } .page-battle .bt-log .p.loot .g4 { color: oklch(0.76 0.13 300); } .page-battle .bt-log .p.loot .g5 { color: var(--crit); }
+
+@media (max-width: 860px) {
+  .bag { grid-template-columns: 1fr; }
+  .bag-grid { --cell: 32px; grid-template-columns: repeat(10, var(--cell)); }
+  .cmp { grid-template-columns: 110px minmax(0, 1fr); gap: 14px; } .cmp-art { height: 150px; } .cmp-art .ink { height: 126px; width: 86px; }
+}

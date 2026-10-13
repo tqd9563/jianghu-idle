@@ -168,6 +168,8 @@ export interface FightOptions {
   mode: 'ev' | 'rng';
   rng?: () => number;
   bossDmgBonus?: number;
+  /** 对精英 / Boss 伤害加成（装备「破军」词条，battle-loot/design.md §3.2）：按关卡种类生效，普通关为 0 */
+  hardDmgBonus?: number;
   /** 装配的武学；只在实战掷骰模式出招，EV 模式（失败诊断）只算普攻 */
   loadout?: CombatSkill[];
   /** 真气上限（开战即满） */
@@ -189,7 +191,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   let ehp = enemy.hp;
   const tags = enemy.tags as readonly string[];
   const isBoss = tags.includes('高血') || (tags.includes('高防') && tags.includes('高攻'));
-  const dmgMult = isBoss ? 1 + (opts.bossDmgBonus ?? 0) : 1;
+  const dmgMult = (isBoss ? 1 + (opts.bossDmgBonus ?? 0) : 1) * (enemy.kind !== 'normal' ? 1 + (opts.hardDmgBonus ?? 0) : 1);
 
   let sq = 0;
   let elayers = 0;      // 敌人身上的毒层（玩家施加）

@@ -294,6 +294,7 @@ AFFIX_N = {"白": (0, 1), "绿": (1, 2), "蓝": (2, 3), "紫": (3, 4), "橙": (4
 # 基础属性占「同当量玩家属性」的比例（曲线 1.7^(等级−1) 与敌我同形）
 BASE_FRAC = dict(weapon_atk=0.034, dart_atk=0.017, dart_hit=0.85, armor_hp=0.034, armor_dfs=0.034, trinket=1.35)
 ROLL = (0.90, 1.10)
+INTEGER_STATS = "--float" not in sys.argv   # 界面不出小数：装备数值生成时就取整
 # 词条池按部位（design.md §3.2），取值区间按品阶（下限, 上限）
 AFFIX_BASE = {                          # 白装区间；其它品阶 × AFFIX_K
     "atk_pct": (0.017, 0.027), "crit_pp": (0.007, 0.011), "cd_pp": (0.017, 0.030), "hit": (1.7, 2.7),
@@ -348,6 +349,11 @@ def make_item(slot: str, grade: str, level: float, rng: random.Random | None = N
         if a in ("hit", "dodge"):
             v *= (1 + level / 5)
         it["affixes"][a] = v
+    if INTEGER_STATS:   # 整数口径（2026-10-13）：基础属性取整最低 1；百分比 / pp 词条取整到 1%，命中 / 闪避 / 真气取整最低 1
+        for k2, v2 in it["stats"].items():
+            it["stats"][k2] = max(1, int(math.floor(v2 + 0.5)))
+        for k2, v2 in it["affixes"].items():
+            it["affixes"][k2] = max(0.01, math.floor(v2 * 100 + 0.5) / 100) if k2.endswith("_pct") or k2.endswith("_pp") else max(1, int(math.floor(v2 + 0.5)))
     return it
 
 

@@ -2023,7 +2023,7 @@ let ITEMS = [
   { id: 14, slot: '衣甲', g: 1, lv: 2.45, obj: '粗布短打', base: { 气血: 15, 防御: 0.8 }, afx: [] },
 ];
 const bag = { sel: 5, sort: 'new' };
-const fmt = v => Number.isInteger(v) ? v : v.toFixed(1);
+const fmt = v => Math.max(1, Math.round(v));
 const itemName = it => (it.afx.length ? `<span class="pre">${it.afx.map(a => PRE[a[0]]).join('')}的</span>` : '') + it.obj;
 const THUMB = { 剑: 'jian', 刀: 'dao', 枪: 'qiang', 棍: 'gun', 暗器: 'anqi', 衣甲: 'jia', 佩饰: 'pei' };
 const SHAPE = { 兵器: [1, 3], 暗器: [1, 2], 衣甲: [2, 2], 佩饰: [1, 1] };   // 列 × 行
@@ -2039,7 +2039,7 @@ function renderWorn() {
     if (!it) return `<div class="worn-i empty"><span class="slot-k">${sl}</span><span class="nm">空着</span></div>`;
     return `<div class="worn-i" data-item="${it.id}"><span class="slot-k">${sl}${ink(it)}</span>
       <span class="nm"><span class="g${it.g}">${itemName(it)}</span><span class="gtag g${it.g}">${GN[it.g]}</span>${it.cat ? `<span class="wtag">${it.cat}</span>` : ''}</span>
-      <span class="base">${Object.entries(it.base).map(([k, v]) => `${k} <b>+${fmt(v)}</b>`).join(' · ')}<span class="faint"> · 等级 ${it.lv.toFixed(1)}</span></span>
+      <span class="base">${Object.entries(it.base).map(([k, v]) => `${k} <b>+${fmt(v)}</b>`).join(' · ')}</span>
       ${it.afx.length ? `<span class="afx">${it.afx.map(([k, v]) => `<span>${afxText(k, v)}</span>`).join('')}</span>` : ''}</div>`;
   }).join('');
   const w = ITEMS.filter(i => i.worn);
@@ -2067,7 +2067,7 @@ function renderCmp() {
   if (!it) { el.innerHTML = '<div class="cmp-empty">点背包里的装备，在此与身上的比较</div>'; return; }
   const cur = ITEMS.find(i => i.worn && i.slot === it.slot);
   const keys = [...new Set([...Object.keys(it.base), ...(cur ? Object.keys(cur.base) : [])])];
-  const diff = keys.map(k => { const a = it.base[k] || 0, c = cur ? cur.base[k] || 0 : 0, d = a - c; return `<span class="k">${k}</span><span class="v">+${fmt(a)}</span><span class="d ${d > 0 ? 'up' : d < 0 ? 'dn' : ''}">${it.worn ? '' : d > 0 ? '▲ ' + fmt(d) : d < 0 ? '▼ ' + fmt(-d) : '—'}</span>`; }).join('');
+  const diff = keys.map(k => { const a = fmt(it.base[k] || 0), c = cur ? fmt(cur.base[k] || 0) : 0, d = a - c; return `<span class="k">${k}</span><span class="v">+${a}</span><span class="d ${d > 0 ? 'up' : d < 0 ? 'dn' : ''}">${it.worn ? '' : d > 0 ? '▲ ' + d : d < 0 ? '▼ ' + (-d) : '—'}</span>`; }).join('');
   const afx = it.afx.map(([k, v]) => `<span class="k">${PRE[k]}</span><span class="v">${afxText(k, v)}</span><span class="d"></span>`).join('');
   let note = '';
   if (it.slot === '兵器' && cur && it.cat !== cur.cat) note = `<div class="note warn">换持${it.cat}，将卸下流云剑法、青萍剑法两门剑法；通臂拳属肉身功夫，不受影响。</div>`;

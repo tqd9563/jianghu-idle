@@ -41,7 +41,8 @@ import {
   outputMult, settleRetire, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
 import {
-  OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage, type OfflineSettleResult,
+  IDLE_SEC_OVERHEAD, IDLE_SEC_PER_ROUND, OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage,
+  type IdleBasis, type OfflineSettleResult,
 } from '../engine/offlineRewards';
 import { BUILD, TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
@@ -86,18 +87,14 @@ interface PersistedState {
   chargeHighWater: number;
   clearedStages: string[];
   attempts: Record<string, number>;
-  autoAdvance: boolean;
+  /** 挂机（battle-loot/design.md §2.1）：守着一关反复打；离线按它折算场次（§2.3）；每世清零 */
+  idle: IdleState | null;
   /** 本轮活跃游玩秒数（tick 累计；页面关闭期间不计 —— run_duration_s 权威口径，经济表 §6.4） */
   runPlaySec: number;
   /** 最近一次实质进展（首通/突破/武学/机制节点）时的 runPlaySec（埋点口径） */
   lastProgressSec: number;
   /** 本世 retire_unlocked 是否已上报 */
   standardNotified: boolean;
-  /** 连续回刷衰减（公式表 §6 防原地刷爆）：同一关连续第 n 次回刷 ×0.8^(n−1)，间隔 10 分钟重置 */
-  refarmKey: string | null;
-  refarmCount: number;
-  /** 上次回刷时的 runPlaySec（活跃净时间口径） */
-  refarmAt: number;
   /** 观察员会话进行中 —— 持久化：面板重开/页面刷新不得回到「未开始」假象 */
   sessionActive: boolean;
   /** 观察员暂停（test_paused/test_resumed）：暂停期间挂机产出、活跃时长、战斗回放全部冻结。
@@ -175,6 +172,16 @@ function revealDelay(turns: FightResult['turns'], i: number): number {
   return t.side === 'enemy' ? REVEAL_AFTER_ENEMY_MS : REVEAL_AFTER_PLAYER_MS;
 }
 
+export type BattleMode = 'push' | 'idle' | 'single';
+
+export interface IdleState {
+  map: MapNo;
+  tier: TierId;
+  stage: number;
+  /** 本世在此挂机已打的场次（在线 + 离线折算） */
+  fights: number;
+}
+
 export interface BattleState {
   map: MapNo;
   tier: TierId;
@@ -188,9 +195,12 @@ export interface BattleState {
   /** 揭示节拍的缩放：精英 / Boss 把整场压进 15–30 秒（§7.1），普通关为 1 */
   revealScale?: number;
   resolved: boolean;
+  /** 这一场是推关（打下一关）、挂机（守着一关反复打）还是单打一次（重打一次） */
+  mode: BattleMode;
   chainAt: number | null;
-  /** 自动连战目标：首通胜 → 下一关（推进）；回刷胜 → 原关（回退挂机，收益按公式表 §6 衰减） */
+  /** 接着打的关：推关胜 → 下一关；推关败 / 挂机败 → 退回挂机关；挂机胜 → 原关 */
   chainStage: number | null;
+  chainMode: BattleMode | null;
   /** 胜利实际入账（收益行同源同值）；fame = 本场首通精英 / Boss 的名号声望 */
   reward: { neili: number; silver: number; refarm: boolean; fame?: number; drop?: string } | null;
   /** 本场战斗记录开头说一句拜山传闻 */
@@ -295,8 +305,12 @@ interface GameState extends PersistedState {
   buySectItem: (itemId: string) => void;
   selectMap: (m: MapNo) => void;
   selectTier: (t: TierId) => void;
+  /** 推关或重打一次：下一关 → 推关（赢了接着往前，输了退回挂机）；已通关卡 → 只打这一场 */
   challengeStage: (map: MapNo, tier: TierId, stage: number) => void;
-  setAutoAdvance: (v: boolean) => void;
+  /** 在此挂机：守着这一关反复打，输了退一关继续，不停机 */
+  idleAt: (map: MapNo, tier: TierId, stage: number) => void;
+  /** 收手：这一场打完就停，不再接着打 */
+  stopIdle: () => void;
   dismissFailure: () => void;
   openRetire: () => void;
   proceedRetire: () => void;
@@ -319,9 +333,8 @@ const FRESH: PersistedState = {
   dantian: 0, silver: 0, xp: 0,
   reputation: 0, repTotal: 0,
   ownedRepNodes: [], chargeHighWater: 0,
-  clearedStages: [], attempts: {}, autoAdvance: true,
+  clearedStages: [], attempts: {}, idle: null,
   runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
-  refarmKey: null, refarmCount: 0, refarmAt: 0,
   sessionActive: false, paused: false,
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
@@ -692,6 +705,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (savedAt !== null && !merged.paused) {
         const r = calculateOfflineRewards({
           currentMaxIdleStage: maxIdleStage(merged.clearedStages),
+          idle: idleBasisOf(merged),
           lastSeenAt: savedAt,
           now,
           capOverrideMin: getDebugOfflineCap(),
@@ -709,6 +723,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           const liveMin = r.effectiveMin * k;
           merged.dantian += r.neili * k;
           merged.silver += Math.round(r.silver * k);
+          // 挂机场次记进本世计数（battle-loot/design.md §2.3）；掉落随实装二接在 r.idle.wins 上
+          if (r.idle && merged.idle) merged.idle = { ...merged.idle, fights: merged.idle.fights + Math.round(r.idle.fights * k) };
           // 阅历冻结（sect-neigong/spec.md §4.4）：离线不再产出
           // 卡在台阶上时，闭关同样判顿悟（spec §1.3「在线离线都算」）
           const dw = advanceDunwu(merged, liveMin * 60, Math.random);
@@ -736,6 +752,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             tier_id: r.tier.id,
             efficiency: r.efficiency,
             neili: r.neili, silver: r.silver,
+            idle_stage: r.idle?.stageKey ?? null, idle_fights: r.idle?.fights ?? 0, idle_wins: r.idle?.wins ?? 0,
             silent: r.silent,
             debug_cap: r.debugCap,
           });
@@ -899,7 +916,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       } else if (b.resolved && b.chainAt !== null && now >= b.chainAt) {
         const target = b.chainStage;
         set({ battle: null });
-        if (target !== null && get().autoAdvance) get().challengeStage(b.map, b.tier, target);
+        if (target !== null) startBattle(set, get, b.map, b.tier, target, b.chainMode ?? 'push');
       }
     }
 
@@ -1143,41 +1160,26 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   challengeStage: (map, tier, stage) => {
     const s = get();
-    if (s.battle && !s.battle.resolved) return;
-    if (!tierUnlocked(map, tier, s.tiersUnlocked ?? [])) return;
-    const next = nextStageOf(map, tier, s.clearedStages);
     const isRefarm = s.clearedStages.includes(stageKey(map, tier, stage));
-    if (!isRefarm && stage !== next) return; // 只能打下一关或回刷已通关卡
-
-    const enemy = getStage(map, tier, stage);
-    const build = playerBuild(s);
-    const result = fight(build, enemy, {
-      mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes), loadout: buildLoadout(s), qiMax: qiMaxOf(s),
-    });
-    const key = enemy.kind !== 'normal';
-    const turnCount = result.turns.length;
-    // 普通关按原型节拍逐条揭示；Boss/精英演出 15–30 秒不可跳过（§7.1），节拍整体缩放进这个区间
-    let totalMs = REVEAL_FIRST_MS;
-    for (let i = 0; i < turnCount - 1; i++) totalMs += revealDelay(result.turns, i);
-    const revealScale = key ? Math.min(Math.max(totalMs, 15000), 30000) / totalMs : 1;
-    const intervalMs = (totalMs * revealScale) / Math.max(1, turnCount);
-    set({
-      failure: null,
-      selectedMap: map,
-      selectedTier: tier,
-      battle: {
-        map, tier, stage, enemy, result,
-        revealed: 0, nextRevealAt: Date.now() + REVEAL_FIRST_MS * revealScale, intervalMs, revealScale,
-        resolved: false, chainAt: null, chainStage: null, reward: null,
-        seed: Math.floor(Math.random() * 2 ** 31),
-        ...(s.rumorPending ? { rumor: true } : {}),
-      },
-      ...(s.rumorPending ? { rumorPending: false } : {}),
-    });
+    startBattle(set, get, map, tier, stage, isRefarm ? 'single' : 'push');
   },
 
-  setAutoAdvance: (v) => {
-    set({ autoAdvance: v });
+  idleAt: (map, tier, stage) => {
+    const s = get();
+    if (!s.clearedStages.includes(stageKey(map, tier, stage))) return; // 只能在已通关的关挂
+    const same = s.idle && s.idle.map === map && s.idle.tier === tier && s.idle.stage === stage;
+    set({ idle: same ? s.idle : { map, tier, stage, fights: 0 } });
+    track('idle_start', { run: s.run, realm: s.realm, route: s.route }, { map, tier, stage });
+    if (!s.battle || s.battle.resolved) startBattle(set, get, map, tier, stage, 'idle');
+    persist(get());
+  },
+
+  stopIdle: () => {
+    const s = get();
+    if (!s.idle) return;
+    track('idle_stop', { run: s.run, realm: s.realm, route: s.route }, { ...s.idle });
+    const b = s.battle;
+    set({ idle: null, battle: b && b.resolved ? { ...b, chainAt: null, chainStage: null, chainMode: null } : b });
     persist(get());
   },
 
@@ -1394,7 +1396,7 @@ function rebirth(
     ganwuLevel: s.ganwuLevel ?? 0,
     deepestBossEver: Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages)),
     fameClaimed: s.fameClaimed ?? [],
-    autoAdvance: s.autoAdvance,
+    idle: null,
     // 窍穴图鉴归隐保留（spec §8）；窍穴进度、伤势、折寿由 ...FRESH 重置
     acupointLog: s.acupointLog ?? [],
     // 两个时钟（reincarnation/spec.md §6）：年岁重置，江湖历从谢幕年份接着算
@@ -1410,6 +1412,105 @@ function rebirth(
     owned_nodes: s.ownedRepNodes, wuxing,
   });
   persist(get());
+}
+
+/** 离线挂机折算的依据（battle-loot/design.md §2.3）：按当下战力试打 20 场定胜率与平均耗时 */
+const IDLE_TRIALS = 20;
+export function idleBasisOf(s: PersistedState): IdleBasis | null {
+  const idle = s.idle;
+  if (!idle || !tierUnlocked(idle.map, idle.tier, s.tiersUnlocked ?? [])) return null;
+  const key = stageKey(idle.map, idle.tier, idle.stage);
+  if (!s.clearedStages.includes(key)) return null;
+  const enemy = getStage(idle.map, idle.tier, idle.stage);
+  const build = playerBuild(s);
+  let x = 20261013;
+  const rng = () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; };
+  let wins = 0, rounds = 0;
+  for (let i = 0; i < IDLE_TRIALS; i++) {
+    const r = fight(build, enemy, { mode: 'rng', rng, bossDmgBonus: bossDmgBonus(s.ownedRepNodes), loadout: buildLoadout(s), qiMax: qiMaxOf(s) });
+    if (r.win) wins++;
+    rounds += r.rounds;
+  }
+  return {
+    stageKey: key,
+    winRate: wins / IDLE_TRIALS,
+    fightSec: (rounds / IDLE_TRIALS) * IDLE_SEC_PER_ROUND + IDLE_SEC_OVERHEAD,
+    silverPerWin: refarmReward(enemy).silver,
+  };
+}
+
+/** 本段里比 stage 低的最后一个已通关（退一关挂机用）；没有返回 null */
+export function lastClearedBelow(map: MapNo, tier: TierId, stage: number, cleared: readonly string[]): number | null {
+  for (let st = stage - 1; st >= 1; st--) if (cleared.includes(stageKey(map, tier, st))) return st;
+  return null;
+}
+
+/** 一场打完接着打哪关（纯函数，便于测试）：返回新的挂机状态与连战目标 */
+export function nextAfterBattle(
+  idle: IdleState | null, b: Pick<BattleState, 'map' | 'tier' | 'stage' | 'mode'>, win: boolean, cleared: readonly string[],
+): { idle: IdleState | null; chainStage: number | null; chainMode: BattleMode | null } {
+  const sameTrack = idle !== null && idle.map === b.map && idle.tier === b.tier;
+  const idleHere = (stage: number, fights: number): IdleState => ({ map: b.map, tier: b.tier, stage, fights });
+  if (b.mode === 'idle') {
+    if (!idle) return { idle: null, chainStage: null, chainMode: null };   // 挂机中收手：这一场打完就停
+    if (win) return { idle: { ...idle, fights: idle.fights + 1 }, chainStage: idle.stage, chainMode: 'idle' };
+    const back = lastClearedBelow(b.map, b.tier, b.stage, cleared);
+    return back === null
+      ? { idle: null, chainStage: null, chainMode: null }
+      : { idle: idleHere(back, idle.fights), chainStage: back, chainMode: 'idle' };
+  }
+  if (b.mode === 'push') {
+    if (win) {
+      const next = nextStageOf(b.map, b.tier, cleared);
+      if (next !== null) return { idle, chainStage: next, chainMode: 'push' };
+      // 本段打穿：在最后一关挂着
+      const here = idleHere(b.stage, sameTrack ? idle!.fights : 0);
+      return { idle: here, chainStage: here.stage, chainMode: 'idle' };
+    }
+    const back = sameTrack ? idle!.stage : lastClearedBelow(b.map, b.tier, b.stage, cleared);
+    if (back === null) return { idle, chainStage: null, chainMode: null };
+    return { idle: idleHere(back, sameTrack ? idle!.fights : 0), chainStage: back, chainMode: 'idle' };
+  }
+  return { idle, chainStage: null, chainMode: null };
+}
+
+function startBattle(
+  set: (partial: Partial<GameState>) => void,
+  get: () => GameState,
+  map: MapNo, tier: TierId, stage: number, mode: BattleMode,
+) {
+  const s = get();
+  if (s.battle && !s.battle.resolved) return;
+  if (!tierUnlocked(map, tier, s.tiersUnlocked ?? [])) return;
+  const next = nextStageOf(map, tier, s.clearedStages);
+  const isRefarm = s.clearedStages.includes(stageKey(map, tier, stage));
+  if (!isRefarm && stage !== next) return; // 只能打下一关或已通关卡
+
+  const enemy = getStage(map, tier, stage);
+  const build = playerBuild(s);
+  const result = fight(build, enemy, {
+    mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes), loadout: buildLoadout(s), qiMax: qiMaxOf(s),
+  });
+  const key = enemy.kind !== 'normal';
+  const turnCount = result.turns.length;
+  // 普通关按原型节拍逐条揭示；Boss/精英演出 15–30 秒不可跳过（§7.1），节拍整体缩放进这个区间
+  let totalMs = REVEAL_FIRST_MS;
+  for (let i = 0; i < turnCount - 1; i++) totalMs += revealDelay(result.turns, i);
+  const revealScale = key ? Math.min(Math.max(totalMs, 15000), 30000) / totalMs : 1;
+  const intervalMs = (totalMs * revealScale) / Math.max(1, turnCount);
+  set({
+    failure: null,
+    selectedMap: map,
+    selectedTier: tier,
+    battle: {
+      map, tier, stage, enemy, result, mode,
+      revealed: 0, nextRevealAt: Date.now() + REVEAL_FIRST_MS * revealScale, intervalMs, revealScale,
+      resolved: false, chainAt: null, chainStage: null, chainMode: null, reward: null,
+      seed: Math.floor(Math.random() * 2 ** 31),
+      ...(s.rumorPending ? { rumor: true } : {}),
+    },
+    ...(s.rumorPending ? { rumorPending: false } : {}),
+  });
 }
 
 function resolveBattle(
@@ -1428,7 +1529,7 @@ function resolveBattle(
   const attempts = { ...s.attempts, [tid]: attempt };
   const isKeyBattle = enemy.kind !== 'normal';
 
-  let { silver, lastProgressSec, refarmKey, refarmCount, refarmAt } = s;
+  let { silver, lastProgressSec } = s;
   let fameState: Partial<PersistedState> = {};
   let fameGained = 0;
   let clearedStages = s.clearedStages;
@@ -1436,15 +1537,8 @@ function resolveBattle(
   let rewardApplied: BattleState['reward'] = null;
 
   if (result.win) {
-    let reward = firstClear ? enemy.reward : refarmReward(enemy);
-    if (!firstClear) {
-      // 连续回刷衰减（公式表 §6）：同一关连续第 n 次 ×0.8^(n−1)，间隔 10 分钟重置
-      refarmCount = refarmKey === key && s.runPlaySec - refarmAt < 600 ? refarmCount + 1 : 1;
-      refarmKey = key;
-      refarmAt = s.runPlaySec;
-      const decay = Math.pow(0.8, refarmCount - 1);
-      reward = { ...reward, silver: Math.round(reward.silver * decay) };
-    }
+    // 已通关卡给首通银两的五成，不再有连刷递减（battle-loot/design.md 裁决 14）：一场要演两三秒，产出已被时长卡住
+    const reward = firstClear ? enemy.reward : refarmReward(enemy);
     // 关卡不掉内力（formulas.md §6.1 v1.6）：推完前沿即归隐，关卡内力落在一世末尾等于白拿
     silver += reward.silver;   // 阅历冻结（spec §4.4）：关卡不再发阅历
     // 首次击败精英 / Boss：名号传开（economy.md §1.3），跨世只领一次
@@ -1511,16 +1605,17 @@ function resolveBattle(
     track('form_learned', { run: s.run, realm: s.realm, route: s.route }, { form: name });
   }
 
-  // 自动连战：首通胜利推进下一关；回刷胜利回到原关（回退挂机）
-  const chainStage = result.win && s.autoAdvance
-    ? (firstClear ? nextStageOf(b.map, b.tier, clearedStages) : b.stage)
-    : null;
+  // 接着打哪一关（battle-loot/design.md §2.1）：
+  //   推关：赢了接着往前，到头了就在这一关挂着；输了退回挂机关（没有就退回本段最后一个已通关）
+  //   挂机：赢了原地再打；输了退一关继续挂，退无可退才停
+  //   单打一次：打完就停
+  const { idle, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
   set({
     silver, clearedStages, attempts, failure, lastProgressSec,
-    refarmKey, refarmCount, refarmAt, injuries, lifespanLost, ...fameState,
+    injuries, lifespanLost, ...fameState, idle,
     formCasts: wx.formCasts, learnedForms: wx.learnedForms,
     ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),
-    battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, reward: rewardApplied },
+    battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, chainMode, reward: rewardApplied },
   });
   if (fameGained > 0) {
     track('fame_gained', { run: s.run, realm: s.realm, route: s.route }, {

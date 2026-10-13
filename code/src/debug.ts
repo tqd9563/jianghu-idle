@@ -22,7 +22,7 @@ const PRESETS: Record<string, object> = {
     dantian: 6900, silver: 530, xp: 189,
     reputation: 0, repTotal: 0,
     tiersPassed: 2, chargeHighWater: 3,
-    clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
+    clearedStages: [...m1all, ...m2upto(6)], attempts: {}, idle: null,
     tiersUnlocked: ['1-0', '2-0', '1-1'], 
   },
   // 突破就绪态：境界 4 · 六段周天缴清、任脉已贯通 · 图3 推进到第 8 关
@@ -35,7 +35,7 @@ const PRESETS: Record<string, object> = {
       guanyuan: { failCount: 0, opened: true }, qihai: { failCount: 0, opened: true },
       danzhong: { failCount: 1, opened: true },
     },
-    clearedStages: [...m1all, ...upto(2, 0), ...m3upto(7)], attempts: {}, autoAdvance: true,
+    clearedStages: [...m1all, ...upto(2, 0), ...m3upto(7)], attempts: {}, idle: null,
     tiersUnlocked: ['1-0', '2-0', '1-1', '3-0', '2-1'],
   },
   // Boss 2 卡点态：境界 3 打推荐境界 4 的铁掌恶僧（复现失败诊断规则 1）
@@ -44,7 +44,7 @@ const PRESETS: Record<string, object> = {
     dantian: 3210, silver: 490, xp: 96,
     reputation: 0, repTotal: 0,
     tiersPassed: 3, chargeHighWater: 1,
-    clearedStages: [...m1all, ...m2upto(trackLength(2, 0) - 1)], attempts: {}, autoAdvance: false,
+    clearedStages: [...m1all, ...m2upto(trackLength(2, 0) - 1)], attempts: {}, idle: null,
     tiersUnlocked: ['1-0', '2-0', '1-1'], 
   },
   // 归隐就绪态：境界 5 + 三图全通
@@ -55,7 +55,7 @@ const PRESETS: Record<string, object> = {
     tiersPassed: 3, chargeHighWater: 0,
     clearedStages: [...m1all, ...upto(2, 0), ...upto(3, 0)],
     tiersUnlocked: ['1-0', '2-0', '1-1', '3-0', '2-1', '4-0', '3-1'], deepestBossEver: 3,
-    attempts: { boss3: 2 }, autoAdvance: true,
+    attempts: { boss3: 2 }, idle: null,
     runPlaySec: 2760, lastProgressSec: 2700, standardNotified: false,
   },
   // 长线第 35 天早上（原型 longline-prototype.html 的 mock 玩家）：境界 4 峰值、推完前沿待归隐
@@ -67,7 +67,7 @@ const PRESETS: Record<string, object> = {
     tiersPassed: 3, chargeHighWater: 5,
     // 早上推完前沿：图 1 初入 / 历练、图 2 初入全通，图 1 绝境、图 2 历练、图 3 初入各推到第 8 关
     clearedStages: [...m1all, ...upto(1, 1), ...upto(1, 2, 8), ...upto(2, 0), ...upto(2, 1, 8), ...m3upto(8)],
-    attempts: {}, autoAdvance: true,
+    attempts: {}, idle: null,
     tiersUnlocked: ['1-0', '1-1', '1-2', '2-0', '2-1', '3-0'],
     lifeWeightedHours: 598.4, deepestBossEver: 11, fameThisLife: 243,
     fameClaimed: [
@@ -83,7 +83,7 @@ const PRESETS: Record<string, object> = {
     dantian: 0, silver: 0, xp: 0,
     reputation: 130, repTotal: 130,
     tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
-    clearedStages: [], attempts: {}, autoAdvance: true,
+    clearedStages: [], attempts: {}, idle: null,
     runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
   },
   // 选内功弹窗：刚突破入境界 2、尚未主修内功（issue #26 视觉验收用）
@@ -92,7 +92,7 @@ const PRESETS: Record<string, object> = {
     dantian: 0, silver: 0, xp: 0,
     reputation: 130, repTotal: 130,
     tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
-    clearedStages: [], attempts: {}, autoAdvance: true,
+    clearedStages: [], attempts: {}, idle: null,
     runPlaySec: 0, lastProgressSec: 0, standardNotified: false,
   },
   // 转世系统（reincarnation-prototype.html）：垂暮态——境界 3 寿元 90，80 岁时离寿元不足一次重伤
@@ -100,7 +100,7 @@ const PRESETS: Record<string, object> = {
     run: 3, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 5,
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
     tiersPassed: 2, chargeHighWater: 3,
-    clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
+    clearedStages: [...m1all, ...m2upto(6)], attempts: {}, idle: null,
     tiersUnlocked: ['1-0', '2-0', '1-1'], age: 80, eraStart: 206, peakRealm: 3,
   },
   // 将死态：境界 3、89.99 岁，挂机片刻即寿终正寝，用于看自动归隐演出
@@ -108,7 +108,7 @@ const PRESETS: Record<string, object> = {
     run: 3, realm: 3, route: 'tangmen', neigong: 'shiguxinfa', zhong: 5,
     dantian: 6900, silver: 530, xp: 189, reputation: 260, repTotal: 260,
     tiersPassed: 2, chargeHighWater: 3,
-    clearedStages: [...m1all, ...m2upto(6)], attempts: {}, autoAdvance: true,
+    clearedStages: [...m1all, ...m2upto(6)], attempts: {}, idle: null,
     tiersUnlocked: ['1-0', '2-0', '1-1'], age: 89.99, eraStart: 206, peakRealm: 3,
   },
   // 魂魄未稳态：被迫转世后的新一世开局
@@ -116,7 +116,7 @@ const PRESETS: Record<string, object> = {
     run: 4, realm: 1, route: null, neigong: null, zhong: 0,
     dantian: 0, silver: 0, xp: 0, reputation: 390, repTotal: 390,
     tiersPassed: 0, ownedRepNodes: [], chargeHighWater: 0,
-    clearedStages: [], attempts: {}, autoAdvance: true,
+    clearedStages: [], attempts: {}, idle: null,
     age: 18, eraStart: 308, soulUnsettled: true,
   },
 };

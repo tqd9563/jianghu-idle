@@ -65,8 +65,13 @@ describe('存档迁移 v6 → v7：图 1 初入补入门关，原关卡编号顺
       'm1t0s1', 'm1t0s2', 'm1t0s3', 'm1t0s4', 'm1t0s5', 'm1t0s6', 'm1t0s7', 'm1t0s8', 'm1t1s1',
     ]);
     expect(out.attempts).toEqual({ m1t0s9: 4, m2t0s1: 1 });
-    expect(out.refarmKey).toBe('m1t0s8');
+    expect(out.refarmKey).toBeUndefined();   // v9 废止回刷衰减字段，顺延后再删
     expect(out.fameClaimed).toEqual(['stage:m1t0s10', 'meridian:shoutaiyin']);
+  });
+
+  it('v8 → v9：自动连战开关与回刷衰减三字段删掉，其它不动；idle 不补', () => {
+    const out = migrate({ autoAdvance: true, refarmKey: 'm1t0s8', refarmCount: 3, refarmAt: 12, silver: 5 } as Record<string, unknown>, 8, SAVE_VERSION);
+    expect(out).toEqual({ silver: 5 });
   });
 
   it('没打过图 1 初入的存档不补入门关；缺的字段不补 undefined', () => {

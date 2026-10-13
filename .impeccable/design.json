@@ -1,162 +1,256 @@
 {
-  "schemaVersion": 2,
-  "generatedAt": "2026-09-30T04:09:53Z",
-  "title": "Design System: 江湖无尽录",
-  "extensions": {
-    "colorMeta": {
-      "candle-gold": {
-        "role": "primary",
-        "displayName": "烛火暖金",
-        "canonical": "oklch(0.78 0.13 78)"
-      },
-      "ink-gold": {
-        "role": "primary",
-        "displayName": "墨金",
-        "canonical": "oklch(0.75 0.075 76)"
-      },
-      "qi-cyan": {
-        "role": "secondary",
-        "displayName": "冷青",
-        "canonical": "oklch(0.74 0.10 215)"
-      },
-      "cinnabar": {
-        "role": "secondary",
-        "displayName": "朱砂",
-        "canonical": "oklch(0.66 0.14 32)"
-      },
-      "blood": {
-        "role": "tertiary",
-        "displayName": "血褐",
-        "canonical": "oklch(0.62 0.17 25)"
-      },
-      "night-bg": {
-        "role": "neutral",
-        "displayName": "夜底",
-        "canonical": "oklch(0.155 0.013 262)"
-      },
-      "ink": {
-        "role": "neutral",
-        "displayName": "墨",
-        "canonical": "oklch(0.91 0.012 85)"
-      }
-    },
-    "typographyMeta": {
-      "headline": {
-        "displayName": "演出标题",
-        "purpose": "只用于四个整屏演出"
-      },
-      "display": {
-        "displayName": "页标题",
-        "purpose": "每页一个"
-      },
-      "title": {
-        "displayName": "卡片标题 / 专名",
-        "purpose": "卡片头、武学内功名、导航"
-      },
-      "body": {
-        "displayName": "正文",
-        "purpose": "说明、战报（霞鹜文楷）"
-      }
-    },
-    "shadows": [
-      {
-        "name": "float",
-        "value": "0 14px 40px oklch(0.05 0.01 262 / 0.7)",
-        "purpose": "设置面板、悬停提示"
-      },
-      {
-        "name": "display-object",
-        "value": "drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6))",
-        "purpose": "书脊、书册"
-      },
-      {
-        "name": "selected-glow",
-        "value": "0 0 12px oklch(0.78 0.13 78 / 0.35)",
-        "purpose": "当前节点、选中陈列物"
-      }
-    ],
-    "motion": [
-      {
-        "name": "ease-out-quart",
-        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "全站默认缓动"
-      },
-      {
-        "name": "page-in",
-        "value": "0.45s opacity + translateY(6px)",
-        "purpose": "切页"
-      }
-    ],
-    "breakpoints": [
-      {
-        "name": "mobile",
-        "value": "860px"
-      }
-    ]
+ "schemaVersion": 2,
+ "generatedAt": "2026-10-13T16:16:02.470803",
+ "title": "Design System: 江湖无尽录",
+ "extensions": {
+  "colorMeta": {
+   "candle-gold": {
+    "role": "primary",
+    "displayName": "烛火暖金",
+    "canonical": "oklch(0.78 0.13 78)"
+   },
+   "ink-gold": {
+    "role": "primary",
+    "displayName": "墨金",
+    "canonical": "oklch(0.75 0.075 76)"
+   },
+   "qi-cyan": {
+    "role": "secondary",
+    "displayName": "冷青",
+    "canonical": "oklch(0.74 0.10 215)"
+   },
+   "cinnabar": {
+    "role": "secondary",
+    "displayName": "朱砂",
+    "canonical": "oklch(0.66 0.14 32)"
+   },
+   "blood": {
+    "role": "tertiary",
+    "displayName": "血褐",
+    "canonical": "oklch(0.62 0.17 25)"
+   },
+   "night-bg": {
+    "role": "neutral",
+    "displayName": "夜底",
+    "canonical": "oklch(0.155 0.013 262)"
+   },
+   "ink": {
+    "role": "neutral",
+    "displayName": "墨",
+    "canonical": "oklch(0.91 0.012 85)"
+   },
+   "grade-fine": {
+    "role": "tertiary",
+    "displayName": "精良 绿",
+    "canonical": "oklch(0.78 0.12 145)"
+   },
+   "grade-superior": {
+    "role": "tertiary",
+    "displayName": "上乘 青",
+    "canonical": "oklch(0.78 0.09 215)"
+   },
+   "grade-rare": {
+    "role": "tertiary",
+    "displayName": "珍品 紫",
+    "canonical": "oklch(0.76 0.13 300)"
+   },
+   "grade-supreme": {
+    "role": "tertiary",
+    "displayName": "极品 橙",
+    "canonical": "oklch(0.72 0.16 50)"
+   },
+   "route-vigorous": {
+    "role": "tertiary",
+    "displayName": "刚猛 朱砂",
+    "canonical": "oklch(0.72 0.16 28)"
+   },
+   "route-lasting": {
+    "role": "tertiary",
+    "displayName": "绵长 竹青",
+    "canonical": "oklch(0.76 0.11 135)"
+   },
+   "route-guarding": {
+    "role": "tertiary",
+    "displayName": "守御 石青",
+    "canonical": "oklch(0.74 0.10 245)"
+   },
+   "route-devious": {
+    "role": "tertiary",
+    "displayName": "诡谲 紫",
+    "canonical": "oklch(0.74 0.11 320)"
+   },
+   "route-venomous": {
+    "role": "tertiary",
+    "displayName": "阴毒 黛绿",
+    "canonical": "oklch(0.70 0.10 175)"
+   },
+   "black-ink": {
+    "role": "tertiary",
+    "displayName": "黑市 紫灰",
+    "canonical": "oklch(0.82 0.09 300)"
+   },
+   "lantern-gold": {
+    "role": "tertiary",
+    "displayName": "灯笼 暖金",
+    "canonical": "oklch(0.8 0.08 70)"
+   }
   },
-  "components": [
-    {
-      "name": "描金主按钮",
-      "kind": "button",
-      "refersTo": "button-primary",
-      "description": "主操作；第二行小字写价格或耗费",
-      "html": "<button class=\"ds-main\">突破 · 小有所成</button>",
-      "css": ".ds-main{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:600;letter-spacing:.16em;padding:11px 26px;border:0;border-radius:10px;color:oklch(0.78 0.13 78);background:linear-gradient(to bottom,oklch(0.78 0.13 78/.16),oklch(0.78 0.13 78/.05));box-shadow:inset 0 0 0 1px oklch(0.78 0.13 78/.55)}.ds-main:hover{box-shadow:inset 0 0 0 1px oklch(0.82 0.13 78/.85),0 0 22px oklch(0.78 0.13 78/.22)}"
-    },
-    {
-      "name": "进度线",
-      "kind": "custom",
-      "refersTo": "done-line",
-      "description": "实线已完成、虚线剩余",
-      "html": "<div class=\"ds-pl\"><i style=\"width:62%\"></i></div>",
-      "css": ".ds-pl{position:relative;height:3px;width:240px}.ds-pl::before{content:'';position:absolute;left:0;right:0;top:1px;height:1px;background:repeating-linear-gradient(to right,oklch(0.4 0.014 262/.7) 0 3px,transparent 3px 6px)}.ds-pl i{position:absolute;left:0;top:.5px;height:1.5px;background:oklch(0.5 0.045 70)}"
-    }
+  "typographyMeta": {
+   "headline": {
+    "displayName": "演出标题",
+    "purpose": "只用于四个整屏演出"
+   },
+   "display": {
+    "displayName": "页标题",
+    "purpose": "每页一个"
+   },
+   "title": {
+    "displayName": "卡片标题 / 专名",
+    "purpose": "卡片头、武学内功名、导航"
+   },
+   "body": {
+    "displayName": "正文",
+    "purpose": "说明、战报（霞鹜文楷）"
+   }
+  },
+  "shadows": [
+   {
+    "name": "float",
+    "value": "0 14px 40px oklch(0.05 0.01 262 / 0.7)",
+    "purpose": "设置面板、悬停提示"
+   },
+   {
+    "name": "display-object",
+    "value": "drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6))",
+    "purpose": "书脊、书册"
+   },
+   {
+    "name": "selected-glow",
+    "value": "0 0 12px oklch(0.78 0.13 78 / 0.35)",
+    "purpose": "当前节点、选中陈列物"
+   }
   ],
-  "narrative": {
-    "northStar": "月下水墨卷",
-    "overview": "每一页背后固定铺一幅 AI 水墨画，信息浮在画上；外壳只有人物卷侧栏一层；情绪集中在四个整屏演出。",
-    "keyCharacteristics": [
-      "一层外壳",
-      "底图铺满舞台",
-      "卡片不嵌套",
-      "实线已完成、虚线剩余",
-      "思源宋体 + 霞鹜文楷"
-    ],
-    "rules": [
-      {
-        "name": "The One Candle Rule",
-        "body": "暖金只标现在能做的事与当前位置",
-        "section": "colors"
-      },
-      {
-        "name": "The Dot Lives In The Rail Rule",
-        "body": "提示点只在侧栏",
-        "section": "colors"
-      },
-      {
-        "name": "The Serif Is For Names Rule",
-        "body": "宋体只给标题、专名与按钮",
-        "section": "typography"
-      },
-      {
-        "name": "The No Box Around The Painting Rule",
-        "body": "画不进盒子",
-        "section": "elevation"
-      }
-    ],
-    "dos": [
-      "底图固定同位、上浓下淡",
-      "空状态收起",
-      "公式放悬停",
-      "只摊开眼前需要的"
-    ],
-    "donts": [
-      "廉价页游感",
-      "低幼卡通",
-      "SaaS 仪表盘气质",
-      "主界面提示点与开发用语",
-      "彩色侧条、渐变文字、装饰毛玻璃",
-      "实心金色大按钮"
-    ]
+  "motion": [
+   {
+    "name": "ease-out-quart",
+    "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+    "purpose": "全站默认缓动"
+   },
+   {
+    "name": "page-in",
+    "value": "0.45s opacity + translateY(6px)",
+    "purpose": "切页"
+   },
+   {
+    "name": "wipe-in",
+    "value": "clip-path inset(0 100% 0 0) → inset(0) 0.45s ease-out",
+    "purpose": "进黑市的整页拉黑转场"
+   }
+  ],
+  "breakpoints": [
+   {
+    "name": "mobile",
+    "value": "860px"
+   }
+  ]
+ },
+ "components": [
+  {
+   "name": "描金主按钮",
+   "kind": "button",
+   "refersTo": "button-primary",
+   "description": "主操作；第二行小字写价格或耗费",
+   "html": "<button class=\"ds-main\">突破 · 小有所成</button>",
+   "css": ".ds-main{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:600;letter-spacing:.16em;padding:11px 26px;border:0;border-radius:10px;color:oklch(0.78 0.13 78);background:linear-gradient(to bottom,oklch(0.78 0.13 78/.16),oklch(0.78 0.13 78/.05));box-shadow:inset 0 0 0 1px oklch(0.78 0.13 78/.55)}.ds-main:hover{box-shadow:inset 0 0 0 1px oklch(0.82 0.13 78/.85),0 0 22px oklch(0.78 0.13 78/.22)}"
+  },
+  {
+   "name": "进度线",
+   "kind": "custom",
+   "refersTo": "done-line",
+   "description": "实线已完成、虚线剩余",
+   "html": "<div class=\"ds-pl\"><i style=\"width:62%\"></i></div>",
+   "css": ".ds-pl{position:relative;height:3px;width:240px}.ds-pl::before{content:'';position:absolute;left:0;right:0;top:1px;height:1px;background:repeating-linear-gradient(to right,oklch(0.4 0.014 262/.7) 0 3px,transparent 3px 6px)}.ds-pl i{position:absolute;left:0;top:.5px;height:1.5px;background:oklch(0.5 0.045 70)}"
+  },
+  {
+   "name": "路数章",
+   "kind": "chip",
+   "refersTo": "tag-route",
+   "description": "武学的特点标签：透明底、1px 同色描边、前置 6px 亮点，五色各一。",
+   "html": "<span class=\"ds-tag-route\" style=\"--tc:oklch(0.72 0.16 28)\">刚猛</span>",
+   "css": ".ds-tag-route{--tc:oklch(0.72 0.16 28);display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:1px 7px;border-radius:3px;color:var(--tc);background:none;box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--tc) 45%,transparent)}.ds-tag-route::before{content:\"\";width:6px;height:6px;border-radius:50%;background:var(--tc);box-shadow:0 0 6px color-mix(in oklch,var(--tc) 60%,transparent)}"
+  },
+  {
+   "name": "背包物件格（珍品）",
+   "kind": "card",
+   "refersTo": "item-tile",
+   "description": "形态格里的一件装备：品阶色描边 + 底晕 + 右下角标，图按原比例填满。",
+   "html": "<button class=\"ds-item ds-g4\"><span class=\"ds-ink\">⚔</span></button>",
+   "css": ".ds-item{position:relative;width:46px;height:146px;border:0;border-radius:6px;padding:3px;color:oklch(0.76 0.13 300);background:linear-gradient(to top,color-mix(in oklch,currentColor 28%,transparent),transparent 55%),oklch(0.22 0.015 262 / 0.55);box-shadow:inset 0 0 0 1.5px color-mix(in oklch,currentColor 70%,transparent);display:grid;place-items:center;overflow:hidden;cursor:pointer}.ds-item::after{content:\"\";position:absolute;right:0;bottom:0;border-style:solid;border-width:0 0 12px 12px;border-color:transparent transparent currentColor transparent;opacity:.9}.ds-item:hover{background:oklch(0.27 0.017 262 / 0.65)}.ds-item:focus-visible{outline:none;box-shadow:inset 0 0 0 1px oklch(0.78 0.13 78 / 0.7),0 0 12px oklch(0.78 0.13 78 / 0.25)}.ds-ink{font-size:28px;color:oklch(0.91 0.012 85)}"
+  },
+  {
+   "name": "黑市蒙面牌",
+   "kind": "card",
+   "refersTo": "mask-card",
+   "description": "黑市的一张蒙面货：问号遮罩、名、价；买下即揭晓。",
+   "html": "<button class=\"ds-mask\"><span class=\"ds-veil\">？</span><span class=\"ds-nm\">一柄剑</span><span class=\"ds-pr\">来路不明 · 1,800 两</span></button>",
+   "css": ".ds-mask{width:200px;border:0;border-radius:10px;padding:10px 8px;display:grid;justify-items:center;gap:6px;color:oklch(0.91 0.012 85);background:oklch(0.18 0.03 300 / 0.8);box-shadow:inset 0 0 0 1px oklch(0.45 0.08 300 / 0.4);cursor:pointer;transition:box-shadow .2s}.ds-mask:hover,.ds-mask:focus-visible{outline:none;box-shadow:inset 0 0 0 1px oklch(0.6 0.12 300 / 0.7)}.ds-veil{width:120px;height:150px;border-radius:6px;display:grid;place-items:center;font-family:\"Noto Serif SC\",serif;font-size:40px;color:oklch(0.6 0.08 300);background:linear-gradient(160deg,oklch(0.3 0.04 300),oklch(0.18 0.03 300));box-shadow:inset 0 0 0 1px oklch(0.5 0.08 300 / 0.5)}.ds-nm{font-family:\"Noto Serif SC\",serif;font-size:15px;letter-spacing:.08em}.ds-pr{font-size:12.5px;color:oklch(0.76 0.015 85)}"
   }
+ ],
+ "narrative": {
+  "northStar": "月下水墨卷",
+  "overview": "每一页背后固定铺一幅 AI 水墨画，信息浮在画上；外壳只有人物卷侧栏一层；情绪集中在四个整屏演出。",
+  "keyCharacteristics": [
+   "一层外壳",
+   "底图铺满舞台",
+   "卡片不嵌套",
+   "实线已完成、虚线剩余",
+   "思源宋体 + 霞鹜文楷"
+  ],
+  "rules": [
+   {
+    "name": "The One Candle Rule",
+    "body": "暖金只标现在能做的事与当前位置",
+    "section": "colors"
+   },
+   {
+    "name": "The Dot Lives In The Rail Rule",
+    "body": "提示点只在侧栏",
+    "section": "colors"
+   },
+   {
+    "name": "The Serif Is For Names Rule",
+    "body": "宋体只给标题、专名与按钮",
+    "section": "typography"
+   },
+   {
+    "name": "The No Box Around The Painting Rule",
+    "body": "画不进盒子",
+    "section": "elevation"
+   },
+   {
+    "name": "The Grade On The Edge, Route In The Seal Rule",
+    "body": "品阶靠描边和名字色说，路数靠一枚描边章说；两者不共用色相，不共用形态。",
+    "section": "colors"
+   }
+  ],
+  "dos": [
+   "底图固定同位、上浓下淡",
+   "空状态收起",
+   "公式放悬停",
+   "只摊开眼前需要的",
+   "Do 让装备的品阶不点开也能看出来：描边、底晕、角标三重信号，凡品素色。",
+   "Do 把数量用物件表示：剩余次数是一排铜钱，剩余件数是还蒙着的牌，倒计时是更漏。"
+  ],
+  "donts": [
+   "廉价页游感",
+   "低幼卡通",
+   "SaaS 仪表盘气质",
+   "主界面提示点与开发用语",
+   "彩色侧条、渐变文字、装饰毛玻璃",
+   "实心金色大按钮",
+   "Don't 加解释性小字：规则靠形态、文案靠悬停。",
+   "Don't 在界面上出现小数。",
+   "Don't 在黑市解锁前露任何入口或进度提示；不公示概率与保底。"
+  ]
+ }
 }

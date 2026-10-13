@@ -24,6 +24,20 @@ colors:
   card-teal: "oklch(0.26 0.032 215 / 0.55)"
   card-wood: "oklch(0.25 0.03 58 / 0.5)"
   card-lacquer: "oklch(0.13 0.011 262 / 0.82)"
+  grade-fine: "oklch(0.78 0.12 145)"
+  grade-superior: "oklch(0.78 0.09 215)"
+  grade-rare: "oklch(0.76 0.13 300)"
+  grade-supreme: "oklch(0.72 0.16 50)"
+  route-vigorous: "oklch(0.72 0.16 28)"
+  route-lasting: "oklch(0.76 0.11 135)"
+  route-guarding: "oklch(0.74 0.10 245)"
+  route-devious: "oklch(0.74 0.11 320)"
+  route-venomous: "oklch(0.70 0.10 175)"
+  black-ink: "oklch(0.82 0.09 300)"
+  black-card: "oklch(0.13 0.02 300 / 0.75)"
+  black-line: "oklch(0.4 0.08 300 / 0.35)"
+  lantern-gold: "oklch(0.8 0.08 70)"
+  seal-red: "oklch(0.5 0.17 28 / 0.92)"
 typography:
   display:
     fontFamily: "Noto Serif SC, Songti SC, STSong, serif"
@@ -55,6 +69,7 @@ rounded:
   button: "10px"
   card: "12px"
   sheet: "16px"
+  cell: "6px"
 spacing:
   xs: "4px"
   sm: "8px"
@@ -102,11 +117,59 @@ components:
     textColor: "{colors.candle-gold}"
     rounded: "{rounded.control}"
     padding: "9px 12px"
+  tag-grade-common:
+    backgroundColor: "oklch(0.30 0.014 262 / 0.55)"
+    textColor: "{colors.ink-muted}"
+    rounded: "{rounded.tag}"
+    padding: "1px 6px"
+  tag-grade-fine:
+    backgroundColor: "oklch(0.72 0.14 145 / 0.12)"
+    textColor: "{colors.grade-fine}"
+    rounded: "{rounded.tag}"
+    padding: "1px 6px"
+  tag-grade-superior:
+    backgroundColor: "oklch(0.74 0.10 215 / 0.12)"
+    textColor: "{colors.grade-superior}"
+    rounded: "{rounded.tag}"
+    padding: "1px 6px"
+  tag-grade-rare:
+    backgroundColor: "oklch(0.7 0.14 300 / 0.14)"
+    textColor: "{colors.grade-rare}"
+    rounded: "{rounded.tag}"
+    padding: "1px 6px"
+  tag-grade-supreme:
+    backgroundColor: "oklch(0.72 0.16 50 / 0.14)"
+    textColor: "{colors.grade-supreme}"
+    rounded: "{rounded.tag}"
+    padding: "1px 6px"
+  tag-route:
+    backgroundColor: "transparent"
+    textColor: "{colors.route-vigorous}"
+    rounded: "3px"
+    padding: "1px 7px"
+  bag-cell:
+    backgroundColor: "oklch(0.18 0.012 262 / 0.35)"
+    rounded: "5px"
+    size: "46px"
+  item-tile:
+    backgroundColor: "oklch(0.22 0.015 262 / 0.55)"
+    rounded: "{rounded.cell}"
+    padding: "3px"
+  mask-card:
+    backgroundColor: "oklch(0.18 0.03 300 / 0.8)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.button}"
+    padding: "10px 8px"
+    width: "200px"
+  stall-item:
+    backgroundColor: "oklch(0.22 0.015 262 / 0.5)"
+    rounded: "{rounded.button}"
+    padding: "10px"
 ---
 
 # Design System: 江湖无尽录
 
-> 获批原型：`docs/design/ui-overhaul-prototype.html`（issue #26 视觉 + 骨架大改，2026-09-30 定稿）。本文件与原型冲突时以原型为准并回改本文件。
+> 获批原型：`docs/design/ui-overhaul-prototype.html`（issue #26 视觉 + 骨架大改，2026-09-30 定稿）；`docs/design/battle-loot-prototype.html`（issue #45 战斗挂机、装备、市集与黑市，2026-10-13 定稿，在前者之上增补）。本文件与原型冲突时以原型为准并回改本文件。
 
 ## 1. Overview
 
@@ -124,6 +187,8 @@ components:
 - 卡片只用于真正成组的信息（身手、破境、伤势、心法要诀、商店），从不嵌套。
 - 进度线全站一个规则：实线已完成、虚线剩余。
 - 标题用思源宋体，正文用霞鹜文楷，数字等宽。
+- 装备数值一律整数；界面上不写解释性小字，规则靠形态和悬停说清。
+- 道具图走写实材质（金属、皮革、玉石），与水墨底图、线装书封有意对比；一名一图。
 
 ## 2. Colors
 
@@ -149,9 +214,20 @@ components:
 - **墨线 Hair** (`oklch(0.30 0.016 262 / 0.7)`)：唯一允许的分隔线，1px。
 - **卡片底**：默认冷灰 `card-cool`，设置面板可切墨青 / 檀木 / 漆底描金；伤势卡固定血褐淡底。
 
+### 装备品阶（五阶）
+- **凡品**：墨淡字、灰淡底，格子素色。**精良** (`grade-fine`)、**上乘** (`grade-superior`)、**珍品** (`grade-rare`)、**极品** (`grade-supreme`)：章用同色淡底，背包格用同色描边 + 底部同色晕 + 右下角标，极品另加外发光。装备名（含词条前缀）整体着品阶色。
+- 武学品质三阶（寻常 / 上乘 / 绝学）与装备品阶是两套：武学用灰 / 冷青 / 暖金填充章，装备用五阶描边。
+
+### 武学路数（五色）
+- **刚猛** `route-vigorous` 朱砂红、**绵长** `route-lasting` 竹青、**守御** `route-guarding` 石青、**诡谲** `route-devious` 紫、**阴毒** `route-venomous` 黛绿。色相刻意避开品阶的灰 / 青 210° / 金 78° 与装备品阶的绿 145° / 青 215° / 紫 300° / 橙。
+
+### 黑市（暗调）
+- 进入黑市整页换紫黑调：标题 `black-ink`，卡片 `black-card` + `black-line` 描边，底图压暗；灯笼与更漏用 `lantern-gold`。黑市是唯一允许整页换色相的页面。
+
 ### Named Rules
 **The One Candle Rule.** 烛火暖金只标「现在能做的事」和「当前位置」。已完成的东西一律退成墨金，未解锁的一律退成墨浅。
 **The Dot Lives In The Rail Rule.** 提示点（金点）只出现在侧栏页签上，主界面任何地方都不放提示点。
+**The Grade On The Edge, Route In The Seal Rule.** 品阶靠描边和名字色说，路数靠一枚描边章说；两者不共用色相，不共用形态。
 
 ## 3. Typography
 
@@ -211,10 +287,28 @@ components:
 - 设置齿轮弹出设置面板（卡片底色、画面主题）。
 - 手机宽度（≤860px）：侧栏收起，顶部一条资源条，底部固定页签栏。
 
+### Tags（装备品阶与路数）
+- **品阶章**（`.gtag`）：11px，同色淡底、同色字，五阶各一色；跟在装备名后面。
+- **路数章**（`.qtag.tag`）：透明底、1px 同色细描边、前置一枚 6px 同色亮点；跟在武学品质章后面。不用填充、不用侧条，和品阶章一眼分开。
+
+### 行囊（形态格背包）
+- 10 列 × 8 行共 80 格，格 46px、间距 4px；空格 `bag-cell` 淡底细描边。
+- 物件按部位占格：兵器 1×3、暗器 1×2、衣甲 2×2、佩饰 1×1；游戏自动紧凑摆放，玩家不拖动。
+- 物件格 `item-tile`：写实道具图按原比例填满，品阶靠描边 + 底晕 + 右下角标；左上金点 = 新得，右上 ▲ = 比身上好；比身上差的凡品、精良压暗。
+- 比较面板：左 150×210 大图（品阶色径向晕底），右名字 + 逐项 ▲▼ 对比 + 词条 + 「穿戴」「卖出（价）」；穿着中只剩「卸下」，不写「正穿着」。
+- 手机宽度：格缩到 32px，仍 10 列；大图缩到 110 宽。
+
+### 市集与黑市
+- 市集：摊位分段切换（武馆 / 兵器铺 / 衣饰铺 / 药铺），铺子用 `stall-item` 小卡：道具图 + 名 + 品阶章 + 类目 + 属性 + 价格按钮；武馆用行。
+- 黑市入口：解锁前市集不露任何提示；解锁那一笔买下时进整屏演出，之后摊位条末尾多一个紫描边的「黑市」页签，点入整页拉黑转场（0.45s，从左向右）。
+- 黑市：三张 `mask-card` 蒙面牌（问号遮罩 120×150，名 + 价），买下即揭晓为道具图 + 品阶色名；下方一排十枚铜钱表示本世剩余次数，标题右侧更漏倒计时。不写概率，不写保底，不写剩余件数的文字。
+
 ### Signature Components
-- **陈列**：武学用线装书脊（竖排书名，按品质换布色，底部类别简笔图标），内功用线装书册封面（书名写在题签上）。都带类型筛选的分段切换。
+- **陈列**：武学与内功都用 AI 线装书册封面（书名写在题签上）。内功按品质用蓝 / 青 / 金三张封面；武学同三张封面按品阶换色（寻常麻布灰褐、上乘绛紫、绝学朱红描金，题签固定米黄），右下压一枚朱砂类目印（剑 / 刀 / 枪 / 棍 / 拳 / 掌 / 指 / 腿 / 镖），未拼齐的在本品阶色上压暗。类目筛选分器械 / 肉身 / 暗器三组。
 - **战报**：每回合一个【第 N 回合】抬头，下面成段叙述；「你」墨金、敌名朱红、招式名冷青、伤害数字加粗。句式来自 `docs/rules/copy/battle-narration.md`。
-- **整屏演出**：突破（金）、出关（冷蓝）、战败（暗红）、转世（暮金）四种径向渐变底，内容居中无框：小字题眼 → 大标题 → 一行说明 → 得失对照 → 按钮。
+- **整屏演出**：突破（金）、出关（冷蓝）、战败（暗红）、转世（暮金）、传功（冷青）、暗门（灯笼暖光压紫黑）六种径向渐变底，内容居中无框：小字题眼 → 大标题 → 一行说明 / 话本段落 → 得失对照或三选一 → 按钮。
+- **挂机态**：战斗页顶部一条淡金描边状态栏（呼吸金点 + 「挂机中」+ 关数 / 场次 / 拾得 + 收手），挑战按钮仍在其下。
+- **战报掉落行**：胜利后「拾得：」+ 装备名按品阶着色、武学全本 / 残页用冷青。
 
 ## 6. Do's and Don'ts
 
@@ -224,6 +318,8 @@ components:
 - **Do** 把公式与推导放进悬停（带点状下划线的数值可悬停）。
 - **Do** 一次只摊开眼前需要的：65 关只列当前附近十来关，全表按需展开。
 - **Do** 用「转世」称呼玩家主动结束一世（归隐是转世的一种，不再作为玩家可见的动作名）。
+- **Do** 让装备的品阶不点开也能看出来：描边、底晕、角标三重信号，凡品素色。
+- **Do** 把数量用物件表示：剩余次数是一排铜钱，剩余件数是还蒙着的牌，倒计时是更漏。
 
 ### Don't:
 - **Don't** 做廉价页游感：闪烁按钮、满屏红点、战力飙升弹字。
@@ -233,3 +329,7 @@ components:
 - **Don't** 用 `border-left` / `border-right` 大于 1px 做彩色侧条；不要渐变文字；不要装饰性毛玻璃。
 - **Don't** 用实心金色大按钮、扁平分段色块进度条。
 - **Don't** 在人物属性里显示「突破后」数值——突破前后对比只在突破演出里出现。
+- **Don't** 加解释性小字：按钮下的规则说明、面板里的「装备等级越高属性越高」、页标题下的副标题一律不写；规则靠形态、文案靠悬停。
+- **Don't** 在界面上出现小数：装备数值生成时就取整，装备等级这类内部数不露出。
+- **Don't** 在黑市解锁前露任何入口或进度提示；不公示概率与保底。
+- **Don't** 让武学书封照搬内功的三色；也不要用不透明填充章表示路数。

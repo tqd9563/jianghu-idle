@@ -2071,11 +2071,10 @@ function renderCmp() {
   const afx = it.afx.map(([k, v]) => `<span class="k">${PRE[k]}</span><span class="v">${afxText(k, v)}</span><span class="d"></span>`).join('');
   let note = '';
   if (it.slot === '兵器' && cur && it.cat !== cur.cat) note = `<div class="note warn">换持${it.cat}，将卸下流云剑法、青萍剑法两门剑法；通臂拳属肉身功夫，不受影响。</div>`;
-  else if (it.worn) note = `<div class="note">正穿着</div>`;
   el.innerHTML = `<div class="cmp-art g${it.g}">${ink(it)}</div><div class="cmp-body"><div class="cmp-h"><span class="nm g${it.g}">${itemName(it)} <span class="gtag g${it.g}">${GN[it.g]}</span></span></div>
     <div class="diff">${diff}${afx}</div>
     ${note}
-    <div class="acts">${it.worn ? '<button class="btn2 quiet" data-unwear>卸下</button>' : `<button class="btn2" data-wear="${it.id}">穿上</button><button class="btn2 quiet" data-sell="${it.id}">卖 ${SELL[it.g]} 两</button>`}</div></div>`;
+    <div class="acts">${it.worn ? '<button class="btn2 quiet" data-unwear>卸下</button>' : `<button class="btn2" data-wear="${it.id}">穿戴</button><button class="btn2 quiet" data-sell="${it.id}">卖出（${SELL[it.g]} 两）</button>`}</div></div>`;
 }
 function renderAll() { renderWorn(); renderBag(); renderCmp(); }
 document.addEventListener('click', e => {

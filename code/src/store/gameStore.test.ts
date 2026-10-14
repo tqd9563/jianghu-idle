@@ -14,8 +14,8 @@ import {
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
-import { applyWuxueDrop, frontierStageOf, handsOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
-import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT } from '../engine/market';
+import { applyWuxueDrop, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
+import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, STALL_PRICE_MULT } from '../engine/market';
 import { slotCount } from '../engine/wuxue';
 import { QUALITY_PARAMS, WUXUE, checkFormGate, formKey as fk, pagesFull, rollWuxueDrop } from '../engine/wuxue';
 import { isBenmen } from '../engine/sect';
@@ -30,7 +30,7 @@ function gearOf(slot: GearSlot, cat?: WeaponCat): GearItem {
   return { ...it, fresh: false };
 }
 import { freshInjuries, isHurt } from '../engine/injury';
-import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { allStages, getStage, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { INIT_AGE, ERA_START, LIFESPAN, SOUL_WEAK_MULT, ageYearsPerDay } from '../engine/reincarnation';
@@ -1236,6 +1236,9 @@ describe('gameStore · 装备与行囊（battle-loot/design.md §3）', () => {
     expect(d.grade).toBe(2);   // Boss 必 +1
     expect(d.level).toBe(boss.x);
     expect(d.sell).toBe(Math.round(boss.reward.silver * 1));
+    // 重打（裁决 38）：精英 / Boss 的掉落率按普通关 6% 算，品阶 +1 保留
+    expect(rollDropFor(boss, seq([0.07]), true)).toBeNull();
+    expect(rollDropFor(boss, seq([0.05, 0, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5]), true)!.grade).toBe(2);
   });
 });
 
@@ -1402,12 +1405,14 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(arms).toHaveLength(10);
     expect(wear).toHaveLength(4);
     expect(arms.filter((g) => g.grade === 1)).toHaveLength(5);
-    expect(arms[0].price).toBe(fs.reward.silver * 4);
-    expect(arms[5].price).toBe(fs.reward.silver * 10);
-    const sword = arms.find((g) => g.cat === '剑' && g.grade === 2)!;
+    const basis = priceBasisOf(st());
+    expect(basis).toBe(Math.max(...m1all.slice(0, 20).map((k) => getStage(1, 0, Number(k.slice(k.indexOf('s') + 1))).reward.silver)));
+    expect(arms[0].price).toBe(basis * STALL_PRICE_MULT[1]);
+    expect(arms[5].price).toBe(basis * STALL_PRICE_MULT[2]);
+    const sword = arms.find((g) => g.cat === '剑' && g.grade === 1)!;
     st().buyMarketItem(sword.id);
     expect(st().bag).toHaveLength(1);
-    expect(st().bag[0]).toMatchObject({ slot: '兵器', cat: '剑', grade: 2, level: fs.x, fresh: true });
+    expect(st().bag[0]).toMatchObject({ slot: '兵器', cat: '剑', grade: 1, level: fs.x, fresh: true });
     expect(st().silver).toBe(100000 - sword.price);
     expect(st().marketSpent).toBe(sword.price);
     expect(st().blackOpen).toBe(false);

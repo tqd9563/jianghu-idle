@@ -114,3 +114,14 @@ describe('存档迁移 v7 → v8：门径并入内功（sect-neigong/spec.md §6
     for (const k of ['collectedPages', 'completedBooks', 'shopPurchasesThisRun']) expect(out).not.toHaveProperty(k);
   });
 });
+
+describe('v9 → v10（实装四：传功与市集）', () => {
+  it('已过境界 1 或已有内功的旧存档视为已传功、市集已开张；境界 1 未选内功的照旧要先遇前辈', () => {
+    const a = migrate({ realm: 3, neigong: 'jingleijue', run: 1 } as never, 9, 10) as { taught: boolean; marketOpen: boolean };
+    expect(a).toMatchObject({ taught: true, marketOpen: true });
+    const b = migrate({ realm: 2, neigong: null, run: 1 } as never, 9, 10) as { taught: boolean; marketOpen: boolean };
+    expect(b).toMatchObject({ taught: true, marketOpen: false });
+    const c = migrate({ realm: 1, neigong: null, run: 1 } as never, 9, 10) as { taught: boolean; marketOpen: boolean };
+    expect(c).toMatchObject({ taught: false, marketOpen: false });
+  });
+});

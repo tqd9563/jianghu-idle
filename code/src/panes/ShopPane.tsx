@@ -1,78 +1,187 @@
 /**
- * 书肆页 —— 定稿原型 docs/design/ui-overhaul-prototype.html「书肆」`#p-market`（从武学页独立出来）。
- * 银两买秘籍：寻常武学、上乘武学的招式秘籍、上乘内功。数值出自 docs/systems/sect-neigong/spec.md §4。
+ * 市集页 —— 定稿原型 docs/design/battle-loot-prototype.html `#p-market`（DESIGN.md「市集与黑市」）。
+ * 摊位分段：武馆（交束脩学寻常武学）、兵器铺、衣饰铺、药铺（留位）；黑市解锁后摊位条末尾多一个暗调页签，
+ * 点入整页拉黑转场。黑市只卖蒙面货：三张蒙面牌，买下即揭晓；一排铜钱表示本世剩余次数，更漏倒计时到换货。
+ * 不写概率、不写保底、不写剩余件数的文字（battle-loot/design.md 裁决 33–34）。
  */
-import { NEIGONG, TIERS, TIER_COUNT } from '../engine/neigong';
+import { useEffect, useState } from 'react';
+import { GRADE_NAMES, gearFullName, type GearItem } from '../engine/gear';
+import { formTitle } from '../engine/formNames';
+import { BLACK_PER_LIFE, msToNextDay, type MarketGood, type MaskedGood } from '../engine/market';
 import { hasNode } from '../engine/prestige';
-import { WUXUE, formKey, formName, type ShopItem } from '../engine/wuxue';
-import { shopItemsOf, shopPriceOf, useGameStore } from '../store/gameStore';
+import { EFFECT_TAG, WUXUE } from '../engine/wuxue';
+import { marketGoodsOf, shopItemsOf, shopPriceOf, useGameStore } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
-const LU_NAME = { huashan: '惊雷', shaolin: '镇岳', tangmen: '蚀骨' } as const;
+type Stall = 'wuguan' | 'arms' | 'wear' | 'herb';
+const STALLS: [Stall, string][] = [['wuguan', '武馆'], ['arms', '兵器铺'], ['wear', '衣饰铺'], ['herb', '药铺']];
 
-/** 一行的标题、品质标签与说明 */
-function itemText(it: ShopItem): { title: string; tag: { cls: string; text: string } | null; desc: string } {
-  if (it.kind === 'wuxue') {
-    const w = WUXUE[it.wuxue!];
-    return { title: it.label, tag: { cls: 'q1', text: w.quality }, desc: `${w.cat} · 特效${w.effect}` };
-  }
-  if (it.kind === 'scroll') {
-    return { title: `招式秘籍 · ${WUXUE[it.wuxue!].name}${formName(it.form!)}`, tag: null, desc: `领悟${formName(it.form!)}所需` };
-  }
-  const ng = NEIGONG[it.id.slice('neigong:'.length) as keyof typeof NEIGONG];
-  return {
-    title: it.label, tag: { cls: 'q2', text: `${ng.quality}内功` },
-    desc: `${LU_NAME[ng.route]}一路 · 最高可至${TIERS[TIER_COUNT[ng.quality] - 1].name}`,
-  };
-}
+const Img = ({ it }: { it: GearItem }) => <img className="ink" src={`/art/gear/${it.img}.png`} alt="" />;
 
 export function ShopPane() {
   const s = useGameStore();
+  const [stall, setStall] = useState<Stall>('wuguan');
+  const [black, setBlack] = useState(false);
+  const [wipe, setWipe] = useState(false);
   const discount = hasNode(s.ownedRepNodes, 'qingzhuang_shanglu');
+
+  const enterBlack = () => {
+    setWipe(true);
+    s.refreshBlack();
+    setTimeout(() => { setBlack(true); setWipe(false); }, 420);
+  };
+
+  return (
+    <div className={`market${black ? ' night' : ''}${wipe ? ' wipe' : ''}`}>
+      {!black ? (
+        <>
+          <header className="jh-head">
+            <div><h1>市集</h1></div>
+            <div className="mk-silver">持有 <b className="gold">{fmtBig(s.silver)}</b> 两</div>
+          </header>
+          <div className="mk-head">
+            <div className="jh-seg" role="group" aria-label="摊位">
+              {STALLS.map(([k, name]) => (
+                <button key={k} type="button" aria-pressed={stall === k} disabled={k === 'herb'} onClick={() => setStall(k)}>{name}</button>
+              ))}
+              {s.blackOpen && <button type="button" className="blk" onClick={enterBlack}>黑市</button>}
+            </div>
+          </div>
+          <section className="jh-card">
+            {stall === 'wuguan' ? <Wuguan discount={discount} /> : <Stalls kind={stall as 'arms' | 'wear'} />}
+          </section>
+        </>
+      ) : <Black onBack={() => setBlack(false)} />}
+    </div>
+  );
+}
+
+/** 武馆：四门寻常武学全本，用行 */
+function Wuguan({ discount }: { discount: boolean }) {
+  const s = useGameStore();
+  return (
+    <>
+      <div className="head">
+        <span className="serif">武馆</span>
+        {discount && <small data-tip="已传承「轻装上路」：市集一律八折，价格已折算">八折</small>}
+      </div>
+      <div className="jh-rows">
+        {shopItemsOf(s).map((it) => {
+          const w = WUXUE[it.wuxue!];
+          const have = (s.ownedWuxue ?? []).includes(it.wuxue!);
+          const price = shopPriceOf(s, it.price);
+          const short = Math.ceil(price - s.silver);
+          return (
+            <div key={it.id} className={`jh-row${have ? ' done' : ''}`}>
+              <div className="t">
+                <span className="serif">{w.name}</span>
+                <span className="jh-tag q1">{w.quality}</span>
+                <span className={`jh-tag tag t-${EFFECT_TAG[w.effect]}`}>{EFFECT_TAG[w.effect]}</span>
+                <span className="wtag">{w.cat}</span>
+              </div>
+              <div className="d">第一式全本 · 三式</div>
+              <div className="a">
+                {have ? <span className="price">已学</span> : (
+                  <span className="jh-buy">
+                    <button type="button" className="jh-btn2" disabled={short > 0} onClick={() => s.buyShopItem(it.id)}>{fmtBig(price)} 两</button>
+                    {short > 0 && <small>还差 {fmtBig(short)}</small>}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/** 兵器铺 / 衣饰铺：小卡 = 道具图 + 名 + 品阶章 + 类目 + 属性 + 价格按钮 */
+function Stalls({ kind }: { kind: 'arms' | 'wear' }) {
+  const s = useGameStore();
+  const goods = marketGoodsOf(s)[kind];
+  const base = (g: MarketGood) => Object.entries(g.sample.base).map(([k, v]) => `${k} +${v}`).join(' · ');
+  return (
+    <>
+      <div className="head"><span className="serif">{kind === 'arms' ? '兵器铺' : '衣饰铺'}</span></div>
+      <div className="stall-grid">
+        {goods.map((g) => {
+          const price = shopPriceOf(s, g.price);
+          return (
+            <div key={g.id} className="stall-it">
+              <Img it={g.sample} />
+              <span className={`nm g${g.grade}`}>{g.sample.name}<span className={`gtag g${g.grade}`}>{GRADE_NAMES[g.grade]}</span>{g.cat && <span className="wtag">{g.cat}</span>}</span>
+              <span className="st">{base(g)}</span>
+              <button type="button" className="jh-btn2" disabled={s.silver < price} onClick={() => s.buyMarketItem(g.id)}>{fmtBig(price)} 两</button>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/** 黑市：三张蒙面牌、铜钱计次、更漏倒计时 */
+function Black({ onBack }: { onBack: () => void }) {
+  const s = useGameStore();
+  const [left, setLeft] = useState(msToNextDay(Date.now()));
+  useEffect(() => {
+    const t = setInterval(() => {
+      const ms = msToNextDay(Date.now());
+      setLeft(ms);
+      if (ms < 1500) s.refreshBlack();
+    }, 1000);
+    return () => clearInterval(t);
+  }, [s]);
+  const sec = Math.floor(left / 1000);
+  const clock = [Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), sec % 60].map((x) => String(x).padStart(2, '0')).join(':');
+  const buys = s.blackBuys ?? 0;
+  const spent = buys >= BLACK_PER_LIFE;
+
+  const revealed = (g: MaskedGood) => {
+    if (!g.revealed) return null;
+    if ('gear' in g.revealed) {
+      const it = g.revealed.gear;
+      return (
+        <div className={`mask-it sold g${it.grade}`}>
+          <Img it={it} />
+          <span className={`nm g${it.grade}`}>{gearFullName(it)}</span>
+          <span className="pr"><span className={`gtag g${it.grade}`}>{GRADE_NAMES[it.grade]}</span></span>
+        </div>
+      );
+    }
+    const p = g.revealed.pages;
+    return (
+      <div className="mask-it sold">
+        <span className="mveil">谱</span>
+        <span className="nm qi">{WUXUE[p.id].name} · {formTitle(p.id, p.k)}</span>
+        <span className="pr">残页 ×{p.n}</span>
+      </div>
+    );
+  };
+
   return (
     <>
       <header className="jh-head">
-        <div><h1>书肆</h1><div className="sub">银两每世清零，买下的秘籍永久保留</div></div>
+        <div><h1>黑市</h1></div>
+        <div className="bk-right">
+          <span className="bk-clock"><i /><b>{clock}</b></span>
+          <button type="button" className="jh-btn2 quiet" onClick={onBack}>回到市集</button>
+        </div>
       </header>
-      <section className="jh-card">
-        <div className="head">
-          <span className="serif">秘籍</span>
-          <small data-tip={discount ? '已传承「轻装上路」：书肆的秘籍一律八折，价格已折算' : undefined}>
-            持有 <b className="gold">{fmtBig(s.silver)}</b> 两
-          </small>
-        </div>
-        <div className="jh-rows">
-          {shopItemsOf(s).map((it) => {
-            const have = it.kind === 'wuxue' ? (s.ownedWuxue ?? []).includes(it.wuxue!)
-              : it.kind === 'scroll' ? (s.ownedScrolls ?? []).includes(formKey(it.wuxue!, it.form!)) : false;
-            const locked = s.realm < it.realm;
-            const price = shopPriceOf(s, it.price);
-            const short = Math.ceil(price - s.silver);
-            const { title, tag, desc } = itemText(it);
-            return (
-              <div key={it.id} className={`jh-row${have ? ' done' : locked ? ' lock' : ''}`}>
-                <div className="t">
-                  <span className="serif">{title}</span>
-                  {tag && <span className={`jh-tag ${tag.cls}`}>{tag.text}</span>}
-                </div>
-                <div className="d">{desc}</div>
-                <div className="a">
-                  {have ? <span className="price">已有</span>
-                    : locked ? <span className="price">境界 {it.realm} 上架</span>
-                      : (
-                        <span className="jh-buy">
-                          <button type="button" className="jh-btn2" disabled={short > 0} onClick={() => s.buyShopItem(it.id)}>
-                            {fmtBig(price)} 两
-                          </button>
-                          {short > 0 && <small>还差 {fmtBig(short)}</small>}
-                        </span>
-                      )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <div className="masked">
+        {(s.blackGoods ?? []).map((g) => g.revealed ? <div key={g.id}>{revealed(g)}</div> : (
+          <button key={g.id} type="button" className={`mask-it${spent ? ' gone' : ''}`} disabled={spent || s.silver < g.price}
+            onClick={() => s.buyMasked(g.id)}>
+            <span className="mveil">？</span>
+            <span className="nm">{g.label}</span>
+            <span className="pr">{g.hint} · {fmtBig(g.price)} 两</span>
+          </button>
+        ))}
+      </div>
+      <div className="coins" aria-label="本世余额">
+        {Array.from({ length: BLACK_PER_LIFE }, (_, i) => <i key={i} className={i < buys ? 'spent' : ''} />)}
+      </div>
     </>
   );
 }

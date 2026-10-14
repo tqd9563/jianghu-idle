@@ -22,7 +22,7 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -102,7 +102,19 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 7) out = migrateIntroStagesV6ToV7(out);
   if (fromVer < 8) out = migrateNeigongV7ToV8(out);
   if (fromVer < 9) out = migrateIdleV8ToV9(out);
+  if (fromVer < 10) out = migrateTeachV9ToV10(out);
   return out;
+}
+
+/**
+ * v9 → v10（battle-loot 实装四）：内功改在传功后选、市集按战败开张。旧存档已过境界 1 的，视为前辈已传功、市集已开张，
+ * 免得卡在选内功或丢了书肆。
+ */
+function migrateTeachV9ToV10<T>(state: T): T {
+  const s = state as { realm?: number; neigong?: string | null; run?: number };
+  if (!s || typeof s !== 'object' || typeof s.realm !== 'number') return state;   // 只动真实存档，碎片对象不补键
+  const taught = s.realm >= 2 || (s.run ?? 1) >= 2 || !!s.neigong;
+  return { ...s, taught, marketOpen: !!s.neigong } as T;
 }
 
 /**

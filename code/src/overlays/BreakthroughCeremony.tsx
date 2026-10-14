@@ -10,9 +10,8 @@ import { slotCount } from '../engine/wuxue';
 import { fmtRate } from '../fmt';
 import { effIdleRate, useGameStore } from '../store/gameStore';
 
-/** 本次突破解锁了什么：境界 2 开内功与武学，境界 3 开门派，其后每境多一个武学槽 */
+/** 本次突破解锁了什么：境界 3 开门派，每境多一个武学槽（内功与武学在传功时就开了，battle-loot/design.md §5） */
 function unlocksOf(realmTo: number): string[] {
-  if (realmTo === 2) return ['内功', '武学', '书肆'];
   const extra = slotCount(realmTo) > slotCount(realmTo - 1) ? [`武学第 ${slotCount(realmTo)} 槽`] : [];
   return realmTo === 3 ? ['门派', ...extra] : extra;
 }

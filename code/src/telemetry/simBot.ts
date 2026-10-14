@@ -120,7 +120,7 @@ export function tend(route: RouteId): void {
     tryAcupoints();
     st().breakthrough();
     st().dismissCeremony();
-    if (st().realm >= 2 && st().neigong === null) st().selectNeigong(bestNeigong(route));
+    if (st().neigong === null && (st().taught || st().run >= 2)) st().selectNeigong(bestNeigong(route));
     if (st().realm === realm) break;
   }
   if (st().neigong) {

@@ -9,10 +9,10 @@ import {
 } from './enemies';
 
 describe('长线关卡表', () => {
-  it('开放 9 条前沿、共 233 关；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
+  it('开放 9 条前沿、共 323 关（每条前沿段末上抬 0.5 当量约 10 关）；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
     const open = MAP_IDS.flatMap((m) => TIERS.filter((t) => !isSealed(m, t)).map((t) => `${m}-${t}`));
     expect(open).toEqual(['1-0', '1-1', '1-2', '2-0', '2-1', '2-2', '3-0', '3-1', '4-0']);
-    expect(allStages()).toHaveLength(233);
+    expect(allStages()).toHaveLength(323);
     expect(trackLength(5, 0)).toBe(0);
   });
 

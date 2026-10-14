@@ -12,14 +12,14 @@ import {
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
 import {
-  BOSS_DROPS, DUPLICATE_SILVER, QINGZHUANG_DISCOUNT, QUALITY_PARAMS, SHOP_ITEMS, SHOP_NEIGONG_PRICE, SHOP_NEIGONG_REALM, SHULIAN_CARRY, WUXUE, checkFormGate, effectValue, formCd, formCost, formDunwuChance, formKey, formMult, formName, pagesFull, rollWuxueDrop, shulianMods, shulianTier, slotCount, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
+  BOSS_DROPS, DUPLICATE_SILVER, QINGZHUANG_DISCOUNT, QUALITY_PARAMS, SHOP_ITEMS, SHULIAN_CARRY, WUXUE, checkFormGate, effectValue, formCd, formCost, formDunwuChance, formKey, formMult, formName, pagesFull, rollWuxueDrop, shulianMods, shulianTier, slotCount, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
   SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
   type SectId, type SectItem, type SectTask, type SectTaskKind,
 } from '../engine/sect';
 import {
-  getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackKey, trackLength,
+  getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackDepth, trackKey, trackLength,
   type EnemyDef, type MapId, type TierId,
 } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, currentSegmentNeili, currentSegmentQuota } from '../engine/formulas';
@@ -50,7 +50,11 @@ import {
 } from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 import {
-  DROP_RATE, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade,
+  BLACK_PER_DAY, BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, MARKET_OPEN_STAGE, buyStallGood, dailyMasked, dayKeyOf, revealMasked, stallGoods,
+  type MarketGood, type MaskedGood,
+} from '../engine/market';
+import {
+  DROP_RATE, INTRO_STAGES, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade,
   type GearGrade, type GearItem, type GearSlot, type Worn,
 } from '../engine/gear';
 import {
@@ -162,6 +166,21 @@ interface PersistedState {
   bag: GearItem[];
   /** 身上穿着的装备，按部位各一件；每世清零 */
   worn: Worn;
+  /** 前辈已传功（battle-loot/design.md §5）：第一世 1-7 战败后置上，此后可选内功；转世后恒为 true */
+  taught: boolean;
+  /** 市集已开张（跨世保留）：传功后在第 8 关起首次战败时 */
+  marketOpen: boolean;
+  /** 市集累计消费（跨世累计），满额那一笔解锁黑市（裁决 32） */
+  marketSpent: number;
+  /** 黑市已解锁（跨世保留） */
+  blackOpen: boolean;
+  /** 本世在黑市买过几件（每世 10 次，转世清零） */
+  blackBuys: number;
+  /** 连开凡品的次数（保底用，不公示） */
+  blackLowStreak: number;
+  /** 当天蒙面货的日期键与三件货（买下的带揭晓结果） */
+  blackDay: string;
+  blackGoods: MaskedGood[];
 }
 
 /**
@@ -289,6 +308,8 @@ interface GameState extends PersistedState {
   offlineSectDone: { kind: SectTaskKind; contrib: number } | null;
   /** 闭关期间挂机拾得（只供出关演出展示，不持久化）：装备件数、最好的一件、放不下卖掉的银两、武学全本与残页数 */
   offlineLoot: { count: number; best: GearItem | null; sold: number; books: number; pages: number } | null;
+  /** 刚解锁黑市：整屏话本演出待看（非持久化） */
+  blackIntro: boolean;
   /** 独立持久化的自然测试窗口；不进入游戏存档。 */
   liveTestWindow: LiveTestWindowRecord | null;
   /** 刚发生的顿悟（台阶名），供一次性轻提示；非持久化 */
@@ -315,8 +336,16 @@ interface GameState extends PersistedState {
   /** 装上 / 卸下武学（spec §2.4，装卸无成本） */
   equipWuxue: (id: WuxueId) => void;
   unequipWuxue: (id: WuxueId) => void;
-  /** 书肆购买（spec §4.2） */
+  /** 市集武馆（spec §4.2，裁决 31）：交束脩学寻常武学 */
   buyShopItem: (itemId: string) => void;
+  /** 市集兵器铺 / 衣饰铺：买一件凡品 / 精良装备进行囊 */
+  buyMarketItem: (goodId: string) => void;
+  /** 看过暗门演出 */
+  dismissBlackIntro: () => void;
+  /** 进黑市：按日期换货 */
+  refreshBlack: () => void;
+  /** 买一件蒙面货：买下才揭晓 */
+  buyMasked: (goodId: string) => void;
   /** 拜入门派（spec §5.1）：境界 3 起，免费，不受路数限制，一世一派 */
   joinSect: (id: SectId) => void;
   /** 派门派任务（spec §5.2）：同时只一件 */
@@ -375,6 +404,7 @@ const FRESH: PersistedState = {
   ownedWuxue: [], ownedScrolls: [], books: [], pages: {}, equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
   sect: null, contrib: 0, sectTask: null, rumorPending: false,
   bag: [], worn: {},
+  taught: false, marketOpen: false, marketSpent: 0, blackOpen: false, blackBuys: 0, blackLowStreak: 0, blackDay: '', blackGoods: [],
 };
 
 /** 页面关闭期间不结算任何收益：lastTick 不入存档，init 时重置为当下 */
@@ -513,19 +543,15 @@ export function shopPriceOf(s: Pick<PersistedState, 'ownedRepNodes'>, price: num
   return Math.round(price * (hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') ? QINGZHUANG_DISCOUNT : 1));
 }
 
-/** 书肆的上乘内功：尚未拥有的第一部（惊雷、镇岳、蚀骨顺序）；都有了为 null */
+/** 尚未拥有的第一部上乘内功（惊雷、镇岳、蚀骨顺序；Boss 首杀「另一路」掉落用）；都有了为 null */
 export function shopNeigongOf(s: Pick<PersistedState, 'ownedNeigong'>): NeigongId | null {
   return (['huashan', 'shaolin', 'tangmen'] as const).map((r) => neigongOf(r, '上乘'))
     .find((id) => !(s.ownedNeigong ?? []).includes(id)) ?? null;
 }
 
-/** 书肆货架（含动态的上乘内功一件）；招式秘籍只陈列已拥有武学的 */
-export function shopItemsOf(s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue'>): ShopItem[] {
-  const ng = shopNeigongOf(s);
-  const items = SHOP_ITEMS.filter((it) => it.kind !== 'scroll' || (s.ownedWuxue ?? []).includes(it.wuxue!));
-  return ng ? [...items, {
-    id: `neigong:${ng}`, label: NEIGONG[ng].name, price: SHOP_NEIGONG_PRICE, realm: SHOP_NEIGONG_REALM, kind: 'neigong',
-  }] : items;
+/** 市集武馆货架：四门寻常武学全本 */
+export function shopItemsOf(_s: Pick<PersistedState, 'ownedWuxue'>): ShopItem[] {
+  return SHOP_ITEMS;
 }
 
 /**
@@ -724,6 +750,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   retireCeremony: null,
   offlineSettlement: null,
   offlineLoot: null,
+  blackIntro: false,
   offlineSectDone: null,
   liveTestWindow: null,
 
@@ -1109,7 +1136,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   selectNeigong: (id) => {
     const s = get();
-    if (s.neigong !== null || s.realm < 2) return;
+    // 第一世要先在 1-7 遇见前辈（taught），第二世起开局即选（battle-loot/design.md §5.2）
+    if (s.neigong !== null || !(s.taught || s.run >= 2)) return;
     if (!(s.ownedNeigong ?? STARTER_NEIGONG).includes(id)) return;
     const route = NEIGONG[id].route;
     set({ neigong: id, route, zhong: 0, tiersPassed: 0, dunwuSec: 0 });
@@ -1181,23 +1209,68 @@ export const useGameStore = create<GameState>((set, get) => ({
   buyShopItem: (itemId) => {
     const s = get();
     const item = shopItemsOf(s).find((i) => i.id === itemId);
-    if (!item || s.realm < item.realm) return;
+    if (!item || s.realm < item.realm || !s.marketOpen) return;
     const price = shopPriceOf(s, item.price);
     if (s.silver < price) return;
-    let patch: Partial<PersistedState>;
-    if (item.kind === 'wuxue') {
-      if ((s.ownedWuxue ?? []).includes(item.wuxue!)) return;
-      patch = { ownedWuxue: [...(s.ownedWuxue ?? []), item.wuxue!] };
-    } else if (item.kind === 'scroll') {
-      const key = formKey(item.wuxue!, item.form!);
-      if ((s.ownedScrolls ?? []).includes(key)) return;
-      patch = { ownedScrolls: [...(s.ownedScrolls ?? []), key] };
-    } else {
-      const ng = shopNeigongOf(s)!;
-      patch = { ownedNeigong: [...(s.ownedNeigong ?? []), ng] };
-    }
-    set({ ...patch, silver: s.silver - price, lastProgressSec: s.runPlaySec });
+    if ((s.ownedWuxue ?? []).includes(item.wuxue!)) return;
+    set({ ownedWuxue: [...(s.ownedWuxue ?? []), item.wuxue!], ...spend(s, price), lastProgressSec: s.runPlaySec });
     track('shop_bought', { run: s.run, realm: s.realm, route: s.route }, { item: itemId, price });
+    persist(get());
+  },
+
+  buyMarketItem: (goodId) => {
+    const s = get();
+    if (!s.marketOpen) return;
+    const { arms, wear } = marketGoodsOf(s);
+    const g = [...arms, ...wear].find((x) => x.id === goodId);
+    if (!g) return;
+    const price = shopPriceOf(s, g.price);
+    if (s.silver < price) return;
+    const it = buyStallGood(g, Math.random);
+    if (!bagFits(s.bag ?? [], it)) return;
+    set({ bag: [...(s.bag ?? []), it], ...spend(s, price) });
+    track('shop_bought', { run: s.run, realm: s.realm, route: s.route }, { item: goodId, price, slot: it.slot, grade: it.grade });
+    persist(get());
+  },
+
+  dismissBlackIntro: () => set({ blackIntro: false }),
+
+  refreshBlack: () => {
+    const s = get();
+    if (!s.blackOpen) return;
+    const day = dayKeyOf(Date.now());
+    if (s.blackDay === day && s.blackGoods.length === BLACK_PER_DAY) return;
+    const enemy = frontierStageOf(s);
+    set({ blackDay: day, blackGoods: dailyMasked(day, enemy.reward.silver, Math.random) });
+    persist(get());
+  },
+
+  buyMasked: (goodId) => {
+    const s = get();
+    const i = (s.blackGoods ?? []).findIndex((g) => g.id === goodId);
+    const g = s.blackGoods?.[i];
+    if (!s.blackOpen || !g || g.revealed || s.blackBuys >= BLACK_PER_LIFE || s.silver < g.price) return;
+    const enemy = frontierStageOf(s);
+    const r = revealMasked(g, enemy.x ?? 1, enemy.reward.silver, s.blackLowStreak ?? 0, Math.random);
+    let patch: Partial<PersistedState> = {};
+    if ('gear' in r.revealed) {
+      const put = putInBag(s.bag ?? [], s.worn ?? {}, r.revealed.gear);
+      patch = { bag: put.bag, silver: s.silver - g.price + put.sold };
+    } else {
+      const got = applyWuxueDrop(s, { id: r.revealed.pages.id, k: r.revealed.pages.k, kind: 'page' });
+      const pages = { ...got.pages };
+      pages[formKey(r.revealed.pages.id, r.revealed.pages.k)] = (pages[formKey(r.revealed.pages.id, r.revealed.pages.k)] ?? 0) + (r.revealed.pages.n - 1);
+      const first = r.revealed.pages.k === 1 && pagesFull(WUXUE[r.revealed.pages.id], pages, r.revealed.pages.id, 1)
+        && !got.ownedWuxue.includes(r.revealed.pages.id);
+      patch = { pages, ownedWuxue: first ? [...got.ownedWuxue, r.revealed.pages.id] : got.ownedWuxue, silver: s.silver - g.price };
+    }
+    const goods = s.blackGoods.map((x, j) => (j === i ? { ...x, revealed: r.revealed } : x));
+    set({ ...patch, blackGoods: goods, blackBuys: (s.blackBuys ?? 0) + 1, blackLowStreak: r.lowStreak, marketSpent: (s.marketSpent ?? 0) + g.price });
+    track('black_bought', { run: s.run, realm: s.realm, route: s.route }, {
+      good: g.mask.kind === 'gear' ? g.mask.slot : 'pages', price: g.price,
+      ...('gear' in r.revealed ? { grade: r.revealed.gear.grade } : { wuxue: r.revealed.pages.id, form: r.revealed.pages.k }),
+      buys: (s.blackBuys ?? 0) + 1,
+    });
     persist(get());
   },
 
@@ -1272,7 +1345,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
-  dismissFailure: () => set({ failure: null }),
+  dismissFailure: () => {
+    const s = get();
+    // 第一世 1-7 战败即遇见隐世前辈：起身行礼后可选内功（battle-loot/design.md §5.1）
+    if (s.failure && isTeachFailure(s)) {
+      set({ failure: null, taught: true });
+      track('elder_met', { run: s.run, realm: s.realm, route: s.route }, {});
+      persist(get());
+      return;
+    }
+    set({ failure: null });
+  },
 
   // ---- 行囊（battle-loot/design.md §3.5）----
   wearGear: (id) => {
@@ -1521,6 +1604,10 @@ function rebirth(
     books: s.books ?? [],
     pages: s.pages ?? {},
     dropsClaimed: s.dropsClaimed ?? [],
+    // 前辈已传过功，转世后开局即选内功（design.md §5.2）；市集、黑市一经开张跨世保留，黑市每世次数清零
+    taught: true,
+    marketOpen: s.marketOpen ?? false, marketSpent: s.marketSpent ?? 0,
+    blackOpen: s.blackOpen ?? false, blackLowStreak: s.blackLowStreak ?? 0, blackDay: s.blackDay ?? '', blackGoods: s.blackGoods ?? [],
     pastLearned: [...new Set([...(s.pastLearned ?? []), ...(s.learnedForms ?? [])])],
     formCasts: Object.fromEntries(Object.entries(s.formCasts ?? {})
       .map(([k, n]) => [k, Math.floor(n * SHULIAN_CARRY)] as const).filter(([, n]) => n > 0)),
@@ -1655,6 +1742,35 @@ function startBattle(
   });
 }
 
+/** 第一世 1-7 的那场战败：隐世前辈出场（battle-loot/design.md §5.1） */
+export function isTeachFailure(s: Pick<GameState, 'failure' | 'run' | 'neigong' | 'taught'>): boolean {
+  const f = s.failure;
+  return !!f && f.map === 1 && f.tier === 0 && f.stage === INTRO_STAGES + 1 && s.run === 1 && s.neigong === null && !s.taught;
+}
+
+/** 市集与黑市按「推关处」定货：最深一条可推前沿的下一关；全推完就取最深已解锁前沿的末关 */
+export function frontierStageOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): EnemyDef {
+  const fronts = openFronts(s);
+  const f = fronts[fronts.length - 1];
+  if (f) return getStage(f.map, f.tier, nextStageOf(f.map, f.tier, s.clearedStages)!);
+  const unlocked = (s.tiersUnlocked ?? ['1-0']).map((k) => k.split('-').map(Number) as [MapNo, TierId]).sort((a, b) => trackDepth(a[0], a[1]) - trackDepth(b[0], b[1]));
+  const [map, tier] = unlocked[unlocked.length - 1] ?? [1, 0];
+  return getStage(map, tier, trackLength(map, tier));
+}
+
+/** 兵器铺与衣饰铺的货：按推关处的当量与首通银两 */
+export function marketGoodsOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): { stage: EnemyDef; arms: MarketGood[]; wear: MarketGood[] } {
+  const stage = frontierStageOf(s);
+  return { stage, ...stallGoods(stage.x ?? 1, stage.reward.silver) };
+}
+
+/** 市集花一笔银两：累计消费满额那一笔解锁黑市并进话本演出（裁决 32） */
+function spend(s: Pick<PersistedState, 'silver' | 'marketSpent' | 'blackOpen'>, price: number): Partial<GameState> {
+  const spent = (s.marketSpent ?? 0) + price;
+  const unlock = !s.blackOpen && spent >= BLACK_UNLOCK_SPENT;
+  return { silver: s.silver - price, marketSpent: spent, ...(unlock ? { blackOpen: true, blackIntro: true } : {}) };
+}
+
 /** 一场胜利掷一次装备掉落（battle-loot/spec.md §2.1）：品阶按关卡在本段里的位置取权重，入门关只出凡品 / 精良 */
 export function rollDropFor(enemy: EnemyDef, rng: () => number): GearItem | null {
   if (rng() >= DROP_RATE[enemy.kind]) return null;
@@ -1719,6 +1835,7 @@ function resolveBattle(
   let { silver, lastProgressSec } = s;
   let bag = s.bag ?? [];
   let wxPatch: Partial<PersistedState> = {};
+  let marketPatch: Partial<PersistedState> = {};
   let fameState: Partial<PersistedState> = {};
   let fameGained = 0;
   let clearedStages = s.clearedStages;
@@ -1766,6 +1883,11 @@ function resolveBattle(
       });
     }
   } else {
+    // 市集开张（裁决 20 / 31，spec §4 X = 第 8 关）：传功后在第 8 关起首次战败
+    if (s.neigong && !s.marketOpen && b.stage >= MARKET_OPEN_STAGE) {
+      marketPatch = { marketOpen: true };
+      track('market_opened', { run: s.run, realm: s.realm, route: s.route }, { stage: key });
+    }
     const build = playerBuild(s);
     const diagCodes = diagnose(build, enemy, result, s.realm);
     failure = {
@@ -1819,11 +1941,15 @@ function resolveBattle(
   //   推关：赢了接着往前，到头了就在这一关挂着；输了退回挂机关（没有就退回本段最后一个已通关）
   //   挂机：赢了原地再打；输了退一关继续挂，退无可退才停
   //   单打一次：打完就停
-  const { idle: idle0, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
+  let { idle: idle0, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
+  // 第一世 1-7 的那场战败要停下来见前辈（design.md §5.1）：不退回挂机、不连战，免得演出被下一场冲掉
+  if (failure && isTeachFailure({ failure, run: s.run, neigong: s.neigong, taught: s.taught })) {
+    idle0 = null; chainStage = null; chainMode = null;
+  }
   const got = (rewardApplied?.gear ? 1 : 0) + (rewardApplied?.wuxue ? 1 : 0);
   const idle = idle0 && b.mode === 'idle' && got > 0 ? { ...idle0, loot: (idle0.loot ?? 0) + got } : idle0;
   set({
-    silver, bag, ...wxPatch, clearedStages, attempts, failure, lastProgressSec,
+    silver, bag, ...wxPatch, ...marketPatch, clearedStages, attempts, failure, lastProgressSec,
     injuries, lifespanLost, ...fameState, idle,
     formCasts: wx.formCasts, learnedForms: wx.learnedForms,
     ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),

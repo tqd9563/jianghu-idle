@@ -157,8 +157,8 @@ function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
     ['防御', String(a.def), statTip(base.def, a.zones.defTempPct, grantDef)],
     ['命中', String(a.accuracy), a.accuracy !== base.accuracy ? `境界基础 ${base.accuracy}<br>十重以上火候 +${+(a.accuracy - base.accuracy).toFixed(1)}` : ''],
     ['闪避', String(a.evasion), a.evasion !== base.evasion ? `境界基础 ${base.evasion}<br>十重以上火候 +${+(a.evasion - base.evasion).toFixed(1)}` : ''],
-    ['暴击率', pct1(a.critRate), critTip(a, 'critRate', route?.name)],
-    ['暴击伤害', pct(a.critDmg), critTip(a, 'critDmg', route?.name)],
+    ['会心率', pct1(a.critRate), critTip(a, 'critRate', route?.name)],
+    ['会心伤害', pct(a.critDmg), critTip(a, 'critDmg', route?.name)],
   ];
 
   return (

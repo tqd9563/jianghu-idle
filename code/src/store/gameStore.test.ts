@@ -14,8 +14,8 @@ import {
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
-import { applyWuxueDrop, frontierStageOf, handsOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
-import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT } from '../engine/market';
+import { applyWuxueDrop, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
+import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, STALL_PRICE_MULT } from '../engine/market';
 import { slotCount } from '../engine/wuxue';
 import { QUALITY_PARAMS, WUXUE, checkFormGate, formKey as fk, pagesFull, rollWuxueDrop } from '../engine/wuxue';
 import { isBenmen } from '../engine/sect';
@@ -30,7 +30,7 @@ function gearOf(slot: GearSlot, cat?: WeaponCat): GearItem {
   return { ...it, fresh: false };
 }
 import { freshInjuries, isHurt } from '../engine/injury';
-import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { allStages, getStage, REFARM_SILVER, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { INIT_AGE, ERA_START, LIFESPAN, SOUL_WEAK_MULT, ageYearsPerDay } from '../engine/reincarnation';
@@ -341,7 +341,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.paused).toBe(false);
   });
 
-  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、重打不递减；首次击败精英名号传开', () => {
+  it('胜利收益快照：关卡不掉内力；回刷银两两成半、阅历为零、重打不递减；首次击败精英名号传开', () => {
     useGameStore.setState({ realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, tiersPassed: 3 });
     const play = () => {
       const t0 = Date.now();
@@ -361,11 +361,11 @@ describe('gameStore · 归隐与声望阁', () => {
     const second = play();
     expect(second.reward!.refarm).toBe(true);
     expect(second.reward!.neili).toBe(0);
-    expect(second.reward!.silver).toBe(Math.round(base.silver * 0.5));
+    expect(second.reward!.silver).toBe(Math.round(base.silver * REFARM_SILVER));
 
     useGameStore.getState().challengeStage(1, 0, 1); // 连续重打：不再递减（battle-loot 裁决 14）
     const third = play();
-    expect(third.reward!.silver).toBe(Math.round(base.silver * 0.5));
+    expect(third.reward!.silver).toBe(Math.round(base.silver * REFARM_SILVER));
     expect(third.chainStage).toBeNull(); // 重打一次：打完就停
 
     // 首次击败图 1 初入的第一个精英：6.4 × 乘区 1，向下取整 6 声望，跨世只领一次
@@ -1236,6 +1236,9 @@ describe('gameStore · 装备与行囊（battle-loot/design.md §3）', () => {
     expect(d.grade).toBe(2);   // Boss 必 +1
     expect(d.level).toBe(boss.x);
     expect(d.sell).toBe(Math.round(boss.reward.silver * 1));
+    // 重打（裁决 38）：精英 / Boss 的掉落率按普通关 6% 算，品阶 +1 保留
+    expect(rollDropFor(boss, seq([0.07]), true)).toBeNull();
+    expect(rollDropFor(boss, seq([0.05, 0, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5]), true)!.grade).toBe(2);
   });
 });
 
@@ -1402,12 +1405,14 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(arms).toHaveLength(10);
     expect(wear).toHaveLength(4);
     expect(arms.filter((g) => g.grade === 1)).toHaveLength(5);
-    expect(arms[0].price).toBe(fs.reward.silver * 4);
-    expect(arms[5].price).toBe(fs.reward.silver * 10);
-    const sword = arms.find((g) => g.cat === '剑' && g.grade === 2)!;
+    const basis = priceBasisOf(st());
+    expect(basis).toBe(Math.max(...m1all.slice(0, 20).map((k) => getStage(1, 0, Number(k.slice(k.indexOf('s') + 1))).reward.silver)));
+    expect(arms[0].price).toBe(basis * STALL_PRICE_MULT[1]);
+    expect(arms[5].price).toBe(basis * STALL_PRICE_MULT[2]);
+    const sword = arms.find((g) => g.cat === '剑' && g.grade === 1)!;
     st().buyMarketItem(sword.id);
     expect(st().bag).toHaveLength(1);
-    expect(st().bag[0]).toMatchObject({ slot: '兵器', cat: '剑', grade: 2, level: fs.x, fresh: true });
+    expect(st().bag[0]).toMatchObject({ slot: '兵器', cat: '剑', grade: 1, level: fs.x, fresh: true });
     expect(st().silver).toBe(100000 - sword.price);
     expect(st().marketSpent).toBe(sword.price);
     expect(st().blackOpen).toBe(false);
@@ -1422,13 +1427,13 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(st().blackIntro).toBe(false);
   });
 
-  it('黑市：每天三件蒙面货、买下才揭晓、每世十次、连开三凡品后保底精良；转世清次数不清解锁', () => {
+  it('黑市：每轮三件蒙面货、买下才揭晓、每世有上限、连开三凡品后保底精良；转世清次数不清解锁', () => {
     useGameStore.setState({ realm: 3, neigong: 'jingleijue', route: 'huashan', marketOpen: true, blackOpen: true, silver: 10_000_000, clearedStages: m1all.slice(0, 20) });
     st().refreshBlack();
     expect(st().blackGoods).toHaveLength(3);
     expect(st().blackGoods.map((g) => g.mask.kind)).toEqual(['gear', 'gear', 'pages']);
     const day = st().blackDay;
-    st().refreshBlack();   // 同一天不换
+    st().refreshBlack();   // 同一轮不换
     expect(st().blackDay).toBe(day);
     vi.spyOn(Math, 'random').mockReturnValue(0);   // 必开凡品
     const g0 = st().blackGoods[0];

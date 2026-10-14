@@ -7,6 +7,7 @@
  *   每天固定上线 ONLINE_H 小时，其余离线；丹田满了多出的散掉，冲穴与突破只能在线做；
  *   上线先把夜里攒满的突破掉；寿元撑不到下次上线，就推完前沿当场归隐，把声望尽数换成修行感悟。
  *   一世内力约两成花在门径武学（pacing_sim.SKILL_SHARE）；有伤先养再打。
+ *   装备与市集（battle-loot/spec.md §7）：行囊里比身上强的穿上、其余卖掉；铺子只买比身上强的；黑市开了就买当天买得起的蒙面货。
  * 只供测试使用，依赖 vitest 的假时钟。
  */
 import { vi } from 'vitest';
@@ -15,12 +16,15 @@ import type { RouteId } from '../engine/content';
 import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
 import { WUXUE, slotCount } from '../engine/wuxue';
 import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
+import { betterThanWorn } from '../engine/gear';
+import { BLACK_PER_LIFE } from '../engine/market';
 import type { SectShelfRow } from '../store/gameStore';
 import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
 import { REP_NODES, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
 import {
-  mapUnlocked, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN, type MapNo,
+  mapUnlocked, marketGoodsOf, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN,
+  type MapNo,
 } from '../store/gameStore';
 import type { TierId } from '../engine/enemies';
 
@@ -133,6 +137,7 @@ export function tend(route: RouteId): void {
       if (st().zhong === z) { skillBudget += zhongCost(z + 1); break; }
     }
     if (!process.env.PACE_NO_WUXUE) tendWuxue();
+    if (!process.env.PACE_NO_MARKET) { tendGear(); tendMarket(); }
     if (!process.env.PACE_NO_SECT) tendSect(route);
   }
 }
@@ -187,6 +192,46 @@ function tendWuxue(): void {
     .slice(0, slotCount(s.realm));
   for (const id of s.equipped) if (!want.includes(id)) st().unequipWuxue(id);
   for (const id of want) st().equipWuxue(id);
+}
+
+/** 装备（标准玩家）：行囊里比身上品阶高的穿上，其余一键卖掉（battle-loot/design.md §3.5 同一口径） */
+function tendGear(): void {
+  for (let guard = 0; guard < 8; guard++) {
+    const s = st();
+    const up = (s.bag ?? []).filter((g) => betterThanWorn(g, s.worn)).sort((a, b) => b.grade - a.grade)[0];
+    if (!up) break;
+    st().wearGear(up.id);
+  }
+  for (const g of [...(st().bag ?? [])]) if (!betterThanWorn(g, st().worn)) st().sellGear(g.id);
+}
+
+/**
+ * 市集与黑市（标准玩家）：铺子货只买样品比身上强的，从便宜的买起；黑市开了就把当天的蒙面货买掉，
+ * 买得起才买、每世额度用完为止。银两先花武馆（tendWuxue），再铺子，最后黑市。
+ */
+function tendMarket(): void {
+  const s0 = st();
+  if (!s0.marketOpen) return;
+  for (let guard = 0; guard < 8; guard++) {
+    const s = st();
+    const { arms, wear } = marketGoodsOf(s);
+    const good = [...arms, ...wear]
+      .filter((g) => betterThanWorn(g.sample, s.worn) && shopPriceOf(s, g.price) <= s.silver)
+      .sort((a, b) => a.price - b.price)[0];
+    if (!good) break;
+    const before = s.silver;
+    st().buyMarketItem(good.id);
+    if (st().silver === before) break;
+    tendGear();
+  }
+  if (!st().blackOpen) return;
+  st().refreshBlack();
+  for (const g of st().blackGoods ?? []) {
+    const s = st();
+    if (g.revealed || (s.blackBuys ?? 0) >= BLACK_PER_LIFE || s.silver < g.price) continue;
+    st().buyMasked(g.id);
+  }
+  tendGear();
 }
 
 /** 在线 hours 小时：每 5 分钟看一眼 */

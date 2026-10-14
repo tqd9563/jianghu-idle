@@ -52,6 +52,8 @@
 | `systems/sim/injury_sim.py` | 受伤系统标定 sim（判据 V6–V9） | — |
 | `systems/sim/reincarnation_sim.py` | 转世判据复核（V1–V7；寿元与年岁速率已由 pacing_sim 生成） | — |
 | `systems/sim/pace_measured.json` | 真实代码的里程碑实测（三路线首达境界 2–6 的天数，`code/src/telemetry/pace.sim.test.ts` 以 WRITE_PACE=1 生成；守卫判据 ±20%） | pace.sim.test.ts |
+| `systems/sim/economy_measured.json` | 真实代码的经济实测（标准玩家各天银两进出、铺子 / 黑市定价基数、黑市解锁日与每世件数、掉落件数；`code/src/telemetry/economy.sim.test.ts` 以 SIM_ECON=1 生成；判据见 `systems/battle-loot/spec.md` §7） | economy.sim.test.ts |
+| `systems/sim/gear_form_measured.json` | 装备两型的余量差实测（真实战斗期望前沿；`code/src/telemetry/gearForm.sim.test.ts` 以 SIM_FORM=1 生成；判据见 `systems/battle-loot/spec.md` §7） | gearForm.sim.test.ts |
 | `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）

@@ -12,7 +12,7 @@
  * 用法：
  *   重新测量并写入记录：WRITE_PACE=1 npx vitest run src/telemetry/pace.sim.test.ts
  *   日常（CI）：各路线 4 个种子的平均首达日须落在里程碑 ±20%（至少 ±2 天）之内，否则游戏节奏已偏离设计。
- *   只跑一个种子排查：PACE_SEED=7 PACE_OUT=/tmp/x.json；模拟玩家不用武学：PACE_NO_WUXUE=1
+ *   只跑一个种子排查：PACE_SEED=7 PACE_OUT=/tmp/x.json；模拟玩家不用武学：PACE_NO_WUXUE=1；不逛市集 / 黑市、不穿装备：PACE_NO_MARKET=1
  *
  * 为什么是 ±20%（2026-09-29 用户选定）：sim 把冲穴与武学的份额也算进了丹田封顶，真实代码里它们在线另付，
  * 前期会早到一两天；三条路线的战斗与名号声望也不同，首达境界 5 相差近一成。这两处 sim 刻画不了。

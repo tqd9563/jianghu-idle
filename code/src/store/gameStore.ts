@@ -50,7 +50,7 @@ import {
 } from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 import {
-  BLACK_PER_DAY, BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, MARKET_OPEN_STAGE, buyStallGood, dailyMasked, dayKeyOf, revealMasked, stallGoods,
+  BLACK_PER_LIFE, BLACK_PER_ROUND, BLACK_UNLOCK_SPENT, MARKET_OPEN_STAGE, buyStallGood, revealMasked, roundKeyOf, roundMasked, stallGoods,
   type MarketGood, type MaskedGood,
 } from '../engine/market';
 import {
@@ -179,6 +179,7 @@ interface PersistedState {
   /** 连开凡品的次数（保底用，不公示） */
   blackLowStreak: number;
   /** 当天蒙面货的日期键与三件货（买下的带揭晓结果） */
+  /** 当前这一轮蒙面货的轮次键（字段名沿用存档 v10） */
   blackDay: string;
   blackGoods: MaskedGood[];
 }
@@ -342,7 +343,7 @@ interface GameState extends PersistedState {
   buyMarketItem: (goodId: string) => void;
   /** 看过暗门演出 */
   dismissBlackIntro: () => void;
-  /** 进黑市：按日期换货 */
+  /** 进黑市：按轮次换货（每 4 小时一轮） */
   refreshBlack: () => void;
   /** 买一件蒙面货：买下才揭晓 */
   buyMasked: (goodId: string) => void;
@@ -817,13 +818,13 @@ export const useGameStore = create<GameState>((set, get) => ({
               let count = 0, sold = 0, books = 0, pages = 0;
               let best: GearItem | null = null;
               for (let i = 0; i < wins; i++) {
-                const drop = rollDropFor(enemy, Math.random);
+                const drop = rollDropFor(enemy, Math.random, true);
                 if (drop) {
                   const put = putInBag(bag, merged.worn ?? {}, drop);
                   bag = put.bag; sold += put.sold; count++;
                   if (!best || drop.grade > best.grade) best = drop;
                 }
-                const wd = rollWuxueDrop(merged.realm, enemy.kind, Math.random);
+                const wd = rollWuxueDrop(merged.realm, 'normal', Math.random);
                 if (wd) {
                   const got = applyWuxueDrop(merged, wd);
                   merged.ownedWuxue = got.ownedWuxue; merged.books = got.books; merged.pages = got.pages;
@@ -1244,10 +1245,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   refreshBlack: () => {
     const s = get();
     if (!s.blackOpen) return;
-    const day = dayKeyOf(Date.now());
-    if (s.blackDay === day && s.blackGoods.length === BLACK_PER_DAY) return;
-    const enemy = frontierStageOf(s);
-    set({ blackDay: day, blackGoods: dailyMasked(day, enemy.reward.silver, Math.random) });
+    const round = roundKeyOf(Date.now());
+    if (s.blackDay === round && s.blackGoods.length === BLACK_PER_ROUND) return;
+    set({ blackDay: round, blackGoods: roundMasked(round, s.realm, priceBasisOf(s), Math.random) });
     persist(get());
   },
 
@@ -1257,7 +1257,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const g = s.blackGoods?.[i];
     if (!s.blackOpen || !g || g.revealed || s.blackBuys >= BLACK_PER_LIFE || s.silver < g.price) return;
     const enemy = frontierStageOf(s);
-    const r = revealMasked(g, enemy.x ?? 1, enemy.reward.silver, s.blackLowStreak ?? 0, Math.random);
+    const r = revealMasked(g, enemy.x ?? 1, priceBasisOf(s), s.blackLowStreak ?? 0, Math.random);
     let patch: Partial<PersistedState> = {};
     if ('gear' in r.revealed) {
       const put = putInBag(s.bag ?? [], s.worn ?? {}, r.revealed.gear);
@@ -1762,18 +1762,32 @@ export function isTeachFailure(s: Pick<GameState, 'failure' | 'run' | 'neigong' 
 
 /** 市集与黑市按「推关处」定货：最深一条可推前沿的下一关；全推完就取最深已解锁前沿的末关 */
 export function frontierStageOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): EnemyDef {
-  const fronts = openFronts(s);
-  const f = fronts[fronts.length - 1];
-  if (f) return getStage(f.map, f.tier, nextStageOf(f.map, f.tier, s.clearedStages)!);
+  // 几条前沿并开时取推得最深的那条（当量最高的下一关）：新图刚开时它的第 1 关比旧图历练段浅得多，不能当定价基数
+  const nexts = openFronts(s).map((f) => getStage(f.map, f.tier, nextStageOf(f.map, f.tier, s.clearedStages)!));
+  const f = nexts.sort((a, b) => (b.x ?? 0) - (a.x ?? 0))[0];
+  if (f) return f;
   const unlocked = (s.tiersUnlocked ?? ['1-0']).map((k) => k.split('-').map(Number) as [MapNo, TierId]).sort((a, b) => trackDepth(a[0], a[1]) - trackDepth(b[0], b[1]));
   const [map, tier] = unlocked[unlocked.length - 1] ?? [1, 0];
   return getStage(map, tier, trackLength(map, tier));
 }
 
-/** 兵器铺与衣饰铺的货：按推关处的当量与首通银两 */
+/**
+ * 市集与黑市的定价基数：已通关卡里最高的首通银两（spec §7）。
+ * 不用推关处的首通银两：各条前沿的头几关银两都很低，而玩家挂机的进账按已通关里最肥的那关算；也不随并开的新图回落。
+ */
+export function priceBasisOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): number {
+  let best = 0;
+  for (const key of s.clearedStages) {
+    const p = parseStageKey(key);
+    if (p) best = Math.max(best, getStage(p.map, p.tier, p.stage).reward.silver);
+  }
+  return best > 0 ? best : frontierStageOf(s).reward.silver;
+}
+
+/** 兵器铺与衣饰铺的货：当量按推关处，价格按定价基数 */
 export function marketGoodsOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): { stage: EnemyDef; arms: MarketGood[]; wear: MarketGood[] } {
   const stage = frontierStageOf(s);
-  return { stage, ...stallGoods(stage.x ?? 1, stage.reward.silver) };
+  return { stage, ...stallGoods(stage.x ?? 1, priceBasisOf(s)) };
 }
 
 /** 市集花一笔银两：累计消费满额那一笔解锁黑市并进话本演出（裁决 32） */
@@ -1783,9 +1797,12 @@ function spend(s: Pick<PersistedState, 'silver' | 'marketSpent' | 'blackOpen'>, 
   return { silver: s.silver - price, marketSpent: spent, ...(unlock ? { blackOpen: true, blackIntro: true } : {}) };
 }
 
-/** 一场胜利掷一次装备掉落（battle-loot/spec.md §2.1）：品阶按关卡在本段里的位置取权重，入门关只出凡品 / 精良 */
-export function rollDropFor(enemy: EnemyDef, rng: () => number): GearItem | null {
-  if (rng() >= DROP_RATE[enemy.kind]) return null;
+/**
+ * 一场胜利掷一次装备掉落（battle-loot/spec.md §2.1）：品阶按关卡在本段里的位置取权重，入门关只出凡品 / 精良。
+ * 重打（非首通）的精英 / Boss 掉落率按普通关算、品阶加成保留（design.md 裁决 38）：否则挂在 Boss 关每场必掉，经济全乱。
+ */
+export function rollDropFor(enemy: EnemyDef, rng: () => number, repeat = false): GearItem | null {
+  if (rng() >= DROP_RATE[repeat ? 'normal' : enemy.kind]) return null;
   const n = trackLength(enemy.map, enemy.tier);
   const pos = n > 1 ? (enemy.stage - 1) / (n - 1) : 0;
   const grade = rollGrade(pos, enemy.kind, rng, isIntroStage(enemy.map, enemy.tier, enemy.stage));
@@ -1867,7 +1884,7 @@ function resolveBattle(
     }
     rewardApplied = { neili: 0, silver: reward.silver, refarm: !firstClear, fame: fameGained };
     // 装备掉落（battle-loot/spec.md §2.1）：传功（选内功）之后才开始掉（裁决 13 / 19）
-    const drop = s.neigong ? rollDropFor(enemy, Math.random) : null;
+    const drop = s.neigong ? rollDropFor(enemy, Math.random, !firstClear) : null;
     if (drop) {
       const put = putInBag(s.bag ?? [], s.worn ?? {}, drop);
       bag = put.bag;
@@ -1878,7 +1895,7 @@ function resolveBattle(
       });
     }
     // 武学掉落（design.md §4）：寻常整式全本、上乘残页；传功后才掉
-    const wd = s.neigong ? rollWuxueDrop(s.realm, enemy.kind, Math.random) : null;
+    const wd = s.neigong ? rollWuxueDrop(s.realm, firstClear ? enemy.kind : 'normal', Math.random) : null;
     if (wd) {
       const got = applyWuxueDrop(s, wd);
       wxPatch = { ownedWuxue: got.ownedWuxue, books: got.books, pages: got.pages };

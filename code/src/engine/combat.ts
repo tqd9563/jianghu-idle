@@ -7,7 +7,7 @@ import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouEffect, zhaoshiLevel, type
 import type { EnemyDef } from './enemies';
 import { HIT_FLOOR, mitigationMultiplier } from './formulas';
 import { ROUTES } from './routes';
-import { QI_REGEN, TRIGGER_RATE, type FormEffect } from './wuxue';
+import { EFFECT_ROUNDS, LASTING_EFFECTS, QI_REGEN, TRIGGER_CAP, type FormEffect } from './wuxue';
 import { assertNever } from './exhaustive';
 
 // 敌人标签参数（公式表，与 sim 常量一致）
@@ -96,7 +96,8 @@ export interface TurnEvent {
   rd: number;
   side: 'player' | 'enemy' | 'end';
   kind: 'attack' | 'cast' | 'miss' | 'crit' | 'burst' | 'poison_apply' | 'poison_tick' | 'poison_burst'
-      | 'thorns_to_player' | 'thorns_to_enemy' | 'enemy_poison_tick' | 'purify' | 'enrage' | 'defeat' | 'victory';
+      | 'thorns_to_player' | 'thorns_to_enemy' | 'enemy_poison_tick' | 'purify' | 'enrage' | 'defeat' | 'victory'
+      | 'followup' | 'sealed';
   dmg?: number;
   text: string;
   phpPct: number;
@@ -114,6 +115,8 @@ export interface TurnEvent {
   missed?: boolean;
   absorb?: number;
   detonate?: number;
+  /** 本招特效确实生效（持续类挂上、连击 / 封穴掷中、回气 / 回元 / 护体 / 附毒 / 透劲结算了），战报据此追加特效句 */
+  fx?: FormEffect;
 }
 
 /** 战斗统计 —— 纯累加器，不参与结算；失败战报（战斗文案冻结件）与诊断规则消费 */
@@ -138,20 +141,23 @@ export interface FightStats {
   formCasts: Record<string, number>;
 }
 
-/** 一式招式（已含熟练与共鸣的倍率） */
+/** 一式招式（倍率已含共鸣；耗气 / 冷却已含熟练加成，battle-loot/spec.md §3.6） */
 export interface CombatForm {
   key: string;
   name: string;
   mult: number;
   effect: FormEffect | null;
+  /** 本式特效数值（四档插值，spec §3.4）；独门机制为 0 */
+  fx: number;
+  cost: number;
+  cd: number;
 }
 
-/** 一门装配中的武学：只列已领悟的招式（spec §2.5） */
+/** 一门装配中的武学：只列已领悟的招式；p = 对总触发率的贡献（已含熟练加成） */
 export interface CombatSkill {
   id: string;
   name: string;
-  cost: number;
-  cd: number;
+  p: number;
   forms: CombatForm[];
 }
 
@@ -198,14 +204,19 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   let playerPoison = 0; // 玩家身上的毒层（毒敌施加）
   let abStacks = 0;     // 玩家身上的破甲层
   const pHit = hitChance(build.hit, enemy.dodge);
-  const eHit = hitChance(enemy.hit, build.dodge);
-  // 武学（spec §2.5）：冷却 → 真气 → 随机。不装武学时不消耗任何额外随机数，金标准逐项不变
+  // 武学（spec §2.5 / battle-loot/spec.md §3.3）：候选 = 冷却好且真气够；总触发率 = Σ 各门几率（封顶）；加权抽门、等概率抽式。
+  // 不装武学时不消耗任何额外随机数，金标准逐项不变
   const loadout = ev ? [] : (opts.loadout ?? []);
   const useSkills = loadout.length > 0;
   const qiMax = useSkills ? opts.qiMax ?? 0 : 0;
   let qi = qiMax;
   const cds = loadout.map(() => 0);
   let fightCasts = 0;
+  // 持续增益 / 减益（spec §3.4）：名字 → [剩余回合, 数值]，回合末递减；同名只刷新不叠加
+  const lasting: Partial<Record<FormEffect, [number, number]>> = {};
+  const lv = (e: FormEffect) => lasting[e]?.[1] ?? 0;
+  const eHitNow = () => hitChance(enemy.hit - lv('迷目'), build.dodge + lv('轻身'));
+  let sealed = false;   // 封穴：敌人跳过下一次行动
   // 非蚀骨被「附毒」挂上的毒：系数 12%、上限 8 层、不毒爆（spec §2.6）
   const pCap = build.poison.cap || 8;
   const pCoef = build.poison.coef || 0.12;
@@ -246,33 +257,55 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     // ---- 玩家行动（结算顺序 1：出招判定 → 命中 → 暴击 → 减免 → 护盾 → 气血）----
     let skill: CombatSkill | null = null;
     let form: CombatForm | null = null;
+    let fx: FormEffect | undefined;
     if (useSkills) {
-      const cand = loadout.map((_, i) => i).filter((i) => cds[i] === 0 && qi >= loadout[i].cost);
-      if (cand.length > 0 && rng() < TRIGGER_RATE) {
-        const i = cand[Math.floor(rng() * cand.length)];
+      const cand = loadout.map((_, i) => i).filter((i) => cds[i] === 0 && qi >= Math.min(...loadout[i].forms.map((f) => f.cost)));
+      const total = Math.min(TRIGGER_CAP, cand.reduce((a, i) => a + loadout[i].p, 0));
+      if (cand.length > 0 && rng() < total) {
+        let r = rng() * cand.reduce((a, i) => a + loadout[i].p, 0);
+        let i = cand[cand.length - 1];
+        for (const c of cand) { r -= loadout[c].p; if (r < 0) { i = c; break; } }
         skill = loadout[i];
-        form = skill.forms[Math.floor(rng() * skill.forms.length)];
-        if (form.effect !== '回气') qi -= skill.cost;
-        cds[i] = skill.cd + 1;
+        const usable = skill.forms.filter((f) => f.cost <= qi);
+        form = usable[Math.floor(rng() * usable.length)];
+        qi -= form.cost;
+        cds[i] = form.cd + 1;
       }
       for (let j = 0; j < cds.length; j++) cds[j] = Math.max(0, cds[j] - 1);
     }
     const eff = form?.effect ?? null;
+    const fv = form?.fx ?? 0;
     const forced = rd === 1 && build.firstCrit;
     const hitRoll = roll(pHit);
     pAttempts += 1; pHits += hitRoll;
-    const critRoll = forced || eff === '必暴' ? 1 : roll(build.crit);
+    const critNow = Math.min(CRIT_CAP, build.crit + lv('凝眸'));
+    const critRoll = forced || eff === '必暴' ? 1 : roll(critNow);
+    // 必暴另加会心伤害（四档）
+    const cdNow = build.cd + (eff === '必暴' ? fv : 0);
     const critEv = ev
       ? (forced ? build.cd : 1 - build.crit + build.crit * build.cd)
-      : (critRoll ? build.cd : 1);
+      : (critRoll ? cdNow : 1);
     // 招式：倍率 × 蓄势；反震按「攻击 + 防御」计；蚀骨「普攻 ×0.60」只作用于普攻（spec S3）
-    const baseAtk = build.atk + (eff === '反震' ? build.def : 0);
+    const atkNow = build.atk * (1 + lv('运劲'));
+    const baseAtk = atkNow + (eff === '反震' ? build.def : 0);
     const mult = form ? form.mult * (eff === '蓄势' ? 1 + 0.1 * fightCasts : 1) : 1;
-    let dealt = baseAtk * mult * critEv * mitigationMultiplier(enemy.def, defK) * hitRoll * dmgMult
+    // 敌方防御：破绽（持续）与透劲（本式）都打折
+    const edefNow = enemy.def * (1 - lv('破绽')) * (eff === '透劲' ? 1 - fv : 1);
+    let dealt = baseAtk * mult * critEv * mitigationMultiplier(edefNow, defK) * hitRoll * dmgMult
       * (form ? 1 : build.plainMult) * spread();
     if (form) fightCasts += 1;
     else if (useSkills) qi = Math.min(qiMax, qi + QI_REGEN);
-    if (eff === '护体') pshield += 0.08 * build.hp;
+    if (form && eff) {
+      switch (eff) {
+        case '护体': pshield += fv * build.hp; fx = eff; break;
+        case '回气': qi = Math.min(qiMax, qi + form.cost * fv); fx = eff; break;
+        case '回元': qi = Math.min(qiMax, qi + fv); fx = eff; break;
+        case '透劲': fx = eff; break;
+        case '封穴': if (rng() < fv) { sealed = true; fx = eff; } break;
+        default:
+          if (LASTING_EFFECTS.has(eff)) { lasting[eff] = [EFFECT_ROUNDS, fv]; fx = eff; }
+      }
+    }
     let detonate = 0;
     if (eff === '引爆' && elayers > 0) {
       detonate = elayers * build.atk * pCoef * 3 * dmgMult;
@@ -292,10 +325,14 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         push(rd, 'player', 'burst', `剑意迸发！爆发剑招造成 ${f1(burst)} 伤害`, f1(burst));
       }
     }
-    const perHit = build.poison.perHit + (eff === '附毒' ? 2 : 0);
+    // 附毒：额外叠 1 层，另有几率再 +1（spec §3.4）
+    let extraPoison = 0;
+    if (eff === '附毒') { extraPoison = 1 + (fv > 0 && rng() < fv ? 1 : 0); fx = eff; }
+    const perHit = build.poison.perHit + extraPoison;
     if (perHit) {
       elayers = Math.min(pCap, elayers + hitRoll * perHit);
     }
+    if (eff === '引爆' && detonate > 0) fx = eff;
     ehp -= dealt;
     stats.dmgDealt += dealt;
     if (skill && form) {
@@ -309,7 +346,17 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         hitRoll === 0
           ? `施展「${skill.name} · ${form.name}」，被闪避`
           : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}${build.sqNeed < 99 && crit ? `，剑意 ${sq}/${build.sqNeed}` : ''}`,
-        f1(dealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}) });
+        f1(dealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}), ...(fx ? { fx } : {}) });
+      // 连击：有几率追加一次普攻（不攒剑意、不叠毒）
+      if (eff === '连击' && hitRoll && rng() < fv) {
+        const h2 = roll(pHit);
+        const c2 = roll(critNow);
+        const d2 = atkNow * build.plainMult * (c2 ? build.cd : 1) * mitigationMultiplier(edefNow, defK) * h2 * dmgMult * spread();
+        ehp -= d2;
+        stats.dmgDealt += d2;
+        stats.skillDmg[skill.id] = (stats.skillDmg[skill.id] ?? 0) + d2;
+        push(rd, 'player', 'followup', h2 ? `招势未尽，顺手又补了一记，造成 ${f1(d2)} 伤害` : '招势未尽，顺手又补了一记，被闪避', f1(d2), { crit: c2 === 1, missed: h2 === 0 });
+      }
     } else if (!ev && hitRoll === 0) {
       push(rd, 'player', 'miss', '你的攻击被闪避');
     } else if (dealt > 0) {
@@ -332,13 +379,18 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (ehp <= 0) return finish(true, rd);
 
     // ---- 敌人行动 ----
-    let eatk = enemy.atk;
+    let eatk = enemy.atk * (1 - lv('卸力'));
     if (tags.includes('狂暴') && rd >= ENRAGE_START) {
       eatk *= 1 + ENRAGE_STEP * (rd - ENRAGE_START + 1);
       if (rd === ENRAGE_START) push(rd, 'enemy', 'enrage', `${enemy.name}狂性大发，攻击开始逐回合提升！`);
     }
     const pdfs = build.def * (1 - Math.min(abStacks, 3) * ARMOR_BREAK_PP);
-    const eHitRoll = roll(eHit);
+    if (sealed) {
+      sealed = false;
+      push(rd, 'enemy', 'sealed', `${enemy.name}穴道被封，这一回合动弹不得`);
+      eatk = 0;
+    }
+    const eHitRoll = eatk > 0 ? roll(eHitNow()) : 0;
     let edmg = eatk * eHitRoll * mitigationMultiplier(pdfs, defK) * spread();
     if (build.lowhpDr && php < 0.3 * build.hp) edmg *= 1 - build.lowhpDr;
     const absorb = Math.min(pshield, edmg);
@@ -346,7 +398,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     php -= edmg - absorb;
     stats.dmgTaken += edmg;
     stats.shieldAbsorbed += absorb;
-    if (!ev && eHitRoll === 0) {
+    if (!ev && eHitRoll === 0 && eatk > 0) {
       push(rd, 'enemy', 'miss', `${enemy.name}的攻击被闪避`);
     } else if (edmg > 0) {
       push(rd, 'enemy', 'attack',
@@ -370,7 +422,11 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     }
     if (ehp <= 0) return finish(true, rd);
 
-    // ---- 回合结束（结算顺序 3：毒 → 狂暴/净化）----
+    // ---- 回合结束（结算顺序 3：毒 → 狂暴/净化；持续特效递减）----
+    for (const k of Object.keys(lasting) as FormEffect[]) {
+      const v = lasting[k]!;
+      if (v[0] <= 1) delete lasting[k]; else v[0] -= 1;
+    }
     if (elayers > 0) {
       const tick = elayers * build.atk * pCoef * dmgMult;
       ehp -= tick;

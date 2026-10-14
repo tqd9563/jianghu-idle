@@ -12,7 +12,7 @@ import type { EnemyDef } from './enemies';
 import type { TurnEvent } from './combat';
 import { assertNever } from './exhaustive';
 import { formTitle } from './formNames';
-import { WUXUE, formHasEffect, type FormEffect, type WuxueId } from './wuxue';
+import { CATALOG_LINES, WUXUE, type FormEffect, type WuxueId } from './wuxue';
 
 // ---------------------------------------------------------------- 类型
 
@@ -279,15 +279,33 @@ export const CAST_EXTRA = {
 /** §5.3 招式特效追加句（只在带特效的式后面追加；必暴已由暴击句体现） */
 export const EFFECT_LINES: Record<Exclude<FormEffect, '必暴'>, string> = {
   护体: '护体真气随招而生，又厚一层。',
-  回气: '招随气转，这一式没耗真气。',
-  附毒: '锋上淬毒，{敌}又添两层毒。',
+  回气: '招随气转，这一式的真气回了大半。',
+  附毒: '锋上淬毒，{敌}身上的毒又添了。',
+  运劲: '一股劲力贯入四肢，接下来几招更见沉猛。',
+  连击: '招势未尽，{我}顺手又补了一记。',
+  凝眸: '心神一凝，{敌}身上的破绽看得更清楚了。',
+  轻身: '身法随招变轻，接下来更难被打中。',
+  回元: '招意圆转，一部分真气回到了丹田。',
+  透劲: '劲力透体而入，{敌}的护身功夫挡不住。',
+  封穴: '这一下封住了穴道，{敌}一时动弹不得。',
+  卸力: '{敌}手臂一麻，之后出手的力道弱了几分。',
+  迷目: '{敌}眼前一花，之后出手便没那么准了。',
+  破绽: '{敌}门户已乱，之后更容易被打伤。',
   蓄势: '剑势层层相叠，后招更重。',
   反震: '杵借身沉，连一身筋骨之力也压了上去。',
   引爆: '机括一响，{敌}体内积毒尽数炸开，其中{爆}点是毒伤。',
 };
 
-/** §5.1 每门武学每一式的专属句子（顺序与 FORM_NAMES 一致） */
-export const FORM_LINES: Record<WuxueId, Lines> = {
+/** §5.4 连击补的那一记与封穴 */
+export const FOLLOWUP: Record<'hit' | 'miss', Lines> = {
+  hit: ['{我}招势未尽，顺手又补了一记，又添{伤}点伤害。'],
+  miss: ['{我}招势未尽，顺手又补了一记，却被{敌}侧身让过。'],
+};
+export const SEALED: Lines = ['{敌}穴道被封，这一回合动弹不得。'];
+
+/** §5.1 每门武学每一式的专属句子（顺序与 FORM_NAMES 一致）：现有 14 门在此，第一批新增 52 门随名录表并入 */
+export const FORM_LINES: Record<WuxueId, Lines> = { ...FORM_LINES_BASE(), ...CATALOG_LINES };
+function FORM_LINES_BASE(): Record<WuxueId, Lines> { return {
   // 流云剑 · 剑法 · 飘逸
   liuyunjian: [
     '{我}剑势舒展，如白云出岫，正是这招{招}，看似漫不经心，剑尖已递到{敌}眼前，造成{伤}点伤害。',
@@ -404,7 +422,7 @@ export const FORM_LINES: Record<WuxueId, Lines> = {
     '{我}双手连发，一式{招}，每一镖的去路都不相同，{敌}左支右绌，受了{伤}点伤害。',
     '{我}最后一镖出手，一招{招}悄无声息，{敌}中镖之处迅速发黑，受了{伤}点伤害。',
   ],
-};
+}; }
 
 // ---------------------------------------------------------------- 组句
 
@@ -517,12 +535,8 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       const tpl = f ? FORM_LINES[f[0]][f[1] - 1] : undefined;
       const segs = tpl ? fill(tpl, { ...base, form: formName, crit: t.crit }) : line(PLAIN_HIT[route], 0, { crit: t.crit });
       if (t.crit) segs.push(...line(CAST_EXTRA.crit, 0));
-      if (f && formHasEffect(WUXUE[f[0]], f[1])) {
-        const eff = WUXUE[f[0]].effect;
-        if (eff !== '必暴' && (eff !== '引爆' || (t.detonate ?? 0) > 0)) {
-          segs.push(...fill(EFFECT_LINES[eff], { ...base, det: t.detonate }));
-        }
-      }
+      // 特效追加句：只在本招特效确实生效时追加（引擎标在 fx 上）；必暴由暴击句体现，连击另有补刀事件
+      if (t.fx && t.fx !== '必暴' && t.fx !== '连击') segs.push(...fill(EFFECT_LINES[t.fx], { ...base, det: t.detonate }));
       if (t.crit && ctx.sqNeed < 99) segs.push(...line(MECH.sq, 0, { n: t.pSq, cap: ctx.sqNeed }));
       return segs;
     }
@@ -542,6 +556,10 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       return line(MECH.foePoisonTick, 0);
     case 'purify':
       return line(MECH.purify, 0);
+    case 'followup':
+      return t.missed ? line(FOLLOWUP.miss, 0) : line(FOLLOWUP.hit, 0, { crit: t.crit });
+    case 'sealed':
+      return line(SEALED, 0);
     case 'enrage':
       return line(FOE_ENRAGE[fk], 0);
     case 'victory':
@@ -560,6 +578,7 @@ export function allTemplates(): string[] {
     ...Object.values(PLAYER_MISS), ...Object.values(FOE_HIT), ...Object.values(FOE_MISS),
     ...Object.values(FOE_ENRAGE), ...Object.values(VICTORY), ...Object.values(DEFEAT),
     ...Object.values(MECH), ...Object.values(CAST_EXTRA), Object.values(EFFECT_LINES),
+    ...Object.values(FOLLOWUP), SEALED,
     ...Object.values(FORM_LINES),
   ];
   return groups.flat();

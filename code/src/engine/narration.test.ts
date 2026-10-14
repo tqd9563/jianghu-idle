@@ -20,8 +20,8 @@ const turn = (over: Partial<TurnEvent>): TurnEvent => ({
 });
 
 describe('招式名与每式句子', () => {
-  it('14 门武学每一式都有式名与专属句子，式数与品质一致', () => {
-    expect(WUXUE_IDS).toHaveLength(14);
+  it('第一批 66 门武学每一式都有式名与专属句子，式数与品质一致', () => {
+    expect(WUXUE_IDS).toHaveLength(66);
     for (const id of WUXUE_IDS) {
       const n = QUALITY_PARAMS[WUXUE[id].quality].forms;
       expect(FORM_NAMES[id], id).toHaveLength(n);
@@ -46,14 +46,15 @@ describe('事件映射', () => {
     { kind: 'attack', side: 'enemy', absorb: 9, dmg: 0 },
     { kind: 'crit' }, { kind: 'miss' }, { kind: 'miss', side: 'enemy' },
     { kind: 'cast', form: 'liuyunjian:1', crit: true }, { kind: 'cast', form: 'kaishanzhang:1', missed: true, dmg: 0 },
-    { kind: 'cast', form: 'qianjibiao:2', detonate: 40 },
+    { kind: 'cast', form: 'qianjibiao:2', detonate: 40, fx: '引爆' },
     { kind: 'burst' }, { kind: 'poison_apply', rd: 0 }, { kind: 'poison_tick' }, { kind: 'poison_burst' },
     { kind: 'thorns_to_player', side: 'enemy' }, { kind: 'thorns_to_enemy' }, { kind: 'enemy_poison_tick', side: 'enemy' },
     { kind: 'purify', side: 'enemy' }, { kind: 'enrage', side: 'enemy' }, { kind: 'victory', side: 'end' },
     { kind: 'defeat', side: 'end' },
+    { kind: 'followup' }, { kind: 'followup', missed: true, dmg: 0 }, { kind: 'sealed', side: 'enemy' },
   ];
   const allKinds: TurnEvent['kind'][] = ['attack', 'cast', 'miss', 'crit', 'burst', 'poison_apply', 'poison_tick',
-    'poison_burst', 'thorns_to_player', 'thorns_to_enemy', 'enemy_poison_tick', 'purify', 'enrage', 'defeat', 'victory'];
+    'poison_burst', 'thorns_to_player', 'thorns_to_enemy', 'enemy_poison_tick', 'purify', 'enrage', 'defeat', 'victory', 'followup', 'sealed'];
 
   it('每种事件都有句子，且不留未填占位', () => {
     expect(new Set(kinds.map((k) => k.kind))).toEqual(new Set(allKinds));
@@ -74,7 +75,7 @@ describe('事件映射', () => {
   });
 
   it('牵机镖引爆时带出毒伤数字', () => {
-    expect(text(narrateTurn(turn({ kind: 'cast', form: 'qianjibiao:2', detonate: 40 }), ctx))).toContain('40');
+    expect(text(narrateTurn(turn({ kind: 'cast', form: 'qianjibiao:2', detonate: 40, fx: '引爆' }), ctx))).toContain('40');
   });
 });
 
@@ -103,9 +104,9 @@ describe('确定性', () => {
     const seed = () => { let x = 42; return () => ((x = (x * 16807) % 2147483647) / 2147483647); };
     const e = getStage(1, 0, 5);
     const b = makeBuild('huashan', 2, 3, 0);
-    const loadout = [{ id: 'liuyunjian', name: '流云剑', cost: 25, cd: 2, forms: [
-      { key: 'liuyunjian:1', name: '第一式', mult: 1.3, effect: '必暴' as const },
-      { key: 'liuyunjian:2', name: '第二式', mult: 1.34, effect: null },
+    const loadout = [{ id: 'liuyunjian', name: '流云剑法', p: 0.25, forms: [
+      { key: 'liuyunjian:1', name: '第一式', mult: 1.3, effect: '必暴' as const, fx: 0, cost: 25, cd: 2 },
+      { key: 'liuyunjian:2', name: '第二式', mult: 1.34, effect: '必暴' as const, fx: 0.05, cost: 25, cd: 2 },
     ] }];
     const run = () => fight(b, e, { mode: 'rng', rng: seed(), loadout, qiMax: 100 }).turns
       .map((t) => text(narrateTurn(t, { ...ctx, enemy: e })));

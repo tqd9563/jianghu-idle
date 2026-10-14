@@ -23,6 +23,8 @@ import {
 } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 import { gearFullName } from '../engine/gear';
+import { formTitle } from '../engine/formNames';
+import { PAGES_NEEDED } from '../engine/wuxue';
 
 const f0 = (n: number) => fmtBig(Math.round(n));
 /** data-tip 走 innerHTML：拼进去的名字统一转义 */
@@ -331,6 +333,13 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             <>
               <div className="p loot">获得：银两 {f0(battle.reward.silver)}{battle.reward.refarm ? '（回刷五成）' : ''}</div>
               {battle.reward.drop && <div className="p loot">首杀掉落：{battle.reward.drop}</div>}
+              {battle.reward.wuxue && (
+                <div className="p loot">
+                  拾得：<span className="serif qi">{WUXUE[battle.reward.wuxue.id].name} · {formTitle(battle.reward.wuxue.id, battle.reward.wuxue.k)}</span>
+                  {battle.reward.wuxue.kind === 'book' ? '全本' : `残页 ${battle.reward.wuxue.have} / ${PAGES_NEEDED[WUXUE[battle.reward.wuxue.id].quality as '上乘' | '绝学']}`}
+                  {battle.reward.wuxue.dup ? '（已有，收入书匣）' : ''}
+                </div>
+              )}
               {battle.reward.gear && (
                 <div className="p loot">
                   拾得：<span className={`serif g${battle.reward.gear.grade}`}>{gearFullName(battle.reward.gear)}</span>

@@ -69,7 +69,7 @@ function shelfText(it: SectShelfRow, id: SectId): { title: string; tag: string |
       const w = WUXUE[it.wuxue!];
       return w.signature
         ? { title: it.label, tag: '绝学 · 独门', desc: d.signature }
-        : { title: it.label, tag: '绝学', desc: `${w.category} · 本门练得快两成` };
+        : { title: it.label, tag: '绝学', desc: `${w.cat} · 本门练得快两成` };
     }
     case 'scroll':
       return { title: `招式秘籍 · ${WUXUE[it.wuxue!].name}${formName(it.form!)}`, tag: null, desc: `领悟${formName(it.form!)}所需` };

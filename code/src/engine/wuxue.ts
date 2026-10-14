@@ -1,62 +1,83 @@
 /**
- * 武学 —— 权威来源：docs/systems/sect-neigong/spec.md §2（参数 / 熟练 / 领悟 / 装配 / 触发 / 特效 / 共鸣 / 名录）
- * 与 §3（顿悟）、§4（书肆 / Boss 掉落）。数值由 docs/systems/sect-neigong/sim.py 标定，禁止在此调参。
- * 招式名进文案冻结批次，本版以「第 N 式」占位。
+ * 武学 —— 权威来源：docs/systems/wuxue-catalog/design.md（名录、触发求和、特效池、路数标签、兵器搭配）、
+ * docs/systems/battle-loot/spec.md §3（五项参数、触发求和 75%、特效四档、熟练改耗气 / 触发 / 冷却）、§2.1（掉落）、
+ * docs/systems/sect-neigong/spec.md §2.3 / §2.4 / §3（领悟、装配槽、顿悟）。
+ * 参数一律读 data/wuxue-catalog.json（由 docs/systems/battle-loot/export_wuxue.py 从 sim 产物生成），禁止在此调参。
+ * 第一批 66 门；第二批不进池、不上架。
  */
 import type { RouteId } from './content';
 import type { Quality } from './neigong';
+import catalog from './data/wuxue-catalog.json';
 
-export type WuxueId =
-  | 'liuyunjian' | 'kaishanzhang' | 'xiulizhen' | 'xingzhegun'
-  | 'jinghongjian' | 'fuhuquan' | 'feihuangshi' | 'duanshuidao'
-  | 'cangyajianjue' | 'luoxingjian' | 'luohanfumogun' | 'xiangmochufa' | 'luoyingfeizhen' | 'qianjibiao';
+export type WuxueId = string;
+export type WuxueCat = '剑' | '刀' | '枪' | '棍' | '拳' | '掌' | '指' | '腿' | '暗器';
+export type WuxueBig = '器械' | '肉身' | '暗器';
+/** 类目分三大类（design.md §3.7）：器械挑兵器，肉身不挑，暗器要暗器槽 */
+export const BIG_OF: Record<WuxueCat, WuxueBig> = {
+  剑: '器械', 刀: '器械', 枪: '器械', 棍: '器械', 拳: '肉身', 掌: '肉身', 指: '肉身', 腿: '肉身', 暗器: '暗器',
+};
+export const CAT_GROUPS: Record<WuxueBig, readonly WuxueCat[]> = { 器械: ['刀', '枪', '剑', '棍'], 肉身: ['拳', '掌', '指', '腿'], 暗器: ['暗器'] };
 
-/** 招式特效（spec §2.6）：前四种挂在第 1 式与末式，后三种是门派独门、每式都带 */
-export type FormEffect = '必暴' | '附毒' | '护体' | '回气' | '蓄势' | '反震' | '引爆';
+/** 招式特效：14 种通用（名录 §3.1）+ 3 种门派独门（§3.2） */
+export type FormEffect = '必暴' | '回气' | '护体' | '附毒' | '回元' | '连击' | '运劲' | '凝眸' | '轻身'
+  | '透劲' | '封穴' | '卸力' | '迷目' | '破绽' | '蓄势' | '反震' | '引爆';
+/** 持续类特效（3 回合，同名只刷新不叠加） */
+export const LASTING_EFFECTS: ReadonlySet<FormEffect> = new Set(['运劲', '凝眸', '轻身', '卸力', '迷目', '破绽']);
+export const EFFECT_ROUNDS = 3;
 
-export type WuxueSource = '书肆' | 'Boss' | '华山' | '少林' | '唐门';
+/** 特点标签（名录 §3.3 W19）：一门一个，按特效归类 */
+export type WuxueTag = '刚猛' | '绵长' | '守御' | '诡谲' | '阴毒';
+export const EFFECT_TAG: Record<FormEffect, WuxueTag> = {
+  必暴: '刚猛', 透劲: '刚猛', 连击: '刚猛', 蓄势: '刚猛', 反震: '刚猛',
+  运劲: '绵长', 凝眸: '绵长', 轻身: '绵长',
+  回气: '守御', 回元: '守御', 护体: '守御',
+  封穴: '诡谲', 卸力: '诡谲', 迷目: '诡谲', 破绽: '诡谲',
+  附毒: '阴毒', 引爆: '阴毒',
+};
+
+export type WuxueSource = '书肆' | 'Boss' | '挂机' | '华山' | '少林' | '唐门' | '武当' | '峨眉' | '丐帮' | '崆峒' | '百蛊门' | '雁门世家';
 
 export interface WuxueDef {
   id: WuxueId;
   name: string;
   quality: Quality;
-  category: string;
-  /** 路数标签：与所修内功同路数吃共鸣；null = 不吃任何共鸣 */
+  cat: WuxueCat;
+  /** 路数：与所修内功同路数吃共鸣；null = 不吃任何共鸣 */
   route: RouteId | null;
   effect: FormEffect;
-  /** 门派独门机制：每一式都带特效 */
+  /** 门派独门机制（蓄势 / 反震 / 引爆），不分档 */
   signature?: boolean;
   source: WuxueSource;
+  /** 第 1 式倍率（相对普攻），往后每式 +0.04 */
+  mult0: number;
+  /** 每次出招耗真气（生疏口径） */
+  cost: number;
+  /** 这门武学对总触发率的贡献 */
+  p: number;
+  /** 出招后停几回合 */
+  cd: number;
 }
 
-export const WUXUE: Record<WuxueId, WuxueDef> = {
-  liuyunjian:     { id: 'liuyunjian',     name: '流云剑',     quality: '寻常', category: '剑法', route: 'huashan', effect: '必暴', source: '书肆' },
-  kaishanzhang:   { id: 'kaishanzhang',   name: '开山掌',     quality: '寻常', category: '拳掌', route: 'shaolin', effect: '护体', source: '书肆' },
-  xiulizhen:      { id: 'xiulizhen',      name: '袖里针',     quality: '寻常', category: '暗器', route: 'tangmen', effect: '附毒', source: '书肆' },
-  xingzhegun:     { id: 'xingzhegun',     name: '行者棍',     quality: '寻常', category: '棍法', route: null,      effect: '回气', source: '书肆' },
-  jinghongjian:   { id: 'jinghongjian',   name: '惊鸿剑',     quality: '上乘', category: '剑法', route: 'huashan', effect: '回气', source: 'Boss' },
-  fuhuquan:       { id: 'fuhuquan',       name: '伏虎拳',     quality: '上乘', category: '拳掌', route: 'shaolin', effect: '必暴', source: 'Boss' },
-  feihuangshi:    { id: 'feihuangshi',    name: '飞蝗石',     quality: '上乘', category: '暗器', route: 'tangmen', effect: '护体', source: 'Boss' },
-  duanshuidao:    { id: 'duanshuidao',    name: '断水刀',     quality: '上乘', category: '刀法', route: 'huashan', effect: '附毒', source: 'Boss' },
-  cangyajianjue:  { id: 'cangyajianjue',  name: '苍崖剑诀',   quality: '绝学', category: '剑法', route: 'huashan', effect: '必暴', source: '华山' },
-  luoxingjian:    { id: 'luoxingjian',    name: '落星剑',     quality: '绝学', category: '剑法', route: 'huashan', effect: '蓄势', signature: true, source: '华山' },
-  luohanfumogun:  { id: 'luohanfumogun',  name: '罗汉伏魔棍', quality: '绝学', category: '棍法', route: 'shaolin', effect: '护体', source: '少林' },
-  xiangmochufa:   { id: 'xiangmochufa',   name: '降魔杵法',   quality: '绝学', category: '杵法', route: 'shaolin', effect: '反震', signature: true, source: '少林' },
-  luoyingfeizhen: { id: 'luoyingfeizhen', name: '落英飞针',   quality: '绝学', category: '暗器', route: 'tangmen', effect: '附毒', source: '唐门' },
-  qianjibiao:     { id: 'qianjibiao',     name: '牵机镖',     quality: '绝学', category: '暗器', route: 'tangmen', effect: '引爆', signature: true, source: '唐门' },
-};
+interface CatalogRow extends Omit<WuxueDef, 'route'> {
+  route: string | null;
+  forms?: string[];
+  lines?: string[];
+}
+const ROWS = catalog.wuxue as CatalogRow[];
 
-export const WUXUE_IDS = Object.keys(WUXUE) as WuxueId[];
+export const WUXUE: Record<WuxueId, WuxueDef> = Object.fromEntries(ROWS.map((r) => [r.id, {
+  id: r.id, name: r.name, quality: r.quality, cat: r.cat, route: (r.route ?? null) as RouteId | null, effect: r.effect,
+  ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, cost: r.cost, p: r.p, cd: r.cd,
+}]));
+export const WUXUE_IDS: WuxueId[] = ROWS.map((r) => r.id);
+/** 第一批新增 52 门的式名与每式句子（现有 14 门仍在 formNames.ts / narration.ts） */
+export const CATALOG_FORMS: Record<WuxueId, readonly string[]> = Object.fromEntries(ROWS.filter((r) => r.forms).map((r) => [r.id, r.forms!]));
+export const CATALOG_LINES: Record<WuxueId, readonly string[]> = Object.fromEntries(ROWS.filter((r) => r.lines).map((r) => [r.id, r.lines!]));
 
-// ---------------------------------------------------------------- 参数（spec §2.1）
+// ---------------------------------------------------------------- 按品质的参数（sect-neigong/spec.md §2.2 / §2.3）
 
 export interface QualityParams {
   forms: number;
-  cost: number;
-  /** 出招后这门武学停几回合 */
-  cd: number;
-  /** 第 1 式倍率（相对普攻） */
-  mult0: number;
   /** 秘籍自带前几式 */
   given: number;
   /** 单式累计出招 → 熟练 / 精通 / 圆熟 */
@@ -66,16 +87,16 @@ export interface QualityParams {
 }
 
 export const QUALITY_PARAMS: Record<Quality, QualityParams> = {
-  寻常: { forms: 3, cost: 25, cd: 2, mult0: 1.30, given: 1, shulian: [4, 10, 25], dunwuP: 0.25 },
-  上乘: { forms: 5, cost: 40, cd: 3, mult0: 1.50, given: 2, shulian: [5, 12, 28], dunwuP: 0.08 },
-  绝学: { forms: 7, cost: 55, cd: 4, mult0: 1.45, given: 3, shulian: [6, 15, 32], dunwuP: 0.05 },
+  寻常: { forms: 3, given: 1, shulian: [4, 10, 25], dunwuP: 0.25 },
+  上乘: { forms: 5, given: 2, shulian: [5, 12, 28], dunwuP: 0.08 },
+  绝学: { forms: 7, given: 3, shulian: [6, 15, 32], dunwuP: 0.05 },
 };
 
 export const MULT_STEP = 0.04;
-export const SHULIAN_STEP = 0.07;
-export const TRIGGER_RATE = 0.55;
 export const QI_REGEN = 20;
 export const RESONANCE_MULT = 1.1;
+/** 总触发率上限（spec §3.3） */
+export const TRIGGER_CAP: number = catalog.trigger_cap;
 /** 前世领悟过的招式，顿悟概率 ×3（spec S4） */
 export const PAST_LEARNED_MULT = 3;
 /** 声望阁「师门指引」：武学新招顿悟概率翻倍（spec S9） */
@@ -105,16 +126,68 @@ export function shulianTier(quality: Quality, casts: number, benmen = false): nu
   return casts >= th[2] ? 3 : casts >= th[1] ? 2 : casts >= th[0] ? 1 : 0;
 }
 
-/** 第 k 式的倍率（含熟练与共鸣） */
-export function formMult(quality: Quality, k: number, casts: number, resonance: boolean, benmen = false): number {
-  const p = QUALITY_PARAMS[quality];
-  return (p.mult0 + MULT_STEP * (k - 1)) * (1 + SHULIAN_STEP * shulianTier(quality, casts, benmen))
-    * (resonance ? RESONANCE_MULT : 1);
+/** 练熟了更顺手（spec §3.6）：耗气倍率、触发几率加成、冷却减少 */
+export interface ShulianMods { cost: number; p: number; cd: number }
+const SHU = catalog.shulian as unknown as Record<string, [number, number, number]>;
+export function shulianMods(tier: number): ShulianMods {
+  const [cost, p, cd] = SHU[String(tier)] ?? SHU['0'];
+  return { cost, p: 1 + p, cd };
 }
 
-/** 第 k 式是否带特效：门派独门每式都带，其余只在第 1 式与末式 */
-export function formHasEffect(def: WuxueDef, k: number): boolean {
-  return !!def.signature || k === 1 || k === QUALITY_PARAMS[def.quality].forms;
+/** 第 k 式的倍率（含共鸣；熟练不再加倍率） */
+export function formMult(def: Pick<WuxueDef, 'mult0'>, k: number, resonance: boolean): number {
+  return (def.mult0 + MULT_STEP * (k - 1)) * (resonance ? RESONANCE_MULT : 1);
+}
+
+/** 这一式实际耗气（取整）与冷却 */
+export function formCost(def: Pick<WuxueDef, 'cost'>, tier: number): number {
+  return Math.round(def.cost * shulianMods(tier).cost);
+}
+export function formCd(def: Pick<WuxueDef, 'cd'>, tier: number): number {
+  return Math.max(1, def.cd - shulianMods(tier).cd);
+}
+
+// ---------------------------------------------------------------- 特效分档（spec §3.4）
+
+type EffectTable = Record<string, { n?: number } & Record<string, number[] | number | undefined>>;
+const EFFECTS = catalog.effects as EffectTable;
+const TIER_SPAN = catalog.tier_span as Record<Quality, [number, number]>;
+
+/** 特效的数值列（四档 Ⅰ–Ⅳ）；独门三种没有 */
+function effectValues(effect: FormEffect): number[] | null {
+  const row = EFFECTS[effect];
+  if (!row) return null;
+  const key = Object.keys(row).find((k) => k !== 'n')!;
+  return row[key] as number[];
+}
+
+/** 第 k 式的特效数值：第 1 式取本品质起档、末式取止档，中间线性插值；整数列四舍五入 */
+export function effectValue(def: Pick<WuxueDef, 'quality' | 'effect'>, k: number): number {
+  const vals = effectValues(def.effect);
+  if (!vals) return 0;
+  const n = QUALITY_PARAMS[def.quality].forms;
+  const [lo, hi] = TIER_SPAN[def.quality];
+  const t = n > 1 ? lo + ((hi - lo) * (k - 1)) / (n - 1) : lo;
+  const i = Math.min(Math.floor(t), 3);
+  const v = vals[i] + (vals[Math.min(i + 1, 3)] - vals[i]) * (t - i);
+  const integer = vals.every((x) => Number.isInteger(x));
+  return integer ? Math.round(v) : Math.round(v * 1000) / 1000;
+}
+
+/** 特效一句话（界面与悬停共用；{} 为本式数值） */
+const EFFECT_SAY: Record<FormEffect, string> = {
+  必暴: '必定会心 · 会心伤害 +{}%', 回气: '返还耗气 {}%', 护体: '护体 {}% 气血', 附毒: '叠毒 +1 层 · {}% 再 +1',
+  运劲: '3 回合攻击 +{}%', 凝眸: '3 回合会心 +{} pp', 轻身: '3 回合闪避 +{}', 回元: '回真气 {}',
+  连击: '{}% 追加一次普攻', 透劲: '无视防御 {}%', 封穴: '{}% 封穴', 卸力: '3 回合敌攻击 −{}%',
+  迷目: '3 回合敌命中 −{}', 破绽: '3 回合敌防御 −{}%',
+  蓄势: '本场每出过一招，本式倍率 +10%', 反震: '按攻击加防御计伤', 引爆: '引爆对方身上毒层',
+};
+const PCT_EFFECTS: ReadonlySet<FormEffect> = new Set(['必暴', '回气', '护体', '附毒', '运劲', '凝眸', '连击', '透劲', '封穴', '卸力', '破绽']);
+export function effectText(def: Pick<WuxueDef, 'quality' | 'effect'>, k: number): string {
+  const v = effectValue(def, k);
+  const shown = PCT_EFFECTS.has(def.effect) ? Math.round(v * 100) : v;
+  if (def.effect === '附毒' && shown === 0) return '叠毒 +1 层';
+  return EFFECT_SAY[def.effect].replace('{}', String(shown));
 }
 
 // ---------------------------------------------------------------- 领悟条件（spec §2.3）
@@ -122,7 +195,7 @@ export function formHasEffect(def: WuxueDef, k: number): boolean {
 export interface FormGate {
   realm: number;
   qi: number;
-  /** 需要该式的招式秘籍 */
+  /** 需要该式的招式秘籍（或拼齐的口诀） */
   scroll: boolean;
 }
 
@@ -152,7 +225,7 @@ export interface FormGateCheck {
 }
 
 /**
- * 第 k 式的领悟条件逐条核对（spec §2.3）：境界、真气上限、招式秘籍、前一式熟练到「熟练」档。
+ * 第 k 式的领悟条件逐条核对（spec §2.3）：境界、真气上限、招式秘籍 / 口诀、前一式熟练到「熟练」档。
  * 自带的式恒为已领悟，不走这里。
  */
 export function checkFormGate(
@@ -174,11 +247,52 @@ export function formDunwuChance(quality: Quality, wuxing: number, pastLearned: b
     * (pastLearned ? PAST_LEARNED_MULT : 1) * (shimen ? SHIMEN_ZHIYIN_MULT : 1));
 }
 
-// ---------------------------------------------------------------- 装配（spec §2.4）
+// ---------------------------------------------------------------- 装配（spec §2.4，design.md §3.7 兵器搭配）
 
 /** 装配槽跟境界走：境界 2 起 2 槽，逐境界 +1，境界 5 起 5 槽 */
 export function slotCount(realm: number): number {
   return realm < 2 ? 0 : Math.min(5, realm);
+}
+
+/** 手里的家伙：兵器类别与是否备着暗器 */
+export interface Hands { weapon: WuxueCat | null; anqi: boolean }
+
+/** 这门武学现在装得上吗：器械要拿同类兵器，暗器要暗器槽里有暗器，肉身不挑 */
+export function usableWith(def: Pick<WuxueDef, 'cat'>, hands: Hands): boolean {
+  const big = BIG_OF[def.cat];
+  return big === '肉身' || (big === '暗器' ? hands.anqi : hands.weapon === def.cat);
+}
+
+// ---------------------------------------------------------------- 掉落（battle-loot/design.md §4，spec §2.1）
+
+/** 每场胜利掉一次武学（整式 / 残页）的概率 */
+export const WX_DROP_P = catalog.wx_p as Record<'normal' | 'elite' | 'boss', number>;
+/** 每式要凑的残页数 */
+export const PAGES_NEEDED = catalog.pages as Record<'上乘' | '绝学', number>;
+/** 上乘残页进池的比例：境界 3 起三成、境界 4 起五成（spec §2.2） */
+export function shangchengShare(realm: number): number {
+  return realm >= 4 ? 0.5 : realm >= 3 ? 0.3 : 0;
+}
+
+export type WuxueDrop = { id: WuxueId; k: number; kind: 'book' | 'page' };
+
+/** 掷一次武学掉落：寻常掉某一式全本，上乘掉某一式残页；绝学不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
+export function rollWuxueDrop(realm: number, kind: 'normal' | 'elite' | 'boss', rng: () => number): WuxueDrop | null {
+  if (rng() >= WX_DROP_P[kind]) return null;
+  const share = shangchengShare(realm);
+  const quality: Quality = share > 0 && rng() < share ? '上乘' : '寻常';
+  const pool = WUXUE_IDS.filter((id) => WUXUE[id].quality === quality);
+  const id = pool[Math.floor(rng() * pool.length)];
+  const k = 1 + Math.floor(rng() * QUALITY_PARAMS[quality].forms);
+  return { id, k, kind: quality === '寻常' ? 'book' : 'page' };
+}
+
+/** 已拥有的全本 / 口诀（书匣）：全本键为 formKey；残页按 formKey 计数 */
+export interface Satchel { books: readonly string[]; pages: Readonly<Record<string, number>> }
+
+/** 这一式的口诀是否已拼齐（上乘 / 绝学） */
+export function pagesFull(def: Pick<WuxueDef, 'quality'>, pages: Readonly<Record<string, number>>, id: WuxueId, k: number): boolean {
+  return def.quality !== '寻常' && (pages[formKey(id, k)] ?? 0) >= PAGES_NEEDED[def.quality];
 }
 
 // ---------------------------------------------------------------- 获取（spec §4）
@@ -196,12 +310,12 @@ export interface ShopItem {
   form?: number;
 }
 
-/** 书肆货架（银两）：寻常武学、上乘招式秘籍；上乘内功那一件按「尚未拥有的第一部」动态给出 */
+/** 书肆货架（银两）：寻常武学、上乘招式秘籍；上乘内功那一件按「尚未拥有的第一部」动态给出。新增寻常暂不上架（W9） */
 export const SHOP_ITEMS: ShopItem[] = [
-  { id: 'book:liuyunjian', label: '流云剑', price: 150, realm: 2, kind: 'wuxue', wuxue: 'liuyunjian' },
-  { id: 'book:kaishanzhang', label: '开山掌', price: 200, realm: 2, kind: 'wuxue', wuxue: 'kaishanzhang' },
-  { id: 'book:xiulizhen', label: '袖里针', price: 250, realm: 2, kind: 'wuxue', wuxue: 'xiulizhen' },
-  { id: 'book:xingzhegun', label: '行者棍', price: 300, realm: 2, kind: 'wuxue', wuxue: 'xingzhegun' },
+  { id: 'book:liuyunjian', label: WUXUE.liuyunjian.name, price: 150, realm: 2, kind: 'wuxue', wuxue: 'liuyunjian' },
+  { id: 'book:kaishanzhang', label: WUXUE.kaishanzhang.name, price: 200, realm: 2, kind: 'wuxue', wuxue: 'kaishanzhang' },
+  { id: 'book:xiulizhen', label: WUXUE.xiulizhen.name, price: 250, realm: 2, kind: 'wuxue', wuxue: 'xiulizhen' },
+  { id: 'book:xingzhegun', label: WUXUE.xingzhegun.name, price: 300, realm: 2, kind: 'wuxue', wuxue: 'xingzhegun' },
   ...(['jinghongjian', 'fuhuquan', 'feihuangshi', 'duanshuidao'] as WuxueId[]).flatMap((w) => [4, 5].map((k) => ({
     id: `scroll:${formKey(w, k)}`, label: `${WUXUE[w].name} · ${formName(k)}`, price: 1500, realm: 4,
     kind: 'scroll' as const, wuxue: w, form: k,

@@ -6,7 +6,7 @@
  */
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { RUMOR } from '../engine/sect';
+import { RUMORS } from '../engine/sect';
 import { DIAG_TEXTS, type FightResult, type TurnEvent } from '../engine/combat';
 import { WUXUE, type WuxueId } from '../engine/wuxue';
 import { NEIGONG } from '../engine/neigong';
@@ -327,7 +327,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
       <section className="bt-log-wrap">
         <h2 className="jh-sec">战报</h2>
         <div className="bt-log" ref={logRef}>
-          {battle?.rumor && <div className="p rumor"><span className="serif">江湖传闻</span>　{RUMOR}</div>}
+          {!!battle?.rumor && <div className="p rumor"><span className="serif">江湖传闻</span>　{RUMORS[battle.rumor as 1 | 2 | 3]}</div>}
           {turns.length === 0 && !battle?.rumor && <div className="empty">尚未交手</div>}
           {narrCtx && <Narration turns={turns} ctx={narrCtx} />}
           {victory && battle.reward && (

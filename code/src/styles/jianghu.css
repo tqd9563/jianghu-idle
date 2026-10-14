@@ -74,3 +74,13 @@
 }
 .jh-ceremony .kick.cause { letter-spacing: 0.3em; }
 .jh-ceremony .kick.cause b { color: var(--ink); font-weight: 600; }
+
+/* 九派按地图分组（battle-loot 原型 .sect-map）：未到的图整组压暗、不可选 */
+.jh-sect-map { margin-bottom: 22px; }
+.jh-sect-map .mh { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.jh-sect-map .mh .serif { font-size: 15px; letter-spacing: 0.25em; }
+.jh-sect-map .mh small { color: var(--faint); font-size: 12px; }
+.jh-sect-opt .cat { display: flex; gap: 6px; flex-wrap: wrap; }
+.jh-sect-opt .cat .wtag { font-size: 11px; color: var(--faint); padding: 1px 6px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+.jh-sect-opt.far { opacity: 0.45; cursor: default; filter: saturate(0.3); }
+.jh-sect-opt.far .n { color: var(--muted); }

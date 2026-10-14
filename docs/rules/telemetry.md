@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v3.1
+> **版本**：v3.2
 >
 > **日期**：2026-09-29
 >
@@ -41,7 +41,7 @@
 | `boss_drop` | Boss 首杀掉落 | `track`, `got` |
 | `sect_joined` | 拜入门派 | `sect`, `neigong` |
 | `sect_task_done` | 门派任务到点结算 | `sect`, `task`（`short` / `long`）, `contrib`（结算后贡献）, `offline`（载入时结算） |
-| `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price` |
+| `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price`；残页另带 `have`（已集）, `need`（每式页数） |
 | `rep_node_bought` | 购买声望节点 | `node_id` |
 | `battle_end` | 战斗结束 | `target`, `win`, `turns`, `hp_left_pct` |
 | `key_battle_end` | Boss/精英战斗结束 | `target`, `win`, `turns` |
@@ -115,6 +115,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v3.2 | 2026-10-14 | 实装五：`sect_shop_bought` 残页加 `have` / `need`；`sect` 取值扩到九派 id。 |
 | v3.1 | 2026-10-14 | battle-loot 实装四：新增 `elder_met` / `market_opened` / `black_bought`；`shop_bought` 也记兵器铺 / 衣饰铺（加 `slot`、`grade`）。 |
 | v3.0 | 2026-10-14 | battle-loot 实装三：新增 `wuxue_dropped`。 |
 | v2.9 | 2026-10-13 | battle-loot 实装二：新增 `gear_dropped` / `gear_equipped` / `gear_sold`。 |

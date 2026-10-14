@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { GRADE_NAMES, gearFullName, type GearItem } from '../engine/gear';
 import { formTitle } from '../engine/formNames';
-import { BLACK_PER_LIFE, msToNextDay, type MarketGood, type MaskedGood } from '../engine/market';
+import { BLACK_PER_LIFE, msToNextRound, type MarketGood, type MaskedGood } from '../engine/market';
 import { hasNode } from '../engine/prestige';
 import { EFFECT_TAG, WUXUE } from '../engine/wuxue';
 import { marketGoodsOf, shopItemsOf, shopPriceOf, useGameStore } from '../store/gameStore';
@@ -124,10 +124,10 @@ function Stalls({ kind }: { kind: 'arms' | 'wear' }) {
 /** 黑市：三张蒙面牌、铜钱计次、更漏倒计时 */
 function Black({ onBack }: { onBack: () => void }) {
   const s = useGameStore();
-  const [left, setLeft] = useState(msToNextDay(Date.now()));
+  const [left, setLeft] = useState(msToNextRound(Date.now()));
   useEffect(() => {
     const t = setInterval(() => {
-      const ms = msToNextDay(Date.now());
+      const ms = msToNextRound(Date.now());
       setLeft(ms);
       if (ms < 1500) s.refreshBlack();
     }, 1000);

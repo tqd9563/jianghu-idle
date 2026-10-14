@@ -10,9 +10,10 @@ import { QUALITY_PARAMS, WUXUE, WUXUE_IDS, type WuxueId } from './wuxue';
 export const MARKET_OPEN_STAGE = 8;
 /** 黑市解锁：市集累计消费满此数的那一笔（实测第 10–13 天解锁，境界 3 中段；spec §7） */
 export const BLACK_UNLOCK_SPENT = 10000;
-/** 蒙面货：每天几件、每世几次（spec §7：境界 4 一世买 6–9 件，境界 5 起每世额度用满） */
-export const BLACK_PER_DAY = 3;
-export const BLACK_PER_LIFE = 10;
+/** 蒙面货：每轮几件、几小时换一轮、每世几次（裁决 40；spec §7） */
+export const BLACK_PER_ROUND = 3;
+export const BLACK_ROUND_H = 4;
+export const BLACK_PER_LIFE = 20;
 /** 保底：连开几件凡品后下一件必精良以上（不公示） */
 export const BLACK_PITY = 3;
 
@@ -80,8 +81,14 @@ export interface MaskedGood {
   revealed: { gear: GearItem } | { pages: { id: WuxueId; k: number; n: number } } | null;
 }
 
-/** 蒙面货定价 = 定价基数 × 倍率：装备约三小时挂机银两、残谱约一小时多——按珍品以上的每小时期望不比挂机划算（spec §7） */
-export const MASK_PRICE_MULT = { gear: 150, pages: 60 } as const;
+/**
+ * 蒙面货定价（裁决 40）= 定价基数 × 本境界倍率：倍率按实测「一天挂机进账 ÷ 目标件数」拟合，
+ * 境界 2–3 一天买得起一件、境界 4 两件、境界 5 起三件（spec §7.3）；残谱按装备的四成。银两规则一变就要重拟。
+ */
+export const MASK_PRICE_MULT: Record<number, number> = { 1: 135, 2: 135, 3: 800, 4: 140, 5: 95, 6: 95, 7: 95 };
+export const MASK_PAGES_RATIO = 0.4;
+export const maskPrice = (kind: 'gear' | 'pages', realm: number, basis: number) =>
+  Math.round(basis * (MASK_PRICE_MULT[realm] ?? 95) * (kind === 'pages' ? MASK_PAGES_RATIO : 1));
 /** 开出品阶的权重（凡 / 精 / 上 / 珍 / 极），不公示；spec §7 复核维持 */
 export const MASK_GRADE_WEIGHTS = [40, 35, 20, 4.5, 0.5];
 /** 半卷残谱给几页 */
@@ -92,20 +99,20 @@ const MASK_LABEL: Record<GearSlot, (cat?: WeaponCat) => string> = {
 };
 const HINTS = ['来路不明', '血迹洗过', '夜里送来的', '不许问出处', '刻字被磨掉了', '主人已不在江湖'];
 
-/** 当天的三件蒙面货（按日期种子固定，同一天不换）：两件装备、一件残谱；clearSilver 为定价基数 */
-export function dailyMasked(dayKey: string, clearSilver: number, rng: () => number): MaskedGood[] {
+/** 这一轮的三件蒙面货（按轮次键固定，同一轮不换）：两件装备、一件残谱；clearSilver 为定价基数 */
+export function roundMasked(roundKey: string, realm: number, clearSilver: number, rng: () => number): MaskedGood[] {
   const out: MaskedGood[] = [];
-  for (let i = 0; i < BLACK_PER_DAY; i++) {
+  for (let i = 0; i < BLACK_PER_ROUND; i++) {
     const hint = HINTS[Math.floor(rng() * HINTS.length)];
-    if (i === BLACK_PER_DAY - 1) {
-      out.push({ id: `${dayKey}:${i}`, mask: { kind: 'pages' }, label: '半卷残谱', hint, price: Math.round(clearSilver * MASK_PRICE_MULT.pages), revealed: null });
+    if (i === BLACK_PER_ROUND - 1) {
+      out.push({ id: `${roundKey}:${i}`, mask: { kind: 'pages' }, label: '半卷残谱', hint, price: maskPrice('pages', realm, clearSilver), revealed: null });
     } else {
       const slots: GearSlot[] = ['兵器', '暗器', '衣甲', '佩饰'];
       const slot = slots[Math.floor(rng() * slots.length)];
       const cat = slot === '兵器' ? WEAPON_CATS[Math.floor(rng() * WEAPON_CATS.length)] : undefined;
       out.push({
-        id: `${dayKey}:${i}`, mask: { kind: 'gear', slot, ...(cat ? { cat } : {}) }, label: MASK_LABEL[slot](cat), hint,
-        price: Math.round(clearSilver * MASK_PRICE_MULT.gear), revealed: null,
+        id: `${roundKey}:${i}`, mask: { kind: 'gear', slot, ...(cat ? { cat } : {}) }, label: MASK_LABEL[slot](cat), hint,
+        price: maskPrice('gear', realm, clearSilver), revealed: null,
       });
     }
   }
@@ -135,14 +142,12 @@ function pickGrade(rng: () => number): GearGrade {
   return 5;
 }
 
-/** 本地日期键（更漏按本地午夜换货） */
-export function dayKeyOf(now: number): string {
-  const d = new Date(now);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/** 轮次键：每 BLACK_ROUND_H 小时一轮（按墙钟整点分段，更漏到下一轮换货） */
+export function roundKeyOf(now: number): string {
+  return String(Math.floor(now / (BLACK_ROUND_H * 3600 * 1000)));
 }
-/** 到下一次换货（本地午夜）的毫秒 */
-export function msToNextDay(now: number): number {
-  const d = new Date(now);
-  d.setHours(24, 0, 0, 0);
-  return d.getTime() - now;
+/** 到下一轮换货的毫秒 */
+export function msToNextRound(now: number): number {
+  const span = BLACK_ROUND_H * 3600 * 1000;
+  return span - (now % span);
 }

@@ -170,6 +170,8 @@ export function targetId(e: EnemyDef): string {
 }
 
 /** 回刷收益（公式表 §6）：银两 50% / 阅历 0；关卡不掉内力 */
+/** 重打一关给首通银两的几成（battle-loot/design.md 裁决 14 / 39：五成改两成半，银两不能太富裕） */
+export const REFARM_SILVER = 0.25;
 export function refarmReward(e: EnemyDef): { neili: number; silver: number; xp: number } {
-  return { neili: 0, silver: Math.round(e.reward.silver * 0.5), xp: 0 };
+  return { neili: 0, silver: Math.round(e.reward.silver * REFARM_SILVER), xp: 0 };
 }

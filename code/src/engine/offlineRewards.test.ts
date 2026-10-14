@@ -10,7 +10,7 @@ import {
   OFFLINE_CAP_MIN, calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
   maxIdleStage, shouldShowOfflineSettlement,
 } from './offlineRewards';
-import { getStage, stageKey, trackLength } from './enemies';
+import { getStage, REFARM_SILVER, stageKey, trackLength } from './enemies';
 
 const MIN = 60_000;
 
@@ -184,7 +184,7 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     expect(r.idle!.fights).toBeGreaterThan(0);
     expect(r.idle!.wins).toBe(r.idle!.fights);   // 必胜
     expect(s.silver).toBe(r.silver);
-    expect(r.silver).toBe(r.idle!.wins * Math.round(getStage(1, 0, 8).reward.silver * 0.5));
+    expect(r.silver).toBe(r.idle!.wins * Math.round(getStage(1, 0, 8).reward.silver * REFARM_SILVER));
     expect(s.idle!.fights).toBe(3 + r.idle!.fights);
     const ev = getEvents().find((e) => e.e === 'offline_settled')!;
     expect([ev.idle_stage, ev.idle_fights, ev.idle_wins]).toEqual([stageKey(1, 0, 8), r.idle!.fights, r.idle!.wins]);

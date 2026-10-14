@@ -13,7 +13,7 @@ import { resolve } from 'node:path';
 import { afterAll, beforeAll, describe, it, vi } from 'vitest';
 import type { RouteId } from '../engine/content';
 import { GRADE_NAMES, type GearSlot } from '../engine/gear';
-import { MASK_PRICE_MULT } from '../engine/market';
+import { maskPrice } from '../engine/market';
 import { getStage } from '../engine/enemies';
 import { WUXUE } from '../engine/wuxue';
 import { frontierStageOf, marketGoodsOf, priceBasisOf, useGameStore } from '../store/gameStore';
@@ -100,7 +100,7 @@ function play(route: RouteId, seed: number): Sample {
       spentStall: sum('shop_bought', 'price', (e) => !!e.slot),
       spentBlack: sum('black_bought', 'price'),
       stallPrice: [goods.arms[0].price, goods.arms[5].price],
-      maskedPrice: Math.round(priceBasisOf(s) * MASK_PRICE_MULT.gear),
+      maskedPrice: maskPrice('gear', s.realm, priceBasisOf(s)),
       blackOpen: s.blackOpen, blackBuys: s.blackBuys ?? 0, marketSpent: s.marketSpent ?? 0,
       drops, dropGrades,
       worn: Object.fromEntries(Object.entries(s.worn ?? {}).map(([k, v]) => [k, v!.grade])),

@@ -50,7 +50,7 @@ import {
 } from '../save/storage';
 import { resetTelemetry, track } from '../telemetry/telemetry';
 import {
-  BLACK_PER_DAY, BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, MARKET_OPEN_STAGE, buyStallGood, dailyMasked, dayKeyOf, revealMasked, stallGoods,
+  BLACK_PER_LIFE, BLACK_PER_ROUND, BLACK_UNLOCK_SPENT, MARKET_OPEN_STAGE, buyStallGood, revealMasked, roundKeyOf, roundMasked, stallGoods,
   type MarketGood, type MaskedGood,
 } from '../engine/market';
 import {
@@ -179,6 +179,7 @@ interface PersistedState {
   /** 连开凡品的次数（保底用，不公示） */
   blackLowStreak: number;
   /** 当天蒙面货的日期键与三件货（买下的带揭晓结果） */
+  /** 当前这一轮蒙面货的轮次键（字段名沿用存档 v10） */
   blackDay: string;
   blackGoods: MaskedGood[];
 }
@@ -342,7 +343,7 @@ interface GameState extends PersistedState {
   buyMarketItem: (goodId: string) => void;
   /** 看过暗门演出 */
   dismissBlackIntro: () => void;
-  /** 进黑市：按日期换货 */
+  /** 进黑市：按轮次换货（每 4 小时一轮） */
   refreshBlack: () => void;
   /** 买一件蒙面货：买下才揭晓 */
   buyMasked: (goodId: string) => void;
@@ -1244,9 +1245,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   refreshBlack: () => {
     const s = get();
     if (!s.blackOpen) return;
-    const day = dayKeyOf(Date.now());
-    if (s.blackDay === day && s.blackGoods.length === BLACK_PER_DAY) return;
-    set({ blackDay: day, blackGoods: dailyMasked(day, priceBasisOf(s), Math.random) });
+    const round = roundKeyOf(Date.now());
+    if (s.blackDay === round && s.blackGoods.length === BLACK_PER_ROUND) return;
+    set({ blackDay: round, blackGoods: roundMasked(round, s.realm, priceBasisOf(s), Math.random) });
     persist(get());
   },
 

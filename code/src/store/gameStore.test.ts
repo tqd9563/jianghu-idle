@@ -30,7 +30,7 @@ function gearOf(slot: GearSlot, cat?: WeaponCat): GearItem {
   return { ...it, fresh: false };
 }
 import { freshInjuries, isHurt } from '../engine/injury';
-import { allStages, getStage, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { allStages, getStage, REFARM_SILVER, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { INIT_AGE, ERA_START, LIFESPAN, SOUL_WEAK_MULT, ageYearsPerDay } from '../engine/reincarnation';
@@ -341,7 +341,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.paused).toBe(false);
   });
 
-  it('胜利收益快照：关卡不掉内力；回刷银两五成、阅历为零、重打不递减；首次击败精英名号传开', () => {
+  it('胜利收益快照：关卡不掉内力；回刷银两两成半、阅历为零、重打不递减；首次击败精英名号传开', () => {
     useGameStore.setState({ realm: 5, route: 'tangmen', neigong: 'shiguxinfa', zhong: 10, tiersPassed: 3 });
     const play = () => {
       const t0 = Date.now();
@@ -361,11 +361,11 @@ describe('gameStore · 归隐与声望阁', () => {
     const second = play();
     expect(second.reward!.refarm).toBe(true);
     expect(second.reward!.neili).toBe(0);
-    expect(second.reward!.silver).toBe(Math.round(base.silver * 0.5));
+    expect(second.reward!.silver).toBe(Math.round(base.silver * REFARM_SILVER));
 
     useGameStore.getState().challengeStage(1, 0, 1); // 连续重打：不再递减（battle-loot 裁决 14）
     const third = play();
-    expect(third.reward!.silver).toBe(Math.round(base.silver * 0.5));
+    expect(third.reward!.silver).toBe(Math.round(base.silver * REFARM_SILVER));
     expect(third.chainStage).toBeNull(); // 重打一次：打完就停
 
     // 首次击败图 1 初入的第一个精英：6.4 × 乘区 1，向下取整 6 声望，跨世只领一次
@@ -1427,13 +1427,13 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(st().blackIntro).toBe(false);
   });
 
-  it('黑市：每天三件蒙面货、买下才揭晓、每世十次、连开三凡品后保底精良；转世清次数不清解锁', () => {
+  it('黑市：每轮三件蒙面货、买下才揭晓、每世有上限、连开三凡品后保底精良；转世清次数不清解锁', () => {
     useGameStore.setState({ realm: 3, neigong: 'jingleijue', route: 'huashan', marketOpen: true, blackOpen: true, silver: 10_000_000, clearedStages: m1all.slice(0, 20) });
     st().refreshBlack();
     expect(st().blackGoods).toHaveLength(3);
     expect(st().blackGoods.map((g) => g.mask.kind)).toEqual(['gear', 'gear', 'pages']);
     const day = st().blackDay;
-    st().refreshBlack();   // 同一天不换
+    st().refreshBlack();   // 同一轮不换
     expect(st().blackDay).toBe(day);
     vi.spyOn(Math, 'random').mockReturnValue(0);   // 必开凡品
     const g0 = st().blackGoods[0];

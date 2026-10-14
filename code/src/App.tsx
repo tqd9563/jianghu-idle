@@ -24,6 +24,7 @@ import { SectPane } from './panes/SectPane';
 import { ShopPane } from './panes/ShopPane';
 import { SECT_REALM } from './engine/sect';
 import { NeigongSelect } from './overlays/NeigongSelect';
+import { BlackIntro } from './overlays/BlackIntro';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
 import { ObserverPanel } from './overlays/ObserverPanel';
 import { OfflineSettlement } from './overlays/OfflineSettlement';
@@ -78,9 +79,10 @@ export default function App() {
 
   // 新一世内功页签随之隐藏：停在内功页的玩家退回修炼页
   useEffect(() => {
-    if ((tab === 'bag' || tab === 'neigong' || tab === 'wuxue' || tab === 'shop') && s.started && s.neigong === null) setTabRaw('cultivate');
+    if ((tab === 'bag' || tab === 'neigong' || tab === 'wuxue') && s.started && s.neigong === null) setTabRaw('cultivate');
+    if (tab === 'shop' && s.started && !s.marketOpen) setTabRaw('cultivate');
     if (tab === 'sect' && s.started && s.realm < SECT_REALM) setTabRaw('cultivate');
-  }, [tab, s.started, s.neigong, s.realm]);
+  }, [tab, s.started, s.neigong, s.realm, s.marketOpen]);
 
   // 顿悟轻提示：几秒后自动收起
   useEffect(() => {
@@ -108,7 +110,8 @@ export default function App() {
     return totalAcupointBonus(realm, opened.size, through);
   };
   const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s), gearBonusOf(s.worn));
-  const neigongSelectOpen = s.realm >= 2 && s.neigong === null && s.retireCeremony === null;
+  // 第一世在 1-7 遇见前辈后选内功，第二世起开局即选（battle-loot/design.md §5）
+  const neigongSelectOpen = s.neigong === null && (s.taught || s.run >= 2) && s.retireCeremony === null && s.failure === null;
   const retire = retireKind(s);
   const repUnlocked = s.repTotal > 0 || s.run > 1;
 
@@ -119,7 +122,7 @@ export default function App() {
   const eraStart = s.eraStart ?? ERA_START;
   const dusk = isDusk(age, s.realm, s.lifespanLost ?? 0);
   const seen = s.seenTabs ?? [];
-  const shopUnlocked = s.neigong !== null;
+  const shopUnlocked = s.marketOpen;
   // 页签：未解锁的不显示，新开且没点开过的带金点（DESIGN.md The Dot Lives In The Rail Rule）
   const tabs: { id: TabId; name: string; short?: string; show: boolean; fresh: boolean }[] = [
     { id: 'cultivate', name: '修炼', show: true, fresh: false },
@@ -128,7 +131,7 @@ export default function App() {
     { id: 'neigong', name: '内功', show: !!s.neigong, fresh: !seen.includes('neigong') },
     { id: 'wuxue', name: '武学', show: !!s.neigong, fresh: !seen.includes('wuxue') },
     { id: 'sect', name: '门派', show: s.realm >= SECT_REALM, fresh: !seen.includes('sect') },
-    { id: 'shop', name: '书肆', show: shopUnlocked, fresh: !seen.includes('shop') },
+    { id: 'shop', name: '市集', show: shopUnlocked, fresh: !seen.includes('shop') },
     { id: 'rep', name: '声望阁', short: '声望', show: repUnlocked, fresh: !seen.includes('rep') },
   ];
   const shown = tabs.filter((t) => t.show);
@@ -236,6 +239,7 @@ export default function App() {
       <TipLayer />
 
       {neigongSelectOpen && <NeigongSelect />}
+      {s.blackIntro && <BlackIntro onDone={s.dismissBlackIntro} />}
       {s.dunwuNotice && <div className="dunwu-toast serif" role="status">顿悟 · {s.dunwuNotice.includes('·') ? s.dunwuNotice : `${s.neigong ? NEIGONG_NAME(s.neigong) : ''} · ${s.dunwuNotice}`}</div>}
       <RetireFlow />
       {s.retireCeremony && (

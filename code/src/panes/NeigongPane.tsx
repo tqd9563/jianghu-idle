@@ -264,8 +264,8 @@ function zhongEffectsText(routeId: RouteId, zhong: number): string {
   if (p.atkPct) parts.push(`攻击 +${pct(p.atkPct * zhong)}`);
   if (p.hpPct) parts.push(`气血 +${pct(p.hpPct * zhong)}`);
   if (p.defPct) parts.push(`防御 +${pct(p.defPct * zhong)}`);
-  if (p.critRatePP) parts.push(`暴击率 +${pp(p.critRatePP * zhong)}`);
-  if (p.critDmgPP) parts.push(`暴击伤害 +${pp(p.critDmgPP * zhong)}`);
+  if (p.critRatePP) parts.push(`会心率 +${pp(p.critRatePP * zhong)}`);
+  if (p.critDmgPP) parts.push(`会心伤害 +${pp(p.critDmgPP * zhong)}`);
   if (p.thornsPP) parts.push(`反伤 +${pp(p.thornsPP * zhong)}`);
   if (p.poisonCoefPP) parts.push(`毒伤系数 +${pp(p.poisonCoefPP * zhong)}`);
   return parts.join(' · ');
@@ -294,11 +294,11 @@ function RouteMechList({ routeId, zhong, build }: { routeId: RouteId; zhong: num
     case 'huashan':
       return (
         <>
-          <li data-tip={`路数赠予：暴击率 +${pp(g.critRatePP!)}、暴击伤害 +${pp(g.critDmgPP!)}<br>逐重加成（已计 ${L} 重）：+${pp((p.critRatePP ?? 0) * L)}、+${pp((p.critDmgPP ?? 0) * L)}`}>
-            暴击率 <b>+{pp(g.critRatePP! + (p.critRatePP ?? 0) * L)}</b>，暴击伤害 <b>+{pp(g.critDmgPP! + (p.critDmgPP ?? 0) * L)}</b>
+          <li data-tip={`路数赠予：会心率 +${pp(g.critRatePP!)}、会心伤害 +${pp(g.critDmgPP!)}<br>逐重加成（已计 ${L} 重）：+${pp((p.critRatePP ?? 0) * L)}、+${pp((p.critDmgPP ?? 0) * L)}`}>
+            会心率 <b>+{pp(g.critRatePP! + (p.critRatePP ?? 0) * L)}</b>，会心伤害 <b>+{pp(g.critDmgPP! + (p.critDmgPP ?? 0) * L)}</b>
           </li>
-          <li>开战首击<b>必定暴击</b></li>
-          <li>每次暴击积 <b>1 层剑意</b></li>
+          <li>开战首击<b>必定会心</b></li>
+          <li>每次会心积 <b>1 层剑意</b></li>
           <li>剑意满 <b>{build.sqNeed} 层</b>，施展爆发剑招 <b>{Math.round(build.burstMult * 100)}%</b></li>
         </>
       );

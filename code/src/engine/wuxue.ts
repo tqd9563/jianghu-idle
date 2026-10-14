@@ -249,9 +249,9 @@ export function formDunwuChance(quality: Quality, wuxing: number, pastLearned: b
 
 // ---------------------------------------------------------------- 装配（spec §2.4，design.md §3.7 兵器搭配）
 
-/** 装配槽跟境界走：境界 2 起 2 槽，逐境界 +1，境界 5 起 5 槽 */
+/** 装配槽跟境界走：境界 1 选定内功后 1 槽（battle-loot/design.md §5.3），逐境界 +1，境界 5 起 5 槽 */
 export function slotCount(realm: number): number {
-  return realm < 2 ? 0 : Math.min(5, realm);
+  return Math.min(5, Math.max(1, realm));
 }
 
 /** 手里的家伙：兵器类别与是否备着暗器 */
@@ -310,19 +310,13 @@ export interface ShopItem {
   form?: number;
 }
 
-/** 书肆货架（银两）：寻常武学、上乘招式秘籍；上乘内功那一件按「尚未拥有的第一部」动态给出。新增寻常暂不上架（W9） */
+/** 市集武馆（银两，裁决 31 / 35）：四门寻常武学全本；上乘招式秘籍与上乘内功已下架（残页靠挂机、内功靠 Boss）。新增寻常暂不上架（W9） */
 export const SHOP_ITEMS: ShopItem[] = [
-  { id: 'book:liuyunjian', label: WUXUE.liuyunjian.name, price: 150, realm: 2, kind: 'wuxue', wuxue: 'liuyunjian' },
-  { id: 'book:kaishanzhang', label: WUXUE.kaishanzhang.name, price: 200, realm: 2, kind: 'wuxue', wuxue: 'kaishanzhang' },
-  { id: 'book:xiulizhen', label: WUXUE.xiulizhen.name, price: 250, realm: 2, kind: 'wuxue', wuxue: 'xiulizhen' },
-  { id: 'book:xingzhegun', label: WUXUE.xingzhegun.name, price: 300, realm: 2, kind: 'wuxue', wuxue: 'xingzhegun' },
-  ...(['jinghongjian', 'fuhuquan', 'feihuangshi', 'duanshuidao'] as WuxueId[]).flatMap((w) => [4, 5].map((k) => ({
-    id: `scroll:${formKey(w, k)}`, label: `${WUXUE[w].name} · ${formName(k)}`, price: 1500, realm: 4,
-    kind: 'scroll' as const, wuxue: w, form: k,
-  }))),
+  { id: 'book:liuyunjian', label: WUXUE.liuyunjian.name, price: 150, realm: 1, kind: 'wuxue', wuxue: 'liuyunjian' },
+  { id: 'book:kaishanzhang', label: WUXUE.kaishanzhang.name, price: 200, realm: 1, kind: 'wuxue', wuxue: 'kaishanzhang' },
+  { id: 'book:xiulizhen', label: WUXUE.xiulizhen.name, price: 250, realm: 1, kind: 'wuxue', wuxue: 'xiulizhen' },
+  { id: 'book:xingzhegun', label: WUXUE.xingzhegun.name, price: 300, realm: 1, kind: 'wuxue', wuxue: 'xingzhegun' },
 ];
-export const SHOP_NEIGONG_PRICE = 5000;
-export const SHOP_NEIGONG_REALM = 5;
 /** 声望阁「轻装上路」：书肆八折（spec S9） */
 export const QINGZHUANG_DISCOUNT = 0.8;
 

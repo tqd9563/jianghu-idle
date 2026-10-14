@@ -154,6 +154,8 @@ function rollAffixes(slot: GearSlot, grade: GearGrade, level: number, rng: () =>
 
 export interface GearRollInput {
   slot?: GearSlot;
+  /** 兵器类别；缺省随机（裁决 25） */
+  cat?: WeaponCat;
   grade: GearGrade;
   /** 掉落关卡当量 */
   level: number;
@@ -165,7 +167,7 @@ let nextId = 0;
 /** 生成一件装备：部位 / 类别 / 型随机，品阶与等级由调用方定 */
 export function rollGear(input: GearRollInput, rng: () => number): GearItem {
   const slot = input.slot ?? GEAR_SLOTS[Math.floor(rng() * GEAR_SLOTS.length)];
-  const cat = slot === '兵器' ? WEAPON_CATS[Math.floor(rng() * WEAPON_CATS.length)] : undefined;
+  const cat = slot === '兵器' ? input.cat ?? WEAPON_CATS[Math.floor(rng() * WEAPON_CATS.length)] : undefined;
   const form: 0 | 1 = rng() < 0.5 ? 0 : 1;
   const [name, img] = gearNameOf(slot, form, input.grade, cat);
   nextId += 1;

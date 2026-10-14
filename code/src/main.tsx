@@ -7,6 +7,7 @@ import './styles/battle.css'
 import './styles/gongfa.css'
 import './styles/jianghu.css'
 import './styles/bag.css'
+import './styles/market.css'
 import App from './App.tsx'
 import { initTheme } from './theme/themePreference'
 

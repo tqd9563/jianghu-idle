@@ -1,0 +1,49 @@
+/* 市集 / 黑市 —— docs/design/battle-loot-prototype.html `#p-market`（DESIGN.md「市集与黑市」「黑市（暗调）」） */
+.market { position: relative; }
+.mk-silver { font-size: 13px; color: var(--muted); align-self: center; }
+.mk-silver .gold { color: var(--gold); font-weight: 600; }
+.mk-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.stall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.stall-it { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: 10px; background: oklch(0.22 0.015 262 / 0.5); align-items: center; }
+.stall-it .ink { grid-row: 1 / span 3; width: 54px; height: 70px; object-fit: contain; opacity: 0.85; }
+.stall-it .nm { font-family: var(--font-display); font-size: 14.5px; letter-spacing: 0.06em; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.stall-it .st { font-size: 12px; color: var(--faint); }
+.stall-it .jh-btn2 { justify-self: start; margin-top: 4px; padding: 3px 10px; font-size: 12.5px; }
+.market .jh-row .wtag, .stall-it .wtag { font-size: 11px; color: var(--faint); padding: 1px 6px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+/* 黑市入口：解锁后摊位条末尾多一个暗色页签（解锁前不渲染） */
+.jh-seg button.blk { margin-left: 10px; color: oklch(0.72 0.1 300); box-shadow: inset 0 0 0 1px oklch(0.5 0.1 300 / 0.45); }
+.jh-seg button.blk:hover { background: oklch(0.25 0.04 300 / 0.6); }
+/* 进门：整页从左向右拉黑 */
+.market.wipe::after { content: ''; position: absolute; inset: -24px; z-index: 5; background: oklch(0.08 0.02 300); animation: wipe-in .45s var(--ease-sharp) both; }
+@keyframes wipe-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+/* 黑市：整页换紫黑调 */
+.market.night { --wash: oklch(0.16 0.02 300 / 0.7); --wash-2: oklch(0.24 0.03 300 / 0.7); }
+.market.night .jh-head h1 { color: oklch(0.82 0.09 300); }
+.page-shop:has(.market.night) + .jh-art, .jh-art.art-shop:has(+ .page-shop .market.night) { filter: brightness(0.45) saturate(0.4) hue-rotate(30deg); }
+.bk-right { display: flex; align-items: center; gap: 16px; }
+.bk-clock { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: oklch(0.8 0.08 70); font-variant-numeric: tabular-nums; }
+.bk-clock i { width: 10px; height: 14px; border-radius: 2px 2px 5px 5px; background: linear-gradient(to top, oklch(0.75 0.1 70), oklch(0.75 0.1 70) 45%, oklch(0.3 0.03 300) 45%); box-shadow: inset 0 0 0 1px oklch(0.6 0.08 70 / 0.6); }
+.coins { display: flex; gap: 8px; margin-top: 16px; }
+.coins i { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, transparent 3px, oklch(0.72 0.1 70) 3.5px, oklch(0.6 0.09 60) 7px, oklch(0.5 0.07 55) 8px); box-shadow: 0 1px 2px oklch(0.05 0.01 262 / 0.6); }
+.coins i.spent { background: radial-gradient(circle, transparent 3px, oklch(0.3 0.02 300) 3.5px, oklch(0.26 0.02 300) 8px); box-shadow: inset 0 0 0 1px oklch(0.4 0.03 300 / 0.5); }
+.masked { display: grid; grid-template-columns: repeat(3, 200px); gap: 14px; }
+.mask-it { position: relative; border: 0; color: inherit; cursor: pointer; border-radius: 10px; padding: 10px 8px; min-height: 0; display: grid; justify-items: center; align-content: center; gap: 6px; background: oklch(0.18 0.03 300 / 0.8); box-shadow: inset 0 0 0 1px oklch(0.45 0.08 300 / 0.4); transition: transform .3s var(--ease-sharp), box-shadow .3s; font-family: inherit; }
+.mask-it:hover:not(:disabled) { box-shadow: inset 0 0 0 1px oklch(0.6 0.12 300 / 0.7); }
+.mask-it:disabled { cursor: default; opacity: 0.6; }
+.mask-it .mveil { width: 120px; height: 150px; border-radius: 6px; background: linear-gradient(160deg, oklch(0.3 0.04 300), oklch(0.18 0.03 300)); box-shadow: inset 0 0 0 1px oklch(0.5 0.08 300 / 0.5); display: grid; place-items: center; font-family: var(--font-display); font-size: 22px; color: oklch(0.6 0.08 300); }
+.mask-it .nm { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.08em; text-align: center; }
+.mask-it .nm.qi { color: var(--qi); }
+.mask-it .pr { font-size: 12.5px; color: var(--muted); }
+.mask-it.sold { cursor: default; }
+.mask-it.sold .ink { width: 150px; height: 150px; object-fit: contain; animation: mask-in .5s var(--ease-sharp); }
+.mask-it.sold .nm { animation: mask-in .6s var(--ease-sharp); }
+.mask-it.gone { opacity: 0.35; }
+@keyframes mask-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* 演出：暗门（灯笼暖光压紫黑）与话本段落 */
+.jh-ceremony.black-in { background: radial-gradient(ellipse at 50% 70%, oklch(0.3 0.06 40 / 0.5), oklch(0.08 0.02 300 / 0.98) 60%); }
+.jh-ceremony.black-in .kick, .jh-ceremony.black-in h2 { color: oklch(0.85 0.1 70); }
+.jh-ceremony .story { max-width: 34em; margin: 18px auto 0; color: var(--muted); line-height: 1.9; font-size: 15px; text-align: left; }
+.jh-ceremony .story em { font-style: normal; color: var(--ink); }
+.jh-ceremony .story + .acts { margin-top: 26px; }
+@media (max-width: 860px) { .masked { grid-template-columns: repeat(3, minmax(0, 1fr)); } .mask-it .mveil { width: 80px; height: 100px; } }
+@media (prefers-reduced-motion: reduce) { .market.wipe::after { animation: none; } .mask-it.sold .ink, .mask-it.sold .nm { animation: none; } }

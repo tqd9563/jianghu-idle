@@ -23,6 +23,7 @@ import {
 } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 import { gearFullName } from '../engine/gear';
+import { isTeachFailure } from '../store/gameStore';
 import { formTitle } from '../engine/formNames';
 import { PAGES_NEEDED } from '../engine/wuxue';
 
@@ -436,12 +437,37 @@ function FailureCeremony({ goCultivate }: { goCultivate: () => void }) {
     `我方输出 ${f0(st.dmgDealt)}（敌余 ${left}%）`,
     `我方承伤 ${f0(st.dmgTaken)}（余 ${Math.round(f.playerHpPct * 100)}%）`,
     `实际命中 ${Math.round(f.hitRate * 100)}%`,
-    ...(f.route === 'huashan' ? [`暴击 ${st.critCount} 次 · 爆发剑招 ${st.burstCount} 次（占输出 ${outPct(st.burstDmg)}%）`] : []),
+    ...(f.route === 'huashan' ? [`会心 ${st.critCount} 次 · 爆发剑招 ${st.burstCount} 次（占输出 ${outPct(st.burstDmg)}%）`] : []),
     ...(f.route === 'shaolin' ? [`护盾吸收 ${f0(st.shieldAbsorbed)} · 反伤输出 ${f0(st.thornsOut)}（占输出 ${outPct(st.thornsOut)}%）`] : []),
     ...(f.route === 'tangmen' ? [`毒伤占输出 ${outPct(st.poisonDmg)}% · 毒爆 ${st.poisonBurstCount} 次 · 毒层被清 ${st.purgeCount} 次`] : []),
     ...(st.abStacksMax > 0 ? [`身中破甲 ${st.abStacksMax} 层`] : []),
     ...(st.thornsTaken > 0 ? [`承受反伤 ${f0(st.thornsTaken)}`] : []),
   ].join('<br>');
+
+  // 第一世 1-7 战败：隐世前辈出场（battle-loot/design.md §5.1），起身行礼后进传功
+  if (isTeachFailure(s)) {
+    return createPortal(
+      <div className="jh-ceremony cold" role="dialog" aria-label="战败">
+        <div>
+          <div className="kick">战 败</div>
+          <h2 className="mid">{f.enemyName}</h2>
+          <div className="d">第 {f.stage} 关 · 鏖战 {f.rounds} 回合</div>
+          <div className="bt-fail-left">
+            <div className="lbl"><span>剩余气血</span><span>{left}%</span></div>
+            <div className="jh-ink-bar hp"><i style={{ width: `${left}%` }} /></div>
+          </div>
+          <div className="story">
+            村口的地痞终究只是地痞。这一回你撞上的是真正在江湖上混饭吃的人，拳脚之间自有章法，你的蛮力一到他面前便散了。
+            <br /><br />倒在路边喘气的时候，一位背着药篓的老者停在你跟前，看了你半晌：<em>「根骨尚可，可惜没人教。」</em>
+          </div>
+          <div className="acts">
+            <button type="button" className="jh-btn" onClick={() => s.dismissFailure()}>起身行礼</button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
 
   // 挂到 body：舞台 .jh-stage 自成层叠上下文（isolation），留在里面会被侧栏压住，盖不满整屏
   return createPortal(

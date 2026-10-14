@@ -12,7 +12,7 @@ const ROUTE_ORDER: RouteId[] = ['huashan', 'shaolin', 'tangmen'];
 const CARD: Record<RouteId, { cls: string; lu: string; motif: string; items: React.ReactNode[]; cost: string }> = {
   huashan: {
     cls: 'hs', lu: '惊雷 · 爆发', motif: '快剑爆发 · 短战最强，看脸不稳',
-    items: [<>暴击率 <b>+10pp</b>，暴击伤害 <b>+20pp</b></>, <><b>开战首击必定暴击</b>（并积 1 层剑意）</>, <>每次暴击积 <b>1 层剑意</b>；满 5 层自动施展<b>爆发剑招</b></>],
+    items: [<>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></>, <><b>开战首击必定会心</b>（并积 1 层剑意）</>, <>每次会心积 <b>1 层剑意</b>；满 5 层自动施展<b>爆发剑招</b></>],
     cost: '短板：面对高闪敌人命中不稳',
   },
   shaolin: {
@@ -30,6 +30,7 @@ const Q_CLS = { 寻常: 'q1', 上乘: 'q2', 绝学: 'q3' } as const;
 
 export function NeigongSelect() {
   const owned = useGameStore((s) => s.ownedNeigong);
+  const firstTime = useGameStore((s) => s.run === 1);
   const selectNeigong = useGameStore((s) => s.selectNeigong);
   const byRoute = (r: RouteId) =>
     owned.filter((id) => NEIGONG[id].route === r)
@@ -40,9 +41,9 @@ export function NeigongSelect() {
   return (
     <div className="jh-ceremony calm ngs" role="dialog" aria-label="择一部内功">
       <div>
-        <div className="kick">择 一 部 内 功</div>
-        <h2 className="mid">隐世前辈 · 各传一脉</h2>
-        <div className="d">习其艺，不列门墙。本世主修此功，下一世开头可重选。</div>
+        <div className="kick">{firstTime ? '传 功' : '择 一 部 内 功'}</div>
+        <h2 className="mid">{firstTime ? '择一门心法' : '隐世前辈 · 各传一脉'}</h2>
+        <div className="d">{firstTime ? '三门心法各走一路；日后转修心法，须耗额外代价' : '习其艺，不列门墙。本世主修此功，下一世开头可重选。'}</div>
         <div className="ngs-cards" role="radiogroup" aria-label="内功">
           {ROUTE_ORDER.map((r) => {
             const list = byRoute(r);

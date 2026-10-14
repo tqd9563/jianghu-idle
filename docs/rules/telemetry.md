@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v3.0
+> **版本**：v3.1
 >
 > **日期**：2026-09-29
 >
@@ -60,6 +60,9 @@
 | `idle_stop` | 收手 | `map`, `tier`, `stage`, `fights` |
 | `gear_dropped` | 装备掉落（在线每件一条；离线一次挂机结算一条） | 在线：`stage`, `slot`, `grade`, `level`, `sold`（行囊满了卖得的银两）, `offline: false`；离线：`stage`, `count`, `best_grade`, `sold`, `offline: true` |
 | `gear_equipped` | 穿戴一件装备 | `slot`, `grade`, `level`, `afx`（词条数） |
+| `elder_met` | 第一世 1-7 战败后起身行礼（此后可选内功） | — |
+| `market_opened` | 市集开张（传功后第 8 关起首次战败） | `stage` |
+| `black_bought` | 黑市买下一件蒙面货 | `good`（部位 / `pages`）, `price`, `grade` 或 `wuxue` + `form`, `buys`（本世第几件） |
 | `wuxue_dropped` | 武学掉落（在线每次一条；离线一次挂机结算一条） | 在线：`stage`, `wuxue`, `form`, `kind`（`book` 全本 / `page` 残页）, `dup`, `offline: false`；离线：`stage`, `books`, `pages`, `offline: true` |
 | `gear_sold` | 卖出装备（单件或一键） | `count`, `silver`, `grade`（单件）/ `below`（一键：卖掉低于此品阶） |
 | `offline_tax_revealed` | 出关结算税率条展示 | `efficiency_pct` |
@@ -112,6 +115,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v3.1 | 2026-10-14 | battle-loot 实装四：新增 `elder_met` / `market_opened` / `black_bought`；`shop_bought` 也记兵器铺 / 衣饰铺（加 `slot`、`grade`）。 |
 | v3.0 | 2026-10-14 | battle-loot 实装三：新增 `wuxue_dropped`。 |
 | v2.9 | 2026-10-13 | battle-loot 实装二：新增 `gear_dropped` / `gear_equipped` / `gear_sold`。 |
 | v2.8 | 2026-10-13 | battle-loot 实装一：新增 `idle_start` / `idle_stop`，`offline_settled` 加挂机折算三字段。 |

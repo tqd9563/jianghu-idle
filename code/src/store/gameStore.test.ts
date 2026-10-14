@@ -14,7 +14,9 @@ import {
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
-import { applyWuxueDrop, handsOf, learnedFormsOf as learnedFormsOfStore } from './gameStore';
+import { applyWuxueDrop, frontierStageOf, handsOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf } from './gameStore';
+import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT } from '../engine/market';
+import { slotCount } from '../engine/wuxue';
 import { QUALITY_PARAMS, WUXUE, formKey as fk, rollWuxueDrop } from '../engine/wuxue';
 
 /** 一件固定类别的装备（剑 / 刀 / 枪 / 棍按名表第一行取） */
@@ -116,8 +118,10 @@ describe('gameStore · 单钱包丹田模型', () => {
     expect(useGameStore.getState().zhong).toBe(3);
   });
 
-  it('选内功只此一次、只能选已拥有的，发 neigong_selected', () => {
-    useGameStore.setState({ realm: 2 });
+  it('选内功只此一次、只能选已拥有的，发 neigong_selected；第一世须先遇见前辈', () => {
+    useGameStore.getState().selectNeigong('zhenyuegong'); // 未传功：拒绝
+    expect(useGameStore.getState().neigong).toBeNull();
+    useGameStore.setState({ taught: true });
     useGameStore.getState().selectNeigong('panshigong'); // 上乘未拥有，拒绝
     expect(useGameStore.getState().neigong).toBeNull();
     useGameStore.getState().selectNeigong('zhenyuegong');
@@ -459,7 +463,8 @@ describe('gameStore · 归隐与声望阁', () => {
   it('推关：输了退回最近已通关处挂机；挂机中输了退一关继续；退无可退才停（纯函数）', () => {
     const cleared = [1, 2, 3, 4, 5, 6].map((st) => stageKey(1, 0, st));
     // 境界 1 裸属性打 1-7 必败（battle-loot/spec.md 判据 12）：推关败 → 退回第 6 关挂机
-    useGameStore.setState({ realm: 1, clearedStages: cleared, idle: null });
+    // （第二世：前辈已传功，这场败不再是教学战败，照常退回挂机）
+    useGameStore.setState({ realm: 1, run: 2, taught: true, clearedStages: cleared, idle: null });
     useGameStore.getState().challengeStage(1, 0, 7);
     const t0 = Date.now();
     for (let i = 1; i <= 400 && !(useGameStore.getState().battle?.resolved ?? false); i++) useGameStore.getState().tick(t0 + i * 700);
@@ -900,13 +905,17 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     expect(st().equipped).toEqual(['kaishanzhang']);
   });
 
-  it('书肆：按境界上架、扣银两、秘籍永久保留；轻装上路八折', () => {
+  it('市集武馆：开张后才能买、扣银两、秘籍永久保留；轻装上路八折；上乘秘籍已下架（裁决 35）', () => {
     useGameStore.setState({ realm: 2, silver: 1000, ownedRepNodes: ['qingzhuang_shanglu'] });
     const st = () => useGameStore.getState();
+    st().buyShopItem('book:xingzhegun');       // 市集未开张
+    expect(st().ownedWuxue).toEqual([]);
+    useGameStore.setState({ marketOpen: true });
     st().buyShopItem('book:xingzhegun');       // 300 × 0.8 = 240
     expect(st().ownedWuxue).toEqual(['xingzhegun']);
     expect(st().silver).toBe(760);
-    st().buyShopItem('scroll:jinghongjian:4');  // 境界 4 才上架
+    expect(st().marketSpent).toBe(240);
+    st().buyShopItem('scroll:jinghongjian:4');  // 已下架
     expect(st().ownedScrolls).toEqual([]);
     st().buyShopItem('book:xingzhegun');        // 已有不重复买
     expect(st().silver).toBe(760);
@@ -1295,5 +1304,122 @@ describe('武学掉落、书匣与兵器搭配（battle-loot/design.md §3.7 / �
     expect(st().pages).toEqual({ 'feipuduanyajian:1': 2 });
     expect(Object.keys(WUXUE)).toHaveLength(66);
     expect(QUALITY_PARAMS.寻常.forms).toBe(3);
+  });
+});
+
+describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 31–35）', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+  afterEach(() => { vi.restoreAllMocks(); });
+  const st = () => useGameStore.getState();
+  const play = () => {
+    const t0 = Date.now();
+    for (let i = 1; i <= 400 && !(st().battle?.resolved ?? false); i++) st().tick(t0 + i * 700);
+    return st().battle!;
+  };
+
+  it('第一世 1-7 必败，战败即遇见前辈：起身行礼后可在境界 1 选内功，开 1 个武学槽', () => {
+    useGameStore.setState({ clearedStages: m1all.slice(0, 6) });
+    st().challengeStage(1, 0, 7);
+    const b = play();
+    expect(b.result.win).toBe(false);
+    expect(isTeachFailure(st())).toBe(true);
+    st().dismissFailure();
+    expect(st().taught).toBe(true);
+    expect(getEvents().some((e) => e.e === 'elder_met')).toBe(true);
+    st().selectNeigong('jingleijue');
+    expect(st().neigong).toBe('jingleijue');
+    expect(st().realm).toBe(1);
+    expect(slotCount(1)).toBe(1);
+    expect(slotCount(2)).toBe(2);
+  });
+
+  it('第二世起开局即选内功；前辈已传功跨世记住', () => {
+    useGameStore.setState({ realm: 3, taught: true, neigong: 'jingleijue', route: 'huashan', retireStep: 'confirm' });
+    st().confirmRetire();
+    expect(st().run).toBe(2);
+    expect(st().taught).toBe(true);
+    expect(st().neigong).toBeNull();
+    st().selectNeigong('zhenyuegong');
+    expect(st().neigong).toBe('zhenyuegong');
+  });
+
+  it('市集在传功后第 8 关起首次战败时开张，跨世保留', () => {
+    useGameStore.setState({ realm: 1, neigong: 'jingleijue', route: 'huashan', taught: true, clearedStages: m1all.slice(0, 7) });
+    st().challengeStage(1, 0, 8);
+    const b = play();
+    expect(b.result.win).toBe(false);
+    expect(st().marketOpen).toBe(true);
+    expect(getEvents().some((e) => e.e === 'market_opened')).toBe(true);
+    useGameStore.setState({ realm: 3, retireStep: 'confirm' });
+    st().confirmRetire();
+    expect(st().marketOpen).toBe(true);
+  });
+
+  it('兵器铺 / 衣饰铺按推关处定货：凡品 / 精良各一件，买下进行囊、计累计消费；满额那一笔解锁黑市并进演出', () => {
+    useGameStore.setState({ realm: 3, neigong: 'jingleijue', route: 'huashan', marketOpen: true, silver: 100000, clearedStages: m1all.slice(0, 20) });
+    const fs = frontierStageOf(st());
+    expect(fs.stage).toBe(21);
+    const { arms, wear } = marketGoodsOf(st());
+    expect(arms).toHaveLength(10);
+    expect(wear).toHaveLength(4);
+    expect(arms.filter((g) => g.grade === 1)).toHaveLength(5);
+    expect(arms[0].price).toBe(fs.reward.silver * 4);
+    expect(arms[5].price).toBe(fs.reward.silver * 10);
+    const sword = arms.find((g) => g.cat === '剑' && g.grade === 2)!;
+    st().buyMarketItem(sword.id);
+    expect(st().bag).toHaveLength(1);
+    expect(st().bag[0]).toMatchObject({ slot: '兵器', cat: '剑', grade: 2, level: fs.x, fresh: true });
+    expect(st().silver).toBe(100000 - sword.price);
+    expect(st().marketSpent).toBe(sword.price);
+    expect(st().blackOpen).toBe(false);
+    // 累计消费满额
+    let guard = 0;
+    const charm = wear.find((g) => g.slot === '佩饰' && g.grade === 1)!;   // 一格一件，行囊装得下 80 件
+    while (!st().blackOpen && guard++ < 200) st().buyMarketItem(charm.id);
+    expect(st().blackOpen).toBe(true);
+    expect(st().blackIntro).toBe(true);
+    expect(st().marketSpent).toBeGreaterThanOrEqual(BLACK_UNLOCK_SPENT);
+    st().dismissBlackIntro();
+    expect(st().blackIntro).toBe(false);
+  });
+
+  it('黑市：每天三件蒙面货、买下才揭晓、每世十次、连开三凡品后保底精良；转世清次数不清解锁', () => {
+    useGameStore.setState({ realm: 3, neigong: 'jingleijue', route: 'huashan', marketOpen: true, blackOpen: true, silver: 10_000_000, clearedStages: m1all.slice(0, 20) });
+    st().refreshBlack();
+    expect(st().blackGoods).toHaveLength(3);
+    expect(st().blackGoods.map((g) => g.mask.kind)).toEqual(['gear', 'gear', 'pages']);
+    const day = st().blackDay;
+    st().refreshBlack();   // 同一天不换
+    expect(st().blackDay).toBe(day);
+    vi.spyOn(Math, 'random').mockReturnValue(0);   // 必开凡品
+    const g0 = st().blackGoods[0];
+    st().buyMasked(g0.id);
+    expect(st().blackGoods[0].revealed).not.toBeNull();
+    expect('gear' in st().blackGoods[0].revealed!).toBe(true);
+    expect(st().blackBuys).toBe(1);
+    expect(st().blackLowStreak).toBe(1);
+    expect(st().bag).toHaveLength(1);
+    st().buyMasked(g0.id);   // 已揭晓不能再买
+    expect(st().blackBuys).toBe(1);
+    st().buyMasked(st().blackGoods[2].id);   // 残谱：两页
+    const p = (st().blackGoods[2].revealed as { pages: { id: string; k: number; n: number } }).pages;
+    expect(p.n).toBe(2);
+    expect(st().pages[`${p.id}:${p.k}`]).toBe(2);
+    // 保底：连开三件凡品后第四件必精良以上（手工把流水推到 3）
+    useGameStore.setState({ blackLowStreak: 3, blackGoods: st().blackGoods.map((g) => ({ ...g, revealed: null })), blackBuys: 0 });
+    st().buyMasked(st().blackGoods[1].id);
+    expect((st().blackGoods[1].revealed as { gear: GearItem }).gear.grade).toBeGreaterThanOrEqual(2);
+    expect(st().blackLowStreak).toBe(0);
+    // 每世十次
+    useGameStore.setState({ blackBuys: BLACK_PER_LIFE, blackGoods: st().blackGoods.map((g) => ({ ...g, revealed: null })) });
+    st().buyMasked(st().blackGoods[0].id);
+    expect(st().blackGoods[0].revealed).toBeNull();
+    useGameStore.setState({ retireStep: 'confirm' });
+    st().confirmRetire();
+    expect(st().blackOpen).toBe(true);
+    expect(st().blackBuys).toBe(0);
   });
 });

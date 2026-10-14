@@ -14,12 +14,13 @@ import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
 import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
 import { WUXUE, slotCount } from '../engine/wuxue';
-import { SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
+import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
+import type { SectShelfRow } from '../store/gameStore';
 import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
 import { REP_NODES, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
 import {
-  nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN, type MapNo,
+  mapUnlocked, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN, type MapNo,
 } from '../store/gameStore';
 import type { TierId } from '../engine/enemies';
 
@@ -150,16 +151,17 @@ function tendSect(route: RouteId): void {
   const s = st();
   if (s.realm < SECT_REALM) return;
   if (s.sect === null) {
-    const order = [route, ...SECT_IDS.filter((id) => id !== route)];
+    const reachable = SECT_IDS.filter((id) => mapUnlocked(SECTS[id].map, s.tiersUnlocked ?? ['1-0']));
+    const order = [route, ...reachable.filter((id) => id !== route)];
     st().joinSect(order.find((id) => sectShelfOf(s, id).some((it) => !it.owned)) ?? route);
   }
   // 剩下的在线时间跑得完一件短差才派，否则留给下线前的长差
   if (st().sectTask === null && onlineLeftSec >= SECT_TASKS.short.hours * 3600) st().startSectTask('short');
-  // 先换绝学武学（直接进装配），再内功、招式秘籍、卷册
-  const rank = { wuxue: 0, neigong: 1, scroll: 2, juance: 3 } as const;
+  // 先凑绝学第一式残页（凑齐直接进装配），再内功、后续式残页、卷册
+  const rank = (x: SectShelfRow) => (x.kind === 'pages' ? (x.form === 1 ? 0 : 2) : x.kind === 'neigong' ? 1 : 3);
   for (let guard = 0; guard < 12; guard++) {
     const it = sectShelfOf(st(), st().sect!).filter((x) => !x.owned && x.lock === null)
-      .sort((a, b) => rank[a.kind] - rank[b.kind])[0];
+      .sort((a, b) => rank(a) - rank(b))[0];
     if (!it || st().contrib < it.price) break;
     st().buySectItem(it.id);
   }

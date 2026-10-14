@@ -15,7 +15,7 @@ import {
   BOSS_DROPS, DUPLICATE_SILVER, QINGZHUANG_DISCOUNT, QUALITY_PARAMS, SHOP_ITEMS, SHULIAN_CARRY, WUXUE, checkFormGate, effectValue, formCd, formCost, formDunwuChance, formKey, formMult, formName, pagesFull, rollWuxueDrop, shulianMods, shulianTier, slotCount, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
-  SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
+  SECTS, SECT_PAGES, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
   type SectId, type SectItem, type SectTask, type SectTaskKind,
 } from '../engine/sect';
 import {
@@ -160,8 +160,8 @@ interface PersistedState {
   contrib: number;
   /** 正在跑的门派任务（同时只一件，到时自动结算） */
   sectTask: SectTask | null;
-  /** 拜山传闻待说：突破入境界 2 时置上，下一场战斗的战斗记录说一次 */
-  rumorPending: boolean;
+  /** 拜山传闻待说（sect.ts RUMORS 的键）：突破入境界 2 置 1，解锁图 2 / 图 3 初入置 2 / 3；下一场战斗的战斗记录说一次，0 = 无 */
+  rumorPending: number;
   /** 行囊（battle-loot/design.md §3.5）：背包里的装备；每世清零（裁决 8） */
   bag: GearItem[];
   /** 身上穿着的装备，按部位各一件；每世清零 */
@@ -240,8 +240,8 @@ export interface BattleState {
     /** 本场拾得的武学（整式全本 / 残页）；dup = 已有，原样收着不起作用；have = 这一式攒到的残页数 */
     wuxue?: WuxueDrop & { dup: boolean; have?: number };
   } | null;
-  /** 本场战斗记录开头说一句拜山传闻 */
-  rumor?: boolean;
+  /** 本场战斗记录开头说一句拜山传闻（RUMORS 的键） */
+  rumor?: number;
   /** 战报变体种子（narration.ts pick），开战时掷定 */
   seed?: number;
 }
@@ -402,7 +402,7 @@ const FRESH: PersistedState = {
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
   ownedWuxue: [], ownedScrolls: [], books: [], pages: {}, equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
-  sect: null, contrib: 0, sectTask: null, rumorPending: false,
+  sect: null, contrib: 0, sectTask: null, rumorPending: 0,
   bag: [], worn: {},
   taught: false, marketOpen: false, marketSpent: 0, blackOpen: false, blackBuys: 0, blackLowStreak: 0, blackDay: '', blackGoods: [],
 };
@@ -598,21 +598,27 @@ export type SectShelfRow = SectItem & {
   lock: string | null;
 };
 
-/** 本派货架逐件的状态：招式秘籍要先有该武学与前一式秘籍，归真卷册要先有本派绝学内功 */
-export function sectShelfOf(s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue' | 'ownedScrolls'>, id: SectId): SectShelfRow[] {
+/** 本派货架逐件的状态：残页按式凑（第一式凑齐即得这门武学），第 5–7 式要先得这门武学、第 6 / 7 式再要前一式口诀；归真卷册要先有本派绝学内功 */
+export function sectShelfOf(
+  s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue' | 'ownedScrolls'> & Partial<Pick<PersistedState, 'pages'>>, id: SectId,
+): SectShelfRow[] {
   const ng = SECTS[id].neigong;
+  const pages = s.pages ?? {};
   return sectShelf(id).map((it) => {
     const scrolls = s.ownedScrolls ?? [];
-    if (it.kind === 'neigong') return { ...it, owned: (s.ownedNeigong ?? []).includes(ng), lock: null };
-    if (it.kind === 'wuxue') return { ...it, owned: (s.ownedWuxue ?? []).includes(it.wuxue!), lock: null };
+    if (it.kind === 'neigong') return { ...it, owned: (s.ownedNeigong ?? []).includes(ng!), lock: null };
     if (it.kind === 'juance') {
-      return { ...it, owned: scrolls.includes(juanceKey(ng)),
-        lock: (s.ownedNeigong ?? []).includes(ng) ? null : `先得${NEIGONG[ng].name}` };
+      return { ...it, owned: scrolls.includes(juanceKey(ng!)),
+        lock: (s.ownedNeigong ?? []).includes(ng!) ? null : `先得${NEIGONG[ng!].name}` };
     }
     const w = it.wuxue!;
-    const lock = !(s.ownedWuxue ?? []).includes(w) ? `先得${WUXUE[w].name}`
-      : it.form! > 5 && !scrolls.includes(formKey(w, it.form! - 1)) ? `先得${formName(it.form! - 1)}` : null;
-    return { ...it, owned: scrolls.includes(formKey(w, it.form!)), lock };
+    const k = it.form!;
+    const full = (f: number) => scrolls.includes(formKey(w, f)) || pagesFull(WUXUE[w], pages, w, f);
+    const owned = k === 1 ? (s.ownedWuxue ?? []).includes(w) : full(k);
+    const lock = k === 1 ? null
+      : !(s.ownedWuxue ?? []).includes(w) ? `先得${WUXUE[w].name}`
+        : k > 5 && !full(k - 1) ? `先得${formName(k - 1)}口诀` : null;
+    return { ...it, owned, lock };
   });
 }
 
@@ -1065,7 +1071,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 首达新境界即得宿慧（economy.md §2），当场生效
       peakRealm: Math.max(s.peakRealm ?? 1, realmTo),
       // 拜山传闻（spec §5.1）：入境界 2 时突破仪式说一次，下一场战斗记录再说一次
-      ...(realmTo === 2 ? { rumorPending: true } : {}),
+      ...(realmTo === 2 ? { rumorPending: 1 } : {}),
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, {
       realm_to: realmTo, first_reach: firstReach,
@@ -1277,6 +1283,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   joinSect: (id) => {
     const s = get();
     if (!s.started || s.sect !== null || s.realm < SECT_REALM || !SECTS[id]) return;
+    if (!mapUnlocked(SECTS[id].map, s.tiersUnlocked ?? ['1-0'])) return;   // 这一派要到了它行走的那张图才遇得上（W13）
     set({ sect: id, lastProgressSec: s.runPlaySec });
     track('sect_joined', { run: s.run, realm: s.realm, route: s.route }, { sect: id, neigong: s.neigong });
     persist(get());
@@ -1294,13 +1301,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.sect === null) return;
     const it = sectShelfOf(s, s.sect).find((x) => x.id === itemId);
     if (!it || it.owned || it.lock !== null || (s.contrib ?? 0) < it.price) return;
-    const patch: Partial<PersistedState> =
-      it.kind === 'neigong' ? { ownedNeigong: [...(s.ownedNeigong ?? []), SECTS[s.sect].neigong] }
-      : it.kind === 'wuxue' ? { ownedWuxue: [...(s.ownedWuxue ?? []), it.wuxue!] }
-      : it.kind === 'juance' ? { ownedScrolls: [...(s.ownedScrolls ?? []), juanceKey(SECTS[s.sect].neigong)] }
-      : { ownedScrolls: [...(s.ownedScrolls ?? []), formKey(it.wuxue!, it.form!)] };
+    let patch: Partial<PersistedState>;
+    if (it.kind === 'neigong') patch = { ownedNeigong: [...(s.ownedNeigong ?? []), SECTS[s.sect].neigong!] };
+    else if (it.kind === 'juance') patch = { ownedScrolls: [...(s.ownedScrolls ?? []), juanceKey(SECTS[s.sect].neigong!)] };
+    else {
+      // 残页一页一页换（W2）：与挂机掉落同一本账，第一式凑齐即得这门武学
+      const got = applyWuxueDrop(s, { id: it.wuxue!, k: it.form!, kind: 'page' });
+      patch = { pages: got.pages, ownedWuxue: got.ownedWuxue };
+    }
     set({ ...patch, contrib: s.contrib - it.price, lastProgressSec: s.runPlaySec });
-    track('sect_shop_bought', { run: s.run, realm: s.realm, route: s.route }, { sect: s.sect, item: itemId, price: it.price });
+    track('sect_shop_bought', { run: s.run, realm: s.realm, route: s.route }, {
+      sect: s.sect, item: itemId, price: it.price, ...(it.kind === 'pages' ? { have: (get().pages ?? {})[formKey(it.wuxue!, it.form!)] ?? 0, need: SECT_PAGES } : {}),
+    });
     persist(get());
   },
 
@@ -1736,9 +1748,9 @@ function startBattle(
       revealed: 0, nextRevealAt: Date.now() + REVEAL_FIRST_MS * revealScale, intervalMs, revealScale,
       resolved: false, chainAt: null, chainStage: null, chainMode: null, reward: null,
       seed: Math.floor(Math.random() * 2 ** 31),
-      ...(s.rumorPending ? { rumor: true } : {}),
+      ...(s.rumorPending ? { rumor: s.rumorPending } : {}),
     },
-    ...(s.rumorPending ? { rumorPending: false } : {}),
+    ...(s.rumorPending ? { rumorPending: 0 } : {}),
   });
 }
 
@@ -1965,7 +1977,9 @@ function resolveBattle(
     const have = s.tiersUnlocked ?? ['1-0'];
     const opened = unlocksAfterBoss(b.map, b.tier).filter((k) => !have.includes(k));
     if (opened.length > 0) {
-      set({ tiersUnlocked: [...have, ...opened] });
+      // 解锁图 2 / 图 3 初入：这张图上的三派行走江湖，下一场战斗说一句拜山传闻（名录 §5.3）
+      const rumor = opened.includes('3-0') ? 3 : opened.includes('2-0') ? 2 : 0;
+      set({ tiersUnlocked: [...have, ...opened], ...(rumor ? { rumorPending: rumor } : {}) });
       track('tier_unlocked', { run: s.run, realm: s.realm, route: s.route }, {
         by: key, opened,
       });

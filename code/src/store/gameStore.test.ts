@@ -14,10 +14,11 @@ import {
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
-import { applyWuxueDrop, frontierStageOf, handsOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf } from './gameStore';
+import { applyWuxueDrop, frontierStageOf, handsOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
 import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT } from '../engine/market';
 import { slotCount } from '../engine/wuxue';
-import { QUALITY_PARAMS, WUXUE, formKey as fk, rollWuxueDrop } from '../engine/wuxue';
+import { QUALITY_PARAMS, WUXUE, checkFormGate, formKey as fk, pagesFull, rollWuxueDrop } from '../engine/wuxue';
+import { isBenmen } from '../engine/sect';
 
 /** 一件固定类别的装备（剑 / 刀 / 枪 / 棍按名表第一行取） */
 function gearOf(slot: GearSlot, cat?: WeaponCat): GearItem {
@@ -1006,7 +1007,9 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     st().joinSect('tangmen');                 // 不设叛出
     expect(st().sect).toBe('shaolin');
     useGameStore.setState({ contrib: 1000 });
-    st().buySectItem('sect:luohanfumogun');
+    for (let i = 0; i < 7; i++) st().buySectItem('sect:luohanfumogun:1');   // 第一式残页 7 页 × 60 → 得这门武学
+    expect(st().ownedWuxue).toContain('luohanfumogun');
+    expect(st().contrib).toBe(1000 - 420);
     st().startSectTask('short');
     st().openRetire(); st().proceedRetire(); st().confirmRetire();
     expect(st().run).toBe(2);
@@ -1014,6 +1017,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(st().contrib).toBe(0);
     expect(st().sectTask).toBeNull();
     expect(st().ownedWuxue).toContain('luohanfumogun');
+    expect(st().pages['luohanfumogun:1']).toBe(7);
     expect(getEvents().filter((e) => e.e === 'sect_joined')).toHaveLength(1);
   });
 
@@ -1040,23 +1044,27 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     vi.useRealTimers();
   });
 
-  it('贡献商店：招式秘籍要先有武学与前一式，归真卷册要先有本派绝学内功', () => {
-    useGameStore.setState({ realm: 3, sect: 'huashan', contrib: 2400 });
-    st().buySectItem('sect:cangyajianjue:5');     // 未得苍崖剑诀
+  it('贡献商店（W2 只换残页）：第 5–7 式残页要先得这门武学、第 6 / 7 式再要前一式口诀；归真卷册要先有本派绝学内功', () => {
+    useGameStore.setState({ realm: 3, sect: 'huashan', contrib: 5000 });
+    st().buySectItem('sect:cangyajianjue:5');     // 未得苍崖九叠剑
     st().buySectItem('sect:juance:yuntaixinfa');  // 未得云台心法
-    expect(st().contrib).toBe(2400);
-    st().buySectItem('sect:cangyajianjue');
-    st().buySectItem('sect:cangyajianjue:6');     // 要先有第五式
-    st().buySectItem('sect:cangyajianjue:5');
+    expect(st().contrib).toBe(5000);
+    for (let i = 0; i < 7; i++) st().buySectItem('sect:cangyajianjue:1');
+    expect(st().ownedWuxue).toEqual(['cangyajianjue']);
+    st().buySectItem('sect:cangyajianjue:6');     // 要先拼齐第五式口诀
+    expect(st().pages['cangyajianjue:6']).toBeUndefined();
+    for (let i = 0; i < 7; i++) st().buySectItem('sect:cangyajianjue:5');
+    st().buySectItem('sect:cangyajianjue:5');     // 已拼齐不再卖
     st().buySectItem('sect:cangyajianjue:6');
     st().buySectItem('sect:yuntaixinfa');
     st().buySectItem('sect:juance:yuntaixinfa');
-    expect(st().ownedWuxue).toEqual(['cangyajianjue']);
-    expect(st().ownedScrolls).toEqual(['cangyajianjue:5', 'cangyajianjue:6', 'juance:yuntaixinfa']);
+    expect(st().pages).toEqual({ 'cangyajianjue:1': 7, 'cangyajianjue:5': 7, 'cangyajianjue:6': 1 });
+    expect(st().ownedScrolls).toEqual(['juance:yuntaixinfa']);
     expect(st().ownedNeigong).toContain('yuntaixinfa');
-    expect(st().contrib).toBe(2400 - 400 - 250 - 350 - 600 - 500);
-    st().buySectItem('sect:luoxingjian');         // 贡献不够
-    expect(st().ownedWuxue).toEqual(['cangyajianjue']);
+    expect(st().contrib).toBe(5000 - 7 * 60 - 7 * 80 - 80 - 600 - 500);
+    // 第五式口诀顶招式秘籍：领悟条件里「招式秘籍」已满足
+    const gate = checkFormGate(WUXUE.cangyajianjue, 5, 4, 999, st().ownedScrolls.includes('cangyajianjue:5') || pagesFull(WUXUE.cangyajianjue, st().pages, 'cangyajianjue', 5), 99);
+    expect(gate.scroll).toBe(true);
   });
 
   it('归真：有卷册才判顿悟', () => {
@@ -1078,11 +1086,39 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(lo('huashan').p).toBeCloseTo(0.25 * (1.04 + 1 + 1) / 3, 9);   // 触发加成取已领悟三式的平均
   });
 
-  it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次', () => {
-    useGameStore.setState({ rumorPending: true });
+  it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次；解锁图 2 / 图 3 初入各说一次新派', () => {
+    useGameStore.setState({ rumorPending: 1 });
     st().challengeStage(1, 0, 1);
-    expect(st().battle?.rumor).toBe(true);
-    expect(st().rumorPending).toBe(false);
+    expect(st().battle?.rumor).toBe(1);
+    expect(st().rumorPending).toBe(0);
+  });
+
+  it('九派按图出现：图 2 的三派要解锁洛阳近郊初入才拜得上；新派货架没有绝学内功与卷册', () => {
+    useGameStore.setState({ realm: 3, tiersUnlocked: ['1-0'] });
+    st().joinSect('wudang');
+    expect(st().sect).toBeNull();
+    useGameStore.setState({ tiersUnlocked: ['1-0', '2-0'] });
+    st().joinSect('wudang');
+    expect(st().sect).toBe('wudang');
+    const shelf = sectShelfOf(st(), 'wudang');
+    expect(shelf.map((it) => it.kind)).toEqual(['pages', 'pages', 'pages', 'pages']);
+    expect(shelf[0]).toMatchObject({ wuxue: 'zhenwudangmoquan', form: 1, price: 60 });
+    expect(sectShelfOf(st(), 'huashan').map((it) => it.kind)).toEqual(['neigong', 'pages', 'pages', 'pages', 'pages', 'pages', 'pages', 'pages', 'pages', 'juance']);
+    expect(isBenmen('wudang', 'zhenwudangmoquan')).toBe(true);
+    expect(isBenmen('wudang', 'cangyajianjue')).toBe(false);
+  });
+
+  it('打通图 1 初入 Boss 解锁图 2：下一场战斗说洛阳三派的传闻', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    const n = trackLength(1, 0);
+    useGameStore.setState({ realm: 6, route: 'shaolin', neigong: 'zhenyuegong', zhong: 40, tiersPassed: 3, clearedStages: m1all.slice(0, n - 1), rumorPending: 0 });
+    st().challengeStage(1, 0, n);
+    for (let i = 0; i < 600 && !(st().battle?.resolved ?? false); i++) { vi.setSystemTime(Date.now() + 700); st().tick(Date.now()); }
+    expect(st().battle!.result.win).toBe(true);
+    expect(st().tiersUnlocked).toContain('2-0');
+    expect(st().rumorPending).toBe(2);
+    vi.useRealTimers();
   });
 });
 

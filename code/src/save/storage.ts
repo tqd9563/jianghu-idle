@@ -22,7 +22,7 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  */
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -103,7 +103,15 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 8) out = migrateNeigongV7ToV8(out);
   if (fromVer < 9) out = migrateIdleV8ToV9(out);
   if (fromVer < 10) out = migrateTeachV9ToV10(out);
+  if (fromVer < 11) out = migrateRumorV10ToV11(out);
   return out;
+}
+
+/** v10 → v11（实装五九派）：拜山传闻从布尔改为「哪张图」的编号，true → 1 */
+function migrateRumorV10ToV11<T>(state: T): T {
+  const s = state as { rumorPending?: unknown };
+  if (!s || typeof s !== 'object' || typeof s.rumorPending !== 'boolean') return state;
+  return { ...s, rumorPending: s.rumorPending ? 1 : 0 } as T;
 }
 
 /**

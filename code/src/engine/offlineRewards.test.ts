@@ -216,7 +216,9 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     expect(r.idle!.wins).toBeGreaterThan(0);
     expect(s.offlineLoot!.count).toBe(r.idle!.wins);
     expect(s.offlineLoot!.best!.grade).toBe(1);
-    expect(s.idle!.loot).toBe(r.idle!.wins);
+    expect(s.idle!.loot).toBe(r.idle!.wins * 2);   // 每胜一场：装备一件 + 武学一次（境界 5 掷 0 为上乘残页）
+    expect(s.offlineLoot!.pages).toBe(r.idle!.wins);
+    expect(s.offlineLoot!.books).toBe(0);
     // 掷 0 全是兵器（3 格）：80 格最多 26 件，装不下的卖掉腾位，背包不超格
     expect(bagUsed(s.bag)).toBeLessThanOrEqual(BAG_CELLS);
     expect(s.bag.every((g) => g.slot === '兵器')).toBe(true);

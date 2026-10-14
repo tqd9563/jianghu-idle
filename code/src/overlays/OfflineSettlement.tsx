@@ -42,7 +42,7 @@ export function OfflineSettlement(props: {
   /** 闭关期间到点结算的门派任务（store 目前未透出，接上后显示「已归」一行） */
   sectDone?: { kind: SectTaskKind; contrib: number } | null;
   /** 闭关期间挂机拾得的装备 */
-  loot?: { count: number; best: GearItem | null; sold: number } | null;
+  loot?: { count: number; best: GearItem | null; sold: number; books?: number; pages?: number } | null;
   onClose: () => void;
 }) {
   const { result: r, sectDone, loot } = props;
@@ -100,6 +100,9 @@ export function OfflineSettlement(props: {
           )}
           {loot && loot.count > 0 && (
             <><span>拾得</span><span><b>{loot.count}</b> 件{loot.best && <> · <span className={`g${loot.best.grade}`}>{gearFullName(loot.best)}</span></>}{loot.sold > 0 && ` · 放不下的卖得 ${loot.sold} 两`}</span></>
+          )}
+          {loot && ((loot.books ?? 0) + (loot.pages ?? 0)) > 0 && (
+            <><span>书匣</span><span>{(loot.books ?? 0) > 0 && <>全本 <b>{loot.books}</b> 式</>}{(loot.books ?? 0) > 0 && (loot.pages ?? 0) > 0 && ' · '}{(loot.pages ?? 0) > 0 && <>残页 <b>{loot.pages}</b> 张</>}</span></>
           )}
           {sectDone ? (
             <><span>门派任务</span><span>{errand(sectDone.kind)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>

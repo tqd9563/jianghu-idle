@@ -3,9 +3,9 @@
  * wuxue.ts 的 formName(k) 仍是「第 N 式」占位；玩家可见处一律用这里的式名。
  * 式数跟品质走（寻常 3 / 上乘 5 / 绝学 7，见 wuxue.ts QUALITY_PARAMS），测试校验长度一致。
  */
-import type { WuxueId } from './wuxue';
+import { CATALOG_FORMS, type WuxueId } from './wuxue';
 
-export const FORM_NAMES: Record<WuxueId, readonly string[]> = {
+const FORM_NAMES_BASE: Record<WuxueId, readonly string[]> = {
   // 寻常
   liuyunjian: ['流云出岫', '回风拂柳', '云断秋江'],
   kaishanzhang: ['推山式', '裂石式', '开山式'],
@@ -24,6 +24,9 @@ export const FORM_NAMES: Record<WuxueId, readonly string[]> = {
   luoyingfeizhen: ['落英缤纷', '桃花流水', '柳絮随风', '梨花带雨', '飞红万点', '残红点翠', '葬花无声'],
   qianjibiao: ['牵丝引线', '机关暗藏', '一线牵魂', '回旋夺命', '暗渡陈仓', '千机百变', '牵机断肠'],
 };
+
+/** 现有 14 门在上表；第一批新增 52 门的式名随名录表（data/wuxue-catalog.json）并入 */
+export const FORM_NAMES: Record<WuxueId, readonly string[]> = { ...FORM_NAMES_BASE, ...CATALOG_FORMS };
 
 /** 第 k 式（从 1 起）的式名；越界时退回「第 N 式」 */
 export function formTitle(id: WuxueId, k: number): string {

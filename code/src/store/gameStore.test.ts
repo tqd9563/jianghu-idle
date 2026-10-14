@@ -13,7 +13,19 @@ import {
   buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind,
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
-import { rollGear, type GearItem } from '../engine/gear';
+import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
+import { applyWuxueDrop, handsOf, learnedFormsOf as learnedFormsOfStore } from './gameStore';
+import { QUALITY_PARAMS, WUXUE, formKey as fk, rollWuxueDrop } from '../engine/wuxue';
+
+/** 一件固定类别的装备（剑 / 刀 / 枪 / 棍按名表第一行取） */
+function gearOf(slot: GearSlot, cat?: WeaponCat): GearItem {
+  // rollGear 的掷骰顺序：（兵器才有的）类别 → 型 → 基础浮动 → 词条数 … 这里只固定类别与型
+  const catIdx = cat ? ['剑', '刀', '枪', '棍'].indexOf(cat) / 4 + 0.01 : 0;
+  const seq = [...(slot === '兵器' ? [catIdx] : []), 0.1, 0.5, 0.5, 0.5, 0.5];
+  let i = 0;
+  const it = rollGear({ slot, grade: 1, level: 1, clearSilver: 1 }, () => seq[Math.min(i++, seq.length - 1)]);
+  return { ...it, fresh: false };
+}
 import { freshInjuries, isHurt } from '../engine/injury';
 import { allStages, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
@@ -874,7 +886,10 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
   });
 
   it('装配槽跟境界走、只能装已拥有的；卸下无成本', () => {
-    useGameStore.setState({ realm: 2, neigong: 'jingleijue', route: 'huashan', ownedWuxue: ['liuyunjian', 'kaishanzhang', 'xiulizhen'] });
+    useGameStore.setState({
+      realm: 2, neigong: 'jingleijue', route: 'huashan', ownedWuxue: ['liuyunjian', 'kaishanzhang', 'xiulizhen'],
+      worn: { 兵器: gearOf('兵器', '剑'), 暗器: gearOf('暗器') },
+    });
     const st = () => useGameStore.getState();
     st().equipWuxue('jinghongjian');            // 未拥有
     st().equipWuxue('liuyunjian');
@@ -956,7 +971,7 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     useGameStore.getState().challengeStage(1, 0, n);
     play();
     expect(useGameStore.getState().ownedWuxue).toContain('jinghongjian');
-    expect(useGameStore.getState().battle!.reward!.drop).toBe('《惊鸿剑》');
+    expect(useGameStore.getState().battle!.reward!.drop).toBe('《惊鸿照影剑》');
     useGameStore.getState().challengeStage(1, 0, n);    // 回刷 Boss：不再掉
     play();
     vi.useRealTimers();
@@ -1041,14 +1056,17 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(zhongGate({ ...s, ownedScrolls: ['juance:yuntaixinfa'] })?.needScroll).toBe(false);
   });
 
-  it('本门绝学熟练阈值 ×0.8：苍崖剑诀第一式出 5 次，拜华山即到「熟练」档', () => {
+  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 5 次，拜华山即到「熟练」档（耗气 ×0.92、触发 ×1.04，倍率不变）', () => {
     const base = {
       realm: 4, neigong: 'shiguxinfa' as const, zhong: 10, ownedWuxue: ['cangyajianjue' as const], ownedScrolls: [],
       equipped: ['cangyajianjue' as const], formCasts: { 'cangyajianjue:1': 5 }, learnedForms: [], pastLearned: [],
     };
-    const m = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0].forms[0].mult;
-    expect(m('huashan')).toBeCloseTo(m(null) * 1.07, 6);
-    expect(m('shaolin')).toBeCloseTo(m(null), 6);
+    const lo = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0];
+    expect(lo('huashan').forms[0].cost).toBe(Math.round(55 * 0.92));
+    expect(lo(null).forms[0].cost).toBe(55);
+    expect(lo('shaolin').forms[0].cost).toBe(55);
+    expect(lo('huashan').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);
+    expect(lo('huashan').p).toBeCloseTo(0.25 * (1.04 + 1 + 1) / 3, 9);   // 触发加成取已领悟三式的平均
   });
 
   it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次', () => {
@@ -1093,7 +1111,7 @@ describe('gameStore · 装备与行囊（battle-loot/design.md §3）', () => {
     const s = useGameStore.getState();
     expect(s.bag).toHaveLength(1);
     expect(s.bag[0].fresh).toBe(true);
-    expect(s.idle!.loot).toBe(1);
+    expect(s.idle!.loot).toBe(2);   // 装备一件 + 武学一式
     const ev = getEvents().find((e) => e.e === 'gear_dropped')!;
     expect(ev).toMatchObject({ stage: stageKey(1, 0, 1), grade: 1, sold: 0, offline: false });
   });
@@ -1173,5 +1191,109 @@ describe('gameStore · 装备与行囊（battle-loot/design.md §3）', () => {
     expect(d.grade).toBe(2);   // Boss 必 +1
     expect(d.level).toBe(boss.x);
     expect(d.sell).toBe(Math.round(boss.reward.silver * 1));
+  });
+});
+
+describe('武学掉落、书匣与兵器搭配（battle-loot/design.md §3.7 / §4）', () => {
+  beforeEach(() => {
+    useGameStore.getState().hardReset();
+    resetTelemetry();
+  });
+  afterEach(() => { vi.restoreAllMocks(); });
+  const st = () => useGameStore.getState();
+  const play = () => {
+    const t0 = Date.now();
+    for (let i = 1; i <= 300 && !(st().battle?.resolved ?? false); i++) st().tick(t0 + i * 700);
+    return st().battle!;
+  };
+
+  it('寻常整式：第一式全本即得这门武学；靠后的式先收书匣，前一式学会那一刻自动学会（逐式接续）', () => {
+    const base = { ownedWuxue: [], books: [], pages: {} };
+    const a = applyWuxueDrop(base, { id: 'jiyujian', k: 3, kind: 'book' });
+    expect(a.ownedWuxue).toEqual([]);
+    expect(a.books).toEqual(['jiyujian:3']);
+    const b = applyWuxueDrop({ ...base, books: a.books }, { id: 'jiyujian', k: 1, kind: 'book' });
+    expect(b.ownedWuxue).toEqual(['jiyujian']);
+    // 第 3 式在匣但第 2 式未会：只会第 1 式；第 2 式一学会，第 3 式跟着会
+    expect(learnedFormsOfStore({ learnedForms: [], books: b.books }, 'jiyujian')).toEqual([1]);
+    expect(learnedFormsOfStore({ learnedForms: ['jiyujian:2'], books: b.books }, 'jiyujian')).toEqual([1, 2, 3]);
+    // 重复全本原样保留（裁决 17）
+    const c = applyWuxueDrop({ ...base, books: b.books, ownedWuxue: b.ownedWuxue }, { id: 'jiyujian', k: 3, kind: 'book' });
+    expect(c.dup).toBe(true);
+    expect(c.books).toEqual(b.books);
+  });
+
+  it('上乘残页：每式 5 页拼成口诀顶招式秘籍，第一式拼齐即得这门武学', () => {
+    let s = { ownedWuxue: [] as string[], books: [] as string[], pages: {} as Record<string, number> };
+    for (let i = 0; i < 4; i++) s = { ...s, ...applyWuxueDrop(s, { id: 'feipuduanyajian', k: 1, kind: 'page' }) };
+    expect(s.ownedWuxue).toEqual([]);
+    const r = applyWuxueDrop(s, { id: 'feipuduanyajian', k: 1, kind: 'page' });
+    expect(r.have).toBe(5);
+    expect(r.ownedWuxue).toEqual(['feipuduanyajian']);
+    expect(r.dup).toBe(false);
+    const more = applyWuxueDrop({ ...s, ...r }, { id: 'feipuduanyajian', k: 1, kind: 'page' });
+    expect(more.dup).toBe(true);   // 拼齐后多出的残页原样留着
+    expect(more.have).toBe(6);
+  });
+
+  it('rollWuxueDrop：普通关 3%、精英 10%、Boss 50%；境界 2 只出寻常全本，境界 3 起三成上乘残页，绝学不进池', () => {
+    const seq = (v: number[]) => { let i = 0; return () => v[i++ % v.length]; };
+    expect(rollWuxueDrop(2, 'normal', seq([0.04]))).toBeNull();
+    const book = rollWuxueDrop(2, 'normal', seq([0.02, 0.5, 0.5]))!;
+    expect(book.kind).toBe('book');
+    expect(WUXUE[book.id].quality).toBe('寻常');
+    expect(book.k).toBeLessThanOrEqual(3);
+    const page = rollWuxueDrop(3, 'boss', seq([0.4, 0.2, 0.5, 0.9]))!;
+    expect(page.kind).toBe('page');
+    expect(WUXUE[page.id].quality).toBe('上乘');
+    expect(page.k).toBe(5);
+    let x = 7; const rng = () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; };
+    for (let i = 0; i < 2000; i++) { const d = rollWuxueDrop(5, 'boss', rng); if (d) expect(WUXUE[d.id].quality).not.toBe('绝学'); }
+  });
+
+  it('战斗胜利掷武学掉落：传功后才掉，全本记进书匣并上战报', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.01);   // 装备与武学都必掉；境界 2 池里只有寻常，掉第一式全本
+    useGameStore.setState({ realm: 2, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: [stageKey(1, 0, 1)] });
+    st().challengeStage(1, 0, 1);
+    const b = play();
+    const w = b.reward!.wuxue!;
+    expect(w.kind).toBe('book');
+    expect(w.k).toBe(1);
+    expect(st().books).toEqual([fk(w.id, 1)]);
+    expect(st().ownedWuxue).toEqual([w.id]);
+    expect(getEvents().find((e) => e.e === 'wuxue_dropped')).toMatchObject({ wuxue: w.id, form: 1, kind: 'book', dup: false });
+  });
+
+  it('兵器搭配：器械武学要拿同类兵器、暗器武学要备暗器、肉身不挑；换兵器时不合的自动卸下', () => {
+    useGameStore.setState({ realm: 5, neigong: 'jingleijue', route: 'huashan', ownedWuxue: ['liuyunjian', 'kaishanzhang', 'xiulizhen', 'pofengdao'] });
+    st().equipWuxue('liuyunjian');   // 赤手：装不了剑法
+    st().equipWuxue('xiulizhen');    // 没暗器
+    st().equipWuxue('kaishanzhang');
+    expect(st().equipped).toEqual(['kaishanzhang']);
+    expect(handsOf(st())).toEqual({ weapon: null, anqi: false });
+
+    const sword = gearOf('兵器', '剑'), saber = gearOf('兵器', '刀'), anqi = gearOf('暗器');
+    useGameStore.setState({ bag: [sword, saber, anqi] });
+    st().wearGear(sword.id);
+    st().wearGear(anqi.id);
+    st().equipWuxue('liuyunjian');
+    st().equipWuxue('xiulizhen');
+    st().equipWuxue('pofengdao');    // 持剑装不了刀法
+    expect(st().equipped).toEqual(['kaishanzhang', 'liuyunjian', 'xiulizhen']);
+    st().wearGear(saber.id);         // 换持刀：剑法卸下，暗器与肉身不动
+    expect(st().equipped).toEqual(['kaishanzhang', 'xiulizhen']);
+    st().equipWuxue('pofengdao');
+    expect(st().equipped).toEqual(['kaishanzhang', 'xiulizhen', 'pofengdao']);
+    st().unwearGear('暗器');          // 卸下暗器：暗器武学卸下
+    expect(st().equipped).toEqual(['kaishanzhang', 'pofengdao']);
+  });
+
+  it('转世：书匣与残页跨世保留；第一批 66 门里名录参数都在', () => {
+    useGameStore.setState({ realm: 3, books: ['jiyujian:2'], pages: { 'feipuduanyajian:1': 2 }, retireStep: 'confirm' });
+    st().confirmRetire();
+    expect(st().books).toEqual(['jiyujian:2']);
+    expect(st().pages).toEqual({ 'feipuduanyajian:1': 2 });
+    expect(Object.keys(WUXUE)).toHaveLength(66);
+    expect(QUALITY_PARAMS.寻常.forms).toBe(3);
   });
 });

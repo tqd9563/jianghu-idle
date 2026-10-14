@@ -12,9 +12,7 @@ import {
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
 import {
-  BOSS_DROPS, DUPLICATE_SILVER, QINGZHUANG_DISCOUNT, QUALITY_PARAMS, SHOP_ITEMS, SHOP_NEIGONG_PRICE, SHOP_NEIGONG_REALM,
-  SHULIAN_CARRY, WUXUE, checkFormGate, formDunwuChance, formHasEffect, formKey, formMult, formName, slotCount,
-  type ShopItem, type WuxueId,
+  BOSS_DROPS, DUPLICATE_SILVER, QINGZHUANG_DISCOUNT, QUALITY_PARAMS, SHOP_ITEMS, SHOP_NEIGONG_PRICE, SHOP_NEIGONG_REALM, SHULIAN_CARRY, WUXUE, checkFormGate, effectValue, formCd, formCost, formDunwuChance, formKey, formMult, formName, pagesFull, rollWuxueDrop, shulianMods, shulianTier, slotCount, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
   SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
@@ -138,6 +136,10 @@ interface PersistedState {
   ownedWuxue: WuxueId[];
   /** 已拥有的招式秘籍 `武学:式`（跨世保留） */
   ownedScrolls: string[];
+  /** 书匣里的寻常全本 `武学:式`（跨世保留，battle-loot/design.md §4.3）：前一式学会就自动学会这一式 */
+  books: string[];
+  /** 残页 `武学:式` → 页数（跨世保留）：凑齐即口诀，顶招式秘籍用（§4.1） */
+  pages: Record<string, number>;
   /** 本世装配（每世清空） */
   equipped: WuxueId[];
   /** 每式累计出招数 `武学:式` → 次数（熟练度来源；转世 ×0.5 带入下一世） */
@@ -216,6 +218,8 @@ export interface BattleState {
     neili: number; silver: number; refarm: boolean; fame?: number; drop?: string;
     /** 本场拾得的装备；行囊满了放不下时直接卖掉，gearSold = 卖得银两 */
     gear?: GearItem; gearSold?: number;
+    /** 本场拾得的武学（整式全本 / 残页）；dup = 已有，原样收着不起作用；have = 这一式攒到的残页数 */
+    wuxue?: WuxueDrop & { dup: boolean; have?: number };
   } | null;
   /** 本场战斗记录开头说一句拜山传闻 */
   rumor?: boolean;
@@ -283,8 +287,8 @@ interface GameState extends PersistedState {
   offlineSettlement: OfflineSettleResult | null;
   /** 出关时顺带结算的门派任务（只供出关演出展示，不持久化） */
   offlineSectDone: { kind: SectTaskKind; contrib: number } | null;
-  /** 闭关期间挂机拾得（只供出关演出展示，不持久化）：件数、最好的一件、放不下卖掉的银两 */
-  offlineLoot: { count: number; best: GearItem | null; sold: number } | null;
+  /** 闭关期间挂机拾得（只供出关演出展示，不持久化）：装备件数、最好的一件、放不下卖掉的银两、武学全本与残页数 */
+  offlineLoot: { count: number; best: GearItem | null; sold: number; books: number; pages: number } | null;
   /** 独立持久化的自然测试窗口；不进入游戏存档。 */
   liveTestWindow: LiveTestWindowRecord | null;
   /** 刚发生的顿悟（台阶名），供一次性轻提示；非持久化 */
@@ -368,7 +372,7 @@ const FRESH: PersistedState = {
   peakRealm: 1, ganwuLevel: 0, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
-  ownedWuxue: [], ownedScrolls: [], equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
+  ownedWuxue: [], ownedScrolls: [], books: [], pages: {}, equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
   sect: null, contrib: 0, sectTask: null, rumorPending: false,
   bag: [], worn: {},
 };
@@ -455,7 +459,12 @@ export function huohouMultOf(s: Pick<PersistedState, 'neigong'>): number {
 // ---------------------------------------------------------------- 武学（sect-neigong/spec.md §2）
 
 type WuxueState = Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'ownedWuxue' | 'ownedScrolls' | 'equipped'
-  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect' | 'worn'>>;
+  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect' | 'worn' | 'books' | 'pages'>>;
+
+/** 手里的家伙（design.md §3.7）：兵器类别与暗器槽 */
+export function handsOf(s: Partial<Pick<PersistedState, 'worn'>>): Hands {
+  return { weapon: s.worn?.兵器?.cat ?? null, anqi: !!s.worn?.暗器 };
+}
 
 /** 当前真气上限（未选内功为 0） */
 export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'> & Partial<Pick<PersistedState, 'worn'>>): number {
@@ -463,11 +472,15 @@ export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'> &
   return s.neigong ? qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) + gearBonusOf(s.worn).qi : 0;
 }
 
-/** 这门武学已领悟的式：秘籍自带前几式 + 本世顿悟的式 */
-export function learnedFormsOf(s: Pick<PersistedState, 'learnedForms'>, id: WuxueId): number[] {
+/** 这门武学已领悟的式：秘籍自带前几式 + 本世顿悟的式 + 书匣里前一式已会的全本（design.md §4.3，逐式接续） */
+export function learnedFormsOf(s: Pick<PersistedState, 'learnedForms'> & Partial<Pick<PersistedState, 'books'>>, id: WuxueId): number[] {
   const p = QUALITY_PARAMS[WUXUE[id].quality];
-  return Array.from({ length: p.forms }, (_, i) => i + 1)
-    .filter((k) => k <= p.given || (s.learnedForms ?? []).includes(formKey(id, k)));
+  const out: number[] = [];
+  for (let k = 1; k <= p.forms; k++) {
+    const key = formKey(id, k);
+    if (k <= p.given || (s.learnedForms ?? []).includes(key) || ((s.books ?? []).includes(key) && out.includes(k - 1))) out.push(k);
+  }
+  return out;
 }
 
 /** 装配转成战斗用的武学表：只列已领悟的式，倍率含熟练与共鸣 */
@@ -477,14 +490,19 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
   const wxMult = 1 + gearBonusOf(s.worn).wxPct;
   return (s.equipped ?? []).map((id) => {
     const d = WUXUE[id];
-    const p = QUALITY_PARAMS[d.quality];
     const res = d.route !== null && d.route === route;
+    const benmen = isBenmen(s.sect ?? null, id);
+    const forms = learnedFormsOf(s, id);
+    // 熟练（battle-loot/spec.md §3.6）：耗气与冷却按抽中的那一式；这门的触发几率加成取已领悟各式的平均
+    const tiers = forms.map((k) => shulianTier(d.quality, (s.formCasts ?? {})[formKey(id, k)] ?? 0, benmen));
+    const pMult = tiers.length ? tiers.reduce((a, t) => a + shulianMods(t).p, 0) / tiers.length : 1;
     return {
-      id, name: d.name, cost: p.cost, cd: p.cd,
-      forms: learnedFormsOf(s, id).map((k) => ({
+      id, name: d.name, p: d.p * pMult,
+      forms: forms.map((k, i) => ({
         key: formKey(id, k), name: formName(k),
-        mult: formMult(d.quality, k, (s.formCasts ?? {})[formKey(id, k)] ?? 0, res, isBenmen(s.sect ?? null, id)) * wxMult,
-        effect: formHasEffect(d, k) ? d.effect : null,
+        mult: formMult(d, k, res) * wxMult,
+        effect: d.effect, fx: effectValue(d, k),
+        cost: formCost(d, tiers[i]), cd: formCd(d, tiers[i]),
       })),
     };
   });
@@ -529,7 +547,7 @@ function settleWuxue(
     const k = have.length + 1;
     if (k > QUALITY_PARAMS[d.quality].forms) continue;
     const key = formKey(id, k);
-    const gate = checkFormGate(d, k, s.realm, qi, (s.ownedScrolls ?? []).includes(key),
+    const gate = checkFormGate(d, k, s.realm, qi, (s.ownedScrolls ?? []).includes(key) || pagesFull(d, s.pages ?? {}, id, k),
       formCasts[formKey(id, k - 1)] ?? 0, isBenmen(s.sect ?? null, id));
     if (!gate.ready) continue;
     const p = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), shimen);
@@ -763,23 +781,35 @@ export const useGameStore = create<GameState>((set, get) => ({
             if (merged.neigong) {
               const enemy = getStage(merged.idle.map, merged.idle.tier, merged.idle.stage);
               let bag = merged.bag ?? [];
-              let count = 0, sold = 0;
+              let count = 0, sold = 0, books = 0, pages = 0;
               let best: GearItem | null = null;
               for (let i = 0; i < wins; i++) {
                 const drop = rollDropFor(enemy, Math.random);
-                if (!drop) continue;
-                const put = putInBag(bag, merged.worn ?? {}, drop);
-                bag = put.bag; sold += put.sold; count++;
-                if (!best || drop.grade > best.grade) best = drop;
+                if (drop) {
+                  const put = putInBag(bag, merged.worn ?? {}, drop);
+                  bag = put.bag; sold += put.sold; count++;
+                  if (!best || drop.grade > best.grade) best = drop;
+                }
+                const wd = rollWuxueDrop(merged.realm, enemy.kind, Math.random);
+                if (wd) {
+                  const got = applyWuxueDrop(merged, wd);
+                  merged.ownedWuxue = got.ownedWuxue; merged.books = got.books; merged.pages = got.pages;
+                  if (wd.kind === 'book') books++; else pages++;
+                }
               }
-              if (count > 0) {
+              if (count + books + pages > 0) {
                 merged.bag = bag;
                 merged.silver += sold;
-                merged.idle = { ...merged.idle, loot: (merged.idle.loot ?? 0) + count };
-                offlineLoot = { count, best, sold };
+                merged.idle = { ...merged.idle, loot: (merged.idle.loot ?? 0) + count + books + pages };
+                offlineLoot = { count, best, sold, books, pages };
                 track('gear_dropped', { run: merged.run, realm: merged.realm, route: merged.route }, {
                   stage: r.idle.stageKey, count, best_grade: best?.grade ?? 0, sold, offline: true,
                 });
+                if (books + pages > 0) {
+                  track('wuxue_dropped', { run: merged.run, realm: merged.realm, route: merged.route }, {
+                    stage: r.idle.stageKey, books, pages, offline: true,
+                  });
+                }
               }
             }
           }
@@ -1135,6 +1165,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     const eq = s.equipped ?? [];
     if (!(s.ownedWuxue ?? []).includes(id) || eq.includes(id) || eq.length >= slotCount(s.realm)) return;
+    if (!usableWith(WUXUE[id], handsOf(s))) return;   // 器械要拿同类兵器，暗器要备暗器（design.md §3.7）
     set({ equipped: [...eq, id] });
     track('wuxue_equipped', { run: s.run, realm: s.realm, route: s.route }, { wuxue: id, slots: eq.length + 1 });
     persist(get());
@@ -1251,7 +1282,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const prev = (s.worn ?? {})[it.slot];
     const bag = (s.bag ?? []).filter((g) => g.id !== id);
     if (prev) bag.push({ ...prev, fresh: false });
-    set({ bag, worn: { ...(s.worn ?? {}), [it.slot]: { ...it, fresh: false } } });
+    const worn: Worn = { ...(s.worn ?? {}), [it.slot]: { ...it, fresh: false } };
+    set({ bag, worn, equipped: (s.equipped ?? []).filter((w) => usableWith(WUXUE[w], handsOf({ worn }))) });
     track('gear_equipped', { run: s.run, realm: s.realm, route: s.route }, { slot: it.slot, grade: it.grade, level: it.level, afx: it.afx.length });
     persist(get());
   },
@@ -1261,7 +1293,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!it || !bagFits(s.bag ?? [], it)) return;
     const worn = { ...(s.worn ?? {}) };
     delete worn[slot];
-    set({ bag: [...(s.bag ?? []), it], worn });
+    // 卸下兵器 / 暗器：靠它才能装的武学一并卸下（design.md §3.7）
+    set({ bag: [...(s.bag ?? []), it], worn, equipped: (s.equipped ?? []).filter((w) => usableWith(WUXUE[w], handsOf({ worn }))) });
     persist(get());
   },
   sellGear: (id) => {
@@ -1485,6 +1518,8 @@ function rebirth(
     // 武学（spec §6.1）：秘籍与首杀记录保留；装配、本世领悟清空；每式熟练带一半
     ownedWuxue: s.ownedWuxue ?? [],
     ownedScrolls: s.ownedScrolls ?? [],
+    books: s.books ?? [],
+    pages: s.pages ?? {},
     dropsClaimed: s.dropsClaimed ?? [],
     pastLearned: [...new Set([...(s.pastLearned ?? []), ...(s.learnedForms ?? [])])],
     formCasts: Object.fromEntries(Object.entries(s.formCasts ?? {})
@@ -1645,6 +1680,26 @@ export function putInBag(bag: readonly GearItem[], worn: Worn, it: GearItem): { 
   return { bag: [...rest, it], sold };
 }
 
+/** 收下一次武学掉落（design.md §4.3 / §4.4）：全本进书匣，第一式全本即得这门武学；残页计数，第一式凑齐即得这门武学 */
+export function applyWuxueDrop(
+  s: Pick<PersistedState, 'ownedWuxue'> & Partial<Pick<PersistedState, 'books' | 'pages'>>, d: WuxueDrop,
+): { ownedWuxue: WuxueId[]; books: string[]; pages: Record<string, number>; dup: boolean; have: number } {
+  const key = formKey(d.id, d.k);
+  const owned = [...(s.ownedWuxue ?? [])];
+  const books = [...(s.books ?? [])];
+  const pages = { ...(s.pages ?? {}) };
+  let dup = false;
+  if (d.kind === 'book') {
+    if (books.includes(key)) dup = true; else books.push(key);
+  } else {
+    dup = pagesFull(WUXUE[d.id], pages, d.id, d.k);
+    pages[key] = (pages[key] ?? 0) + 1;
+  }
+  const gotFirst = d.k === 1 && (d.kind === 'book' || pagesFull(WUXUE[d.id], pages, d.id, 1));
+  if (gotFirst && !owned.includes(d.id)) owned.push(d.id);
+  return { ownedWuxue: owned, books, pages, dup, have: pages[key] ?? 0 };
+}
+
 function resolveBattle(
   set: (partial: Partial<GameState>) => void,
   get: () => GameState,
@@ -1663,6 +1718,7 @@ function resolveBattle(
 
   let { silver, lastProgressSec } = s;
   let bag = s.bag ?? [];
+  let wxPatch: Partial<PersistedState> = {};
   let fameState: Partial<PersistedState> = {};
   let fameGained = 0;
   let clearedStages = s.clearedStages;
@@ -1690,6 +1746,16 @@ function resolveBattle(
       rewardApplied = { ...rewardApplied, gear: drop, ...(put.sold > 0 ? { gearSold: put.sold } : {}) };
       track('gear_dropped', { run: s.run, realm: s.realm, route: s.route }, {
         stage: key, slot: drop.slot, grade: drop.grade, level: drop.level, sold: put.sold, offline: false,
+      });
+    }
+    // 武学掉落（design.md §4）：寻常整式全本、上乘残页；传功后才掉
+    const wd = s.neigong ? rollWuxueDrop(s.realm, enemy.kind, Math.random) : null;
+    if (wd) {
+      const got = applyWuxueDrop(s, wd);
+      wxPatch = { ownedWuxue: got.ownedWuxue, books: got.books, pages: got.pages };
+      rewardApplied = { ...rewardApplied, wuxue: { ...wd, dup: got.dup, have: got.have } };
+      track('wuxue_dropped', { run: s.run, realm: s.realm, route: s.route }, {
+        stage: key, wuxue: wd.id, form: wd.k, kind: wd.kind, dup: got.dup, offline: false,
       });
     }
     if (firstClear) {
@@ -1754,9 +1820,10 @@ function resolveBattle(
   //   挂机：赢了原地再打；输了退一关继续挂，退无可退才停
   //   单打一次：打完就停
   const { idle: idle0, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
-  const idle = idle0 && b.mode === 'idle' && rewardApplied?.gear ? { ...idle0, loot: (idle0.loot ?? 0) + 1 } : idle0;
+  const got = (rewardApplied?.gear ? 1 : 0) + (rewardApplied?.wuxue ? 1 : 0);
+  const idle = idle0 && b.mode === 'idle' && got > 0 ? { ...idle0, loot: (idle0.loot ?? 0) + got } : idle0;
   set({
-    silver, bag, clearedStages, attempts, failure, lastProgressSec,
+    silver, bag, ...wxPatch, clearedStages, attempts, failure, lastProgressSec,
     injuries, lifespanLost, ...fameState, idle,
     formCasts: wx.formCasts, learnedForms: wx.learnedForms,
     ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),

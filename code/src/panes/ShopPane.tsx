@@ -14,7 +14,7 @@ const LU_NAME = { huashan: '惊雷', shaolin: '镇岳', tangmen: '蚀骨' } as c
 function itemText(it: ShopItem): { title: string; tag: { cls: string; text: string } | null; desc: string } {
   if (it.kind === 'wuxue') {
     const w = WUXUE[it.wuxue!];
-    return { title: it.label, tag: { cls: 'q1', text: w.quality }, desc: `${w.category} · 特效${w.effect}` };
+    return { title: it.label, tag: { cls: 'q1', text: w.quality }, desc: `${w.cat} · 特效${w.effect}` };
   }
   if (it.kind === 'scroll') {
     return { title: `招式秘籍 · ${WUXUE[it.wuxue!].name}${formName(it.form!)}`, tag: null, desc: `领悟${formName(it.form!)}所需` };

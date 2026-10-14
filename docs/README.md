@@ -38,13 +38,12 @@
 | `systems/pacing/design.md` | 长线节奏落地设计（23 条裁决总账：多天一世、寿元与年岁、归隐门槛、离线、战斗长线化、战力预算、版本天花板；issue #22） | — |
 | `systems/sim/longline_sim.py` | 长线战斗侧求解器（前沿曲线 → 关卡当量/Boss 门槛/武学计价/首通声望，判据 5 条） | formulas.md §1.3/§3.4/§6.1、content.md §2.0、economy.md §1.3/§4 由其生成 |
 | `systems/sect-neigong/design.md` | 门派 / 内功 / 武学设定（门径并入内功） | — |
-| `systems/sect-neigong/spec.md` | 门派 / 内功 / 武学规格（内功 / 真气 / 武学 / 悟性 / 获取 / 门派 / 迁移数值表，可进实现） | neigong.ts, wuxue.ts, NeigongPane.tsx, NeigongSelect.tsx, WuxuePane.tsx, combat.ts（武学出招）, storage.ts（v8 迁移） |
+| `systems/sect-neigong/spec.md` | 门派 / 内功 / 武学规格（内功 / 真气 / 悟性 / 获取 / 门派 / 迁移数值表；§2.1 / §2.5 / §2.6 / §2.8 已被 battle-loot/spec.md §3 与武学名录取代） | neigong.ts, wuxue.ts（§2.2 / §2.3 / §2.4）, NeigongPane.tsx, NeigongSelect.tsx, storage.ts（v8 迁移） |
 | `systems/sect-neigong/sim.py` | 门派 / 内功 / 武学 sim（扩展战斗：真气、冷却、出招；判据 9 条） | — |
-| `systems/wuxue-catalog/design.md` | 武学名录扩版（九类目 171 门、五项参数与触发求和、特效池、九派绝学分配、起名规则；已定稿，数值待 sim） | — |
+| `systems/wuxue-catalog/design.md` | 武学名录扩版（九类目 171 门、五项参数与触发求和、特效池、九派绝学分配、起名规则；第一批 66 门已实装） | wuxue.ts（读 `data/wuxue-catalog.json`，由 `systems/battle-loot/export_wuxue.py` 生成） |
 | `rules/copy/gear-names.md` | 装备名表：四部位按型 × 品阶一格一名，共 70 个名 | gear.ts |
-| `rules/copy/wuxue-forms.md` | 第一批 52 门新武学的式名与每式战报句子、新特效追加句（草案，实装时并入 battle-narration.md） | — |
 | `systems/battle-loot/design.md` | 战斗挂机：掉落与装备设定（挂机入口、装备四部位五品阶与词条、武学整式 / 残页掉落、境界 1 内功教学关；已定稿） | — |
-| `systems/battle-loot/spec.md` | 战斗挂机：掉落与装备规格（装备基础 / 品阶 / 词条 / 余量、掉落概率、171 门武学五项参数与特效分档、触发求和 75%、境界 1 推关；sim 生成，14 条判据全过） | gear.ts（装备 §1 / §2.1 / §6）, gameStore.ts（掉落、行囊）, BagPane.tsx；武学部分待实装（`wuxue-params.json` 供代码读表） |
+| `systems/battle-loot/spec.md` | 战斗挂机：掉落与装备规格（装备基础 / 品阶 / 词条 / 余量、掉落概率、171 门武学五项参数与特效分档、触发求和 75%、境界 1 推关；sim 生成，14 条判据全过） | gear.ts（装备 §1 / §2.1 / §6）, wuxue.ts + combat.ts（武学 §3：触发求和、特效四档、熟练口径）, gameStore.ts（掉落、行囊、书匣与残页）, BagPane.tsx, WuxuePane.tsx |
 | `systems/battle-loot/sim.py` | 战斗挂机 sim（fight_y：装备 / 新特效 / 触发求和；14 条判据；写出 `wuxue-params.json`） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |
@@ -68,6 +67,7 @@
 | `archive/mvp2/sim/checkpoint_snapshot.py` | 动态加载 `systems/sim/mvp0_sim.py` | — |
 | `archive/directions/*.md` | 已降为历史，被 systems/ 取代 | — |
 | `archive/systems/zhoutian-meridian.md` + `zhoutian-meridian-spec.md` | 已被 `systems/zhoutian/design.md` v2.0 合并取代 | — |
+| `archive/copy/wuxue-forms.md` | 第一批 52 门式名与句子草案，已并入 `rules/copy/battle-narration.md` v1.2；`export_wuxue.py` 仍从此读表 | — |
 | `archive/systems/manual-fragments.md` | 秘籍残页规则层，秘籍阁整体废止（`systems/sect-neigong/spec.md` S7），代码已删 | — |
 | `archive/reviews/game-design-review.md` | 只读历史评审 | — |
 

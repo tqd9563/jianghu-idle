@@ -9,8 +9,8 @@ const seeded = (seed: number) => {
   let x = seed;
   return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; };
 };
-const skill = (id: string, effect: CombatSkill['forms'][number]['effect'], cost = 25, cd = 2, mult = 1.3): CombatSkill => ({
-  id, name: id, cost, cd, forms: [{ key: `${id}:1`, name: '第一式', mult, effect }],
+const skill = (id: string, effect: CombatSkill['forms'][number]['effect'], cost = 25, cd = 2, mult = 1.3, fx = 1, p = 0.55): CombatSkill => ({
+  id, name: id, p, forms: [{ key: `${id}:1`, name: '第一式', mult, effect, fx, cost, cd }],
 });
 
 describe('武学出招', () => {
@@ -40,7 +40,7 @@ describe('武学出招', () => {
     for (let i = 1; i < rds.length; i++) expect(rds[i] - rds[i - 1]).toBeGreaterThanOrEqual(3);
   });
 
-  it('真气不够就不出招；「回气」式不耗气', () => {
+  it('真气不够就不出招；「回气」式按比例返还耗气（Ⅲ 档全返）', () => {
     const none = fight(build, enemy, { mode: 'rng', rng: seeded(9), loadout: [skill('a', null, 500)], qiMax: 100 });
     expect(none.stats.casts).toBe(0);
     const free = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(9), loadout: [skill('b', '回气', 500)], qiMax: 500 });

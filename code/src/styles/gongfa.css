@@ -161,3 +161,50 @@
   .gf-veil, .gf-dlg { animation: none; }
   .ng-book, .wx-book { transition: none; }
 }
+
+/* ═══════ 武学藏书（battle-loot 原型）：同一套 AI 书封，封面按品阶换色，右下类目印；路数章；残页 ═══════ */
+.jh-seg .grp-wrap { display: contents; }
+.jh-seg .grp { color: var(--faint); font-size: 11px; letter-spacing: 0.15em; padding: 4px 6px 4px 12px; align-self: center; }
+.wx-shelf.covers { gap: 26px 22px; align-items: flex-start; padding: 6px 4px 30px; margin-bottom: 10px; }
+.wx-shelf.covers::after { display: none; }
+.wx-cover { position: relative; width: 112px; aspect-ratio: 0.65; border: 0; padding: 0; cursor: pointer; background: none; color: inherit;
+  filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); transition: transform .25s var(--ease-sharp), filter .25s; }
+.wx-cover .cv { position: absolute; inset: 0; background: url('/art/book-q1.png') center / 100% 100% no-repeat; filter: sepia(0.7) saturate(0.55) brightness(0.8); }
+.wx-cover.q2 .cv { filter: hue-rotate(60deg) saturate(0.85) brightness(0.8); }
+.wx-cover.q3 .cv { background-image: url('/art/book-q3.png'); filter: hue-rotate(-28deg) saturate(1.5) brightness(0.9); }
+.wx-cover .t { position: absolute; left: 12%; width: 16%; top: 11%; height: 54%; display: grid; place-items: center; writing-mode: vertical-rl;
+  font-family: var(--font-display); font-size: 13.5px; letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap;
+  background: oklch(0.88 0.035 85); box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45), 0 1px 2px oklch(0.05 0.01 262 / 0.4); }
+.wx-cover.q3 .t { left: 13%; width: 18%; top: 7%; height: 60%; }
+.wx-cover .seal { position: absolute; right: 13%; bottom: 10%; width: 24px; height: 24px; display: grid; place-items: center; font-family: var(--font-display); font-size: 14px; line-height: 1;
+  color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px; box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.75), 0 1px 3px oklch(0.05 0.01 262 / 0.5); transform: rotate(-6deg); }
+.wx-cover small { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--faint); white-space: nowrap; }
+.wx-cover:hover { transform: translateY(-3px); }
+.wx-cover[aria-current="true"] { transform: translateY(-6px); filter: drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.45)); }
+.wx-cover.ghost .cv { filter: sepia(0.7) saturate(0.3) brightness(0.5); }
+.wx-cover.ghost.q2 .cv { filter: hue-rotate(60deg) saturate(0.55) brightness(0.5); }
+.wx-cover.ghost.q3 .cv { filter: hue-rotate(-28deg) saturate(0.9) brightness(0.5); }
+.wx-cover.ghost .t { background: oklch(0.66 0.02 85); color: oklch(0.3 0.02 60); }
+.wx-cover.ghost .seal { opacity: 0.5; }
+.wx-cover .eq { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: var(--gold); color: var(--primary-ink); font-family: var(--font-body); }
+.wx-cover .need { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.42 0.02 262); color: var(--ink); font-family: var(--font-body); }
+
+/* 路数章：透明底 + 1px 同色描边 + 前置亮点，与品质的填充章分开；色相避开品质灰 / 青 / 金与装备品阶绿 / 青 / 紫 / 橙 */
+.jh-tag.tag { --tc: var(--muted); color: var(--tc); background: none; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); display: inline-flex; align-items: center; gap: 5px; }
+.jh-tag.tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tc); box-shadow: 0 0 6px color-mix(in oklch, var(--tc) 60%, transparent); }
+.jh-tag.tag.t-刚猛, .tagc-刚猛 { --tc: oklch(0.72 0.16 28); }
+.jh-tag.tag.t-绵长, .tagc-绵长 { --tc: oklch(0.76 0.11 135); }
+.jh-tag.tag.t-守御, .tagc-守御 { --tc: oklch(0.74 0.10 245); }
+.jh-tag.tag.t-诡谲, .tagc-诡谲 { --tc: oklch(0.74 0.11 320); }
+.jh-tag.tag.t-阴毒, .tagc-阴毒 { --tc: oklch(0.70 0.10 175); }
+.tagc-刚猛, .tagc-绵长, .tagc-守御, .tagc-诡谲, .tagc-阴毒 { color: var(--tc); }
+.wx-card .wtag { font-size: 11px; color: var(--faint); padding: 1px 6px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+
+/* 兵器搭配一行与残页 */
+.wx-need { font-size: 12.5px; color: oklch(0.72 0.12 30); margin: -2px 0 10px; }
+.wx-need.ok { color: var(--ink-gold); }
+.pages { display: flex; gap: 3px; align-items: center; margin-top: 6px; cursor: help; }
+.pages i { width: 9px; height: 12px; border-radius: 1px; background: oklch(0.3 0.014 262); box-shadow: inset 0 0 0 1px oklch(0.4 0.014 262 / 0.6); }
+.pages i.got { background: var(--qi); box-shadow: none; }
+.pages small { font-size: 11px; color: var(--faint); margin-left: 4px; }
+@media (max-width: 860px) { .wx-cover { width: 86px; } }

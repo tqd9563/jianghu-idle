@@ -58,6 +58,16 @@ function hitEls(r: Rect): { el: Element; info: El }[] {
   return out.slice(0, 8);
 }
 
+/* 截图区域：所有红框的并集向外扩一圈（保留上下文），不出窗口 */
+const SHOT_PAD = 120;
+function shotRegion(ms: Mark[]): Rect {
+  const x1 = Math.max(0, Math.min(...ms.map((m) => m.rect.x)) - SHOT_PAD);
+  const y1 = Math.max(0, Math.min(...ms.map((m) => m.rect.y)) - SHOT_PAD);
+  const x2 = Math.min(window.innerWidth, Math.max(...ms.map((m) => m.rect.x + m.rect.w)) + SHOT_PAD);
+  const y2 = Math.min(window.innerHeight, Math.max(...ms.map((m) => m.rect.y + m.rect.h)) + SHOT_PAD);
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
 const norm = (x1: number, y1: number, x2: number, y2: number): Rect => ({ x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) });
 const css = (r: Rect) => ({ left: r.x, top: r.y, width: r.w, height: r.h });
 
@@ -145,12 +155,13 @@ export default function ReportPanel({ tab }: { tab: string }) {
     if (r.w < 6 || r.h < 6) { setBox(null); return; }
     const next = [...marks, { rect: r, els: hitEls(r).map((h) => h.info) }];
     setMarks(next); setBox(null);
-    // 截图：先把压暗与提示去掉，只留红框，再让服务端截窗口
+    // 截图：先把压暗与提示去掉，只留红框，再让服务端截框选区域（外扩一圈）
     setShooting(true);
     await new Promise((res) => setTimeout(res, 160));
     try {
-      const win = { id: id ?? undefined, x: window.screenX, y: window.screenY + (window.outerHeight - window.innerHeight), w: window.innerWidth, h: window.innerHeight };
-      const { id: got } = await api<{ id: string }>('POST', '/shot', win);
+      const rg = shotRegion(next);
+      const area = { id: id ?? undefined, x: window.screenX + rg.x, y: window.screenY + (window.outerHeight - window.innerHeight) + rg.y, w: rg.w, h: rg.h };
+      const { id: got } = await api<{ id: string }>('POST', '/shot', area);
       setId(got); setShotVer((v) => v + 1); setErr(null);
     } catch (ex) {
       setErr(String(ex));

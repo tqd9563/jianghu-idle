@@ -4,7 +4,7 @@
  *   GET    /__report/<id>/shot.png
  *   POST   /__report             写 report.json / save.json，gh 建 issue 并打标签，回 { number, url }
  *   DELETE /__report/<id>        取消提报，删目录
- * reports/ 在仓库根目录、不入库；截图与存档再推到 report-assets 孤儿分支，issue 正文内嵌图片并给链接。
+ * reports/ 在仓库根目录、不入库；截图与存档再推到 report-assets 孤儿分支 reports/<单号>/，issue 正文内嵌截图、写单号。
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -75,18 +75,15 @@ const safeId = (id: string) => /^[0-9]{8}-[0-9]{6}$/.test(id);
 
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
-function issueBody(b: ReportBody, dir: string, urls: { shot: string; save: string | null }): string {
-  const lines: string[] = [b.desc.trim(), '', `![截图](${urls.shot})`, ''];
-  lines.push(`**类型**：${b.type === 'bug' ? '缺陷' : '优化'}　**需裁决**：${b.judge ? '是' : '否'}　**页签**：${b.tab}　**hash**：\`${b.hash || '无'}\``, '');
+function issueBody(b: ReportBody, shotUrl: string): string {
+  const lines: string[] = [b.desc.trim(), '', `![截图](${shotUrl})`, ''];
+  lines.push(`**类型**：${b.type === 'bug' ? '缺陷' : '优化'}　**需裁决**：${b.judge ? '是' : '否'}　**页签**：${b.tab}　**hash**：\`${b.hash || '无'}\`　**单号**：\`${b.id}\``, '');
   if (b.marks.some((m) => m.els.length)) {
     lines.push('## 框中元素', '');
     b.marks.forEach((m, i) => m.els.forEach((e) => lines.push(`- ${CIRCLED[i] ?? i + 1} \`${e.text}\` — \`${e.sel}\``)));
     lines.push('');
   }
-  lines.push('## 附件', '');
-  lines.push(`- 截图：[${ASSET_BRANCH}](${urls.shot}) · 本机 \`${path.join(dir, 'shot.png')}\``);
-  if (urls.save) lines.push(`- 存档：[${ASSET_BRANCH}](${urls.save}) · 本机 \`${path.join(dir, 'save.json')}\``);
-  lines.push(`- 控制台错误：${b.errors.length} 条${b.errors.length ? '，见 report.json' : ''}`);
+  if (b.errors.length) lines.push('## 控制台错误', '', '```', ...b.errors, '```', '');
   return lines.join('\n') + '\n';
 }
 
@@ -98,7 +95,7 @@ export function reportPlugin(): Plugin {
       server.middlewares.use('/__report', async (req, res) => {
         const url = req.url ?? '/';
         try {
-          // 截窗口：客户端给出窗口在屏幕上的位置（CSS 像素，与 screencapture 的点一致）
+          // 截框选区域：客户端给出区域在屏幕上的位置（CSS 像素，与 screencapture 的点一致）
           if (req.method === 'POST' && url === '/shot') {
             const { id: given, x, y, w, h } = await readJson<{ id?: string; x: number; y: number; w: number; h: number }>(req);
             const id = given && safeId(given) ? given : newId();
@@ -138,9 +135,9 @@ export function reportPlugin(): Plugin {
             const repo = repoName();
             ensureAssetBranch(repo);
             const shotUrl = uploadAsset(repo, `reports/${b.id}/shot.png`, path.join(dir, 'shot.png'), `report ${b.id}: 截图`);
-            const saveUrl = b.save ? uploadAsset(repo, `reports/${b.id}/save.json`, path.join(dir, 'save.json'), `report ${b.id}: 存档`) : null;
+            if (b.save) uploadAsset(repo, `reports/${b.id}/save.json`, path.join(dir, 'save.json'), `report ${b.id}: 存档`);
             const bodyFile = path.join(dir, 'issue.md');
-            fs.writeFileSync(bodyFile, issueBody(b, dir, { shot: shotUrl, save: saveUrl }));
+            fs.writeFileSync(bodyFile, issueBody(b, shotUrl));
             const labels = ['report', 'status::todo', b.type === 'bug' ? 'type::bug' : 'type::enhancement'];
             if (b.judge) labels.push('needs-decision');
             const args = ['issue', 'create', '--title', b.title, '--body-file', bodyFile];

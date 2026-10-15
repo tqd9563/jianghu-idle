@@ -18,7 +18,7 @@
 
 - 入口：侧栏脚下的「报」印，或快捷键 ⌥R。只在 `npm run dev` 的开发构建出现，生产包不含。
 - 框选：拖一个红框。框到的文字元素会被记下可见文本和选择器，这是给 fix-todo 的定位信息，比截图上的红框更好找。可以「再框一处」。
-- 截图：松手时由本地中间件调 macOS `screencapture` 截浏览器窗口，红框留在页面上一起烙进图里。也可 ⌘V 换成自己画的截图。首次使用 macOS 会向运行 dev server 的终端索要「屏幕录制」权限。
+- 截图：松手时由本地中间件调 macOS `screencapture` 只截框选区域（所有红框的并集向外扩 120px，保留上下文），红框留在页面上一起烙进图里。也可 ⌘V 换成自己画的截图。首次使用 macOS 会向运行 dev server 的终端索要「屏幕录制」权限。
 - 填写：标题自动拼成「页签 · 首个框中元素：描述第一句」，可改。类型二选一（缺陷 / 优化），「需我裁决」开关打开后 fix-todo 跳过这条。
 - 自动附带：当前存档、页签、URL hash、最近 20 条控制台错误。
 
@@ -27,8 +27,8 @@
 ## 3. 落盘与 issue
 
 - 每单一个目录 `reports/<yyyymmdd-hhmmss>/`，含 `shot.png`、`save.json`、`report.json`、`issue.md`、`issue.json`。目录不入库。
-- 截图与存档再经 Contents API 推到仓库的孤儿分支 `report-assets`（首次自动从空树建出，不含代码），issue 正文用 `blob/report-assets/...?raw=true` 链接内嵌显示截图，并保留本机路径供 fix-todo 直接读。
-- issue 由 `gh issue create` 建在本仓库，标题即面板标题，正文：描述、内嵌截图、类型 / 裁决 / 页签 / hash、框中元素清单、附件链接。
+- 截图与存档再经 Contents API 推到仓库的孤儿分支 `report-assets`（首次自动从空树建出，不含代码），issue 正文用 `blob/report-assets/...?raw=true` 链接内嵌显示截图。
+- issue 由 `gh issue create` 建在本仓库，标题即面板标题，正文：描述、内嵌截图、类型 / 裁决 / 页签 / hash / 单号、框中元素清单；有控制台错误才附一段。存档不在正文里给链接，fix-todo 按单号到 `report-assets` 分支或本机 `reports/<单号>/` 取。
 - 标签：`report` + `type::bug` 或 `type::enhancement` + `status::todo`；需裁决加 `needs-decision`。
 
 ## 4. 状态流转

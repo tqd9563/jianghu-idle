@@ -102,7 +102,7 @@ export interface TurnEvent {
   text: string;
   phpPct: number;
   ehpPct: number;
-  /** 状态快照（§7.1 触发状态可见性）：剑意层 / 我方护盾余量 / 敌方毒层 */
+  /** 状态快照（§7.1 触发状态可见性）：雷印层 / 我方护盾余量 / 敌方毒层 */
   pSq: number;
   pShield: number;
   ePoison: number;
@@ -128,8 +128,8 @@ export interface FightStats {
   dmgDealt: number;        // 我方总输出（普攻+爆发+毒伤+毒爆+反伤）
   dmgTaken: number;        // 我方总承伤（减免后，含护盾吸收部分：敌攻+反噬+毒）
   critCount: number;       // 暴击次数（RNG 模式）
-  burstCount: number;      // 爆发剑招次数
-  burstDmg: number;        // 爆发剑招总伤害
+  burstCount: number;      // 惊雷一击次数
+  burstDmg: number;        // 惊雷一击总伤害
   shieldAbsorbed: number;  // 护盾吸收总量
   thornsOut: number;       // 金钟反震总输出
   poisonDmg: number;       // 毒伤总量（含毒爆）
@@ -322,7 +322,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         dealt += burst;
         stats.burstCount += 1;
         stats.burstDmg += burst;
-        push(rd, 'player', 'burst', `剑意迸发！爆发剑招造成 ${f1(burst)} 伤害`, f1(burst));
+        push(rd, 'player', 'burst', `雷印迸发！惊雷一击造成 ${f1(burst)} 伤害`, f1(burst));
       }
     }
     // 附毒：额外叠 1 层，另有几率再 +1（spec §3.4）
@@ -345,9 +345,9 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       push(rd, 'player', 'cast',
         hitRoll === 0
           ? `施展「${skill.name} · ${form.name}」，被闪避`
-          : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}${build.sqNeed < 99 && crit ? `，剑意 ${sq}/${build.sqNeed}` : ''}`,
+          : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}`,
         f1(dealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}), ...(fx ? { fx } : {}) });
-      // 连击：有几率追加一次普攻（不攒剑意、不叠毒）
+      // 连击：有几率追加一次普攻（不攒雷印、不叠毒）
       if (eff === '连击' && hitRoll && rng() < fv) {
         const h2 = roll(pHit);
         const c2 = roll(critNow);
@@ -363,7 +363,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       const critMark = (forced || critRoll === 1) && !ev;
       if (critMark) stats.critCount += 1;
       push(rd, 'player', critMark ? 'crit' : 'attack',
-        `你${build.plainMult !== 1 ? '普攻（×0.60）' : '普攻'}${critMark ? '暴击！' : '命中，'}造成 ${f1(dealt)} 伤害${build.poison.perHit && hitRoll ? `，毒 +1 层（${Math.round(elayers)}/${build.poison.cap}）` : ''}${critMark && build.sqNeed < 99 ? `，剑意 ${sq}/${build.sqNeed}` : ''}`,
+        `你${build.plainMult !== 1 ? '普攻（×0.60）' : '普攻'}${critMark ? '暴击！' : '命中，'}造成 ${f1(dealt)} 伤害${build.poison.perHit && hitRoll ? `，毒 +1 层（${Math.round(elayers)}/${build.poison.cap}）` : ''}`,
         f1(dealt));
     }
     if (tags.includes('反伤') && dealt > 0) {

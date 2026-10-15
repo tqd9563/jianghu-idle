@@ -74,10 +74,10 @@ export interface TierDef {
 }
 
 export const TIERS: TierDef[] = [
-  { name: '登堂', at: 2, p: 0.5, effect: { huashan: '剑意需求 5 → 4', shaolin: '开场护盾 +15pp', tangmen: '初始毒层 +2' } },
-  { name: '入室', at: 4, p: 0.5, effect: { huashan: '剑招 400% → 550%', shaolin: '反伤 +15pp', tangmen: '毒层上限 8 → 10' } },
-  { name: '大成', at: 6, p: 0.5, effect: { huashan: '剑意需求 → 3', shaolin: '气血 < 30% 受伤 −30%', tangmen: '毒爆 50% → 80%' } },
-  { name: '化境', at: 20, p: 0.02, effect: { huashan: '剑招 +50pp', shaolin: '反伤 +5pp', tangmen: '毒伤系数 +3pp' } },
+  { name: '登堂', at: 2, p: 0.5, effect: { huashan: '雷印需求 5 → 4', shaolin: '开场护盾 +15pp', tangmen: '初始毒层 +2' } },
+  { name: '入室', at: 4, p: 0.5, effect: { huashan: '惊雷一击 400% → 550%', shaolin: '反伤 +15pp', tangmen: '毒层上限 8 → 10' } },
+  { name: '大成', at: 6, p: 0.5, effect: { huashan: '雷印需求 → 3', shaolin: '气血 < 30% 受伤 −30%', tangmen: '毒爆 50% → 80%' } },
+  { name: '化境', at: 20, p: 0.02, effect: { huashan: '惊雷一击 +50pp', shaolin: '反伤 +5pp', tangmen: '毒伤系数 +3pp' } },
   { name: '归真', at: 40, p: 0.01, scroll: true, effect: { huashan: '暴伤 +20pp', shaolin: '开场护盾 +8pp', tangmen: '毒伤系数 +2pp' } },
 ];
 

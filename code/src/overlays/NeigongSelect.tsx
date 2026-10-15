@@ -12,7 +12,7 @@ const ROUTE_ORDER: RouteId[] = ['huashan', 'shaolin', 'tangmen'];
 const CARD: Record<RouteId, { cls: string; lu: string; items: React.ReactNode[] }> = {
   huashan: {
     cls: 'hs', lu: '惊雷 · 爆发',
-    items: [<>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></>, <><b>开战首击必定会心</b>（并积 1 层剑意）</>, <>每次会心积 <b>1 层剑意</b>；满 5 层自动施展<b>爆发剑招</b></>],
+    items: [<>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></>, <><b>开战首击必定会心</b>（并凝 1 道雷印）</>, <>每次会心凝 <b>1 道雷印</b>；满 5 道自动施展<b>惊雷一击</b></>],
   },
   shaolin: {
     cls: 'sl', lu: '镇岳 · 护体',

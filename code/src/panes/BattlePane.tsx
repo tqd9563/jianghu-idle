@@ -251,7 +251,12 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     </div>
                   )}
                   {fighting && last && build.sqNeed < 99 && (
-                    <div className="state">剑意 {Math.floor(last.pSq)} / {build.sqNeed}</div>
+                    <div className="meter marks">
+                      <div className="lbl"><span>雷印</span><span><b>{Math.floor(last.pSq)}</b> / {build.sqNeed}</span></div>
+                      <div className="pips">
+                        {Array.from({ length: build.sqNeed }, (_, i) => <i key={i} className={i < Math.floor(last.pSq) ? 'on' : undefined} />)}
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -398,7 +403,7 @@ function CastStats({ stats }: { stats: FightResult['stats'] }) {
     ...Object.entries(stats.skillCasts)
       .sort((a, b) => (stats.skillDmg[b[0]] ?? 0) - (stats.skillDmg[a[0]] ?? 0))
       .map(([id, n]) => ({ name: WUXUE[id as WuxueId].name, n: `出招 ${n} 次`, dmg: stats.skillDmg[id] ?? 0, serif: true })),
-    { name: '路数机制', n: stats.burstCount > 0 ? `剑招 ${stats.burstCount} 次` : '', dmg: mech, serif: false },
+    { name: '路数机制', n: stats.burstCount > 0 ? `惊雷一击 ${stats.burstCount} 次` : '', dmg: mech, serif: false },
     { name: '普攻', n: '', dmg: plain, serif: false },
   ];
   return (
@@ -438,7 +443,7 @@ function FailureCeremony({ goCultivate }: { goCultivate: () => void }) {
     `我方输出 ${f0(st.dmgDealt)}（敌余 ${left}%）`,
     `我方承伤 ${f0(st.dmgTaken)}（余 ${Math.round(f.playerHpPct * 100)}%）`,
     `实际命中 ${Math.round(f.hitRate * 100)}%`,
-    ...(f.route === 'huashan' ? [`会心 ${st.critCount} 次 · 爆发剑招 ${st.burstCount} 次（占输出 ${outPct(st.burstDmg)}%）`] : []),
+    ...(f.route === 'huashan' ? [`会心 ${st.critCount} 次 · 惊雷一击 ${st.burstCount} 次（占输出 ${outPct(st.burstDmg)}%）`] : []),
     ...(f.route === 'shaolin' ? [`护盾吸收 ${f0(st.shieldAbsorbed)} · 反伤输出 ${f0(st.thornsOut)}（占输出 ${outPct(st.thornsOut)}%）`] : []),
     ...(f.route === 'tangmen' ? [`毒伤占输出 ${outPct(st.poisonDmg)}% · 毒爆 ${st.poisonBurstCount} 次 · 毒层被清 ${st.purgeCount} 次`] : []),
     ...(st.abStacksMax > 0 ? [`身中破甲 ${st.abStacksMax} 层`] : []),

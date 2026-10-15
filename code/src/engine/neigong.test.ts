@@ -18,7 +18,7 @@ describe('内功构筑', () => {
     }
   });
 
-  it('上乘火候多 2%，化境改机制参数（惊雷剑招 +50pp）', () => {
+  it('上乘火候多 2%，化境改机制参数（惊雷一击 +50pp）', () => {
     const base = makeBuild('huashan', 4, 60, 3);
     const up = neigongBuild('leimingjianjing', 4, 60, 4);
     expect(up.atk / base.atk).toBeCloseTo(Math.pow(1.7, 3.0 * 0.02), 9);   // 60 重火候折合 3 个境界（从第 1 重起算）

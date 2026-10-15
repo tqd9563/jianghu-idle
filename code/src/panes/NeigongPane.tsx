@@ -71,7 +71,7 @@ export function NeigongPane() {
       ? <>到第 {nextTier.at} 重即临「{nextTier.name}」之关，需静候顿悟才能再升</>
       : <>再精进 {left} 重，临「{nextTier.name}」之关</>;
   } else {
-    note = <>{ng.quality}内功至「{TIERS[reach - 1].name}」已是尽头，此后每重仍长气血、攻击、防御</>;
+    note = <>{ng.quality}内功至「{TIERS[reach - 1].name}」已是尽头，每重仍长气血、攻击、防御</>;
   }
 
   const owned = [...(s.ownedNeigong ?? [])].sort((a, b) =>
@@ -121,7 +121,7 @@ export function NeigongPane() {
           className="jh-btn"
           disabled={!!gate || short > 0}
           onClick={s.upgradeZhong}
-          data-tip={`十重以内按路数逐重加成，此后每重气血、攻击、防御约 +2.7%；价格每重 ×1.08。<br>重数只在这一世有效，转世即散。`}
+          data-tip={`每重气血、攻击、防御约 +2.7%，十重以内另有路数逐重加成；价格每重 ×1.08。<br>重数只在这一世有效，转世即散。`}
         >
           {gate ? (gate.needScroll ? '缺《归真卷册》' : '静候顿悟') : '精进一重'}
           <small>{gate ? '内力照常积累' : `${fmtBig(cost)} 内力${short > 0 ? ` · 还差 ${fmtBig(short)}` : ''}`}</small>

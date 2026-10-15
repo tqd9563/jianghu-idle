@@ -6,6 +6,7 @@
 """
 import json
 import mvp0_sim as sim
+import longline_sim as L
 
 # 代表性对局：覆盖三路线 × 关键敌人（Boss/全部精英/普通关）× 不同武学/节点档位
 CASES = [
@@ -34,6 +35,12 @@ stages = {(m, i): (e, r) for m, i, e, r in sim.build_stages()}
 out = []
 for route, realm, lv, nodes, mkey, stg in CASES:
     build = sim.make_build(route, realm, lv, nodes)
+    # 火候从第 1 级起折算（formulas.md §3.4 v2.0）：与 longline_sim.build 同式叠在招式构筑之上
+    dx = L.huohou_realms(lv)
+    for key in ("hp", "atk", "dfs"):
+        build[key] *= 1.7 ** dx
+    build["hit"] += 12 * dx
+    build["dodge"] += 3 * dx
     enemy, _reward = stages[(mkey, stg)]
     win, rounds, hp_pct = sim.fight(build, enemy)
     out.append({

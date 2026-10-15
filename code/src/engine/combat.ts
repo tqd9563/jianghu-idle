@@ -3,7 +3,7 @@
  * EV 模式与 sim/mvp0_sim.py fight() 逐行对齐（golden fixture 逐数校验）；
  * RNG 模式为运行时形态：同一结算结构，概率分支由注入的 rng 掷出。
  */
-import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouEffect, zhaoshiLevel, type RouteId } from './content';
+import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, STAT_SCALE, huohouEffect, zhaoshiLevel, type RouteId } from './content';
 import type { EnemyDef } from './enemies';
 import { HIT_FLOOR, mitigationMultiplier } from './formulas';
 import { ROUTES } from './routes';
@@ -187,7 +187,7 @@ const f1 = (v: number) => Math.round(v * 10) / 10;
 export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightResult {
   const ev = opts.mode === 'ev';
   // 本关防御常数（formulas.md §1.3 v1.6）：随关卡当量放大，旧关卡缺省 100
-  const defK = enemy.defK ?? 100;
+  const defK = enemy.defK ?? 100 * STAT_SCALE;
   const rng = opts.rng ?? Math.random;
   const roll = (p: number) => (ev ? p : rng() < p ? 1 : 0);
   const spread = () => (ev ? 1 : 1 + DMG_SPREAD * (2 * rng() - 1));

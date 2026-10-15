@@ -6,6 +6,7 @@
  * 禁止在此手改关卡——改规则先改 sim 再重导出。
  */
 import stageData from './data/longline-stages.json';
+import { STAT_SCALE } from './content';
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
@@ -67,7 +68,7 @@ export function mapName(map: MapId): string {
 // ─────────────────────────────────────────────────────────────
 
 /** 当量 1 的敌人模板 */
-export const ENEMY_BASE = { hp: 60, atk: 6, def: 3.5, hit: 100, dodge: 8 } as const;
+export const ENEMY_BASE = { hp: 60 * STAT_SCALE, atk: 6 * STAT_SCALE, def: 3.5 * STAT_SCALE, hit: 100, dodge: 8 } as const;
 
 /** 属性类标签的修正（content.md §2.0）；反伤 / 毒 / 净化 / 破甲 / 狂暴 在战斗里结算，不改属性 */
 export const TAG_MODS: Partial<Record<EnemyTag, Partial<Record<'hp' | 'atk' | 'def' | 'dodge', number>>>> = {
@@ -77,9 +78,9 @@ export const TAG_MODS: Partial<Record<EnemyTag, Partial<Record<'hp' | 'atk' | 'd
   高攻: { atk: 1.4 },
 };
 
-/** 本关防御常数：K = 100 × 1.7^max(0, 当量 − 3)（formulas.md §1.3 v1.6） */
+/** 本关防御常数：K = 100 × STAT_SCALE × 1.7^max(0, 当量 − 3)（formulas.md §1.3 v1.6；与防御同尺度） */
 export function defKAt(x: number): number {
-  return 100 * Math.pow(1.7, Math.max(0, x - 3));
+  return 100 * STAT_SCALE * Math.pow(1.7, Math.max(0, x - 3));
 }
 
 /** 当量 x 的敌人属性：气血/攻击/防御 × 1.7^(x−1)，命中 +12(x−1)，闪避 +3(x−1)，再乘属性类标签修正 */

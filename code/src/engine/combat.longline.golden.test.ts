@@ -4,7 +4,7 @@
  * 失败先查实现是否偏离 sim，改规则先改 sim 再重导出。
  */
 import { describe, expect, it } from 'vitest';
-import type { RouteId } from './content';
+import { STAT_SCALE, type RouteId } from './content';
 import { fight, makeBuild } from './combat';
 import { enemyStatsAt, type EnemyDef, type EnemyTag } from './enemies';
 import fixtures from './golden/longline-fixtures.json';
@@ -21,19 +21,20 @@ describe('golden 对照 · 长线战斗 vs longline_sim.py', () => {
   for (const c of fixtures.cases as Case[]) {
     it(`${c.route} 境界${c.realm} ${c.lv} 级 vs 当量 ${c.x}${c.tags.length ? ` [${c.tags.join('/')}]` : ''}`, () => {
       const b = makeBuild(c.route, c.realm, c.lv, 3);
-      expect(b.hp).toBeCloseTo(c.build.hp, 6);
-      expect(b.atk).toBeCloseTo(c.build.atk, 6);
-      expect(b.def).toBeCloseTo(c.build.dfs, 6);
+      // 气血 / 攻击 / 防御按 STAT_SCALE 换算（sim 保持原尺度，content.md §1 v2.3）
+      expect(b.hp).toBeCloseTo(c.build.hp * STAT_SCALE, 6);
+      expect(b.atk).toBeCloseTo(c.build.atk * STAT_SCALE, 6);
+      expect(b.def).toBeCloseTo(c.build.dfs * STAT_SCALE, 6);
       expect(b.hit).toBeCloseTo(c.build.hit, 9);
       expect(b.dodge).toBeCloseTo(c.build.dodge, 9);
 
       const st = enemyStatsAt(c.x, c.tags);
-      expect(st.hp).toBeCloseTo(c.enemy.hp, 6);
-      expect(st.atk).toBeCloseTo(c.enemy.atk, 6);
-      expect(st.def).toBeCloseTo(c.enemy.dfs, 6);
+      expect(st.hp).toBeCloseTo(c.enemy.hp * STAT_SCALE, 6);
+      expect(st.atk).toBeCloseTo(c.enemy.atk * STAT_SCALE, 6);
+      expect(st.def).toBeCloseTo(c.enemy.dfs * STAT_SCALE, 6);
       expect(st.hit).toBeCloseTo(c.enemy.hit, 9);
       expect(st.dodge).toBeCloseTo(c.enemy.dodge, 9);
-      expect(st.defK).toBeCloseTo(c.defK, 6);
+      expect(st.defK).toBeCloseTo(c.defK * STAT_SCALE, 6);
 
       const enemy: EnemyDef = {
         map: 1, tier: 0, stage: 1, name: 'golden', kind: 'normal', recommendedRealm: 1,

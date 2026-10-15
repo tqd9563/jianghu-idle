@@ -4,6 +4,7 @@
  * 名表出自 docs/rules/copy/gear-names.md（一名一图，图在 public/art/gear/）。数值一律整数（裁决 37）。
  */
 import type { Build } from './combat';
+import { STAT_SCALE } from './content';
 
 export type GearSlot = '兵器' | '暗器' | '衣甲' | '佩饰';
 export type WeaponCat = '剑' | '刀' | '枪' | '棍';
@@ -103,7 +104,7 @@ export const SELL_MULT = [0, 0.5, 1, 2, 5, 15];
 
 // ---------------------------------------------------------------- 基础属性（spec §1.1）
 
-const BASE_ATK = 10, BASE_HP = 100, BASE_DEF = 5;
+const BASE_ATK = 10 * STAT_SCALE, BASE_HP = 100 * STAT_SCALE, BASE_DEF = 5 * STAT_SCALE;
 const GEAR_RATIO = 0.034;
 const FLOAT: readonly [number, number] = [0.90, 1.10];
 const WEAPON_LIGHT_HIT = 0.4;

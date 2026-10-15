@@ -164,6 +164,12 @@ textarea { font: inherit; color: inherit; }
 .chip .x { border: 0; background: none; color: var(--faint); padding: 0 2px; font-size: 14px; line-height: 1; }
 .chip .x:hover { color: var(--cinnabar); }
 
+/* 标题：自动拼，可改 */
+.title { width: 100%; border: 0; border-bottom: 1px solid var(--hair); background: none; padding: 6px 2px; font-family: var(--serif); font-size: 15px; letter-spacing: 0.05em; color: var(--ink); outline: none; }
+.title:focus { border-bottom-color: oklch(0.78 0.13 78 / 0.6); }
+.title.auto { color: var(--muted); }
+.title::placeholder { color: var(--faint); }
+
 /* 描述 */
 .sheet textarea {
   width: 100%; min-height: 96px; resize: vertical; border: 0; border-radius: 10px;
@@ -294,6 +300,7 @@ textarea { font: inherit; color: inherit; }
     <div id="chips"></div>
   </div>
 
+  <input class="title auto" id="title" placeholder="标题（自动）" aria-label="标题">
   <textarea id="desc" placeholder="怎么了，想改成什么样"></textarea>
 
   <div class="opts">
@@ -317,7 +324,7 @@ textarea { font: inherit; color: inherit; }
 <!-- ═══════ 状态 4：已提报 ═══════ -->
 <div class="toast" id="toast" hidden role="status">
   <div class="seal">入池</div>
-  <div class="t"><b>#57</b> 武学页「全本未得」文案</div>
+  <div class="t"><b>#57</b> <span id="toastTitle">武学 · 全本未得：不要用「全本未得 / 全本在匣」这种文案</span></div>
   <div class="d">待开始 · <a href="#">github.com/tqd9563/jianghu-idle/issues/57</a></div>
 </div>
 
@@ -434,10 +441,23 @@ function renderSheet() {
     chips.appendChild(d);
   }));
   if (!$('#desc').value) $('#desc').value = '不要用「全本未得 / 全本在匣」这种文案。集齐就亮起来，没集齐保持灰暗并显示残页进度。';
+  autoTitle();
 }
+/* 标题自动拼：页签 · 首个框中元素：描述第一句；用户改过就不再跟 */
+let titleTouched = false;
+function autoTitle() {
+  if (titleTouched) return;
+  const first = marks.flatMap(m => m.els)[0];
+  const sentence = ($('#desc').value.split(/[。！？\n]/)[0] || '').trim().slice(0, 30);
+  $('#title').value = ['武学', first && first.text].filter(Boolean).join(' · ') + (sentence ? '：' + sentence : '');
+  $('#title').classList.add('auto');
+}
+$('#desc').addEventListener('input', autoTitle);
+$('#title').addEventListener('input', () => { titleTouched = true; $('#title').classList.remove('auto'); });
 $('#again').onclick = () => setState('cap');
-$('#cancel').onclick = () => { marks = []; $('#desc').value = ''; setState('idle'); };
-$('#submit').onclick = () => { marks = []; $('#desc').value = ''; setState('toast'); setTimeout(() => { if (state === 'toast') setState('idle'); }, 6000); };
+function reset() { marks = []; $('#desc').value = ''; $('#title').value = ''; titleTouched = false; }
+$('#cancel').onclick = () => { reset(); setState('idle'); };
+$('#submit').onclick = () => { $('#toastTitle').textContent = $('#title').value; reset(); setState('toast'); setTimeout(() => { if (state === 'toast') setState('idle'); }, 6000); };
 $('#judge').onclick = (e) => e.currentTarget.setAttribute('aria-pressed', String(e.currentTarget.getAttribute('aria-pressed') !== 'true'));
 sheet.querySelector('.seg').addEventListener('click', (e) => { const b = e.target.closest('[data-type]'); if (!b) return; sheet.querySelectorAll('[data-type]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
 /* 粘贴：换掉缩略图 */

@@ -9,21 +9,18 @@ import { NEIGONG, QUALITY_ORDER, type NeigongId } from '../engine/neigong';
 import { useGameStore } from '../store/gameStore';
 
 const ROUTE_ORDER: RouteId[] = ['huashan', 'shaolin', 'tangmen'];
-const CARD: Record<RouteId, { cls: string; lu: string; motif: string; items: React.ReactNode[]; cost: string }> = {
+const CARD: Record<RouteId, { cls: string; lu: string; items: React.ReactNode[] }> = {
   huashan: {
-    cls: 'hs', lu: '惊雷 · 爆发', motif: '快剑爆发 · 短战最强，看脸不稳',
+    cls: 'hs', lu: '惊雷 · 爆发',
     items: [<>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></>, <><b>开战首击必定会心</b>（并积 1 层剑意）</>, <>每次会心积 <b>1 层剑意</b>；满 5 层自动施展<b>爆发剑招</b></>],
-    cost: '短板：面对高闪敌人命中不稳',
   },
   shaolin: {
-    cls: 'sl', lu: '镇岳 · 护体', motif: '铁壁反震 · 打不死你，磨死对手',
+    cls: 'sl', lu: '镇岳 · 护体',
     items: [<>开战自动获得 <b>30% 气血护盾</b></>, <>受击自动反伤 <b>25%</b></>, <>防御 <b>+20%</b></>],
-    cost: '短板：护盾不防毒，输出最慢',
   },
   tangmen: {
-    cls: 'tm', lu: '蚀骨 · 阴毒', motif: '叠毒后发 · 越拖越强，开局最软',
+    cls: 'tm', lu: '蚀骨 · 阴毒',
     items: [<>开战自动<b>施毒 1 层</b>，命中 <b>+1 层</b>（上限 8）</>, <>毒伤系数 <b>12%</b>，无视防御、绕过护盾</>, <>满层触发<b>毒爆 50%</b></>],
-    cost: '代价：普攻伤害 ×0.60，短战偏慢',
   },
 };
 const Q_CLS = { 寻常: 'q1', 上乘: 'q2', 绝学: 'q3' } as const;
@@ -43,7 +40,6 @@ export function NeigongSelect() {
       <div>
         <div className="kick">{firstTime ? '传 功' : '择 一 部 内 功'}</div>
         <h2 className="mid">{firstTime ? '择一门心法' : '隐世前辈 · 各传一脉'}</h2>
-        <div className="d">{firstTime ? '三门心法各走一路；日后转修心法，须耗额外代价' : '习其艺，不列门墙。本世主修此功，下一世开头可重选。'}</div>
         <div className="ngs-cards" role="radiogroup" aria-label="内功">
           {ROUTE_ORDER.map((r) => {
             const list = byRoute(r);
@@ -62,7 +58,6 @@ export function NeigongSelect() {
               >
                 <div className="ngs-name">{NEIGONG[shownId].name}</div>
                 <div className="ngs-lu">{c.lu}</div>
-                <div className="ngs-motif">{c.motif}</div>
                 {multi && (
                   <div className="ngs-owned" role="radiogroup" aria-label={`${c.lu}一路已有内功`}>
                     {list.map((id) => (
@@ -80,7 +75,6 @@ export function NeigongSelect() {
                   </div>
                 )}
                 <ul className="ngs-items">{c.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
-                <div className="ngs-cost">{c.cost}</div>
               </div>
             );
           })}

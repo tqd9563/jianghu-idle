@@ -203,10 +203,10 @@ function WuxueDetail({ id }: { id: WuxueId }) {
         const needPages = d.quality !== '寻常' ? PAGES_NEEDED[d.quality as '上乘' | '绝学'] : 0;
         const have = pages[key] ?? 0;
         // 已拥有的：自带的式不看残页；未拥有的：每一式都看（第一式凑齐即得这门武学）
-        const pagesRow = needPages > 0 && (!owned || k > p.given) && (
+        const pagesRow = needPages > 0 && have < needPages && (!owned || k > p.given) && (
           <div className="pages" data-tip={`凑齐 ${needPages} 页残页即得这一式口诀，可顶招式秘籍`}>
             {Array.from({ length: needPages }, (_, i) => <i key={i} className={i < have ? 'got' : ''} />)}
-            <small>口诀 {Math.min(have, needPages)} / {needPages} 页</small>
+            <small>残页 {have} / {needPages}</small>
           </div>
         );
 
@@ -233,13 +233,14 @@ function WuxueDetail({ id }: { id: WuxueId }) {
           );
         }
 
-        // 未拥有：只看残页 / 全本进度
+        // 未拥有：得了全本 / 残页凑齐的式整行亮起，其余灰暗并给进度
         if (!owned) {
+          const got = d.quality === '寻常' ? books.includes(key) : have >= needPages;
           return (
-            <div key={k} className="wx-shi locked">
+            <div key={k} className={`wx-shi${got ? '' : ' locked'}`}>
               {nm}
-              <div>{d.quality === '寻常'
-                ? <div className="jh-checks"><span className={books.includes(key) ? 'y' : 'n'}>{books.includes(key) ? '全本在匣' : '全本未得'}</span></div>
+              <div>{got ? null : d.quality === '寻常'
+                ? <div className="jh-checks"><span className="n">全本 0 / 1</span></div>
                 : pagesRow}</div>
               <span className="mul" data-tip={multTip}>×{mult}%</span>
             </div>
@@ -256,7 +257,6 @@ function WuxueDetail({ id }: { id: WuxueId }) {
             {nm}
             <div>
               <div className="jh-checks">
-                {inBox && <span className="y" data-tip="前一式学会的那一刻自动学会">全本在匣</span>}
                 <span className={g.realm ? 'y' : 'n'}>境界 {needG.realm}</span>
                 <span className={g.qi ? 'y' : 'n'} data-tip={`你此刻真气上限 ${qi}`}>真气 ≥ {needG.qi}</span>
                 {needG.scroll && (

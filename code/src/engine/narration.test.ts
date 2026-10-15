@@ -12,7 +12,7 @@ const DOC = resolve(process.cwd(), '../docs/rules/copy/battle-narration.md');
 
 const ctx: NarrCtx = {
   enemy: { name: '山道野狼', kind: 'normal', tags: [] },
-  route: 'huashan', neigongName: '惊雷诀', sqNeed: 5, poisonCap: 8,
+  route: 'huashan', hand: '剑', neigongName: '惊雷诀', sqNeed: 5, poisonCap: 8,
 };
 const turn = (over: Partial<TurnEvent>): TurnEvent => ({
   rd: 3, side: 'player', kind: 'attack', text: '', dmg: 12,

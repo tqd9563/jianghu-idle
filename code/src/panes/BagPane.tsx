@@ -66,7 +66,7 @@ export function BagPane() {
           <div className="worn">
             {GEAR_SLOTS.map((slot) => {
               const it = worn[slot];
-              if (!it) return <div key={slot} className="worn-i empty"><span className="slot-k">{slot}</span><span className="nm">空着</span></div>;
+              if (!it) return <div key={slot} className="worn-i empty"><span className="slot-k">{slot}</span></div>;
               return (
                 <div key={slot} className="worn-i" role="button" tabIndex={0} aria-pressed={sel === it.id}
                   onClick={() => pick(it)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(it); } }}>
@@ -121,7 +121,7 @@ export function BagPane() {
           </div>
 
           <div className={`jh-card cmp${selected ? '' : ' none'}`}>
-            {!selected ? <div className="cmp-empty">点背包里的装备，在此与身上的比较</div> : (
+            {!selected ? null : (
               <Compare it={selected} cur={selWorn ? null : worn[selected.slot] ?? null} isWorn={selWorn}
                 onWear={() => { s.wearGear(selected.id); }}
                 onSell={() => { s.sellGear(selected.id); setSel(null); }}

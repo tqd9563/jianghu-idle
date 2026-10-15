@@ -142,7 +142,7 @@ textarea { font: inherit; color: inherit; }
 .sheet h2 small { font-family: var(--body); font-size: 12px; letter-spacing: 0.05em; color: var(--faint); }
 
 /* 截图缩略：真实 DOM 克隆缩放，红框画在上面 */
-.shot { position: relative; border-radius: 10px; overflow: hidden; background: var(--bg-deep); aspect-ratio: 16 / 9; }
+.shot { flex-shrink: 0; position: relative; border-radius: 10px; overflow: hidden; background: var(--bg-deep); aspect-ratio: 16 / 9; }
 .shot .clone { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; width: 1600px; }
 .shot .mark { position: absolute; border: 1.5px solid var(--cinnabar); background: oklch(0.66 0.14 32 / 0.1); }
 .shot .mark::after { content: attr(data-n); position: absolute; left: -1px; top: -16px; font-size: 11px; color: var(--cinnabar); }

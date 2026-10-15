@@ -27,7 +27,7 @@
 ## 3. 落盘与 issue
 
 - 每单一个目录 `reports/<yyyymmdd-hhmmss>/`，含 `shot.png`、`save.json`、`report.json`、`issue.md`、`issue.json`。目录不入库。
-- 截图与存档再经 Contents API 推到仓库的孤儿分支 `report-assets`（首次自动从空树建出，不含代码），issue 正文用 `blob/report-assets/...?raw=true` 链接内嵌显示截图。
+- 截图与存档在截完图那一刻就开始后台推到仓库的孤儿分支 `report-assets`（首次自动从空树建出，不含代码），趁你打字时传完；同一分支的提交串行排队，点「提报」只剩直接调 API 建 issue 这一步（约 1.5 秒）。issue 正文用 `blob/report-assets/...?raw=true` 链接内嵌显示截图。
 - issue 由 `gh issue create` 建在本仓库，标题即面板标题，正文：描述、内嵌截图、类型 / 裁决 / 页签 / hash / 单号、框中元素清单；有控制台错误才附一段。存档不在正文里给链接，fix-todo 按单号到 `report-assets` 分支或本机 `reports/<单号>/` 取。
 - 标签：`report` + `type::bug` 或 `type::enhancement` + `status::todo`；需裁决加 `needs-decision`。
 

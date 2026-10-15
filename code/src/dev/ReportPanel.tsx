@@ -160,7 +160,8 @@ export default function ReportPanel({ tab }: { tab: string }) {
     await new Promise((res) => setTimeout(res, 160));
     try {
       const rg = shotRegion(next);
-      const area = { id: id ?? undefined, x: window.screenX + rg.x, y: window.screenY + (window.outerHeight - window.innerHeight) + rg.y, w: rg.w, h: rg.h };
+      // 存档随截图一起送过去，服务端趁你打字时先把图和存档传上去
+      const area = { id: id ?? undefined, x: window.screenX + rg.x, y: window.screenY + (window.outerHeight - window.innerHeight) + rg.y, w: rg.w, h: rg.h, save: localStorage.getItem(SAVE_KEY) };
       const { id: got } = await api<{ id: string }>('POST', '/shot', area);
       setId(got); setShotVer((v) => v + 1); setErr(null);
     } catch (ex) {
@@ -179,7 +180,7 @@ export default function ReportPanel({ tab }: { tab: string }) {
     try {
       const r = await api<{ number: number; url: string }>('POST', '', {
         id, title: title.trim() || tabName, desc, type, judge, tab: tabName, hash: location.hash,
-        marks, save: localStorage.getItem(SAVE_KEY), errors: recentErrors(), pasted: pasted ?? undefined,
+        marks, errors: recentErrors(), pasted: pasted ?? undefined,
       });
       setIssue({ ...r, title: title.trim() || tabName });
       reset(); setPhase('toast');

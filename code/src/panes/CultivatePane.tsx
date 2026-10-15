@@ -148,15 +148,15 @@ function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
   };
   const grantDef = route?.grant.defPct ?? 0;
   const rows: [string, string, string][] = [
-    ['气血', String(a.hp), statTip(base.hp, a.zones.hpTempPct, 0)],
+    ['气血', String(Math.round(a.hp)), statTip(base.hp, a.zones.hpTempPct, 0)],
     ['真气', qiMax > 0 ? String(qiMax) : '——',
       ng ? `(70 + 15 × (境界 − 2) + 重数) × 气海<br><span class='l'>(70 + 15 × ${Math.max(s.realm, 2) - 2} + ${s.zhong}) × ${ng.name}气海 ${QI_COEF[ng.quality].toFixed(1)}</span>`
         : '未修内功，尚无真气'],
-    ['攻击', String(a.atk), statTip(base.atk, a.zones.atkTempPct, 0,
+    ['攻击', String(Math.round(a.atk)), statTip(base.atk, a.zones.atkTempPct, 0,
       a.basicAtkMult !== 1 ? [`普攻系数 ×${a.basicAtkMult.toFixed(2)}（轻手暗器）`] : [])],
-    ['防御', String(a.def), statTip(base.def, a.zones.defTempPct, grantDef)],
-    ['命中', String(a.accuracy), a.accuracy !== base.accuracy ? `境界基础 ${base.accuracy}<br>十重以上火候 +${+(a.accuracy - base.accuracy).toFixed(1)}` : ''],
-    ['闪避', String(a.evasion), a.evasion !== base.evasion ? `境界基础 ${base.evasion}<br>十重以上火候 +${+(a.evasion - base.evasion).toFixed(1)}` : ''],
+    ['防御', String(Math.round(a.def)), statTip(base.def, a.zones.defTempPct, grantDef)],
+    ['命中', String(Math.round(a.accuracy)), a.accuracy !== base.accuracy ? `境界基础 ${base.accuracy}<br>十重以上火候 +${+(a.accuracy - base.accuracy).toFixed(1)}` : ''],
+    ['闪避', String(Math.round(a.evasion)), a.evasion !== base.evasion ? `境界基础 ${base.evasion}<br>十重以上火候 +${+(a.evasion - base.evasion).toFixed(1)}` : ''],
     ['会心率', pct1(a.critRate), critTip(a, 'critRate', route?.name)],
     ['会心伤害', pct(a.critDmg), critTip(a, 'critDmg', route?.name)],
   ];
@@ -186,7 +186,7 @@ function critTip(a: FinalAttributes, key: 'critRate' | 'critDmg', routeName?: st
   const baseV = key === 'critRate' ? BASE_CRIT_RATE : BASE_CRIT_DMG;
   const diff = a[key] - baseV;
   if (diff < 1e-9) return '';
-  return `基础 ${pct(baseV)}<br>${routeName ?? '路数'}（路数赠予与逐重）+${pct1(diff)}`;
+  return `基础 ${pct(baseV)}<br>${routeName ?? '路数'} +${pct1(diff)}`;
 }
 
 // ─────────────────────────────── 破境

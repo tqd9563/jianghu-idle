@@ -96,7 +96,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const eliteDone = elites.filter((d) => isDone(d.stage)).length;
 
   const narrCtx: NarrCtx | null = enemy ? {
-    enemy, route: s.route ?? null, neigongName: s.neigong ? NEIGONG[s.neigong].name : null,
+    enemy, route: s.route ?? null, hand: s.worn?.兵器?.cat ?? (s.worn?.暗器 ? '暗器' : 'none'),
+    neigongName: s.neigong ? NEIGONG[s.neigong].name : null,
     sqNeed: build.sqNeed, poisonCap: build.poison.cap, seed: battle?.seed ?? 0,
   } : null;
 
@@ -289,9 +290,9 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                 {idling && (
                   <div className="idle-bar">
                     <span className="pulse" />
+                    <span>第 <b>{idling.stage}</b> 关</span>
                     <span className="serif">挂机中</span>
-                    <span>第 <b>{idling.stage}</b> 关 · 已 <b>{idling.fights}</b> 场{(idling.loot ?? 0) > 0 && <> · 拾得 <b>{idling.loot}</b> 件</>}</span>
-                    <button type="button" className="jh-btn2 quiet" onClick={() => s.stopIdle()}>收手</button>
+                    <button type="button" className="jh-btn2 quiet" onClick={() => s.stopIdle()}>停止</button>
                   </div>
                 )}
                 <div className="btns">

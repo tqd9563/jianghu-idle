@@ -25,8 +25,10 @@ export type FoeKind = 'beast' | 'bandit' | 'master';
 
 export interface NarrCtx {
   enemy: Pick<EnemyDef, 'name' | 'kind' | 'tags'>;
-  /** 所修内功的路数；未修内功为 null（普攻写成拳脚） */
+  /** 所修内功的路数；未修内功为 null */
   route: RouteId | null;
+  /** 手里拿的：兵器槽的类别；兵器槽空而暗器槽有物为「暗器」；都没有为 none（普攻写成拳脚） */
+  hand: Hand;
   /** 所修内功名（爆发剑招句里用）；未修为 null */
   neigongName: string | null;
   /** 剑意需求（华山）；99 = 无剑意 */
@@ -56,16 +58,18 @@ export function foeKind(enemy: Pick<EnemyDef, 'name' | 'kind'>): FoeKind {
 
 type Lines = readonly string[];
 type ByFoe = Record<FoeKind, Lines>;
-type PlainRoute = RouteId | 'none';
+/** 普攻句子按手里的家伙分：赤手（none / 少林拳掌）、剑、刀、枪、棍、暗器 */
+export type Hand = 'none' | '剑' | '刀' | '枪' | '棍' | '暗器';
+type PlainKey = Hand | 'shaolin';
 
-/** §3.1 你的普攻 · 命中（按路数） */
-export const PLAIN_HIT: Record<PlainRoute, Lines> = {
+/** §3.1 你的普攻 · 命中（按手中兵器） */
+export const PLAIN_HIT: Record<PlainKey, Lines> = {
   none: [
     '{我}抢上一步，一拳捣在{敌}胸口，造成{伤}点伤害。',
     '{我}侧身让过来势，顺手一掌拍在{敌}肩头，造成{伤}点伤害。',
     '{我}虚晃一招，趁{敌}回防不及，一脚踢中其腰间，造成{伤}点伤害。',
   ],
-  huashan: [
+  剑: [
     '{我}踏步抢攻，剑尖直点{敌}胸前，逼得对方连退两步，造成{伤}点伤害。',
     '{我}身形一晃，反手一剑削向{敌}肩头，带起一蓬血花，造成{伤}点伤害。',
     '{我}虚晃一招，趁{敌}回防不及，一剑扫中其腰间，造成{伤}点伤害。',
@@ -75,20 +79,35 @@ export const PLAIN_HIT: Record<PlainRoute, Lines> = {
     '{我}硬接来势，反手一掌推在{敌}肩头，推得对方一个趔趄，造成{伤}点伤害。',
     '{我}步步进逼，肘膝连撞{敌}胸腹，造成{伤}点伤害。',
   ],
-  tangmen: [
+  刀: [
+    '{我}刀光一闪，顺势劈向{敌}肩头，造成{伤}点伤害。',
+    '{我}拧腰横刀，一刀扫中{敌}腰间，造成{伤}点伤害。',
+    '{我}虚晃一招，趁{敌}回防不及，刀背重重砸在其背上，造成{伤}点伤害。',
+  ],
+  枪: [
+    '{我}长枪一抖，枪尖直点{敌}胸前，造成{伤}点伤害。',
+    '{我}拨开来势，顺手一枪扎中{敌}肩头，造成{伤}点伤害。',
+    '{我}枪杆横扫，抽在{敌}腰间，打得对方踉跄半步，造成{伤}点伤害。',
+  ],
+  棍: [
+    '{我}抡棍横扫，一棍抽在{敌}肋下，造成{伤}点伤害。',
+    '{我}棍头一点，正戳在{敌}胸口，逼得对方连退两步，造成{伤}点伤害。',
+    '{我}虚晃一招，趁{敌}回防不及，一棍扫中其小腿，造成{伤}点伤害。',
+  ],
+  暗器: [
     '{我}袖底一扬，两枚透骨钉直奔{敌}而去，造成{伤}点伤害。',
     '{我}脚下游走，顺手甩出一把铁蒺藜，打在{敌}身上，造成{伤}点伤害。',
     '{我}指间寒光一闪，一枚毒针钉进{敌}臂上，造成{伤}点伤害。',
   ],
 };
 
-/** §3.2 你的普攻 · 暴击（按路数） */
-export const PLAIN_CRIT: Record<PlainRoute, Lines> = {
+/** §3.2 你的普攻 · 暴击（按手中兵器） */
+export const PLAIN_CRIT: Record<PlainKey, Lines> = {
   none: [
     '{我}看准{敌}一个破绽，一拳正中要害，足足造成{伤}点伤害！',
     '{我}这一掌又快又狠，结结实实印在{敌}心口，造成{伤}点伤害！',
   ],
-  huashan: [
+  剑: [
     '{我}看准{敌}一个破绽，剑走偏锋直取要害，这一剑又快又狠，足足造成{伤}点伤害！',
     '剑光一闪，{我}这一刺正中{敌}空门，力透重围，造成{伤}点伤害！',
   ],
@@ -96,7 +115,19 @@ export const PLAIN_CRIT: Record<PlainRoute, Lines> = {
     '{我}沉腰发力，一拳打得{敌}弯下腰去，足足造成{伤}点伤害！',
     '{我}看准空门，一掌拍在{敌}要害，掌力透体而入，造成{伤}点伤害！',
   ],
-  tangmen: [
+  刀: [
+    '{我}看准{敌}一个破绽，一刀劈下势大力沉，足足造成{伤}点伤害！',
+    '刀风呼啸，{我}这一刀正劈在{敌}要害，造成{伤}点伤害！',
+  ],
+  枪: [
+    '{我}看准{敌}一个破绽，一枪如毒龙出洞直取要害，足足造成{伤}点伤害！',
+    '枪影一闪，{我}这一刺正中{敌}空门，透背而出，造成{伤}点伤害！',
+  ],
+  棍: [
+    '{我}看准{敌}一个破绽，一棍当头砸落，足足造成{伤}点伤害！',
+    '棍风呼啸，{我}这一棍结结实实砸在{敌}肩上，造成{伤}点伤害！',
+  ],
+  暗器: [
     '{我}一镖正中{敌}要穴，入肉极深，足足造成{伤}点伤害！',
     '{我}趁{敌}换气，一把钢针尽数没入其胸前，造成{伤}点伤害！',
   ],
@@ -503,7 +534,9 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const fk = foeKind(ctx.enemy);
   const foe = ctx.enemy.name;
   const rd = t.rd;
-  const route: PlainRoute = ctx.route ?? 'none';
+  const route = ctx.route;
+  // 普攻句子跟手里的家伙走：赤手时少林路数写拳掌、其余写拳脚
+  const plain: PlainKey = ctx.hand === 'none' && route === 'shaolin' ? 'shaolin' : ctx.hand;
   const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '剑意' };
   const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
 
@@ -516,12 +549,12 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
         if (t.absorb) segs.push(...line(MECH.absorb, 0, { shield: t.absorb }));
         return segs;
       }
-      const segs = line(PLAIN_HIT[route], 0);
+      const segs = line(PLAIN_HIT[plain], 0);
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
       return segs;
     }
     case 'crit': {
-      const segs = line(PLAIN_CRIT[route], 0, { crit: true });
+      const segs = line(PLAIN_CRIT[plain], 0, { crit: true });
       if (ctx.sqNeed < 99) segs.push(...line(MECH.sq, 0, { n: t.pSq, cap: ctx.sqNeed }));
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
       return segs;
@@ -533,7 +566,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       const formName = f ? formTitle(f[0], f[1]) : '';
       if (t.missed) return line(CAST_EXTRA.miss, 0, { form: formName });
       const tpl = f ? FORM_LINES[f[0]][f[1] - 1] : undefined;
-      const segs = tpl ? fill(tpl, { ...base, form: formName, crit: t.crit }) : line(PLAIN_HIT[route], 0, { crit: t.crit });
+      const segs = tpl ? fill(tpl, { ...base, form: formName, crit: t.crit }) : line(PLAIN_HIT[plain], 0, { crit: t.crit });
       if (t.crit) segs.push(...line(CAST_EXTRA.crit, 0));
       // 特效追加句：只在本招特效确实生效时追加（引擎标在 fx 上）；必暴由暴击句体现，连击另有补刀事件
       if (t.fx && t.fx !== '必暴' && t.fx !== '连击') segs.push(...fill(EFFECT_LINES[t.fx], { ...base, det: t.detonate }));

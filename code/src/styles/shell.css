@@ -184,6 +184,8 @@ button { font: inherit; color: inherit; }
 .jh-tip.on { opacity: 1; }
 .jh-tip .l { color: var(--faint); }
 [data-tip] { cursor: help; }
+button[data-tip] { cursor: pointer; }
+button[data-tip]:disabled { cursor: default; }
 .jh-dotted { position: relative; }
 .jh-dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: repeating-linear-gradient(to right, var(--ink-gold) 0 2px, transparent 2px 5px); }
 

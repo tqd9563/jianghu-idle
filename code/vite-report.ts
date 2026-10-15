@@ -4,7 +4,7 @@
  *   GET    /__report/<id>/shot.png
  *   POST   /__report             写 report.json / save.json，gh 建 issue 并打标签，回 { number, url }
  *   DELETE /__report/<id>        取消提报，删目录
- * reports/ 在仓库根目录、不入库；issue 正文里写绝对路径，fix-todo 在本机按路径读。
+ * reports/ 在仓库根目录、不入库；截图与存档再推到 report-assets 孤儿分支，issue 正文内嵌图片并给链接。
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -15,6 +15,36 @@ import type { Plugin } from 'vite';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPORTS = path.join(ROOT, 'reports');
+/** 附件推到仓库的孤儿分支，issue 里用 blob?raw=true 链接内嵌显示 */
+const ASSET_BRANCH = 'report-assets';
+
+const gh = (args: string[], input?: string) => spawnSync('gh', args, { cwd: ROOT, encoding: 'utf8', input });
+
+let repoCache: string | null = null;
+function repoName(): string {
+  if (!repoCache) repoCache = gh(['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner']).stdout.trim();
+  return repoCache;
+}
+
+/** 分支不存在就从空树建一个孤儿分支，不带任何代码 */
+function ensureAssetBranch(repo: string): void {
+  if (gh(['api', `repos/${repo}/git/ref/heads/${ASSET_BRANCH}`]).status === 0) return;
+  const git = (a: string[]) => spawnSync('git', a, { cwd: ROOT, encoding: 'utf8' });
+  const tree = git(['hash-object', '-t', 'tree', '/dev/null']).stdout.trim();
+  const commit = git(['commit-tree', tree, '-m', 'report assets（提报截图与存档，由提报面板自动推送）']).stdout.trim();
+  const r = git(['push', 'origin', `${commit}:refs/heads/${ASSET_BRANCH}`]);
+  if (r.status !== 0) throw new Error(`建 ${ASSET_BRANCH} 分支失败：${r.stderr}`);
+}
+
+/** Contents API 上传一个文件；base64 走 --input 文件，避免 argv 超长 */
+function uploadAsset(repo: string, rel: string, file: string, message: string): string {
+  const bodyFile = file + '.upload.json';
+  fs.writeFileSync(bodyFile, JSON.stringify({ message, branch: ASSET_BRANCH, content: fs.readFileSync(file).toString('base64') }));
+  const r = gh(['api', '-X', 'PUT', `repos/${repo}/contents/${rel}`, '--input', bodyFile]);
+  fs.rmSync(bodyFile, { force: true });
+  if (r.status !== 0) throw new Error(`上传 ${rel} 失败：${r.stderr || r.stdout}`);
+  return `https://github.com/${repo}/blob/${ASSET_BRANCH}/${rel}?raw=true`;
+}
 
 interface Mark { rect: { x: number; y: number; w: number; h: number }; els: { tag: string; text: string; sel: string }[] }
 interface ReportBody {
@@ -45,17 +75,17 @@ const safeId = (id: string) => /^[0-9]{8}-[0-9]{6}$/.test(id);
 
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
-function issueBody(b: ReportBody, dir: string): string {
-  const lines: string[] = [b.desc.trim(), ''];
+function issueBody(b: ReportBody, dir: string, urls: { shot: string; save: string | null }): string {
+  const lines: string[] = [b.desc.trim(), '', `![截图](${urls.shot})`, ''];
   lines.push(`**类型**：${b.type === 'bug' ? '缺陷' : '优化'}　**需裁决**：${b.judge ? '是' : '否'}　**页签**：${b.tab}　**hash**：\`${b.hash || '无'}\``, '');
   if (b.marks.some((m) => m.els.length)) {
     lines.push('## 框中元素', '');
     b.marks.forEach((m, i) => m.els.forEach((e) => lines.push(`- ${CIRCLED[i] ?? i + 1} \`${e.text}\` — \`${e.sel}\``)));
     lines.push('');
   }
-  lines.push('## 附件（本机）', '');
-  lines.push(`- 截图：\`${path.join(dir, 'shot.png')}\``);
-  if (b.save) lines.push(`- 存档：\`${path.join(dir, 'save.json')}\``);
+  lines.push('## 附件', '');
+  lines.push(`- 截图：[${ASSET_BRANCH}](${urls.shot}) · 本机 \`${path.join(dir, 'shot.png')}\``);
+  if (urls.save) lines.push(`- 存档：[${ASSET_BRANCH}](${urls.save}) · 本机 \`${path.join(dir, 'save.json')}\``);
   lines.push(`- 控制台错误：${b.errors.length} 条${b.errors.length ? '，见 report.json' : ''}`);
   return lines.join('\n') + '\n';
 }
@@ -104,17 +134,21 @@ export function reportPlugin(): Plugin {
             if (b.save) fs.writeFileSync(path.join(dir, 'save.json'), b.save);
             const { pasted: _pasted, save: _save, ...meta } = b;
             fs.writeFileSync(path.join(dir, 'report.json'), JSON.stringify({ ...meta, createdAt: new Date().toISOString() }, null, 2));
+            // 附件先推到 report-assets 分支，正文里内嵌显示
+            const repo = repoName();
+            ensureAssetBranch(repo);
+            const shotUrl = uploadAsset(repo, `reports/${b.id}/shot.png`, path.join(dir, 'shot.png'), `report ${b.id}: 截图`);
+            const saveUrl = b.save ? uploadAsset(repo, `reports/${b.id}/save.json`, path.join(dir, 'save.json'), `report ${b.id}: 存档`) : null;
             const bodyFile = path.join(dir, 'issue.md');
-            fs.writeFileSync(bodyFile, issueBody(b, dir));
+            fs.writeFileSync(bodyFile, issueBody(b, dir, { shot: shotUrl, save: saveUrl }));
             const labels = ['report', 'status::todo', b.type === 'bug' ? 'type::bug' : 'type::enhancement'];
             if (b.judge) labels.push('needs-decision');
             const args = ['issue', 'create', '--title', b.title, '--body-file', bodyFile];
             labels.forEach((l) => args.push('--label', l));
-            const r = spawnSync('gh', args, { cwd: ROOT, encoding: 'utf8' });
+            const r = gh(args);
             if (r.status !== 0) return send(res, 500, { error: `gh 失败：${r.stderr || r.stdout}` });
             const issueUrl = r.stdout.trim().split('\n').pop() ?? '';
             const number = Number(issueUrl.split('/').pop());
-            fs.appendFileSync(path.join(dir, 'report.json'), '');
             fs.writeFileSync(path.join(dir, 'issue.json'), JSON.stringify({ number, url: issueUrl }));
             return send(res, 200, { number, url: issueUrl });
           }

@@ -26,8 +26,9 @@
 
 ## 3. 落盘与 issue
 
-- 每单一个目录 `reports/<yyyymmdd-hhmmss>/`，含 `shot.png`、`save.json`、`report.json`、`issue.md`、`issue.json`。目录不入库，issue 正文写绝对路径，fix-todo 在本机按路径读。
-- issue 由 `gh issue create` 建在本仓库，标题即面板标题，正文：描述、类型 / 裁决 / 页签 / hash、框中元素清单、附件路径。
+- 每单一个目录 `reports/<yyyymmdd-hhmmss>/`，含 `shot.png`、`save.json`、`report.json`、`issue.md`、`issue.json`。目录不入库。
+- 截图与存档再经 Contents API 推到仓库的孤儿分支 `report-assets`（首次自动从空树建出，不含代码），issue 正文用 `blob/report-assets/...?raw=true` 链接内嵌显示截图，并保留本机路径供 fix-todo 直接读。
+- issue 由 `gh issue create` 建在本仓库，标题即面板标题，正文：描述、内嵌截图、类型 / 裁决 / 页签 / hash、框中元素清单、附件链接。
 - 标签：`report` + `type::bug` 或 `type::enhancement` + `status::todo`；需裁决加 `needs-decision`。
 
 ## 4. 状态流转

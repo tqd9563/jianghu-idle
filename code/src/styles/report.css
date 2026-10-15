@@ -1,0 +1,87 @@
+/* 提报面板（仅 dev 构建）。原型：docs/design/report-panel-prototype.html */
+.jh-report-seal { flex: 0 0 40px; letter-spacing: 0; font-size: 13px; }
+.jh-report-seal:hover { color: var(--cinnabar); border-color: oklch(0.66 0.14 32 / 0.5); }
+
+/* 框选层 */
+.jh-report-cap { position: fixed; inset: 0; z-index: var(--z-modal); cursor: crosshair; background: oklch(0.1 0.01 262 / 0.35); touch-action: none; }
+.jh-report-cap.shooting { background: transparent; cursor: default; }
+.jh-report-cap .hint {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%); pointer-events: none;
+  font-family: var(--font-display); letter-spacing: 0.2em; font-size: 14px; color: var(--ink);
+  background: oklch(0.13 0.011 262 / 0.82); padding: 8px 18px; border-radius: 10px;
+}
+.jh-report-cap .hint kbd { font-family: var(--font-body); letter-spacing: 0; color: var(--faint); margin-left: 10px; }
+.jh-report-cap .box { position: fixed; border: 1.5px solid var(--cinnabar); background: oklch(0.66 0.14 32 / 0.08); box-shadow: 0 0 0 1px oklch(0.13 0.011 262 / 0.6); pointer-events: none; }
+.jh-report-cap .box::after { content: attr(data-n); position: absolute; right: -1px; bottom: -22px; font-size: 12px; color: var(--cinnabar); }
+.jh-report-cap .el { position: fixed; outline: 1px dashed oklch(0.66 0.14 32 / 0.6); outline-offset: 1px; pointer-events: none; border-radius: 3px; }
+
+/* 填写卷 */
+.jh-report-back { position: fixed; inset: 0; z-index: var(--z-modal-backdrop); background: oklch(0.1 0.01 262 / 0.5); }
+.jh-report-sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); z-index: var(--z-modal);
+  background: linear-gradient(to right, oklch(0.145 0.013 262), oklch(0.165 0.014 262));
+  box-shadow: -20px 0 60px oklch(0 0 0 / 0.45);
+  padding: 26px 26px 22px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+  animation: jh-report-in .36s var(--ease-sharp); color: var(--ink); font-family: var(--font-body);
+}
+@keyframes jh-report-in { from { transform: translateX(24px); opacity: 0; } }
+.jh-report-sheet h2 { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.2em; margin: 0; font-weight: 600; display: flex; align-items: baseline; justify-content: space-between; }
+.jh-report-sheet h2 small { font-family: var(--font-body); font-size: 12px; letter-spacing: 0.05em; color: var(--faint); }
+.jh-report-sheet .shot { flex-shrink: 0; border-radius: 10px; overflow: hidden; background: var(--bg-deep); aspect-ratio: 16 / 9; display: grid; place-items: center; }
+.jh-report-sheet .shot img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.jh-report-sheet .shot.pasted { outline: 1.5px solid var(--ink-gold); }
+.jh-report-sheet .shot .none { color: var(--faint); font-size: 13px; }
+.jh-report-sheet .shot-cap { display: flex; justify-content: flex-end; font-size: 12px; color: var(--faint); margin-top: -10px; }
+.jh-report-sheet .shot-cap kbd { font-family: inherit; color: var(--muted); }
+.jh-report-sheet .els { display: flex; flex-direction: column; gap: 6px; }
+.jh-report-sheet .els .k { font-size: 12px; color: var(--faint); letter-spacing: 0.1em; display: flex; justify-content: space-between; }
+.jh-report-sheet .els .k button { border: 0; background: none; color: var(--gold); padding: 0; font: inherit; font-size: 12px; letter-spacing: 0.1em; cursor: pointer; }
+.jh-report-sheet .chip { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 8px; background: oklch(0.22 0.015 262 / 0.55); font-size: 13px; }
+.jh-report-sheet .chip .n { color: var(--cinnabar); font-size: 12px; }
+.jh-report-sheet .chip .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jh-report-sheet .chip .t code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--faint); margin-left: 8px; }
+.jh-report-sheet .chip .x { border: 0; background: none; color: var(--faint); padding: 0 2px; font-size: 14px; line-height: 1; cursor: pointer; }
+.jh-report-sheet .chip .x:hover { color: var(--cinnabar); }
+.jh-report-sheet .title { width: 100%; border: 0; border-bottom: 1px solid var(--hair); background: none; padding: 6px 2px; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.05em; color: var(--ink); outline: none; }
+.jh-report-sheet .title:focus { border-bottom-color: oklch(0.78 0.13 78 / 0.6); }
+.jh-report-sheet .title.auto { color: var(--muted); }
+.jh-report-sheet .title::placeholder { color: var(--faint); }
+.jh-report-sheet textarea { width: 100%; min-height: 96px; resize: vertical; border: 0; border-radius: 10px; background: oklch(0.22 0.015 262 / 0.55); padding: 12px 14px; line-height: 1.6; outline: none; font: inherit; color: inherit; }
+.jh-report-sheet textarea:focus { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.45); }
+.jh-report-sheet textarea::placeholder { color: var(--faint); }
+.jh-report-sheet .opts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.jh-report-sheet .seg { display: inline-flex; border: 1px solid var(--hair); border-radius: 8px; overflow: hidden; }
+.jh-report-sheet .seg button { border: 0; background: none; padding: 5px 14px; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.jh-report-sheet .seg button + button { border-left: 1px solid var(--hair); }
+.jh-report-sheet .seg button[aria-pressed="true"] { background: oklch(0.78 0.13 78 / 0.10); color: var(--gold); }
+.jh-report-sheet .sw { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; color: var(--muted); border: 0; background: none; padding: 0; cursor: pointer; }
+.jh-report-sheet .sw i { width: 30px; height: 17px; border-radius: 9px; background: oklch(0.30 0.014 262); position: relative; transition: background .2s; }
+.jh-report-sheet .sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--muted); transition: transform .2s var(--ease-sharp); }
+.jh-report-sheet .sw[aria-pressed="true"] { color: var(--gold); }
+.jh-report-sheet .sw[aria-pressed="true"] i { background: oklch(0.78 0.13 78 / 0.35); }
+.jh-report-sheet .sw[aria-pressed="true"] i::after { transform: translateX(13px); background: var(--gold); }
+.jh-report-sheet .auto-line { display: flex; gap: 14px; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+.jh-report-sheet .auto-line span::before { content: '✓ '; color: var(--ink-gold); }
+.jh-report-sheet .auto-line span.warn::before { content: '! '; color: var(--cinnabar); }
+.jh-report-sheet .err { font-size: 12.5px; color: var(--cinnabar); word-break: break-all; }
+.jh-report-sheet .acts { margin-top: auto; display: flex; gap: 8px; align-items: center; padding-top: 6px; }
+.jh-report-sheet .btn { border: 0; border-radius: 10px; padding: 11px 26px; font-family: var(--font-display); letter-spacing: 0.2em; font-size: 14px; cursor: pointer; }
+.jh-report-sheet .btn.primary { background: oklch(0.78 0.13 78 / 0.10); color: var(--gold); }
+.jh-report-sheet .btn.primary:hover { background: oklch(0.78 0.13 78 / 0.16); }
+.jh-report-sheet .btn:disabled { opacity: 0.6; cursor: wait; }
+.jh-report-sheet .cancel { margin-left: auto; border: 0; background: none; color: var(--faint); font: inherit; font-size: 13px; cursor: pointer; }
+
+/* 入池回执 */
+.jh-report-toast {
+  position: fixed; right: 26px; bottom: 26px; z-index: var(--z-toast); max-width: 380px;
+  background: oklch(0.13 0.011 262 / 0.9); border-radius: 12px; padding: 14px 18px 14px 16px;
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
+  animation: jh-report-toast-in .4s var(--ease-sharp); color: var(--ink); font-family: var(--font-body);
+}
+@keyframes jh-report-toast-in { from { transform: translateY(10px); opacity: 0; } }
+.jh-report-toast .seal { grid-row: span 2; width: 40px; height: 40px; border-radius: 6px; border: 1.5px solid oklch(0.5 0.17 28 / 0.92); color: oklch(0.5 0.17 28 / 0.92); font-family: var(--font-display); font-weight: 700; font-size: 13px; display: grid; place-items: center; letter-spacing: 0.1em; transform: rotate(-6deg); }
+.jh-report-toast .t { font-family: var(--font-display); letter-spacing: 0.1em; font-size: 15px; }
+.jh-report-toast .t b { color: var(--gold); font-weight: 600; }
+.jh-report-toast .d { font-size: 12.5px; color: var(--faint); }
+.jh-report-toast .d a { color: var(--ink-gold); text-decoration: none; }
+.jh-report-toast .d a:hover { text-decoration: underline; text-underline-offset: 3px; }

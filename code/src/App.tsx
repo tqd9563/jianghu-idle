@@ -2,7 +2,7 @@
  * 实现基准：docs/design/prototype.html（获批原型）+ 根目录 DESIGN.md，1:1 还原。
  * 内功页与选内功：docs/design/sect-neigong-prototype.html §1–§2；侧边栏页签解锁前不显示（同原型「侧边栏」节）。
  */
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { gearBonusOf } from './engine/gear';
 import { computeAttributes } from './engine/attributes';
@@ -32,6 +32,9 @@ import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
 import { DUSK_MARGIN, ERA_START, INIT_AGE, currentEra, isDusk, lifespanCap } from './engine/reincarnation';
 import { NEIGONG } from './engine/neigong';
+
+// 提报面板只进 dev 构建：懒加载，生产包不含
+const ReportPanel = import.meta.env.DEV ? lazy(() => import('./dev/ReportPanel')) : null;
 
 const NEIGONG_NAME = (id: keyof typeof NEIGONG) => NEIGONG[id].name;
 
@@ -202,6 +205,11 @@ export default function App() {
             ⚙
           </button>
           {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+          {ReportPanel && (
+            <button type="button" className="jh-ghost jh-report-seal" aria-label="提报（⌥R）" title="提报 ⌥R" onClick={() => window.dispatchEvent(new Event('jh:report'))}>
+              报
+            </button>
+          )}
         </div>
       </nav>
 
@@ -236,6 +244,7 @@ export default function App() {
           </button>
         ))}
       </nav>
+      {ReportPanel && <Suspense fallback={null}><ReportPanel tab={tab} /></Suspense>}
       <TipLayer />
 
       {neigongSelectOpen && <NeigongSelect />}

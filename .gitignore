@@ -10,3 +10,6 @@ __pycache__
 
 .playwright-mcp/
 code/dist/
+
+# 提报附件（截图 / 存档），本机使用，不入库
+reports/

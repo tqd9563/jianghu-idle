@@ -102,6 +102,7 @@ docs/
       sim.py                该模块专属 sim（可选）
     sim/                    跨模块全局 sim：mvp0_sim.py、export_fixtures.py
   design/                   获批交互原型 prototype.html、风格对比页
+  tooling/                  开发工具流程（提报面板、fix-todo），不是游戏内容
   archive/                  历史归档（只读）：mvp0/、mvp1/、mvp2/、systems/、directions/、reviews/
 ```
 
@@ -117,6 +118,7 @@ docs/
 | 模块设定 / 规格 | `docs/systems/<模块名>/` | 当前主题模块的权威口径，命名见 §3.1。 |
 | 全局模拟脚本 | `docs/systems/sim/` | 跨模块 sim 与 fixture 导出脚本。 |
 | 交互原型 | `docs/design/` | 获批原型 prototype.html、风格对比页。 |
+| 开发工具流程 | `docs/tooling/` | 提报面板、fix-todo 这类开发期工具的流程说明，与游戏设计无关。 |
 | 历史归档 | `docs/archive/` | mvp0/ mvp1/ mvp2/ systems/ directions/ reviews/，只读；历史核心规格（spec.md）与阶段收口（closure.md）均在此。 |
 
 ### 3.1 systems/ 模块目录规范

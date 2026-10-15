@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fight, makeBuild } from './combat';
+import { STAT_SCALE, huohouRealms } from './content';
 import {
   MVP2_BOSS_REWARDS,
   MVP2_BOSS_VALUES,
@@ -39,9 +40,10 @@ describe('MVP-2 finalized non-playable constants', () => {
         map: 3 as const,
         stage: 1,
         name: trial.name,
-        hp: trial.hp,
-        atk: trial.atk,
-        def: trial.def,
+        // 试炼常量仍是 sim 尺度，按 STAT_SCALE 换算到展示尺度（content.md §1 v2.9）
+        hp: trial.hp * STAT_SCALE,
+        atk: trial.atk * STAT_SCALE,
+        def: trial.def * STAT_SCALE,
         hit: trial.hit,
         dodge: trial.dodge,
         tags: [...trial.tags],
@@ -50,9 +52,16 @@ describe('MVP-2 finalized non-playable constants', () => {
         recommendedRealm: trial.recommendedRealm,
         reward: { neili: 0, silver: 0, xp: 0 },
       };
-      expect(fight(makeBuild(trial.route, 5, 7, 0), enemy, { mode: 'ev' }).win).toBe(false);
-      expect(fight(makeBuild(trial.route, 5, 7, 3), enemy, { mode: 'ev' }).win).toBe(true);
-      expect(fight(makeBuild(trial.route, 5, 8, 0), enemy, { mode: 'ev' }).win).toBe(true);
+      // MVP-2 试炼按「只有招式、没有火候」的构筑定的；火候改从第 1 级起折算后（formulas.md §3.4 v2.0）这里剥掉火候再比
+      const zhaoshiOnly = (lv: number, nodes: number) => {
+        const b = makeBuild(trial.route, 5, lv, nodes);
+        const dx = huohouRealms(lv);
+        const k = Math.pow(1.7, dx);
+        return { ...b, hp: b.hp / k, atk: b.atk / k, def: b.def / k, hit: b.hit - 12 * dx, dodge: b.dodge - 3 * dx };
+      };
+      expect(fight(zhaoshiOnly(7, 0), enemy, { mode: 'ev' }).win).toBe(false);
+      expect(fight(zhaoshiOnly(7, 3), enemy, { mode: 'ev' }).win).toBe(true);
+      expect(fight(zhaoshiOnly(8, 0), enemy, { mode: 'ev' }).win).toBe(true);
     }
   });
 

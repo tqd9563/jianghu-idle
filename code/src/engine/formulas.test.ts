@@ -52,12 +52,13 @@ describe('门径武学：招式 10 级 + 火候（formulas.md §3.4 v1.6）', ()
     expect(zhongCost(1)).toBe(3490);
     expect(zhongCost(65)).toBe(Math.round(3490 * 1.08 ** 64));
   });
-  it('招式封顶十成；十成以上每 20 级火候折合一个境界', () => {
+  it('招式封顶十成；火候从第 1 级起每 20 级折合一个境界（v2.0）', () => {
     expect(zhaoshiLevel(7)).toBe(7);
     expect(zhaoshiLevel(64)).toBe(10);
-    expect(huohouRealms(10)).toBe(0);
-    expect(huohouRealms(64)).toBeCloseTo(2.7, 10);
-    const e = huohouEffect(30);                // 折合 1 个境界
+    expect(huohouRealms(0)).toBe(0);
+    expect(huohouRealms(10)).toBeCloseTo(0.5, 10);
+    expect(huohouRealms(64)).toBeCloseTo(3.2, 10);
+    const e = huohouEffect(20);                // 折合 1 个境界
     expect(e.statMult).toBeCloseTo(1.7, 10);
     expect(e.hit).toBeCloseTo(12, 10);
     expect(e.dodge).toBeCloseTo(3, 10);

@@ -57,10 +57,10 @@ describe('gear · 生成', () => {
 
   it('装备等级沿 1.7^(ℓ−1) 放大：第 5 当量的兵器攻击约为第 1 当量的 8 倍', () => {
     const at = (level: number) => rollGear({ slot: '兵器', grade: 1, level, clearSilver: 1 }, seq([0.1, 0.1, 0.5, 0.5, 0.9])).base.攻击!;
-    // 境界 1 一件凡品只有零点几，取整到 1；第 5 当量 0.034 × 10 × 1.7^4 × 1.08 ≈ 3.07 → 3
-    expect(at(1)).toBe(1);
-    expect(at(5)).toBe(3);
-    expect(at(9)).toBe(Math.round(0.034 * 10 * Math.pow(1.7, 8) * 1.08));
+    // 展示尺度（content.md §1 v2.9）：第 1 当量 0.034 × 100 × 1.08 ≈ 3.67 → 4；第 5 当量 × 1.7^4 ≈ 30.7 → 31
+    expect(at(1)).toBe(4);
+    expect(at(5)).toBe(31);
+    expect(at(9)).toBe(Math.round(0.034 * 100 * Math.pow(1.7, 8) * 1.08));
   });
 });
 
@@ -138,7 +138,7 @@ describe('gear · 叠进构筑（spec §6）', () => {
 
     const a = computeAttributes(3, 'shaolin', 5, 0, 0, 1, g);
     const a0 = computeAttributes(3, 'shaolin', 5);
-    expect(a.atk).toBeCloseTo(Math.round((a0.atk + 2) * 1.04 * 10) / 10, 1);
+    expect(a.atk).toBeCloseTo((a0.atk + 2) * 1.04, 0);   // a0.atk 已取整到 0.1，再乘会差半位
     expect(a.critRate).toBeCloseTo(a0.critRate + 0.02, 9);
 
     const normal = allStages().find((e) => e.kind === 'normal' && !e.tags.includes('高血'))!;

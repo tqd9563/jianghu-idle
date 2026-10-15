@@ -20,8 +20,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 13,
-        "hpPct": 0.52773613
+        "rounds": 11,
+        "hpPct": 0.66357245
       }
     },
     {
@@ -43,8 +43,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 19,
-        "hpPct": 0.78844259
+        "rounds": 17,
+        "hpPct": 0.91414738
       }
     },
     {
@@ -66,8 +66,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 10,
-        "hpPct": 0.6458021
+        "rounds": 8,
+        "hpPct": 0.73085796
       }
     },
     {
@@ -89,8 +89,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 7,
-        "hpPct": 0.76991039
+        "rounds": 6,
+        "hpPct": 0.84118371
       }
     },
     {
@@ -112,8 +112,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 13,
-        "hpPct": 0.99417945
+        "rounds": 12,
+        "hpPct": 1.0
       }
     },
     {
@@ -135,8 +135,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 6,
-        "hpPct": 0.80825866
+        "rounds": 5,
+        "hpPct": 0.84118371
       }
     },
     {
@@ -159,8 +159,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 13,
-        "hpPct": 0.42815095
+        "rounds": 12,
+        "hpPct": 0.58513048
       }
     },
     {
@@ -183,8 +183,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 25,
-        "hpPct": 0.73593392
+        "rounds": 22,
+        "hpPct": 0.96406797
       }
     },
     {
@@ -207,8 +207,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 10,
-        "hpPct": 0.52345913
+        "rounds": 6,
+        "hpPct": 0.77370754
       }
     },
     {
@@ -230,8 +230,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 8,
-        "hpPct": 0.32951364
+        "rounds": 6,
+        "hpPct": 0.5442243
       }
     },
     {
@@ -253,8 +253,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 16,
-        "hpPct": 0.78257846
+        "rounds": 14,
+        "hpPct": 0.85225288
       }
     },
     {
@@ -275,9 +275,9 @@
         ]
       },
       "expect": {
-        "win": false,
-        "rounds": 20,
-        "hpPct": 0.0
+        "win": true,
+        "rounds": 16,
+        "hpPct": 0.41448505
       }
     },
     {
@@ -300,8 +300,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 16,
-        "hpPct": 0.48574165
+        "rounds": 12,
+        "hpPct": 0.72625758
       }
     },
     {
@@ -324,8 +324,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 32,
-        "hpPct": 0.59137482
+        "rounds": 29,
+        "hpPct": 0.92260829
       }
     },
     {
@@ -349,7 +349,7 @@
       "expect": {
         "win": true,
         "rounds": 8,
-        "hpPct": 0.73423341
+        "hpPct": 0.8150768
       }
     },
     {
@@ -370,7 +370,7 @@
       "expect": {
         "win": true,
         "rounds": 4,
-        "hpPct": 0.8925445
+        "hpPct": 0.90475491
       }
     },
     {
@@ -390,8 +390,8 @@
       },
       "expect": {
         "win": true,
-        "rounds": 3,
-        "hpPct": 0.928363
+        "rounds": 2,
+        "hpPct": 0.96825164
       }
     },
     {

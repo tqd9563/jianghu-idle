@@ -50,7 +50,7 @@ export function computeAttributes(
   const def = route ? ROUTES[route] : null;
   const g = def?.grant ?? {};
   const p = def?.perLevel ?? {};
-  // 逐重效果封顶十重；十重以上的火候与境界曲线同形叠在最外层（sect-neigong/spec.md §1.2）
+  // 逐重效果封顶十重；火候从第 1 重起与境界曲线同形叠在最外层（sect-neigong/spec.md §1.2）
   const L = route ? zhaoshiLevel(zhong) : 0;
   const dx = route ? huohouRealms(zhong) * huohouMult : 0;
   const hh = { statMult: Math.pow(1.7, dx), hit: 12 * dx, dodge: 3 * dx };

@@ -111,8 +111,8 @@ def skill_cost(level: int) -> float:
 
 
 def huohou_realms(level: int) -> float:
-    """火候折合的境界数"""
-    return max(0, level - SHICHENG) / LEVELS_PER_REALM
+    """火候折合的境界数：从第 1 重起每重折合 1/20 个境界（2026-10-15 起不再等到十成之后）"""
+    return level / LEVELS_PER_REALM
 
 
 def build(route: str, realm: int, level: int) -> dict:

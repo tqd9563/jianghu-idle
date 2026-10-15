@@ -21,4 +21,5 @@
 - 需求升级为「已确认」时必须补齐：动机（为什么做）、武侠世界观锚点、验收标准、依赖；复杂系统另建 `docs/systems/<模块>/design.md`，池中只留一行 + 链接。
 - 「进行中」同时不超过 2 条；废弃的需求不删除，改状态并留一句废弃原因。
 - GitHub issue 只用于三类：跨多次会话/多个 PR 的里程碑级功能（子任务用 issue 正文 checklist，不拆子 issue）、bug、需长期追踪的技术债；对应 PR 用 `Closes #N` 关联。
+- 例外：游戏内提报面板建的单（`report` 标签）不受上一条限制，小优化也可入池；状态用 `status::todo / doing / pr` 标签流转，合入即关闭。流程见 `docs/tooling/report-flow.md`。
 - 完成一个需求时，同步更新其在 BACKLOG.md 中的状态。

@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>提报面板 原型 — 开发工具</title>
+<!--
+  提报面板（仅 dev 构建）原型。
+  目的：玩的时候按一下，问题带着上下文自己进队列。
+  四个状态：常态 → 框选中 → 填写 → 已提报。右下角控制条可切状态；框选可真实拖拽。
+  底下的「武学」页是 mock，只为给框选一个真实 DOM。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: oklch(0.155 0.013 262);
+  --bg-deep: oklch(0.125 0.012 262);
+  --wash: oklch(0.19 0.014 262);
+  --wash-2: oklch(0.225 0.016 262);
+  --ink: oklch(0.91 0.012 85);
+  --muted: oklch(0.76 0.015 85);
+  --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7);
+  --gold: oklch(0.78 0.13 78);
+  --ink-gold: oklch(0.75 0.075 76);
+  --cinnabar: oklch(0.66 0.14 32);
+  --blood: oklch(0.62 0.17 25);
+  --lacquer: oklch(0.13 0.011 262 / 0.82);
+  --serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --body: "LXGW WenKai", -apple-system, "PingFang SC", sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --z-sticky: 10; --z-overlay: 20; --z-sheet: 30; --z-toast: 40; --z-proto: 50;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.6 var(--body); font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+textarea { font: inherit; color: inherit; }
+
+/* ═══════ 原型控制条（非设计内容） ═══════ */
+.proto {
+  position: fixed; left: 14px; bottom: 14px; z-index: var(--z-proto);
+  background: oklch(0.97 0 0); color: oklch(0.2 0 0); border-radius: 10px;
+  padding: 10px 12px; font-size: 12px; box-shadow: 0 8px 30px oklch(0 0 0 / 0.5);
+  display: grid; gap: 6px; width: 290px;
+}
+.proto .row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.proto .row > span { width: 40px; flex: 0 0 40px; color: oklch(0.45 0 0); }
+.proto button { border: 1px solid oklch(0.8 0 0); background: white; border-radius: 6px; padding: 2px 8px; color: oklch(0.2 0 0); }
+.proto button[aria-pressed="true"] { background: oklch(0.25 0 0); color: white; border-color: oklch(0.25 0 0); }
+.proto p { margin: 0; color: oklch(0.4 0 0); line-height: 1.5; }
+
+/* ═══════ 游戏外壳 mock（照现行 App.tsx 侧栏） ═══════ */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--bg-deep) 248px, transparent 248px); }
+.rail { position: sticky; top: 0; height: 100vh; padding: 26px 22px 20px; display: flex; flex-direction: column; gap: 22px; }
+.brand { font-family: var(--serif); font-size: 13px; letter-spacing: 0.3em; color: var(--faint); }
+.who .realm { font-family: var(--serif); font-size: 30px; font-weight: 700; letter-spacing: 0.1em; line-height: 1.2; }
+.who .realm small { font-size: 13px; font-weight: 500; color: var(--ink-gold); letter-spacing: 0.15em; margin-left: 6px; vertical-align: 4px; }
+.who .life { margin-top: 6px; color: var(--muted); font-size: 13px; }
+.who .life b { color: var(--ink); font-weight: 600; }
+.body-state { font-size: 13px; color: var(--faint); display: flex; align-items: center; gap: 8px; }
+.body-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.55 0.05 150); }
+.res { display: grid; gap: 12px; }
+.res .k { font-size: 12px; color: var(--faint); letter-spacing: 0.1em; }
+.res .v { font-size: 22px; font-weight: 600; line-height: 1.25; }
+.res .v.small { font-size: 17px; }
+.res .rate { font-size: 12.5px; color: var(--gold); margin-left: 6px; font-weight: 500; }
+.res-pair { display: flex; gap: 22px; }
+.brush { height: 8px; width: 100%; opacity: 0.55; }
+.nav { display: grid; gap: 2px; }
+.nav button { display: flex; align-items: center; gap: 10px; border: 0; background: none; text-align: left; padding: 9px 12px; border-radius: 8px; color: var(--muted); font-family: var(--serif); font-size: 15px; letter-spacing: 0.2em; }
+.nav button[aria-current="page"] { background: oklch(0.78 0.13 78 / 0.09); color: var(--gold); }
+.rail-foot { margin-top: auto; display: flex; gap: 8px; }
+.ghost { flex: 1; border: 1px solid var(--hair); background: none; border-radius: 8px; padding: 8px 0; font-family: var(--serif); letter-spacing: 0.3em; color: var(--faint); }
+.ghost.icon { flex: 0 0 40px; letter-spacing: 0; }
+
+.stage { position: relative; padding: 30px clamp(18px, 3.2vw, 48px) 60px; min-width: 0; }
+.stage::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 20%, oklch(0.22 0.02 262 / 0.6), transparent 60%); pointer-events: none; }
+.page { position: relative; max-width: 1080px; margin: 0 auto; }
+.page h1 { font-family: var(--serif); font-size: 28px; letter-spacing: 0.18em; font-weight: 700; margin: 0 0 6px; }
+.page .lead { color: var(--muted); margin: 0 0 26px; }
+
+/* 武学 mock：几行招式 */
+.wx { display: grid; gap: 4px; max-width: 720px; }
+.wx-row { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 12px 16px; border-radius: 12px; background: oklch(0.25 0.017 262 / 0.55); }
+.wx-row.dim { opacity: 0.55; }
+.wx-row .nm { font-family: var(--serif); font-size: 16px; letter-spacing: 0.1em; }
+.wx-row .nm small { font-family: var(--body); font-size: 12.5px; color: var(--faint); letter-spacing: 0.05em; margin-left: 10px; }
+.wx-row .st { font-size: 13px; color: var(--faint); }
+.wx-row .st.lit { color: var(--ink-gold); }
+.wx-row .st.bad { color: var(--cinnabar); }
+
+/* ═══════ 提报入口：侧栏脚下的一枚小印（dev 构建才有） ═══════ */
+.report-seal {
+  flex: 0 0 40px; border: 1px solid var(--hair); background: none; border-radius: 8px;
+  color: var(--faint); font-family: var(--serif); font-size: 13px; letter-spacing: 0;
+}
+.report-seal:hover { color: var(--cinnabar); border-color: oklch(0.66 0.14 32 / 0.5); }
+
+/* ═══════ 框选层 ═══════ */
+.cap {
+  position: fixed; inset: 0; z-index: var(--z-overlay); cursor: crosshair;
+  background: oklch(0.1 0.01 262 / 0.35);
+}
+.cap .hint {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+  font-family: var(--serif); letter-spacing: 0.2em; font-size: 14px; color: var(--ink);
+  background: var(--lacquer); padding: 8px 18px; border-radius: 10px; pointer-events: none;
+}
+.cap .hint kbd { font-family: var(--body); letter-spacing: 0; color: var(--faint); margin-left: 10px; }
+.cap .box {
+  position: fixed; border: 1.5px solid var(--cinnabar); background: oklch(0.66 0.14 32 / 0.08);
+  box-shadow: 0 0 0 1px oklch(0.13 0.011 262 / 0.6);
+  pointer-events: none;
+}
+.cap .box::after {
+  content: attr(data-n); position: absolute; right: -1px; bottom: -22px;
+  font-size: 12px; color: var(--cinnabar); letter-spacing: 0.05em;
+}
+.cap .el { position: fixed; outline: 1px dashed oklch(0.66 0.14 32 / 0.6); outline-offset: 1px; pointer-events: none; border-radius: 3px; }
+
+/* ═══════ 填写页：右侧抽出一卷 ═══════ */
+.sheet-back { position: fixed; inset: 0; z-index: var(--z-sheet); background: oklch(0.1 0.01 262 / 0.5); }
+.sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); z-index: var(--z-sheet);
+  background: linear-gradient(to right, oklch(0.145 0.013 262), oklch(0.165 0.014 262));
+  box-shadow: -20px 0 60px oklch(0 0 0 / 0.45);
+  padding: 26px 26px 22px; display: flex; flex-direction: column; gap: 18px;
+  overflow-y: auto; animation: sheet-in .36s var(--ease);
+}
+@keyframes sheet-in { from { transform: translateX(24px); opacity: 0; } }
+.sheet h2 { font-family: var(--serif); font-size: 18px; letter-spacing: 0.2em; margin: 0; font-weight: 600; display: flex; align-items: baseline; justify-content: space-between; }
+.sheet h2 small { font-family: var(--body); font-size: 12px; letter-spacing: 0.05em; color: var(--faint); }
+
+/* 截图缩略：真实 DOM 克隆缩放，红框画在上面 */
+.shot { flex-shrink: 0; position: relative; border-radius: 10px; overflow: hidden; background: var(--bg-deep); aspect-ratio: 16 / 9; }
+.shot .clone { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; width: 1600px; }
+.shot .mark { position: absolute; border: 1.5px solid var(--cinnabar); background: oklch(0.66 0.14 32 / 0.1); }
+.shot .mark::after { content: attr(data-n); position: absolute; left: -1px; top: -16px; font-size: 11px; color: var(--cinnabar); }
+.shot-cap { display: flex; justify-content: flex-end; font-size: 12px; color: var(--faint); margin-top: -10px; }
+.shot-cap kbd { font-family: inherit; color: var(--muted); }
+.shot.pasted { outline: 1.5px solid var(--ink-gold); }
+
+/* 框中元素：芯片 */
+.els { display: flex; flex-direction: column; gap: 6px; }
+.els .k { font-size: 12px; color: var(--faint); letter-spacing: 0.1em; display: flex; justify-content: space-between; }
+.els .k button { border: 0; background: none; color: var(--gold); padding: 0; font-size: 12px; letter-spacing: 0.1em; }
+.chip {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  padding: 7px 10px; border-radius: 8px; background: oklch(0.22 0.015 262 / 0.55); font-size: 13px;
+}
+.chip .n { color: var(--cinnabar); font-size: 12px; }
+.chip .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip .t code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--faint); margin-left: 8px; }
+.chip .x { border: 0; background: none; color: var(--faint); padding: 0 2px; font-size: 14px; line-height: 1; }
+.chip .x:hover { color: var(--cinnabar); }
+
+/* 标题：自动拼，可改 */
+.title { width: 100%; border: 0; border-bottom: 1px solid var(--hair); background: none; padding: 6px 2px; font-family: var(--serif); font-size: 15px; letter-spacing: 0.05em; color: var(--ink); outline: none; }
+.title:focus { border-bottom-color: oklch(0.78 0.13 78 / 0.6); }
+.title.auto { color: var(--muted); }
+.title::placeholder { color: var(--faint); }
+
+/* 描述 */
+.sheet textarea {
+  width: 100%; min-height: 96px; resize: vertical; border: 0; border-radius: 10px;
+  background: oklch(0.22 0.015 262 / 0.55); padding: 12px 14px; line-height: 1.6; outline: none;
+}
+.sheet textarea:focus { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.45); }
+.sheet textarea::placeholder { color: var(--faint); }
+
+/* 类型 + 裁决开关：一行 */
+.opts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--hair); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: none; padding: 5px 14px; color: var(--muted); font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--hair); }
+.seg button[aria-pressed="true"] { background: oklch(0.78 0.13 78 / 0.10); color: var(--gold); }
+.sw { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); border: 0; background: none; padding: 0; }
+.sw i { width: 30px; height: 17px; border-radius: 9px; background: oklch(0.30 0.014 262); position: relative; transition: background .2s; }
+.sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--muted); transition: transform .2s var(--ease); }
+.sw[aria-pressed="true"] { color: var(--gold); }
+.sw[aria-pressed="true"] i { background: oklch(0.78 0.13 78 / 0.35); }
+.sw[aria-pressed="true"] i::after { transform: translateX(13px); background: var(--gold); }
+
+/* 自动附带：一行小字，不解释，只列 */
+.auto { display: flex; gap: 14px; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+.auto span::before { content: '✓ '; color: var(--ink-gold); }
+.auto span.warn::before { content: '! '; color: var(--cinnabar); }
+
+/* 动作 */
+.acts { margin-top: auto; display: flex; gap: 8px; align-items: center; padding-top: 6px; }
+.btn { border: 0; border-radius: 10px; padding: 11px 26px; font-family: var(--serif); letter-spacing: 0.2em; font-size: 14px; }
+.btn.primary { background: oklch(0.78 0.13 78 / 0.10); color: var(--gold); }
+.btn.primary:hover { background: oklch(0.78 0.13 78 / 0.16); }
+.btn.quiet { background: transparent; color: var(--muted); }
+.btn.quiet:hover { color: var(--ink); }
+.acts .cancel { margin-left: auto; border: 0; background: none; color: var(--faint); font-size: 13px; }
+
+/* ═══════ 已提报：一枚印落下 ═══════ */
+.toast {
+  position: fixed; right: 26px; bottom: 26px; z-index: var(--z-toast);
+  background: var(--lacquer); border-radius: 12px; padding: 14px 18px 14px 16px;
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
+  animation: toast-in .4s var(--ease); max-width: 360px;
+}
+@keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
+.toast .seal {
+  grid-row: span 2; width: 40px; height: 40px; border-radius: 6px; border: 1.5px solid oklch(0.5 0.17 28 / 0.92);
+  color: oklch(0.5 0.17 28 / 0.92); font-family: var(--serif); font-weight: 700; font-size: 13px;
+  display: grid; place-items: center; letter-spacing: 0.1em; transform: rotate(-6deg);
+}
+.toast .t { font-family: var(--serif); letter-spacing: 0.1em; font-size: 15px; }
+.toast .t b { color: var(--gold); font-weight: 600; }
+.toast .d { font-size: 12.5px; color: var(--faint); }
+.toast .d a { color: var(--ink-gold); text-decoration: none; }
+.toast .d a:hover { text-decoration: underline; text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════ 游戏外壳 mock ═══════ -->
+<div class="app" id="app">
+  <nav class="rail" aria-label="人物卷">
+    <div class="brand">江湖无尽录</div>
+    <div class="who">
+      <div class="realm">登堂<small>第三境</small></div>
+      <div class="life">第 <b>2</b> 世 · <b>31</b> 岁 · 江湖历 <b>58</b> 年</div>
+    </div>
+    <div class="body-state">身无伤病</div>
+    <div class="res">
+      <div><div class="k">内力</div><div class="v">6,900<span class="rate">+3.2/秒</span></div></div>
+      <div class="res-pair">
+        <div><div class="k">银两</div><div class="v small">530</div></div>
+        <div><div class="k">声望</div><div class="v small">120</div></div>
+      </div>
+    </div>
+    <svg class="brush" viewBox="0 0 200 8" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M2 5 C 40 2, 90 6, 140 3.5 S 190 4, 198 3" stroke="oklch(0.55 0.02 262)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="nav">
+      <button type="button">修炼</button>
+      <button type="button">战斗</button>
+      <button type="button">行囊</button>
+      <button type="button">内功</button>
+      <button type="button" aria-current="page">武学</button>
+      <button type="button">门派</button>
+      <button type="button">市集</button>
+      <button type="button">声望阁</button>
+    </div>
+    <div class="rail-foot">
+      <button type="button" class="ghost">转世</button>
+      <button type="button" class="ghost icon" aria-label="设置">⚙</button>
+      <!-- 提报入口：dev 构建才渲染；热键 ⌥R 等价 -->
+      <button type="button" class="report-seal" id="seal" aria-label="提报（⌥R）" title="提报 ⌥R">报</button>
+    </div>
+  </nav>
+
+  <main class="stage" id="stage">
+    <div class="page">
+      <h1>武学</h1>
+      <p class="lead">惊雷诀 · 剑 · 五式</p>
+      <div class="wx" id="wx">
+        <div class="wx-row"><div class="nm">惊雷一闪<small>起手</small></div><div class="st lit">全本在匣</div></div>
+        <div class="wx-row"><div class="nm">雷走龙蛇<small>连招</small></div><div class="st lit">残页 8/8</div></div>
+        <div class="wx-row dim"><div class="nm">霹雳贯日<small>爆发</small></div><div class="st">全本未得</div></div>
+        <div class="wx-row dim"><div class="nm">风雷同至<small>守势</small></div><div class="st bad">残页 3/8</div></div>
+        <div class="wx-row dim"><div class="nm">九天惊雷<small>绝招</small></div><div class="st">残页 0/8</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══════ 状态 2：框选层 ═══════ -->
+<div class="cap" id="cap" hidden>
+  <div class="hint">拖一个框，圈住你要说的地方<kbd>Esc 取消 · 松开即定</kbd></div>
+  <div class="box" id="box" hidden data-n="①"></div>
+</div>
+
+<!-- ═══════ 状态 3：填写 ═══════ -->
+<div class="sheet-back" id="sheetBack" hidden></div>
+<aside class="sheet" id="sheet" hidden aria-label="提报">
+  <h2>提报<small>武学 · 第 2 世 · 10:42</small></h2>
+
+  <div class="shot" id="shot">
+    <div class="clone" id="clone"></div>
+  </div>
+  <div class="shot-cap" id="shotCap"><kbd>⌘V</kbd>&nbsp;换成你自己的截图</div>
+
+  <div class="els">
+    <div class="k"><span>框中元素</span><button type="button" id="again">再框一处</button></div>
+    <div id="chips"></div>
+  </div>
+
+  <input class="title auto" id="title" placeholder="标题（自动）" aria-label="标题">
+  <textarea id="desc" placeholder="怎么了，想改成什么样"></textarea>
+
+  <div class="opts">
+    <div class="seg" role="group" aria-label="类型">
+      <button type="button" aria-pressed="true" data-type="bug">缺陷</button>
+      <button type="button" aria-pressed="false" data-type="polish">优化</button>
+    </div>
+    <button type="button" class="sw" id="judge" aria-pressed="false">需我裁决<i></i></button>
+  </div>
+
+  <div class="auto">
+    <span>存档</span><span>页签 武学</span><span>种子 a91f</span><span class="warn">控制台错误 1</span>
+  </div>
+
+  <div class="acts">
+    <button type="button" class="btn primary" id="submit">提报</button>
+    <button type="button" class="cancel" id="cancel">取消</button>
+  </div>
+</aside>
+
+<!-- ═══════ 状态 4：已提报 ═══════ -->
+<div class="toast" id="toast" hidden role="status">
+  <div class="seal">入池</div>
+  <div class="t"><b>#57</b> <span id="toastTitle">武学 · 全本未得：不要用「全本未得 / 全本在匣」这种文案</span></div>
+  <div class="d">待开始 · <a href="#">github.com/tqd9563/jianghu-idle/issues/57</a></div>
+</div>
+
+<!-- ═══════ 原型控制条 ═══════ -->
+<div class="proto" id="proto">
+  <div class="row"><span>状态</span>
+    <button type="button" data-st="idle" aria-pressed="true">常态</button>
+    <button type="button" data-st="cap">框选中</button>
+    <button type="button" data-st="sheet">填写</button>
+    <button type="button" data-st="toast">已提报</button>
+  </div>
+  <p>常态里按 <b>⌥R</b> 或点侧栏「报」进入框选；框选可真实拖拽，松开进填写页。填写页的截图是当前页面缩略，红框与芯片按你框的位置生成。</p>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const cap = $('#cap'), box = $('#box'), sheet = $('#sheet'), sheetBack = $('#sheetBack'), toast = $('#toast');
+const proto = $('#proto');
+
+/* —— 状态机 —— */
+let state = 'idle';
+function setState(s) {
+  state = s;
+  cap.hidden = s !== 'cap';
+  sheet.hidden = sheetBack.hidden = s !== 'sheet';
+  toast.hidden = s !== 'toast';
+  if (s !== 'cap') { box.hidden = true; clearElMarks(); }
+  proto.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === s)));
+  if (s === 'sheet' && !marks.length) demoMark();
+  if (s === 'sheet') renderSheet();
+}
+proto.addEventListener('click', (e) => { const b = e.target.closest('[data-st]'); if (b) setState(b.dataset.st); });
+$('#seal').addEventListener('click', () => setState('cap'));
+document.addEventListener('keydown', (e) => {
+  if (e.altKey && e.code === 'KeyR') { e.preventDefault(); setState('cap'); }
+  if (e.key === 'Escape') { if (state === 'cap') setState(marks.length ? 'sheet' : 'idle'); else if (state === 'sheet') setState('idle'); }
+});
+
+/* —— 框选：拖拽 + 命中元素 —— */
+let marks = [];          // [{rect:{x,y,w,h}, els:[{tag,text,sel}]}]
+let drag = null;
+cap.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; box.hidden = false; place(box, drag.x, drag.y, 0, 0); cap.setPointerCapture(e.pointerId); });
+cap.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const r = norm(drag.x, drag.y, e.clientX, e.clientY);
+  place(box, r.x, r.y, r.w, r.h);
+  box.dataset.n = '①②③④'[marks.length] || '⑤';
+  clearElMarks();
+  hitEls(r).forEach(({ el }) => { const b = el.getBoundingClientRect(); const m = document.createElement('div'); m.className = 'el'; place(m, b.left, b.top, b.width, b.height); cap.appendChild(m); });
+});
+cap.addEventListener('pointerup', (e) => {
+  if (!drag) return;
+  const r = norm(drag.x, drag.y, e.clientX, e.clientY); drag = null;
+  if (r.w < 6 || r.h < 6) { box.hidden = true; clearElMarks(); return; }
+  marks.push({ rect: r, els: hitEls(r).map(h => h.info) });
+  setState('sheet');
+});
+function norm(x1, y1, x2, y2) { return { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) }; }
+function place(el, x, y, w, h) { el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.width = w + 'px'; el.style.height = h + 'px'; }
+function clearElMarks() { cap.querySelectorAll('.el').forEach(n => n.remove()); }
+
+/* 命中规则：只取「带可见文本的叶子节点」，与框相交即命中；这就是 agent 拿到的定位信息 */
+function hitEls(r) {
+  const out = [];
+  document.querySelectorAll('#app *').forEach((el) => {
+    if (el.children.length && ![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) return;
+    const text = (el.textContent || '').trim(); if (!text) return;
+    const b = textRect(el);
+    if (b.width === 0 || b.right < r.x || b.left > r.x + r.w || b.bottom < r.y || b.top > r.y + r.h) return;
+    out.push({ el, info: { tag: el.tagName.toLowerCase(), text: text.slice(0, 24), sel: selOf(el) } });
+  });
+  return out.slice(0, 8);
+}
+/* 混合元素（文本 + 子元素）只量自己的文字，不量整个格子：否则横跨整行的名字格会误命中 */
+function textRect(el) {
+  if (!el.children.length) return el.getBoundingClientRect();
+  const r = document.createRange(); let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+  el.childNodes.forEach((n) => { if (n.nodeType !== 3 || !n.textContent.trim()) return; r.selectNodeContents(n); const b = r.getBoundingClientRect(); x1 = Math.min(x1, b.left); y1 = Math.min(y1, b.top); x2 = Math.max(x2, b.right); y2 = Math.max(y2, b.bottom); });
+  return { left: x1, top: y1, right: x2, bottom: y2, width: x2 - x1, height: y2 - y1 };
+}
+function selOf(el) {
+  const parts = [];
+  for (let n = el; n && n.id !== 'app' && parts.length < 3; n = n.parentElement) {
+    let s = n.tagName.toLowerCase();
+    if (n.className && typeof n.className === 'string') s += '.' + n.className.trim().split(/\s+/)[0];
+    const sib = n.parentElement ? [...n.parentElement.children].filter(c => c.tagName === n.tagName) : [];
+    if (sib.length > 1) s += `:nth-of-type(${sib.indexOf(n) + 1})`;
+    parts.unshift(s);
+  }
+  return parts.join(' > ');
+}
+/* 直接跳到「填写」时，预置一个框在「全本未得」那一行 */
+function demoMark() {
+  const el = $('#wx .wx-row:nth-child(3) .st'); const b = el.getBoundingClientRect();
+  const r = { x: b.left - 14, y: b.top - 10, w: b.width + 28, h: b.height + 20 };
+  marks = [{ rect: r, els: hitEls(r).map(h => h.info) }];
+}
+
+/* —— 填写页渲染 —— */
+function renderSheet() {
+  const shot = $('#shot'), clone = $('#clone');
+  const scale = shot.clientWidth / window.innerWidth;
+  clone.style.width = window.innerWidth + 'px';
+  clone.style.height = window.innerHeight + 'px';
+  clone.style.transform = `scale(${scale})`;
+  clone.innerHTML = ''; const c = $('#app').cloneNode(true); c.id = ''; c.querySelector('#seal')?.remove(); clone.appendChild(c);
+  shot.querySelectorAll('.mark').forEach(n => n.remove());
+  marks.forEach((m, i) => { const d = document.createElement('div'); d.className = 'mark'; d.dataset.n = '①②③④'[i]; place(d, m.rect.x * scale, m.rect.y * scale, m.rect.w * scale, m.rect.h * scale); shot.appendChild(d); });
+  const chips = $('#chips'); chips.innerHTML = '';
+  marks.forEach((m, i) => m.els.forEach((e, j) => {
+    const d = document.createElement('div'); d.className = 'chip';
+    d.innerHTML = `<span class="n">${'①②③④'[i]}</span><span class="t">${e.text}<code>${e.sel}</code></span><button type="button" class="x" aria-label="去掉">×</button>`;
+    d.querySelector('.x').onclick = () => { m.els.splice(j, 1); renderSheet(); };
+    chips.appendChild(d);
+  }));
+  if (!$('#desc').value) $('#desc').value = '不要用「全本未得 / 全本在匣」这种文案。集齐就亮起来，没集齐保持灰暗并显示残页进度。';
+  autoTitle();
+}
+/* 标题自动拼：页签 · 首个框中元素：描述第一句；用户改过就不再跟 */
+let titleTouched = false;
+function autoTitle() {
+  if (titleTouched) return;
+  const first = marks.flatMap(m => m.els)[0];
+  const sentence = ($('#desc').value.split(/[。！？\n]/)[0] || '').trim().slice(0, 30);
+  $('#title').value = ['武学', first && first.text].filter(Boolean).join(' · ') + (sentence ? '：' + sentence : '');
+  $('#title').classList.add('auto');
+}
+$('#desc').addEventListener('input', autoTitle);
+$('#title').addEventListener('input', () => { titleTouched = true; $('#title').classList.remove('auto'); });
+$('#again').onclick = () => setState('cap');
+function reset() { marks = []; $('#desc').value = ''; $('#title').value = ''; titleTouched = false; }
+$('#cancel').onclick = () => { reset(); setState('idle'); };
+$('#submit').onclick = () => { $('#toastTitle').textContent = $('#title').value; reset(); setState('toast'); setTimeout(() => { if (state === 'toast') setState('idle'); }, 6000); };
+$('#judge').onclick = (e) => e.currentTarget.setAttribute('aria-pressed', String(e.currentTarget.getAttribute('aria-pressed') !== 'true'));
+sheet.querySelector('.seg').addEventListener('click', (e) => { const b = e.target.closest('[data-type]'); if (!b) return; sheet.querySelectorAll('[data-type]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+/* 粘贴：换掉缩略图 */
+document.addEventListener('paste', (e) => {
+  if (state !== 'sheet') return;
+  const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/')); if (!f) return;
+  const shot = $('#shot'); shot.classList.add('pasted'); $('#clone').innerHTML = `<img src="${URL.createObjectURL(f)}" style="width:${window.innerWidth}px">`;
+  shot.querySelectorAll('.mark').forEach(n => n.remove()); $('#shotCap').textContent = '已换成你的截图';
+});
+window.addEventListener('resize', () => { if (state === 'sheet') renderSheet(); });
+</script>
+</body>
+</html>

@@ -169,7 +169,7 @@ components:
 
 # Design System: 江湖无尽录
 
-> 获批原型：`docs/design/ui-overhaul-prototype.html`（issue #26 视觉 + 骨架大改，2026-09-30 定稿）；`docs/design/battle-loot-prototype.html`（issue #45 战斗挂机、装备、市集与黑市，2026-10-13 定稿，在前者之上增补）。本文件与原型冲突时以原型为准并回改本文件。
+> 获批原型：`docs/design/ui-overhaul-prototype.html`（issue #26 视觉 + 骨架大改，2026-09-30 定稿）；`docs/design/battle-loot-prototype.html`（issue #45 战斗挂机、装备、市集与黑市，2026-10-13 定稿，在前者之上增补）；`docs/design/report-panel-prototype.html`（dev 构建内的提报面板，2026-10-15 定稿，只复用既有 token，不新增）。本文件与原型冲突时以原型为准并回改本文件。
 
 ## 1. Overview
 

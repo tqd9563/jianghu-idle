@@ -10,9 +10,12 @@ import './styles/bag.css'
 import './styles/market.css'
 import App from './App.tsx'
 import { initTheme } from './theme/themePreference'
+import { installReportLog } from './dev/reportLog'
 
 // 启动即套用已保存的皮肤：否则刷新后 data-theme 缺失，界面会退回默认夜雨账台
 initTheme()
+// 开发期记录控制台错误，供提报面板一并带走
+if (import.meta.env.DEV) installReportLog()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

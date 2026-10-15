@@ -8,7 +8,7 @@
 import { STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
 import type { RouteId } from '../engine/content';
 
-const SAVE_KEY = 'jianghu-idle:save:v1';
+export const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
 const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
 

@@ -123,8 +123,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ach.t2 .ic { filter: none; } .ach.t2 .ic.fx { filter: saturate(0) brightness(1.28) contrast(1.1); }
 .ach.t3 .ic { filter: drop-shadow(0 0 10px oklch(0.8 0.14 85 / 0.5)); } .ach.t3 .ic.fx { filter: sepia(0.5) saturate(2.6) hue-rotate(4deg) brightness(1.35) contrast(1.1) drop-shadow(0 0 10px oklch(0.8 0.14 85 / 0.55)); }
 .ach.t1 .n { color: oklch(0.80 0.07 55); } .ach.t2 .n { color: oklch(0.88 0.01 240); } .ach.t3 .n { color: var(--gold); }
-.ach .grade { font-size: 11px; letter-spacing: 0.2em; color: var(--faint); }
-.ach.t1 .grade { color: oklch(0.72 0.09 55); } .ach.t2 .grade { color: oklch(0.80 0.01 240); } .ach.t3 .grade { color: var(--gold); }
 .ach .ic.ph { display: grid; place-items: center; font-family: var(--serif); font-size: 26px; color: var(--faint); border-radius: 50%; box-shadow: inset 0 0 0 1px var(--hair); }
 .ach.lit .ic { filter: none; }
 .ach.lit .ic.ph { color: var(--ink-gold); box-shadow: inset 0 0 0 1px oklch(0.75 0.075 76 / 0.5); }
@@ -399,15 +397,13 @@ function achTile(a) {
   const lit = tier > 0, max = tier === 3;
   const name = lit ? a.tiers[tier - 1] : a.tiers[0];
   const nextTh = max ? a.th[2] : a.th[tier];
-    const GRADE = ['', '铜', '银', '金'];
-  // 悬停只给两件事：现在生效的最高一层效果、离下一层还差多少
-  const now = tier ? `现 ${a.eff[tier - 1]}` : '';
-  const next = max ? '已至顶' : `${a.tiers[tier]} · 还差 ${fmt(nextTh - c)} ${a.what}`;
+    // 悬停只给两件事：现在生效的最高一层效果、离下一层还差多少
+  const now = tier ? a.eff[tier - 1] : '';
+  const next = max ? '' : `下一级：${a.tiers[tier]} · ${a.what} ${fmt(c)}/${fmt(nextTh)}`;
   const tip = [now, next].filter(Boolean).join('<br>');
   return `<div class="ach${lit ? ' lit' : ''}${max ? ' max' : ''} t${tier}" data-tip-html="${tip}">
     <div class="ring"><img class="ic" src="../../code/public/art/achv/${a.id}${['', '', '-silver', '-gold'][tier]}.png" alt="" data-base="../../code/public/art/achv/${a.id}.png" onerror="if (this.src !== new URL(this.dataset.base, location).href) { this.classList.add('fx'); this.src = this.dataset.base; } else { this.outerHTML='<div class=\\'ic ph\\'>${FIRST_CHAR[a.id]}</div>'; }"></div>
     <div class="n">${name}</div>
-    ${tier ? `<div class="grade">${GRADE[tier]}</div>` : ''}
   </div>`;
 }
 

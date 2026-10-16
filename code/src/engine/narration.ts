@@ -244,6 +244,13 @@ export const MECH = {
     '{我}胸中层层叠浪再也压不住，{功}一催，这一击排山倒海般压向{敌}，造成{伤}点伤害！',
     '百川汇流，一朝归海，{我}借{功}之力连下数击，{敌}受到{伤}点伤害！',
   ],
+  /** 归海会心后追加（不带数字；叠满的那一下不追加，直接接排山倒海） */
+  gather: [
+    '这一下的力道并未用尽，余劲仍在体内流转。',
+    '一招打完，{我}周身气血翻涌，越打越顺。',
+    '这一下打得{敌}闷哼一声，{我}的劲反倒更足了。',
+    '{我}收招回气，只觉胸中那股劲又足了几分。',
+  ],
   /** 唐门普攻命中后追加：毒层数 */
   poisonAdd: ['毒入一层，已积 {层} / {上限} 层。'],
   /** 唐门开战施毒 */
@@ -553,6 +560,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
     }
     case 'crit': {
       const segs = line(PLAIN_CRIT[plain], 0, { crit: true });
+      if (ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
       return segs;
     }
@@ -567,6 +575,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       if (t.crit) segs.push(...line(CAST_EXTRA.crit, 0));
       // 特效追加句：只在本招特效确实生效时追加（引擎标在 fx 上）；必暴由暴击句体现，连击另有补刀事件
       if (t.fx && t.fx !== '必暴' && t.fx !== '连击') segs.push(...fill(EFFECT_LINES[t.fx], { ...base, det: t.detonate }));
+      if (t.crit && ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
       return segs;
     }
     case 'burst':

@@ -182,7 +182,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   <ul class="foot">
     <li>开战首击必定会心，所以交手一开始就是 1 重浪。</li>
     <li>引擎里一叠满就当场倾出、归零，现行实现玩家永远看不到满格。原型在满格时停 0.7 秒再清空，让「满了 → 打出去」看得见。</li>
-    <li>会心句不再带「n / m」，叠浪进度只看上面这一行。要诀写作「每次会心叠 1 重浪；叠满 N 重，施展排山倒海」。</li>
+    <li>会心句不再带「n / m」，叠浪进度只看上面这一行；会心后追加一句不带数字的余劲句，叠满的那一下不追加。要诀写作「每次会心叠 1 重浪；叠满 N 重，施展排山倒海」。</li>
   </ul>
 </div>
 
@@ -200,6 +200,13 @@ const FOE_HIT = [
   `<span class="foe">${FOE}</span>趁你换招，一棍扫中你的小腿，受到<span class="dm">{d}</span>点伤害。`,
   `<span class="foe">${FOE}</span>扑上来一阵乱打，<span class="me">你</span>挨了几下，受到<span class="dm">{d}</span>点伤害。`,
 ];
+const GATHER = [
+  `这一下的力道并未用尽，余劲仍在体内流转。`,
+  `一招打完，<span class="me">你</span>周身气血翻涌，越打越顺。`,
+  `这一下打得<span class="foe">${FOE}</span>闷哼一声，<span class="me">你</span>的劲反倒更足了。`,
+  `<span class="me">你</span>收招回气，只觉胸中那股劲又足了几分。`,
+];
+let gi = 0;
 const BURST = [
   `浪已叠满，<span class="me">你</span>借<span class="sk">百川诀</span>之力一击倾出，<span class="foe">${FOE}</span>如遭山崩海啸，受到<span class="cr">{d}</span>点伤害！`,
   `<span class="me">你</span>胸中层层叠浪再也压不住，<span class="sk">百川诀</span>一催，这一击排山倒海般压向<span class="foe">${FOE}</span>，造成<span class="cr">{d}</span>点伤害！`,
@@ -253,7 +260,7 @@ function gain() {
   }, 700);
 }
 function enemyTurn() { const d = dmg(380, 520); hp = Math.max(1, hp - d); say(pick(FOE_HIT).replace('{d}', d)); paint(n); }
-function playerCrit() { round(); say(pick(CRIT).replace('{d}', dmg(820, 900))); gain(); if (!busy) enemyTurn(); else setTimeout(enemyTurn, 1250); }
+function playerCrit() { round(); const c = pick(CRIT).replace('{d}', dmg(820, 900)); say(n + 1 < need ? c + GATHER[gi++ % GATHER.length] : c); gain(); if (!busy) enemyTurn(); else setTimeout(enemyTurn, 1250); }
 function playerHit() { round(); say(pick(HIT).replace('{d}', dmg(360, 420))); enemyTurn(); }
 
 function reset() {

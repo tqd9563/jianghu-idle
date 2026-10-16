@@ -314,17 +314,24 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       elayers = 0;
     }
 
+    // 叠满即排山倒海：伤害并入本次出手结算，但战报里排在触发它的会心之后（pushBurst）
+    let burstAmt = 0;
     if (build.sqNeed < 99) {
       sq += ev ? pHit * (forced ? 1 : build.crit) : hitRoll * critRoll;
       if (sq >= build.sqNeed) {
         sq -= build.sqNeed;
-        const burst = build.atk * build.burstMult * mitigationMultiplier(enemy.def, defK) * dmgMult * spread();
-        dealt += burst;
+        burstAmt = build.atk * build.burstMult * mitigationMultiplier(enemy.def, defK) * dmgMult * spread();
+        dealt += burstAmt;
         stats.burstCount += 1;
-        stats.burstDmg += burst;
-        push(rd, 'player', 'burst', `浪已叠满！排山倒海造成 ${f1(burst)} 伤害`, f1(burst));
+        stats.burstDmg += burstAmt;
       }
     }
+    const pushBurst = () => {
+      if (burstAmt <= 0) return;
+      push(rd, 'player', 'burst', `浪已叠满！排山倒海造成 ${f1(burstAmt)} 伤害`, f1(burstAmt));
+      burstAmt = 0;
+    };
+    const shownDealt = dealt - burstAmt;
     // 附毒：额外叠 1 层，另有几率再 +1（spec §3.4）
     let extraPoison = 0;
     if (eff === '附毒') { extraPoison = 1 + (fv > 0 && rng() < fv ? 1 : 0); fx = eff; }
@@ -345,8 +352,9 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       push(rd, 'player', 'cast',
         hitRoll === 0
           ? `施展「${skill.name} · ${form.name}」，被闪避`
-          : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}`,
-        f1(dealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}), ...(fx ? { fx } : {}) });
+          : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(shownDealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}`,
+        f1(shownDealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}), ...(fx ? { fx } : {}) });
+      pushBurst();
       // 连击：有几率追加一次普攻（不叠浪、不叠毒）
       if (eff === '连击' && hitRoll && rng() < fv) {
         const h2 = roll(pHit);
@@ -363,9 +371,10 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       const critMark = (forced || critRoll === 1) && !ev;
       if (critMark) stats.critCount += 1;
       push(rd, 'player', critMark ? 'crit' : 'attack',
-        `你${build.plainMult !== 1 ? '普攻（×0.60）' : '普攻'}${critMark ? '暴击！' : '命中，'}造成 ${f1(dealt)} 伤害${build.poison.perHit && hitRoll ? `，毒 +1 层（${Math.round(elayers)}/${build.poison.cap}）` : ''}`,
-        f1(dealt));
+        `你${build.plainMult !== 1 ? '普攻（×0.60）' : '普攻'}${critMark ? '暴击！' : '命中，'}造成 ${f1(shownDealt)} 伤害${build.poison.perHit && hitRoll ? `，毒 +1 层（${Math.round(elayers)}/${build.poison.cap}）` : ''}`,
+        f1(shownDealt));
     }
+    pushBurst();
     if (tags.includes('反伤') && dealt > 0) {
       const refl = dealt * THORNS_ENEMY;
       const absorb = Math.min(pshield, refl);

@@ -30,7 +30,7 @@ import { PAGES_NEEDED } from '../engine/wuxue';
 const f0 = (n: number) => fmtBig(Math.round(n));
 
 /** 叠浪潮位条（docs/design/jishi-prototype.html 丙）：按重上涨；引擎一叠满就倾出归零，这里在满时停 0.7 秒再泄空 */
-function TideMeter({ n, need, bursts }: { n: number; need: number; bursts: number }) {
+function TideMeter({ n, need, bursts, brim }: { n: number; need: number; bursts: number; brim: boolean }) {
   const [full, setFull] = useState(false);
   const [pour, setPour] = useState(false);
   const seen = useRef(bursts);
@@ -43,9 +43,11 @@ function TideMeter({ n, need, bursts }: { n: number; need: number; bursts: numbe
     const t2 = setTimeout(() => setPour(false), 1200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [bursts]);
-  const shown = full ? need : n;
+  // brim：触发叠满的那句会心已揭示、排山倒海还在下一拍——引擎此刻已归零，这里先顶满
+  const top = full || brim;
+  const shown = top ? need : n;
   return (
-    <div className={`meter tide${full ? ' full' : ''}${pour ? ' pour' : ''}`}>
+    <div className={`meter tide${top ? ' full' : ''}${pour ? ' pour' : ''}`}>
       <div className="lbl"><span>叠浪</span><span className="n"><b>{shown}</b> / {need}</span></div>
       <div className="tide-bar">
         <i style={{ width: `${(shown / need) * 100}%` }} />
@@ -277,7 +279,11 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     </div>
                   )}
                   {fighting && last && build.sqNeed < 99 && (
-                    <TideMeter n={Math.floor(last.pSq)} need={build.sqNeed} bursts={turns.filter((t) => t.kind === 'burst').length} />
+                    <TideMeter
+                      n={Math.floor(last.pSq)} need={build.sqNeed}
+                      bursts={turns.filter((t) => t.kind === 'burst').length}
+                      brim={battle!.result.turns[battle!.revealed]?.kind === 'burst'}
+                    />
                   )}
                 </div>
 

@@ -106,7 +106,7 @@ function Stalls({ kind }: { kind: 'arms' | 'wear' }) {
       <div className="head"><span className="serif">{kind === 'arms' ? '兵器铺' : '衣饰铺'}</span></div>
       <div className="stall-grid">
         {goods.map((g) => {
-          const price = shopPriceOf(s, g.price);
+          const price = shopPriceOf(s, g.price, 'goods');
           return (
             <div key={g.id} className="stall-it">
               <Img it={g.sample} />

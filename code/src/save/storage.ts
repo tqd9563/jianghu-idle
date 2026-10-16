@@ -22,7 +22,7 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -104,10 +104,29 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 9) out = migrateIdleV8ToV9(out);
   if (fromVer < 10) out = migrateTeachV9ToV10(out);
   if (fromVer < 11) out = migrateRumorV10ToV11(out);
+  if (fromVer < 12) out = migratePrestigeV11ToV12(out);
   return out;
 }
 
 /** v10 → v11（实装五九派）：拜山传闻从布尔改为「哪张图」的编号，true → 1 */
+/**
+ * v12（prestige-shop/design.md）：声望阁改前尘。再入江湖改名重出江湖；武道笔记 / 师门指引 / 破关心得退出购买
+ * （效果并入侠名录成就，实装二迁为对应成就一层）；新增底蕴八条级数，旧档补零。
+ */
+function migratePrestigeV11ToV12<T>(state: T): T {
+  const s = state as Record<string, unknown>;
+  if (!Array.isArray(s.ownedRepNodes)) return state;   // 没买过节点的档不动；底蕴缺字段由 FRESH 兜底
+  const rename: Record<string, string> = { zairu_jianghu: 'chongchu_jianghu' };
+  const retired = new Set(['wudao_biji', 'shimen_zhiyin', 'poguan_xinde']);
+  const owned = s.ownedRepNodes as string[];
+  const gone = owned.filter((id) => retired.has(id));
+  return {
+    ...s,
+    ownedRepNodes: [...new Set(owned.filter((id) => !retired.has(id)).map((id) => rename[id] ?? id))],
+    ...(gone.length ? { retiredNodes: gone } : {}),
+  } as T;
+}
+
 function migrateRumorV10ToV11<T>(state: T): T {
   const s = state as { rumorPending?: unknown };
   if (!s || typeof s !== 'object' || typeof s.rumorPending !== 'boolean') return state;

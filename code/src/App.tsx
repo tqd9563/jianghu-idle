@@ -17,7 +17,7 @@ import { applyDebugHash } from './debug';
 import { BagPane } from './panes/BagPane';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
-import { RepPane } from './panes/RepPane';
+import { RepPane, type RepSub } from './panes/RepPane';
 import { NeigongPane } from './panes/NeigongPane';
 import { WuxuePane } from './panes/WuxuePane';
 import { SectPane } from './panes/SectPane';
@@ -43,13 +43,16 @@ type TabId = 'cultivate' | 'battle' | 'bag' | 'neigong' | 'wuxue' | 'sect' | 'sh
 /** 每页一幅底图（code/public/art/，莉刻生成） */
 const PAGE_ART: Record<TabId, string> = {
   cultivate: 'cultivate.jpg', battle: 'battle-village.jpg', bag: 'wuxue.jpg', neigong: 'neigong.jpg', wuxue: 'wuxue.jpg',
-  sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep.jpg',
+  sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep-diyun.jpg',
 };
+/** 前尘页三个栏目各一张底图（prestige-shop/design.md §5） */
+const REP_ART: Record<RepSub, string> = { diyun: 'rep-diyun.jpg', jiyuan: 'rep-jiyuan.jpg' };
 const REALM_CN = ['', '第一境', '第二境', '第三境', '第四境', '第五境', '第六境', '第七境'];
 
 export default function App() {
   const s = useGameStore();
   const [tab, setTabRaw] = useState<TabId>('cultivate');
+  const [repSub, setRepSub] = useState<RepSub>('diyun');
   // 点开页签即记入「已见」，新开页签的金点随之消失
   const setTab = (t: TabId) => { setTabRaw(t); useGameStore.getState().seeTab(t); };
   const [observerOpen, setObserverOpen] = useState(false);
@@ -135,7 +138,7 @@ export default function App() {
     { id: 'wuxue', name: '武学', show: !!s.neigong, fresh: !seen.includes('wuxue') },
     { id: 'sect', name: '门派', show: s.realm >= SECT_REALM, fresh: !seen.includes('sect') },
     { id: 'shop', name: '市集', show: shopUnlocked, fresh: !seen.includes('shop') },
-    { id: 'rep', name: '声望阁', short: '声望', show: repUnlocked, fresh: !seen.includes('rep') },
+    { id: 'rep', name: '前尘', show: repUnlocked, fresh: !seen.includes('rep') },
   ];
   const shown = tabs.filter((t) => t.show);
   const bodyLine = hurt && worst
@@ -223,7 +226,7 @@ export default function App() {
         </div>
         <div className="jh-stage">
           {/* 底图：每页同位，固定铺满舞台背后（DESIGN.md Do：底图固定同位、上浓下淡） */}
-          <div key={tab} className={`jh-art art-${tab}`} style={{ '--art': `url('/art/${PAGE_ART[tab]}')` } as CSSProperties} aria-hidden="true" />
+          <div key={tab === 'rep' ? `rep-${repSub}` : tab} className={`jh-art art-${tab}`} style={{ '--art': `url('/art/${tab === 'rep' ? REP_ART[repSub] : PAGE_ART[tab]}')` } as CSSProperties} aria-hidden="true" />
           <div key={`p-${tab}`} className={`jh-page page-${tab}`}>
             {tab === 'cultivate' && <CultivatePane />}
             {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
@@ -232,7 +235,7 @@ export default function App() {
             {tab === 'wuxue' && s.neigong && <WuxuePane />}
             {tab === 'sect' && s.realm >= SECT_REALM && <SectPane />}
             {tab === 'shop' && shopUnlocked && <ShopPane />}
-            {tab === 'rep' && <RepPane />}
+            {tab === 'rep' && <RepPane sub={repSub} onSub={setRepSub} />}
           </div>
         </div>
       </main>

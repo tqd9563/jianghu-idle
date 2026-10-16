@@ -1,5 +1,5 @@
 /**
- * 转世结算演出（规格书 §8.6-3）：声望入账的峰终庆典 + 本世总结；关闭后落地声望阁（§8.6-4）。
+ * 转世结算演出（规格书 §8.6-3）：声望入账的峰终庆典 + 本世总结；关闭后落地前尘（§8.6-4）。
  * 与转世演出同一套 jh-ceremony.dusk 语言。文案逐字取自 docs/rules/copy/retire.md v2.3 §4；
  * 寿终 / 战死分岔见 copy/reincarnation.md v1.2 §3（死因行放在题眼位置）。
  */
@@ -67,7 +67,7 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
         )}
         <div className="acts">
           <button type="button" className="jh-btn" style={{ minWidth: 240 }} onClick={onDone}>
-            {battle ? '转世 · 再入江湖' : '进入声望阁'}
+            {battle ? '转世 · 再入江湖' : '进入前尘'}
           </button>
         </div>
       </div>

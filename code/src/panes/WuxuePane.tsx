@@ -10,12 +10,11 @@ import { formTitle } from '../engine/formNames';
 import {
   BIG_OF, CAT_GROUPS, EFFECT_TAG, FORM_GATES, PAGES_NEEDED, QUALITY_PARAMS, RESONANCE_MULT, TRIGGER_CAP, WUXUE, WUXUE_IDS,
   checkFormGate, effectText, formCd, formCost, formDunwuChance, formKey, formMult, pagesFull, shulianThresholds,
-  shulianTier, slotCount, usableWith, type WuxueCat, type WuxueId,
+  shulianTier, usableWith, type WuxueCat, type WuxueId,
 } from '../engine/wuxue';
-import { hasNode } from '../engine/prestige';
 import { isBenmen } from '../engine/sect';
 import { ROUTES } from '../engine/routes';
-import { handsOf, learnedFormsOf, qiMaxOf, useGameStore } from '../store/gameStore';
+import { handsOf, learnedFormsOf, qiMaxOf, useGameStore, slotCountOf } from '../store/gameStore';
 
 const Q_NO: Record<Quality, 1 | 2 | 3> = { 寻常: 1, 上乘: 2, 绝学: 3 };
 /** 熟练四档的玩家叫法（引擎里末档叫「圆熟」，界面统一写「圆满」） */
@@ -52,7 +51,7 @@ export function WuxuePane() {
   const [cur, setCur] = useState<WuxueId | null>(equipped[0] ?? shelf[0] ?? null);
   const [cat, setCat] = useState<'全部' | WuxueCat>('全部');
   const current = cur && shelf.includes(cur) ? cur : shelf[0] ?? null;
-  const slots = slotCount(s.realm);
+  const slots = slotCountOf(s);
   const count = (c: '全部' | WuxueCat) => shelf.filter((id) => c === '全部' || WUXUE[id].cat === c).length;
   const shown = shelf.filter((id) => cat === '全部' || WUXUE[id].cat === cat);
 
@@ -135,7 +134,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
   const owned = (s.ownedWuxue ?? []).includes(id);
   const equipped = s.equipped ?? [];
   const on = equipped.includes(id);
-  const full = equipped.length >= slotCount(s.realm);
+  const full = equipped.length >= slotCountOf(s);
   const res = d.route !== null && s.neigong !== null && NEIGONG[s.neigong].route === d.route;
   const benmen = isBenmen(s.sect ?? null, id);
   const learned = learnedFormsOf(s, id);
@@ -250,7 +249,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
         const hasScroll = (s.ownedScrolls ?? []).includes(key) || pagesFull(d, pages, id, k);
         const g = checkFormGate(d, k, s.realm, qi, hasScroll, casts(k - 1), benmen);
         const needG = FORM_GATES[d.quality][k];
-        const chance = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), hasNode(s.ownedRepNodes, 'shimen_zhiyin'));
+        const chance = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), false);
         const inBox = d.quality === '寻常' && books.includes(key);
         return (
           <div key={k} className="wx-shi locked">
@@ -266,7 +265,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
                 )}
                 <span className={g.prev ? 'y' : 'n'}>前式熟练</span>
                 {k === nextK && g.ready && !inBox && (
-                  <span className="dunwu" data-tip={`每出一招判一次顿悟：基础 ${Math.round(p.dunwuP * 100)}% × 悟性 ${(s.wuxing ?? 1).toFixed(2)}${(s.pastLearned ?? []).includes(key) ? ' · 前世悟过 ×3' : ''}${hasNode(s.ownedRepNodes, 'shimen_zhiyin') ? ' · 师门指引 ×2' : ''}`}>
+                  <span className="dunwu" data-tip={`每出一招判一次顿悟：基础 ${Math.round(p.dunwuP * 100)}% × 悟性 ${(s.wuxing ?? 1).toFixed(2)}${(s.pastLearned ?? []).includes(key) ? ' · 前世悟过 ×3' : ''}`}>
                     顿悟中 · 每出一招 {(chance * 100).toFixed(0)}%
                   </span>
                 )}

@@ -214,7 +214,7 @@ export const GEAR_SHAPE: Record<GearSlot, readonly [number, number]> = { 兵器:
 export const BAG_CELLS = 80;
 export const cellsOf = (slot: GearSlot) => GEAR_SHAPE[slot][0] * GEAR_SHAPE[slot][1];
 export const bagUsed = (bag: readonly GearItem[]) => bag.reduce((n, it) => n + cellsOf(it.slot), 0);
-export const bagFits = (bag: readonly GearItem[], it: GearItem) => bagUsed(bag) + cellsOf(it.slot) <= BAG_CELLS;
+export const bagFits = (bag: readonly GearItem[], it: GearItem, cells = BAG_CELLS) => bagUsed(bag) + cellsOf(it.slot) <= cells;
 
 // ---------------------------------------------------------------- 名字与数值
 

@@ -116,13 +116,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* 侠名录：成就网格，计量达标点亮 */
 .achv { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .ach { position: relative; border-radius: 10px; padding: 12px 10px 10px; background: oklch(0.18 0.012 262 / 0.45); display: grid; justify-items: center; gap: 6px; text-align: center; cursor: help; }
-.ach .ring { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--hair); }
+.ach .ring { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; }
 .ach .ic { width: 64px; height: 64px; object-fit: contain; filter: grayscale(1) brightness(0.45); transition: filter .3s var(--ease); }
-/* 三品：铜 / 银 / 金，靠描边与底晕说（DESIGN.md The Grade On The Edge Rule） */
-.ach.t1 .ring { box-shadow: inset 0 0 0 1.5px oklch(0.62 0.09 55), 0 0 0 3px oklch(0.62 0.09 55 / 0.12); background: radial-gradient(circle, oklch(0.62 0.09 55 / 0.14), transparent 70%); }
-.ach.t2 .ring { box-shadow: inset 0 0 0 1.5px oklch(0.80 0.01 240), 0 0 0 3px oklch(0.80 0.01 240 / 0.14); background: radial-gradient(circle, oklch(0.80 0.01 240 / 0.16), transparent 70%); }
-.ach.t3 .ring { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 0 3px oklch(0.78 0.13 78 / 0.18), 0 0 14px oklch(0.78 0.13 78 / 0.35); background: radial-gradient(circle, oklch(0.78 0.13 78 / 0.2), transparent 70%); }
-.ach.t1 .n { color: oklch(0.78 0.08 55); } .ach.t2 .n { color: oklch(0.86 0.01 240); } .ach.t3 .n { color: var(--gold); }
+/* 三品：徽记本身换材质——铜 <id>.png / 银 <id>-silver.png / 金 <id>-gold.png（AI 图生图）；缺图时 .fx 滤镜兜底 */
+.ach.t1 .ic { filter: none; }
+.ach.t2 .ic { filter: none; } .ach.t2 .ic.fx { filter: saturate(0) brightness(1.28) contrast(1.1); }
+.ach.t3 .ic { filter: drop-shadow(0 0 10px oklch(0.8 0.14 85 / 0.5)); } .ach.t3 .ic.fx { filter: sepia(0.5) saturate(2.6) hue-rotate(4deg) brightness(1.35) contrast(1.1) drop-shadow(0 0 10px oklch(0.8 0.14 85 / 0.55)); }
+.ach.t1 .n { color: oklch(0.80 0.07 55); } .ach.t2 .n { color: oklch(0.88 0.01 240); } .ach.t3 .n { color: var(--gold); }
 .ach .grade { font-size: 11px; letter-spacing: 0.2em; color: var(--faint); }
 .ach.t1 .grade { color: oklch(0.72 0.09 55); } .ach.t2 .grade { color: oklch(0.80 0.01 240); } .ach.t3 .grade { color: var(--gold); }
 .ach .ic.ph { display: grid; place-items: center; font-family: var(--serif); font-size: 26px; color: var(--faint); border-radius: 50%; box-shadow: inset 0 0 0 1px var(--hair); }
@@ -411,7 +411,7 @@ function achTile(a) {
   const GRADE = ['', '铜', '银', '金'];
   const tip = a.tiers.map((t, i) => `${i < tier ? '✓' : '·'} ${GRADE[i + 1]} · ${t}　${a.eff[i]}　${fmt(a.th[i])} ${a.what}`).join('<br>');
   return `<div class="ach${lit ? ' lit' : ''}${max ? ' max' : ''} t${tier}" data-tip-html="${tip}">
-    <div class="ring"><img class="ic" src="../../code/public/art/achv/${a.id}.png" alt="" onerror="this.outerHTML='<div class=\\'ic ph\\'>${FIRST_CHAR[a.id]}</div>'"></div>
+    <div class="ring"><img class="ic" src="../../code/public/art/achv/${a.id}${['', '', '-silver', '-gold'][tier]}.png" alt="" data-base="../../code/public/art/achv/${a.id}.png" onerror="if (this.src !== new URL(this.dataset.base, location).href) { this.classList.add('fx'); this.src = this.dataset.base; } else { this.outerHTML='<div class=\\'ic ph\\'>${FIRST_CHAR[a.id]}</div>'; }"></div>
     <div class="n">${name}</div>
     ${tier ? `<div class="grade">${GRADE[tier]}</div>` : ''}
     <div class="bar"><i style="width:${pct}%"></i></div>

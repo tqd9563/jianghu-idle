@@ -84,9 +84,17 @@
 /* 敌方墨条自右向左 */
 .page-battle .side.enemy .jh-ink-bar i { left: auto; right: 0; background: linear-gradient(to left, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30));
   -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); }
-.page-battle .meter.marks .pips { display: flex; gap: 6px; margin-top: 7px; }
-.page-battle .meter.marks .pips i { width: 9px; height: 9px; border-radius: 50%; background: oklch(0.12 0.01 262 / 0.7); box-shadow: inset 0 0 0 1px var(--hair); transition: background .3s var(--ease-sharp), box-shadow .3s var(--ease-sharp); }
-.page-battle .meter.marks .pips i.on { background: var(--gold); box-shadow: 0 0 8px oklch(0.78 0.13 78 / 0.45); }
+/* 叠浪潮位条（jishi-prototype.html 丙）：一根墨条按重上涨，水青渐金；满时浪头发亮，倾出时一口气泄空 */
+.page-battle .meter.tide .lbl .n, .page-battle .meter.tide .lbl .n b { transition: color .3s; }
+.page-battle .meter.tide.full .lbl .n, .page-battle .meter.tide.full .lbl .n b { color: var(--gold); }
+.page-battle .tide-bar { position: relative; height: 7px; margin-top: 5px; }
+.page-battle .tide-bar::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.7); }
+.page-battle .tide-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .55s var(--ease-sharp);
+  background: linear-gradient(to right, oklch(0.46 0.06 200), oklch(0.62 0.08 190) 55%, var(--gold));
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); }
+.page-battle .tide-bar .tick { position: absolute; top: 1px; bottom: 1px; width: 1px; background: oklch(0.155 0.013 262 / 0.9); z-index: 1; }
+.page-battle .meter.tide.full .tide-bar i { box-shadow: 0 0 12px oklch(0.78 0.13 78 / 0.55); -webkit-mask-image: none; mask-image: none; }
+.page-battle .meter.tide.pour .tide-bar i { transition: width .45s cubic-bezier(0.6, 0, 0.9, 0.4); }
 .page-battle .vs { text-align: center; padding-top: 16px; font-family: var(--font-display); color: var(--faint); letter-spacing: 0.2em; }
 .page-battle .vs .big { font-size: 26px; color: var(--muted); letter-spacing: 0.1em; display: block; }
 .page-battle .vs .rd { font-size: 12px; }

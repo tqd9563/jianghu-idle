@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>积势表现原型</title>
+<title>叠浪表现原型</title>
 <!--
-  issue #69：归海路数的「势」在战斗页「你」一侧的表现。
+  issue #69：归海路数的「叠浪」在战斗页「你」一侧的表现。
   三种方案同屏对照，顶部控件同时驱动三栏；战报区在最下方，演示会心句不再带层数。
   色值、字体、墨条尺寸取自 code/src/styles/tokens.css、shell.css、battle.css。
 -->
@@ -61,7 +61,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .opt { border-radius: 10px; padding: 16px 18px 20px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
 .opt .tag { font-family: var(--font-display); color: var(--ink-gold); letter-spacing: 0.12em; font-size: 13px; }
 .opt .note { color: var(--faint); font-size: 12px; margin: 2px 0 14px; min-height: 2.6em; }
-.opt.rec .tag::after { content: '推荐'; margin-left: 8px; font-size: 11px; padding: 0 6px; border-radius: 3px; color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+.opt.rec .tag::after { content: '已选定'; margin-left: 8px; font-size: 11px; padding: 0 6px; border-radius: 3px; color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
 
 /* 「你」一侧：照抄战斗页 */
 .side .name { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; }
@@ -124,11 +124,11 @@ button:disabled { opacity: 0.4; cursor: default; }
 </head>
 <body>
 <div class="wrap">
-  <h1>积势</h1>
+  <h1>叠浪</h1>
   <p class="sub">归海路数 · 战斗页「你」一侧的三种表现。顶部控件同时驱动三栏。</p>
 
   <div class="ctl">
-    <div class="grp"><span>积势需求</span>
+    <div class="grp"><span>叠浪需求</span>
       <button data-need="5" class="on">5 · 入门</button><button data-need="4">4 · 登堂</button><button data-need="3">3 · 大成</button>
     </div>
     <div class="grp">
@@ -142,34 +142,34 @@ button:disabled { opacity: 0.4; cursor: default; }
   <div class="grid">
     <section class="opt" data-v="a">
       <div class="tag">甲 · 圆点</div>
-      <div class="note">现行实现。一分势一枚点，数得清；和墨条语言不同，单独成一行。</div>
+      <div class="note">现行实现。一重浪一枚点，数得清；和墨条语言不同，单独成一行。</div>
       <div class="side">
         <div class="name">你</div><div class="desc">小有所成 · 百川诀</div>
         <div class="meter"><div class="lbl"><span>气血</span><span><b class="hpn">3,311</b> / 3,311</span></div><div class="ink hp"><i class="hpb" style="width:100%"></i></div></div>
         <div class="meter"><div class="lbl"><span>真气</span><span><b class="qin">90</b> / 90</span></div><div class="ink qi"><i class="qib" style="width:100%"></i></div></div>
-        <div class="meter js"><div class="lbl"><span>积势</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="pips"></div></div>
+        <div class="meter js"><div class="lbl"><span>叠浪</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="pips"></div></div>
       </div>
     </section>
 
-    <section class="opt rec" data-v="b">
+    <section class="opt" data-v="b">
       <div class="tag">乙 · 分段墨条</div>
       <div class="note">与真气条同高同宽，切成需求数格。三条墨条一个家族，格数一眼可见。</div>
       <div class="side">
         <div class="name">你</div><div class="desc">小有所成 · 百川诀</div>
         <div class="meter"><div class="lbl"><span>气血</span><span><b class="hpn">3,311</b> / 3,311</span></div><div class="ink hp"><i class="hpb" style="width:100%"></i></div></div>
         <div class="meter"><div class="lbl"><span>真气</span><span><b class="qin">90</b> / 90</span></div><div class="ink qi"><i class="qib" style="width:100%"></i></div></div>
-        <div class="meter js"><div class="lbl"><span>积势</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="cells"></div></div>
+        <div class="meter js"><div class="lbl"><span>叠浪</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="cells"></div></div>
       </div>
     </section>
 
-    <section class="opt" data-v="c">
+    <section class="opt rec" data-v="c">
       <div class="tag">丙 · 潮位</div>
       <div class="note">一根连续墨条按格上涨，水色渐成金。满时浪头发亮，倾出时一口气泄空，贴「百川归海」。</div>
       <div class="side">
         <div class="name">你</div><div class="desc">小有所成 · 百川诀</div>
         <div class="meter"><div class="lbl"><span>气血</span><span><b class="hpn">3,311</b> / 3,311</span></div><div class="ink hp"><i class="hpb" style="width:100%"></i></div></div>
         <div class="meter"><div class="lbl"><span>真气</span><span><b class="qin">90</b> / 90</span></div><div class="ink qi"><i class="qib" style="width:100%"></i></div></div>
-        <div class="meter js"><div class="lbl"><span>积势</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="tide"><i style="width:20%"></i></div></div>
+        <div class="meter js"><div class="lbl"><span>叠浪</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="tide"><i style="width:20%"></i></div></div>
       </div>
     </section>
   </div>
@@ -180,9 +180,9 @@ button:disabled { opacity: 0.4; cursor: default; }
   </div>
 
   <ul class="foot">
-    <li>开战首击必定会心，所以交手一开始就是 1 分势。</li>
-    <li>引擎里势一满就当场倾出、归零，现行实现玩家永远看不到满格。原型在满格时停 0.7 秒再清空，让「满了 → 打出去」看得见。</li>
-    <li>会心句不再带「n / m」，势的进度只看上面这一行。</li>
+    <li>开战首击必定会心，所以交手一开始就是 1 重浪。</li>
+    <li>引擎里一叠满就当场倾出、归零，现行实现玩家永远看不到满格。原型在满格时停 0.7 秒再清空，让「满了 → 打出去」看得见。</li>
+    <li>会心句不再带「n / m」，叠浪进度只看上面这一行。要诀写作「每次会心叠 1 重浪；叠满 N 重，施展排山倒海」。</li>
   </ul>
 </div>
 
@@ -201,8 +201,8 @@ const FOE_HIT = [
   `<span class="foe">${FOE}</span>扑上来一阵乱打，<span class="me">你</span>挨了几下，受到<span class="dm">{d}</span>点伤害。`,
 ];
 const BURST = [
-  `势已积满，<span class="me">你</span>借<span class="sk">百川诀</span>之力一击倾出，<span class="foe">${FOE}</span>如遭山崩海啸，受到<span class="cr">{d}</span>点伤害！`,
-  `<span class="me">你</span>胸中积势再也按捺不住，<span class="sk">百川诀</span>一催，这一击排山倒海般压向<span class="foe">${FOE}</span>，造成<span class="cr">{d}</span>点伤害！`,
+  `浪已叠满，<span class="me">你</span>借<span class="sk">百川诀</span>之力一击倾出，<span class="foe">${FOE}</span>如遭山崩海啸，受到<span class="cr">{d}</span>点伤害！`,
+  `<span class="me">你</span>胸中层层叠浪再也压不住，<span class="sk">百川诀</span>一催，这一击排山倒海般压向<span class="foe">${FOE}</span>，造成<span class="cr">{d}</span>点伤害！`,
   `百川汇流，一朝归海，<span class="me">你</span>借<span class="sk">百川诀</span>之力连下数击，<span class="foe">${FOE}</span>受到<span class="cr">{d}</span>点伤害！`,
 ];
 

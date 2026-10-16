@@ -102,7 +102,7 @@ export interface TurnEvent {
   text: string;
   phpPct: number;
   ehpPct: number;
-  /** 状态快照（§7.1 触发状态可见性）：积势 / 我方护盾余量 / 敌方毒层 */
+  /** 状态快照（§7.1 触发状态可见性）：叠浪重数 / 我方护盾余量 / 敌方毒层 */
   pSq: number;
   pShield: number;
   ePoison: number;
@@ -322,7 +322,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         dealt += burst;
         stats.burstCount += 1;
         stats.burstDmg += burst;
-        push(rd, 'player', 'burst', `势已积满！排山倒海造成 ${f1(burst)} 伤害`, f1(burst));
+        push(rd, 'player', 'burst', `浪已叠满！排山倒海造成 ${f1(burst)} 伤害`, f1(burst));
       }
     }
     // 附毒：额外叠 1 层，另有几率再 +1（spec §3.4）
@@ -347,7 +347,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
           ? `施展「${skill.name} · ${form.name}」，被闪避`
           : `施展「${skill.name} · ${form.name}」${crit ? '，暴击' : ''}${eff && eff !== '必暴' ? `（${eff}）` : ''}，造成 ${f1(dealt)} 伤害${detonate > 0 ? `（引爆毒层 ${f1(detonate)}）` : ''}`,
         f1(dealt), { form: form.key, crit, missed: hitRoll === 0, ...(detonate > 0 ? { detonate: f1(detonate) } : {}), ...(fx ? { fx } : {}) });
-      // 连击：有几率追加一次普攻（不积势、不叠毒）
+      // 连击：有几率追加一次普攻（不叠浪、不叠毒）
       if (eff === '连击' && hitRoll && rng() < fv) {
         const h2 = roll(pHit);
         const c2 = roll(critNow);

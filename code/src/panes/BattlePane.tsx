@@ -28,6 +28,32 @@ import { formTitle } from '../engine/formNames';
 import { PAGES_NEEDED } from '../engine/wuxue';
 
 const f0 = (n: number) => fmtBig(Math.round(n));
+
+/** 叠浪潮位条（docs/design/jishi-prototype.html 丙）：按重上涨；引擎一叠满就倾出归零，这里在满时停 0.7 秒再泄空 */
+function TideMeter({ n, need, bursts }: { n: number; need: number; bursts: number }) {
+  const [full, setFull] = useState(false);
+  const [pour, setPour] = useState(false);
+  const seen = useRef(bursts);
+  // 绘制前切到满格，避免先闪一帧 0
+  useLayoutEffect(() => {
+    if (bursts <= seen.current) { seen.current = bursts; return; }
+    seen.current = bursts;
+    setFull(true);
+    const t1 = setTimeout(() => { setFull(false); setPour(true); }, 700);
+    const t2 = setTimeout(() => setPour(false), 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [bursts]);
+  const shown = full ? need : n;
+  return (
+    <div className={`meter tide${full ? ' full' : ''}${pour ? ' pour' : ''}`}>
+      <div className="lbl"><span>叠浪</span><span className="n"><b>{shown}</b> / {need}</span></div>
+      <div className="tide-bar">
+        <i style={{ width: `${(shown / need) * 100}%` }} />
+        {Array.from({ length: need - 1 }, (_, k) => <span key={k} className="tick" style={{ left: `${((k + 1) / need) * 100}%` }} />)}
+      </div>
+    </div>
+  );
+}
 /** data-tip 走 innerHTML：拼进去的名字统一转义 */
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
@@ -251,12 +277,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     </div>
                   )}
                   {fighting && last && build.sqNeed < 99 && (
-                    <div className="meter marks">
-                      <div className="lbl"><span>积势</span><span><b>{Math.floor(last.pSq)}</b> / {build.sqNeed}</span></div>
-                      <div className="pips">
-                        {Array.from({ length: build.sqNeed }, (_, i) => <i key={i} className={i < Math.floor(last.pSq) ? 'on' : undefined} />)}
-                      </div>
-                    </div>
+                    <TideMeter n={Math.floor(last.pSq)} need={build.sqNeed} bursts={turns.filter((t) => t.kind === 'burst').length} />
                   )}
                 </div>
 

@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>前尘 原型 — 声望阁改版</title>
 <!--
-  前尘（声望阁改版）原型 v0.2。设计：docs/systems/prestige-shop/design.md §5。
+  前尘（声望阁改版）原型 v0.3。设计：docs/systems/prestige-shop/design.md §5。
   外壳照现行 code/src/App.tsx 的人物卷侧栏画；只做这一页。
-  页内「底蕴 | 传承」分段切换；底蕴 = 修行感悟宽卡 + 八条属性小卡 4×2，收益逐级递减，无「尽数」。
+  页内「底蕴 | 传承 | 侠名录」分段切换；底蕴 = 修行感悟宽卡 + 八条属性小卡 4×2，收益逐级递减，无「尽数」；
+  传承 = 13 件一次性购买；侠名录 = 22 条成就线网格，计量达标自动点亮，三层印记。图标走 ../../code/public/art/achv/<id>.png。
   右下角控制条：三种状态（首次落地 / 第九世 / 钱不够）× 三个页名候选。按钮可真实点击：买一级扣声望、级数与收益同步涨。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -110,7 +111,30 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: oklch(0.19 0.014 262 / 0.8); margin-bottom: 16px; }
 .seg button { border: 0; background: none; border-radius: 8px; padding: 6px 18px; font-family: var(--serif); font-size: 14.5px; letter-spacing: 0.2em; color: var(--muted); }
 .seg button[aria-selected="true"] { background: var(--wash-2); color: var(--ink); }
-.page[data-tab="diyun"] .only-chuancheng, .page[data-tab="chuancheng"] .only-diyun { display: none; }
+.page:not([data-tab="diyun"]) .only-diyun, .page:not([data-tab="chuancheng"]) .only-chuancheng, .page:not([data-tab="xiaming"]) .only-xiaming { display: none; }
+
+/* 侠名录：成就网格，计量达标点亮 */
+.achv { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.ach { position: relative; border-radius: 10px; padding: 12px 10px 10px; background: oklch(0.18 0.012 262 / 0.45); display: grid; justify-items: center; gap: 6px; text-align: center; cursor: help; }
+.ach .ic { width: 64px; height: 64px; object-fit: contain; filter: grayscale(1) brightness(0.45); transition: filter .3s var(--ease); }
+.ach .ic.ph { display: grid; place-items: center; font-family: var(--serif); font-size: 26px; color: var(--faint); border-radius: 50%; box-shadow: inset 0 0 0 1px var(--hair); }
+.ach.lit .ic { filter: none; }
+.ach.lit .ic.ph { color: var(--ink-gold); box-shadow: inset 0 0 0 1px oklch(0.75 0.075 76 / 0.5); }
+.ach.lit.max .ic { filter: drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.45)); }
+.ach .n { font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.06em; color: var(--faint); line-height: 1.3; }
+.ach.lit .n { color: var(--ink); }
+.ach .seals { display: flex; gap: 5px; }
+.ach .seals i { width: 14px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--hair); font: 600 9px/14px var(--serif); font-style: normal; color: var(--faint); display: grid; place-items: center; }
+.ach .seals i.on { background: oklch(0.75 0.075 76 / 0.18); color: var(--ink-gold); box-shadow: inset 0 0 0 1px oklch(0.75 0.075 76 / 0.55); }
+.ach .seals i.next { color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.6); }
+.ach .bar { width: 100%; height: 6px; position: relative; }
+.ach .bar::before { content: ''; position: absolute; left: 0; right: 0; top: 3px; border-top: 1px dashed oklch(0.40 0.014 262 / 0.7); }
+.ach .bar i { position: absolute; left: 0; top: 2.5px; height: 1.5px; background: oklch(0.50 0.045 70); }
+.ach.max .bar i { background: var(--ink-gold); }
+.ach .cnt { font-size: 11px; color: var(--faint); }
+.ach.lit .cnt { color: var(--muted); }
+.ach .cnt b { color: var(--ink); font-weight: 500; }
+@media (max-width: 860px) { .achv { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 .card { border-radius: 12px; padding: 16px 18px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
 .card + .card { margin-top: 14px; }
@@ -185,7 +209,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <div class="proto">
   <div class="row"><span>状态</span><button data-state="first" aria-pressed="true">首次落地</button><button data-state="mid">第九世</button><button data-state="poor">钱不够</button></div>
   <div class="row"><span>页名</span><button data-name="前尘" aria-pressed="true">前尘</button><button data-name="宿世">宿世</button><button data-name="轮回">轮回</button></div>
-  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家。按钮可点，扣声望、涨级数；每级收益递减。</p>
+  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家。按钮可点，扣声望、涨级数；每级收益递减。侠名录的图标缺图时显示首字占位。</p>
 </div>
 <div class="tip" id="tip"></div>
 
@@ -235,6 +259,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <div class="seg" role="tablist">
         <button role="tab" aria-selected="true" data-tab="diyun">底蕴</button>
         <button role="tab" aria-selected="false" data-tab="chuancheng">传承</button>
+        <button role="tab" aria-selected="false" data-tab="xiaming">侠名录</button>
       </div>
 
       <p class="guide js-guide">你的声望可以换成底蕴与传承，让下一世更快更远。</p>
@@ -252,6 +277,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
         <div class="card">
           <div class="head"><span class="serif">传承</span><small>一次购得，永久生效</small></div>
           <div class="rows js-rows-c"></div>
+        </div>
+      </div>
+
+      <!-- 侠名录 -->
+      <div class="only-xiaming">
+        <div class="card">
+          <div class="head"><span class="serif">侠名录</span><small class="js-achv-sum"></small></div>
+          <div class="achv js-achv"></div>
         </div>
       </div>
     </section>
@@ -283,17 +316,51 @@ const LINES = [
   { id: 'zhenqi',          name: '真气',     first: 0.05,  fmt: pct },
 ];
 const NODES = [
-  { id: 'zairu_jianghu',      name: '再入江湖', price: 150,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
-  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '书肆的秘籍一律八折' },
-  { id: 'wudao_biji',         name: '武道笔记', price: 440,  type: '资源', desc: '每一世悟性 +0.1，领悟得更快' },
-  { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '武学领悟新招的顿悟概率翻倍' },
-  { id: 'poguan_xinde',       name: '破关心得', price: 1100, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
+  { id: 'chongchu_jianghu',   name: '重出江湖', price: 70,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
+  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 80,  type: '策略', desc: '书肆的秘籍一律八折' },
+  { id: 'gaixian_yizhe',      name: '改弦易辙', price: 90,  type: '资源', desc: '转修内功的手续费减半' },
+  { id: 'baoluo_wanxiang',    name: '包罗万象', price: 100,  type: '资源', desc: '行囊多出两行' },
+  { id: 'huiyan_shizhu',      name: '慧眼识珠', price: 120,  type: '信息', desc: '市集的货物开价前就露出词条' },
+  { id: 'yaodao_bingchu',     name: '药到病除', price: 130,  type: '战斗', desc: '花银两疗伤的价减半' },
+  { id: 'anhun_dingpo',       name: '安魂定魄', price: 140,  type: '策略', desc: '战死转世后，魂魄未稳由十年缩为五年' },
+  { id: 'haina_baichuan',     name: '海纳百川', price: 200,  type: '资源', desc: '丹田上限提高两成，夜里少散功' },
+  { id: 'jiaqing_jiushu',     name: '驾轻就熟', price: 270,  type: '策略', desc: '转世后内功的第一段台阶不必顿悟' },
+  { id: 'renzu_guizong',      name: '认祖归宗', price: 320,  type: '策略', desc: '转世后开局即拜回上一世的门派' },
+  { id: 'taojia_huanjia',     name: '讨价还价', price: 400,  type: '资源', desc: '市集一律八折' },
+  { id: 'shuangguan_qixia',   name: '双管齐下', price: 720, type: '策略', desc: '可同时接两个门派任务' },
+  { id: 'bizhou_zizhen',      name: '敝帚自珍', price: 1080, type: '策略', desc: '转世时随身带走一件装备' },
 ];
+// 侠名录 22 条线：三层名、计量、层级门槛（门槛暂定，待 sim 按第 7 / 21 / 50 天标定）
+const ACHV = [
+  { id: 'jian',     tiers: ['初窥剑意','剑气纵横','人剑合一'], what: '剑法胜场',     th: [100, 1000, 10000], eff: ['剑法伤害 +10%','剑法伤害 +20%','剑法伤害 +30%'] },
+  { id: 'dao',      tiers: ['快刀斩麻','大刀阔斧','刀罡无影'], what: '刀法胜场',     th: [100, 1000, 10000], eff: ['刀法伤害 +10%','刀法伤害 +20%','刀法伤害 +30%'] },
+  { id: 'qiang',    tiers: ['横枪跃马','单枪匹马','枪出如龙'], what: '枪法胜场',     th: [100, 1000, 10000], eff: ['枪法伤害 +10%','枪法伤害 +20%','枪法伤害 +30%'] },
+  { id: 'gun',      tiers: ['棍起生风','横扫千军','棍压群雄'], what: '棍法胜场',     th: [100, 1000, 10000], eff: ['棍法伤害 +10%','棍法伤害 +20%','棍法伤害 +30%'] },
+  { id: 'quan',     tiers: ['拳不离手','拳拳到肉','拳开山岳'], what: '拳法胜场',     th: [100, 1000, 10000], eff: ['拳法伤害 +10%','拳法伤害 +20%','拳法伤害 +30%'] },
+  { id: 'zhang',    tiers: ['掌风初成','排山倒海','掌震乾坤'], what: '掌法胜场',     th: [100, 1000, 10000], eff: ['掌法伤害 +10%','掌法伤害 +20%','掌法伤害 +30%'] },
+  { id: 'zhi',      tiers: ['指上功夫','指点江山','弹指惊雷'], what: '指法胜场',     th: [100, 1000, 10000], eff: ['指法伤害 +10%','指法伤害 +20%','指法伤害 +30%'] },
+  { id: 'tui',      tiers: ['身轻如燕','飞檐走壁','踏雪无痕'], what: '腿法胜场',     th: [100, 1000, 10000], eff: ['腿法伤害 +10%','腿法伤害 +20%','腿法伤害 +30%'] },
+  { id: 'anqi',     tiers: ['例无虚发','百步穿杨','百发百中'], what: '暗器胜场',     th: [100, 1000, 10000], eff: ['暗器伤害 +10%','暗器伤害 +20%','暗器伤害 +30%'] },
+  { id: 'boss',     tiers: ['破关斩将','势如破竹','摧枯拉朽'], what: '首杀头目',     th: [1, 4, 9],          eff: ['头目伤害 +5%','头目伤害 +10%','头目伤害 +15%'] },
+  { id: 'elite',    tiers: ['小有名气','声名远播','名动江湖'], what: '首杀精英',     th: [5, 20, 50],        eff: ['名号声望 +15%','名号声望 +30%','名号声望 +50%'] },
+  { id: 'jingmai',  tiers: ['气走周天','脱胎换骨','返璞归真'], what: '贯通经脉',     th: [2, 5, 10],         eff: ['经脉声望 +15%','经脉声望 +30%','经脉声望 +50%'] },
+  { id: 'chongxue', tiers: ['运气如常','举重若轻','游刃有余'], what: '冲穴次数',     th: [20, 100, 400],     eff: ['冲穴耗内力 −5%','冲穴耗内力 −10%','冲穴耗内力 −15%'] },
+  { id: 'zhaoshi',  tiers: ['勤学苦练','触类旁通','融会贯通'], what: '招式圆满',     th: [3, 12, 40],        eff: ['熟练增速 +20%','熟练增速 +35%','熟练增速 +50%'] },
+  { id: 'canye',    tiers: ['零敲碎打','拾遗补阙','集腋成裘'], what: '拼齐口诀',     th: [1, 5, 15],         eff: ['残页掉率 +20%','残页掉率 +35%','残页掉率 +50%'] },
+  { id: 'menpai',   tiers: ['初入师门','论功行赏','栋梁之材'], what: '门派任务',     th: [10, 60, 250],      eff: ['贡献 +10%','贡献 +20%','贡献 +30%'] },
+  { id: 'heishi',   tiers: ['探头探脑','暗度陈仓','轻车熟路'], what: '黑市购买',     th: [5, 30, 120],       eff: ['蒙面货每世 +2','蒙面货每世 +4','蒙面货每世 +6'] },
+  { id: 'yinliang', tiers: ['积少成多','日进斗金','富甲一方'], what: '累计银两',     th: [50000, 1000000, 20000000], eff: ['银两掉落 +10%','银两掉落 +20%','银两掉落 +30%'] },
+  { id: 'yueli',    tiers: ['略知一二','见多识广','博古通今'], what: '累计阅历',     th: [500, 5000, 40000], eff: ['阅历 +10%','阅历 +20%','阅历 +30%'] },
+  { id: 'yangshang',tiers: ['养精蓄锐','妙手回春','金刚不坏'], what: '养好的伤',     th: [5, 30, 120],       eff: ['伤势恢复 +20%','伤势恢复 +35%','伤势恢复 +50%'] },
+  { id: 'zhanbai',  tiers: ['屡败屡战','全身而退','百折不挠'], what: '战败次数',     th: [10, 60, 250],      eff: ['每世免伤 1 次','每世免伤 2 次','每世免伤 3 次'] },
+  { id: 'zhuanshi', tiers: ['初露锋芒','名扬四海','威震武林'], what: '转世次数',     th: [3, 12, 40],        eff: ['基础声望 +5%','基础声望 +10%','基础声望 +15%'] },
+];
+const FIRST_CHAR = { jian: '剑', dao: '刀', qiang: '枪', gun: '棍', quan: '拳', zhang: '掌', zhi: '指', tui: '腿', anqi: '镖', boss: '魁', elite: '名', jingmai: '脉', chongxue: '穴', zhaoshi: '式', canye: '页', menpai: '派', heishi: '市', yinliang: '银', yueli: '阅', yangshang: '医', zhanbai: '败', zhuanshi: '世' };
 const zero = () => Object.fromEntries(LINES.map((l) => [l.id, 0]));
 const STATES = {
-  first: { run: 2, era: 1046, rep: 340, peak: 2, ganwu: 0, lv: zero(), owned: [], guide: true },
-  mid:   { run: 9, era: 1385, rep: 1240, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
-  poor:  { run: 9, era: 1385, rep: 23, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
+  first: { run: 2, era: 1046, rep: 340, peak: 2, ganwu: 0, lv: zero(), owned: [], guide: true, cnt: { jian: 62, boss: 0, elite: 2, chongxue: 7, zhanbai: 4, zhuanshi: 1, yinliang: 3100 } },
+  mid:   { run: 9, era: 1385, rep: 1240, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['chongchu_jianghu', 'qingzhuang_shanglu'], guide: false, cnt: { jian: 1340, dao: 120, boss: 2, elite: 14, jingmai: 3, chongxue: 46, zhaoshi: 5, canye: 2, menpai: 24, heishi: 7, yinliang: 420000, yueli: 2100, yangshang: 9, zhanbai: 23, zhuanshi: 8 } },
+  poor:  { run: 9, era: 1385, rep: 23, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['chongchu_jianghu', 'qingzhuang_shanglu'], guide: false, cnt: { jian: 1340, dao: 120, boss: 2, elite: 14, jingmai: 3, chongxue: 46, zhaoshi: 5, canye: 2, menpai: 24, heishi: 7, yinliang: 420000, yueli: 2100, yangshang: 9, zhanbai: 23, zhuanshi: 8 } },
 };
 let S = structuredClone(STATES.first);
 const fmt = (n) => n.toLocaleString('zh-CN');
@@ -327,6 +394,24 @@ function nodeRow(n) {
   </div>`;
 }
 
+function achTile(a) {
+  const c = (S.cnt || {})[a.id] || 0;
+  const tier = a.th.filter((t) => c >= t).length;          // 0–3
+  const lit = tier > 0, max = tier === 3;
+  const name = lit ? a.tiers[tier - 1] : a.tiers[0];
+  const nextTh = max ? a.th[2] : a.th[tier];
+  const prevTh = tier === 0 ? 0 : a.th[tier - 1];
+  const pct = max ? 100 : Math.max(0, Math.min(100, (c - prevTh) / (nextTh - prevTh) * 100));
+  const tip = a.tiers.map((t, i) => `${i < tier ? '✓' : '·'} ${t}　${a.eff[i]}　${fmt(a.th[i])} ${a.what}`).join('<br>');
+  return `<div class="ach${lit ? ' lit' : ''}${max ? ' max' : ''}" data-tip-html="${tip}">
+    <img class="ic" src="../../code/public/art/achv/${a.id}.png" alt="" onerror="this.outerHTML='<div class=\'ic ph\'>${FIRST_CHAR[a.id]}</div>'">
+    <div class="n">${name}</div>
+    <div class="seals">${[0, 1, 2].map((i) => `<i class="${i < tier ? 'on' : i === tier ? 'next' : ''}">${['一', '二', '三'][i]}</i>`).join('')}</div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="cnt"><b>${fmt(c)}</b> / ${fmt(nextTh)}</div>
+  </div>`;
+}
+
 function render() {
   document.querySelectorAll('.js-rep').forEach((el) => el.textContent = fmt(S.rep));
   document.querySelector('.js-run').textContent = S.run;
@@ -343,6 +428,9 @@ function render() {
   document.querySelector('.js-gw').innerHTML = ganwuCard();
   document.querySelector('.js-grid').innerHTML = LINES.map(tile).join('');
   document.querySelector('.js-rows-c').innerHTML = NODES.map(nodeRow).join('');
+  document.querySelector('.js-achv').innerHTML = ACHV.map(achTile).join('');
+  const got = ACHV.reduce((n, a) => n + a.th.filter((t) => ((S.cnt || {})[a.id] || 0) >= t).length, 0);
+  document.querySelector('.js-achv-sum').textContent = `已点亮 ${got} / ${ACHV.length * 3}`;
 }
 
 document.addEventListener('click', (e) => {

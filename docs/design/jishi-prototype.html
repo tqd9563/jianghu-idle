@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>叠浪表现原型</title>
+<!--
+  issue #69：归海路数的「叠浪」在战斗页「你」一侧的表现。
+  三种方案同屏对照，顶部控件同时驱动三栏；战报区在最下方，演示会心句不再带层数。
+  色值、字体、墨条尺寸取自 code/src/styles/tokens.css、shell.css、battle.css。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: oklch(0.155 0.013 262);
+  --bg-deep: oklch(0.125 0.012 262);
+  --wash: oklch(0.19 0.014 262);
+  --wash-2: oklch(0.225 0.016 262);
+  --ink: oklch(0.91 0.012 85);
+  --muted: oklch(0.76 0.015 85);
+  --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7);
+  --gold: oklch(0.78 0.13 78);
+  --ink-gold: oklch(0.75 0.075 76);
+  --hp: oklch(0.62 0.17 25);
+  --qi: oklch(0.74 0.10 215);
+  --crit: oklch(0.72 0.16 50);
+  --track: oklch(0.12 0.01 262 / 0.7);
+  --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-body: "LXGW WenKai", -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", "STSong", serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: radial-gradient(ellipse at 30% 0%, oklch(0.2 0.02 262), var(--bg) 60%) fixed, var(--bg);
+  color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.6;
+  padding: 28px 16px 60px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+h1 { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.18em; margin: 0 0 4px; font-weight: 700; }
+.sub { color: var(--faint); font-size: 13px; margin: 0 0 22px; }
+
+/* 控件 */
+.ctl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 16px; border-radius: 8px; background: var(--wash); margin-bottom: 22px; }
+.ctl .grp { display: flex; gap: 6px; align-items: center; }
+.ctl .grp > span { color: var(--faint); font-size: 12.5px; margin-right: 4px; }
+button { font: inherit; cursor: pointer; border: 0; border-radius: 6px; padding: 6px 14px; background: var(--wash-2); color: var(--muted); font-family: var(--font-display); letter-spacing: 0.08em; }
+button:hover { color: var(--ink); }
+button.on { background: oklch(0.78 0.13 78 / 0.14); color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.4); }
+button.main { background: var(--gold); color: oklch(0.19 0.03 78); font-weight: 600; }
+button:disabled { opacity: 0.4; cursor: default; }
+
+/* 三栏 */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.opt { border-radius: 10px; padding: 16px 18px 20px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
+.opt .tag { font-family: var(--font-display); color: var(--ink-gold); letter-spacing: 0.12em; font-size: 13px; }
+.opt .note { color: var(--faint); font-size: 12px; margin: 2px 0 14px; min-height: 2.6em; }
+.opt.rec .tag::after { content: '已选定'; margin-left: 8px; font-size: 11px; padding: 0 6px; border-radius: 3px; color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+
+/* 「你」一侧：照抄战斗页 */
+.side .name { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; }
+.side .desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.meter { margin-top: 14px; }
+.meter .lbl { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+.meter .lbl b { color: var(--ink); font-weight: 600; }
+.ink { position: relative; height: 7px; margin-top: 5px; }
+.ink::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: var(--track); }
+.ink i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .5s var(--ease-sharp);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); }
+.ink.hp i { background: linear-gradient(to right, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); }
+.ink.qi { height: 5px; }
+.ink.qi i { background: linear-gradient(to right, oklch(0.5 0.08 220), var(--qi)); }
+
+/* 势满时标签与数字的变化（三案共用） */
+.meter.js .lbl .n { transition: color .3s; }
+.meter.js.full .lbl .n b, .meter.js.full .lbl .n { color: var(--gold); }
+
+/* A 圆点（现行实现） */
+.pips { display: flex; gap: 6px; margin-top: 7px; }
+.pips i { width: 9px; height: 9px; border-radius: 50%; background: var(--track); box-shadow: inset 0 0 0 1px var(--hair); transition: background .3s var(--ease-sharp), box-shadow .3s var(--ease-sharp); }
+.pips i.on { background: var(--gold); box-shadow: 0 0 8px oklch(0.78 0.13 78 / 0.45); }
+.full .pips i { animation: pulse .7s var(--ease-sharp); }
+
+/* B 分段墨条：同真气条 5px，按需求数切格 */
+.cells { display: flex; gap: 3px; margin-top: 6px; height: 5px; }
+.cells i { flex: 1; border-radius: 2px; background: var(--track); transition: background .3s var(--ease-sharp), box-shadow .3s; }
+.cells i.on { background: linear-gradient(to right, oklch(0.6 0.1 75), var(--gold)); }
+.full .cells i { box-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.6); animation: pulse .7s var(--ease-sharp); }
+
+/* C 潮位：一根连续墨条按格涨，格线留刻度；满时浪头发亮，倾出时自右向左泄空 */
+.tide { position: relative; height: 7px; margin-top: 5px; }
+.tide::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: var(--track); }
+.tide i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .55s var(--ease-sharp);
+  background: linear-gradient(to right, oklch(0.46 0.06 200), oklch(0.62 0.08 190) 55%, var(--gold));
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); }
+.tide .tick { position: absolute; top: 1px; bottom: 1px; width: 1px; background: oklch(0.155 0.013 262 / 0.9); z-index: 1; }
+.full .tide i { box-shadow: 0 0 12px oklch(0.78 0.13 78 / 0.55); -webkit-mask-image: none; mask-image: none; }
+.pour .tide i { transition: width .45s cubic-bezier(0.6, 0, 0.9, 0.4); }
+
+@keyframes pulse { 0% { transform: scale(1); } 35% { transform: scale(1.25); filter: brightness(1.4); } 100% { transform: scale(1); } }
+.cells i, .pips i { transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* 战报 */
+.logwrap { margin-top: 26px; }
+.logwrap h2 { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.2em; color: var(--faint); font-weight: 600; margin: 0 0 6px; }
+.log { max-height: 280px; overflow: auto; padding-right: 6px; }
+.log .rh { font-family: var(--font-display); color: var(--faint); letter-spacing: 0.15em; margin: 12px 0 4px; font-size: 13px; }
+.log .p { color: var(--muted); line-height: 1.85; max-width: 46em; animation: in .35s var(--ease-sharp); }
+.log .me { color: var(--ink-gold); } .log .foe { color: oklch(0.72 0.12 30); } .log .sk { color: var(--qi); }
+.log .dm { color: var(--ink); font-weight: 600; } .log .cr { color: var(--crit); font-weight: 700; }
+.log .empty { color: var(--faint); padding: 20px 0; font-family: var(--font-display); letter-spacing: 0.2em; }
+@keyframes in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.foot { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--hair); color: var(--faint); font-size: 12.5px; }
+.foot li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>叠浪</h1>
+  <p class="sub">归海路数 · 战斗页「你」一侧的三种表现。顶部控件同时驱动三栏。</p>
+
+  <div class="ctl">
+    <div class="grp"><span>叠浪需求</span>
+      <button data-need="5" class="on">5 · 入门</button><button data-need="4">4 · 登堂</button><button data-need="3">3 · 大成</button>
+    </div>
+    <div class="grp">
+      <button id="crit" class="main">会心一击</button>
+      <button id="hit">普攻</button>
+      <button id="auto">自动演一场</button>
+      <button id="reset">重来</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="opt" data-v="a">
+      <div class="tag">甲 · 圆点</div>
+      <div class="note">现行实现。一重浪一枚点，数得清；和墨条语言不同，单独成一行。</div>
+      <div class="side">
+        <div class="name">你</div><div class="desc">小有所成 · 百川诀</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span><b class="hpn">3,311</b> / 3,311</span></div><div class="ink hp"><i class="hpb" style="width:100%"></i></div></div>
+        <div class="meter"><div class="lbl"><span>真气</span><span><b class="qin">90</b> / 90</span></div><div class="ink qi"><i class="qib" style="width:100%"></i></div></div>
+        <div class="meter js"><div class="lbl"><span>叠浪</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="pips"></div></div>
+      </div>
+    </section>
+
+    <section class="opt" data-v="b">
+      <div class="tag">乙 · 分段墨条</div>
+      <div class="note">与真气条同高同宽，切成需求数格。三条墨条一个家族，格数一眼可见。</div>
+      <div class="side">
+        <div class="name">你</div><div class="desc">小有所成 · 百川诀</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span><b class="hpn">3,311</b> / 3,311</span></div><div class="ink hp"><i class="hpb" style="width:100%"></i></div></div>
+        <div class="meter"><div class="lbl"><span>真气</span><span><b class="qin">90</b> / 90</span></div><div class="ink qi"><i class="qib" style="width:100%"></i></div></div>
+        <div class="meter js"><div class="lbl"><span>叠浪</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="cells"></div></div>
+      </div>
+    </section>
+
+    <section class="opt rec" data-v="c">
+      <div class="tag">丙 · 潮位</div>
+      <div class="note">一根连续墨条按格上涨，水色渐成金。满时浪头发亮，倾出时一口气泄空，贴「百川归海」。</div>
+      <div class="side">
+        <div class="name">你</div><div class="desc">小有所成 · 百川诀</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span><b class="hpn">3,311</b> / 3,311</span></div><div class="ink hp"><i class="hpb" style="width:100%"></i></div></div>
+        <div class="meter"><div class="lbl"><span>真气</span><span><b class="qin">90</b> / 90</span></div><div class="ink qi"><i class="qib" style="width:100%"></i></div></div>
+        <div class="meter js"><div class="lbl"><span>叠浪</span><span class="n"><b class="jn">1</b> / <span class="jd">5</span></span></div><div class="tide"><i style="width:20%"></i></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="logwrap">
+    <h2>战　报</h2>
+    <div class="log" id="log"><div class="empty">点「会心一击」或「自动演一场」</div></div>
+  </div>
+
+  <ul class="foot">
+    <li>开战首击必定会心，所以交手一开始就是 1 重浪。</li>
+    <li>引擎里一叠满就当场倾出、归零，现行实现玩家永远看不到满格。原型在满格时停 0.7 秒再清空，让「满了 → 打出去」看得见。</li>
+    <li>会心句不再带「n / m」，叠浪进度只看上面这一行；会心后追加一句不带数字的余劲句，叠满的那一下不追加。要诀写作「每次会心叠 1 重浪；叠满 N 重，施展排山倒海」。</li>
+  </ul>
+</div>
+
+<script>
+const FOE = '「瘸腿」邓八';
+const CRIT = [
+  `<span class="me">你</span>看准<span class="foe">${FOE}</span>一个破绽，一拳正中要害，足足造成<span class="cr">{d}</span>点伤害！`,
+  `<span class="me">你</span>一记重手打在<span class="foe">${FOE}</span>胸口，这一下又狠又准，造成<span class="cr">{d}</span>点伤害！`,
+];
+const HIT = [
+  `<span class="me">你</span>侧身让过来势，顺手一掌拍在<span class="foe">${FOE}</span>肩头，造成<span class="dm">{d}</span>点伤害。`,
+  `<span class="me">你</span>欺身而上，一拳捣在<span class="foe">${FOE}</span>腰间，造成<span class="dm">{d}</span>点伤害。`,
+];
+const FOE_HIT = [
+  `<span class="foe">${FOE}</span>趁你换招，一棍扫中你的小腿，受到<span class="dm">{d}</span>点伤害。`,
+  `<span class="foe">${FOE}</span>扑上来一阵乱打，<span class="me">你</span>挨了几下，受到<span class="dm">{d}</span>点伤害。`,
+];
+const GATHER = [
+  `这一下的力道并未用尽，余劲仍在体内流转。`,
+  `一招打完，<span class="me">你</span>周身气血翻涌，越打越顺。`,
+  `这一下打得<span class="foe">${FOE}</span>闷哼一声，<span class="me">你</span>的劲反倒更足了。`,
+  `<span class="me">你</span>收招回气，只觉胸中那股劲又足了几分。`,
+];
+let gi = 0;
+const BURST = [
+  `浪已叠满，<span class="me">你</span>借<span class="sk">百川诀</span>之力一击倾出，<span class="foe">${FOE}</span>如遭山崩海啸，受到<span class="cr">{d}</span>点伤害！`,
+  `<span class="me">你</span>胸中层层叠浪再也压不住，<span class="sk">百川诀</span>一催，这一击排山倒海般压向<span class="foe">${FOE}</span>，造成<span class="cr">{d}</span>点伤害！`,
+  `百川汇流，一朝归海，<span class="me">你</span>借<span class="sk">百川诀</span>之力连下数击，<span class="foe">${FOE}</span>受到<span class="cr">{d}</span>点伤害！`,
+];
+
+let need = 5, n = 0, rd = 0, hp = 3311, busy = false, auto = null, bi = 0;
+const HPMAX = 3311;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const dmg = (lo, hi) => Math.round(lo + Math.random() * (hi - lo));
+const logEl = $('#log');
+
+function say(html) {
+  const e = $('.empty', logEl); if (e) e.remove();
+  const p = document.createElement('div'); p.className = 'p'; p.innerHTML = html;
+  logEl.appendChild(p); logEl.scrollTop = logEl.scrollHeight;
+}
+function round() { rd += 1; const h = document.createElement('div'); h.className = 'rh'; h.textContent = `【第 ${rd} 回合】`; const e = $('.empty', logEl); if (e) e.remove(); logEl.appendChild(h); }
+
+function build() {
+  $$('.pips').forEach((el) => { el.innerHTML = '<i></i>'.repeat(need); });
+  $$('.cells').forEach((el) => { el.innerHTML = '<i></i>'.repeat(need); });
+  $$('.tide').forEach((el) => {
+    $$('.tick', el).forEach((t) => t.remove());
+    for (let k = 1; k < need; k++) { const t = document.createElement('span'); t.className = 'tick'; t.style.left = `${(k / need) * 100}%`; el.appendChild(t); }
+  });
+  $$('.jd').forEach((e) => { e.textContent = need; });
+}
+function paint(shown) {
+  $$('.jn').forEach((e) => { e.textContent = shown; });
+  $$('.pips, .cells').forEach((el) => $$('i', el).forEach((i, k) => i.classList.toggle('on', k < shown)));
+  $$('.tide i').forEach((i) => { i.style.width = `${(shown / need) * 100}%`; });
+  $$('.hpn').forEach((e) => { e.textContent = hp.toLocaleString('en-US'); });
+  $$('.hpb').forEach((e) => { e.style.width = `${(hp / HPMAX) * 100}%`; });
+}
+
+function gain() {
+  n += 1;
+  if (n < need) { paint(n); return; }
+  // 满：先亮满 0.7s，再倾出归零
+  busy = true; setBtns();
+  $$('.meter.js').forEach((m) => m.classList.add('full'));
+  paint(need);
+  setTimeout(() => {
+    say(BURST[bi++ % BURST.length].replace('{d}', dmg(3400, 4200)));
+    $$('.meter.js').forEach((m) => { m.classList.remove('full'); m.classList.add('pour'); });
+    n = 0; paint(0);
+    setTimeout(() => { $$('.meter.js').forEach((m) => m.classList.remove('pour')); busy = false; setBtns(); }, 500);
+  }, 700);
+}
+function enemyTurn() { const d = dmg(380, 520); hp = Math.max(1, hp - d); say(pick(FOE_HIT).replace('{d}', d)); paint(n); }
+function playerCrit() { round(); const c = pick(CRIT).replace('{d}', dmg(820, 900)); say(n + 1 < need ? c + GATHER[gi++ % GATHER.length] : c); gain(); if (!busy) enemyTurn(); else setTimeout(enemyTurn, 1250); }
+function playerHit() { round(); say(pick(HIT).replace('{d}', dmg(360, 420))); enemyTurn(); }
+
+function reset() {
+  stopAuto(); n = 1; rd = 1; hp = HPMAX; bi = 0; busy = false;
+  logEl.innerHTML = '<div class="rh">【第 1 回合】</div>';
+  say(pick(CRIT).replace('{d}', dmg(820, 900)));
+  build(); paint(n); setBtns();
+}
+function setBtns() { $('#crit').disabled = busy || !!auto; $('#hit').disabled = busy || !!auto; $('#auto').textContent = auto ? '停' : '自动演一场'; }
+function stopAuto() { if (auto) { clearInterval(auto); auto = null; } setBtns(); }
+function startAuto() {
+  reset();
+  auto = setInterval(() => {
+    if (busy) return;
+    if (rd >= 16 || hp <= 1) { stopAuto(); return; }
+    Math.random() < 0.42 ? playerCrit() : playerHit();
+  }, 1100);
+  setBtns();
+}
+
+$$('[data-need]').forEach((b) => b.addEventListener('click', () => {
+  $$('[data-need]').forEach((x) => x.classList.toggle('on', x === b));
+  need = +b.dataset.need; reset();
+}));
+$('#crit').addEventListener('click', () => { if (!busy) playerCrit(); });
+$('#hit').addEventListener('click', () => { if (!busy) playerHit(); });
+$('#auto').addEventListener('click', () => (auto ? stopAuto() : startAuto()));
+$('#reset').addEventListener('click', reset);
+reset();
+</script>
+</body>
+</html>

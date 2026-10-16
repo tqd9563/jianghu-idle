@@ -298,8 +298,8 @@ function RouteMechList({ routeId, zhong, build }: { routeId: RouteId; zhong: num
             会心率 <b>+{pp(g.critRatePP! + (p.critRatePP ?? 0) * L)}</b>，会心伤害 <b>+{pp(g.critDmgPP! + (p.critDmgPP ?? 0) * L)}</b>
           </li>
           <li>开战首击<b>必定会心</b></li>
-          <li>每次会心积 <b>1 层剑意</b></li>
-          <li>剑意满 <b>{build.sqNeed} 层</b>，施展爆发剑招 <b>{Math.round(build.burstMult * 100)}%</b></li>
+          <li>每次会心叠 <b>1 重浪</b></li>
+          <li>叠满 <b>{build.sqNeed} 重</b>，施展排山倒海 <b>{Math.round(build.burstMult * 100)}%</b></li>
         </>
       );
     case 'shaolin':

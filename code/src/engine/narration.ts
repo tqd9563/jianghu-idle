@@ -29,9 +29,9 @@ export interface NarrCtx {
   route: RouteId | null;
   /** 手里拿的：兵器槽的类别；兵器槽空而暗器槽有物为「暗器」；都没有为 none（普攻写成拳脚） */
   hand: Hand;
-  /** 所修内功名（爆发剑招句里用）；未修为 null */
+  /** 所修内功名（排山倒海句里用）；未修为 null */
   neigongName: string | null;
-  /** 剑意需求（华山）；99 = 无剑意 */
+  /** 叠浪需求（归海路数）；99 = 不叠浪 */
   sqNeed: number;
   /** 毒层上限（唐门）；0 = 不叠毒 */
   poisonCap: number;
@@ -238,14 +238,19 @@ export const DEFEAT: ByFoe = {
 
 /** §4 路数机制与状态 */
 export const MECH = {
-  /** 华山剑意满，爆发剑招 */
+  /** 归海叠满，排山倒海 */
   burst: [
-    '剑意积满，{我}周身隐有雷鸣，{功}催动之下一剑轰然斩落，{敌}如遭雷击，受到{伤}点伤害！',
-    '{我}胸中剑意再也按捺不住，{功}一催，长剑化作一道惊雷劈向{敌}，造成{伤}点伤害！',
-    '积蓄已久的剑意一朝迸发，{我}借{功}之力连斩数剑，{敌}受到{伤}点伤害！',
+    '浪已叠满，{我}借{功}之力一击倾出，{敌}如遭山崩海啸，受到{伤}点伤害！',
+    '{我}胸中层层叠浪再也压不住，{功}一催，这一击排山倒海般压向{敌}，造成{伤}点伤害！',
+    '百川汇流，一朝归海，{我}借{功}之力连下数击，{敌}受到{伤}点伤害！',
   ],
-  /** 华山暴击后追加：剑意层数 */
-  sq: ['剑意又凝一分（{层} / {上限}）。'],
+  /** 归海会心后追加（不带数字；叠满的那一下不追加，直接接排山倒海） */
+  gather: [
+    '这一下的力道并未用尽，余劲仍在体内流转。',
+    '一招打完，{我}周身气血翻涌，越打越顺。',
+    '这一下打得{敌}闷哼一声，{我}的劲反倒更足了。',
+    '{我}收招回气，只觉胸中那股劲又足了几分。',
+  ],
   /** 唐门普攻命中后追加：毒层数 */
   poisonAdd: ['毒入一层，已积 {层} / {上限} 层。'],
   /** 唐门开战施毒 */
@@ -537,7 +542,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const route = ctx.route;
   // 普攻句子跟手里的家伙走：赤手时少林路数写拳掌、其余写拳脚
   const plain: PlainKey = ctx.hand === 'none' && route === 'shaolin' ? 'shaolin' : ctx.hand;
-  const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '剑意' };
+  const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '归海' };
   const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
 
   switch (t.kind) {
@@ -555,7 +560,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
     }
     case 'crit': {
       const segs = line(PLAIN_CRIT[plain], 0, { crit: true });
-      if (ctx.sqNeed < 99) segs.push(...line(MECH.sq, 0, { n: t.pSq, cap: ctx.sqNeed }));
+      if (ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
       return segs;
     }
@@ -570,7 +575,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       if (t.crit) segs.push(...line(CAST_EXTRA.crit, 0));
       // 特效追加句：只在本招特效确实生效时追加（引擎标在 fx 上）；必暴由暴击句体现，连击另有补刀事件
       if (t.fx && t.fx !== '必暴' && t.fx !== '连击') segs.push(...fill(EFFECT_LINES[t.fx], { ...base, det: t.detonate }));
-      if (t.crit && ctx.sqNeed < 99) segs.push(...line(MECH.sq, 0, { n: t.pSq, cap: ctx.sqNeed }));
+      if (t.crit && ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
       return segs;
     }
     case 'burst':

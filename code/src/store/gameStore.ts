@@ -544,7 +544,7 @@ export function shopPriceOf(s: Pick<PersistedState, 'ownedRepNodes'>, price: num
   return Math.round(price * (hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') ? QINGZHUANG_DISCOUNT : 1));
 }
 
-/** 尚未拥有的第一部上乘内功（惊雷、镇岳、蚀骨顺序；Boss 首杀「另一路」掉落用）；都有了为 null */
+/** 尚未拥有的第一部上乘内功（归海、镇岳、蚀骨顺序；Boss 首杀「另一路」掉落用）；都有了为 null */
 export function shopNeigongOf(s: Pick<PersistedState, 'ownedNeigong'>): NeigongId | null {
   return (['huashan', 'shaolin', 'tangmen'] as const).map((r) => neigongOf(r, '上乘'))
     .find((id) => !(s.ownedNeigong ?? []).includes(id)) ?? null;

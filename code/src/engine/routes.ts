@@ -6,7 +6,7 @@ import type { RouteId } from './content';
 
 export interface RouteDef {
   id: RouteId;
-  /** 路数名（惊雷 / 镇岳 / 蚀骨）：华山、少林、唐门只作门派名（worldview.md §7-1） */
+  /** 路数名（归海 / 镇岳 / 蚀骨）：华山、少林、唐门只作门派名（worldview.md §7-1） */
   name: string;
   motif: string;
   /** 修习即得（路数赠予，不占重数） */
@@ -39,7 +39,7 @@ export interface RouteDef {
 export const ROUTES: Record<RouteId, RouteDef> = {
   huashan: {
     id: 'huashan',
-    name: '惊雷',
+    name: '归海',
     motif: '快剑爆发 · 短战最强，看脸不稳',
     grant: { critRatePP: 0.10, critDmgPP: 0.20, firstStrikeCrit: true },
     perLevel: { atkPct: 0.06, critRatePP: 0.025, critDmgPP: 0.08 },

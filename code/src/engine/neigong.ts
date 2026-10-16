@@ -1,6 +1,6 @@
 /**
  * 内功 —— 权威来源：docs/systems/sect-neigong/spec.md §1（名录 / 重数 / 台阶 / 真气 / 转修）与 §3（悟性与顿悟）。
- * 路数（惊雷 / 镇岳 / 蚀骨）沿用路线 id：huashan / shaolin / tangmen，路数参数仍在 routes.ts。
+ * 路数（归海 / 镇岳 / 蚀骨）沿用路线 id：huashan / shaolin / tangmen，路数参数仍在 routes.ts。
  * 寻常内功 = 原「招式十成 + 火候」构筑（spec §7 判据零），所以关卡与敌人不用重调。禁止在此调参。
  */
 import { huohouRealms, type RouteId } from './content';
@@ -20,13 +20,13 @@ export interface NeigongDef {
 }
 
 export const NEIGONG: Record<NeigongId, NeigongDef> = {
-  jingleijue:      { id: 'jingleijue',      name: '惊雷诀',   quality: '寻常', route: 'huashan' },
+  jingleijue:      { id: 'jingleijue',      name: '百川诀',   quality: '寻常', route: 'huashan' },
   zhenyuegong:     { id: 'zhenyuegong',     name: '镇岳功',   quality: '寻常', route: 'shaolin' },
   shiguxinfa:      { id: 'shiguxinfa',      name: '蚀骨心法', quality: '寻常', route: 'tangmen' },
-  leimingjianjing: { id: 'leimingjianjing', name: '雷鸣剑经', quality: '上乘', route: 'huashan' },
+  leimingjianjing: { id: 'leimingjianjing', name: '沧海功',   quality: '上乘', route: 'huashan' },
   panshigong:      { id: 'panshigong',      name: '磐石功',   quality: '上乘', route: 'shaolin' },
   xuanyinjue:      { id: 'xuanyinjue',      name: '玄阴诀',   quality: '上乘', route: 'tangmen' },
-  yuntaixinfa:     { id: 'yuntaixinfa',     name: '云台心法', quality: '绝学', route: 'huashan' },
+  yuntaixinfa:     { id: 'yuntaixinfa',     name: '沧溟真经', quality: '绝学', route: 'huashan' },
   putixingong:     { id: 'putixingong',     name: '菩提心功', quality: '绝学', route: 'shaolin' },
   qianguxinjue:    { id: 'qianguxinjue',    name: '千蛊心诀', quality: '绝学', route: 'tangmen' },
 };
@@ -74,10 +74,10 @@ export interface TierDef {
 }
 
 export const TIERS: TierDef[] = [
-  { name: '登堂', at: 2, p: 0.5, effect: { huashan: '剑意需求 5 → 4', shaolin: '开场护盾 +15pp', tangmen: '初始毒层 +2' } },
-  { name: '入室', at: 4, p: 0.5, effect: { huashan: '剑招 400% → 550%', shaolin: '反伤 +15pp', tangmen: '毒层上限 8 → 10' } },
-  { name: '大成', at: 6, p: 0.5, effect: { huashan: '剑意需求 → 3', shaolin: '气血 < 30% 受伤 −30%', tangmen: '毒爆 50% → 80%' } },
-  { name: '化境', at: 20, p: 0.02, effect: { huashan: '剑招 +50pp', shaolin: '反伤 +5pp', tangmen: '毒伤系数 +3pp' } },
+  { name: '登堂', at: 2, p: 0.5, effect: { huashan: '叠满 5 重 → 4 重', shaolin: '开场护盾 +15pp', tangmen: '初始毒层 +2' } },
+  { name: '入室', at: 4, p: 0.5, effect: { huashan: '排山倒海 400% → 550%', shaolin: '反伤 +15pp', tangmen: '毒层上限 8 → 10' } },
+  { name: '大成', at: 6, p: 0.5, effect: { huashan: '叠满 → 3 重', shaolin: '气血 < 30% 受伤 −30%', tangmen: '毒爆 50% → 80%' } },
+  { name: '化境', at: 20, p: 0.02, effect: { huashan: '排山倒海 +50pp', shaolin: '反伤 +5pp', tangmen: '毒伤系数 +3pp' } },
   { name: '归真', at: 40, p: 0.01, scroll: true, effect: { huashan: '暴伤 +20pp', shaolin: '开场护盾 +8pp', tangmen: '毒伤系数 +2pp' } },
 ];
 

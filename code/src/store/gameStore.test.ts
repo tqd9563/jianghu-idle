@@ -1047,7 +1047,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
   it('贡献商店（W2 只换残页）：第 5–7 式残页要先得这门武学、第 6 / 7 式再要前一式口诀；归真卷册要先有本派绝学内功', () => {
     useGameStore.setState({ realm: 3, sect: 'huashan', contrib: 5000 });
     st().buySectItem('sect:cangyajianjue:5');     // 未得苍崖九叠剑
-    st().buySectItem('sect:juance:yuntaixinfa');  // 未得云台心法
+    st().buySectItem('sect:juance:yuntaixinfa');  // 未得沧溟真经
     expect(st().contrib).toBe(5000);
     for (let i = 0; i < 7; i++) st().buySectItem('sect:cangyajianjue:1');
     expect(st().ownedWuxue).toEqual(['cangyajianjue']);

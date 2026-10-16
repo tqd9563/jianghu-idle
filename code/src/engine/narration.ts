@@ -29,9 +29,9 @@ export interface NarrCtx {
   route: RouteId | null;
   /** 手里拿的：兵器槽的类别；兵器槽空而暗器槽有物为「暗器」；都没有为 none（普攻写成拳脚） */
   hand: Hand;
-  /** 所修内功名（惊雷一击句里用）；未修为 null */
+  /** 所修内功名（排山倒海句里用）；未修为 null */
   neigongName: string | null;
-  /** 雷印需求（惊雷路数）；99 = 无雷印 */
+  /** 积势需求（归海路数）；99 = 不积势 */
   sqNeed: number;
   /** 毒层上限（唐门）；0 = 不叠毒 */
   poisonCap: number;
@@ -238,11 +238,11 @@ export const DEFEAT: ByFoe = {
 
 /** §4 路数机制与状态 */
 export const MECH = {
-  /** 惊雷雷印满，惊雷一击 */
+  /** 归海势满，排山倒海 */
   burst: [
-    '雷印积满，{我}周身隐有雷鸣，{功}催动之下一击轰然落下，{敌}如遭雷击，受到{伤}点伤害！',
-    '{我}胸中雷意再也按捺不住，{功}一催，这一击化作一道惊雷劈向{敌}，造成{伤}点伤害！',
-    '积蓄已久的雷印一朝迸发，{我}借{功}之力连下数击，{敌}受到{伤}点伤害！',
+    '势已积满，{我}借{功}之力一击倾出，{敌}如遭山崩海啸，受到{伤}点伤害！',
+    '{我}胸中积势再也按捺不住，{功}一催，这一击排山倒海般压向{敌}，造成{伤}点伤害！',
+    '百川汇流，一朝归海，{我}借{功}之力连下数击，{敌}受到{伤}点伤害！',
   ],
   /** 唐门普攻命中后追加：毒层数 */
   poisonAdd: ['毒入一层，已积 {层} / {上限} 层。'],
@@ -535,7 +535,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const route = ctx.route;
   // 普攻句子跟手里的家伙走：赤手时少林路数写拳掌、其余写拳脚
   const plain: PlainKey = ctx.hand === 'none' && route === 'shaolin' ? 'shaolin' : ctx.hand;
-  const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '惊雷' };
+  const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '归海' };
   const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
 
   switch (t.kind) {

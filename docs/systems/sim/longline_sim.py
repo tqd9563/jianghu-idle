@@ -115,11 +115,12 @@ def huohou_realms(level: int) -> float:
     return level / LEVELS_PER_REALM
 
 
-def build(route: str, realm: int, level: int) -> dict:
+def build(route: str, realm: int, level: int, stat_lv: int = 0) -> dict:
+    """stat_lv：声望阁「筋骨」每条的级数（气血 / 攻击 / 防御同级），按境界基础属性加成（pacing_sim）"""
     b = m.make_build(route, min(realm, 5), min(level, SHICHENG), nodes=3)
     dx = huohou_realms(level)
     for key in ("hp", "atk", "dfs"):
-        b[key] *= 1.7 ** dx
+        b[key] *= 1.7 ** dx * (1 + ps.stat_bonus(stat_lv))
     b["hit"] += 12 * dx
     b["dodge"] += 3 * dx
     if realm >= 6:   # make_build 只认境界 1–5：按境界 6 属性等比放大
@@ -177,7 +178,7 @@ def run_lives(days: int = 115):
         realm, level = 1, 0
         realm_wallet = skill_wallet = 0.0
         n = round((life.end - life.start) / step)
-        snaps = [(life.start, 1, 0)]
+        snaps = [(life.start, 1, 0, life.stat_lv)]
         for i in range(n):
             t = life.start + i * step
             online = (t - math.floor(t + 1e-9)) * 24 < ONLINE_H - 1e-9
@@ -198,7 +199,7 @@ def run_lives(days: int = 115):
                 while skill_wallet >= skill_cost(level + 1):
                     skill_wallet -= skill_cost(level + 1)
                     level += 1
-            snaps.append((t + step, realm, level))
+            snaps.append((t + step, realm, level, life.stat_lv))
         # 最后一次上线：先突破、买武学，再归隐
         while realm <= 5 and realm_wallet >= ps.REALM_TOTAL[realm] * (1 + ps.CHONGXUE_OVERHEAD[realm]):
             realm_wallet -= ps.REALM_TOTAL[realm] * (1 + ps.CHONGXUE_OVERHEAD[realm])
@@ -209,7 +210,7 @@ def run_lives(days: int = 115):
         while skill_wallet >= skill_cost(level + 1):
             skill_wallet -= skill_cost(level + 1)
             level += 1
-        snaps.append((life.end, realm, level))
+        snaps.append((life.end, realm, level, life.stat_lv))
         runs.append((life, snaps))
 
     def state_at(snaps, t):
@@ -258,11 +259,11 @@ def band_of(realm: int) -> int:
 def boss_threshold(combat: dict, d: int) -> float:
     """Boss 门槛 = 下一境界首日最慢路线刚好打得过；买了破关心得的日子按伤害 +10% 算。
     境界 5 段的 Boss 需境界 6：按「入境界 6、武学仍是第 100 天的等级」计（本版收官）"""
-    realm, lv = combat[d] if d <= 100 else (6, combat[100][1])
+    realm, lv, st = combat[d] if d <= 100 else (6, *combat[100][1:])
     k = 1 + POGUAN_BONUS if d >= POGUAN_DAY else 1.0
     xs = []
     for r in ROUTES:
-        bd = build(r, realm, lv)
+        bd = build(r, realm, lv, st)
         bd["atk"] *= k
         xs.append(frontier_x(bd))
     return min(xs)
@@ -319,13 +320,13 @@ def main():
 
     # ── 每日构筑与前沿
     print("\n【二】每日战斗构筑与前沿（境界当量；日增为最慢路线较前一天）")
-    print(f"  {'天':>4} {'境界':>4} {'武学':>5} {'火候':>6} " + " ".join(f"{r:>9}" for r in ROUTES) + f" {'最慢':>7} {'日增':>6}")
+    print(f"  {'天':>4} {'境界':>4} {'武学':>5} {'火候':>6} {'筋骨':>5} " + " ".join(f"{r:>9}" for r in ROUTES) + f" {'最慢':>7} {'日增':>6}")
     prev = None
     for d in days:
-        r, lv = combat[d]
+        r, lv, st = combat[d]
         if d in (1, 2, 3, 6, 7, 8, 14, 20, 21, 22, 35, 49, 50, 51, 75, 99, 100):
             inc = "" if prev is None else f"{x_min[d] - x_min[d-1]:+.3f}"
-            print(f"  {d:>4} {r:>4} {lv:>5} {huohou_realms(lv):>6.2f} "
+            print(f"  {d:>4} {r:>4} {lv:>5} {huohou_realms(lv):>6.2f} {st:>5} "
                   + " ".join(f"{X[rt][d]:>9.3f}" for rt in ROUTES) + f" {x_min[d]:>7.3f} {inc:>6}")
         prev = d
 

@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>侠名录 原型 — 声望阁改版</title>
+<!--
+  侠名录（声望阁改版）原型。设计：docs/systems/prestige-shop/design.md §5。
+  外壳照现行 code/src/App.tsx 的人物卷侧栏画；只做这一页。
+  右下角控制条：三种状态（首次落地 / 平时 / 钱不够）× 两个布局案（A 行列表 / B 四格小卡）。
+  按钮可真实点击：买一级扣声望、级数与加成同步涨。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: oklch(0.155 0.013 262);
+  --bg-deep: oklch(0.125 0.012 262);
+  --wash: oklch(0.19 0.014 262);
+  --wash-2: oklch(0.225 0.016 262);
+  --ink: oklch(0.91 0.012 85);
+  --muted: oklch(0.76 0.015 85);
+  --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7);
+  --gold: oklch(0.78 0.13 78);
+  --ink-gold: oklch(0.75 0.075 76);
+  --cinnabar: oklch(0.66 0.14 32);
+  --serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --body: "LXGW WenKai", -apple-system, "PingFang SC", sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.6 var(--body); font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden;
+}
+body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opacity: .05; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+button { font: inherit; color: inherit; cursor: pointer; }
+.serif { font-family: var(--serif); }
+
+/* ═══════ 原型控制条（非设计内容） ═══════ */
+.proto {
+  position: fixed; left: 14px; bottom: 14px; z-index: 50;
+  background: oklch(0.97 0 0); color: oklch(0.2 0 0); border-radius: 10px;
+  padding: 10px 12px; font-size: 12px; box-shadow: 0 8px 30px oklch(0 0 0 / 0.5);
+  display: grid; gap: 6px; width: 300px;
+}
+.proto .row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.proto .row > span { width: 40px; flex: 0 0 40px; color: oklch(0.45 0 0); }
+.proto button { border: 1px solid oklch(0.8 0 0); background: white; border-radius: 6px; padding: 2px 8px; color: oklch(0.2 0 0); }
+.proto button[aria-pressed="true"] { background: oklch(0.25 0 0); color: white; border-color: oklch(0.25 0 0); }
+.proto p { margin: 0; color: oklch(0.4 0 0); line-height: 1.5; }
+
+/* ═══════ 外壳：人物卷侧栏 + 舞台 ═══════ */
+.app { position: relative; z-index: 1; display: grid; min-height: 100vh; grid-template-columns: 248px minmax(0, 1fr);
+  background: linear-gradient(to right, var(--bg-deep) 248px, transparent 248px); }
+.scroll { position: sticky; top: 0; height: 100vh; padding: 26px 22px; display: flex; flex-direction: column; gap: 18px; }
+.brand { font-family: var(--serif); letter-spacing: 0.4em; color: var(--faint); font-size: 13px; }
+.who .realm { font-family: var(--serif); font-size: 30px; font-weight: 700; letter-spacing: 0.1em; line-height: 1.2; }
+.who .realm small { font-size: 13px; font-weight: 500; color: var(--ink-gold); letter-spacing: 0.15em; margin-left: 6px; vertical-align: 4px; }
+.who .life { margin-top: 6px; color: var(--muted); font-size: 13px; }
+.who .life b { color: var(--ink); font-weight: 600; }
+.body-state { font-size: 13px; color: var(--faint); display: flex; align-items: center; gap: 8px; }
+.body-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.55 0.05 150); }
+.res { display: grid; gap: 12px; }
+.res .k { font-size: 12px; color: var(--faint); letter-spacing: 0.1em; }
+.res .v { font-size: 22px; font-weight: 600; line-height: 1.25; }
+.res .v.small { font-size: 17px; }
+.res .rate { font-size: 12.5px; color: var(--gold); margin-left: 6px; font-weight: 500; }
+.res-pair { display: flex; gap: 22px; }
+.brush { height: 8px; width: 100%; opacity: 0.55; }
+.nav { display: grid; gap: 2px; }
+.nav button {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  border: 0; background: none; text-align: left; cursor: pointer;
+  font-family: var(--serif); font-size: 18px; letter-spacing: 0.35em;
+  padding: 9px 12px; border-radius: 8px; color: var(--muted);
+}
+.nav button:hover { color: var(--ink); background: oklch(0.2 0.014 262 / 0.6); }
+.nav button[aria-current="page"] { color: var(--gold); background: oklch(0.78 0.13 78 / 0.09); }
+.scroll-foot { margin-top: auto; display: flex; gap: 8px; }
+.ghost-btn { flex: 1; border: 1px solid var(--hair); background: none; border-radius: 8px; padding: 8px 0; font-family: var(--serif); letter-spacing: 0.3em; color: var(--faint); }
+.ghost-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+.ghost-btn.icon { flex: 0 0 40px; letter-spacing: 0; }
+
+.stage { position: relative; z-index: 0; isolation: isolate; padding: 30px clamp(18px, 3.2vw, 48px) 60px; min-width: 0; }
+.page { position: relative; max-width: 1080px; margin: 0 auto; animation: page-in .45s var(--ease); }
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page-art { position: fixed; left: 248px; right: 0; top: 0; height: 100vh; z-index: -1; pointer-events: none;
+  background: var(--art) center top / cover no-repeat; filter: saturate(0.55) brightness(0.8);
+  -webkit-mask-image: linear-gradient(to bottom, oklch(0 0 0) 0%, oklch(0 0 0 / 0.35) 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, oklch(0 0 0) 0%, oklch(0 0 0 / 0.35) 55%, transparent 100%); }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.page-head h1 { margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; }
+.page-head .sub { color: var(--muted); margin-top: 4px; font-size: 13.5px; }
+.page-head .sub b { color: var(--ink); font-weight: 600; }
+.mult { text-align: right; }
+.mult .v { font-size: 30px; font-weight: 600; color: var(--gold); line-height: 1.1; cursor: help;
+  text-decoration: underline dotted oklch(0.78 0.13 78 / 0.5); text-underline-offset: 6px; }
+.mult .k { font-size: 12px; color: var(--faint); }
+
+.card { border-radius: 12px; padding: 16px 18px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
+.card + .card { margin-top: 14px; }
+.card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.card .head .serif { font-size: 15px; letter-spacing: 0.2em; }
+.card .head small { color: var(--faint); font-size: 12px; }
+
+.guide { margin: -6px 0 16px; color: var(--muted); font-size: 13.5px; }
+
+/* 行列表（传承沿用；底蕴案 A 也用） */
+.rows { display: grid; }
+.row-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
+.row-i:first-child { border-top: 0; padding-top: 2px; }
+.row-i .t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row-i .t .serif { font-size: 15px; letter-spacing: 0.08em; cursor: help; }
+.row-i .d { grid-column: 1; color: var(--muted); font-size: 12.5px; }
+.row-i .d b { color: var(--ink); font-weight: 600; }
+.row-i .a { grid-row: 1 / span 2; grid-column: 2; display: flex; align-items: center; gap: 10px; }
+.row-i .price { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.row-i .price.ok { color: var(--ink-gold); }
+.row-i.done .serif { color: var(--muted); }
+.qtag { font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: oklch(0.3 0.016 262 / 0.6); color: var(--muted); white-space: nowrap; }
+.lv { font-size: 12px; color: var(--ink-gold); letter-spacing: 0.05em; white-space: nowrap; }
+.lv b { font-size: 15px; font-weight: 600; color: var(--ink); margin-right: 2px; }
+.buy { display: grid; justify-items: end; gap: 3px; }
+.buy small { font-size: 11.5px; color: var(--faint); }
+.btn2 { border: 0; background: none; font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.1em; color: var(--gold);
+  padding: 5px 14px; border-radius: 8px; box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); white-space: nowrap; transition: background .2s var(--ease); }
+.btn2:hover:not(:disabled) { background: oklch(0.78 0.13 78 / 0.1); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.75); }
+.btn2:disabled { color: var(--faint); box-shadow: inset 0 0 0 1px var(--hair); cursor: default; }
+.btn2.quiet { color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
+.btn2.quiet:hover:not(:disabled) { color: var(--ink); background: oklch(0.3 0.016 262 / 0.3); }
+.btn2.quiet:disabled { color: var(--faint); }
+
+/* 底蕴案 B：四格小卡 */
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { border-radius: 10px; padding: 14px 14px 12px; background: oklch(0.18 0.012 262 / 0.45); display: grid; gap: 6px; align-content: start; }
+.tile .n { font-family: var(--serif); font-size: 15px; letter-spacing: 0.1em; cursor: help; display: flex; justify-content: space-between; align-items: baseline; }
+.tile .n small { font-family: var(--body); font-size: 11.5px; color: var(--faint); letter-spacing: 0; }
+.tile .big { font-family: var(--serif); font-size: 34px; font-weight: 700; line-height: 1; margin-top: 2px; }
+.tile .big small { font-family: var(--body); font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+.tile .e { color: var(--muted); font-size: 12.5px; }
+.tile .e b { color: var(--ink); font-weight: 600; }
+.tile .btns { display: grid; gap: 6px; margin-top: 8px; }
+.tile .btns .btn2 { width: 100%; }
+.tile .btns small { font-size: 11.5px; color: var(--faint); text-align: center; }
+.page[data-layout="a"] .only-b, .page[data-layout="b"] .only-a { display: none; }
+
+/* 悬停提示 */
+.tip { position: fixed; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .15s;
+  background: oklch(0.13 0.011 262 / 0.96); color: var(--ink); border-radius: 8px; padding: 9px 12px; font-size: 12.5px; line-height: 1.6;
+  box-shadow: 0 14px 40px oklch(0.05 0.01 262 / 0.7); max-width: 300px; }
+.tip.on { opacity: 1; }
+.tip .l { color: var(--faint); }
+
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); background: none; }
+  .scroll { display: none; }
+  .page-art { left: 0; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .row-i { grid-template-columns: minmax(0, 1fr); }
+  .row-i .a { grid-row: auto; grid-column: 1; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="proto">
+  <div class="row"><span>状态</span><button data-state="first" aria-pressed="true">首次落地</button><button data-state="mid">第九世</button><button data-state="poor">钱不够</button></div>
+  <div class="row"><span>布局</span><button data-layout="a" aria-pressed="true">A 行列表</button><button data-layout="b">B 四格小卡</button></div>
+  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家。按钮可点，扣声望、涨级数。</p>
+</div>
+<div class="tip" id="tip"></div>
+
+<div class="app">
+  <aside class="scroll">
+    <div class="brand">江湖无尽录</div>
+    <div class="who">
+      <div class="realm">江湖新丁<small>第一境</small></div>
+      <div class="life">第 <b class="js-run">2</b> 世 · <b>18</b> 岁 · 江湖历 <b class="js-era">1046</b> 年</div>
+    </div>
+    <div class="body-state">身无伤病</div>
+    <div class="res">
+      <div><div class="k">内力</div><div class="v">0<span class="rate">+<span class="js-rate">23.4</span>/秒</span></div></div>
+      <div class="res-pair">
+        <div><div class="k">银两</div><div class="v small">0</div></div>
+        <div><div class="k">声望</div><div class="v small js-rep">340</div></div>
+      </div>
+    </div>
+    <svg class="brush" viewBox="0 0 200 8" preserveAspectRatio="none"><path d="M2 5 C 40 2, 90 6, 140 3.5 S 190 4, 198 3" stroke="oklch(0.55 0.02 262)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+    <nav class="nav">
+      <button>修炼</button>
+      <button>战斗</button>
+      <button>行囊</button>
+      <button>内功</button>
+      <button>武学</button>
+      <button>门派</button>
+      <button>市集</button>
+      <button aria-current="page">侠名录</button>
+    </nav>
+    <div class="scroll-foot">
+      <button class="ghost-btn" disabled data-tip="本世突破一次后可转世">转世</button>
+      <button class="ghost-btn icon" aria-label="设置">⚙</button>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <section class="page" id="page" data-layout="a">
+      <div class="page-art" style="--art:url('../../code/public/art/rep.jpg')"></div>
+      <header class="page-head">
+        <div>
+          <h1>侠名录</h1>
+          <div class="sub">持有 <b class="js-rep">340</b> 声望</div>
+        </div>
+        <div class="mult"><div class="v js-mult" data-tip-html="">2.6×</div><div class="k">挂机产出</div></div>
+      </header>
+
+      <p class="guide js-guide">你的声望可以换成底蕴与传承，让下一世更快更远。</p>
+
+      <!-- 底蕴：可反复购买 -->
+      <div class="card">
+        <div class="head"><span class="serif">底蕴</span><small>转世不散</small></div>
+        <div class="rows only-a js-rows-a"></div>
+        <div class="grid4 only-b js-grid-b"></div>
+      </div>
+
+      <!-- 传承：一次性 -->
+      <div class="card">
+        <div class="head"><span class="serif">传承</span><small>一次购得，永久生效</small></div>
+        <div class="rows js-rows-c"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ───── 数据（design.md §2 / §3；传承取 copy/retire.md §5.1） ─────
+const REALM_NAMES = { 2: '初窥门径', 3: '小有所成', 4: '炉火纯青', 5: '一流高手' };
+const SUHUI = { 2: 1.6, 3: 3.7, 4: 7.6, 5: 13.4 };
+const GANWU_GAIN = 0.2, GANWU_P0 = 8.5;
+const JINGU_GAIN = 0.05, JINGU_P0 = 10, JINGU_Q = 1.35;
+const ganwuPrice = (n) => Math.ceil(GANWU_P0 * n);
+const jinguPrice = (n) => Math.round(JINGU_P0 * Math.pow(JINGU_Q, n - 1));
+const NODES = [
+  { id: 'zairu_jianghu',      name: '再入江湖', price: 150,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
+  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '书肆的秘籍一律八折' },
+  { id: 'wudao_biji',         name: '武道笔记', price: 440,  type: '资源', desc: '每一世悟性 +0.1，领悟得更快' },
+  { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '武学领悟新招的顿悟概率翻倍' },
+  { id: 'poguan_xinde',       name: '破关心得', price: 1100, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
+];
+const TIP_GANWU = '侠名在外，江湖自有人奉上资粮。价格每级 +8.5 声望，和每一世转世拿到的声望一起往上涨。';
+const TIP_JINGU = '散功重修，根骨不失——打熬出来的底子随神魂带到来世。';
+const LINES = [
+  { id: 'ganwu',  name: '修行感悟', stat: '挂机产出', unit: '×', gain: GANWU_GAIN, price: ganwuPrice, tip: TIP_GANWU, fmt: (v) => `${v.toFixed(1)}×` },
+  { id: 'genggu', name: '根骨', stat: '气血', unit: '%', gain: JINGU_GAIN, price: jinguPrice, tip: TIP_JINGU, fmt: (v) => `${Math.round(v * 100)}%` },
+  { id: 'luli',   name: '膂力', stat: '攻击', unit: '%', gain: JINGU_GAIN, price: jinguPrice, tip: TIP_JINGU, fmt: (v) => `${Math.round(v * 100)}%` },
+  { id: 'tiegu',  name: '铁骨', stat: '防御', unit: '%', gain: JINGU_GAIN, price: jinguPrice, tip: TIP_JINGU, fmt: (v) => `${Math.round(v * 100)}%` },
+];
+const STATES = {
+  first: { run: 2, era: 1046, rep: 340, peak: 2, lv: { ganwu: 0, genggu: 0, luli: 0, tiegu: 0 }, owned: [], guide: true },
+  mid:   { run: 9, era: 1385, rep: 1240, peak: 3, lv: { ganwu: 52, genggu: 10, luli: 10, tiegu: 9 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
+  poor:  { run: 9, era: 1385, rep: 23, peak: 3, lv: { ganwu: 52, genggu: 10, luli: 10, tiegu: 9 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
+};
+let S = structuredClone(STATES.first);
+const fmt = (n) => n.toLocaleString('zh-CN');
+
+function affordable(line) {
+  let k = 0, cost = 0, lv = S.lv[line.id];
+  while (cost + line.price(lv + k + 1) <= S.rep) { cost += line.price(lv + k + 1); k += 1; }
+  return { k, cost };
+}
+function buy(line, all) {
+  const { k } = affordable(line);
+  const n = all ? k : (k >= 1 ? 1 : 0);
+  for (let i = 0; i < n; i++) { S.rep -= line.price(S.lv[line.id] + 1); S.lv[line.id] += 1; }
+  render();
+}
+function buyNode(id) {
+  const n = NODES.find((x) => x.id === id);
+  if (S.rep < n.price) return;
+  S.rep -= n.price; S.owned.push(id); render();
+}
+function suhuiTotal() { return Object.entries(SUHUI).reduce((a, [r, v]) => a + (Number(r) <= S.peak ? v : 0), 0); }
+
+function lineRowA(line) {
+  const lv = S.lv[line.id], next = line.price(lv + 1), can = S.rep >= next, { k, cost } = affordable(line);
+  const short = Math.ceil(next - S.rep);
+  return `<div class="row-i">
+    <div class="t"><span class="serif" data-tip="${line.tip}">${line.name}</span><span class="lv"><b>${lv}</b>级</span></div>
+    <div class="d">每级${line.stat} +${line.fmt(line.gain)} · 现 <b>+${line.fmt(line.gain * lv)}</b></div>
+    <div class="a">
+      <span class="buy"><button class="btn2" ${can ? '' : 'disabled'} data-buy="${line.id}">${fmt(next)} 声望</button>${can ? '' : `<small>还差 ${fmt(short)}</small>`}</span>
+      <span class="buy"><button class="btn2 quiet" ${k >= 2 ? '' : 'disabled'} data-buy-all="${line.id}">尽数 · ${k >= 2 ? `${k} 级` : '—'}</button>${k >= 2 ? `<small>${fmt(cost)} 声望</small>` : ''}</span>
+    </div>
+  </div>`;
+}
+function lineTileB(line) {
+  const lv = S.lv[line.id], next = line.price(lv + 1), can = S.rep >= next, { k, cost } = affordable(line);
+  const short = Math.ceil(next - S.rep);
+  return `<div class="tile">
+    <div class="n" data-tip="${line.tip}"><span>${line.name}</span><small>${line.stat}</small></div>
+    <div class="big">${lv}<small>级</small></div>
+    <div class="e">每级 +${line.fmt(line.gain)} · 现 <b>+${line.fmt(line.gain * lv)}</b></div>
+    <div class="btns">
+      <button class="btn2" ${can ? '' : 'disabled'} data-buy="${line.id}">${fmt(next)} 声望</button>
+      ${can ? '' : `<small>还差 ${fmt(short)}</small>`}
+      <button class="btn2 quiet" ${k >= 2 ? '' : 'disabled'} data-buy-all="${line.id}">尽数${k >= 2 ? ` · ${k} 级` : ''}</button>
+      ${k >= 2 ? `<small>${fmt(cost)} 声望</small>` : ''}
+    </div>
+  </div>`;
+}
+function nodeRow(n) {
+  const owned = S.owned.includes(n.id), short = Math.ceil(n.price - S.rep);
+  return `<div class="row-i${owned ? ' done' : ''}">
+    <div class="t"><span class="serif">${n.name}</span><span class="qtag">${n.type}</span></div>
+    <div class="d">${n.desc}</div>
+    <div class="a">${owned ? '<span class="price ok">已传承</span>' : `<span class="buy"><button class="btn2" ${short > 0 ? 'disabled' : ''} data-node="${n.id}">${fmt(n.price)} 声望</button>${short > 0 ? `<small>还差 ${fmt(short)}</small>` : ''}</span>`}</div>
+  </div>`;
+}
+
+function render() {
+  document.querySelectorAll('.js-rep').forEach((el) => el.textContent = fmt(S.rep));
+  document.querySelector('.js-run').textContent = S.run;
+  document.querySelector('.js-era').textContent = fmt(S.era);
+  const suhui = suhuiTotal(), ganwu = GANWU_GAIN * S.lv.ganwu, mult = 1 + suhui + ganwu;
+  const m = document.querySelector('.js-mult');
+  m.textContent = `${mult.toFixed(1)}×`;
+  const suhuiLines = Object.entries(SUHUI).map(([r, v]) => Number(r) <= S.peak
+    ? `+ 宿慧 · 首达${REALM_NAMES[r]} ${v.toFixed(1)}×` : `<span class="l">宿慧 · 首达${REALM_NAMES[r]} ${v.toFixed(1)}× · 未至</span>`).join('<br>');
+  m.dataset.tipHtml = `基础 1<br>${suhuiLines}<br>+ 修行感悟 ${ganwu.toFixed(1)}×<br><span class="l">相加即挂机产出倍率</span>`;
+  document.querySelector('.js-rate').textContent = (9 * mult).toFixed(1);
+  const nothing = S.lv.ganwu + S.lv.genggu + S.lv.luli + S.lv.tiegu === 0 && S.owned.length === 0;
+  document.querySelector('.js-guide').hidden = !(S.guide && nothing);
+  document.querySelector('.js-rows-a').innerHTML = LINES.map(lineRowA).join('');
+  document.querySelector('.js-grid-b').innerHTML = LINES.map(lineTileB).join('');
+  document.querySelector('.js-rows-c').innerHTML = NODES.map(nodeRow).join('');
+}
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.buy) buy(LINES.find((l) => l.id === b.dataset.buy), false);
+  else if (b.dataset.buyAll) buy(LINES.find((l) => l.id === b.dataset.buyAll), true);
+  else if (b.dataset.node) buyNode(b.dataset.node);
+  else if (b.dataset.state) {
+    S = structuredClone(STATES[b.dataset.state]);
+    b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    render();
+  } else if (b.dataset.layout) {
+    document.getElementById('page').dataset.layout = b.dataset.layout;
+    b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  }
+});
+
+// 悬停提示
+const tip = document.getElementById('tip');
+document.addEventListener('mouseover', (e) => {
+  const t = e.target.closest('[data-tip],[data-tip-html]'); if (!t) return;
+  if (t.dataset.tipHtml !== undefined) tip.innerHTML = t.dataset.tipHtml; else tip.textContent = t.dataset.tip;
+  tip.classList.add('on');
+});
+document.addEventListener('mousemove', (e) => {
+  if (!tip.classList.contains('on')) return;
+  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 10), y = Math.min(e.clientY + 16, innerHeight - tip.offsetHeight - 10);
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+});
+document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip],[data-tip-html]')) tip.classList.remove('on'); });
+
+render();
+</script>
+</body>
+</html>

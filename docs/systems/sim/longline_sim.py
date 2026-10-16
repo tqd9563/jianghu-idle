@@ -116,11 +116,16 @@ def huohou_realms(level: int) -> float:
 
 
 def build(route: str, realm: int, level: int, stat_lv: int = 0) -> dict:
-    """stat_lv：声望阁「筋骨」每条的级数（气血 / 攻击 / 防御同级），按境界基础属性加成（pacing_sim）"""
+    """stat_lv：声望阁「底蕴」八条属性项的级数（标准玩家各条同级，pacing_sim）：
+    气血 / 攻击 / 防御 / 命中 / 闪避按境界基础属性比例加成；会心 +0.5pp、会心伤害 +5pp 逐级递减加点；真气不进本 sim"""
     b = m.make_build(route, min(realm, 5), min(level, SHICHENG), nodes=3)
     dx = huohou_realms(level)
     for key in ("hp", "atk", "dfs"):
         b[key] *= 1.7 ** dx * (1 + ps.stat_bonus(stat_lv))
+    b["hit"] *= 1 + ps.stat_cum(stat_lv, 0.03)
+    b["dodge"] *= 1 + ps.stat_cum(stat_lv, 0.03)
+    b["crit"] = min(0.80, b["crit"] + ps.stat_cum(stat_lv, 0.005))
+    b["cd"] += ps.stat_cum(stat_lv, 0.05)
     b["hit"] += 12 * dx
     b["dodge"] += 3 * dx
     if realm >= 6:   # make_build 只认境界 1–5：按境界 6 属性等比放大

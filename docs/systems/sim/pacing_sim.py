@@ -67,14 +67,16 @@ NODE_GAIN = 0.20
 NODE_P0 = 8.5           # 声望。原 10；筋骨分走 STAT_SHARE 的声望后按 10 × (1 − STAT_SHARE) 补偿，境界总额不动（prestige-shop/design.md §3）
 BASE_P0 = 10.0          # 基础声望系数 c（economy.md §1.1）
 
-# 声望阁「筋骨」（气血 / 攻击 / 防御三条，可反复购买；prestige-shop/design.md）：
-#   每条第 n 级价格 = STAT_P0 × STAT_Q^(n−1) 声望，每级该项属性 +STAT_GAIN（按境界基础属性计）。
-#   标准玩家每世把 STAT_SHARE 的声望平分到三条上，其余照旧买传承与修行感悟。
+# 声望阁「底蕴」属性项（八条可反复购买；prestige-shop/design.md §2）：
+#   每条第 n 级价格 = STAT_P0 × STAT_Q^(n−1) 声望；第 n 级收益 = 首级收益 × STAT_DECAY^(n−1)（逐级递减）。
+#   气血 / 攻击 / 防御 / 命中 / 闪避 / 真气按境界基础属性的比例计，首级 STAT_GAIN；会心 / 会心伤害为加点。
+#   标准玩家每世把 STAT_SHARE 的声望平分到八条上，其余照旧买传承与修行感悟。
 STAT_SHARE = 0.15
 STAT_P0 = 10.0
 STAT_Q = 1.35
 STAT_GAIN = 0.05
-STAT_LINES = 3
+STAT_DECAY = 0.96
+STAT_LINES = 8
 
 # 境界总额与宿慧已实装（content.md §1、economy.md §2，节奏守卫按实测锚定）。声望阁加筋骨后
 # 不重解这两张表，改为冻结输入、验证里程碑仍命中（表五）；置 None 则回到按里程碑重解。
@@ -92,9 +94,14 @@ def stat_price(level: int) -> float:
     return STAT_P0 * STAT_Q ** (level - 1)
 
 
+def stat_cum(level: int, first: float = STAT_GAIN) -> float:
+    """某一条买到 level 级的累计收益：首级 first，逐级 × STAT_DECAY"""
+    return first * (1 - STAT_DECAY ** level) / (1 - STAT_DECAY)
+
+
 def stat_bonus(level: int) -> float:
-    """筋骨某一条 level 级给该项属性的加成（比例）"""
-    return STAT_GAIN * level
+    """气血 / 攻击 / 防御等比例项 level 级的累计加成"""
+    return stat_cum(level)
 
 
 def rate(realm: int) -> float:
@@ -356,8 +363,9 @@ def main() -> None:
     print("\n【表四】声望阁：修行感悟的实际购买（归隐时用本世声望尽数买入）")
     print(f"  第 n 级 +{NODE_GAIN:.0%} 基础产出，价格 = {NODE_P0:g}P × n；基础声望 = {BASE_P0:.0f} × 乘区加权有效小时")
     print(f"  （声望 = 基础 × 前沿乘数 {FRONT_MULT}（首达境界 3 之后）+ 名号约 {FAME_SHARE:.0%}；多出基础的部分先买齐五件传承）")
-    print(f"  筋骨：每条第 n 级 {STAT_P0:.0f} × {STAT_Q}^(n−1) 声望、+{STAT_GAIN:.0%}；标准玩家每世声望的 {STAT_SHARE:.0%} 平分三条")
-    print(f"{'第d天':>7}{'累计级数':>10}{'声望阁乘区':>12}{'总乘区':>9}{'筋骨级':>8}{'属性加成':>10}{'折合当量':>10}")
+    print(f"  底蕴属性：每条第 n 级 {STAT_P0:.0f} × {STAT_Q}^(n−1) 声望、收益 {STAT_GAIN:.0%} × {STAT_DECAY}^(n−1)（上限 {STAT_GAIN / (1 - STAT_DECAY):.0%}）；"
+          f"标准玩家每世声望的 {STAT_SHARE:.0%} 平分 {STAT_LINES} 条")
+    print(f"{'第d天':>7}{'累计级数':>10}{'声望阁乘区':>12}{'总乘区':>9}{'每条级数':>8}{'累计加成':>10}{'折合当量':>10}")
     print("-" * 66)
     for d in [2, 7, 21, 50, 100]:
         lv = STANDARD["levels_by_day"][d]
@@ -369,7 +377,7 @@ def main() -> None:
     print("  每世转世时的声望与筋骨购买（前 8 世）：")
     for life in LIVES[:8]:
         nxt = LIVES[LIVES.index(life) + 1]
-        print(f"    第 {LIVES.index(life) + 1} 世（第 {life.start + 1:.0f}–{life.end:.0f} 天）→ 来世 感悟 {nxt.levels} 级 · 筋骨 {nxt.stat_lv} 级")
+        print(f"    第 {LIVES.index(life) + 1} 世（第 {life.start + 1:.0f}–{life.end:.0f} 天）→ 来世 感悟 {nxt.levels} 级 · 底蕴属性各 {nxt.stat_lv} 级")
 
     print("\n【表五】验证 · 按天推演（一世可能跨几天，首达日允许早于目标不超过一世）")
     print(f"{'境界':<6}{'目标日':>8}{'实测日':>8}{'判定':>6}")
@@ -388,8 +396,8 @@ def main() -> None:
     for x in sorted(MILESTONE_DAY):
         d = daily.get(x)
         print(f"  境界 {x}：第 {d if d else '>400'} 天（标准玩家第 {first.get(x)} 天）")
-    print("\n【表七】对照：声望全押修行感悟 / 全押筋骨 的玩家首达日（判据：全押感悟不得比标准快 15% 以上）")
-    for label, share in (("全押感悟", 0.0), ("全押筋骨", 1.0)):
+    print("\n【表七】对照：声望全押修行感悟 / 全押底蕴属性 的玩家首达日（判据：全押感悟不得比标准快 15% 以上）")
+    for label, share in (("全押感悟", 0.0), ("全押属性", 1.0)):
         got = play(NEED, SUHUI, days=400, stat_share=share)["first"]
         print(f"  {label}：" + " · ".join(f"境界 {x} 第 {got.get(x, '>400')} 天" for x in sorted(MILESTONE_DAY)))
         if share == 0.0:

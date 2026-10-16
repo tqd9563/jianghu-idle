@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>侠名录 原型 — 声望阁改版</title>
+<title>前尘 原型 — 声望阁改版</title>
 <!--
-  侠名录（声望阁改版）原型。设计：docs/systems/prestige-shop/design.md §5。
+  前尘（声望阁改版）原型 v0.2。设计：docs/systems/prestige-shop/design.md §5。
   外壳照现行 code/src/App.tsx 的人物卷侧栏画；只做这一页。
-  右下角控制条：三种状态（首次落地 / 平时 / 钱不够）× 两个布局案（A 行列表 / B 四格小卡）。
-  按钮可真实点击：买一级扣声望、级数与加成同步涨。
+  页内「底蕴 | 传承」分段切换；底蕴 = 修行感悟宽卡 + 八条属性小卡 4×2，收益逐级递减，无「尽数」。
+  右下角控制条：三种状态（首次落地 / 第九世 / 钱不够）× 三个页名候选。按钮可真实点击：买一级扣声望、级数与收益同步涨。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,7 +97,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: var(--art) center top / cover no-repeat; filter: saturate(0.55) brightness(0.8);
   -webkit-mask-image: linear-gradient(to bottom, oklch(0 0 0) 0%, oklch(0 0 0 / 0.35) 55%, transparent 100%);
   mask-image: linear-gradient(to bottom, oklch(0 0 0) 0%, oklch(0 0 0 / 0.35) 55%, transparent 100%); }
-.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
 .page-head h1 { margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; }
 .page-head .sub { color: var(--muted); margin-top: 4px; font-size: 13.5px; }
 .page-head .sub b { color: var(--ink); font-weight: 600; }
@@ -106,52 +106,61 @@ button { font: inherit; color: inherit; cursor: pointer; }
   text-decoration: underline dotted oklch(0.78 0.13 78 / 0.5); text-underline-offset: 6px; }
 .mult .k { font-size: 12px; color: var(--faint); }
 
+/* 分段切换（同市集摊位条） */
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: oklch(0.19 0.014 262 / 0.8); margin-bottom: 16px; }
+.seg button { border: 0; background: none; border-radius: 8px; padding: 6px 18px; font-family: var(--serif); font-size: 14.5px; letter-spacing: 0.2em; color: var(--muted); }
+.seg button[aria-selected="true"] { background: var(--wash-2); color: var(--ink); }
+.page[data-tab="diyun"] .only-chuancheng, .page[data-tab="chuancheng"] .only-diyun { display: none; }
+
 .card { border-radius: 12px; padding: 16px 18px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); }
 .card + .card { margin-top: 14px; }
 .card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
 .card .head .serif { font-size: 15px; letter-spacing: 0.2em; }
 .card .head small { color: var(--faint); font-size: 12px; }
+.guide { margin: -4px 0 14px; color: var(--muted); font-size: 13.5px; }
 
-.guide { margin: -6px 0 16px; color: var(--muted); font-size: 13.5px; }
+/* 修行感悟宽卡 */
+.gw { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 20px; align-items: center; }
+.gw .n { font-family: var(--serif); font-size: 16px; letter-spacing: 0.12em; cursor: help; }
+.gw .big { font-family: var(--serif); font-size: 36px; font-weight: 700; line-height: 1; }
+.gw .big small { font-family: var(--body); font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+.gw .e { color: var(--muted); font-size: 13px; }
+.gw .e b { color: var(--ink); font-weight: 600; }
+.gw .e .nx { margin-left: 14px; }
 
-/* 行列表（传承沿用；底蕴案 A 也用） */
-.rows { display: grid; }
-.row-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
-.row-i:first-child { border-top: 0; padding-top: 2px; }
-.row-i .t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.row-i .t .serif { font-size: 15px; letter-spacing: 0.08em; cursor: help; }
-.row-i .d { grid-column: 1; color: var(--muted); font-size: 12.5px; }
-.row-i .d b { color: var(--ink); font-weight: 600; }
-.row-i .a { grid-row: 1 / span 2; grid-column: 2; display: flex; align-items: center; gap: 10px; }
-.row-i .price { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.row-i .price.ok { color: var(--ink-gold); }
-.row-i.done .serif { color: var(--muted); }
-.qtag { font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: oklch(0.3 0.016 262 / 0.6); color: var(--muted); white-space: nowrap; }
-.lv { font-size: 12px; color: var(--ink-gold); letter-spacing: 0.05em; white-space: nowrap; }
-.lv b { font-size: 15px; font-weight: 600; color: var(--ink); margin-right: 2px; }
+/* 八条属性小卡 4×2 */
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.tile { border-radius: 10px; padding: 14px 14px 12px; background: oklch(0.18 0.012 262 / 0.45); display: grid; gap: 5px; align-content: start; }
+.tile .n { font-family: var(--serif); font-size: 15px; letter-spacing: 0.1em; cursor: help; }
+.tile .big { font-family: var(--serif); font-size: 32px; font-weight: 700; line-height: 1; margin-top: 2px; }
+.tile .big small { font-family: var(--body); font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+.tile .e { color: var(--muted); font-size: 12.5px; display: grid; gap: 1px; }
+.tile .e b { color: var(--ink); font-weight: 600; }
+.tile .e .nx { color: var(--faint); }
+.tile .e .nx b { color: var(--ink-gold); }
+.tile .btns { display: grid; gap: 4px; margin-top: 8px; }
+.tile .btns .btn2 { width: 100%; }
+.tile .btns small { font-size: 11.5px; color: var(--faint); text-align: center; }
+
 .buy { display: grid; justify-items: end; gap: 3px; }
 .buy small { font-size: 11.5px; color: var(--faint); }
 .btn2 { border: 0; background: none; font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.1em; color: var(--gold);
   padding: 5px 14px; border-radius: 8px; box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); white-space: nowrap; transition: background .2s var(--ease); }
 .btn2:hover:not(:disabled) { background: oklch(0.78 0.13 78 / 0.1); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.75); }
 .btn2:disabled { color: var(--faint); box-shadow: inset 0 0 0 1px var(--hair); cursor: default; }
-.btn2.quiet { color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
-.btn2.quiet:hover:not(:disabled) { color: var(--ink); background: oklch(0.3 0.016 262 / 0.3); }
-.btn2.quiet:disabled { color: var(--faint); }
 
-/* 底蕴案 B：四格小卡 */
-.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.tile { border-radius: 10px; padding: 14px 14px 12px; background: oklch(0.18 0.012 262 / 0.45); display: grid; gap: 6px; align-content: start; }
-.tile .n { font-family: var(--serif); font-size: 15px; letter-spacing: 0.1em; cursor: help; display: flex; justify-content: space-between; align-items: baseline; }
-.tile .n small { font-family: var(--body); font-size: 11.5px; color: var(--faint); letter-spacing: 0; }
-.tile .big { font-family: var(--serif); font-size: 34px; font-weight: 700; line-height: 1; margin-top: 2px; }
-.tile .big small { font-family: var(--body); font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
-.tile .e { color: var(--muted); font-size: 12.5px; }
-.tile .e b { color: var(--ink); font-weight: 600; }
-.tile .btns { display: grid; gap: 6px; margin-top: 8px; }
-.tile .btns .btn2 { width: 100%; }
-.tile .btns small { font-size: 11.5px; color: var(--faint); text-align: center; }
-.page[data-layout="a"] .only-b, .page[data-layout="b"] .only-a { display: none; }
+/* 传承行列表 */
+.rows { display: grid; }
+.row-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
+.row-i:first-child { border-top: 0; padding-top: 2px; }
+.row-i .t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row-i .t .serif { font-size: 15px; letter-spacing: 0.08em; }
+.row-i .d { grid-column: 1; color: var(--muted); font-size: 12.5px; }
+.row-i .a { grid-row: 1 / span 2; grid-column: 2; display: flex; align-items: center; gap: 10px; }
+.row-i .price { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.row-i .price.ok { color: var(--ink-gold); }
+.row-i.done .serif { color: var(--muted); }
+.qtag { font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: oklch(0.3 0.016 262 / 0.6); color: var(--muted); white-space: nowrap; }
 
 /* 悬停提示 */
 .tip { position: fixed; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .15s;
@@ -165,6 +174,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .scroll { display: none; }
   .page-art { left: 0; }
   .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gw { grid-template-columns: minmax(0, 1fr); }
   .row-i { grid-template-columns: minmax(0, 1fr); }
   .row-i .a { grid-row: auto; grid-column: 1; justify-content: flex-start; }
 }
@@ -174,8 +184,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 <div class="proto">
   <div class="row"><span>状态</span><button data-state="first" aria-pressed="true">首次落地</button><button data-state="mid">第九世</button><button data-state="poor">钱不够</button></div>
-  <div class="row"><span>布局</span><button data-layout="a" aria-pressed="true">A 行列表</button><button data-layout="b">B 四格小卡</button></div>
-  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家。按钮可点，扣声望、涨级数。</p>
+  <div class="row"><span>页名</span><button data-name="前尘" aria-pressed="true">前尘</button><button data-name="宿世">宿世</button><button data-name="轮回">轮回</button></div>
+  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家。按钮可点，扣声望、涨级数；每级收益递减。</p>
 </div>
 <div class="tip" id="tip"></div>
 
@@ -203,7 +213,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <button>武学</button>
       <button>门派</button>
       <button>市集</button>
-      <button aria-current="page">侠名录</button>
+      <button aria-current="page" class="js-name">前尘</button>
     </nav>
     <div class="scroll-foot">
       <button class="ghost-btn" disabled data-tip="本世突破一次后可转世">转世</button>
@@ -212,29 +222,37 @@ button { font: inherit; color: inherit; cursor: pointer; }
   </aside>
 
   <main class="stage">
-    <section class="page" id="page" data-layout="a">
+    <section class="page" id="page" data-tab="diyun">
       <div class="page-art" style="--art:url('../../code/public/art/rep.jpg')"></div>
       <header class="page-head">
         <div>
-          <h1>侠名录</h1>
+          <h1 class="js-name">前尘</h1>
           <div class="sub">持有 <b class="js-rep">340</b> 声望</div>
         </div>
         <div class="mult"><div class="v js-mult" data-tip-html="">2.6×</div><div class="k">挂机产出</div></div>
       </header>
 
-      <p class="guide js-guide">你的声望可以换成底蕴与传承，让下一世更快更远。</p>
-
-      <!-- 底蕴：可反复购买 -->
-      <div class="card">
-        <div class="head"><span class="serif">底蕴</span><small>转世不散</small></div>
-        <div class="rows only-a js-rows-a"></div>
-        <div class="grid4 only-b js-grid-b"></div>
+      <div class="seg" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="diyun">底蕴</button>
+        <button role="tab" aria-selected="false" data-tab="chuancheng">传承</button>
       </div>
 
-      <!-- 传承：一次性 -->
-      <div class="card">
-        <div class="head"><span class="serif">传承</span><small>一次购得，永久生效</small></div>
-        <div class="rows js-rows-c"></div>
+      <p class="guide js-guide">你的声望可以换成底蕴与传承，让下一世更快更远。</p>
+
+      <!-- 底蕴 -->
+      <div class="only-diyun">
+        <div class="card">
+          <div class="gw js-gw"></div>
+          <div class="grid4 js-grid"></div>
+        </div>
+      </div>
+
+      <!-- 传承 -->
+      <div class="only-chuancheng">
+        <div class="card">
+          <div class="head"><span class="serif">传承</span><small>一次购得，永久生效</small></div>
+          <div class="rows js-rows-c"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -245,9 +263,25 @@ button { font: inherit; color: inherit; cursor: pointer; }
 const REALM_NAMES = { 2: '初窥门径', 3: '小有所成', 4: '炉火纯青', 5: '一流高手' };
 const SUHUI = { 2: 1.6, 3: 3.7, 4: 7.6, 5: 13.4 };
 const GANWU_GAIN = 0.2, GANWU_P0 = 8.5;
-const JINGU_GAIN = 0.05, JINGU_P0 = 10, JINGU_Q = 1.35;
+const P0 = 10, Q = 1.35, DECAY = 0.96;
 const ganwuPrice = (n) => Math.ceil(GANWU_P0 * n);
-const jinguPrice = (n) => Math.round(JINGU_P0 * Math.pow(JINGU_Q, n - 1));
+const price = (n) => Math.round(P0 * Math.pow(Q, n - 1));
+const gainAt = (first, n) => first * Math.pow(DECAY, n - 1);          // 第 n 级收益
+const cum = (first, n) => first * (1 - Math.pow(DECAY, n)) / (1 - DECAY); // n 级累计
+const pct = (v) => `${(v * 100).toFixed(1).replace(/\.0$/, '')}%`;
+const pts = (v) => `${(v * 100).toFixed(1).replace(/\.0$/, '')} 点`;
+const TIP_GANWU = '侠名在外，江湖自有人奉上资粮。价格每级 +8.5 声望，和每一世转世拿到的声望一起往上涨。';
+const TIP_DIYUN = '散功重修，根骨不失——打熬出来的底子随神魂带到来世。';
+const LINES = [
+  { id: 'qixue',           name: '气血',     first: 0.05,  fmt: pct },
+  { id: 'gongji',          name: '攻击',     first: 0.05,  fmt: pct },
+  { id: 'fangyu',          name: '防御',     first: 0.05,  fmt: pct },
+  { id: 'mingzhong',       name: '命中',     first: 0.03,  fmt: pct },
+  { id: 'shanbi',          name: '闪避',     first: 0.03,  fmt: pct },
+  { id: 'huixin',          name: '会心',     first: 0.005, fmt: pts },
+  { id: 'huixin_shanghai', name: '会心伤害', first: 0.05,  fmt: pts },
+  { id: 'zhenqi',          name: '真气',     first: 0.05,  fmt: pct },
+];
 const NODES = [
   { id: 'zairu_jianghu',      name: '再入江湖', price: 150,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
   { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '书肆的秘籍一律八折' },
@@ -255,65 +289,33 @@ const NODES = [
   { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '武学领悟新招的顿悟概率翻倍' },
   { id: 'poguan_xinde',       name: '破关心得', price: 1100, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
 ];
-const TIP_GANWU = '侠名在外，江湖自有人奉上资粮。价格每级 +8.5 声望，和每一世转世拿到的声望一起往上涨。';
-const TIP_JINGU = '散功重修，根骨不失——打熬出来的底子随神魂带到来世。';
-const LINES = [
-  { id: 'ganwu',  name: '修行感悟', stat: '挂机产出', unit: '×', gain: GANWU_GAIN, price: ganwuPrice, tip: TIP_GANWU, fmt: (v) => `${v.toFixed(1)}×` },
-  { id: 'genggu', name: '根骨', stat: '气血', unit: '%', gain: JINGU_GAIN, price: jinguPrice, tip: TIP_JINGU, fmt: (v) => `${Math.round(v * 100)}%` },
-  { id: 'luli',   name: '膂力', stat: '攻击', unit: '%', gain: JINGU_GAIN, price: jinguPrice, tip: TIP_JINGU, fmt: (v) => `${Math.round(v * 100)}%` },
-  { id: 'tiegu',  name: '铁骨', stat: '防御', unit: '%', gain: JINGU_GAIN, price: jinguPrice, tip: TIP_JINGU, fmt: (v) => `${Math.round(v * 100)}%` },
-];
+const zero = () => Object.fromEntries(LINES.map((l) => [l.id, 0]));
 const STATES = {
-  first: { run: 2, era: 1046, rep: 340, peak: 2, lv: { ganwu: 0, genggu: 0, luli: 0, tiegu: 0 }, owned: [], guide: true },
-  mid:   { run: 9, era: 1385, rep: 1240, peak: 3, lv: { ganwu: 52, genggu: 10, luli: 10, tiegu: 9 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
-  poor:  { run: 9, era: 1385, rep: 23, peak: 3, lv: { ganwu: 52, genggu: 10, luli: 10, tiegu: 9 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
+  first: { run: 2, era: 1046, rep: 340, peak: 2, ganwu: 0, lv: zero(), owned: [], guide: true },
+  mid:   { run: 9, era: 1385, rep: 1240, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
+  poor:  { run: 9, era: 1385, rep: 23, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['zairu_jianghu', 'qingzhuang_shanglu'], guide: false },
 };
 let S = structuredClone(STATES.first);
 const fmt = (n) => n.toLocaleString('zh-CN');
+const suhuiTotal = () => Object.entries(SUHUI).reduce((a, [r, v]) => a + (Number(r) <= S.peak ? v : 0), 0);
 
-function affordable(line) {
-  let k = 0, cost = 0, lv = S.lv[line.id];
-  while (cost + line.price(lv + k + 1) <= S.rep) { cost += line.price(lv + k + 1); k += 1; }
-  return { k, cost };
+function buyBtn(p) {
+  const can = S.rep >= p;
+  return `<button class="btn2" ${can ? '' : 'disabled'}>${fmt(p)} 声望</button>${can ? '' : `<small>还差 ${fmt(Math.ceil(p - S.rep))}</small>`}`;
 }
-function buy(line, all) {
-  const { k } = affordable(line);
-  const n = all ? k : (k >= 1 ? 1 : 0);
-  for (let i = 0; i < n; i++) { S.rep -= line.price(S.lv[line.id] + 1); S.lv[line.id] += 1; }
-  render();
+function ganwuCard() {
+  const lv = S.ganwu, p = ganwuPrice(lv + 1);
+  return `<div><div class="n" data-tip="${TIP_GANWU}">修行感悟</div><div class="big">${lv}<small>级</small></div></div>
+    <div class="e">挂机产出 现 <b>+${(GANWU_GAIN * lv).toFixed(1)}×</b><span class="nx">下一级 <b>+0.2×</b></span></div>
+    <div class="buy" data-buy="ganwu">${buyBtn(p)}</div>`;
 }
-function buyNode(id) {
-  const n = NODES.find((x) => x.id === id);
-  if (S.rep < n.price) return;
-  S.rep -= n.price; S.owned.push(id); render();
-}
-function suhuiTotal() { return Object.entries(SUHUI).reduce((a, [r, v]) => a + (Number(r) <= S.peak ? v : 0), 0); }
-
-function lineRowA(line) {
-  const lv = S.lv[line.id], next = line.price(lv + 1), can = S.rep >= next, { k, cost } = affordable(line);
-  const short = Math.ceil(next - S.rep);
-  return `<div class="row-i">
-    <div class="t"><span class="serif" data-tip="${line.tip}">${line.name}</span><span class="lv"><b>${lv}</b>级</span></div>
-    <div class="d">每级${line.stat} +${line.fmt(line.gain)} · 现 <b>+${line.fmt(line.gain * lv)}</b></div>
-    <div class="a">
-      <span class="buy"><button class="btn2" ${can ? '' : 'disabled'} data-buy="${line.id}">${fmt(next)} 声望</button>${can ? '' : `<small>还差 ${fmt(short)}</small>`}</span>
-      <span class="buy"><button class="btn2 quiet" ${k >= 2 ? '' : 'disabled'} data-buy-all="${line.id}">尽数 · ${k >= 2 ? `${k} 级` : '—'}</button>${k >= 2 ? `<small>${fmt(cost)} 声望</small>` : ''}</span>
-    </div>
-  </div>`;
-}
-function lineTileB(line) {
-  const lv = S.lv[line.id], next = line.price(lv + 1), can = S.rep >= next, { k, cost } = affordable(line);
-  const short = Math.ceil(next - S.rep);
-  return `<div class="tile">
-    <div class="n" data-tip="${line.tip}"><span>${line.name}</span><small>${line.stat}</small></div>
+function tile(line) {
+  const lv = S.lv[line.id], p = price(lv + 1);
+  return `<div class="tile" data-buy="${line.id}">
+    <div class="n" data-tip="${TIP_DIYUN}">${line.name}</div>
     <div class="big">${lv}<small>级</small></div>
-    <div class="e">每级 +${line.fmt(line.gain)} · 现 <b>+${line.fmt(line.gain * lv)}</b></div>
-    <div class="btns">
-      <button class="btn2" ${can ? '' : 'disabled'} data-buy="${line.id}">${fmt(next)} 声望</button>
-      ${can ? '' : `<small>还差 ${fmt(short)}</small>`}
-      <button class="btn2 quiet" ${k >= 2 ? '' : 'disabled'} data-buy-all="${line.id}">尽数${k >= 2 ? ` · ${k} 级` : ''}</button>
-      ${k >= 2 ? `<small>${fmt(cost)} 声望</small>` : ''}
-    </div>
+    <div class="e"><span>现 <b>+${line.fmt(cum(line.first, lv))}</b></span><span class="nx">下一级 <b>+${line.fmt(gainAt(line.first, lv + 1))}</b></span></div>
+    <div class="btns">${buyBtn(p)}</div>
   </div>`;
 }
 function nodeRow(n) {
@@ -329,31 +331,40 @@ function render() {
   document.querySelectorAll('.js-rep').forEach((el) => el.textContent = fmt(S.rep));
   document.querySelector('.js-run').textContent = S.run;
   document.querySelector('.js-era').textContent = fmt(S.era);
-  const suhui = suhuiTotal(), ganwu = GANWU_GAIN * S.lv.ganwu, mult = 1 + suhui + ganwu;
+  const suhui = suhuiTotal(), ganwu = GANWU_GAIN * S.ganwu, mult = 1 + suhui + ganwu;
   const m = document.querySelector('.js-mult');
   m.textContent = `${mult.toFixed(1)}×`;
   const suhuiLines = Object.entries(SUHUI).map(([r, v]) => Number(r) <= S.peak
     ? `+ 宿慧 · 首达${REALM_NAMES[r]} ${v.toFixed(1)}×` : `<span class="l">宿慧 · 首达${REALM_NAMES[r]} ${v.toFixed(1)}× · 未至</span>`).join('<br>');
   m.dataset.tipHtml = `基础 1<br>${suhuiLines}<br>+ 修行感悟 ${ganwu.toFixed(1)}×<br><span class="l">相加即挂机产出倍率</span>`;
   document.querySelector('.js-rate').textContent = (9 * mult).toFixed(1);
-  const nothing = S.lv.ganwu + S.lv.genggu + S.lv.luli + S.lv.tiegu === 0 && S.owned.length === 0;
+  const nothing = S.ganwu + Object.values(S.lv).reduce((a, b) => a + b, 0) === 0 && S.owned.length === 0;
   document.querySelector('.js-guide').hidden = !(S.guide && nothing);
-  document.querySelector('.js-rows-a').innerHTML = LINES.map(lineRowA).join('');
-  document.querySelector('.js-grid-b').innerHTML = LINES.map(lineTileB).join('');
+  document.querySelector('.js-gw').innerHTML = ganwuCard();
+  document.querySelector('.js-grid').innerHTML = LINES.map(tile).join('');
   document.querySelector('.js-rows-c').innerHTML = NODES.map(nodeRow).join('');
 }
 
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.buy) buy(LINES.find((l) => l.id === b.dataset.buy), false);
-  else if (b.dataset.buyAll) buy(LINES.find((l) => l.id === b.dataset.buyAll), true);
-  else if (b.dataset.node) buyNode(b.dataset.node);
-  else if (b.dataset.state) {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  const wrap = b.closest('[data-buy]');
+  if (wrap) {
+    const id = wrap.dataset.buy;
+    if (id === 'ganwu') { S.rep -= ganwuPrice(S.ganwu + 1); S.ganwu += 1; }
+    else { S.rep -= price(S.lv[id] + 1); S.lv[id] += 1; }
+    render();
+  } else if (b.dataset.node) {
+    const n = NODES.find((x) => x.id === b.dataset.node);
+    S.rep -= n.price; S.owned.push(n.id); render();
+  } else if (b.dataset.tab && b.getAttribute('role') === 'tab') {
+    document.getElementById('page').dataset.tab = b.dataset.tab;
+    b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-selected', x === b));
+  } else if (b.dataset.state) {
     S = structuredClone(STATES[b.dataset.state]);
     b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
     render();
-  } else if (b.dataset.layout) {
-    document.getElementById('page').dataset.layout = b.dataset.layout;
+  } else if (b.dataset.name) {
+    document.querySelectorAll('.js-name').forEach((el) => el.textContent = b.dataset.name);
     b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
   }
 });

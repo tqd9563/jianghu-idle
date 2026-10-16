@@ -35,7 +35,7 @@ import {
 } from '../engine/acupoints';
 import {
   DIYUN_MAP, FAME_BOSS, FAME_ELITE, FAME_MERIDIAN, REP_NODE_MAP,
-  bagExtraCells, bossDmgBonus, dantianCapMult, deepestBoss, diyunBonus, diyunPrice, freshDiyun, ganwuAffordable, ganwuPrice,
+  bagExtraCells, bossDmgBonus, deepestBoss, diyunBonus, diyunPrice, extraWuxueSlots, freshDiyun, ganwuAffordable, ganwuPrice,
   hasNode, isBossKey, isEliteKey, marketDiscount, outputMult, settleRetire, soulWeakYears, switchFeeMult,
   type DiyunId, type DiyunLevels, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
@@ -608,6 +608,11 @@ function settleWuxue(
 }
 
 /** 升重是否被台阶挡住；归真要先有本内功的归真卷册（门派贡献商店） */
+/** 武学装配槽：按境界 + 海纳百川一槽 */
+export function slotCountOf(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>): number {
+  return slotCount(s.realm) + extraWuxueSlots(s.ownedRepNodes ?? []);
+}
+
 /** 行囊容量：80 格 + 包罗万象两行 */
 export function bagCellsOf(s: Pick<PersistedState, 'ownedRepNodes'>): number {
   return BAG_CELLS + bagExtraCells(s.ownedRepNodes ?? []);
@@ -1000,9 +1005,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       let chargeHighWater = s.chargeHighWater;
       if (cost !== null) {
         // 丹田上限 = 突破消耗。v4.0 起满额后产出无处可去（旧「溢出转气势」已随 D5/v4.0 废止）。
-        // 海纳百川：上限提高两成，多出的只是存着，周天进度仍按突破总额算
-        const cap = cost * dantianCapMult(s.ownedRepNodes);
-        if (dantian > cap) dantian = cap;
+        if (dantian > cost) dantian = cost;
         // N 段动态（zhoutian/design.md §3.1：境界 1–5 = 4/3/4/6/8，段间公比 2）
         const N = zhoutianN(s.realm);
         const { segmentsFull } = zhoutianProgress(dantian, cost, N);
@@ -1229,7 +1232,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   equipWuxue: (id) => {
     const s = get();
     const eq = s.equipped ?? [];
-    if (!(s.ownedWuxue ?? []).includes(id) || eq.includes(id) || eq.length >= slotCount(s.realm)) return;
+    if (!(s.ownedWuxue ?? []).includes(id) || eq.includes(id) || eq.length >= slotCountOf(s)) return;
     if (!usableWith(WUXUE[id], handsOf(s))) return;   // 器械要拿同类兵器，暗器要备暗器（design.md §3.7）
     set({ equipped: [...eq, id] });
     track('wuxue_equipped', { run: s.run, realm: s.realm, route: s.route }, { wuxue: id, slots: eq.length + 1 });

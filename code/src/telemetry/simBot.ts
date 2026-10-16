@@ -14,7 +14,7 @@ import { vi } from 'vitest';
 import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
 import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
-import { WUXUE, slotCount } from '../engine/wuxue';
+import { WUXUE } from '../engine/wuxue';
 import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
 import { betterThanWorn } from '../engine/gear';
 import { BLACK_PER_LIFE } from '../engine/market';
@@ -24,7 +24,7 @@ import { DIYUN_IDS, REP_NODES, diyunPrice, freshDiyun, ganwuPrice } from '../eng
 import { saveGame } from '../save/storage';
 import {
   mapUnlocked, marketGoodsOf, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN,
-  type MapNo,
+  slotCountOf, type MapNo,
 } from '../store/gameStore';
 import type { TierId } from '../engine/enemies';
 
@@ -190,7 +190,7 @@ function tendWuxue(): void {
   const want = [...s.ownedWuxue].sort((a, b) =>
     (QUALITY_ORDER.indexOf(WUXUE[b].quality) - QUALITY_ORDER.indexOf(WUXUE[a].quality))
     || (Number(WUXUE[b].route === route) - Number(WUXUE[a].route === route)))
-    .slice(0, slotCount(s.realm));
+    .slice(0, slotCountOf(s));
   for (const id of s.equipped) if (!want.includes(id)) st().unequipWuxue(id);
   for (const id of want) st().equipWuxue(id);
 }
@@ -270,7 +270,7 @@ export function retireAndShop(): void {
   }
   st().closeRetireCeremony();
   // 底蕴：预算平分八条，各自从低到高买
-  let guard = 4000;
+  let guard = process.env.PACE_NO_DIYUN ? 0 : 4000;
   while (guard-- > 0) {
     const d = { ...freshDiyun(), ...(st().diyun ?? {}) };
     const id = DIYUN_IDS.reduce((a, b) => (d[b] < d[a] ? b : a));
@@ -279,7 +279,9 @@ export function retireAndShop(): void {
     st().buyDiyun(id);
     diyunBudget -= price;
   }
-  for (const node of REP_NODES) {
+  // 排查开关：PACE_NO_JIYUAN=1 不买机缘、PACE_NO_DIYUN=1 不买底蕴（与 PACE_NO_WUXUE 同类）
+  const onlyJy = process.env.PACE_JIYUAN ? new Set(process.env.PACE_JIYUAN.split(',')) : null;
+  for (const node of process.env.PACE_NO_JIYUAN ? [] : REP_NODES.filter((n) => !onlyJy || onlyJy.has(n.id))) {
     if (st().ownedRepNodes.includes(node.id)) continue;
     if (qolBudget < node.price) break;
     st().buyRepNode(node.id);

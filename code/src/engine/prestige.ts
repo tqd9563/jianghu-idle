@@ -31,7 +31,7 @@ export const REP_NODES: RepNodeDef[] = [
   { id: 'huiyan_shizhu',      name: '慧眼识珠', price: 100, type: '信息', desc: '市集售卖的商品显示词条' },
   { id: 'yaodao_bingchu',     name: '药到病除', price: 110, type: '战斗', desc: '疗伤所需银两减半' },
   { id: 'anhun_dingpo',       name: '安魂定魄', price: 120, type: '策略', desc: '魂魄未稳缩短为五年' },
-  { id: 'haina_baichuan',     name: '海纳百川', price: 170, type: '资源', desc: '丹田上限提高两成' },
+  { id: 'haina_baichuan',     name: '海纳百川', price: 170, type: '资源', desc: '武学装配槽 +1' },
   { id: 'jiaqing_jiushu',     name: '驾轻就熟', price: 230, type: '策略', desc: '转世后内功首段台阶免顿悟' },
   { id: 'renzu_guizong',      name: '认祖归宗', price: 270, type: '策略', desc: '转世后自动拜入前世门派' },
   { id: 'taojia_huanjia',     name: '讨价还价', price: 340, type: '资源', desc: '市集商品八折' },
@@ -56,8 +56,8 @@ export const switchFeeMult = (owned: string[]) => (hasNode(owned, 'gaixian_yizhe
 export const bagExtraCells = (owned: string[]) => (hasNode(owned, 'baoluo_wanxiang') ? 20 : 0);
 /** 安魂定魄：魂魄未稳由十年缩为五年 */
 export const soulWeakYears = (owned: string[]) => (hasNode(owned, 'anhun_dingpo') ? 5 : 10);
-/** 海纳百川：丹田上限提高两成（多出的部分只是存着，周天进度仍按突破总额算） */
-export const dantianCapMult = (owned: string[]) => (hasNode(owned, 'haina_baichuan') ? 1.2 : 1);
+/** 海纳百川：武学装配多一槽（原「丹田上限 +20%」实测把首达境界 4 提前 8 天，改为与内力节奏无关的容量） */
+export const extraWuxueSlots = (owned: string[]) => (hasNode(owned, 'haina_baichuan') ? 1 : 0);
 /** 讨价还价：市集商品八折（兵器铺 / 衣饰铺）；轻装上路管书肆（武馆秘籍） */
 export const marketDiscount = (owned: string[]) => (hasNode(owned, 'taojia_huanjia') ? 0.8 : 1);
 

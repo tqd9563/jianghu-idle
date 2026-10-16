@@ -11,7 +11,7 @@ import {
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
-  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind,
+  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind, slotCountOf,
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
@@ -263,6 +263,13 @@ describe('gameStore · 归隐与声望阁', () => {
     // 驾轻就熟：转世后再选内功，首段台阶视为已过
     useGameStore.getState().selectNeigong('jingleijue');
     expect(useGameStore.getState().tiersPassed).toBe(1);
+  });
+
+  it('海纳百川：武学装配槽 +1（prestige-shop/design.md §2b 实装一改）', () => {
+    useGameStore.setState({ realm: 2, ownedRepNodes: [] });
+    expect(slotCountOf(useGameStore.getState())).toBe(2);
+    useGameStore.setState({ ownedRepNodes: ['haina_baichuan'] });
+    expect(slotCountOf(useGameStore.getState())).toBe(3);
   });
 
   it('机缘购买：扣声望、发 prestige_node_bought；不足拒绝', () => {

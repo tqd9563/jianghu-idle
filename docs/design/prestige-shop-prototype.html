@@ -8,7 +8,7 @@
   前尘（声望阁改版）原型 v0.3。设计：docs/systems/prestige-shop/design.md §5。
   外壳照现行 code/src/App.tsx 的人物卷侧栏画；只做这一页。
   页内「底蕴 | 传承 | 侠名录」分段切换；底蕴 = 修行感悟宽卡 + 八条属性小卡 4×2，收益逐级递减，无「尽数」；
-  机缘 = 13 件一次性购买；侠名录 = 22 条成就线网格，计量达标自动点亮，徽记描边铜 / 银 / 金三品。图标走 ../../code/public/art/achv/<id>.png。
+  机缘 = 14 件一次性购买；侠名录 = 22 条成就线网格，计量达标自动点亮，徽记描边铜 / 银 / 金三品。图标走 ../../code/public/art/achv/<id>.png。
   右下角控制条：三种状态（首次落地 / 第九世 / 钱不够）× 三个页名候选。按钮可真实点击：买一级扣声望、级数与收益同步涨。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -311,19 +311,20 @@ const LINES = [
   { id: 'zhenqi',          name: '真气',     first: 0.05,  fmt: pct },
 ];
 const NODES = [
-  { id: 'chongchu_jianghu',   name: '重出江湖', price: 70,  type: '信息', desc: '开战前显示敌人机制的克制提示' },
-  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 80,  type: '策略', desc: '书肆秘籍八折' },
-  { id: 'gaixian_yizhe',      name: '改弦易辙', price: 90,  type: '资源', desc: '转修手续费减半' },
-  { id: 'baoluo_wanxiang',    name: '包罗万象', price: 100,  type: '资源', desc: '行囊空间 +2' },
-  { id: 'huiyan_shizhu',      name: '慧眼识珠', price: 120,  type: '信息', desc: '市集售卖的商品显示词条' },
-  { id: 'yaodao_bingchu',     name: '药到病除', price: 130,  type: '战斗', desc: '疗伤所需银两减半' },
-  { id: 'anhun_dingpo',       name: '安魂定魄', price: 140,  type: '策略', desc: '魂魄未稳缩短为五年' },
-  { id: 'haina_baichuan',     name: '海纳百川', price: 200,  type: '资源', desc: '丹田上限提高两成' },
-  { id: 'jiaqing_jiushu',     name: '驾轻就熟', price: 270,  type: '策略', desc: '转世后内功首段台阶免顿悟' },
-  { id: 'renzu_guizong',      name: '认祖归宗', price: 320,  type: '策略', desc: '转世后自动拜入前世门派' },
-  { id: 'taojia_huanjia',     name: '讨价还价', price: 400,  type: '资源', desc: '市集商品八折' },
-  { id: 'shuangguan_qixia',   name: '双管齐下', price: 720, type: '策略', desc: '可同时承接两项门派任务' },
-  { id: 'bizhou_zizhen',      name: '敝帚自珍', price: 1080, type: '策略', desc: '转世时保留一件装备' },
+  { id: 'chongchu_jianghu',   name: '重出江湖', price: 60,  type: '信息', desc: '开战前显示敌人机制的克制提示' },
+  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 70,  type: '策略', desc: '书肆秘籍八折' },
+  { id: 'gaixian_yizhe',      name: '改弦易辙', price: 80,  type: '资源', desc: '转修手续费减半' },
+  { id: 'baoluo_wanxiang',    name: '包罗万象', price: 90,  type: '资源', desc: '行囊空间 +2' },
+  { id: 'huiyan_shizhu',      name: '慧眼识珠', price: 100,  type: '信息', desc: '市集售卖的商品显示词条' },
+  { id: 'yaodao_bingchu',     name: '药到病除', price: 110,  type: '战斗', desc: '疗伤所需银两减半' },
+  { id: 'anhun_dingpo',       name: '安魂定魄', price: 120,  type: '策略', desc: '魂魄未稳缩短为五年' },
+  { id: 'haina_baichuan',     name: '海纳百川', price: 170,  type: '资源', desc: '丹田上限提高两成' },
+  { id: 'jiaqing_jiushu',     name: '驾轻就熟', price: 230,  type: '策略', desc: '转世后内功首段台阶免顿悟' },
+  { id: 'renzu_guizong',      name: '认祖归宗', price: 270,  type: '策略', desc: '转世后自动拜入前世门派' },
+  { id: 'taojia_huanjia',     name: '讨价还价', price: 340,  type: '资源', desc: '市集商品八折' },
+  { id: 'shuangguan_qixia',   name: '双管齐下', price: 600, type: '策略', desc: '可同时承接两项门派任务' },
+  { id: 'bizhou_zizhen',      name: '敝帚自珍', price: 900, type: '策略', desc: '转世时保留一件装备' },
+  { id: 'kegu_mingxin',       name: '刻骨铭心', price: 900, type: '策略', desc: '转世时保留一门武学的招式与熟练' },
 ];
 // 侠名录 22 条线：三层名、计量、层级门槛（门槛暂定，待 sim 按第 7 / 21 / 50 天标定）
 const ACHV = [

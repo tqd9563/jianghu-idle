@@ -46,6 +46,7 @@
 | `systems/battle-loot/spec.md` | 战斗挂机：掉落与装备规格（装备基础 / 品阶 / 词条 / 余量、掉落概率、171 门武学五项参数与特效分档、触发求和 75%、境界 1 推关；sim 生成，14 条判据全过） | gear.ts（装备 §1 / §2.1 / §6）, wuxue.ts + combat.ts（武学 §3）, market.ts（§4 市集 / 黑市暂定数值）, gameStore.ts（掉落、行囊、书匣、教学关、市集）, BagPane.tsx, WuxuePane.tsx, ShopPane.tsx（市集 / 黑市） |
 | `systems/battle-loot/sim.py` | 战斗挂机 sim（fight_y：装备 / 新特效 / 触发求和；14 条判据；写出 `wuxue-params.json`） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
+| `systems/prestige-shop/design.md` | 前尘（声望阁改版）设定：底蕴八条可反复购买且逐级递减、感悟价补偿、页面分段切换；sim 判据已过，原型待审 | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |
 | `systems/injury/spec.md` | 受伤系统规格（伤型表/严重度/压制/恢复/折寿接口，可进实现） | — |

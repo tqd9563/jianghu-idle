@@ -117,11 +117,11 @@ def main():
         return max(X[r][d] - L.frontier_x(L.build(r, *combat[d]), tags) for r in L.ROUTES)
 
     def boss_x(nxt: int, tags: tuple[str, ...]) -> float:
-        realm, lv = combat[nxt] if nxt <= 100 else (6, combat[100][1])
+        realm, lv, st = combat[nxt] if nxt <= 100 else (6, *combat[100][1:])
         k = 1 + L.POGUAN_BONUS if nxt >= L.POGUAN_DAY else 1.0
         xs = []
         for r in L.ROUTES:
-            bd = L.build(r, realm, lv)
+            bd = L.build(r, realm, lv, st)
             bd["atk"] *= k
             xs.append(L.frontier_x(bd, tags))
         return min(xs)

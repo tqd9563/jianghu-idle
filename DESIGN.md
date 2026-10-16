@@ -38,6 +38,9 @@ colors:
   black-line: "oklch(0.4 0.08 300 / 0.35)"
   lantern-gold: "oklch(0.8 0.08 70)"
   seal-red: "oklch(0.5 0.17 28 / 0.92)"
+  grade-bronze: "oklch(0.80 0.07 55)"
+  grade-silver: "oklch(0.88 0.01 240)"
+  grade-gold: "oklch(0.78 0.13 78)"
 typography:
   display:
     fontFamily: "Noto Serif SC, Songti SC, STSong, serif"
@@ -165,11 +168,28 @@ components:
     backgroundColor: "oklch(0.22 0.015 262 / 0.5)"
     rounded: "{rounded.button}"
     padding: "10px"
+  seg-switch:
+    backgroundColor: "oklch(0.19 0.014 262 / 0.8)"
+    rounded: "{rounded.button}"
+    padding: "3px"
+  seg-switch-item-active:
+    backgroundColor: "{colors.wash-raised}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "6px 18px"
+  stat-tile:
+    backgroundColor: "oklch(0.18 0.012 262 / 0.45)"
+    rounded: "{rounded.button}"
+    padding: "14px 14px 12px"
+  achv-tile:
+    backgroundColor: "oklch(0.18 0.012 262 / 0.45)"
+    rounded: "{rounded.button}"
+    padding: "12px 10px 10px"
 ---
 
 # Design System: 江湖无尽录
 
-> 获批原型：`docs/design/ui-overhaul-prototype.html`（issue #26 视觉 + 骨架大改，2026-09-30 定稿）；`docs/design/battle-loot-prototype.html`（issue #45 战斗挂机、装备、市集与黑市，2026-10-13 定稿，在前者之上增补）；`docs/design/report-panel-prototype.html`（dev 构建内的提报面板，2026-10-15 定稿，只复用既有 token，不新增）。本文件与原型冲突时以原型为准并回改本文件。
+> 获批原型：`docs/design/ui-overhaul-prototype.html`（issue #26 视觉 + 骨架大改，2026-09-30 定稿）；`docs/design/battle-loot-prototype.html`（issue #45 战斗挂机、装备、市集与黑市，2026-10-13 定稿，在前者之上增补）；`docs/design/report-panel-prototype.html`（dev 构建内的提报面板，2026-10-15 定稿，只复用既有 token，不新增）；`docs/design/prestige-shop-prototype.html`（前尘页：底蕴 / 机缘 / 侠名录三段，成就徽记铜 / 银 / 金三品，2026-10-16 定稿，在前者之上增补）。本文件与原型冲突时以原型为准并回改本文件。
 
 ## 1. Overview
 
@@ -221,6 +241,9 @@ components:
 ### 武学路数（五色）
 - **刚猛** `route-vigorous` 朱砂红、**绵长** `route-lasting` 竹青、**守御** `route-guarding` 石青、**诡谲** `route-devious` 紫、**阴毒** `route-venomous` 黛绿。色相刻意避开品阶的灰 / 青 210° / 金 78° 与装备品阶的绿 145° / 青 215° / 紫 300° / 橙。
 
+### 成就三品（铜 / 银 / 金）
+- 侠名录的成就层级不靠描边、不靠字，靠**徽记本身的材质**：铜版原图、银版去色提亮、金版暖黄加外晕，三套图一线三枚；未点亮灰度压暗。层名文字按品着色（`grade-bronze` / `grade-silver` / `grade-gold`），卡面不写「铜 / 银 / 金」字样。
+
 ### 黑市（暗调）
 - 进入黑市整页换紫黑调：标题 `black-ink`，卡片 `black-card` + `black-line` 描边，底图压暗；灯笼与更漏用 `lantern-gold`。黑市是唯一允许整页换色相的页面。
 
@@ -228,6 +251,7 @@ components:
 **The One Candle Rule.** 烛火暖金只标「现在能做的事」和「当前位置」。已完成的东西一律退成墨金，未解锁的一律退成墨浅。
 **The Dot Lives In The Rail Rule.** 提示点（金点）只出现在侧栏页签上，主界面任何地方都不放提示点。
 **The Grade On The Edge, Route In The Seal Rule.** 品阶靠描边和名字色说，路数靠一枚描边章说；两者不共用色相，不共用形态。
+**The Grade Is The Metal Rule.** 成就的品质长在徽记材质上（铜币 → 银币 → 金币），不加框、不加字；和装备「品阶在描边」是两套语言，不混用。
 
 ## 3. Typography
 
@@ -303,6 +327,12 @@ components:
 - 黑市入口：解锁前市集不露任何提示；解锁那一笔买下时进整屏演出，之后摊位条末尾多一个紫描边的「黑市」页签，点入整页拉黑转场（0.45s，从左向右）。
 - 黑市：三张 `mask-card` 蒙面牌（问号遮罩 120×150，名 + 价），买下即揭晓为道具图 + 品阶色名；下方一排十枚铜钱表示本世剩余次数，标题右侧更漏倒计时。不写概率，不写保底，不写剩余件数的文字。
 
+### 前尘页（底蕴 / 机缘 / 侠名录）
+- 页顶一条分段切换（`seg-switch`，同市集摊位条），一次只摊开一区；三区各一张夜色水墨底图，随页签淡入切换。
+- 底蕴：一张修行感悟宽卡 + 八张属性小卡 4 × 2（`stat-tile`）：宋体名 + 属性字、级数大字、「现 +x · 下一级 +y」两行、价格按钮；没有「尽数」。
+- 机缘：一次性购买项行列表（`.row-i`），名 + 类型章 + 一句短效果，价格写在按钮上，已购写「已得」。
+- 侠名录：成就徽记 6 × 4 网格（`achv-tile`）：徽记 + 当前层名，卡面不放进度、不写品字；悬停两行「当前效果」「下一级：名 · 计量 n/门槛」。
+
 ### Signature Components
 - **陈列**：武学与内功都用 AI 线装书册封面（书名写在题签上）。内功按品质用蓝 / 青 / 金三张封面；武学同三张封面按品阶换色（寻常麻布灰褐、上乘绛紫、绝学朱红描金，题签固定米黄），右下压一枚朱砂类目印（剑 / 刀 / 枪 / 棍 / 拳 / 掌 / 指 / 腿 / 镖），未拼齐的在本品阶色上压暗。类目筛选分器械 / 肉身 / 暗器三组。
 - **战报**：每回合一个【第 N 回合】抬头，下面成段叙述；「你」墨金、敌名朱红、招式名冷青、伤害数字加粗。句式来自 `docs/rules/copy/battle-narration.md`。
@@ -320,6 +350,8 @@ components:
 - **Do** 用「转世」称呼玩家主动结束一世（归隐是转世的一种，不再作为玩家可见的动作名）。
 - **Do** 让装备的品阶不点开也能看出来：描边、底晕、角标三重信号，凡品素色。
 - **Do** 把数量用物件表示：剩余次数是一排铜钱，剩余件数是还蒙着的牌，倒计时是更漏。
+- **Do** 让成就的品质长在徽记材质上（铜 / 银 / 金三套图），进度收进悬停。
+- **Do** 把可反复购买项写成「现 +x · 下一级 +y」，每买一级都看得见下一级给多少。
 
 ### Don't:
 - **Don't** 做廉价页游感：闪烁按钮、满屏红点、战力飙升弹字。
@@ -329,7 +361,8 @@ components:
 - **Don't** 用 `border-left` / `border-right` 大于 1px 做彩色侧条；不要渐变文字；不要装饰性毛玻璃。
 - **Don't** 用实心金色大按钮、扁平分段色块进度条。
 - **Don't** 在人物属性里显示「突破后」数值——突破前后对比只在突破演出里出现。
-- **Don't** 加解释性小字：按钮下的规则说明、面板里的「装备等级越高属性越高」、页标题下的副标题一律不写；规则靠形态、文案靠悬停。
+- **Don't** 加解释性小字：按钮下的规则说明、面板里的「装备等级越高属性越高」、页标题下的副标题一律不写；规则靠形态、文案靠悬停。效果说明一律短句（「行囊空间 +2」「丹田上限提高两成」），不写「夜里少散功」这类白话。
+- **Don't** 用「一二三」印或描边表示成就层级；也不要在成就卡面放进度条或「铜 / 银 / 金」字样。
 - **Don't** 在界面上出现小数：装备数值生成时就取整，装备等级这类内部数不露出。
 - **Don't** 在黑市解锁前露任何入口或进度提示；不公示概率与保底。
 - **Don't** 让武学书封照搬内功的三色；也不要用不透明填充章表示路数。

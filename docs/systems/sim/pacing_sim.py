@@ -64,12 +64,44 @@ SKILL_SHARE = 0.20
 
 # 声望阁「修行感悟」：第 n 级 +NODE_GAIN 基础产出，价格 = NODE_P0 × n（economy.md §3）
 NODE_GAIN = 0.20
-NODE_P0 = 10.0          # 声望；基础声望系数 c 同为 10（economy.md §1.1）
+NODE_P0 = 8.5           # 声望。原 10；筋骨分走 STAT_SHARE 的声望后按 10 × (1 − STAT_SHARE) 补偿，境界总额不动（prestige-shop/design.md §3）
+BASE_P0 = 10.0          # 基础声望系数 c（economy.md §1.1）
+
+# 声望阁「底蕴」属性项（八条可反复购买；prestige-shop/design.md §2）：
+#   每条第 n 级价格 = STAT_P0 × STAT_Q^(n−1) 声望；第 n 级收益 = 首级收益 × STAT_DECAY^(n−1)（逐级递减）。
+#   气血 / 攻击 / 防御 / 命中 / 闪避 / 真气按境界基础属性的比例计，首级 STAT_GAIN；会心 / 会心伤害为加点。
+#   标准玩家每世把 STAT_SHARE 的声望平分到八条上，其余照旧买传承与修行感悟。
+STAT_SHARE = 0.15
+STAT_P0 = 10.0
+STAT_Q = 1.35
+STAT_GAIN = 0.05
+STAT_DECAY = 0.96
+STAT_LINES = 8
+
+# 境界总额与宿慧已实装（content.md §1、economy.md §2，节奏守卫按实测锚定）。声望阁加筋骨后
+# 不重解这两张表，改为冻结输入、验证里程碑仍命中（表五）；置 None 则回到按里程碑重解。
+FROZEN_TOTALS: dict[int, int] | None = {1: 87_100, 2: 3_360_000, 3: 12_400_000, 4: 75_200_000, 5: 280_000_000}
+FROZEN_SUHUI: dict[int, float] | None = {2: 1.6, 3: 3.7, 4: 7.6, 5: 13.4}
 
 # 声望的另两层与另一项开销（2026-09-29 第 6 步补入：真实代码的节奏守卫要对得上，不再当余量）：
 FRONT_MULT = 1.2        # 行为乘数「打到自己的前沿」（economy.md §1.2）：首个 Boss 要境界 3，首达境界 3 之后的世才有
 FAME_SHARE = 0.05       # 名号与经脉声望约占基础声望的这一比例（longline_sim 表六）
-QOL_PRICES = [150, 220, 440, 660, 1100]   # 五件传承（economy.md §4）：前沿乘数与名号多出来的声望先买它们，买齐后并入修行感悟
+QOL_PRICES = [60, 70, 80, 90, 100, 110, 120, 170, 230, 270, 340, 600, 900, 900]   # 十四件机缘（prestige-shop/design.md §2b）：前沿乘数与名号多出来的声望先买它们，买齐后并入修行感悟
+
+
+def stat_price(level: int) -> float:
+    """筋骨某一条第 level 级的声望价"""
+    return STAT_P0 * STAT_Q ** (level - 1)
+
+
+def stat_cum(level: int, first: float = STAT_GAIN) -> float:
+    """某一条买到 level 级的累计收益：首级 first，逐级 × STAT_DECAY"""
+    return first * (1 - STAT_DECAY ** level) / (1 - STAT_DECAY)
+
+
+def stat_bonus(level: int) -> float:
+    """气血 / 攻击 / 防御等比例项 level 级的累计加成"""
+    return stat_cum(level)
 
 
 def rate(realm: int) -> float:
@@ -117,24 +149,31 @@ STEPS_PER_DAY = 24      # 推演步长 1 小时
 
 
 class Life:
-    __slots__ = ("start", "end", "m_base", "levels", "peak_at_start", "age_end")
+    __slots__ = ("start", "end", "m_base", "levels", "peak_at_start", "age_end", "stat_lv")
 
-    def __init__(self, start: float, m_base: float, levels: int, peak: int):
+    def __init__(self, start: float, m_base: float, levels: int, peak: int, stat_lv: int = 0):
         self.start, self.end, self.m_base, self.levels, self.peak_at_start = start, start, m_base, levels, peak
         self.age_end = float(INIT_AGE)
+        self.stat_lv = stat_lv              # 本世每条筋骨的级数（转世时买入，世内不变）
 
 
 def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 1.0,
          daily: bool = False, days: int = 130, die_at: float | None = None, weak_years: float = 0.0,
-         weak_mult: float = 0.6) -> dict:
+         weak_mult: float = 0.6, stat_share: float | None = None) -> dict:
     """推演 days 天。daily=True 为「每次上线都归隐」的对照玩家；shop_frac 为声望阁只买标准量的比例；
     die_at 为在该时刻（天）战死一次，来世前 weak_years 年产出 × weak_mult（魂魄未稳）。
-    返回 first（首达日）、lives（每一世）、levels_by_day（每天开始时的修行感悟级数）。"""
+    stat_share 为每世声望分给筋骨的比例（默认 STAT_SHARE）。
+    返回 first（首达日）、lives（每一世）、levels_by_day（每天开始时的修行感悟级数）、
+    stat_by_day（每天开始时每条筋骨的级数）。"""
+    if stat_share is None:
+        stat_share = STAT_SHARE
     reached: set[int] = set()
     first: dict[int, int] = {}
     lives: list[Life] = []
     levels_by_day: dict[int, int] = {}
+    stat_by_day: dict[int, int] = {}
     levels, wallet, extra = 0, 0.0, 0.0
+    stat_lv, stat_wallet = 0, 0.0
     qol = list(QOL_PRICES)
     k, end_k = 0, days * STEPS_PER_DAY
     dt = 1 / STEPS_PER_DAY
@@ -142,7 +181,7 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
     while k < end_k:
         weak_until = INIT_AGE + weak_years if pending_weak else 0.0
         pending_weak = False
-        life = Life(k * dt, 1 + NODE_GAIN * levels, levels, max([1, *reached]))
+        life = Life(k * dt, 1 + NODE_GAIN * levels, levels, max([1, *reached]), stat_lv)
         lives.append(life)
         age, realm, held, life_rep, life_extra = float(INIT_AGE), 1, 0.0, 0.0, 0.0
         while k < end_k:
@@ -153,6 +192,7 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
             online = hour < ONLINE_H
             if hour == 0:
                 levels_by_day[k // STEPS_PER_DAY + 1] = levels
+                stat_by_day[k // STEPS_PER_DAY + 1] = stat_lv
                 # 上线先把夜里攒满的突破掉（首达记在当天）
                 while realm in need and held >= need[realm]:
                     held -= need[realm]
@@ -168,8 +208,8 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
             eff = (1.0 if online else OFFLINE_EFF) * (weak_mult if age < weak_until else 1.0)
             gain = 3600 * m * eff
             front = FRONT_MULT if life.peak_at_start >= 3 else 1.0
-            life_rep += NODE_P0 * m * eff
-            life_extra += NODE_P0 * m * eff * (front - 1 + FAME_SHARE)
+            life_rep += BASE_P0 * m * eff
+            life_extra += BASE_P0 * m * eff * (front - 1 + FAME_SHARE)
             cap = need.get(realm)
             held = held + gain if cap is None else min(held + gain, cap)
             k += 1
@@ -189,11 +229,16 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
             extra -= qol.pop(0)
         if not qol:
             wallet, extra = wallet + extra, 0.0
-        wallet += shop_frac * life_rep
+        # 筋骨：本世声望的 stat_share 平分到三条上，各自从低到高买（三条同价同级，只记一条）
+        stat_wallet += shop_frac * life_rep * stat_share / STAT_LINES
+        while stat_wallet >= stat_price(stat_lv + 1):
+            stat_wallet -= stat_price(stat_lv + 1)
+            stat_lv += 1
+        wallet += shop_frac * life_rep * (1 - stat_share)
         while wallet >= NODE_P0 * (levels + 1):
             wallet -= NODE_P0 * (levels + 1)
             levels += 1
-    return dict(first=first, lives=lives, levels_by_day=levels_by_day)
+    return dict(first=first, lives=lives, levels_by_day=levels_by_day, stat_by_day=stat_by_day)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -203,6 +248,9 @@ def play(need: dict[int, float], suhui: dict[int, float], *, shop_frac: float = 
 # ═══════════════════════════════════════════════════════════
 
 def solve() -> tuple[dict[int, float], dict[int, float]]:
+    if FROZEN_TOTALS is not None:
+        need = {r: FROZEN_TOTALS[r] * (1 + CHONGXUE_OVERHEAD[r]) / (1 - SKILL_SHARE) / rate(r) for r in range(1, 6)}
+        return need, dict(FROZEN_SUHUI or {})
     need: dict[int, float] = {}
     suhui: dict[int, float] = {x: 0.0 for x in range(2, 6)}
     for _ in range(8):
@@ -313,15 +361,23 @@ def main() -> None:
     print(f"  前 100 天共转世 {n100} 次；江湖历约走 {years:,.0f} 年（按开世时的速率估）")
 
     print("\n【表四】声望阁：修行感悟的实际购买（归隐时用本世声望尽数买入）")
-    print(f"  第 n 级 +{NODE_GAIN:.0%} 基础产出，价格 = {NODE_P0:.0f}P × n；基础声望 = {NODE_P0:.0f} × 乘区加权有效小时")
+    print(f"  第 n 级 +{NODE_GAIN:.0%} 基础产出，价格 = {NODE_P0:g}P × n；基础声望 = {BASE_P0:.0f} × 乘区加权有效小时")
     print(f"  （声望 = 基础 × 前沿乘数 {FRONT_MULT}（首达境界 3 之后）+ 名号约 {FAME_SHARE:.0%}；多出基础的部分先买齐五件传承）")
-    print(f"{'第d天':>7}{'累计级数':>10}{'声望阁乘区':>12}{'总乘区':>9}")
-    print("-" * 40)
+    print(f"  底蕴属性：每条第 n 级 {STAT_P0:.0f} × {STAT_Q}^(n−1) 声望、收益 {STAT_GAIN:.0%} × {STAT_DECAY}^(n−1)（上限 {STAT_GAIN / (1 - STAT_DECAY):.0%}）；"
+          f"标准玩家每世声望的 {STAT_SHARE:.0%} 平分 {STAT_LINES} 条")
+    print(f"{'第d天':>7}{'累计级数':>10}{'声望阁乘区':>12}{'总乘区':>9}{'每条级数':>8}{'累计加成':>10}{'折合当量':>10}")
+    print("-" * 66)
     for d in [2, 7, 21, 50, 100]:
         lv = STANDARD["levels_by_day"][d]
+        sl = STANDARD["stat_by_day"][d]
         life = life_at(d - 0.5)
         m = life.m_base + sum(SUHUI[x] for x, fd in first.items() if fd < d and x in SUHUI)
-        print(f"{d:>7}{lv:>10}{NODE_GAIN * lv:>11.1f}×{m:>8.1f}×")
+        print(f"{d:>7}{lv:>10}{NODE_GAIN * lv:>11.1f}×{m:>8.1f}×{sl:>8}{stat_bonus(sl):>9.0%}"
+              f"{math.log(1 + stat_bonus(sl)) / math.log(1.7):>10.2f}")
+    print("  每世转世时的声望与筋骨购买（前 8 世）：")
+    for life in LIVES[:8]:
+        nxt = LIVES[LIVES.index(life) + 1]
+        print(f"    第 {LIVES.index(life) + 1} 世（第 {life.start + 1:.0f}–{life.end:.0f} 天）→ 来世 感悟 {nxt.levels} 级 · 底蕴属性各 {nxt.stat_lv} 级")
 
     print("\n【表五】验证 · 按天推演（一世可能跨几天，首达日允许早于目标不超过一世）")
     print(f"{'境界':<6}{'目标日':>8}{'实测日':>8}{'判定':>6}")
@@ -340,6 +396,13 @@ def main() -> None:
     for x in sorted(MILESTONE_DAY):
         d = daily.get(x)
         print(f"  境界 {x}：第 {d if d else '>400'} 天（标准玩家第 {first.get(x)} 天）")
+    print("\n【表七】对照：声望全押修行感悟 / 全押底蕴属性 的玩家首达日（判据：全押感悟不得比标准快 15% 以上）")
+    for label, share in (("全押感悟", 0.0), ("全押属性", 1.0)):
+        got = play(NEED, SUHUI, days=400, stat_share=share)["first"]
+        print(f"  {label}：" + " · ".join(f"境界 {x} 第 {got.get(x, '>400')} 天" for x in sorted(MILESTONE_DAY)))
+        if share == 0.0:
+            gain = 1 - got.get(6, 400) / first[6]
+            print(f"  [{'PASS' if gain <= 0.15 else 'FAIL'}] 全押感悟首达境界 6 比标准快 {gain:.1%}（≤ 15%）")
 
     print("\n【附】首日体验（境界 1，无声望加成）")
     acc = 0.0

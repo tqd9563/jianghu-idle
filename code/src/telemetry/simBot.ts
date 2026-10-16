@@ -20,7 +20,7 @@ import { betterThanWorn } from '../engine/gear';
 import { BLACK_PER_LIFE } from '../engine/market';
 import type { SectShelfRow } from '../store/gameStore';
 import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
-import { REP_NODES, ganwuPrice } from '../engine/prestige';
+import { DIYUN_IDS, REP_NODES, diyunPrice, freshDiyun, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
 import {
   mapUnlocked, marketGoodsOf, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN,
@@ -44,6 +44,7 @@ let skillBudget = 0;
 let lastDantian = 0;
 /** 传承预算：前沿乘数与名号多出基础声望的部分 */
 let qolBudget = 0;
+let diyunBudget = 0;
 function creditSkillBudget(): void {
   skillBudget += Math.max(0, st().dantian - lastDantian) * SKILL_SHARE;
   lastDantian = st().dantian;
@@ -252,9 +253,10 @@ export function online(route: RouteId, hours = ONLINE_H): void {
 }
 
 /**
- * 归隐并花声望（寿终正寝已自动归隐时只收尾）。买法同 pacing_sim：基础声望买修行感悟；
- * 前沿乘数与名号多出来的部分先按序买五件传承，买齐后并入修行感悟。
+ * 归隐并花声望（寿终正寝已自动归隐时只收尾）。买法同 pacing_sim（prestige-shop/design.md §3）：
+ * 本世声望的 DIYUN_SHARE 平分八条底蕴；其余先按序买机缘（由前沿乘数与名号多出来的部分支付），买齐后并入修行感悟。
  */
+export const DIYUN_SHARE = 0.15;
 export function retireAndShop(): void {
   if (st().retireCeremony === null && retireKind(st()) !== null) {
     st().openRetire();
@@ -262,18 +264,31 @@ export function retireAndShop(): void {
     st().confirmRetire();
   }
   const c = st().retireCeremony;
-  if (c) qolBudget += c.settle.total - c.settle.base + c.settle.fameThisLife;
+  if (c) {
+    qolBudget += c.settle.total - c.settle.base + c.settle.fameThisLife;
+    diyunBudget += c.settle.total * DIYUN_SHARE;
+  }
   st().closeRetireCeremony();
+  // 底蕴：预算平分八条，各自从低到高买
+  let guard = 4000;
+  while (guard-- > 0) {
+    const d = { ...freshDiyun(), ...(st().diyun ?? {}) };
+    const id = DIYUN_IDS.reduce((a, b) => (d[b] < d[a] ? b : a));
+    const price = diyunPrice(d[id] + 1);
+    if (diyunBudget < price || st().reputation < price) break;
+    st().buyDiyun(id);
+    diyunBudget -= price;
+  }
   for (const node of REP_NODES) {
     if (st().ownedRepNodes.includes(node.id)) continue;
     if (qolBudget < node.price) break;
     st().buyRepNode(node.id);
     if (st().ownedRepNodes.includes(node.id)) qolBudget -= node.price;
   }
-  // 传承未买齐时，留着的余量不许修行感悟花掉
+  // 机缘未买齐时，留着的余量不许修行感悟花掉
   const reserve = REP_NODES.every((n) => st().ownedRepNodes.includes(n.id)) ? 0 : qolBudget;
   if (reserve === 0) qolBudget = 0;
-  let guard = 2000;
+  guard = 2000;
   while (guard-- > 0 && st().reputation - ganwuPrice((st().ganwuLevel ?? 0) + 1) >= reserve) {
     const lv = st().ganwuLevel ?? 0;
     st().buyGanwu('one');
@@ -327,4 +342,5 @@ export function resetBot(): void {
   skillBudget = 0;
   lastDantian = 0;
   qolBudget = 0;
+  diyunBudget = 0;
 }

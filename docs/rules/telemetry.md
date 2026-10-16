@@ -42,7 +42,7 @@
 | `sect_joined` | 拜入门派 | `sect`, `neigong` |
 | `sect_task_done` | 门派任务到点结算 | `sect`, `task`（`short` / `long`）, `contrib`（结算后贡献）, `offline`（载入时结算） |
 | `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price`；残页另带 `have`（已集）, `need`（每式页数） |
-| `rep_node_bought` | 购买声望节点 | `node_id` |
+| `rep_node_bought` | 购买声望节点 | `node_id` |（实现事件名为 `prestige_node_bought`；取值域见 `copy/retire.md` §8）
 | `battle_end` | 战斗结束 | `target`, `win`, `turns`, `hp_left_pct` |
 | `key_battle_end` | Boss/精英战斗结束 | `target`, `win`, `turns` |
 | `adjustment` | 失败后有意义调整 | `action`, `context` |
@@ -95,6 +95,7 @@
 |---|---|---|
 | `fame_gained` | 首次击败精英 / Boss、首次贯通经脉（跨世一次） | `source`（`elite` / `boss` / `meridian`）, `key`, `reputation` |
 | `ganwu_bought` | 购买修行感悟（一级或尽数） | `level_from`, `level_to`, `price`, `balance_after` |
+| `diyun_bought` | 购买底蕴一级（`../systems/prestige-shop/design.md` §2） | `line`（八条之一）, `level_to`, `price`, `balance_after` |
 | `tier_unlocked` | 打通段末 Boss 开出新前沿（跨世保留） | `by`（关卡键）, `opened`（`{图}-{难度}` 列表） |
 
 - 关卡键 v2.3 起为 `m{图}t{难度}s{关}`：`stage_first_clear` 增加 `tier` 字段，`key_battle_end.target` / `injury_inflicted.target` 改为关卡键（原 `boss1` / `elite_m2s4` 形态退役）。
@@ -118,6 +119,7 @@
 | v3.2 | 2026-10-14 | 实装五：`sect_shop_bought` 残页加 `have` / `need`；`sect` 取值扩到九派 id。 |
 | v3.1 | 2026-10-14 | battle-loot 实装四：新增 `elder_met` / `market_opened` / `black_bought`；`shop_bought` 也记兵器铺 / 衣饰铺（加 `slot`、`grade`）。 |
 | v3.0 | 2026-10-14 | battle-loot 实装三：新增 `wuxue_dropped`。 |
+| v2.10 | 2026-10-16 | 前尘实装一：新增 `diyun_bought`；`rep_node_bought` 取值域换为十四件机缘。 |
 | v2.9 | 2026-10-13 | battle-loot 实装二：新增 `gear_dropped` / `gear_equipped` / `gear_sold`。 |
 | v2.8 | 2026-10-13 | battle-loot 实装一：新增 `idle_start` / `idle_stop`，`offline_settled` 加挂机折算三字段。 |
 | v2.7 | 2026-09-29 | 门派实装：新增 `sect_joined` / `sect_task_done` / `sect_shop_bought`。 |

@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { diagnose, fight, type Build, type CombatSkill, type FightResult, type FightStats } from '../engine/combat';
 import { REALMS, type RouteId } from '../engine/content';
 import {
-  DUNWU_INTERVAL_SEC, HUOHOU_MULT, NEIGONG, STARTER_NEIGONG, WUDAO_BIJI_WUXING, dunwuChance, neigongBuild,
+  DUNWU_INTERVAL_SEC, HUOHOU_MULT, NEIGONG, STARTER_NEIGONG, dunwuChance, neigongBuild,
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
 import {
@@ -34,9 +34,10 @@ import {
   type AcupointState,
 } from '../engine/acupoints';
 import {
-  FAME_BOSS, FAME_ELITE, FAME_MERIDIAN, REP_NODE_MAP,
-  bossDmgBonus, deepestBoss, ganwuAffordable, ganwuPrice, hasNode, isBossKey, isEliteKey,
-  outputMult, settleRetire, type RepNodeId, type RetireSettle,
+  DIYUN_MAP, FAME_BOSS, FAME_ELITE, FAME_MERIDIAN, REP_NODE_MAP,
+  bagExtraCells, bossDmgBonus, dantianCapMult, deepestBoss, diyunBonus, diyunPrice, freshDiyun, ganwuAffordable, ganwuPrice,
+  hasNode, isBossKey, isEliteKey, marketDiscount, outputMult, settleRetire, soulWeakYears, switchFeeMult,
+  type DiyunId, type DiyunLevels, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
 import {
   IDLE_SEC_OVERHEAD, IDLE_SEC_PER_ROUND, OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage,
@@ -54,7 +55,7 @@ import {
   type MarketGood, type MaskedGood,
 } from '../engine/market';
 import {
-  DROP_RATE, INTRO_STAGES, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade,
+  BAG_CELLS, DROP_RATE, INTRO_STAGES, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade,
   type GearGrade, type GearItem, type GearSlot, type Worn,
 } from '../engine/gear';
 import {
@@ -126,6 +127,8 @@ interface PersistedState {
   peakRealm: number;
   /** 修行感悟等级（跨世保留，economy.md §3） */
   ganwuLevel: number;
+  /** 底蕴八条的级数（跨世保留，prestige-shop/design.md §2） */
+  diyun: DiyunLevels;
   /** 本世乘区加权有效时长（小时）：基础声望 = 10 × 它（economy.md §1.1）；在线全额、离线 × 60% */
   lifeWeightedHours: number;
   /** 历来击败过的最深 Boss（跨世保留）：行为乘数「打到自己的前沿」的比较基准（economy.md §1.2） */
@@ -380,6 +383,8 @@ interface GameState extends PersistedState {
   buyRepNode: (id: RepNodeId) => void;
   /** 修行感悟：'one' 买一级，'all' 买到买不起为止（economy.md §3） */
   buyGanwu: (mode: 'one' | 'all') => void;
+  /** 底蕴：买某一条一级（prestige-shop/design.md §2） */
+  buyDiyun: (id: DiyunId) => void;
   startSession: (testerId: string) => void;
   endSession: (reason: 'completed' | 'external_dropout' | 'design_dropout') => void;
   pauseSession: () => void;
@@ -399,7 +404,7 @@ const FRESH: PersistedState = {
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
-  peakRealm: 1, ganwuLevel: 0, lifeWeightedHours: 0,
+  peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
   ownedWuxue: [], ownedScrolls: [], books: [], pages: {}, equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
@@ -464,7 +469,7 @@ export function openFronts(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedSta
 }
 
 export function playerBuild(
-  s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'tiersPassed' | 'injuries'> & Partial<Pick<PersistedState, 'worn'>>,
+  s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'tiersPassed' | 'injuries'> & Partial<Pick<PersistedState, 'worn' | 'diyun'>>,
 ): Build {
   const base = s.neigong
     ? neigongBuild(s.neigong, s.realm, s.zhong, s.tiersPassed)
@@ -477,9 +482,21 @@ export function playerBuild(
         poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
         sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan' as RouteId,
       };
+  // 底蕴（prestige-shop/design.md §2）：在火候之后、装备之前乘入；会心 / 会心伤害为加点
+  const d = s.diyun;
+  const withDiyun: Build = {
+    ...base,
+    hp: base.hp * (1 + diyunBonus(d, 'qixue')),
+    atk: base.atk * (1 + diyunBonus(d, 'gongji')),
+    def: base.def * (1 + diyunBonus(d, 'fangyu')),
+    hit: base.hit * (1 + diyunBonus(d, 'mingzhong')),
+    dodge: base.dodge * (1 + diyunBonus(d, 'shanbi')),
+    crit: Math.min(0.8, base.crit + diyunBonus(d, 'huixin')),
+    cd: base.cd + diyunBonus(d, 'huixin_shanghai'),
+  };
   // 装备在开战前叠进构筑（battle-loot/spec.md §6），伤势在最后一层叠加
   // （injury/spec.md §0 红线：只改喂进 fight() 的 Build，不碰 fight()）
-  return applyInjuriesToBuild(applyGearToBuild(base, gearBonusOf(s.worn)), s.injuries ?? freshInjuries());
+  return applyInjuriesToBuild(applyGearToBuild(withDiyun, gearBonusOf(s.worn)), s.injuries ?? freshInjuries());
 }
 
 /** 所修内功的火候品质倍率（未选内功为 1），供 computeAttributes 展示用 */
@@ -498,9 +515,9 @@ export function handsOf(s: Partial<Pick<PersistedState, 'worn'>>): Hands {
 }
 
 /** 当前真气上限（未选内功为 0） */
-export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'> & Partial<Pick<PersistedState, 'worn'>>): number {
-  // 蕴气词条加真气上限（battle-loot/design.md §3.2）
-  return s.neigong ? qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) + gearBonusOf(s.worn).qi : 0;
+export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'> & Partial<Pick<PersistedState, 'worn' | 'diyun'>>): number {
+  // 蕴气词条加真气上限（battle-loot/design.md §3.2）；底蕴「真气」按比例乘在内功真气上
+  return s.neigong ? Math.round(qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) * (1 + diyunBonus(s.diyun, 'zhenqi'))) + gearBonusOf(s.worn).qi : 0;
 }
 
 /** 这门武学已领悟的式：秘籍自带前几式 + 本世顿悟的式 + 书匣里前一式已会的全本（design.md §4.3，逐式接续） */
@@ -540,8 +557,12 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
 }
 
 /** 书肆实价：轻装上路八折（spec S9） */
-export function shopPriceOf(s: Pick<PersistedState, 'ownedRepNodes'>, price: number): number {
-  return Math.round(price * (hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') ? QINGZHUANG_DISCOUNT : 1));
+export function shopPriceOf(s: Pick<PersistedState, 'ownedRepNodes'>, price: number, kind: 'book' | 'goods' = 'book'): number {
+  // 轻装上路管书肆（武馆秘籍），讨价还价管市集商品（兵器铺 / 衣饰铺）
+  const mult = kind === 'book'
+    ? (hasNode(s.ownedRepNodes, 'qingzhuang_shanglu') ? QINGZHUANG_DISCOUNT : 1)
+    : marketDiscount(s.ownedRepNodes);
+  return Math.round(price * mult);
 }
 
 /** 尚未拥有的第一部上乘内功（归海、镇岳、蚀骨顺序；Boss 首杀「另一路」掉落用）；都有了为 null */
@@ -567,7 +588,8 @@ function settleWuxue(
   const learnedForms = [...(s.learnedForms ?? [])];
   const learned: string[] = [];
   const qi = qiMaxOf(s);
-  const shimen = hasNode(s.ownedRepNodes, 'shimen_zhiyin');
+  // 师门指引已退出购买（效果并入侠名录「招式」线，实装二接入）
+  const shimen = false;
   for (const [id, n] of Object.entries(stats.skillCasts) as [WuxueId, number][]) {
     const d = WUXUE[id];
     const have = learnedFormsOf({ learnedForms }, id);
@@ -586,6 +608,11 @@ function settleWuxue(
 }
 
 /** 升重是否被台阶挡住；归真要先有本内功的归真卷册（门派贡献商店） */
+/** 行囊容量：80 格 + 包罗万象两行 */
+export function bagCellsOf(s: Pick<PersistedState, 'ownedRepNodes'>): number {
+  return BAG_CELLS + bagExtraCells(s.ownedRepNodes ?? []);
+}
+
 export function zhongGate(s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed'> & Partial<Pick<PersistedState, 'ownedScrolls'>>) {
   return s.neigong ? tierGate(NEIGONG[s.neigong].quality, s.zhong, s.tiersPassed,
     (s.ownedScrolls ?? []).includes(juanceKey(s.neigong))) : null;
@@ -820,7 +847,7 @@ export const useGameStore = create<GameState>((set, get) => ({
               for (let i = 0; i < wins; i++) {
                 const drop = rollDropFor(enemy, Math.random, true);
                 if (drop) {
-                  const put = putInBag(bag, merged.worn ?? {}, drop);
+                  const put = putInBag(bag, merged.worn ?? {}, drop, bagCellsOf(merged));
                   bag = put.bag; sold += put.sold; count++;
                   if (!best || drop.grade > best.grade) best = drop;
                 }
@@ -973,7 +1000,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       let chargeHighWater = s.chargeHighWater;
       if (cost !== null) {
         // 丹田上限 = 突破消耗。v4.0 起满额后产出无处可去（旧「溢出转气势」已随 D5/v4.0 废止）。
-        if (dantian > cost) dantian = cost;
+        // 海纳百川：上限提高两成，多出的只是存着，周天进度仍按突破总额算
+        const cap = cost * dantianCapMult(s.ownedRepNodes);
+        if (dantian > cap) dantian = cap;
         // N 段动态（zhoutian/design.md §3.1：境界 1–5 = 4/3/4/6/8，段间公比 2）
         const N = zhoutianN(s.realm);
         const { segmentsFull } = zhoutianProgress(dantian, cost, N);
@@ -993,7 +1022,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const age = ageAfter(s.age ?? INIT_AGE, dt / 60, s.peakRealm ?? 1);
       const lifeMinutes = (s.lifeMinutes ?? 0) + dt / 60;
       // 魂魄未稳：转世后前 10 年（spec §4.1）
-      const soulUnsettled = (s.soulUnsettled ?? false) && !soulSettles(age);
+      const soulUnsettled = (s.soulUnsettled ?? false) && !soulSettles(age, soulWeakYears(s.ownedRepNodes));
       // 卡在台阶上：挂机累计判顿悟（spec §1.3）
       const dw = advanceDunwu(s, dt, Math.random);
       const sectDone = settleSectTask(s, now);
@@ -1147,7 +1176,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (s.neigong !== null || !(s.taught || s.run >= 2)) return;
     if (!(s.ownedNeigong ?? STARTER_NEIGONG).includes(id)) return;
     const route = NEIGONG[id].route;
-    set({ neigong: id, route, zhong: 0, tiersPassed: 0, dunwuSec: 0 });
+    // 驾轻就熟：转世后首段台阶不必顿悟（第一世不算）
+    set({ neigong: id, route, zhong: 0, tiersPassed: s.run > 1 && hasNode(s.ownedRepNodes, 'jiaqing_jiushu') ? 1 : 0, dunwuSec: 0 });
     track('neigong_selected', { run: s.run, realm: s.realm, route }, {
       neigong: id, quality: NEIGONG[id].quality,
     });
@@ -1157,7 +1187,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   switchNeigong: (to) => {
     const s = get();
     if (!s.neigong || s.neigong === to || !(s.ownedNeigong ?? []).includes(to)) return;
-    const fee = switchFee(s.realm);
+    const fee = Math.round(switchFee(s.realm) * switchFeeMult(s.ownedRepNodes));
     if (s.silver < fee) return;
     const zhong = zhongAfterSwitch(s.neigong, to, s.zhong);
     const route = NEIGONG[to].route;
@@ -1231,10 +1261,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { arms, wear } = marketGoodsOf(s);
     const g = [...arms, ...wear].find((x) => x.id === goodId);
     if (!g) return;
-    const price = shopPriceOf(s, g.price);
+    const price = shopPriceOf(s, g.price, 'goods');
     if (s.silver < price) return;
     const it = buyStallGood(g, Math.random);
-    if (!bagFits(s.bag ?? [], it)) return;
+    if (!bagFits(s.bag ?? [], it, bagCellsOf(s))) return;
     set({ bag: [...(s.bag ?? []), it], ...spend(s, price) });
     track('shop_bought', { run: s.run, realm: s.realm, route: s.route }, { item: goodId, price, slot: it.slot, grade: it.grade });
     persist(get());
@@ -1260,7 +1290,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const r = revealMasked(g, enemy.x ?? 1, priceBasisOf(s), s.blackLowStreak ?? 0, Math.random);
     let patch: Partial<PersistedState> = {};
     if ('gear' in r.revealed) {
-      const put = putInBag(s.bag ?? [], s.worn ?? {}, r.revealed.gear);
+      const put = putInBag(s.bag ?? [], s.worn ?? {}, r.revealed.gear, bagCellsOf(s));
       patch = { bag: put.bag, silver: s.silver - g.price + put.sold };
     } else {
       const got = applyWuxueDrop(s, { id: r.revealed.pages.id, k: r.revealed.pages.k, kind: 'page' });
@@ -1385,7 +1415,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   unwearGear: (slot) => {
     const s = get();
     const it = (s.worn ?? {})[slot];
-    if (!it || !bagFits(s.bag ?? [], it)) return;
+    if (!it || !bagFits(s.bag ?? [], it, bagCellsOf(s))) return;
     const worn = { ...(s.worn ?? {}) };
     delete worn[slot];
     // 卸下兵器 / 暗器：靠它才能装的武学一并卸下（design.md §3.7）
@@ -1454,6 +1484,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ reputation, ownedRepNodes: [...s.ownedRepNodes, id] });
     track('prestige_node_bought', { run: s.run, realm: s.realm, route: s.route }, {
       node_id: id, price: node.price, balance_after: reputation,
+    });
+    persist(get());
+  },
+
+  buyDiyun: (id) => {
+    const s = get();
+    if (!DIYUN_MAP[id]) return;
+    const diyun = { ...freshDiyun(), ...(s.diyun ?? {}) };
+    const lv = diyun[id];
+    const price = diyunPrice(lv + 1);
+    if (s.reputation < price) return;
+    const reputation = s.reputation - price;
+    set({ reputation, diyun: { ...diyun, [id]: lv + 1 } });
+    track('diyun_bought', { run: s.run, realm: s.realm, route: s.route }, {
+      line: id, level_to: lv + 1, price, balance_after: reputation,
     });
     persist(get());
   },
@@ -1604,7 +1649,14 @@ function rebirth(
   // 重置与保留（§8.3 + sect-neigong/spec.md §6.1）：资源全清空；已拥有的内功、宿慧（peakRealm）、
   // 修行感悟、历来最深 Boss、已领成就跨世保留；内功重数与台阶清零、下一世境界 2 重选；悟性重掷
   const newRun = s.run + 1;
-  const wuxing = rollWuxing(Math.random(), hasNode(s.ownedRepNodes, 'wudao_biji') ? WUDAO_BIJI_WUXING : 0);
+  const wuxing = rollWuxing(Math.random(), 0);
+  const owned = s.ownedRepNodes ?? [];
+  // 敝帚自珍：带走身上品阶最高（同阶取等级高）的一件
+  const keepGear = hasNode(owned, 'bizhou_zizhen')
+    ? Object.values(s.worn ?? {}).sort((a, b) => b.grade - a.grade || b.level - a.level)[0] : undefined;
+  // 刻骨铭心：主修（装配首位）那门武学的招式与熟练原样带走
+  const keepWuxue = hasNode(owned, 'kegu_mingxin') ? (s.equipped ?? [])[0] : undefined;
+  const keepPrefix = keepWuxue ? `${keepWuxue}:` : null;
   set({
     ...FRESH,
     run: newRun,
@@ -1621,8 +1673,14 @@ function rebirth(
     marketOpen: s.marketOpen ?? false, marketSpent: s.marketSpent ?? 0,
     blackOpen: s.blackOpen ?? false, blackLowStreak: s.blackLowStreak ?? 0, blackDay: s.blackDay ?? '', blackGoods: s.blackGoods ?? [],
     pastLearned: [...new Set([...(s.pastLearned ?? []), ...(s.learnedForms ?? [])])],
+    learnedForms: keepPrefix ? (s.learnedForms ?? []).filter((k) => k.startsWith(keepPrefix)) : [],
+    equipped: keepWuxue ? [keepWuxue] : [],
     formCasts: Object.fromEntries(Object.entries(s.formCasts ?? {})
-      .map(([k, n]) => [k, Math.floor(n * SHULIAN_CARRY)] as const).filter(([, n]) => n > 0)),
+      .map(([k, n]) => [k, keepPrefix && k.startsWith(keepPrefix) ? n : Math.floor(n * SHULIAN_CARRY)] as const).filter(([, n]) => n > 0)),
+    worn: keepGear ? { [keepGear.slot]: keepGear } : {},
+    // 认祖归宗：开局即拜回上一世的门派；驾轻就熟：首段台阶不必顿悟
+    sect: hasNode(owned, 'renzu_guizong') ? s.sect : null,
+    tiersPassed: hasNode(owned, 'jiaqing_jiushu') ? 1 : 0,
     ownedNeigong: s.ownedNeigong ?? [...STARTER_NEIGONG],
     wuxing,
     seenTabs: s.seenTabs ?? [],
@@ -1631,6 +1689,7 @@ function rebirth(
     ownedRepNodes: s.ownedRepNodes,
     peakRealm: s.peakRealm ?? 1,
     ganwuLevel: s.ganwuLevel ?? 0,
+    diyun: { ...freshDiyun(), ...(s.diyun ?? {}) },
     deepestBossEver: Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages)),
     fameClaimed: s.fameClaimed ?? [],
     idle: null,
@@ -1810,8 +1869,8 @@ export function rollDropFor(enemy: EnemyDef, rng: () => number, repeat = false):
 }
 
 /** 放进背包；放不下时（design.md §3.5）：不比身上强的直接卖掉，比身上强的卖掉背包里最差的腾位 */
-export function putInBag(bag: readonly GearItem[], worn: Worn, it: GearItem): { bag: GearItem[]; sold: number } {
-  if (bagFits(bag, it)) return { bag: [...bag, it], sold: 0 };
+export function putInBag(bag: readonly GearItem[], worn: Worn, it: GearItem, cells = BAG_CELLS): { bag: GearItem[]; sold: number } {
+  if (bagFits(bag, it, cells)) return { bag: [...bag, it], sold: 0 };
   const cur = worn[it.slot];
   if (cur && it.grade <= cur.grade) return { bag: [...bag], sold: it.sell };
   const rest = [...bag].sort((a, b) => a.grade - b.grade || a.sell - b.sell);
@@ -1886,7 +1945,7 @@ function resolveBattle(
     // 装备掉落（battle-loot/spec.md §2.1）：传功（选内功）之后才开始掉（裁决 13 / 19）
     const drop = s.neigong ? rollDropFor(enemy, Math.random, !firstClear) : null;
     if (drop) {
-      const put = putInBag(s.bag ?? [], s.worn ?? {}, drop);
+      const put = putInBag(s.bag ?? [], s.worn ?? {}, drop, bagCellsOf(s));
       bag = put.bag;
       silver += put.sold;
       rewardApplied = { ...rewardApplied, gear: drop, ...(put.sold > 0 ? { gearSold: put.sold } : {}) };

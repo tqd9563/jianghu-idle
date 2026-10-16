@@ -90,7 +90,7 @@ export function soulMult(unsettled: boolean): number {
   return unsettled ? SOUL_WEAK_MULT : 1;
 }
 
-/** 魂魄未稳是否已到解除年岁：转世后前 10 年 */
-export function soulSettles(age: number): boolean {
-  return age >= INIT_AGE + SOUL_WEAK_YEARS;
+/** 魂魄未稳是否已到解除年岁：转世后前 10 年（安魂定魄缩为 5 年） */
+export function soulSettles(age: number, years = SOUL_WEAK_YEARS): boolean {
+  return age >= INIT_AGE + years;
 }

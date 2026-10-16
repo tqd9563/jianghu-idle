@@ -12,7 +12,6 @@ import {
   checkFormGate, effectText, formCd, formCost, formDunwuChance, formKey, formMult, pagesFull, shulianThresholds,
   shulianTier, slotCount, usableWith, type WuxueCat, type WuxueId,
 } from '../engine/wuxue';
-import { hasNode } from '../engine/prestige';
 import { isBenmen } from '../engine/sect';
 import { ROUTES } from '../engine/routes';
 import { handsOf, learnedFormsOf, qiMaxOf, useGameStore } from '../store/gameStore';
@@ -250,7 +249,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
         const hasScroll = (s.ownedScrolls ?? []).includes(key) || pagesFull(d, pages, id, k);
         const g = checkFormGate(d, k, s.realm, qi, hasScroll, casts(k - 1), benmen);
         const needG = FORM_GATES[d.quality][k];
-        const chance = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), hasNode(s.ownedRepNodes, 'shimen_zhiyin'));
+        const chance = formDunwuChance(d.quality, s.wuxing ?? 1, (s.pastLearned ?? []).includes(key), false);
         const inBox = d.quality === '寻常' && books.includes(key);
         return (
           <div key={k} className="wx-shi locked">
@@ -266,7 +265,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
                 )}
                 <span className={g.prev ? 'y' : 'n'}>前式熟练</span>
                 {k === nextK && g.ready && !inBox && (
-                  <span className="dunwu" data-tip={`每出一招判一次顿悟：基础 ${Math.round(p.dunwuP * 100)}% × 悟性 ${(s.wuxing ?? 1).toFixed(2)}${(s.pastLearned ?? []).includes(key) ? ' · 前世悟过 ×3' : ''}${hasNode(s.ownedRepNodes, 'shimen_zhiyin') ? ' · 师门指引 ×2' : ''}`}>
+                  <span className="dunwu" data-tip={`每出一招判一次顿悟：基础 ${Math.round(p.dunwuP * 100)}% × 悟性 ${(s.wuxing ?? 1).toFixed(2)}${(s.pastLearned ?? []).includes(key) ? ' · 前世悟过 ×3' : ''}`}>
                     顿悟中 · 每出一招 {(chance * 100).toFixed(0)}%
                   </span>
                 )}

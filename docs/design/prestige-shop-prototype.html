@@ -94,10 +94,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stage { position: relative; z-index: 0; isolation: isolate; padding: 30px clamp(18px, 3.2vw, 48px) 60px; min-width: 0; }
 .page { position: relative; max-width: 1080px; margin: 0 auto; animation: page-in .45s var(--ease); }
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* 底图：与 code/src/styles/shell.css .jh-art 同参数；三个栏目各一张，按页签切换 */
 .page-art { position: fixed; left: 248px; right: 0; top: 0; height: 100vh; z-index: -1; pointer-events: none;
-  background: var(--art) center top / cover no-repeat; filter: saturate(0.55) brightness(0.8);
-  -webkit-mask-image: linear-gradient(to bottom, oklch(0 0 0) 0%, oklch(0 0 0 / 0.35) 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, oklch(0 0 0) 0%, oklch(0 0 0 / 0.35) 55%, transparent 100%); }
+  background: var(--art) center top / cover no-repeat; opacity: 0.5; filter: brightness(0.75) saturate(0.5);
+  transition: opacity .45s var(--ease);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%); }
+.page[data-tab="diyun"] .page-art { --art: url('../../code/public/art/rep-diyun.jpg'); }
+.page[data-tab="chuancheng"] .page-art { --art: url('../../code/public/art/rep-jiyuan.jpg'); }
+.page[data-tab="xiaming"] .page-art { --art: url('../../code/public/art/rep-xiaming.jpg'); }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
 .page-head h1 { margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; }
 .page-head .sub { color: var(--muted); margin-top: 4px; font-size: 13.5px; }
@@ -242,7 +247,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
   <main class="stage">
     <section class="page" id="page" data-tab="diyun">
-      <div class="page-art" style="--art:url('../../code/public/art/rep.jpg')"></div>
+      <div class="page-art"></div>
       <header class="page-head">
         <div>
           <h1 class="js-name">前尘</h1>

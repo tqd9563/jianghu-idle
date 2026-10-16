@@ -211,9 +211,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <body>
 
 <div class="proto">
-  <div class="row"><span>状态</span><button data-state="first" aria-pressed="true">首次落地</button><button data-state="mid">第九世</button><button data-state="poor">钱不够</button></div>
+  <div class="row"><span>状态</span><button data-state="first" aria-pressed="true">首次落地</button><button data-state="mid">第九世</button><button data-state="poor">钱不够</button><button data-state="tiers">三品示例</button></div>
   <div class="row"><span>页名</span><button data-name="前尘" aria-pressed="true">前尘</button><button data-name="宿世">宿世</button><button data-name="轮回">轮回</button></div>
-  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家。按钮可点，扣声望、涨级数；每级收益递减。侠名录的图标缺图时显示首字占位。</p>
+  <p>首次落地 = 第一世转世后 340 声望；第九世 = 第 10 天的标准玩家；三品示例 = 第 40 世，侠名录首行从左到右金 / 银 / 铜 / 未点亮。按钮可点，扣声望、涨级数；每级收益递减。侠名录的图标缺图时显示首字占位。</p>
 </div>
 <div class="tip" id="tip"></div>
 
@@ -364,6 +364,8 @@ const zero = () => Object.fromEntries(LINES.map((l) => [l.id, 0]));
 const STATES = {
   first: { run: 2, era: 1046, rep: 340, peak: 2, ganwu: 0, lv: zero(), owned: [], guide: true, cnt: { jian: 62, boss: 0, elite: 2, chongxue: 7, zhanbai: 4, zhuanshi: 1, yinliang: 3100 } },
   mid:   { run: 9, era: 1385, rep: 1240, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['chongchu_jianghu', 'qingzhuang_shanglu'], guide: false, cnt: { jian: 1340, dao: 120, boss: 2, elite: 14, jingmai: 3, chongxue: 46, zhaoshi: 5, canye: 2, menpai: 24, heishi: 7, yinliang: 420000, yueli: 2100, yangshang: 9, zhanbai: 23, zhuanshi: 8 } },
+  tiers: { run: 40, era: 3900, rep: 5200, peak: 5, ganwu: 300, lv: { qixue: 20, gongji: 20, fangyu: 18, mingzhong: 12, shanbi: 10, huixin: 14, huixin_shanghai: 15, zhenqi: 12 }, owned: ['chongchu_jianghu', 'qingzhuang_shanglu', 'gaixian_yizhe', 'baoluo_wanxiang', 'huiyan_shizhu', 'yaodao_bingchu', 'anhun_dingpo', 'haina_baichuan'], guide: false,
+           cnt: { jian: 12400, dao: 2300, qiang: 160, gun: 0, quan: 1000, zhang: 100, zhi: 0, tui: 0, anqi: 10000, boss: 9, elite: 32, jingmai: 10, chongxue: 420, zhaoshi: 15, canye: 6, menpai: 300, heishi: 40, yinliang: 26000000, yueli: 9000, yangshang: 130, zhanbai: 70, zhuanshi: 40 } },
   poor:  { run: 9, era: 1385, rep: 23, peak: 3, ganwu: 52, lv: { qixue: 6, gongji: 7, fangyu: 5, mingzhong: 3, shanbi: 2, huixin: 4, huixin_shanghai: 5, zhenqi: 3 }, owned: ['chongchu_jianghu', 'qingzhuang_shanglu'], guide: false, cnt: { jian: 1340, dao: 120, boss: 2, elite: 14, jingmai: 3, chongxue: 46, zhaoshi: 5, canye: 2, menpai: 24, heishi: 7, yinliang: 420000, yueli: 2100, yangshang: 9, zhanbai: 23, zhuanshi: 8 } },
 };
 let S = structuredClone(STATES.first);
@@ -411,7 +413,7 @@ function achTile(a) {
   return `<div class="ach${lit ? ' lit' : ''}${max ? ' max' : ''} t${tier}" data-tip-html="${tip}">
     <div class="ring"><img class="ic" src="../../code/public/art/achv/${a.id}.png" alt="" onerror="this.outerHTML='<div class=\\'ic ph\\'>${FIRST_CHAR[a.id]}</div>'"></div>
     <div class="n">${name}</div>
-    <div class="grade">${tier ? GRADE[tier] : '未得'}</div>
+    ${tier ? `<div class="grade">${GRADE[tier]}</div>` : ''}
     <div class="bar"><i style="width:${pct}%"></i></div>
     <div class="cnt"><b>${fmt(c)}</b> / ${fmt(nextTh)}</div>
   </div>`;

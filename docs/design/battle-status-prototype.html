@@ -127,12 +127,7 @@ button { font-family: inherit; }
 <body>
 <div class="proto-bar">
   <span class="t">增减益标记</span>
-  <div class="seg" id="styleSeg">
-    <button data-s="seala" aria-pressed="true">一 · 器物</button>
-    <button data-s="sealb" aria-pressed="false">二 · 意象</button>
-    <button data-s="sealc" aria-pressed="false">三 · 纹样</button>
-    <button data-s="seal" aria-pressed="false">原版</button>
-  </div>
+
 </div>
 
 <div class="page">
@@ -161,7 +156,7 @@ button { font-family: inherit; }
     </div>
   </div>
 
-  <div class="sec-h">石印 · 四组图案</div>
+  <div class="sec-h">图标</div>
   <div class="sheet" id="sheet"></div>
 </div>
 
@@ -179,9 +174,9 @@ const FX = {
   du:      { nm: '毒',   side: 'debuff', eff: v => `${v} 层 · 每回合发作` },
 };
 const ORDER = ['yunjin', 'ningmou', 'qingshen', 'xieli', 'mimu', 'pozhan', 'fengxue', 'du'];
-const STYLES = { seala: '一 · 器物', sealb: '二 · 意象', sealc: '三 · 纹样', seal: '原版' };
-let style = 'seala';
-const src = k => `../../code/public/art/fx/${style}-${k}.png`;
+const STYLES = { '': '石印 · 器物' };
+let style = '';
+const src = k => `../../code/public/art/fx/${k}.png`;
 
 // 剧本：每回合双方身上的状态 [key, 值, 余回合]；毒的「余回合」位放层数
 const STEPS = [
@@ -252,7 +247,7 @@ function sheet() {
       <div class="nm">${nm}</div>
       <div class="icons">${ORDER.map((k, n) => `
         <div class="cell${n === 3 ? ' split' : ''}">
-          <div class="sizes">${[48, 30, 22].map(z => `<img src="../../code/public/art/fx/${s}-${k}.png" width="${z}" height="${z}" alt="">`).join('')}</div>
+          <div class="sizes">${[48, 30, 22].map(z => `<img src="../../code/public/art/fx/${k}.png" width="${z}" height="${z}" alt="">`).join('')}</div>
           <div class="lb ${FX[k].side}">${FX[k].nm}</div>
         </div>`).join('')}</div>
     </div>`).join('');
@@ -266,7 +261,6 @@ function setStyle(s) {
   document.querySelectorAll('#styleSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === s));
   sheet(); render(false);
 }
-document.querySelectorAll('#styleSeg button').forEach(b => b.onclick = () => setStyle(b.dataset.s));
 
 // 悬停
 const tip = $('tip');

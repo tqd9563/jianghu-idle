@@ -95,6 +95,24 @@
 .page-battle .tide-bar .tick { position: absolute; top: 1px; bottom: 1px; width: 1px; background: oklch(0.155 0.013 262 / 0.9); z-index: 1; }
 .page-battle .meter.tide.full .tide-bar i { box-shadow: 0 0 12px oklch(0.78 0.13 78 / 0.55); -webkit-mask-image: none; mask-image: none; }
 .page-battle .meter.tide.pour .tide-bar i { transition: width .45s cubic-bezier(0.6, 0, 0.9, 0.4); }
+/* 增减益标记（battle-status-prototype.html）：石印一行，己方靠左、敌方靠右；下挂三点 = 余几回合，最后一回合明暗呼吸；毒右下角标层数 */
+.page-battle .fx-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; padding-bottom: 8px; }
+.page-battle .side.enemy .fx-row { justify-content: flex-end; }
+.page-battle .fx { position: relative; width: 30px; height: 30px; animation: fx-in .42s var(--ease-sharp); }
+.page-battle .fx img { width: 30px; height: 30px; object-fit: contain; display: block; animation: fx-flash .7s ease-out; }
+.page-battle .fx .pips { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); display: flex; gap: 3px; }
+.page-battle .fx .pips span { width: 4px; height: 4px; border-radius: 50%; background: oklch(0.36 0.014 262); transition: background .3s, box-shadow .3s; }
+.page-battle .fx.buff .pips span.on { background: var(--gold); box-shadow: 0 0 4px oklch(0.78 0.13 78 / 0.7); }
+.page-battle .fx.debuff .pips span.on { background: var(--cinnabar); box-shadow: 0 0 4px oklch(0.66 0.14 32 / 0.7); }
+.page-battle .fx .n { position: absolute; right: -5px; bottom: -5px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--bg-deep); color: var(--poison); font-size: 10.5px; line-height: 15px; text-align: center; font-weight: 700; box-shadow: 0 0 0 1px oklch(0.72 0.14 145 / 0.5); }
+.page-battle .fx.last img { animation: fx-fade 1.2s ease-in-out infinite alternate; }
+@keyframes fx-in { from { opacity: 0; transform: scale(1.5); } }
+@keyframes fx-flash { from { filter: brightness(2) drop-shadow(0 0 8px oklch(0.85 0.1 80)); } }
+@keyframes fx-fade { to { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .page-battle .fx, .page-battle .fx img { animation: none; } }
+.jh-tip .fx-buff { color: var(--gold); }
+.jh-tip .fx-debuff { color: oklch(0.74 0.13 32); }
+.jh-tip .fx-du { color: var(--poison); }
 .page-battle .vs { text-align: center; padding-top: 16px; font-family: var(--font-display); color: var(--faint); letter-spacing: 0.2em; }
 .page-battle .vs .big { font-size: 26px; color: var(--muted); letter-spacing: 0.1em; display: block; }
 .page-battle .vs .rd { font-size: 12px; }
@@ -158,6 +176,7 @@
   .page-battle .side.enemy { text-align: left; }
   .page-battle .side.enemy .name { justify-content: flex-start; }
   .page-battle .side.enemy .meter .lbl { flex-direction: row; }
+  .page-battle .side.enemy .fx-row { justify-content: flex-start; }
   .page-battle .side.enemy .jh-ink-bar i { left: 0; right: auto; background: linear-gradient(to right, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30));
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); }
   .page-battle .vs { padding: 0; text-align: left; }

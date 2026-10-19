@@ -8,7 +8,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RUMORS } from '../engine/sect';
 import { DIAG_TEXTS, type FightResult, type TurnEvent } from '../engine/combat';
-import { WUXUE, formName, type WuxueId } from '../engine/wuxue';
+import { WUXUE, formName, type FormEffect, type WuxueId } from '../engine/wuxue';
 import { NEIGONG } from '../engine/neigong';
 import { REALMS } from '../engine/content';
 import {
@@ -64,6 +64,56 @@ function unlockHint(map: MapNo, tier: TierId): string {
   return `击败${mapName(map)} · ${TIER_NAMES[(tier - 1) as TierId]} Boss 后开启`;
 }
 
+/** 增减益标记（docs/design/battle-status-prototype.html）：石印图标一行，下挂三点亮几枚余几回合；毒右下角标层数；数值收进悬停 */
+const FX_ICON: Partial<Record<FormEffect, string>> = {
+  运劲: 'yunjin', 凝眸: 'ningmou', 轻身: 'qingshen', 卸力: 'xieli', 迷目: 'mimu', 破绽: 'pozhan',
+};
+const BUFFS: ReadonlySet<FormEffect> = new Set(['运劲', '凝眸', '轻身']);
+const pc = (v: number) => Math.round(v * 100);
+const FX_SAY: Partial<Record<FormEffect, (v: number) => string>> = {
+  运劲: (v) => `攻击 +${pc(v)}%`, 凝眸: (v) => `会心 +${pc(v)}%`, 轻身: (v) => `闪避 +${v}`,
+  卸力: (v) => `攻击 −${pc(v)}%`, 迷目: (v) => `命中 −${v}`, 破绽: (v) => `防御 −${pc(v)}%`,
+};
+type FxChip = { key: string; icon: string; side: 'buff' | 'debuff'; tip: string; left?: number; layers?: number };
+
+function FxRow({ chips }: { chips: FxChip[] }) {
+  return (
+    <div className="fx-row">
+      {chips.map((c) => (
+        <div key={c.key} className={`fx ${c.side}${c.left === 1 ? ' last' : ''}`} data-tip={c.tip}>
+          <img src={`/art/fx/${c.icon}.png`} alt="" />
+          {c.left !== undefined && (
+            <span className="pips">{[1, 2, 3].map((n) => <span key={n} className={n <= c.left! ? 'on' : ''} />)}</span>
+          )}
+          {c.layers !== undefined && <span className="n">{c.layers}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 从当前快照拼出双方的标记；同一特效重新挂上时换 key，让图标重新落印 */
+function fxChips(turns: TurnEvent[], poisonCap: number): { mine: FxChip[]; foe: FxChip[] } {
+  const last = turns[turns.length - 1];
+  const mine: FxChip[] = [], foe: FxChip[] = [];
+  if (!last) return { mine, foe };
+  if (last.ePoison > 0) {
+    const n = Math.round(last.ePoison);
+    foe.push({ key: 'du', icon: 'du', side: 'debuff', layers: n, tip: `<span class="fx-du">毒</span>　${n} / ${poisonCap} 层` });
+  }
+  for (const [k, left, v] of last.lasting) {
+    const icon = FX_ICON[k];
+    if (!icon) continue;
+    let cast = turns.length - 1;
+    while (cast > 0 && turns[cast].fx !== k) cast--;
+    const side = BUFFS.has(k) ? 'buff' : 'debuff';
+    const tip = `<span class="fx-${side}">${k}</span>　${FX_SAY[k]!(v)}<br><span class="l">余 ${left} 回合</span>`;
+    (side === 'buff' ? mine : foe).push({ key: `${k}:${cast}`, icon, side, left, tip });
+  }
+  if (last.eSealed) foe.push({ key: 'fengxue', icon: 'fengxue', side: 'debuff', tip: '<span class="fx-debuff">封穴</span>　下一次出手落空' });
+  return { mine, foe };
+}
+
 /** 标签展示名：内部值「毒」UI 显示「剧毒」（retire-copy §7） */
 const tagLabel = (t: EnemyTag) => (t === '毒' ? '剧毒' : t);
 
@@ -105,6 +155,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const ehpPct = last ? last.ehpPct : 1;
   // 少林护体：气血墨条上的浅蓝护盾段，自左端伸展、扣盾时右缘削减（2026-07-07 UI 裁决）
   const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
+  const fx = fighting ? fxChips(turns, build.poison.cap || 8) : null;
   const qiNow = battle && last && (s.equipped ?? []).length > 0 ? last.pQi : qiCap;
   const idleEnemy = open && total > 0 ? getStage(viewMap, viewTier, idleStage) : null;
   const enemy = battle ? battle.enemy : idleEnemy;
@@ -284,6 +335,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                       brim={battle!.result.turns[battle!.revealed]?.kind === 'burst'}
                     />
                   )}
+                  {fx && fx.mine.length > 0 && <FxRow chips={fx.mine} />}
                 </div>
 
                 <div className="vs">
@@ -308,9 +360,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     <div className="lbl"><span>气血</span><span><b>{f0(enemy.hp * ehpPct)}</b> / {f0(enemy.hp)}</span></div>
                     <div className="jh-ink-bar hp"><i style={{ width: `${ehpPct * 100}%` }} /></div>
                   </div>
-                  {fighting && last && build.poison.cap > 0 && (
-                    <div className="state">身中毒 {Math.round(last.ePoison)} / {build.poison.cap} 层</div>
-                  )}
+                  {fx && fx.foe.length > 0 && <FxRow chips={fx.foe} />}
                   {enemy.kind !== 'normal' && (
                     <div className="fame">{fameClaimed ? '名号已传' : `首次击败 · 声望 +${fmtBig(fameReward)}`}</div>
                   )}

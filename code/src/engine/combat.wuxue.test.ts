@@ -56,4 +56,19 @@ describe('武学出招', () => {
     const d = fight(tm, getStage(3, 0, 20), { mode: 'rng', rng: seeded(11), loadout: [skill('x', '引爆', 25, 1)], qiMax: 300 });
     expect(d.turns.some((t) => t.kind === 'cast' && t.text.includes('引爆毒层'))).toBe(true);
   });
+
+  it('状态快照：持续特效挂上记 3 回合并逐回合递减；封穴在敌人落空前一直挂着', () => {
+    const r = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(7), loadout: [skill('m', '迷目', 25, 4, 1.3, 24, 0.75)], qiMax: 300 });
+    const castAt = r.turns.findIndex((t) => t.fx === '迷目');
+    expect(castAt).toBeGreaterThanOrEqual(0);
+    expect(r.turns[castAt].lasting).toContainEqual(['迷目', 3, 24]);
+    const left = r.turns.slice(castAt).map((t) => t.lasting.find(([k]) => k === '迷目')?.[1] ?? 0);
+    expect(left.indexOf(2)).toBeGreaterThan(0);
+    expect(left.indexOf(1)).toBeGreaterThan(left.indexOf(2));
+    const s = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(7), loadout: [skill('f', '封穴', 25, 2, 1.3, 1, 0.75)], qiMax: 300 });
+    const sealAt = s.turns.findIndex((t) => t.fx === '封穴');
+    expect(s.turns[sealAt].eSealed).toBe(true);
+    const skip = s.turns.findIndex((t, i) => i > sealAt && t.kind === 'sealed');
+    expect(s.turns[skip].eSealed).toBe(false);
+  });
 });

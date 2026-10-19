@@ -59,7 +59,7 @@ body { background: var(--bg); }
   <button data-go="idle" class="on">① 挂机中 → 点停止</button>
   <button data-go="fail">② 推关失败（可退回）</button>
   <button data-go="fail-first">②′ 推关失败（无关可退）</button>
-  <button data-go="ngs">③ 传功 · 另授罗汉拳</button>
+  <button data-go="ngs">③ 传功 · 选内功后择武学</button>
   <button data-go="seats1">④ 武学槽 · 境界 1</button>
   <button data-go="seats6">④′ 武学槽 · 境界 6</button>
   <p>② 不点任何按钮，5 秒后自动退回第 8 关挂机。</p>
@@ -97,12 +97,12 @@ body { background: var(--bg); }
 
   <!-- ③ 传功 -->
   <section class="view" id="v-ngs">
-    <p class="scene-note">第一世传功选内功。卡片与现行一致，按钮上方多一行「另授」。选定后罗汉拳直接装进第一个武学槽。</p>
+    <p class="scene-note">第一世传功：先择内功（与现行一致），点「主修」后同样的整屏再择一门武学（罗汉拳 / 开山掌 / 连环腿），选定后直接装进第一个武学槽。</p>
   </section>
 
   <!-- ④ 武学槽 -->
   <section class="view" id="v-seats1">
-    <p class="scene-note">境界 1 传功后：五槽，罗汉拳已装。未开的槽不再显示「境界 N 开」。</p>
+    <p class="scene-note">境界 1 传功后：五槽，前辈所授武学已装。未开的槽不再显示「境界 N 开」。</p>
     <div class="jh-page">
       <header class="jh-head"><div><h1>武学</h1></div></header>
       <div class="wx-seats">
@@ -146,8 +146,7 @@ body { background: var(--bg); }
       <div class="gains">
         <span>场次</span><span><b>118</b> 场 · 胜 116</span>
         <span>银两</span><span><b>+266</b></span>
-        <span>拾得</span><span><b>4</b> 件 · <span class="g2">精良 · 青钢剑</span></span>
-        <span>书匣</span><span>全本 <b>1</b> 门</span>
+        <span>获得</span><span>装备 ×<b>4</b>，武学全本 ×<b>2</b>，武学残页 ×<b>3</b></span>
       </div>
       <div class="acts">
         <button type="button" class="jh-btn" style="min-width: 240px" data-close>好</button>
@@ -192,6 +191,32 @@ body { background: var(--bg); }
   </div>
 </template>
 
+<template id="t-gift">
+  <div class="jh-ceremony calm ngs" role="dialog" aria-label="择一门武学">
+    <div>
+      <div class="kick">传 功</div>
+      <h2 class="mid">择一门武学</h2>
+      <div class="ngs-cards" role="radiogroup" aria-label="武学">
+        <div role="radio" aria-checked="true" class="jh-card ngs-card on" data-wx="罗汉拳">
+          <div class="ngs-name">罗汉拳</div><div class="ngs-lu">拳 · 寻常 · 诡谲</div>
+          <ul class="ngs-items"><li>触发 <b>25%</b>，冷却 <b>2</b> 回合</li><li>第一式 <b>20% 封穴</b></li></ul>
+        </div>
+        <div role="radio" aria-checked="false" class="jh-card ngs-card" data-wx="开山掌">
+          <div class="ngs-name">开山掌</div><div class="ngs-lu">掌 · 寻常 · 守御</div>
+          <ul class="ngs-items"><li>触发 <b>25%</b>，冷却 <b>2</b> 回合</li><li>第一式 <b>护体 3% 气血</b></li></ul>
+        </div>
+        <div role="radio" aria-checked="false" class="jh-card ngs-card" data-wx="连环腿">
+          <div class="ngs-name">连环腿</div><div class="ngs-lu">腿 · 寻常 · 守御</div>
+          <ul class="ngs-items"><li>触发 <b>33%</b>，冷却 <b>1</b> 回合</li><li>第一式 <b>护体 3% 气血</b></li></ul>
+        </div>
+      </div>
+      <div class="acts">
+        <button type="button" class="jh-btn breathe" data-close>习 罗汉拳</button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <template id="t-ngs">
   <div class="jh-ceremony calm ngs" role="dialog" aria-label="择一部内功">
     <div>
@@ -211,7 +236,6 @@ body { background: var(--bg); }
           <ul class="ngs-items"><li>开战自动<b>施毒 1 层</b>，命中 <b>+1 层</b>（上限 8）</li><li>毒伤系数 <b>12%</b>，无视防御、绕过护盾</li><li>满层触发<b>毒爆 50%</b></li></ul>
         </div>
       </div>
-      <div class="ngs-gift">另授一套 <em>罗汉拳</em></div>
       <div class="acts">
         <button type="button" class="jh-btn breathe" data-close>主修 百川诀</button>
       </div>
@@ -239,13 +263,24 @@ function showFail() {
   }, 1000);
 }
 function backToIdle() { go('idle'); }
+function openGift() {
+  let pick = '罗汉拳';
+  open('t-gift', () => { go('seats1'); document.querySelector('#v-seats1 .wx-seat .n').textContent = pick;
+    document.querySelector('#v-seats1 .wx-seat .m').textContent = { 罗汉拳: '拳 · 触发 25% · 冷却 2', 开山掌: '掌 · 触发 25% · 冷却 2', 连环腿: '腿 · 触发 33% · 冷却 1' }[pick]; });
+  const btn = layer.querySelector('.acts .jh-btn');
+  layer.querySelectorAll('[data-wx]').forEach((c) => c.addEventListener('click', () => {
+    pick = c.dataset.wx;
+    layer.querySelectorAll('[data-wx]').forEach((x) => { x.classList.toggle('on', x === c); x.setAttribute('aria-checked', x === c); });
+    btn.textContent = '习 ' + pick;
+  }));
+}
 function go(v) {
   close();
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('on', el.id === 'v-' + v));
   document.querySelectorAll('.proto [data-go]').forEach((b) => b.classList.toggle('on', b.dataset.go === v));
   if (v === 'fail') showFail();
   if (v === 'fail-first') open('t-fail-first');
-  if (v === 'ngs') open('t-ngs', () => go('seats1'));
+  if (v === 'ngs') open('t-ngs', () => openGift());
 }
 document.querySelectorAll('.proto [data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
 document.getElementById('stop').addEventListener('click', () => open('t-summary'));

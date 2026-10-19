@@ -1,7 +1,7 @@
 /**
  * 武学 —— 权威来源：docs/systems/wuxue-catalog/design.md（名录、触发求和、特效池、路数标签、兵器搭配）、
  * docs/systems/battle-loot/spec.md §3（五项参数、触发求和 75%、特效四档、熟练改耗气 / 触发 / 冷却）、§2.1（掉落）、
- * docs/systems/sect-neigong/spec.md §2.3 / §2.4 / §3（领悟、装配槽、顿悟）。
+ * docs/systems/battle-loot/design.md §4（一式一页、前式圆满接下式）、docs/systems/sect-neigong/spec.md §2.2 / §2.4（熟练、装配槽）。
  * 参数一律读 data/wuxue-catalog.json（由 docs/systems/battle-loot/export_wuxue.py 从 sim 产物生成），禁止在此调参。
  * 第一批 66 门；第二批不进池、不上架。
  */
@@ -78,18 +78,14 @@ export const CATALOG_LINES: Record<WuxueId, readonly string[]> = Object.fromEntr
 
 export interface QualityParams {
   forms: number;
-  /** 秘籍自带前几式 */
-  given: number;
   /** 单式累计出招 → 熟练 / 精通 / 圆熟 */
   shulian: [number, number, number];
-  /** 新招每出一次招的基础顿悟概率 */
-  dunwuP: number;
 }
 
 export const QUALITY_PARAMS: Record<Quality, QualityParams> = {
-  寻常: { forms: 3, given: 1, shulian: [4, 10, 25], dunwuP: 0.25 },
-  上乘: { forms: 5, given: 2, shulian: [5, 12, 28], dunwuP: 0.08 },
-  绝学: { forms: 7, given: 3, shulian: [6, 15, 32], dunwuP: 0.05 },
+  寻常: { forms: 3, shulian: [4, 10, 25] },
+  上乘: { forms: 5, shulian: [5, 12, 28] },
+  绝学: { forms: 7, shulian: [6, 15, 32] },
 };
 
 export const MULT_STEP = 0.04;
@@ -97,12 +93,6 @@ export const QI_REGEN = 20;
 export const RESONANCE_MULT = 1.1;
 /** 总触发率上限（spec §3.3） */
 export const TRIGGER_CAP: number = catalog.trigger_cap;
-/** 前世领悟过的招式，顿悟概率 ×3（spec S4） */
-export const PAST_LEARNED_MULT = 3;
-/** 声望阁「师门指引」：武学新招顿悟概率翻倍（spec S9） */
-export const SHIMEN_ZHIYIN_MULT = 2;
-/** 转世带入下一世的熟练比例（spec §6.1） */
-export const SHULIAN_CARRY = 0.5;
 
 export const SHULIAN_NAMES = ['生疏', '熟练', '精通', '圆熟'] as const;
 const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
@@ -190,61 +180,21 @@ export function effectText(def: Pick<WuxueDef, 'quality' | 'effect'>, k: number)
   return EFFECT_SAY[def.effect].replace('{}', String(shown));
 }
 
-// ---------------------------------------------------------------- 领悟条件（spec §2.3）
-
-export interface FormGate {
-  realm: number;
-  qi: number;
-  /** 需要该式的招式秘籍（或拼齐的口诀） */
-  scroll: boolean;
-}
-
-/** 自带之后各式的门槛；自带的式不在表里 */
-export const FORM_GATES: Record<Quality, Record<number, FormGate>> = {
-  寻常: { 2: { realm: 2, qi: 80, scroll: false }, 3: { realm: 2, qi: 95, scroll: false } },
-  上乘: {
-    3: { realm: 3, qi: 120, scroll: false },
-    4: { realm: 4, qi: 150, scroll: true },
-    5: { realm: 4, qi: 170, scroll: true },
-  },
-  绝学: {
-    4: { realm: 3, qi: 140, scroll: false },
-    5: { realm: 4, qi: 170, scroll: true },
-    6: { realm: 5, qi: 210, scroll: true },
-    7: { realm: 5, qi: 240, scroll: true },
-  },
-};
-
-export interface FormGateCheck {
-  realm: boolean;
-  qi: boolean;
-  scroll: boolean;
-  prev: boolean;
-  /** 全部满足：每出一次招判一次顿悟 */
-  ready: boolean;
-}
+// ---------------------------------------------------------------- 招式解锁（battle-loot/design.md §4）
 
 /**
- * 第 k 式的领悟条件逐条核对（spec §2.3）：境界、真气上限、招式秘籍 / 口诀、前一式熟练到「熟练」档。
- * 自带的式恒为已领悟，不走这里。
+ * 能出的式：从第一式起逐式接续，第 k 式要「到手」且第 k − 1 式已圆满（熟练第 3 档）。
+ * 到手：寻常得了这门就是整门；上乘 / 绝学一式一页，要有这一式的残页。中间缺一式，后面的都接不上。
  */
-export function checkFormGate(
-  def: WuxueDef, k: number, realm: number, qiMax: number, hasScroll: boolean, prevCasts: number, benmen = false,
-): FormGateCheck {
-  const g = FORM_GATES[def.quality][k];
-  const c = {
-    realm: realm >= g.realm,
-    qi: qiMax >= g.qi,
-    scroll: !g.scroll || hasScroll,
-    prev: shulianTier(def.quality, prevCasts, benmen) >= 1,
-  };
-  return { ...c, ready: c.realm && c.qi && c.scroll && c.prev };
-}
-
-/** 新招一次顿悟判定的成功概率 */
-export function formDunwuChance(quality: Quality, wuxing: number, pastLearned: boolean, shimen: boolean): number {
-  return Math.min(1, QUALITY_PARAMS[quality].dunwuP * wuxing
-    * (pastLearned ? PAST_LEARNED_MULT : 1) * (shimen ? SHIMEN_ZHIYIN_MULT : 1));
+export function usableForms(
+  def: Pick<WuxueDef, 'quality'>, has: (k: number) => boolean, casts: (k: number) => number, benmen = false,
+): number[] {
+  const out: number[] = [];
+  for (let k = 1; k <= QUALITY_PARAMS[def.quality].forms; k++) {
+    if (!has(k) || (k > 1 && shulianTier(def.quality, casts(k - 1), benmen) < 3)) break;
+    out.push(k);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------- 装配（spec §2.4，design.md §3.7 兵器搭配）
@@ -265,21 +215,20 @@ export function usableWith(def: Pick<WuxueDef, 'cat'>, hands: Hands): boolean {
 
 // ---------------------------------------------------------------- 掉落（battle-loot/design.md §4，spec §2.1）
 
-/** 每场胜利掉一次武学（整式 / 残页）的概率 */
+/** 每场胜利掉一次武学（整门 / 残页）的概率 */
 export const WX_DROP_P = catalog.wx_p as Record<'normal' | 'elite' | 'boss', number>;
-/** 每式要凑的残页数 */
-export const PAGES_NEEDED = catalog.pages as Record<'上乘' | '绝学', number>;
 /** 上乘残页进池的比例：境界 3 起三成、境界 4 起五成（spec §2.2） */
 export function shangchengShare(realm: number): number {
   return realm >= 4 ? 0.5 : realm >= 3 ? 0.3 : 0;
 }
 
+/** 寻常掉整门（k 恒为 1），上乘 / 绝学掉某一式的那一页 */
 export type WuxueDrop = { id: WuxueId; k: number; kind: 'book' | 'page' };
 
-/** 掷一次武学掉落：寻常掉某一式全本，上乘掉某一式残页；绝学不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
+/** 掷一次武学掉落：寻常掉整门，上乘掉某一式残页；绝学不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
 export function rollWuxueDrop(
   realm: number, kind: 'normal' | 'elite' | 'boss', rng: () => number,
-  /** 侠名录：阅历线管整式（寻常全本）、残页线管残页；都为 1 时随机序列与旧版一致 */
+  /** 侠名录：阅历线管寻常整门、残页线管残页；都为 1 时随机序列与旧版一致 */
   mult: { book: number; page: number } = { book: 1, page: 1 },
 ): WuxueDrop | null {
   const roll = rng();
@@ -289,17 +238,12 @@ export function rollWuxueDrop(
   if (roll >= WX_DROP_P[kind] * (quality === '寻常' ? mult.book : mult.page)) return null;
   const pool = WUXUE_IDS.filter((id) => WUXUE[id].quality === quality);
   const id = pool[Math.floor(rng() * pool.length)];
-  const k = 1 + Math.floor(rng() * QUALITY_PARAMS[quality].forms);
-  return { id, k, kind: quality === '寻常' ? 'book' : 'page' };
+  if (quality === '寻常') return { id, k: 1, kind: 'book' };
+  return { id, k: 1 + Math.floor(rng() * QUALITY_PARAMS[quality].forms), kind: 'page' };
 }
 
-/** 已拥有的全本 / 口诀（书匣）：全本键为 formKey；残页按 formKey 计数 */
-export interface Satchel { books: readonly string[]; pages: Readonly<Record<string, number>> }
-
-/** 这一式的口诀是否已拼齐（上乘 / 绝学） */
-export function pagesFull(def: Pick<WuxueDef, 'quality'>, pages: Readonly<Record<string, number>>, id: WuxueId, k: number): boolean {
-  return def.quality !== '寻常' && (pages[formKey(id, k)] ?? 0) >= PAGES_NEEDED[def.quality];
-}
+/** 重复掉落折银两（裁决 17 改）：已有的寻常整门、已有的那一页 [待 sim] */
+export const DUP_DROP_SILVER = { book: 30, page: 60 } as const;
 
 // ---------------------------------------------------------------- 获取（spec §4）
 

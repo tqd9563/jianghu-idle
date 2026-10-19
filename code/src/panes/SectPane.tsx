@@ -6,8 +6,8 @@
 import { useState } from 'react';
 import { mapName } from '../engine/enemies';
 import { NEIGONG, TIERS, TIER_COUNT } from '../engine/neigong';
-import { EFFECT_TAG, WUXUE, formKey, formName } from '../engine/wuxue';
-import { SECTS, SECT_MAPS, SECT_PAGES, SECT_TASKS, sectsOnMap, type SectId, type SectTaskKind } from '../engine/sect';
+import { EFFECT_TAG, WUXUE, effectText, formName } from '../engine/wuxue';
+import { SECTS, SECT_MAPS, SECT_TASKS, sectsOnMap, type SectId, type SectTaskKind } from '../engine/sect';
 import { mapUnlocked, sectShelfOf, useGameStore, type SectShelfRow } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
@@ -74,7 +74,7 @@ function SectJoin() {
 }
 
 /** 货架一行的标题、标签与说明（说明只写用途，不写开发用语） */
-function shelfText(it: SectShelfRow, id: SectId, have: number): { title: string; tag: string | null; cat: string | null; desc: string } {
+function shelfText(it: SectShelfRow, id: SectId): { title: string; tag: string | null; cat: string | null; desc: string } {
   const d = SECTS[id];
   switch (it.kind) {
     case 'neigong': {
@@ -86,12 +86,12 @@ function shelfText(it: SectShelfRow, id: SectId, have: number): { title: string;
       if (it.form === 1) {
         return {
           title: w.name, tag: w.signature ? '绝学 · 独门' : '绝学', cat: w.cat,
-          desc: `第一式残页 · 已集 ${Math.min(have, SECT_PAGES)} / ${SECT_PAGES} · ${EFFECT_TAG[w.effect]} · 本门练得快两成`,
+          desc: `第一式残页 · ${EFFECT_TAG[w.effect]} · 本门练得快两成`,
         };
       }
       return {
         title: `${w.name} · ${formName(it.form!)}残页`, tag: null, cat: null,
-        desc: `已集 ${Math.min(have, SECT_PAGES)} / ${SECT_PAGES} · 拼齐即可参悟${formName(it.form!)}`,
+        desc: effectText(w, it.form!),
       };
     }
     case 'juance':
@@ -146,8 +146,7 @@ function SectHome({ id }: { id: SectId }) {
           </div>
           <div className="jh-rows">
             {sectShelfOf(s, id).map((it) => {
-              const have = it.kind === 'pages' ? (s.pages ?? {})[formKey(it.wuxue!, it.form!)] ?? 0 : 0;
-              const { title, tag, cat, desc } = shelfText(it, id, have);
+              const { title, tag, cat, desc } = shelfText(it, id);
               const short = it.price - contrib;
               return (
                 <div key={it.id} className={`jh-row${it.owned ? ' done' : it.lock ? ' lock' : ''}`}>
@@ -158,12 +157,12 @@ function SectHome({ id }: { id: SectId }) {
                   </div>
                   <div className="d">{desc}</div>
                   <div className="a">
-                    {it.owned ? <span className="price">{it.kind === 'pages' ? '已拼齐' : '已有'}</span>
+                    {it.owned ? <span className="price">已有</span>
                       : it.lock ? <span className="price">{it.lock}</span>
                         : (
                           <span className="jh-buy">
                             <button type="button" className="jh-btn2" disabled={short > 0} onClick={() => s.buySectItem(it.id)}>
-                              {fmtBig(it.price)} 贡献{it.kind === 'pages' ? ' / 页' : ''}
+                              {fmtBig(it.price)} 贡献
                             </button>
                             {short > 0 && <small>还差 {fmtBig(short)}</small>}
                           </span>

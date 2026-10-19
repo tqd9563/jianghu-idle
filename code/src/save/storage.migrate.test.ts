@@ -125,3 +125,21 @@ describe('v9 → v10（实装四：传功与市集）', () => {
     expect(c).toMatchObject({ taught: false, marketOpen: false });
   });
 });
+
+describe('v12 → v13（武学一式一页）', () => {
+  it('攒过的残页、旧秘籍自带的式、本世已悟的式都算得了那一页；寻常全本并入整门；顿悟记录作废', () => {
+    const out = migrate({
+      ownedWuxue: ['jinghongjian', 'liuyunjian'],
+      books: ['jiyujian:2'],
+      pages: { 'feipuduanyajian:3': 2, 'feipuduanyajian:1': 0, 'jinghongjian:4': 5 },
+      learnedForms: ['jinghongjian:3'], pastLearned: ['liuyunjian:2'],
+      ownedScrolls: ['jinghongjian:5', 'juance:yuntaixinfa'],
+    } as Record<string, unknown>, 12, SAVE_VERSION) as Record<string, unknown>;
+    expect(out.ownedWuxue).toEqual(['jinghongjian', 'liuyunjian', 'jiyujian']);
+    expect([...(out.pages as string[])].sort()).toEqual([
+      'feipuduanyajian:3', 'jinghongjian:1', 'jinghongjian:2', 'jinghongjian:3', 'jinghongjian:4', 'jinghongjian:5',
+    ]);
+    expect(out.ownedScrolls).toEqual(['juance:yuntaixinfa']);
+    for (const k of ['books', 'learnedForms', 'pastLearned']) expect(out).not.toHaveProperty(k);
+  });
+});

@@ -252,7 +252,7 @@ export default function App() {
 
       {neigongSelectOpen && <NeigongSelect />}
       {s.blackIntro && <BlackIntro onDone={s.dismissBlackIntro} />}
-      {s.dunwuNotice && <div className="dunwu-toast serif" role="status">顿悟 · {s.dunwuNotice.includes('·') ? s.dunwuNotice : `${s.neigong ? NEIGONG_NAME(s.neigong) : ''} · ${s.dunwuNotice}`}</div>}
+      {s.dunwuNotice && <div className="dunwu-toast serif" role="status">{s.dunwuNotice.includes('·') ? `贯通 · ${s.dunwuNotice}` : `顿悟 · ${s.neigong ? NEIGONG_NAME(s.neigong) : ''} · ${s.dunwuNotice}`}</div>}
       <RetireFlow />
       {s.retireCeremony && (
         <RetireCeremony onDone={() => { s.closeRetireCeremony(); setTab('rep'); }} />

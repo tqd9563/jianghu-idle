@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v3.2
+> **版本**：v3.3
 >
 > **日期**：2026-09-29
 >
@@ -36,12 +36,12 @@
 | `zhong_upgraded` | 内功升一重 | `neigong`, `zhong_to`, `cost_neili` |
 | `dunwu` | 顿悟跨过内功台阶 | `neigong`, `tier`, `zhong`, `wuxing` |
 | `wuxue_equipped` | 装上一门武学 | `wuxue`, `slots` |
-| `form_learned` | 顿悟领悟武学新招 | `form` |
+| `form_learned` | 前一式圆满、接上武学下一式 | `form` |
 | `shop_bought` | 书肆购买 | `item`, `price` |
 | `boss_drop` | Boss 首杀掉落 | `track`, `got` |
 | `sect_joined` | 拜入门派 | `sect`, `neigong` |
 | `sect_task_done` | 门派任务到点结算 | `sect`, `task`（`short` / `long`）, `contrib`（结算后贡献）, `offline`（载入时结算） |
-| `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price`；残页另带 `have`（已集）, `need`（每式页数） |
+| `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price` |
 | `rep_node_bought` | 购买声望节点 | `node_id` |（实现事件名为 `prestige_node_bought`；取值域见 `copy/retire.md` §8）
 | `battle_end` | 战斗结束 | `target`, `win`, `turns`, `hp_left_pct` |
 | `key_battle_end` | Boss/精英战斗结束 | `target`, `win`, `turns` |
@@ -63,7 +63,7 @@
 | `elder_met` | 第一世 1-7 战败后起身行礼（此后可选内功） | — |
 | `market_opened` | 市集开张（传功后第 8 关起首次战败） | `stage` |
 | `black_bought` | 黑市买下一件蒙面货 | `good`（部位 / `pages`）, `price`, `grade` 或 `wuxue` + `form`, `buys`（本世第几件） |
-| `wuxue_dropped` | 武学掉落（在线每次一条；离线一次挂机结算一条） | 在线：`stage`, `wuxue`, `form`, `kind`（`book` 全本 / `page` 残页）, `dup`, `offline: false`；离线：`stage`, `books`, `pages`, `offline: true` |
+| `wuxue_dropped` | 武学掉落（在线每次一条；离线一次挂机结算一条） | 在线：`stage`, `wuxue`, `form`, `kind`（`book` 寻常整门 / `page` 残页）, `dup`（已有、折银两）, `offline: false`；离线：`stage`, `books`, `pages`（只计新得的，重复不计）, `offline: true` |
 | `gear_sold` | 卖出装备（单件或一键） | `count`, `silver`, `grade`（单件）/ `below`（一键：卖掉低于此品阶） |
 | `offline_tax_revealed` | 出关结算税率条展示 | `efficiency_pct` |
 | `session_start` | 页面激活（会话开始） | — |
@@ -117,6 +117,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v3.3 | 2026-10-19 | 武学一式一页（battle-loot 裁决 42）：`form_learned` 改为前式圆满接上；`sect_shop_bought` 去掉 `have` / `need`；`wuxue_dropped` 的 `book` 改指整门、离线计数不含重复。 |
 | v3.2 | 2026-10-14 | 实装五：`sect_shop_bought` 残页加 `have` / `need`；`sect` 取值扩到九派 id。 |
 | v3.1 | 2026-10-14 | battle-loot 实装四：新增 `elder_met` / `market_opened` / `black_bought`；`shop_bought` 也记兵器铺 / 衣饰铺（加 `slot`、`grade`）。 |
 | v3.0 | 2026-10-14 | battle-loot 实装三：新增 `wuxue_dropped`。 |

@@ -133,6 +133,7 @@
 .page-battle .bt-log .p.lose { color: var(--muted); margin-top: 10px; }
 .page-battle .bt-log .p.loot { color: var(--gold); }
 .page-battle .bt-log .p.win + .p.loot { margin-top: 4px; }
+.page-battle .bt-log .p.loot .dup { color: var(--muted); }
 .page-battle .bt-log .p.rumor { color: var(--muted); margin-bottom: 6px; }
 .page-battle .bt-log .p.rumor .serif { color: var(--ink-gold); letter-spacing: 0.15em; }
 

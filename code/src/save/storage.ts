@@ -7,6 +7,7 @@
 
 import { STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
 import type { RouteId } from '../engine/content';
+import { WUXUE, type WuxueId } from '../engine/wuxue';
 
 export const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
@@ -21,8 +22,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v6 = 多天一世（issue #22 第 6 步）：境界总额与关卡表重解、寿元随境界、新增本世时长；
  * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
+ * v13 = 武学一式一页（battle-loot/design.md §4）：残页从计数改为已得的式，寻常全本并入整门，取消顿悟领悟。
  */
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -105,7 +107,48 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 10) out = migrateTeachV9ToV10(out);
   if (fromVer < 11) out = migrateRumorV10ToV11(out);
   if (fromVer < 12) out = migratePrestigeV11ToV12(out);
+  if (fromVer < 13) out = migrateFormPagesV12ToV13(out);
   return out;
+}
+
+/** 旧版秘籍自带的前几式（上乘 2、绝学 3）：迁移时补成残页，已有的不收回 */
+const OLD_GIVEN = { 上乘: 2, 绝学: 3 } as const;
+
+/**
+ * v12 → v13（battle-loot/design.md §4 一式一页）：宁多给不收回——
+ * 某一式攒过残页（哪怕没凑齐）、有招式秘籍、本世已悟、或是旧秘籍自带的式，都算得了这一页；
+ * 寻常书匣里任一式全本即得整门；本世领悟与前世悟过的记录作废（解锁改看前一式圆满）。
+ */
+function migrateFormPagesV12ToV13<T>(state: T): T {
+  const s = state as Record<string, unknown>;
+  if (!['ownedWuxue', 'pages', 'books', 'learnedForms', 'pastLearned', 'ownedScrolls'].some((k) => k in s)) return state;
+  const owned = new Set((s.ownedWuxue as WuxueId[] | undefined) ?? []);
+  const pages = new Set<string>();
+  const add = (key: string) => {
+    const id = key.split(':')[0] as WuxueId;
+    const d = WUXUE[id];
+    if (!d) return;
+    if (d.quality === '寻常') owned.add(id);
+    else { pages.add(key); if (key.endsWith(':1')) owned.add(id); }
+  };
+  const old = s.pages;
+  if (Array.isArray(old)) (old as string[]).forEach(add);
+  else if (old) Object.entries(old as Record<string, number>).filter(([, n]) => n > 0).forEach(([k]) => add(k));
+  ((s.books as string[] | undefined) ?? []).forEach(add);
+  ((s.learnedForms as string[] | undefined) ?? []).forEach(add);
+  const scrolls = (s.ownedScrolls as string[] | undefined) ?? [];
+  scrolls.filter((k) => !k.startsWith('juance:')).forEach(add);
+  for (const id of owned) {
+    const q = WUXUE[id]?.quality;
+    if (q === '上乘' || q === '绝学') for (let k = 1; k <= OLD_GIVEN[q]; k++) pages.add(`${id}:${k}`);
+  }
+  const { books: _b, learnedForms: _l, pastLearned: _p, ...rest } = s;
+  return {
+    ...rest,
+    ownedWuxue: [...owned],
+    pages: [...pages],
+    ownedScrolls: scrolls.filter((k) => k.startsWith('juance:')),
+  } as T;
 }
 
 /** v10 → v11（实装五九派）：拜山传闻从布尔改为「哪张图」的编号，true → 1 */

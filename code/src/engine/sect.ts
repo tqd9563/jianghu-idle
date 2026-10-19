@@ -6,7 +6,7 @@
  */
 import type { MapId } from './enemies';
 import { NEIGONG, neigongOf, type NeigongId } from './neigong';
-import { PAGES_NEEDED, WUXUE, type WuxueCat, type WuxueId } from './wuxue';
+import { QUALITY_PARAMS, WUXUE, type WuxueCat, type WuxueId } from './wuxue';
 
 export type SectId = 'huashan' | 'shaolin' | 'tangmen' | 'gaibang' | 'wudang' | 'emei' | 'kongtong' | 'yanmen' | 'baigu';
 export type SectName = '华山' | '少林' | '唐门' | '丐帮' | '武当' | '峨眉' | '崆峒' | '雁门世家' | '百蛊门';
@@ -116,29 +116,28 @@ export interface SectItem {
   form?: number;
 }
 
-/** 绝学残页：第一式（即这门武学）每页 60，需口诀的第 5 / 6 / 7 式每页 80 [待 sim] */
-export const SECT_PAGE_PRICE = { first: 60, later: 80 } as const;
-/** 绝学要口诀的式（wuxue.ts FORM_GATES 绝学 scroll: true） */
-export const SECT_SCROLL_FORMS = [5, 6, 7] as const;
+/**
+ * 绝学一式一页（battle-loot/design.md §4.1）：第一式即这门武学 420，第 2–4 式每页 200，第 5–7 式每页 360；
+ * 一门换齐 2,100，与旧版 7 页一式时的总价相同 [待 sim]
+ */
+export const SECT_PAGE_PRICE = (k: number) => (k === 1 ? 420 : k <= 4 ? 200 : 360);
 
-/** 归真卷册的秘籍键（与招式秘籍同存 ownedScrolls） */
+/** 归真卷册的秘籍键（存 ownedScrolls） */
 export const juanceKey = (ng: NeigongId) => `juance:${ng}`;
 
-/** 本派货架，按陈列顺序：绝学内功（原三派）、各门绝学的第一式残页、各门第 5–7 式残页、归真卷册 */
+/** 本派货架，按陈列顺序：绝学内功（原三派）、各门绝学的第一式残页、各门后几式残页、归真卷册 */
 export function sectShelf(id: SectId): SectItem[] {
   const d = SECTS[id];
+  const page = (w: WuxueId, k: number) => ({
+    id: `sect:${w}:${k}`, kind: 'pages' as const, label: WUXUE[w].name, price: SECT_PAGE_PRICE(k), wuxue: w, form: k,
+  });
   return [
     ...(d.neigong ? [{ id: `sect:${d.neigong}`, kind: 'neigong' as const, label: NEIGONG[d.neigong].name, price: 600 }] : []),
-    ...d.wuxue.map((w) => ({ id: `sect:${w}:1`, kind: 'pages' as const, label: WUXUE[w].name, price: SECT_PAGE_PRICE.first, wuxue: w, form: 1 })),
-    ...d.wuxue.flatMap((w) => SECT_SCROLL_FORMS.map((k) => ({
-      id: `sect:${w}:${k}`, kind: 'pages' as const, label: WUXUE[w].name, price: SECT_PAGE_PRICE.later, wuxue: w, form: k,
-    }))),
+    ...d.wuxue.map((w) => page(w, 1)),
+    ...d.wuxue.flatMap((w) => Array.from({ length: QUALITY_PARAMS.绝学.forms - 1 }, (_, i) => page(w, i + 2))),
     ...(d.neigong ? [{ id: `sect:${juanceKey(d.neigong)}`, kind: 'juance' as const, label: '归真卷册', price: 500 }] : []),
   ];
 }
-
-/** 绝学每式要凑的残页数 */
-export const SECT_PAGES = PAGES_NEEDED.绝学;
 
 /** 这门武学是不是所拜门派的本门绝学 */
 export function isBenmen(sect: SectId | null, id: WuxueId): boolean {

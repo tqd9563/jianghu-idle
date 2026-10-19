@@ -156,7 +156,7 @@ function Black({ onBack }: { onBack: () => void }) {
       <div className="mask-it sold">
         <span className="mveil">谱</span>
         <span className="nm qi">{WUXUE[p.id].name} · {formTitle(p.id, p.k)}</span>
-        <span className="pr">残页 ×{p.n}</span>
+        <span className="pr">残页</span>
       </div>
     );
   };

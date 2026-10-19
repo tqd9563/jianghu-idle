@@ -102,7 +102,7 @@ export function OfflineSettlement(props: {
             <><span>拾得</span><span><b>{loot.count}</b> 件{loot.best && <> · <span className={`g${loot.best.grade}`}>{gearFullName(loot.best)}</span></>}{loot.sold > 0 && ` · 放不下的卖得 ${loot.sold} 两`}</span></>
           )}
           {loot && ((loot.books ?? 0) + (loot.pages ?? 0)) > 0 && (
-            <><span>书匣</span><span>{(loot.books ?? 0) > 0 && <>全本 <b>{loot.books}</b> 式</>}{(loot.books ?? 0) > 0 && (loot.pages ?? 0) > 0 && ' · '}{(loot.pages ?? 0) > 0 && <>残页 <b>{loot.pages}</b> 张</>}</span></>
+            <><span>书匣</span><span>{(loot.books ?? 0) > 0 && <>全本 <b>{loot.books}</b> 门</>}{(loot.books ?? 0) > 0 && (loot.pages ?? 0) > 0 && ' · '}{(loot.pages ?? 0) > 0 && <>残页 <b>{loot.pages}</b> 张</>}</span></>
           )}
           {sectDone ? (
             <><span>门派任务</span><span>{errand(sectDone.kind)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>

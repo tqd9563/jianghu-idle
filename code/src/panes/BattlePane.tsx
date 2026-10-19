@@ -8,7 +8,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RUMORS } from '../engine/sect';
 import { DIAG_TEXTS, type FightResult, type TurnEvent } from '../engine/combat';
-import { WUXUE, type WuxueId } from '../engine/wuxue';
+import { WUXUE, formName, type WuxueId } from '../engine/wuxue';
 import { NEIGONG } from '../engine/neigong';
 import { REALMS } from '../engine/content';
 import {
@@ -25,7 +25,6 @@ import { fmtBig } from '../fmt';
 import { gearFullName } from '../engine/gear';
 import { isTeachFailure } from '../store/gameStore';
 import { formTitle } from '../engine/formNames';
-import { PAGES_NEEDED } from '../engine/wuxue';
 
 const f0 = (n: number) => fmtBig(Math.round(n));
 
@@ -369,9 +368,10 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               {battle.reward.drop && <div className="p loot">首杀掉落：{battle.reward.drop}</div>}
               {battle.reward.wuxue && (
                 <div className="p loot">
-                  拾得：<span className="serif qi">{WUXUE[battle.reward.wuxue.id].name} · {formTitle(battle.reward.wuxue.id, battle.reward.wuxue.k)}</span>
-                  {battle.reward.wuxue.kind === 'book' ? '全本' : `残页 ${battle.reward.wuxue.have} / ${PAGES_NEEDED[WUXUE[battle.reward.wuxue.id].quality as '上乘' | '绝学']}`}
-                  {battle.reward.wuxue.dup ? '（已有，收入书匣）' : ''}
+                  拾得：<span className="serif qi">{WUXUE[battle.reward.wuxue.id].name}</span>
+                  {battle.reward.wuxue.kind === 'book' ? (battle.reward.wuxue.dup ? null : ' 全本')
+                    : <> 残页 · <span data-tip={formTitle(battle.reward.wuxue.id, battle.reward.wuxue.k)}>{formName(battle.reward.wuxue.k)}</span></>}
+                  {battle.reward.wuxue.dup && <span className="dup"> 已有 · 银两 +{battle.reward.wuxue.silver}</span>}
                 </div>
               )}
               {battle.reward.gear && (

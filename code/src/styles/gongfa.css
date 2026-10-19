@@ -129,7 +129,13 @@
 .wx-shi .mul { text-align: right; font-weight: 600; }
 .wx-shi.locked .nm .serif, .wx-shi.locked .mul { color: var(--faint); }
 .wx-shi.locked .fx { color: oklch(0.55 0.05 215); }
-.wx-shi .dunwu { color: var(--gold); }
+/* 锁定行（wuxue-form-unlock 原型）：一页一式，有页实心青、缺页虚线空框；原因一句短话，近在眼前的那一式带进度 */
+.lk { display: flex; align-items: center; gap: 9px; margin: 0 14px; font-size: 12.5px; color: var(--faint); min-height: 34px; }
+.lk .leaf { flex: none; width: 9px; height: 12px; border-radius: 1px; outline: 1px dashed oklch(0.48 0.014 262); outline-offset: -1px; cursor: help; }
+.lk .leaf.got { background: var(--qi); outline: 0; }
+.lk .why.near { color: var(--muted); }
+.lk .cnt { color: var(--ink-gold); font-weight: 600; }
+.lk .cnt small { color: var(--faint); font-weight: 400; font-size: 12px; }
 
 /* 熟练度：一条线四个节点（生疏 · 熟练 · 精通 · 圆满） */
 .prof { position: relative; height: 34px; margin: 0 14px; cursor: help; }
@@ -155,6 +161,7 @@
   .wx-book { width: 50px; height: 190px; }
   .wx-shi { grid-template-columns: 1fr 56px; }
   .wx-shi > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .lk { margin: 0; min-height: 0; }
   .prof { margin: 4px 14px 0; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -203,8 +210,5 @@
 /* 兵器搭配一行与残页 */
 .wx-need { font-size: 12.5px; color: oklch(0.72 0.12 30); margin: -2px 0 10px; }
 .wx-need.ok { color: var(--ink-gold); }
-.pages { display: flex; gap: 3px; align-items: center; margin-top: 6px; cursor: help; }
-.pages i { width: 9px; height: 12px; border-radius: 1px; background: oklch(0.3 0.014 262); box-shadow: inset 0 0 0 1px oklch(0.4 0.014 262 / 0.6); }
-.pages i.got { background: var(--qi); box-shadow: none; }
-.pages small { font-size: 11px; color: var(--faint); margin-left: 4px; }
+.wx-cover small .pgc { color: var(--qi); }
 @media (max-width: 860px) { .wx-cover { width: 86px; } }

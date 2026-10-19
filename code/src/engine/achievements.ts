@@ -9,7 +9,7 @@
  * 实测 `docs/systems/sim/achv_measured.json`，2026-10-19）。九类器械按主修类目的胜场定，挂机场次多，门槛高。
  */
 import { isBossKey, isEliteKey } from './prestige';
-import { PAGES_NEEDED, WUXUE, type WuxueCat, type WuxueId } from './wuxue';
+import { WUXUE, type WuxueCat, type WuxueId } from './wuxue';
 
 export type AchvId =
   | 'jian' | 'dao' | 'qiang' | 'gun' | 'quan' | 'zhang' | 'zhi' | 'tui' | 'anqi'
@@ -74,7 +74,7 @@ export const ACHV_MAP: Record<AchvId, AchvDef> = Object.fromEntries(ACHV.map((a)
 export interface AchvSource {
   achv?: AchvCounts;
   fameClaimed?: readonly string[];
-  pages?: Readonly<Record<string, number>>;
+  pages?: readonly string[];
   ownedWuxue?: readonly WuxueId[];
   run?: number;
   /** 退出购买的旧传承（存档 v12 迁移记下）：至少给对应成就一层 */
@@ -90,10 +90,7 @@ export function achvCount(s: AchvSource, id: AchvId): number {
     case 'boss': return (s.fameClaimed ?? []).filter((k) => k.startsWith('stage:') && isBossKey(k.slice(6))).length;
     case 'elite': return (s.fameClaimed ?? []).filter((k) => k.startsWith('stage:') && isEliteKey(k.slice(6))).length;
     case 'jingmai': return (s.fameClaimed ?? []).filter((k) => k.startsWith('meridian:')).length;
-    case 'canye': return Object.entries(s.pages ?? {}).filter(([k, n]) => {
-      const q = WUXUE[k.split(':')[0] as WuxueId]?.quality;
-      return q !== undefined && q !== '寻常' && n >= PAGES_NEEDED[q];
-    }).length;
+    case 'canye': return (s.pages ?? []).filter((k) => WUXUE[k.split(':')[0] as WuxueId] !== undefined).length;
     case 'yueli': return (s.ownedWuxue ?? []).length;
     case 'zhuanshi': return Math.max(0, (s.run ?? 1) - 1);
     default: return s.achv?.[id] ?? 0;

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadSavedAt, saveGame, setDebugOfflineCap } from '../save/storage';
 import { useGameStore } from '../store/gameStore';
 import { BAG_CELLS, bagUsed } from './gear';
+import { DUP_DROP_SILVER } from './wuxue';
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import {
   OFFLINE_CAP_MIN, calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
@@ -183,7 +184,7 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     expect(r.idle!.stageKey).toBe(stageKey(1, 0, 8));
     expect(r.idle!.fights).toBeGreaterThan(0);
     expect(r.idle!.wins).toBe(r.idle!.fights);   // 必胜
-    expect(s.silver).toBe(r.silver);
+    expect(s.silver).toBe(r.silver + (s.offlineLoot?.sold ?? 0));   // 卖装备与重复武学折银另记
     expect(r.silver).toBe(r.idle!.wins * Math.round(getStage(1, 0, 8).reward.silver * REFARM_SILVER));
     expect(s.idle!.fights).toBe(3 + r.idle!.fights);
     const ev = getEvents().find((e) => e.e === 'offline_settled')!;
@@ -216,14 +217,16 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
     expect(r.idle!.wins).toBeGreaterThan(0);
     expect(s.offlineLoot!.count).toBe(r.idle!.wins);
     expect(s.offlineLoot!.best!.grade).toBe(1);
-    expect(s.idle!.loot).toBe(r.idle!.wins * 2);   // 每胜一场：装备一件 + 武学一次（境界 5 掷 0 为上乘残页）
-    expect(s.offlineLoot!.pages).toBe(r.idle!.wins);
+    // 每胜一场：装备一件 + 武学一次（境界 5 掷 0 恒为同一页上乘残页：头一页收下，其余重复折银两）
+    expect(s.idle!.loot).toBe(r.idle!.wins + 1);
+    expect(s.offlineLoot!.pages).toBe(1);
     expect(s.offlineLoot!.books).toBe(0);
+    const dupSilver = (r.idle!.wins - 1) * DUP_DROP_SILVER.page;
     // 掷 0 全是兵器（3 格）：80 格最多 26 件，装不下的卖掉腾位，背包不超格
     expect(bagUsed(s.bag)).toBeLessThanOrEqual(BAG_CELLS);
     expect(s.bag.every((g) => g.slot === '兵器')).toBe(true);
     expect(s.bag.length).toBe(Math.min(r.idle!.wins, 26));
-    expect(s.offlineLoot!.sold > 0).toBe(r.idle!.wins > 26);
+    expect(s.offlineLoot!.sold > dupSilver).toBe(r.idle!.wins > 26);
     expect(s.silver).toBe(r.silver + s.offlineLoot!.sold);
     const ev = getEvents().find((e) => e.e === 'gear_dropped')!;
     expect(ev).toMatchObject({ offline: true, count: r.idle!.wins });

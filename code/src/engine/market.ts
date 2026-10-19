@@ -91,8 +91,8 @@ export const maskPrice = (kind: 'gear' | 'pages', realm: number, basis: number) 
   Math.round(basis * (MASK_PRICE_MULT[realm] ?? 95) * (kind === 'pages' ? MASK_PAGES_RATIO : 1));
 /** 开出品阶的权重（凡 / 精 / 上 / 珍 / 极），不公示；spec §7 复核维持 */
 export const MASK_GRADE_WEIGHTS = [40, 35, 20, 4.5, 0.5];
-/** 半卷残谱给几页 */
-export const MASK_PAGES = 2;
+/** 半卷残谱给几页：一式一页后改为 1 页（battle-loot/design.md §4.1） */
+export const MASK_PAGES = 1;
 
 const MASK_LABEL: Record<GearSlot, (cat?: WeaponCat) => string> = {
   兵器: (c) => `一柄${c ?? '兵刃'}`, 暗器: () => '一只暗器囊', 衣甲: () => '一件衣甲', 佩饰: () => '一枚佩饰',
@@ -119,7 +119,7 @@ export function roundMasked(roundKey: string, realm: number, clearSilver: number
   return out;
 }
 
-/** 揭晓一件：装备按黑市权重开品阶（连开 BLACK_PITY 件凡品后必精良以上），残谱给随机一门上乘的某一式两页 */
+/** 揭晓一件：装备按黑市权重开品阶（连开 BLACK_PITY 件凡品后必精良以上），残谱给随机一门上乘的某一式那一页 */
 export function revealMasked(
   g: MaskedGood, level: number, clearSilver: number, lowStreak: number, rng: () => number,
 ): { revealed: NonNullable<MaskedGood['revealed']>; lowStreak: number } {

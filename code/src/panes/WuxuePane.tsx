@@ -141,7 +141,8 @@ function WuxueDetail({ id }: { id: WuxueId }) {
   const qi = qiMaxOf(s);
   const books = s.books ?? [];
   const pages = s.pages ?? {};
-  const casts = (k: number) => (s.formCasts ?? {})[formKey(id, k)] ?? 0;
+  // 侠名录·招式线加速后熟练可带小数，界面只显示整招
+  const casts = (k: number) => Math.floor((s.formCasts ?? {})[formKey(id, k)] ?? 0);
   const nextK = learned.length + 1;
   const th = shulianThresholds(d.quality, benmen);
   const hands = handsOf(s);

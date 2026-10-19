@@ -4,6 +4,7 @@
  * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.3 §2（单源）。
  */
 import { getStage, mapName, TIER_NAMES, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { achvVal } from '../engine/achievements';
 import { SECTS } from '../engine/sect';
 import { deepestBoss, settleRetire, suhuiTotal } from '../engine/prestige';
 import { retireKind, useGameStore } from '../store/gameStore';
@@ -29,6 +30,7 @@ export function RetireFlow() {
   const s = useGameStore();
   if (retireKind(s) === null || s.retireStep === null) return null;
   const settle = settleRetire({
+    baseMult: 1 + achvVal(s, 'zhuanshi'),
     weightedHours: s.lifeWeightedHours ?? 0,
     clearedStages: s.clearedStages,
     deepestBossEver: s.deepestBossEver ?? 0,

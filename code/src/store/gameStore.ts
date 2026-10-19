@@ -35,10 +35,11 @@ import {
 } from '../engine/acupoints';
 import {
   DIYUN_MAP, FAME_BOSS, FAME_ELITE, FAME_MERIDIAN, REP_NODE_MAP,
-  bagExtraCells, bossDmgBonus, deepestBoss, diyunBonus, diyunPrice, extraWuxueSlots, freshDiyun, ganwuAffordable, ganwuPrice,
+  bagExtraCells, deepestBoss, diyunBonus, diyunPrice, extraWuxueSlots, freshDiyun, ganwuAffordable, ganwuPrice,
   hasNode, isBossKey, isEliteKey, marketDiscount, outputMult, settleRetire, soulWeakYears, switchFeeMult,
   type DiyunId, type DiyunLevels, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
+import { achvVal, bumpAchv, catDmgBonus, winCounts, type AchvCounts, type AchvId } from '../engine/achievements';
 import {
   IDLE_SEC_OVERHEAD, IDLE_SEC_PER_ROUND, OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage,
   type IdleBasis, type OfflineSettleResult,
@@ -129,6 +130,12 @@ interface PersistedState {
   ganwuLevel: number;
   /** 底蕴八条的级数（跨世保留，prestige-shop/design.md §2） */
   diyun: DiyunLevels;
+  /** 侠名录计数（跨世保留，prestige-shop/design.md §2c）；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世由已有字段推导 */
+  achv: AchvCounts;
+  /** 退出购买的旧传承（存档 v12 迁移记下）：对应成就至少给一层 */
+  retiredNodes?: string[];
+  /** 本世已用掉的免伤次数（侠名录·战败线） */
+  freeHurtUsed: number;
   /** 本世乘区加权有效时长（小时）：基础声望 = 10 × 它（economy.md §1.1）；在线全额、离线 × 60% */
   lifeWeightedHours: number;
   /** 历来击败过的最深 Boss（跨世保留）：行为乘数「打到自己的前沿」的比较基准（economy.md §1.2） */
@@ -404,7 +411,7 @@ const FRESH: PersistedState = {
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
-  peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), lifeWeightedHours: 0,
+  peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), achv: {}, freeHurtUsed: 0, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
   ownedWuxue: [], ownedScrolls: [], books: [], pages: {}, equipped: [], formCasts: {}, learnedForms: [], pastLearned: [], dropsClaimed: [],
@@ -507,7 +514,7 @@ export function huohouMultOf(s: Pick<PersistedState, 'neigong'>): number {
 // ---------------------------------------------------------------- 武学（sect-neigong/spec.md §2）
 
 type WuxueState = Pick<PersistedState, 'realm' | 'neigong' | 'zhong' | 'ownedWuxue' | 'ownedScrolls' | 'equipped'
-  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect' | 'worn' | 'books' | 'pages'>>;
+  | 'formCasts' | 'learnedForms' | 'pastLearned'> & Partial<Pick<PersistedState, 'sect' | 'worn' | 'books' | 'pages' | 'achv' | 'retiredNodes'>>;
 
 /** 手里的家伙（design.md §3.7）：兵器类别与暗器槽 */
 export function handsOf(s: Partial<Pick<PersistedState, 'worn'>>): Hands {
@@ -548,7 +555,8 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
       id, name: d.name, p: d.p * pMult,
       forms: forms.map((k, i) => ({
         key: formKey(id, k), name: formName(k),
-        mult: formMult(d, k, res) * wxMult,
+        // 侠名录九类器械线：该类武学伤害 +10 / 20 / 30%
+        mult: formMult(d, k, res) * wxMult * (1 + catDmgBonus(s, d.cat)),
         effect: d.effect, fx: effectValue(d, k),
         cost: formCost(d, tiers[i]), cd: formCd(d, tiers[i]),
       })),
@@ -582,9 +590,21 @@ export function shopItemsOf(_s: Pick<PersistedState, 'ownedWuxue'>): ShopItem[] 
  */
 function settleWuxue(
   s: WuxueState & Pick<PersistedState, 'wuxing' | 'ownedRepNodes'>, stats: FightStats, rand: () => number,
-): { formCasts: Record<string, number>; learnedForms: string[]; learned: string[] } {
+): { formCasts: Record<string, number>; learnedForms: string[]; learned: string[]; yuanman: number } {
   const formCasts = { ...(s.formCasts ?? {}) };
-  for (const [k, n] of Object.entries(stats.formCasts)) formCasts[k] = (formCasts[k] ?? 0) + n;
+  // 侠名录·招式线：熟练增速；某一式跨入「圆满」记一次
+  const speed = 1 + achvVal(s, 'zhaoshi');
+  let yuanman = 0;
+  for (const [k, n] of Object.entries(stats.formCasts)) {
+    const before = formCasts[k] ?? 0;
+    formCasts[k] = before + n * speed;
+    const wid = k.split(':')[0] as WuxueId;
+    const def = WUXUE[wid];
+    if (def) {
+      const bm = isBenmen(s.sect ?? null, wid);
+      if (shulianTier(def.quality, before, bm) < 3 && shulianTier(def.quality, formCasts[k], bm) >= 3) yuanman++;
+    }
+  }
   const learnedForms = [...(s.learnedForms ?? [])];
   const learned: string[] = [];
   const qi = qiMaxOf(s);
@@ -604,10 +624,9 @@ function settleWuxue(
       if (rand() < p) { learnedForms.push(key); learned.push(`${d.name} · ${formName(k)}`); break; }
     }
   }
-  return { formCasts, learnedForms, learned };
+  return { formCasts, learnedForms, learned, yuanman };
 }
 
-/** 升重是否被台阶挡住；归真要先有本内功的归真卷册（门派贡献商店） */
 /** 武学装配槽：按境界 + 海纳百川一槽 */
 export function slotCountOf(s: Pick<PersistedState, 'realm' | 'ownedRepNodes'>): number {
   return slotCount(s.realm) + extraWuxueSlots(s.ownedRepNodes ?? []);
@@ -618,6 +637,7 @@ export function bagCellsOf(s: Pick<PersistedState, 'ownedRepNodes'>): number {
   return BAG_CELLS + bagExtraCells(s.ownedRepNodes ?? []);
 }
 
+/** 升重是否被台阶挡住；归真要先有本内功的归真卷册（门派贡献商店） */
 export function zhongGate(s: Pick<PersistedState, 'neigong' | 'zhong' | 'tiersPassed'> & Partial<Pick<PersistedState, 'ownedScrolls'>>) {
   return s.neigong ? tierGate(NEIGONG[s.neigong].quality, s.zhong, s.tiersPassed,
     (s.ownedScrolls ?? []).includes(juanceKey(s.neigong))) : null;
@@ -656,10 +676,31 @@ export function sectShelfOf(
 }
 
 /** 到点的门派任务结算入账；没到点或没任务返回 null */
-function settleSectTask(s: Pick<PersistedState, 'sectTask' | 'contrib'>, now: number): Partial<PersistedState> | null {
+function settleSectTask(
+  s: Pick<PersistedState, 'sectTask' | 'contrib'> & Partial<Pick<PersistedState, 'achv' | 'retiredNodes'>>, now: number,
+): { patch: Partial<PersistedState>; gain: number } | null {
   const t = s.sectTask;
   if (!t || now < t.endsAt) return null;
-  return { sectTask: null, contrib: (s.contrib ?? 0) + SECT_TASKS[t.kind].contrib };
+  // 侠名录·门派线：贡献 +10 / 20 / 30%
+  const gain = Math.round(SECT_TASKS[t.kind].contrib * (1 + achvVal(s, 'menpai')));
+  return { patch: { sectTask: null, contrib: (s.contrib ?? 0) + gain }, gain };
+}
+
+/** 全身伤势档位之和：自愈前后相减即「养好的伤」 */
+const sevSum = (inj: ReturnType<typeof freshInjuries>) => Object.values(inj).reduce((a, x) => a + x.severity, 0);
+
+/** 武学掉落倍率（侠名录·阅历线管整式、残页线管残页） */
+const dropMults = (s: Partial<Pick<PersistedState, 'achv' | 'ownedWuxue' | 'pages' | 'retiredNodes'>>) =>
+  ({ book: 1 + achvVal(s, 'yueli'), page: 1 + achvVal(s, 'canye') });
+
+/** 黑市每世件数：20 + 侠名录·黑市线 */
+export function blackCapOf(s: Partial<Pick<PersistedState, 'achv' | 'retiredNodes'>>): number {
+  return BLACK_PER_LIFE + achvVal(s, 'heishi');
+}
+
+/** 侠名录跨层埋点 */
+function trackUps(ctx: { run: number; realm: number; route: RouteId | null }, ups: { id: AchvId; tier: number }[]) {
+  for (const u of ups) track('achv_tier', ctx, { line: u.id, tier: u.tier });
 }
 
 /**
@@ -839,7 +880,10 @@ export const useGameStore = create<GameState>((set, get) => ({
           const k = r.effectiveMin > deathMin ? deathMin / r.effectiveMin : 1;
           const liveMin = r.effectiveMin * k;
           merged.dantian += r.neili * k;
-          merged.silver += Math.round(r.silver * k);
+          // 侠名录·银两线：银两掉落 +10 / 20 / 30%
+          const offSilver = Math.round(r.silver * k * (1 + achvVal(merged, 'yinliang')));
+          merged.silver += offSilver;
+          const offAdd: AchvCounts = { yinliang: offSilver };
           // 挂机场次记进本世计数（battle-loot/design.md §2.3）；掉落接在胜场上，每胜一场掷一次
           if (r.idle && merged.idle) {
             const wins = Math.round(r.idle.wins * k);
@@ -856,16 +900,18 @@ export const useGameStore = create<GameState>((set, get) => ({
                   bag = put.bag; sold += put.sold; count++;
                   if (!best || drop.grade > best.grade) best = drop;
                 }
-                const wd = rollWuxueDrop(merged.realm, 'normal', Math.random);
+                const wd = rollWuxueDrop(merged.realm, 'normal', Math.random, dropMults(merged));
                 if (wd) {
                   const got = applyWuxueDrop(merged, wd);
                   merged.ownedWuxue = got.ownedWuxue; merged.books = got.books; merged.pages = got.pages;
                   if (wd.kind === 'book') books++; else pages++;
                 }
               }
+              Object.assign(offAdd, winCounts(merged.equipped, wins));
               if (count + books + pages > 0) {
                 merged.bag = bag;
                 merged.silver += sold;
+                offAdd.yinliang = (offAdd.yinliang ?? 0) + sold;
                 merged.idle = { ...merged.idle, loot: (merged.idle.loot ?? 0) + count + books + pages };
                 offlineLoot = { count, best, sold, books, pages };
                 track('gear_dropped', { run: merged.run, realm: merged.realm, route: merged.route }, {
@@ -890,9 +936,12 @@ export const useGameStore = create<GameState>((set, get) => ({
             + (liveMin / 60) * OFFLINE_EFFICIENCY * currentMult(merged);
           // 离线同样养伤（injury/spec.md §5）：按封顶后的结算时长恢复，
           // 且离线不打仗、不会新受伤——下线休息即安全静养。
-          merged.injuries = healInjuries(
-            merged.injuries ?? freshInjuries(), liveMin, merged.realm,
-          );
+          const offPrevInj = merged.injuries ?? freshInjuries();
+          merged.injuries = healInjuries(offPrevInj, liveMin * (1 + achvVal(merged, 'yangshang')), merged.realm);
+          offAdd.yangshang = sevSum(offPrevInj) - sevSum(merged.injuries);
+          const offAch = bumpAchv(merged, offAdd);
+          merged.achv = offAch.achv;
+          trackUps({ run: merged.run, realm: merged.realm, route: merged.route }, offAch.ups);
           // 离线同样变老（reincarnation/spec.md §2.3）：与在线同速率，只受离线封顶截断
           merged.age = ageAfter(merged.age ?? INIT_AGE, liveMin, peak);
           merged.lifeMinutes = (merged.lifeMinutes ?? 0) + liveMin;
@@ -916,12 +965,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 门派任务离线照常计时（spec §5.2）：到点的在载入时入账
       const sectDone = savedAt !== null && !merged.paused ? settleSectTask(merged, now) : null;
       // sectDone.contrib 是入账后的总额；演出要的是这趟任务挣了多少
-      const offlineSectDone = sectDone ? { kind: merged.sectTask!.kind, contrib: SECT_TASKS[merged.sectTask!.kind].contrib } : null;
+      const offlineSectDone = sectDone ? { kind: merged.sectTask!.kind, contrib: sectDone.gain } : null;
       if (sectDone) {
         track('sect_task_done', { run: merged.run, realm: merged.realm, route: merged.route }, {
-          sect: merged.sect, task: merged.sectTask!.kind, contrib: sectDone.contrib, offline: true,
+          sect: merged.sect, task: merged.sectTask!.kind, contrib: sectDone.patch.contrib, offline: true,
         });
-        Object.assign(merged, sectDone);
+        const sectAch = bumpAchv(merged, { menpai: 1 });
+        Object.assign(merged, sectDone.patch, { achv: sectAch.achv });
+        trackUps({ run: merged.run, realm: merged.realm, route: merged.route }, sectAch.ups);
       }
       set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, offlineSectDone, offlineLoot, dunwuNotice });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
@@ -1020,7 +1071,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       // 伤势自愈：与挂机共用同一游戏内时钟（injury/spec.md §5）
       const prevInj = s.injuries ?? freshInjuries();
-      const injuries = isHurt(prevInj) ? healInjuries(prevInj, dt / 60, s.realm) : prevInj;
+      // 侠名录·养伤线：恢复 +20 / 35 / 50%；养好一档记一次
+      const injuries = isHurt(prevInj) ? healInjuries(prevInj, (dt / 60) * (1 + achvVal(s, 'yangshang')), s.realm) : prevInj;
+      const healed = sevSum(prevInj) - sevSum(injuries);
       // 年岁同一时钟（reincarnation/spec.md §2）：角色老一岁，江湖历走一年
       const age = ageAfter(s.age ?? INIT_AGE, dt / 60, s.peakRealm ?? 1);
       const lifeMinutes = (s.lifeMinutes ?? 0) + dt / 60;
@@ -1029,15 +1082,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 卡在台阶上：挂机累计判顿悟（spec §1.3）
       const dw = advanceDunwu(s, dt, Math.random);
       const sectDone = settleSectTask(s, now);
+      const tickAch = healed > 0 || sectDone ? bumpAchv(s, { yangshang: healed, menpai: sectDone ? 1 : 0 }) : null;
       set({
         dantian, chargeHighWater, runPlaySec, injuries, age, lifeWeightedHours, lifeMinutes, soulUnsettled,
         tiersPassed: dw.tiersPassed, dunwuSec: dw.dunwuSec,
         ...(dw.tier ? { dunwuNotice: dw.tier, lastProgressSec: runPlaySec } : {}),
-        ...sectDone,
+        ...sectDone?.patch,
+        ...(tickAch ? { achv: tickAch.achv } : {}),
       });
+      if (tickAch) trackUps({ run: s.run, realm: s.realm, route: s.route }, tickAch.ups);
       if (sectDone) {
         track('sect_task_done', { run: s.run, realm: s.realm, route: s.route }, {
-          sect: s.sect, task: s.sectTask!.kind, contrib: sectDone.contrib, offline: false,
+          sect: s.sect, task: s.sectTask!.kind, contrib: sectDone.patch.contrib, offline: false,
         });
       }
       if (dw.tier) {
@@ -1136,7 +1192,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
     if (gate !== 'ok') return;
 
-    const neiliCost = neiliCostFor(realm, acupointId, segmentQuota);
+    // 侠名录·冲穴线：耗内力 −5 / 10 / 15%
+    const neiliCost = neiliCostFor(realm, acupointId, segmentQuota) * (1 - achvVal(s, 'chongxue'));
+    const cxAch = bumpAchv(s, { chongxue: 1 });
     const current = progress[acupointId] ?? { failCount: 0, opened: false };
     const pos = acupointPos(realm, acupointId);
     const result = attemptAcupointFn(current, pos, Math.random());
@@ -1149,14 +1207,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     const meridian = acupointData.meridians.find(m => m.acupointIds.includes(acupointId))!;
     const openedIds = new Set(Object.entries(nextProgress).filter(([, a]) => a.opened).map(([id]) => id));
     const fame = result.success && isMeridianComplete(meridian, openedIds)
-      ? claimFame(s, `meridian:${meridian.id}`, FAME_MERIDIAN) : { fame: 0 };
+      ? claimFame(s, `meridian:${meridian.id}`, FAME_MERIDIAN * (1 + achvVal(s, 'jingmai'))) : { fame: 0 };
     const { fame: fameGained, ...fameState } = fame;
     set({
       // 真气成败同扣，液面如实回落；已沉入根基（chargeHighWater）的部分不受影响
       dantian: Math.max(0, s.dantian - neiliCost),
       acupointProgress: nextProgress,
       ...fameState,
+      achv: cxAch.achv,
     });
+    trackUps({ run: s.run, realm: s.realm, route: s.route }, cxAch.ups);
     if (fameGained > 0) {
       track('fame_gained', { run: s.run, realm, route: s.route }, {
         source: 'meridian', key: meridian.id, reputation: fameGained,
@@ -1288,7 +1348,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     const i = (s.blackGoods ?? []).findIndex((g) => g.id === goodId);
     const g = s.blackGoods?.[i];
-    if (!s.blackOpen || !g || g.revealed || s.blackBuys >= BLACK_PER_LIFE || s.silver < g.price) return;
+    if (!s.blackOpen || !g || g.revealed || s.blackBuys >= blackCapOf(s) || s.silver < g.price) return;
     const enemy = frontierStageOf(s);
     const r = revealMasked(g, enemy.x ?? 1, priceBasisOf(s), s.blackLowStreak ?? 0, Math.random);
     let patch: Partial<PersistedState> = {};
@@ -1304,7 +1364,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       patch = { pages, ownedWuxue: first ? [...got.ownedWuxue, r.revealed.pages.id] : got.ownedWuxue, silver: s.silver - g.price };
     }
     const goods = s.blackGoods.map((x, j) => (j === i ? { ...x, revealed: r.revealed } : x));
-    set({ ...patch, blackGoods: goods, blackBuys: (s.blackBuys ?? 0) + 1, blackLowStreak: r.lowStreak, marketSpent: (s.marketSpent ?? 0) + g.price });
+    const bkAch = bumpAchv(s, { heishi: 1 });
+    set({ ...patch, blackGoods: goods, blackBuys: (s.blackBuys ?? 0) + 1, blackLowStreak: r.lowStreak, marketSpent: (s.marketSpent ?? 0) + g.price, achv: bkAch.achv });
+    trackUps({ run: s.run, realm: s.realm, route: s.route }, bkAch.ups);
     track('black_bought', { run: s.run, realm: s.realm, route: s.route }, {
       good: g.mask.kind === 'gear' ? g.mask.slot : 'pages', price: g.price,
       ...('gear' in r.revealed ? { grade: r.revealed.gear.grade } : { wuxue: r.revealed.pages.id, form: r.revealed.pages.k }),
@@ -1601,6 +1663,7 @@ function rebirth(
   const s = get();
   // 寿终与战死可能发生在归隐门槛之前；声望同源同算法，全额结算
   const settle = settleRetire({
+    baseMult: 1 + achvVal(s, 'zhuanshi'),
     weightedHours: s.lifeWeightedHours ?? 0,
     clearedStages: s.clearedStages,
     deepestBossEver: s.deepestBossEver ?? 0,
@@ -1693,6 +1756,8 @@ function rebirth(
     peakRealm: s.peakRealm ?? 1,
     ganwuLevel: s.ganwuLevel ?? 0,
     diyun: { ...freshDiyun(), ...(s.diyun ?? {}) },
+    achv: s.achv ?? {},
+    retiredNodes: s.retiredNodes ?? [],
     deepestBossEver: Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages)),
     fameClaimed: s.fameClaimed ?? [],
     idle: null,
@@ -1727,7 +1792,7 @@ export function idleBasisOf(s: PersistedState): IdleBasis | null {
   let wins = 0, rounds = 0;
   for (let i = 0; i < IDLE_TRIALS; i++) {
     const r = fight(build, enemy, {
-      mode: 'rng', rng, bossDmgBonus: bossDmgBonus(s.ownedRepNodes), hardDmgBonus: gearBonusOf(s.worn).hardPct,
+      mode: 'rng', rng, bossDmgBonus: achvVal(s, 'boss'), hardDmgBonus: gearBonusOf(s.worn).hardPct,
       loadout: buildLoadout(s), qiMax: qiMaxOf(s),
     });
     if (r.win) wins++;
@@ -1791,7 +1856,7 @@ function startBattle(
   const enemy = getStage(map, tier, stage);
   const build = playerBuild(s);
   const result = fight(build, enemy, {
-    mode: 'rng', bossDmgBonus: bossDmgBonus(s.ownedRepNodes), hardDmgBonus: gearBonusOf(s.worn).hardPct,
+    mode: 'rng', bossDmgBonus: achvVal(s, 'boss'), hardDmgBonus: gearBonusOf(s.worn).hardPct,
     loadout: buildLoadout(s), qiMax: qiMaxOf(s),
   });
   const key = enemy.kind !== 'normal';
@@ -1937,14 +2002,17 @@ function resolveBattle(
     // 已通关卡给首通银两的五成，不再有连刷递减（battle-loot/design.md 裁决 14）：一场要演两三秒，产出已被时长卡住
     const reward = firstClear ? enemy.reward : refarmReward(enemy);
     // 关卡不掉内力（formulas.md §6.1 v1.6）：推完前沿即归隐，关卡内力落在一世末尾等于白拿
-    silver += reward.silver;   // 阅历冻结（spec §4.4）：关卡不再发阅历
+    // 侠名录·银两线：银两掉落 +10 / 20 / 30%
+    const silverGot = Math.round(reward.silver * (1 + achvVal(s, 'yinliang')));
+    silver += silverGot;   // 阅历冻结（spec §4.4）：关卡不再发阅历
     // 首次击败精英 / Boss：名号传开（economy.md §1.3），跨世只领一次
     if (isEliteKey(key) || isBossKey(key)) {
-      const { fame, ...rest } = claimFame(s, `stage:${key}`, isBossKey(key) ? FAME_BOSS : FAME_ELITE);
+      // 侠名录·精英线：名号声望 +15 / 30 / 50%
+      const { fame, ...rest } = claimFame(s, `stage:${key}`, (isBossKey(key) ? FAME_BOSS : FAME_ELITE) * (1 + achvVal(s, 'elite')));
       fameGained = fame;
       if (fame > 0) fameState = rest;
     }
-    rewardApplied = { neili: 0, silver: reward.silver, refarm: !firstClear, fame: fameGained };
+    rewardApplied = { neili: 0, silver: silverGot, refarm: !firstClear, fame: fameGained };
     // 装备掉落（battle-loot/spec.md §2.1）：传功（选内功）之后才开始掉（裁决 13 / 19）
     const drop = s.neigong ? rollDropFor(enemy, Math.random, !firstClear) : null;
     if (drop) {
@@ -1957,7 +2025,7 @@ function resolveBattle(
       });
     }
     // 武学掉落（design.md §4）：寻常整式全本、上乘残页；传功后才掉
-    const wd = s.neigong ? rollWuxueDrop(s.realm, firstClear ? enemy.kind : 'normal', Math.random) : null;
+    const wd = s.neigong ? rollWuxueDrop(s.realm, firstClear ? enemy.kind : 'normal', Math.random, dropMults(s)) : null;
     if (wd) {
       const got = applyWuxueDrop(s, wd);
       wxPatch = { ownedWuxue: got.ownedWuxue, books: got.books, pages: got.pages };
@@ -1995,7 +2063,10 @@ function resolveBattle(
   let injuries = s.injuries ?? freshInjuries();
   let lifespanLost = s.lifespanLost ?? 0;
   let lethal = false;
-  const hurtBy = injuryFromBattle(enemy, result.win, result.playerHpPct);
+  const hurtRaw = injuryFromBattle(enemy, result.win, result.playerHpPct);
+  // 侠名录·战败线：每世前几次战败不受伤
+  const freeHurt = !!hurtRaw && !result.win && (s.freeHurtUsed ?? 0) < achvVal(s, 'zhanbai');
+  const hurtBy = freeHurt ? null : hurtRaw;
   if (hurtBy) {
     const r = inflictInjury(injuries, hurtBy);
     injuries = r.injuries;
@@ -2024,6 +2095,12 @@ function resolveBattle(
 
   // 武学：累计熟练、判新招顿悟（胜负都算，出过招就算练过）
   const wx = settleWuxue(s, result.stats, Math.random);
+  // 侠名录计数：胜场按装配武学的类目、银两按本场进账；败一场记一次
+  const btAch = bumpAchv(s, {
+    ...(result.win ? { ...winCounts(s.equipped, 1), yinliang: Math.max(0, silver - s.silver) } : { zhanbai: 1 }),
+    zhaoshi: wx.yuanman,
+  });
+  trackUps({ run: s.run, realm: s.realm, route: s.route }, btAch.ups);
   for (const name of wx.learned) {
     track('form_learned', { run: s.run, realm: s.realm, route: s.route }, { form: name });
   }
@@ -2041,7 +2118,8 @@ function resolveBattle(
   const idle = idle0 && b.mode === 'idle' && got > 0 ? { ...idle0, loot: (idle0.loot ?? 0) + got } : idle0;
   set({
     silver, bag, ...wxPatch, ...marketPatch, clearedStages, attempts, failure, lastProgressSec,
-    injuries, lifespanLost, ...fameState, idle,
+    injuries, lifespanLost, ...fameState, idle, achv: btAch.achv,
+    ...(freeHurt ? { freeHurtUsed: (s.freeHurtUsed ?? 0) + 1 } : {}),
     formCasts: wx.formCasts, learnedForms: wx.learnedForms,
     ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),
     battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, chainMode, reward: rewardApplied },

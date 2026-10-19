@@ -7,10 +7,10 @@
 import { useEffect, useState } from 'react';
 import { GRADE_NAMES, gearFullName, type GearItem } from '../engine/gear';
 import { formTitle } from '../engine/formNames';
-import { BLACK_PER_LIFE, msToNextRound, type MarketGood, type MaskedGood } from '../engine/market';
+import { msToNextRound, type MarketGood, type MaskedGood } from '../engine/market';
 import { hasNode } from '../engine/prestige';
 import { EFFECT_TAG, WUXUE } from '../engine/wuxue';
-import { marketGoodsOf, shopItemsOf, shopPriceOf, useGameStore } from '../store/gameStore';
+import { blackCapOf, marketGoodsOf, shopItemsOf, shopPriceOf, useGameStore } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
 type Stall = 'wuguan' | 'arms' | 'wear' | 'herb';
@@ -136,7 +136,8 @@ function Black({ onBack }: { onBack: () => void }) {
   const sec = Math.floor(left / 1000);
   const clock = [Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), sec % 60].map((x) => String(x).padStart(2, '0')).join(':');
   const buys = s.blackBuys ?? 0;
-  const spent = buys >= BLACK_PER_LIFE;
+  const cap = blackCapOf(s);
+  const spent = buys >= cap;
 
   const revealed = (g: MaskedGood) => {
     if (!g.revealed) return null;
@@ -180,7 +181,7 @@ function Black({ onBack }: { onBack: () => void }) {
         ))}
       </div>
       <div className="coins" aria-label="本世余额">
-        {Array.from({ length: BLACK_PER_LIFE }, (_, i) => <i key={i} className={i < buys ? 'spent' : ''} />)}
+        {Array.from({ length: cap }, (_, i) => <i key={i} className={i < buys ? 'spent' : ''} />)}
       </div>
     </>
   );

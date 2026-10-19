@@ -862,6 +862,53 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(getEvents().some((e) => e.e === 'forced_reincarnation')).toBe(false);
   });
 
+  it('侠名录挂钩：胜场按装配武学类目计、银两进账计入；战败计数，战败线点亮后首次战败不受伤', () => {
+    useGameStore.setState({
+      realm: 5, route: 'huashan', neigong: 'jingleijue', zhong: 10, tiersPassed: 3,
+      ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], achv: {},
+    });
+    const play = () => {
+      const t0 = Date.now();
+      for (let i = 1; i <= 200 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+        useGameStore.getState().tick(t0 + i * 700);
+      }
+      return useGameStore.getState().battle!;
+    };
+    useGameStore.getState().challengeStage(1, 0, 1);
+    const b = play();
+    expect(b.result.win).toBe(true);
+    let s = useGameStore.getState();
+    expect(s.achv.jian).toBe(1);
+    expect(s.achv.yinliang).toBeGreaterThanOrEqual(b.reward!.silver);
+
+    // 境界 1 白身打 Boss 必败：未点亮战败线时受伤，点亮后（6 败）本世第一次免伤
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000_000);
+    const lose = () => {
+      st().challengeStage(1, 0, M1BOSS);
+      for (let i = 0; i < 400; i++) {
+        const bt = st().battle;
+        if (!bt || bt.resolved) break;
+        vi.setSystemTime(Date.now() + 1_000);
+        st().tick(Date.now());
+      }
+    };
+    useGameStore.setState({
+      realm: 1, route: null, neigong: null, equipped: [], clearedStages: m1all.slice(0, M1BOSS - 1),
+      injuries: freshInjuries(), achv: { zhanbai: 5 }, freeHurtUsed: 0, battle: null,
+    });
+    lose();
+    s = st();
+    expect(s.achv.zhanbai).toBe(6);
+    expect(isHurt(s.injuries ?? freshInjuries())).toBe(true);           // 第 6 败时还没点亮，照常受伤
+    useGameStore.setState({ injuries: freshInjuries(), battle: null });
+    lose();
+    s = st();
+    vi.useRealTimers();
+    expect(s.freeHurtUsed).toBe(1);
+    expect(isHurt(s.injuries ?? freshInjuries())).toBe(false);          // 点亮后本世第一次战败免伤
+  });
+
   it('战死：三处重伤时再败于 Boss → 越过致死线，强制转世', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);

@@ -1,0 +1,2212 @@
+{
+  "generated": "2028-07-04",
+  "note": "由 code/src/telemetry/achv.sim.test.ts 生成（SIM_ACHV=1）：标准玩家各成就线的计量与层；门槛按「第 7 / 21 / 50 天摸到一二三层」标定。",
+  "seeds": [
+    7,
+    42
+  ],
+  "samples": [
+    {
+      "route": "huashan",
+      "seed": 7,
+      "mainCat": "tui",
+      "days": {
+        "7": {
+          "jian": {
+            "count": 0,
+            "tier": 0
+          },
+          "dao": {
+            "count": 22,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 0,
+            "tier": 0
+          },
+          "elite": {
+            "count": 19,
+            "tier": 0
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 37,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 0,
+            "tier": 0
+          },
+          "canye": {
+            "count": 0,
+            "tier": 0
+          },
+          "menpai": {
+            "count": 1,
+            "tier": 0
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 96684,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 33,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 4,
+            "tier": 0
+          },
+          "zhanbai": {
+            "count": 11,
+            "tier": 1
+          },
+          "zhuanshi": {
+            "count": 6,
+            "tier": 1
+          }
+        },
+        "21": {
+          "jian": {
+            "count": 68,
+            "tier": 0
+          },
+          "dao": {
+            "count": 67,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 23,
+            "tier": 1
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 118,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 0,
+            "tier": 0
+          },
+          "canye": {
+            "count": 2,
+            "tier": 1
+          },
+          "menpai": {
+            "count": 17,
+            "tier": 1
+          },
+          "heishi": {
+            "count": 10,
+            "tier": 1
+          },
+          "yinliang": {
+            "count": 514507,
+            "tier": 2
+          },
+          "yueli": {
+            "count": 39,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 9,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 48,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 19,
+            "tier": 2
+          }
+        },
+        "50": {
+          "jian": {
+            "count": 19097,
+            "tier": 2
+          },
+          "dao": {
+            "count": 5399,
+            "tier": 1
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 13606,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 31081,
+            "tier": 2
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 4,
+            "tier": 2
+          },
+          "elite": {
+            "count": 55,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 4,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 243,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 24,
+            "tier": 2
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 87,
+            "tier": 2
+          },
+          "heishi": {
+            "count": 89,
+            "tier": 2
+          },
+          "yinliang": {
+            "count": 5059967,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 52,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 118,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 29,
+            "tier": 3
+          }
+        },
+        "100": {
+          "jian": {
+            "count": 34652,
+            "tier": 2
+          },
+          "dao": {
+            "count": 103011,
+            "tier": 3
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 13606,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 153597,
+            "tier": 3
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 80,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 5,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 399,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 39,
+            "tier": 2
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 228,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 276,
+            "tier": 3
+          },
+          "yinliang": {
+            "count": 30322297,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 115,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 224,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 38,
+            "tier": 3
+          }
+        }
+      }
+    },
+    {
+      "route": "huashan",
+      "seed": 42,
+      "mainCat": "tui",
+      "days": {
+        "7": {
+          "jian": {
+            "count": 45,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 8,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 0,
+            "tier": 0
+          },
+          "elite": {
+            "count": 19,
+            "tier": 0
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 34,
+            "tier": 0
+          },
+          "zhaoshi": {
+            "count": 0,
+            "tier": 0
+          },
+          "canye": {
+            "count": 0,
+            "tier": 0
+          },
+          "menpai": {
+            "count": 1,
+            "tier": 0
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 54709,
+            "tier": 0
+          },
+          "yueli": {
+            "count": 32,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 2,
+            "tier": 0
+          },
+          "zhanbai": {
+            "count": 10,
+            "tier": 1
+          },
+          "zhuanshi": {
+            "count": 6,
+            "tier": 1
+          }
+        },
+        "21": {
+          "jian": {
+            "count": 9661,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 75,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 36,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 3,
+            "tier": 2
+          },
+          "chongxue": {
+            "count": 115,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 6,
+            "tier": 1
+          },
+          "canye": {
+            "count": 2,
+            "tier": 1
+          },
+          "menpai": {
+            "count": 17,
+            "tier": 1
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 448563,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 39,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 6,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 59,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 19,
+            "tier": 2
+          }
+        },
+        "50": {
+          "jian": {
+            "count": 13489,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 31197,
+            "tier": 2
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 15025,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 62967,
+            "tier": 3
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 69,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 4,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 220,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 29,
+            "tier": 2
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 93,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 8164908,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 43,
+            "tier": 2
+          },
+          "zhanbai": {
+            "count": 128,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 26,
+            "tier": 3
+          }
+        },
+        "100": {
+          "jian": {
+            "count": 42328,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 90555,
+            "tier": 3
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 15025,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 232025,
+            "tier": 3
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 77,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 5,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 384,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 66,
+            "tier": 3
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 233,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 36162304,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 104,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 255,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 36,
+            "tier": 3
+          }
+        }
+      }
+    },
+    {
+      "route": "tangmen",
+      "seed": 7,
+      "mainCat": "zhi",
+      "days": {
+        "7": {
+          "jian": {
+            "count": 0,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 4,
+            "tier": 0
+          },
+          "quan": {
+            "count": 21,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 4523,
+            "tier": 1
+          },
+          "zhi": {
+            "count": 4337,
+            "tier": 1
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 19,
+            "tier": 0
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 19,
+            "tier": 0
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 40,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 15,
+            "tier": 1
+          },
+          "canye": {
+            "count": 0,
+            "tier": 0
+          },
+          "menpai": {
+            "count": 1,
+            "tier": 0
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 55248,
+            "tier": 0
+          },
+          "yueli": {
+            "count": 30,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 7,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 6,
+            "tier": 1
+          },
+          "zhuanshi": {
+            "count": 6,
+            "tier": 1
+          }
+        },
+        "21": {
+          "jian": {
+            "count": 3020,
+            "tier": 1
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 4,
+            "tier": 0
+          },
+          "quan": {
+            "count": 21,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 8310,
+            "tier": 2
+          },
+          "zhi": {
+            "count": 4641,
+            "tier": 1
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 2529,
+            "tier": 1
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 27,
+            "tier": 1
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 118,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 29,
+            "tier": 2
+          },
+          "canye": {
+            "count": 2,
+            "tier": 1
+          },
+          "menpai": {
+            "count": 17,
+            "tier": 1
+          },
+          "heishi": {
+            "count": 8,
+            "tier": 1
+          },
+          "yinliang": {
+            "count": 225240,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 38,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 19,
+            "tier": 2
+          },
+          "zhanbai": {
+            "count": 28,
+            "tier": 1
+          },
+          "zhuanshi": {
+            "count": 19,
+            "tier": 2
+          }
+        },
+        "50": {
+          "jian": {
+            "count": 5711,
+            "tier": 1
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 4,
+            "tier": 0
+          },
+          "quan": {
+            "count": 10844,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 59262,
+            "tier": 3
+          },
+          "zhi": {
+            "count": 55335,
+            "tier": 3
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 53937,
+            "tier": 3
+          },
+          "boss": {
+            "count": 3,
+            "tier": 2
+          },
+          "elite": {
+            "count": 51,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 4,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 253,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 91,
+            "tier": 3
+          },
+          "canye": {
+            "count": 97,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 87,
+            "tier": 2
+          },
+          "heishi": {
+            "count": 84,
+            "tier": 2
+          },
+          "yinliang": {
+            "count": 3225223,
+            "tier": 2
+          },
+          "yueli": {
+            "count": 55,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 61,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 102,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 29,
+            "tier": 3
+          }
+        },
+        "100": {
+          "jian": {
+            "count": 5711,
+            "tier": 1
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 4,
+            "tier": 0
+          },
+          "quan": {
+            "count": 10844,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 160968,
+            "tier": 3
+          },
+          "zhi": {
+            "count": 157041,
+            "tier": 3
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 145158,
+            "tier": 3
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 82,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 5,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 402,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 187,
+            "tier": 3
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 228,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 267,
+            "tier": 3
+          },
+          "yinliang": {
+            "count": 17350132,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 109,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 228,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 38,
+            "tier": 3
+          }
+        }
+      }
+    },
+    {
+      "route": "tangmen",
+      "seed": 42,
+      "mainCat": "zhang",
+      "days": {
+        "7": {
+          "jian": {
+            "count": 0,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 6822,
+            "tier": 1
+          },
+          "zhi": {
+            "count": 4510,
+            "tier": 1
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 66,
+            "tier": 0
+          },
+          "boss": {
+            "count": 0,
+            "tier": 0
+          },
+          "elite": {
+            "count": 19,
+            "tier": 0
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 34,
+            "tier": 0
+          },
+          "zhaoshi": {
+            "count": 13,
+            "tier": 1
+          },
+          "canye": {
+            "count": 0,
+            "tier": 0
+          },
+          "menpai": {
+            "count": 2,
+            "tier": 1
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 100703,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 34,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 3,
+            "tier": 0
+          },
+          "zhanbai": {
+            "count": 10,
+            "tier": 1
+          },
+          "zhuanshi": {
+            "count": 6,
+            "tier": 1
+          }
+        },
+        "21": {
+          "jian": {
+            "count": 2479,
+            "tier": 1
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 0,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 15200,
+            "tier": 2
+          },
+          "zhi": {
+            "count": 6887,
+            "tier": 1
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 8936,
+            "tier": 2
+          },
+          "boss": {
+            "count": 2,
+            "tier": 1
+          },
+          "elite": {
+            "count": 37,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 3,
+            "tier": 2
+          },
+          "chongxue": {
+            "count": 119,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 33,
+            "tier": 2
+          },
+          "canye": {
+            "count": 4,
+            "tier": 1
+          },
+          "menpai": {
+            "count": 18,
+            "tier": 2
+          },
+          "heishi": {
+            "count": 4,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 323400,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 39,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 12,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 34,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 19,
+            "tier": 2
+          }
+        },
+        "50": {
+          "jian": {
+            "count": 13773,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 15087,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 61919,
+            "tier": 3
+          },
+          "zhi": {
+            "count": 32823,
+            "tier": 2
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 60216,
+            "tier": 3
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 65,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 4,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 233,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 109,
+            "tier": 3
+          },
+          "canye": {
+            "count": 97,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 91,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 79,
+            "tier": 2
+          },
+          "yinliang": {
+            "count": 5132209,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 54,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 97,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 27,
+            "tier": 3
+          }
+        },
+        "100": {
+          "jian": {
+            "count": 13773,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 15087,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 179071,
+            "tier": 3
+          },
+          "zhi": {
+            "count": 139914,
+            "tier": 3
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 164984,
+            "tier": 3
+          },
+          "boss": {
+            "count": 7,
+            "tier": 3
+          },
+          "elite": {
+            "count": 85,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 5,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 380,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 205,
+            "tier": 3
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 232,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 268,
+            "tier": 3
+          },
+          "yinliang": {
+            "count": 28772568,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 111,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 177,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 36,
+            "tier": 3
+          }
+        }
+      }
+    },
+    {
+      "route": "shaolin",
+      "seed": 7,
+      "mainCat": "quan",
+      "days": {
+        "7": {
+          "jian": {
+            "count": 0,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 2672,
+            "tier": 1
+          },
+          "zhang": {
+            "count": 2427,
+            "tier": 1
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 2,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 12,
+            "tier": 0
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 19,
+            "tier": 0
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 39,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 9,
+            "tier": 1
+          },
+          "canye": {
+            "count": 0,
+            "tier": 0
+          },
+          "menpai": {
+            "count": 0,
+            "tier": 0
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 48178,
+            "tier": 0
+          },
+          "yueli": {
+            "count": 23,
+            "tier": 0
+          },
+          "yangshang": {
+            "count": 7,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 5,
+            "tier": 0
+          },
+          "zhuanshi": {
+            "count": 6,
+            "tier": 1
+          }
+        },
+        "21": {
+          "jian": {
+            "count": 42,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 8644,
+            "tier": 2
+          },
+          "quan": {
+            "count": 16636,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 8320,
+            "tier": 2
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 121,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 12,
+            "tier": 0
+          },
+          "boss": {
+            "count": 3,
+            "tier": 2
+          },
+          "elite": {
+            "count": 44,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 3,
+            "tier": 2
+          },
+          "chongxue": {
+            "count": 123,
+            "tier": 2
+          },
+          "zhaoshi": {
+            "count": 29,
+            "tier": 2
+          },
+          "canye": {
+            "count": 2,
+            "tier": 1
+          },
+          "menpai": {
+            "count": 18,
+            "tier": 2
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 446570,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 40,
+            "tier": 2
+          },
+          "yangshang": {
+            "count": 9,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 47,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 18,
+            "tier": 2
+          }
+        },
+        "50": {
+          "jian": {
+            "count": 15971,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 8644,
+            "tier": 2
+          },
+          "quan": {
+            "count": 62503,
+            "tier": 3
+          },
+          "zhang": {
+            "count": 48388,
+            "tier": 2
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 121,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 12,
+            "tier": 0
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 64,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 4,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 229,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 50,
+            "tier": 2
+          },
+          "canye": {
+            "count": 97,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 92,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 5561109,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 36,
+            "tier": 2
+          },
+          "zhanbai": {
+            "count": 100,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 26,
+            "tier": 3
+          }
+        },
+        "100": {
+          "jian": {
+            "count": 15971,
+            "tier": 2
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 13445,
+            "tier": 2
+          },
+          "quan": {
+            "count": 140541,
+            "tier": 3
+          },
+          "zhang": {
+            "count": 126426,
+            "tier": 3
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 121,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 12,
+            "tier": 0
+          },
+          "boss": {
+            "count": 9,
+            "tier": 3
+          },
+          "elite": {
+            "count": 85,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 5,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 379,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 64,
+            "tier": 3
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 233,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 19389717,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 80,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 232,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 35,
+            "tier": 3
+          }
+        }
+      }
+    },
+    {
+      "route": "shaolin",
+      "seed": 42,
+      "mainCat": "quan",
+      "days": {
+        "7": {
+          "jian": {
+            "count": 3,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 0,
+            "tier": 0
+          },
+          "quan": {
+            "count": 407,
+            "tier": 0
+          },
+          "zhang": {
+            "count": 4,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 19,
+            "tier": 0
+          },
+          "jingmai": {
+            "count": 2,
+            "tier": 1
+          },
+          "chongxue": {
+            "count": 39,
+            "tier": 1
+          },
+          "zhaoshi": {
+            "count": 6,
+            "tier": 1
+          },
+          "canye": {
+            "count": 0,
+            "tier": 0
+          },
+          "menpai": {
+            "count": 0,
+            "tier": 0
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 38347,
+            "tier": 0
+          },
+          "yueli": {
+            "count": 10,
+            "tier": 0
+          },
+          "yangshang": {
+            "count": 7,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 3,
+            "tier": 0
+          },
+          "zhuanshi": {
+            "count": 6,
+            "tier": 1
+          }
+        },
+        "21": {
+          "jian": {
+            "count": 66,
+            "tier": 0
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 1474,
+            "tier": 1
+          },
+          "quan": {
+            "count": 10997,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 68,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 0,
+            "tier": 0
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 1,
+            "tier": 1
+          },
+          "elite": {
+            "count": 28,
+            "tier": 1
+          },
+          "jingmai": {
+            "count": 3,
+            "tier": 2
+          },
+          "chongxue": {
+            "count": 123,
+            "tier": 2
+          },
+          "zhaoshi": {
+            "count": 11,
+            "tier": 1
+          },
+          "canye": {
+            "count": 2,
+            "tier": 1
+          },
+          "menpai": {
+            "count": 16,
+            "tier": 1
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 330077,
+            "tier": 1
+          },
+          "yueli": {
+            "count": 39,
+            "tier": 1
+          },
+          "yangshang": {
+            "count": 12,
+            "tier": 1
+          },
+          "zhanbai": {
+            "count": 33,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 19,
+            "tier": 2
+          }
+        },
+        "50": {
+          "jian": {
+            "count": 6807,
+            "tier": 1
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 5751,
+            "tier": 1
+          },
+          "quan": {
+            "count": 44228,
+            "tier": 2
+          },
+          "zhang": {
+            "count": 68,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 4613,
+            "tier": 1
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 6,
+            "tier": 3
+          },
+          "elite": {
+            "count": 64,
+            "tier": 2
+          },
+          "jingmai": {
+            "count": 4,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 242,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 45,
+            "tier": 2
+          },
+          "canye": {
+            "count": 83,
+            "tier": 2
+          },
+          "menpai": {
+            "count": 87,
+            "tier": 2
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 4401846,
+            "tier": 2
+          },
+          "yueli": {
+            "count": 54,
+            "tier": 2
+          },
+          "yangshang": {
+            "count": 47,
+            "tier": 2
+          },
+          "zhanbai": {
+            "count": 61,
+            "tier": 2
+          },
+          "zhuanshi": {
+            "count": 28,
+            "tier": 3
+          }
+        },
+        "100": {
+          "jian": {
+            "count": 6807,
+            "tier": 1
+          },
+          "dao": {
+            "count": 0,
+            "tier": 0
+          },
+          "qiang": {
+            "count": 0,
+            "tier": 0
+          },
+          "gun": {
+            "count": 8149,
+            "tier": 2
+          },
+          "quan": {
+            "count": 117739,
+            "tier": 3
+          },
+          "zhang": {
+            "count": 68,
+            "tier": 0
+          },
+          "zhi": {
+            "count": 0,
+            "tier": 0
+          },
+          "tui": {
+            "count": 4613,
+            "tier": 1
+          },
+          "anqi": {
+            "count": 0,
+            "tier": 0
+          },
+          "boss": {
+            "count": 8,
+            "tier": 3
+          },
+          "elite": {
+            "count": 85,
+            "tier": 3
+          },
+          "jingmai": {
+            "count": 5,
+            "tier": 3
+          },
+          "chongxue": {
+            "count": 413,
+            "tier": 3
+          },
+          "zhaoshi": {
+            "count": 58,
+            "tier": 2
+          },
+          "canye": {
+            "count": 98,
+            "tier": 3
+          },
+          "menpai": {
+            "count": 227,
+            "tier": 3
+          },
+          "heishi": {
+            "count": 0,
+            "tier": 0
+          },
+          "yinliang": {
+            "count": 16938292,
+            "tier": 3
+          },
+          "yueli": {
+            "count": 56,
+            "tier": 3
+          },
+          "yangshang": {
+            "count": 90,
+            "tier": 3
+          },
+          "zhanbai": {
+            "count": 162,
+            "tier": 3
+          },
+          "zhuanshi": {
+            "count": 38,
+            "tier": 3
+          }
+        }
+      }
+    }
+  ]
+}

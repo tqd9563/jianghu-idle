@@ -1,16 +1,17 @@
 /**
  * 前尘 —— 底蕴（修行感悟 + 八条属性，可反复购买）与机缘（十四件一次性）；转世后的落地页（§8.6-4）。
  * 结构按定稿原型 docs/design/prestige-shop-prototype.html；设计 docs/systems/prestige-shop/design.md §5；
- * 文案逐字取自 docs/rules/copy/retire.md v2.4 §5。侠名录（成就）随实装二接入。
+ * 文案逐字取自 docs/rules/copy/retire.md v2.4 §5；侠名录 §5.3。
  */
 import { REALMS } from '../engine/content';
 import {
   DIYUN, GANWU_GAIN, REP_NODES, SUHUI, diyunCum, diyunGainAt, diyunPrice, freshDiyun, ganwuPrice,
 } from '../engine/prestige';
+import { ACHV, achvCount, achvEffText, achvTier, type AchvDef } from '../engine/achievements';
 import { currentMult, useGameStore } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
-export type RepSub = 'diyun' | 'jiyuan';
+export type RepSub = 'diyun' | 'jiyuan' | 'xiaming';
 
 const TIP_GANWU = '侠名在外，江湖自有人奉上资粮。价格每级 +8.5 声望，和每一世转世拿到的声望一起往上涨。';
 const TIP_DIYUN = '散功重修，根骨不失——打熬出来的底子随神魂带到来世。';
@@ -48,6 +49,7 @@ export function RepPane({ sub, onSub }: { sub: RepSub; onSub: (s: RepSub) => voi
       <div className="jh-seg rep-seg" role="tablist" aria-label="前尘">
         <button type="button" role="tab" aria-selected={sub === 'diyun'} onClick={() => onSub('diyun')}>底蕴</button>
         <button type="button" role="tab" aria-selected={sub === 'jiyuan'} onClick={() => onSub('jiyuan')}>机缘</button>
+        <button type="button" role="tab" aria-selected={sub === 'xiaming'} onClick={() => onSub('xiaming')}>侠名录</button>
       </div>
 
       {s.repTotal > 0 && nothingBought && (
@@ -119,6 +121,40 @@ export function RepPane({ sub, onSub }: { sub: RepSub; onSub: (s: RepSub) => voi
           </div>
         </section>
       )}
+
+      {sub === 'xiaming' && <Xiaming />}
     </>
+  );
+}
+
+const ICON_SUFFIX = ['', '', '-silver', '-gold'];
+
+/** 侠名录：二十二枚徽记，品质长在材质上（铜 / 银 / 金），进度与效果收进悬停（DESIGN.md The Grade Is The Metal Rule） */
+function Xiaming() {
+  const s = useGameStore();
+  const lit = ACHV.reduce((n, a) => n + achvTier(s, a.id), 0);
+  return (
+    <section className="jh-card">
+      <div className="head"><span className="serif">侠名录</span><small>已点亮 {lit} / {ACHV.length * 3}</small></div>
+      <div className="jh-achv">
+        {ACHV.map((a) => <AchvTile key={a.id} a={a} />)}
+      </div>
+    </section>
+  );
+}
+
+function AchvTile({ a }: { a: AchvDef }) {
+  const s = useGameStore();
+  const tier = achvTier(s, a.id);
+  const c = achvCount(s, a.id);
+  const lines = [
+    tier > 0 ? achvEffText(a, tier) : '',
+    tier < 3 ? `下一级：${a.tiers[tier]} · ${a.what} ${fmtBig(Math.min(c, a.th[tier]))}/${fmtBig(a.th[tier])}` : '',
+  ].filter(Boolean);
+  return (
+    <div className={`ach t${tier}`} data-tip={lines.join('<br>')}>
+      <img className="ic" src={`/art/achv/${a.id}${ICON_SUFFIX[tier]}.png`} alt="" />
+      <div className="n serif">{a.tiers[Math.max(0, tier - 1)]}</div>
+    </div>
   );
 }

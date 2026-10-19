@@ -128,9 +128,10 @@ button { font-family: inherit; }
 <div class="proto-bar">
   <span class="t">增减益标记</span>
   <div class="seg" id="styleSeg">
-    <button data-s="seal" aria-pressed="true">甲 · 石印</button>
-    <button data-s="ink" aria-pressed="false">乙 · 墨圈</button>
-    <button data-s="token" aria-pressed="false">丙 · 古钱</button>
+    <button data-s="seala" aria-pressed="true">一 · 器物</button>
+    <button data-s="sealb" aria-pressed="false">二 · 意象</button>
+    <button data-s="sealc" aria-pressed="false">三 · 纹样</button>
+    <button data-s="seal" aria-pressed="false">原版</button>
   </div>
 </div>
 
@@ -160,7 +161,7 @@ button { font-family: inherit; }
     </div>
   </div>
 
-  <div class="sec-h">三组图标</div>
+  <div class="sec-h">石印 · 四组图案</div>
   <div class="sheet" id="sheet"></div>
 </div>
 
@@ -178,8 +179,8 @@ const FX = {
   du:      { nm: '毒',   side: 'debuff', eff: v => `${v} 层 · 每回合发作` },
 };
 const ORDER = ['yunjin', 'ningmou', 'qingshen', 'xieli', 'mimu', 'pozhan', 'fengxue', 'du'];
-const STYLES = { seal: '甲 · 石印', ink: '乙 · 墨圈', token: '丙 · 古钱' };
-let style = 'seal';
+const STYLES = { seala: '一 · 器物', sealb: '二 · 意象', sealc: '三 · 纹样', seal: '原版' };
+let style = 'seala';
 const src = k => `../../code/public/art/fx/${style}-${k}.png`;
 
 // 剧本：每回合双方身上的状态 [key, 值, 余回合]；毒的「余回合」位放层数

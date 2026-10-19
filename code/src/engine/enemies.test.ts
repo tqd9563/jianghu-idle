@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { fight } from './combat';
 import { buildLoadout, playerBuild, qiMaxOf } from '../store/gameStore';
-import { GIFT_WUXUE } from './wuxue';
+import { GIFT_WUXUE_OPTIONS } from './wuxue';
 import {
   allStages, enemyStatsAt, getStage, isSealed, MAP_IDS, parseStageKey, stageKey, TEACH_X, TIERS, trackLength,
 } from './enemies';
@@ -62,21 +62,23 @@ describe('长线关卡表', () => {
     expect(getStage(1, 0, 7).recommendedRealm).toBe(1);
   });
 
-  it('传功缓坡（第 7–21 关）：每关 +0.05；刚传功的百川诀 + 罗汉拳打第 7 关胜率 ≥ 90%，裸属性打教学战强度全败；第 22 关起要境界 2', () => {
+  it('传功缓坡（第 7–21 关）：每关 +0.05；刚传功的百川诀 + 前辈所授任一门打第 7 关胜率 ≥ 90%，裸属性打教学战强度全败；第 22 关起要境界 2', () => {
     for (let st = 7; st <= 21; st++) {
       expect(getStage(1, 0, st).recommendedRealm).toBe(1);
       expect(getStage(1, 0, st).x).toBeCloseTo(2 + (st - 7) * 0.05, 4);
     }
     expect(getStage(1, 0, 22).recommendedRealm).toBe(2);
     expect(getStage(1, 0, 22).x).toBeCloseTo(TEACH_X, 4);
-    const taught = { realm: 1, neigong: 'jingleijue' as const, zhong: 0, tiersPassed: 0, injuries: undefined,
-      ownedWuxue: [GIFT_WUXUE], equipped: [GIFT_WUXUE], formCasts: {}, pages: [] };
-    const b = playerBuild(taught);
-    let wins = 0;
-    for (let i = 0; i < 400; i++) {
-      if (fight(b, getStage(1, 0, 7), { mode: 'rng', loadout: buildLoadout(taught), qiMax: qiMaxOf(taught) }).win) wins++;
+    for (const gift of GIFT_WUXUE_OPTIONS) {
+      const taught = { realm: 1, neigong: 'jingleijue' as const, zhong: 0, tiersPassed: 0, injuries: undefined,
+        ownedWuxue: [gift], equipped: [gift], formCasts: {}, pages: [] };
+      const b = playerBuild(taught);
+      let wins = 0;
+      for (let i = 0; i < 400; i++) {
+        if (fight(b, getStage(1, 0, 7), { mode: 'rng', loadout: buildLoadout(taught), qiMax: qiMaxOf(taught) }).win) wins++;
+      }
+      expect(wins / 400, gift).toBeGreaterThanOrEqual(0.9);
     }
-    expect(wins / 400).toBeGreaterThanOrEqual(0.9);
     const bare = playerBuild({ realm: 1, neigong: null, zhong: 0, tiersPassed: 0, injuries: undefined });
     const teach = { ...getStage(1, 0, 7), ...enemyStatsAt(TEACH_X) };
     for (let i = 0; i < 400; i++) expect(fight(bare, teach, { mode: 'rng' }).win).toBe(false);

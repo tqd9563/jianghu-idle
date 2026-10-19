@@ -15,9 +15,9 @@ import {
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
-import { RETREAT_WAIT_MS, applyWuxueDrop, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
+import { RETREAT_WAIT_MS, applyWuxueDrop, giftPending, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
 import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, STALL_PRICE_MULT } from '../engine/market';
-import { GIFT_WUXUE, slotCount } from '../engine/wuxue';
+import { slotCount } from '../engine/wuxue';
 import { DUP_DROP_SILVER, QUALITY_PARAMS, WUXUE, rollWuxueDrop } from '../engine/wuxue';
 import { isBenmen } from '../engine/sect';
 
@@ -1487,7 +1487,7 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     return st().battle!;
   };
 
-  it('第一世 1-7 必败，战败即遇见前辈：起身行礼后可在境界 1 选内功，开 5 个武学槽、另得罗汉拳', () => {
+  it('第一世 1-7 必败，战败即遇见前辈：起身行礼后可在境界 1 选内功，开 5 个武学槽、再择一门武学', () => {
     useGameStore.setState({ clearedStages: m1all.slice(0, 6) });
     st().challengeStage(1, 0, 7);
     const b = play();
@@ -1501,9 +1501,16 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(st().realm).toBe(1);
     expect(slotCount(1)).toBe(5);
     expect(slotCount(2)).toBe(6);
-    // 前辈另授罗汉拳，直接装上
-    expect(st().ownedWuxue).toContain(GIFT_WUXUE);
-    expect(st().equipped).toEqual([GIFT_WUXUE]);
+    // 选完内功，前辈再授一门：三选一，选定即装上；三门之外的不收，选过不再给
+    expect(giftPending(st())).toBe(true);
+    st().pickGiftWuxue('liuyunjian');
+    expect(st().ownedWuxue).toEqual([]);
+    st().pickGiftWuxue('xuanfengtui');
+    expect(st().ownedWuxue).toEqual(['xuanfengtui']);
+    expect(st().equipped).toEqual(['xuanfengtui']);
+    expect(giftPending(st())).toBe(false);
+    st().pickGiftWuxue('kaishanzhang');
+    expect(st().ownedWuxue).toEqual(['xuanfengtui']);
   });
 
   it('第二世起开局即选内功；前辈已传功跨世记住', () => {
@@ -1514,7 +1521,7 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(st().neigong).toBeNull();
     st().selectNeigong('zhenyuegong');
     expect(st().neigong).toBe('zhenyuegong');
-    expect(st().ownedWuxue.filter((id) => id === GIFT_WUXUE)).toHaveLength(1);   // 已有不重给
+    expect(giftPending(st())).toBe(false);   // 第二世起不再授武学
   });
 
   it('传功后 1-7 回到缓坡起点：同一关裸属性打教学战强度，传功后按缓坡打', () => {

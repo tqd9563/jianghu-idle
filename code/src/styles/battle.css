@@ -172,3 +172,11 @@
 @media (prefers-reduced-motion: reduce) {
   .page-battle .bt-log .p { animation: none; }
 }
+
+/* 推关失败二选一：退回按钮带 5 秒倒计时，底边金线随之缩短（docs/design/idle-ux-prototype.html ②） */
+.jh-btn.count { overflow: hidden; }
+.jh-btn.count .left { display: inline-block; min-width: 1.2em; margin-left: 0.4em; color: var(--muted); font-family: var(--font-body); letter-spacing: 0; }
+.jh-btn.count::after { content: ''; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--gold); opacity: 0.6;
+  transform-origin: left; animation: count-down 5s linear forwards; }
+@keyframes count-down { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .jh-btn.count::after { display: none; } }

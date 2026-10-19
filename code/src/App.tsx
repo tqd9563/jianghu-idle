@@ -8,7 +8,7 @@ import { gearBonusOf } from './engine/gear';
 import { computeAttributes } from './engine/attributes';
 import { REALM_ACUPOINTS, isMeridianComplete, totalAcupointBonus } from './engine/acupoints';
 import { REALMS } from './engine/content';
-import { effIdleRate, huohouMultOf, nextStageOf, retireKind, useGameStore } from './store/gameStore';
+import { effIdleRate, giftPending, huohouMultOf, nextStageOf, retireKind, useGameStore } from './store/gameStore';
 import { fmtBig, fmtRate } from './fmt';
 import { freshInjuries, isHurt, worstInjury, INJURY_DEFS, SEVERITY_NAME } from './engine/injury';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -23,7 +23,8 @@ import { WuxuePane } from './panes/WuxuePane';
 import { SectPane } from './panes/SectPane';
 import { ShopPane } from './panes/ShopPane';
 import { SECT_REALM } from './engine/sect';
-import { NeigongSelect } from './overlays/NeigongSelect';
+import { GiftWuxueSelect, NeigongSelect } from './overlays/NeigongSelect';
+import { IdleSummary } from './overlays/IdleSummary';
 import { BlackIntro } from './overlays/BlackIntro';
 import { BreakthroughCeremony } from './overlays/BreakthroughCeremony';
 import { ObserverPanel } from './overlays/ObserverPanel';
@@ -251,6 +252,8 @@ export default function App() {
       <TipLayer />
 
       {neigongSelectOpen && <NeigongSelect />}
+      {!neigongSelectOpen && giftPending(s) && s.failure === null && s.retireCeremony === null && <GiftWuxueSelect />}
+      {s.idleSummary && <IdleSummary sum={s.idleSummary} onClose={s.dismissIdleSummary} />}
       {s.blackIntro && <BlackIntro onDone={s.dismissBlackIntro} />}
       {s.dunwuNotice && <div className="dunwu-toast serif" role="status">{s.dunwuNotice.includes('·') ? `贯通 · ${s.dunwuNotice}` : `顿悟 · ${s.neigong ? NEIGONG_NAME(s.neigong) : ''} · ${s.dunwuNotice}`}</div>}
       <RetireFlow />

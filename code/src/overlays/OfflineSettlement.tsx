@@ -8,23 +8,11 @@ import type { OfflineSettleResult } from '../engine/offlineRewards';
 import { gearFullName, type GearItem } from '../engine/gear';
 import { SECTS, SECT_TASKS, type SectTaskKind } from '../engine/sect';
 import { useGameStore } from '../store/gameStore';
-import { fmtBig as fmt, fmtRate } from '../fmt';
-
-const CN = ['零', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
-
-/** 有效闭关时长的武侠写法：一个时辰 = 2 小时，一刻 = 15 分钟；满十二个时辰写「一昼夜」 */
-function shichenText(min: number): string {
-  if (min < 15) return '闭关片刻';
-  if (min < 120) return `闭关${CN[Math.min(7, Math.round(min / 15))]}刻`;
-  const sc = Math.round(min / 120);
-  return sc >= 12 ? '闭关一昼夜' : `闭关${CN[sc]}个时辰`;
-}
+import { fmtBig as fmt, fmtRate, minText, shichenText } from '../fmt';
 
 /** 离开时长的玩家侧措辞（原始时长，非截断值） */
 function awayText(rawSec: number): string {
-  const min = Math.floor(rawSec / 60);
-  if (min < 60) return `离开 ${min} 分钟`;
-  return `离开 ${Math.floor(min / 60)} 小时 ${min % 60} 分`;
+  return `离开 ${minText(rawSec)}`;
 }
 
 /** 关卡键里的关数（'m1t0s38' → 38） */

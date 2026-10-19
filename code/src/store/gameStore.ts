@@ -12,7 +12,7 @@ import {
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
 import {
-  BOSS_DROPS, DUPLICATE_SILVER, GIFT_WUXUE, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianMods, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
+  BOSS_DROPS, DUPLICATE_SILVER, GIFT_WUXUE_OPTIONS, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianMods, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
   SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
@@ -393,6 +393,8 @@ interface GameState extends PersistedState {
   /** 收手：这一场打完就停，不再接着打 */
   stopIdle: () => void;
   dismissIdleSummary: () => void;
+  /** 传功选完内功后，从三门里择一门武学（battle-loot/design.md §5.1） */
+  pickGiftWuxue: (id: WuxueId) => void;
   /** 穿戴背包里的一件（同部位原来那件回背包） */
   wearGear: (id: string) => void;
   /** 卸下身上某部位的装备回背包（背包放不下则不卸） */
@@ -1259,12 +1261,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!(s.ownedNeigong ?? STARTER_NEIGONG).includes(id)) return;
     const route = NEIGONG[id].route;
     // 驾轻就熟：转世后首段台阶不必顿悟（第一世不算）
-    // 前辈另授一套罗汉拳（寻常整门），直接装进武学槽；已有就不再给
-    const gift = (s.ownedWuxue ?? []).includes(GIFT_WUXUE) ? {} : {
-      ownedWuxue: [...(s.ownedWuxue ?? []), GIFT_WUXUE],
-      equipped: [...(s.equipped ?? []), GIFT_WUXUE].slice(0, slotCountOf(s)),
-    };
-    set({ neigong: id, route, zhong: 0, tiersPassed: s.run > 1 && hasNode(s.ownedRepNodes, 'jiaqing_jiushu') ? 1 : 0, dunwuSec: 0, ...gift });
+    set({ neigong: id, route, zhong: 0, tiersPassed: s.run > 1 && hasNode(s.ownedRepNodes, 'jiaqing_jiushu') ? 1 : 0, dunwuSec: 0 });
     track('neigong_selected', { run: s.run, realm: s.realm, route }, {
       neigong: id, quality: NEIGONG[id].quality,
     });
@@ -1466,7 +1463,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   stopIdle: () => {
     const s = get();
     if (!s.idle) return;
-    track('idle_stop', { run: s.run, realm: s.realm, route: s.route }, { ...s.idle });
+    const { map: im, tier: it, stage: is, fights: ifs } = s.idle;
+    track('idle_stop', { run: s.run, realm: s.realm, route: s.route }, { map: im, tier: it, stage: is, fights: ifs });
     const b = s.battle;
     // 挂机小结（裁决 44）：一场都没打完就停，不弹
     const { sess } = s.idle;
@@ -1478,6 +1476,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   dismissIdleSummary: () => set({ idleSummary: null }),
+
+  pickGiftWuxue: (id) => {
+    const s = get();
+    if (!giftPending(s) || !GIFT_WUXUE_OPTIONS.includes(id)) return;
+    set({ ownedWuxue: [...(s.ownedWuxue ?? []), id], equipped: [...(s.equipped ?? []), id].slice(0, slotCountOf(s)) });
+    track('gift_wuxue_picked', { run: s.run, realm: s.realm, route: s.route }, { wuxue: id });
+    persist(get());
+  },
 
   retryFailed: () => {
     const { failure: f, battle: b } = get();
@@ -1918,6 +1924,12 @@ function startBattle(
     },
     ...(s.rumorPending ? { rumorPending: 0 } : {}),
   });
+}
+
+/** 前辈还没授武学：第一世境界 1 选完内功、三门里一门都还没有（由状态推出，不另存字段） */
+export function giftPending(s: Pick<PersistedState, 'run' | 'realm' | 'neigong' | 'taught' | 'ownedWuxue'>): boolean {
+  return s.run === 1 && s.realm === 1 && s.taught && s.neigong !== null
+    && !GIFT_WUXUE_OPTIONS.some((id) => (s.ownedWuxue ?? []).includes(id));
 }
 
 /** 推关失败后等玩家选择的时长：不选就退回挂机（battle-loot/design.md 裁决 44） */

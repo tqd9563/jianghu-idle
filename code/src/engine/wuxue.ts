@@ -199,8 +199,8 @@ export function usableForms(
 
 // ---------------------------------------------------------------- 装配（spec §2.4，design.md §3.7 兵器搭配）
 
-/** 传功时前辈另授的武学：寻常拳法，不挑兵器（battle-loot/design.md §5.1） */
-export const GIFT_WUXUE: WuxueId = 'luohanquan';
+/** 传功选完内功后，前辈再授一门武学：拳、掌、腿各一门寻常，不挑兵器、特效各不相同（battle-loot/design.md §5.1） */
+export const GIFT_WUXUE_OPTIONS: readonly WuxueId[] = ['luohanquan', 'kaishanzhang', 'xuanfengtui'];
 
 /** 装配槽 = 境界 + 4：境界 1 传功后 5 槽，逐境界 +1（battle-loot/design.md §5.3） */
 export function slotCount(realm: number): number {

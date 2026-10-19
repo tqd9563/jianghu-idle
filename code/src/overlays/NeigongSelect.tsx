@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import type { RouteId } from '../engine/content';
 import { NEIGONG, QUALITY_ORDER, type NeigongId } from '../engine/neigong';
+import { EFFECT_TAG, GIFT_WUXUE_OPTIONS, WUXUE, effectText, type WuxueId } from '../engine/wuxue';
 import { useGameStore } from '../store/gameStore';
 
 const ROUTE_ORDER: RouteId[] = ['huashan', 'shaolin', 'tangmen'];
@@ -83,6 +84,47 @@ export function NeigongSelect() {
           <button type="button" className="jh-btn breathe" onClick={() => selectNeigong(picked)}>
             主修 {NEIGONG[picked].name}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 传功第二屏：选完内功后前辈再授一门武学，拳 / 掌 / 腿三选一（docs/design/idle-ux-prototype.html ③） */
+export function GiftWuxueSelect() {
+  const pick = useGameStore((s) => s.pickGiftWuxue);
+  const [picked, setPicked] = useState<WuxueId>(GIFT_WUXUE_OPTIONS[0]);
+  return (
+    <div className="jh-ceremony calm ngs" role="dialog" aria-label="择一门武学">
+      <div>
+        <div className="kick">传 功</div>
+        <h2 className="mid">择一门武学</h2>
+        <div className="ngs-cards" role="radiogroup" aria-label="武学">
+          {GIFT_WUXUE_OPTIONS.map((id) => {
+            const d = WUXUE[id];
+            const on = picked === id;
+            return (
+              <div
+                key={id}
+                role="radio"
+                aria-checked={on}
+                tabIndex={0}
+                className={`jh-card ngs-card${on ? ' on' : ''}`}
+                onClick={() => setPicked(id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPicked(id); } }}
+              >
+                <div className="ngs-name">{d.name}</div>
+                <div className="ngs-lu">{d.cat} · {d.quality} · {EFFECT_TAG[d.effect]}</div>
+                <ul className="ngs-items">
+                  <li>触发 <b>{Math.round(d.p * 100)}%</b>，冷却 <b>{d.cd}</b> 回合</li>
+                  <li>第一式 <b>{effectText(d, 1)}</b></li>
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+        <div className="acts">
+          <button type="button" className="jh-btn breathe" onClick={() => pick(picked)}>习 {WUXUE[picked].name}</button>
         </div>
       </div>
     </div>

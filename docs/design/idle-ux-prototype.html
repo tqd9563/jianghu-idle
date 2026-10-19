@@ -8,7 +8,7 @@
   挂机体验四处改动 · 原型
   1. 点「停止」后弹挂机小结（收功）
   2. 推关失败：二选一，5 秒不选默认退回挂机
-  3. 传功时另授一门罗汉拳
+  3. 传功选完内功后再择一门武学（罗汉拳 / 开山掌 / 旋风腿）
   4. 武学槽 = 境界 + 4（境界 1 五槽）
   样式直接引用现行 code/src/styles/*.css，类名与实现同源；本文件需在仓库内打开。
   右上角白色面板是原型控制，不是设计内容。
@@ -37,10 +37,6 @@ body { background: var(--bg); }
   transform-origin: left; animation: count-down 5s linear forwards; }
 @keyframes count-down { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .jh-btn.count::after { animation: none; display: none; } }
-
-/* —— 新增：传功另授一行 —— */
-.ngs-gift { color: var(--muted); margin: -10px auto 22px; font-size: 14px; }
-.ngs-gift em { font-style: normal; font-family: var(--font-display); color: var(--ink); letter-spacing: 0.1em; }
 
 /* 原型控制（非设计内容） */
 .proto { position: fixed; right: 14px; top: 14px; z-index: 300; background: #fff; color: #222; border-radius: 10px; padding: 12px 14px; width: 230px;
@@ -97,7 +93,7 @@ body { background: var(--bg); }
 
   <!-- ③ 传功 -->
   <section class="view" id="v-ngs">
-    <p class="scene-note">第一世传功：先择内功（与现行一致），点「主修」后同样的整屏再择一门武学（罗汉拳 / 开山掌 / 连环腿），选定后直接装进第一个武学槽。</p>
+    <p class="scene-note">第一世传功：先择内功（与现行一致），点「主修」后同样的整屏再择一门武学（罗汉拳 / 开山掌 / 旋风腿），选定后直接装进第一个武学槽。</p>
   </section>
 
   <!-- ④ 武学槽 -->
@@ -205,9 +201,9 @@ body { background: var(--bg); }
           <div class="ngs-name">开山掌</div><div class="ngs-lu">掌 · 寻常 · 守御</div>
           <ul class="ngs-items"><li>触发 <b>25%</b>，冷却 <b>2</b> 回合</li><li>第一式 <b>护体 3% 气血</b></li></ul>
         </div>
-        <div role="radio" aria-checked="false" class="jh-card ngs-card" data-wx="连环腿">
-          <div class="ngs-name">连环腿</div><div class="ngs-lu">腿 · 寻常 · 守御</div>
-          <ul class="ngs-items"><li>触发 <b>33%</b>，冷却 <b>1</b> 回合</li><li>第一式 <b>护体 3% 气血</b></li></ul>
+        <div role="radio" aria-checked="false" class="jh-card ngs-card" data-wx="旋风腿">
+          <div class="ngs-name">旋风腿</div><div class="ngs-lu">腿 · 寻常 · 诡谲</div>
+          <ul class="ngs-items"><li>触发 <b>33%</b>，冷却 <b>2</b> 回合</li><li>第一式 <b>3 回合敌防御 −16%</b></li></ul>
         </div>
       </div>
       <div class="acts">
@@ -266,7 +262,7 @@ function backToIdle() { go('idle'); }
 function openGift() {
   let pick = '罗汉拳';
   open('t-gift', () => { go('seats1'); document.querySelector('#v-seats1 .wx-seat .n').textContent = pick;
-    document.querySelector('#v-seats1 .wx-seat .m').textContent = { 罗汉拳: '拳 · 触发 25% · 冷却 2', 开山掌: '掌 · 触发 25% · 冷却 2', 连环腿: '腿 · 触发 33% · 冷却 1' }[pick]; });
+    document.querySelector('#v-seats1 .wx-seat .m').textContent = { 罗汉拳: '拳 · 触发 25% · 冷却 2', 开山掌: '掌 · 触发 25% · 冷却 2', 旋风腿: '腿 · 触发 33% · 冷却 2' }[pick]; });
   const btn = layer.querySelector('.acts .jh-btn');
   layer.querySelectorAll('[data-wx]').forEach((c) => c.addEventListener('click', () => {
     pick = c.dataset.wx;

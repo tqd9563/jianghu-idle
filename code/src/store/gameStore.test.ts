@@ -15,7 +15,7 @@ import {
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
-import { applyWuxueDrop, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
+import { RETREAT_WAIT_MS, applyWuxueDrop, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
 import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, STALL_PRICE_MULT } from '../engine/market';
 import { GIFT_WUXUE, slotCount } from '../engine/wuxue';
 import { DUP_DROP_SILVER, QUALITY_PARAMS, WUXUE, rollWuxueDrop } from '../engine/wuxue';
@@ -487,7 +487,7 @@ describe('gameStore · 归隐与声望阁', () => {
       return useGameStore.getState().battle!;
     };
     useGameStore.getState().idleAt(1, 0, 1);
-    expect(useGameStore.getState().idle).toEqual({ map: 1, tier: 0, stage: 1, fights: 0 });
+    expect(useGameStore.getState().idle).toMatchObject({ map: 1, tier: 0, stage: 1, fights: 0, sess: { since: Date.now(), fights: 0 } });
     const b1 = playOut();
     expect(b1.result.win).toBe(true);
     expect(b1.reward!.refarm).toBe(true);
@@ -503,13 +503,48 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(b2.mode).toBe('idle');
     expect(b2.resolved).toBe(false);
 
-    // 收手：这一场打完不再接
+    // 收手：这一场打完不再接；弹小结（已打完一场，场次 1、胜 1、银两按回刷）
+    const silverBefore = useGameStore.getState().silver;
     useGameStore.getState().stopIdle();
     expect(useGameStore.getState().idle).toBeNull();
+    const sum = useGameStore.getState().idleSummary!;
+    expect(sum).toMatchObject({ map: 1, tier: 0, stage: 1, fights: 1, wins: 1, since: 1_000_000_000 });
+    expect(sum.silver).toBeGreaterThan(0);
+    expect(sum.until - sum.since).toBeGreaterThan(0);
+    expect(silverBefore).toBeGreaterThanOrEqual(sum.silver);
+    useGameStore.getState().dismissIdleSummary();
+    expect(useGameStore.getState().idleSummary).toBeNull();
     const b3 = playOut();
     expect(b3.chainStage).toBeNull();
     expect(getEvents().map((e) => e.e)).toEqual(expect.arrayContaining(['idle_start', 'idle_stop']));
     vi.useRealTimers();
+  });
+
+  it('推关失败二选一：再战一场只打这一场；立刻退回不等倒计时；没打完一场就停不弹小结', () => {
+    const cleared = Array.from({ length: 21 }, (_, i) => stageKey(1, 0, i + 1));
+    const st = () => useGameStore.getState();
+    const playOut = () => {
+      const t0 = Date.now();
+      for (let i = 1; i <= 400 && !(st().battle?.resolved ?? false); i++) st().tick(t0 + i * 700);
+      return st().battle!;
+    };
+    useGameStore.setState({ realm: 1, run: 2, taught: true, clearedStages: cleared, idle: null });
+    st().challengeStage(1, 0, 22);
+    expect(playOut().result.win).toBe(false);
+    // 再战一场：同一关、推关，弹窗收起
+    st().retryFailed();
+    expect(st().failure).toBeNull();
+    expect(st().battle).toMatchObject({ stage: 22, mode: 'push', resolved: false });
+    expect(playOut().result.win).toBe(false);
+    expect(st().failure).not.toBeNull();   // 又输了，再问一次
+    // 立刻退回：下一次 tick 就开第 21 关的挂机
+    st().retreatNow();
+    expect(st().failure).toBeNull();
+    st().tick(Date.now() + 50_000);
+    expect(st().battle).toMatchObject({ stage: 21, mode: 'idle', resolved: false });
+    // 挂机一场都没打完就停：不弹小结
+    st().stopIdle();
+    expect(st().idleSummary).toBeNull();
   });
 
   it('推关：输了退回最近已通关处挂机；挂机中输了退一关继续；退无可退才停（纯函数）', () => {
@@ -524,7 +559,10 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(b.result.win).toBe(false);
     expect(b.chainStage).toBe(21);
     expect(b.chainMode).toBe('idle');
-    expect(useGameStore.getState().idle).toEqual({ map: 1, tier: 0, stage: 21, fights: 0 });
+    expect(useGameStore.getState().idle).toMatchObject({ map: 1, tier: 0, stage: 21, fights: 0 });
+    // 推关输了：弹窗等 5 秒，不选才退回（裁决 44）
+    expect(b.chainAt! - Date.now()).toBeGreaterThan(RETREAT_WAIT_MS - 1500);
+    expect(useGameStore.getState().failure).not.toBeNull();
 
     // 挂机中输了：退一关；第 1 关输了退无可退 → 停
     const idle6 = { map: 1 as const, tier: 0 as const, stage: 6, fights: 9 };

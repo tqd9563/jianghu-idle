@@ -216,7 +216,32 @@ export interface IdleState {
   fights: number;
   /** 在此挂机拾得的装备件数（在线 + 离线折算） */
   loot?: number;
+  /** 这一段挂机的累计（点「在此挂机」起算，退关不断；点停止时做小结，battle-loot/design.md 裁决 44） */
+  sess?: IdleSession;
 }
+
+/** 一段挂机的累计：起始时刻、场次、胜场、银两进账、拾得装备件数与最好的一件、武学全本与残页 */
+export interface IdleSession {
+  since: number;
+  fights: number;
+  wins: number;
+  silver: number;
+  gear: number;
+  best: GearItem | null;
+  books: number;
+  pages: number;
+}
+
+/** 挂机小结（点停止时弹出，不持久化） */
+export interface IdleSummary extends IdleSession {
+  map: MapNo;
+  tier: TierId;
+  stage: number;
+  enemyName: string;
+  until: number;
+}
+
+const freshSess = (now: number): IdleSession => ({ since: now, fights: 0, wins: 0, silver: 0, gear: 0, best: null, books: 0, pages: 0 });
 
 export interface BattleState {
   map: MapNo;
@@ -313,6 +338,8 @@ interface GameState extends PersistedState {
   offlineSectDone: { kind: SectTaskKind; contrib: number } | null;
   /** 闭关期间挂机拾得（只供出关演出展示，不持久化）：装备件数、最好的一件、放不下卖掉的银两、武学全本与残页数 */
   offlineLoot: { count: number; best: GearItem | null; sold: number; books: number; pages: number } | null;
+  /** 挂机小结待呈现（点停止时生成，非持久化） */
+  idleSummary: IdleSummary | null;
   /** 刚解锁黑市：整屏话本演出待看（非持久化） */
   blackIntro: boolean;
   /** 独立持久化的自然测试窗口；不进入游戏存档。 */
@@ -365,6 +392,7 @@ interface GameState extends PersistedState {
   idleAt: (map: MapNo, tier: TierId, stage: number) => void;
   /** 收手：这一场打完就停，不再接着打 */
   stopIdle: () => void;
+  dismissIdleSummary: () => void;
   /** 穿戴背包里的一件（同部位原来那件回背包） */
   wearGear: (id: string) => void;
   /** 卸下身上某部位的装备回背包（背包放不下则不卸） */
@@ -376,6 +404,10 @@ interface GameState extends PersistedState {
   /** 离开行囊页：这一趟看过的都不再算「新得」 */
   markBagSeen: () => void;
   dismissFailure: () => void;
+  /** 推关失败弹窗：再战一场（只打这一场，输了再问） */
+  retryFailed: () => void;
+  /** 推关失败弹窗：立刻退回挂机（不等倒计时） */
+  retreatNow: () => void;
   openRetire: () => void;
   proceedRetire: () => void;
   cancelRetire: () => void;
@@ -807,6 +839,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   retireCeremony: null,
   offlineSettlement: null,
   offlineLoot: null,
+  idleSummary: null,
   blackIntro: false,
   offlineSectDone: null,
   liveTestWindow: null,
@@ -864,7 +897,14 @@ export const useGameStore = create<GameState>((set, get) => ({
           // 挂机场次记进本世计数（battle-loot/design.md §2.3）；掉落接在胜场上，每胜一场掷一次
           if (r.idle && merged.idle) {
             const wins = Math.round(r.idle.wins * k);
-            merged.idle = { ...merged.idle, fights: merged.idle.fights + Math.round(r.idle.fights * k) };
+            const offFights = Math.round(r.idle.fights * k);
+            merged.idle = { ...merged.idle, fights: merged.idle.fights + offFights };
+            // 这一段挂机的累计（裁决 44）：离线折算的场次、胜场、银两也算进去
+            if (merged.idle.sess) {
+              const ss = merged.idle.sess;
+              merged.idle.sess = { ...ss, fights: ss.fights + offFights, wins: ss.wins + wins, silver: ss.silver + offSilver };
+            }
+            const sess0 = merged.idle.sess;
             if (merged.neigong) {
               const enemy = getStage(merged.idle.map, merged.idle.tier, merged.idle.stage);
               let bag = merged.bag ?? [];
@@ -890,6 +930,8 @@ export const useGameStore = create<GameState>((set, get) => ({
                 merged.silver += sold + dupSilver;
                 offAdd.yinliang = (offAdd.yinliang ?? 0) + sold + dupSilver;
                 merged.idle = { ...merged.idle, loot: (merged.idle.loot ?? 0) + count + books + pages };
+                if (sess0) merged.idle.sess = { ...sess0, silver: sess0.silver + sold + dupSilver, gear: sess0.gear + count, books: sess0.books + books, pages: sess0.pages + pages,
+                  best: best && (!sess0.best || best.grade > sess0.best.grade) ? best : sess0.best };
                 offlineLoot = { count, best, sold: sold + dupSilver, books, pages };
                 track('gear_dropped', { run: merged.run, realm: merged.realm, route: merged.route }, {
                   stage: r.idle.stageKey, count, best_grade: best?.grade ?? 0, sold, offline: true,
@@ -1415,7 +1457,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     if (!s.clearedStages.includes(stageKey(map, tier, stage))) return; // 只能在已通关的关挂
     const same = s.idle && s.idle.map === map && s.idle.tier === tier && s.idle.stage === stage;
-    set({ idle: same ? s.idle : { map, tier, stage, fights: 0 } });
+    set({ idle: same ? s.idle : { map, tier, stage, fights: 0, sess: freshSess(Date.now()) } });
     track('idle_start', { run: s.run, realm: s.realm, route: s.route }, { map, tier, stage });
     if (!s.battle || s.battle.resolved) startBattle(set, get, map, tier, stage, 'idle');
     persist(get());
@@ -1426,8 +1468,28 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!s.idle) return;
     track('idle_stop', { run: s.run, realm: s.realm, route: s.route }, { ...s.idle });
     const b = s.battle;
-    set({ idle: null, battle: b && b.resolved ? { ...b, chainAt: null, chainStage: null, chainMode: null } : b });
+    // 挂机小结（裁决 44）：一场都没打完就停，不弹
+    const { sess } = s.idle;
+    const idleSummary: IdleSummary | null = sess && sess.fights > 0
+      ? { ...sess, map: s.idle.map, tier: s.idle.tier, stage: s.idle.stage, enemyName: getStage(s.idle.map, s.idle.tier, s.idle.stage).name, until: Date.now() }
+      : null;
+    set({ idle: null, idleSummary, battle: b && b.resolved ? { ...b, chainAt: null, chainStage: null, chainMode: null } : b });
     persist(get());
+  },
+
+  dismissIdleSummary: () => set({ idleSummary: null }),
+
+  retryFailed: () => {
+    const { failure: f, battle: b } = get();
+    if (!f || !b || !b.resolved) return;
+    set({ failure: null, battle: { ...b, chainAt: null, chainStage: null, chainMode: null } });
+    get().challengeStage(f.map, f.tier, f.stage);
+  },
+
+  retreatNow: () => {
+    const b = get().battle;
+    set({ failure: null });
+    if (b && b.resolved && b.chainAt !== null) set({ battle: { ...b, chainAt: Date.now() } });
   },
 
   dismissFailure: () => {
@@ -1858,6 +1920,9 @@ function startBattle(
   });
 }
 
+/** 推关失败后等玩家选择的时长：不选就退回挂机（battle-loot/design.md 裁决 44） */
+export const RETREAT_WAIT_MS = 5000;
+
 /** 第一世 1-7 的那场战败：隐世前辈出场（battle-loot/design.md §5.1） */
 export function isTeachFailure(s: Pick<GameState, 'failure' | 'run' | 'neigong' | 'taught'>): boolean {
   const f = s.failure;
@@ -2088,14 +2153,29 @@ function resolveBattle(
     idle0 = null; chainStage = null; chainMode = null;
   }
   const got = (rewardApplied?.gear ? 1 : 0) + (rewardApplied?.wuxue ? 1 : 0);
-  const idle = idle0 && b.mode === 'idle' && got > 0 ? { ...idle0, loot: (idle0.loot ?? 0) + got } : idle0;
+  let idle = idle0 && b.mode === 'idle' && got > 0 ? { ...idle0, loot: (idle0.loot ?? 0) + got } : idle0;
+  // 这一段挂机的累计（裁决 44）：挂机场次都记，推关输了退回挂机时从这一刻起算
+  if (idle) {
+    const sess = idle.sess ?? freshSess(now);
+    if (b.mode === 'idle') {
+      const g = rewardApplied?.gear;
+      const wxGot = rewardApplied?.wuxue && !rewardApplied.wuxue.dup ? rewardApplied.wuxue.kind : null;
+      idle = { ...idle, sess: {
+        ...sess, fights: sess.fights + 1, wins: sess.wins + (result.win ? 1 : 0), silver: sess.silver + Math.max(0, silver - s.silver),
+        gear: sess.gear + (g ? 1 : 0), best: g && (!sess.best || g.grade > sess.best.grade) ? g : sess.best,
+        books: sess.books + (wxGot === 'book' ? 1 : 0), pages: sess.pages + (wxGot && wxGot !== 'book' ? 1 : 0),
+      } };
+    } else if (!idle.sess) idle = { ...idle, sess };
+  }
+  // 推关输了、有关可退：弹窗等玩家选「再战一场 / 退回挂机」，RETREAT_WAIT_MS 不选默认退回（裁决 44）
+  const waitChoice = b.mode === 'push' && !result.win && chainMode === 'idle' && failure !== null;
   set({
     silver, bag, ...wxPatch, ...marketPatch, clearedStages, attempts, failure, lastProgressSec,
     injuries, lifespanLost, ...fameState, idle, achv: btAch.achv,
     ...(freeHurt ? { freeHurtUsed: (s.freeHurtUsed ?? 0) + 1 } : {}),
     formCasts: wx.formCasts,
     ...(wx.learned.length > 0 ? { dunwuNotice: wx.learned.join('、') } : {}),
-    battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + 900 : null, chainStage, chainMode, reward: rewardApplied },
+    battle: { ...b, resolved: true, chainAt: chainStage !== null ? now + (waitChoice ? RETREAT_WAIT_MS : 900) : null, chainStage, chainMode, reward: rewardApplied },
   });
   if (fameGained > 0) {
     track('fame_gained', { run: s.run, realm: s.realm, route: s.route }, {

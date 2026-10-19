@@ -46,7 +46,7 @@ const PAGE_ART: Record<TabId, string> = {
   sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep-diyun.jpg',
 };
 /** 前尘页三个栏目各一张底图（prestige-shop/design.md §5） */
-const REP_ART: Record<RepSub, string> = { diyun: 'rep-diyun.jpg', jiyuan: 'rep-jiyuan.jpg' };
+const REP_ART: Record<RepSub, string> = { diyun: 'rep-diyun.jpg', jiyuan: 'rep-jiyuan.jpg', xiaming: 'rep-xiaming.jpg' };
 const REALM_CN = ['', '第一境', '第二境', '第三境', '第四境', '第五境', '第六境', '第七境'];
 
 export default function App() {

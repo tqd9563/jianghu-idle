@@ -277,10 +277,16 @@ export function shangchengShare(realm: number): number {
 export type WuxueDrop = { id: WuxueId; k: number; kind: 'book' | 'page' };
 
 /** 掷一次武学掉落：寻常掉某一式全本，上乘掉某一式残页；绝学不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
-export function rollWuxueDrop(realm: number, kind: 'normal' | 'elite' | 'boss', rng: () => number): WuxueDrop | null {
-  if (rng() >= WX_DROP_P[kind]) return null;
+export function rollWuxueDrop(
+  realm: number, kind: 'normal' | 'elite' | 'boss', rng: () => number,
+  /** 侠名录：阅历线管整式（寻常全本）、残页线管残页；都为 1 时随机序列与旧版一致 */
+  mult: { book: number; page: number } = { book: 1, page: 1 },
+): WuxueDrop | null {
+  const roll = rng();
+  if (roll >= WX_DROP_P[kind] * Math.max(mult.book, mult.page)) return null;
   const share = shangchengShare(realm);
   const quality: Quality = share > 0 && rng() < share ? '上乘' : '寻常';
+  if (roll >= WX_DROP_P[kind] * (quality === '寻常' ? mult.book : mult.page)) return null;
   const pool = WUXUE_IDS.filter((id) => WUXUE[id].quality === quality);
   const id = pool[Math.floor(rng() * pool.length)];
   const k = 1 + Math.floor(rng() * QUALITY_PARAMS[quality].forms);

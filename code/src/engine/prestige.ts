@@ -48,8 +48,6 @@ export const hasNode = (owned: string[], id: RepNodeId) => owned.includes(id);
 
 // ---- 机缘效果（prestige-shop/design.md §2b） ----
 
-/** 破关心得已退出购买（并入侠名录「头目」线）；成就实装前 Boss 伤害加成为 0 */
-export const bossDmgBonus = (_owned: string[]) => 0;
 /** 改弦易辙：转修手续费减半 */
 export const switchFeeMult = (owned: string[]) => (hasNode(owned, 'gaixian_yizhe') ? 0.5 : 1);
 /** 包罗万象：行囊多出两行（每行 10 格） */
@@ -196,12 +194,14 @@ export interface RetireSettle {
  * 口径与 pacing_sim 表五一致（c = NODE_P0 = 10）。
  */
 export function settleRetire(args: {
+  /** 侠名录·转世线：基础声望 +5 / 10 / 15% */
+  baseMult?: number;
   weightedHours: number;
   clearedStages: readonly string[];
   deepestBossEver: number;
   fameThisLife: number;
 }): RetireSettle {
-  const base = Math.floor(BASE_REP_PER_HOUR * args.weightedHours);
+  const base = Math.floor(BASE_REP_PER_HOUR * args.weightedHours * (args.baseMult ?? 1));
   const thisLife = deepestBoss(args.clearedStages);
   const frontReached = thisLife > 0 && thisLife >= args.deepestBossEver;
   const frontMult = frontReached ? FRONT_MULT : 1;

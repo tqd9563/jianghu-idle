@@ -95,6 +95,7 @@
 |---|---|---|
 | `fame_gained` | 首次击败精英 / Boss、首次贯通经脉（跨世一次） | `source`（`elite` / `boss` / `meridian`）, `key`, `reputation` |
 | `ganwu_bought` | 购买修行感悟（一级或尽数） | `level_from`, `level_to`, `price`, `balance_after` |
+| `achv_tier` | 侠名录某条线跨入新一层（计数类线；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世为推导计量，不发） | `line`, `tier`（1 铜 / 2 银 / 3 金） |
 | `diyun_bought` | 购买底蕴一级（`../systems/prestige-shop/design.md` §2） | `line`（八条之一）, `level_to`, `price`, `balance_after` |
 | `tier_unlocked` | 打通段末 Boss 开出新前沿（跨世保留） | `by`（关卡键）, `opened`（`{图}-{难度}` 列表） |
 
@@ -119,6 +120,7 @@
 | v3.2 | 2026-10-14 | 实装五：`sect_shop_bought` 残页加 `have` / `need`；`sect` 取值扩到九派 id。 |
 | v3.1 | 2026-10-14 | battle-loot 实装四：新增 `elder_met` / `market_opened` / `black_bought`；`shop_bought` 也记兵器铺 / 衣饰铺（加 `slot`、`grade`）。 |
 | v3.0 | 2026-10-14 | battle-loot 实装三：新增 `wuxue_dropped`。 |
+| v2.11 | 2026-10-19 | 前尘实装二：新增 `achv_tier`。 |
 | v2.10 | 2026-10-16 | 前尘实装一：新增 `diyun_bought`；`rep_node_bought` 取值域换为十四件机缘。 |
 | v2.9 | 2026-10-13 | battle-loot 实装二：新增 `gear_dropped` / `gear_equipped` / `gear_sold`。 |
 | v2.8 | 2026-10-13 | battle-loot 实装一：新增 `idle_start` / `idle_stop`，`offline_settled` 加挂机折算三字段。 |

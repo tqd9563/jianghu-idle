@@ -199,9 +199,12 @@ export function usableForms(
 
 // ---------------------------------------------------------------- 装配（spec §2.4，design.md §3.7 兵器搭配）
 
-/** 装配槽跟境界走：境界 1 选定内功后 1 槽（battle-loot/design.md §5.3），逐境界 +1，境界 5 起 5 槽 */
+/** 传功时前辈另授的武学：寻常拳法，不挑兵器（battle-loot/design.md §5.1） */
+export const GIFT_WUXUE: WuxueId = 'luohanquan';
+
+/** 装配槽 = 境界 + 4：境界 1 传功后 5 槽，逐境界 +1（battle-loot/design.md §5.3） */
 export function slotCount(realm: number): number {
-  return Math.min(5, Math.max(1, realm));
+  return Math.max(1, realm) + 4;
 }
 
 /** 手里的家伙：兵器类别与是否备着暗器 */

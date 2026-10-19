@@ -17,7 +17,7 @@ import {
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
 import { applyWuxueDrop, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
 import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, STALL_PRICE_MULT } from '../engine/market';
-import { slotCount } from '../engine/wuxue';
+import { GIFT_WUXUE, slotCount } from '../engine/wuxue';
 import { DUP_DROP_SILVER, QUALITY_PARAMS, WUXUE, rollWuxueDrop } from '../engine/wuxue';
 import { isBenmen } from '../engine/sect';
 
@@ -31,7 +31,7 @@ function gearOf(slot: GearSlot, cat?: WeaponCat): GearItem {
   return { ...it, fresh: false };
 }
 import { freshInjuries, isHurt } from '../engine/injury';
-import { allStages, getStage, REFARM_SILVER, stageKey, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { allStages, enemyStatsAt, getStage, REFARM_SILVER, stageKey, TEACH_X, trackLength, type MapId, type TierId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 import { INIT_AGE, ERA_START, LIFESPAN, SOUL_WEAK_MULT, ageYearsPerDay } from '../engine/reincarnation';
@@ -266,9 +266,9 @@ describe('gameStore · 归隐与声望阁', () => {
 
   it('海纳百川：武学装配槽 +1（prestige-shop/design.md §2b 实装一改）', () => {
     useGameStore.setState({ realm: 2, ownedRepNodes: [] });
-    expect(slotCountOf(useGameStore.getState())).toBe(2);
+    expect(slotCountOf(useGameStore.getState())).toBe(6);
     useGameStore.setState({ ownedRepNodes: ['haina_baichuan'] });
-    expect(slotCountOf(useGameStore.getState())).toBe(3);
+    expect(slotCountOf(useGameStore.getState())).toBe(7);
   });
 
   it('机缘购买：扣声望、发 prestige_node_bought；不足拒绝', () => {
@@ -513,19 +513,18 @@ describe('gameStore · 归隐与声望阁', () => {
   });
 
   it('推关：输了退回最近已通关处挂机；挂机中输了退一关继续；退无可退才停（纯函数）', () => {
-    const cleared = [1, 2, 3, 4, 5, 6].map((st) => stageKey(1, 0, st));
-    // 境界 1 裸属性打 1-7 必败（battle-loot/spec.md 判据 12）：推关败 → 退回第 6 关挂机
-    // （第二世：前辈已传功，这场败不再是教学战败，照常退回挂机）
+    const cleared = Array.from({ length: 21 }, (_, i) => stageKey(1, 0, i + 1));
+    // 境界 1 裸属性打 1-22（境界 2 段起点）必败：推关败 → 退回第 21 关挂机
     useGameStore.setState({ realm: 1, run: 2, taught: true, clearedStages: cleared, idle: null });
-    useGameStore.getState().challengeStage(1, 0, 7);
+    useGameStore.getState().challengeStage(1, 0, 22);
     const t0 = Date.now();
     for (let i = 1; i <= 400 && !(useGameStore.getState().battle?.resolved ?? false); i++) useGameStore.getState().tick(t0 + i * 700);
     const b = useGameStore.getState().battle!;
     expect(b.mode).toBe('push');
     expect(b.result.win).toBe(false);
-    expect(b.chainStage).toBe(6);
+    expect(b.chainStage).toBe(21);
     expect(b.chainMode).toBe('idle');
-    expect(useGameStore.getState().idle).toEqual({ map: 1, tier: 0, stage: 6, fights: 0 });
+    expect(useGameStore.getState().idle).toEqual({ map: 1, tier: 0, stage: 21, fights: 0 });
 
     // 挂机中输了：退一关；第 1 关输了退无可退 → 停
     const idle6 = { map: 1 as const, tier: 0 as const, stage: 6, fights: 9 };
@@ -534,7 +533,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(nextAfterBattle({ ...idle6, stage: 1 }, { map: 1, tier: 0, stage: 1, mode: 'idle' }, false, cleared))
       .toEqual({ idle: null, chainStage: null, chainMode: null });
     // 推关胜：接着打下一关；本段打穿则在末关挂着
-    expect(nextAfterBattle(null, { map: 1, tier: 0, stage: 7, mode: 'push' }, true, [...cleared, stageKey(1, 0, 7)]).chainStage).toBe(8);
+    expect(nextAfterBattle(null, { map: 1, tier: 0, stage: 22, mode: 'push' }, true, [...cleared, stageKey(1, 0, 22)]).chainStage).toBe(23);
     const n = trackLength(1, 0);
     const all = Array.from({ length: n }, (_, i) => stageKey(1, 0, i + 1));
     expect(nextAfterBattle(null, { map: 1, tier: 0, stage: n, mode: 'push' }, true, all))
@@ -990,18 +989,17 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
   });
 
   it('装配槽跟境界走、只能装已拥有的；卸下无成本', () => {
+    const six = ['liuyunjian', 'kaishanzhang', 'xiulizhen', 'tongbiquan', 'bajiquan', 'lianhuantui'];
     useGameStore.setState({
-      realm: 2, neigong: 'jingleijue', route: 'huashan', ownedWuxue: ['liuyunjian', 'kaishanzhang', 'xiulizhen'],
+      realm: 1, neigong: 'jingleijue', route: 'huashan', ownedWuxue: six,
       worn: { 兵器: gearOf('兵器', '剑'), 暗器: gearOf('暗器') },
     });
     const st = () => useGameStore.getState();
     st().equipWuxue('jinghongjian');            // 未拥有
-    st().equipWuxue('liuyunjian');
-    st().equipWuxue('kaishanzhang');
-    st().equipWuxue('xiulizhen');               // 境界 2 只有 2 槽
-    expect(st().equipped).toEqual(['liuyunjian', 'kaishanzhang']);
+    for (const id of six) st().equipWuxue(id);  // 境界 1 只有 5 槽
+    expect(st().equipped).toEqual(six.slice(0, 5));
     st().unequipWuxue('liuyunjian');
-    expect(st().equipped).toEqual(['kaishanzhang']);
+    expect(st().equipped).toEqual(six.slice(1, 5));
   });
 
   it('市集武馆：开张后才能买、扣银两、秘籍永久保留；轻装上路八折；上乘秘籍已下架（裁决 35）', () => {
@@ -1451,7 +1449,7 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     return st().battle!;
   };
 
-  it('第一世 1-7 必败，战败即遇见前辈：起身行礼后可在境界 1 选内功，开 1 个武学槽', () => {
+  it('第一世 1-7 必败，战败即遇见前辈：起身行礼后可在境界 1 选内功，开 5 个武学槽、另得罗汉拳', () => {
     useGameStore.setState({ clearedStages: m1all.slice(0, 6) });
     st().challengeStage(1, 0, 7);
     const b = play();
@@ -1463,8 +1461,11 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     st().selectNeigong('jingleijue');
     expect(st().neigong).toBe('jingleijue');
     expect(st().realm).toBe(1);
-    expect(slotCount(1)).toBe(1);
-    expect(slotCount(2)).toBe(2);
+    expect(slotCount(1)).toBe(5);
+    expect(slotCount(2)).toBe(6);
+    // 前辈另授罗汉拳，直接装上
+    expect(st().ownedWuxue).toContain(GIFT_WUXUE);
+    expect(st().equipped).toEqual([GIFT_WUXUE]);
   });
 
   it('第二世起开局即选内功；前辈已传功跨世记住', () => {
@@ -1475,11 +1476,21 @@ describe('教学关、市集与黑市（battle-loot/design.md §5、裁决 20 / 
     expect(st().neigong).toBeNull();
     st().selectNeigong('zhenyuegong');
     expect(st().neigong).toBe('zhenyuegong');
+    expect(st().ownedWuxue.filter((id) => id === GIFT_WUXUE)).toHaveLength(1);   // 已有不重给
+  });
+
+  it('传功后 1-7 回到缓坡起点：同一关裸属性打教学战强度，传功后按缓坡打', () => {
+    useGameStore.setState({ clearedStages: m1all.slice(0, 6) });
+    st().challengeStage(1, 0, 7);
+    expect(st().battle!.enemy.hp).toBeCloseTo(enemyStatsAt(TEACH_X).hp, 6);
+    play(); st().dismissFailure(); st().selectNeigong('jingleijue');
+    st().challengeStage(1, 0, 7);
+    expect(st().battle!.enemy.hp).toBe(getStage(1, 0, 7).hp);
   });
 
   it('市集在传功后第 8 关起首次战败时开张，跨世保留', () => {
-    useGameStore.setState({ realm: 1, neigong: 'jingleijue', route: 'huashan', taught: true, clearedStages: m1all.slice(0, 7) });
-    st().challengeStage(1, 0, 8);
+    useGameStore.setState({ realm: 1, neigong: 'jingleijue', route: 'huashan', taught: true, clearedStages: m1all.slice(0, 21) });
+    st().challengeStage(1, 0, 22);
     const b = play();
     expect(b.result.win).toBe(false);
     expect(st().marketOpen).toBe(true);

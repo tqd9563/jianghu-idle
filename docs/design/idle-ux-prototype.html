@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>挂机小结与推关失败原型</title>
+<!--
+  挂机体验四处改动 · 原型
+  1. 点「停止」后弹挂机小结（收功）
+  2. 推关失败：二选一，5 秒不选默认退回挂机
+  3. 传功时另授一门罗汉拳
+  4. 武学槽 = 境界 + 4（境界 1 五槽）
+  样式直接引用现行 code/src/styles/*.css，类名与实现同源；本文件需在仓库内打开。
+  右上角白色面板是原型控制，不是设计内容。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<link rel="stylesheet" href="../../code/src/index.css">
+<link rel="stylesheet" href="../../code/src/styles/shell.css">
+<link rel="stylesheet" href="../../code/src/styles/battle.css">
+<link rel="stylesheet" href="../../code/src/styles/gongfa.css">
+<link rel="stylesheet" href="../../code/src/styles/jianghu.css">
+<link rel="stylesheet" href="../../code/src/styles/market.css">
+<style>
+body { background: var(--bg); }
+.wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+.view { display: none; }
+.view.on { display: block; }
+.scene-note { color: var(--faint); font-size: 12.5px; margin: 0 0 18px; }
+
+/* —— 新增：推关失败的倒计时按钮 —— */
+.jh-btn.count { overflow: hidden; }
+.jh-btn.count .left { display: inline-block; min-width: 1.2em; margin-left: 0.4em; color: var(--muted); font-family: var(--font-body); letter-spacing: 0; }
+.jh-btn.count::after { content: ''; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--gold); opacity: 0.6;
+  transform-origin: left; animation: count-down 5s linear forwards; }
+@keyframes count-down { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .jh-btn.count::after { animation: none; display: none; } }
+
+/* —— 新增：传功另授一行 —— */
+.ngs-gift { color: var(--muted); margin: -10px auto 22px; font-size: 14px; }
+.ngs-gift em { font-style: normal; font-family: var(--font-display); color: var(--ink); letter-spacing: 0.1em; }
+
+/* 原型控制（非设计内容） */
+.proto { position: fixed; right: 14px; top: 14px; z-index: 300; background: #fff; color: #222; border-radius: 10px; padding: 12px 14px; width: 230px;
+  font: 12.5px/1.5 -apple-system, "PingFang SC", sans-serif; box-shadow: 0 6px 24px rgb(0 0 0 / 0.4); }
+.proto b { display: block; margin: 8px 0 4px; font-size: 12px; color: #666; }
+.proto button { display: block; width: 100%; text-align: left; margin: 3px 0; padding: 5px 8px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; cursor: pointer; font: inherit; color: #222; }
+.proto button.on { background: #222; color: #fff; border-color: #222; }
+.proto p { margin: 6px 0 0; color: #777; font-size: 11.5px; }
+@media (max-width: 860px) { .proto { position: static; width: auto; margin: 12px; } }
+</style>
+</head>
+<body>
+
+<div class="proto">
+  <b>场景</b>
+  <button data-go="idle" class="on">① 挂机中 → 点停止</button>
+  <button data-go="fail">② 推关失败（可退回）</button>
+  <button data-go="fail-first">②′ 推关失败（无关可退）</button>
+  <button data-go="ngs">③ 传功 · 另授罗汉拳</button>
+  <button data-go="seats1">④ 武学槽 · 境界 1</button>
+  <button data-go="seats6">④′ 武学槽 · 境界 6</button>
+  <p>② 不点任何按钮，5 秒后自动退回第 8 关挂机。</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ① 挂机中 -->
+  <section class="view on" id="v-idle">
+    <p class="scene-note">战斗页底部，挂机中。点「停止」弹小结；一场都没打完就停，不弹。</p>
+    <div class="jh-page page-battle">
+      <div class="act2">
+        <div class="idle-bar">
+          <span class="pulse"></span>
+          <span>第 <b>8</b> 关</span>
+          <span class="serif">挂机中</span>
+          <button type="button" class="jh-btn2 quiet" id="stop">停止</button>
+        </div>
+        <div class="btns">
+          <button type="button" class="jh-btn fight">挑战 · 第<span class="n">9</span>关</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 推关失败（前面有已通关可退） -->
+  <section class="view" id="v-fail">
+    <p class="scene-note">推第 9 关输了。弹窗出来后计时 5 秒，期间战斗暂停。</p>
+  </section>
+
+  <!-- ②′ 推关失败（本段第一关就输，无关可退） -->
+  <section class="view" id="v-fail-first">
+    <p class="scene-note">新图第 1 关就输了，没有已通关可退：保持现在的样子，只有「再战一场」和「回去修炼」，不倒计时。</p>
+  </section>
+
+  <!-- ③ 传功 -->
+  <section class="view" id="v-ngs">
+    <p class="scene-note">第一世传功选内功。卡片与现行一致，按钮上方多一行「另授」。选定后罗汉拳直接装进第一个武学槽。</p>
+  </section>
+
+  <!-- ④ 武学槽 -->
+  <section class="view" id="v-seats1">
+    <p class="scene-note">境界 1 传功后：五槽，罗汉拳已装。未开的槽不再显示「境界 N 开」。</p>
+    <div class="jh-page">
+      <header class="jh-head"><div><h1>武学</h1></div></header>
+      <div class="wx-seats">
+        <button class="wx-seat" aria-pressed="true"><span class="n">罗汉拳</span><span class="m">拳 · 触发 25% · 冷却 2</span><span class="x">已装</span></button>
+        <div class="wx-seat empty">空槽</div>
+        <div class="wx-seat empty">空槽</div>
+        <div class="wx-seat empty">空槽</div>
+        <div class="wx-seat empty">空槽</div>
+      </div>
+    </div>
+  </section>
+  <section class="view" id="v-seats6">
+    <p class="scene-note">境界 6：十槽，五个一行排两行。前尘「海纳百川」再加一槽时第三行只有一个。</p>
+    <div class="jh-page">
+      <header class="jh-head"><div><h1>武学</h1></div></header>
+      <div class="wx-seats">
+        <button class="wx-seat" aria-pressed="true"><span class="n">惊鸿照影剑</span><span class="m">剑 · 触发 25% · 冷却 3</span><span class="x">已装</span></button>
+        <button class="wx-seat"><span class="n">罗汉拳</span><span class="m">拳 · 触发 25% · 冷却 2</span><span class="x">已装</span></button>
+        <button class="wx-seat"><span class="n">流云剑法</span><span class="m">剑 · 触发 25% · 冷却 2</span><span class="x">已装</span></button>
+        <button class="wx-seat"><span class="n">旋风腿</span><span class="m">腿 · 触发 33% · 冷却 2</span><span class="x">已装</span></button>
+        <button class="wx-seat"><span class="n">袖里针</span><span class="m">暗器 · 触发 25% · 冷却 2</span><span class="x">已装</span></button>
+        <button class="wx-seat"><span class="n">金刚指</span><span class="m">指 · 触发 25% · 冷却 3</span><span class="x">已装</span></button>
+        <button class="wx-seat"><span class="n">八卦掌</span><span class="m">掌 · 触发 33% · 冷却 2</span><span class="x">已装</span></button>
+        <div class="wx-seat empty">空槽</div>
+        <div class="wx-seat empty">空槽</div>
+        <div class="wx-seat empty">空槽</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- 弹层挂这里（实现里 createPortal 到 body） -->
+<div id="layer"></div>
+
+<template id="t-summary">
+  <div class="jh-ceremony calm" role="dialog" aria-label="收功">
+    <div>
+      <div class="kick">收 功</div>
+      <h2 class="mid">挂机三刻</h2>
+      <div class="d">第 8 关 · 拦路泼皮 · 47 分钟</div>
+      <div class="gains">
+        <span>场次</span><span><b>118</b> 场 · 胜 116</span>
+        <span>银两</span><span><b>+266</b></span>
+        <span>拾得</span><span><b>4</b> 件 · <span class="g2">精良 · 青钢剑</span></span>
+        <span>书匣</span><span>全本 <b>1</b> 门</span>
+      </div>
+      <div class="acts">
+        <button type="button" class="jh-btn" style="min-width: 240px" data-close>好</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="t-fail">
+  <div class="jh-ceremony cold" role="dialog" aria-label="战败">
+    <div>
+      <div class="kick">战 败</div>
+      <h2 class="mid">山野猎户</h2>
+      <div class="d">第 9 关 · 鏖战 31 回合</div>
+      <div class="bt-fail-left">
+        <div class="lbl"><span class="jh-dotted">剩余气血</span><span>38%</span></div>
+        <div class="jh-ink-bar hp"><i style="width: 38%"></i></div>
+      </div>
+      <div class="acts">
+        <button type="button" class="jh-btn quiet" data-close="retry">再战一场</button>
+        <button type="button" class="jh-btn count" data-close="back">退回第 8 关挂机<span class="left">5</span></button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="t-fail-first">
+  <div class="jh-ceremony cold" role="dialog" aria-label="战败">
+    <div>
+      <div class="kick">战 败</div>
+      <h2 class="mid">城郊恶棍</h2>
+      <div class="d">第 1 关 · 鏖战 27 回合</div>
+      <div class="bt-fail-left">
+        <div class="lbl"><span class="jh-dotted">剩余气血</span><span>52%</span></div>
+        <div class="jh-ink-bar hp"><i style="width: 52%"></i></div>
+      </div>
+      <div class="acts">
+        <button type="button" class="jh-btn quiet" data-close>再战一场</button>
+        <button type="button" class="jh-btn" data-close>回去修炼 · 周天 <span class="n">64</span>%</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="t-ngs">
+  <div class="jh-ceremony calm ngs" role="dialog" aria-label="择一部内功">
+    <div>
+      <div class="kick">传 功</div>
+      <h2 class="mid">择一门心法</h2>
+      <div class="ngs-cards" role="radiogroup" aria-label="内功">
+        <div role="radio" aria-checked="true" class="jh-card ngs-card on">
+          <div class="ngs-name">百川诀</div><div class="ngs-lu">归海 · 爆发</div>
+          <ul class="ngs-items"><li>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></li><li><b>开战首击必定会心</b>（并叠 1 重浪）</li><li>每次会心叠 <b>1 重浪</b>；叠满 5 重自动施展<b>排山倒海</b></li></ul>
+        </div>
+        <div role="radio" aria-checked="false" class="jh-card ngs-card">
+          <div class="ngs-name">镇岳功</div><div class="ngs-lu">镇岳 · 护体</div>
+          <ul class="ngs-items"><li>开战自动获得 <b>30% 气血护盾</b></li><li>受击自动反伤 <b>25%</b></li><li>防御 <b>+20%</b></li></ul>
+        </div>
+        <div role="radio" aria-checked="false" class="jh-card ngs-card">
+          <div class="ngs-name">蚀骨心法</div><div class="ngs-lu">蚀骨 · 阴毒</div>
+          <ul class="ngs-items"><li>开战自动<b>施毒 1 层</b>，命中 <b>+1 层</b>（上限 8）</li><li>毒伤系数 <b>12%</b>，无视防御、绕过护盾</li><li>满层触发<b>毒爆 50%</b></li></ul>
+        </div>
+      </div>
+      <div class="ngs-gift">另授一套 <em>罗汉拳</em></div>
+      <div class="acts">
+        <button type="button" class="jh-btn breathe" data-close>主修 百川诀</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+const layer = document.getElementById('layer');
+let timer = null;
+function close() { layer.innerHTML = ''; clearInterval(timer); }
+function open(id, after) {
+  close();
+  layer.appendChild(document.getElementById(id).content.cloneNode(true));
+  layer.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => { close(); after?.(b.dataset.close); }));
+}
+function showFail() {
+  open('t-fail', (how) => { if (how === 'back') backToIdle(); });
+  let left = 5;
+  const n = layer.querySelector('.left');
+  timer = setInterval(() => {
+    left -= 1;
+    if (left > 0) { n.textContent = left; return; }
+    close(); backToIdle();
+  }, 1000);
+}
+function backToIdle() { go('idle'); }
+function go(v) {
+  close();
+  document.querySelectorAll('.view').forEach((el) => el.classList.toggle('on', el.id === 'v-' + v));
+  document.querySelectorAll('.proto [data-go]').forEach((b) => b.classList.toggle('on', b.dataset.go === v));
+  if (v === 'fail') showFail();
+  if (v === 'fail-first') open('t-fail-first');
+  if (v === 'ngs') open('t-ngs', () => go('seats1'));
+}
+document.querySelectorAll('.proto [data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
+document.getElementById('stop').addEventListener('click', () => open('t-summary'));
+</script>
+</body>
+</html>

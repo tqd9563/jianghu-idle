@@ -12,14 +12,14 @@ import {
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
 import {
-  BOSS_DROPS, DUPLICATE_SILVER, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianMods, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
+  BOSS_DROPS, DUPLICATE_SILVER, GIFT_WUXUE, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianMods, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
   SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
   type SectId, type SectItem, type SectTask, type SectTaskKind,
 } from '../engine/sect';
 import {
-  getStage, isSealed, MAP_IDS, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackDepth, trackKey, trackLength,
+  enemyStatsAt, getStage, isSealed, MAP_IDS, TEACH_X, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackDepth, trackKey, trackLength,
   type EnemyDef, type MapId, type TierId,
 } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, currentSegmentNeili, currentSegmentQuota } from '../engine/formulas';
@@ -759,7 +759,7 @@ function maxClearedStage(clearedStages: readonly string[]): string | null {
   for (const key of clearedStages) {
     const p = parseStageKey(key);
     if (!p) continue;
-    const order = p.tier * 10000 + p.map * 100 + p.stage;
+    const order = p.tier * 1_000_000 + p.map * 1000 + p.stage;
     if (!best || order > best.order) best = { key, order };
   }
   return best?.key ?? null;
@@ -1217,7 +1217,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!(s.ownedNeigong ?? STARTER_NEIGONG).includes(id)) return;
     const route = NEIGONG[id].route;
     // 驾轻就熟：转世后首段台阶不必顿悟（第一世不算）
-    set({ neigong: id, route, zhong: 0, tiersPassed: s.run > 1 && hasNode(s.ownedRepNodes, 'jiaqing_jiushu') ? 1 : 0, dunwuSec: 0 });
+    // 前辈另授一套罗汉拳（寻常整门），直接装进武学槽；已有就不再给
+    const gift = (s.ownedWuxue ?? []).includes(GIFT_WUXUE) ? {} : {
+      ownedWuxue: [...(s.ownedWuxue ?? []), GIFT_WUXUE],
+      equipped: [...(s.equipped ?? []), GIFT_WUXUE].slice(0, slotCountOf(s)),
+    };
+    set({ neigong: id, route, zhong: 0, tiersPassed: s.run > 1 && hasNode(s.ownedRepNodes, 'jiaqing_jiushu') ? 1 : 0, dunwuSec: 0, ...gift });
     track('neigong_selected', { run: s.run, realm: s.realm, route }, {
       neigong: id, quality: NEIGONG[id].quality,
     });
@@ -1822,7 +1827,10 @@ function startBattle(
   const isRefarm = s.clearedStages.includes(stageKey(map, tier, stage));
   if (!isRefarm && stage !== next) return; // 只能打下一关或已通关卡
 
-  const enemy = getStage(map, tier, stage);
+  const base = getStage(map, tier, stage);
+  // 第一世 1-7 教学战：碰上真正的江湖人，按境界 2 段起点的强度打，裸属性必败（battle-loot/design.md §5.1）
+  const teach = map === 1 && tier === 0 && stage === INTRO_STAGES + 1 && s.run === 1 && s.neigong === null && !s.taught;
+  const enemy = teach ? { ...base, ...enemyStatsAt(TEACH_X) } : base;
   const build = playerBuild(s);
   const result = fight(build, enemy, {
     mode: 'rng', bossDmgBonus: achvVal(s, 'boss'), hardDmgBonus: gearBonusOf(s.worn).hardPct,

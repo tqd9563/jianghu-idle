@@ -1,12 +1,14 @@
 /**
- * 声望、宿慧与修行感悟 —— 权威来源：docs/rules/economy.md v2.3；
+ * 声望、宿慧、修行感悟、底蕴与机缘 —— 权威来源：docs/rules/economy.md、docs/systems/prestige-shop/design.md；
  * 玩家可见文案唯一冻结源：docs/rules/copy/retire.md。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
 import { allStages, stageKey, trackDepth, trackLength, type EnemyTag } from './enemies';
 
 export type RepNodeId =
-  | 'zairu_jianghu' | 'qingzhuang_shanglu' | 'wudao_biji' | 'shimen_zhiyin' | 'poguan_xinde';
+  | 'chongchu_jianghu' | 'qingzhuang_shanglu' | 'gaixian_yizhe' | 'baoluo_wanxiang' | 'huiyan_shizhu'
+  | 'yaodao_bingchu' | 'anhun_dingpo' | 'haina_baichuan' | 'jiaqing_jiushu' | 'renzu_guizong'
+  | 'taojia_huanjia' | 'shuangguan_qixia' | 'bizhou_zizhen' | 'kegu_mingxin';
 
 export interface RepNodeDef {
   id: RepNodeId;
@@ -17,15 +19,25 @@ export interface RepNodeDef {
 }
 
 /**
- * 五件传承（economy.md §4 v2.2 定价：修行感悟买完后每日结余 220，约第 12 天前买齐）。
- * 旧梦重温、快速入门、江湖熟路已废止。卡面文案逐字取自 retire-copy §5.1。
+ * 十四件机缘（prestige-shop/design.md §2b；价表由 pacing_sim 标定，合计 4,040）。
+ * 旧五件传承：再入江湖改名重出江湖；武道笔记 / 师门指引 / 破关心得退出购买，效果并入侠名录成就。
+ * 卡面文案逐字取自 retire-copy §5.1。
  */
 export const REP_NODES: RepNodeDef[] = [
-  { id: 'zairu_jianghu',      name: '再入江湖', price: 150,  type: '信息', desc: '开战前，敌人的每个机制标签都附上一条克制提示' },
-  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 220,  type: '策略', desc: '书肆的秘籍一律八折' },
-  { id: 'wudao_biji',         name: '武道笔记', price: 440,  type: '资源', desc: '每一世悟性 +0.1，领悟得更快' },
-  { id: 'shimen_zhiyin',      name: '师门指引', price: 660,  type: '策略', desc: '武学领悟新招的顿悟概率翻倍' },
-  { id: 'poguan_xinde',       name: '破关心得', price: 1100, type: '战斗', desc: '对各图头目（Boss）造成的伤害提高 10%' },
+  { id: 'chongchu_jianghu',   name: '重出江湖', price: 60,  type: '信息', desc: '开战前显示敌人机制的克制提示' },
+  { id: 'qingzhuang_shanglu', name: '轻装上路', price: 70,  type: '策略', desc: '书肆秘籍八折' },
+  { id: 'gaixian_yizhe',      name: '改弦易辙', price: 80,  type: '资源', desc: '转修手续费减半' },
+  { id: 'baoluo_wanxiang',    name: '包罗万象', price: 90,  type: '资源', desc: '行囊空间 +2' },
+  { id: 'huiyan_shizhu',      name: '慧眼识珠', price: 100, type: '信息', desc: '市集售卖的商品显示词条' },
+  { id: 'yaodao_bingchu',     name: '药到病除', price: 110, type: '战斗', desc: '疗伤所需银两减半' },
+  { id: 'anhun_dingpo',       name: '安魂定魄', price: 120, type: '策略', desc: '魂魄未稳缩短为五年' },
+  { id: 'haina_baichuan',     name: '海纳百川', price: 170, type: '资源', desc: '武学装配槽 +1' },
+  { id: 'jiaqing_jiushu',     name: '驾轻就熟', price: 230, type: '策略', desc: '转世后内功首段台阶免顿悟' },
+  { id: 'renzu_guizong',      name: '认祖归宗', price: 270, type: '策略', desc: '转世后自动拜入前世门派' },
+  { id: 'taojia_huanjia',     name: '讨价还价', price: 340, type: '资源', desc: '市集商品八折' },
+  { id: 'shuangguan_qixia',   name: '双管齐下', price: 600, type: '策略', desc: '可同时承接两项门派任务' },
+  { id: 'bizhou_zizhen',      name: '敝帚自珍', price: 900, type: '策略', desc: '转世时保留一件装备' },
+  { id: 'kegu_mingxin',       name: '刻骨铭心', price: 900, type: '策略', desc: '转世时保留一门武学的招式与熟练' },
 ];
 
 export const REP_NODE_MAP: Record<RepNodeId, RepNodeDef> = Object.fromEntries(
@@ -34,14 +46,22 @@ export const REP_NODE_MAP: Record<RepNodeId, RepNodeDef> = Object.fromEntries(
 
 export const hasNode = (owned: string[], id: RepNodeId) => owned.includes(id);
 
-// ---- 节点效果（与 sim run_playthrough2 逐项对齐，声望经济表 §6.1/§6.3） ----
+// ---- 机缘效果（prestige-shop/design.md §2b） ----
 
-/** 破关心得：对 Boss（高血 或 高防+高攻）伤害 +10%，走 fight 的 bossDmgBonus */
-export const bossDmgBonus = (owned: string[]) => (hasNode(owned, 'poguan_xinde') ? 0.10 : 0);
+/** 破关心得已退出购买（并入侠名录「头目」线）；成就实装前 Boss 伤害加成为 0 */
+export const bossDmgBonus = (_owned: string[]) => 0;
+/** 改弦易辙：转修手续费减半 */
+export const switchFeeMult = (owned: string[]) => (hasNode(owned, 'gaixian_yizhe') ? 0.5 : 1);
+/** 包罗万象：行囊多出两行（每行 10 格） */
+export const bagExtraCells = (owned: string[]) => (hasNode(owned, 'baoluo_wanxiang') ? 20 : 0);
+/** 安魂定魄：魂魄未稳由十年缩为五年 */
+export const soulWeakYears = (owned: string[]) => (hasNode(owned, 'anhun_dingpo') ? 5 : 10);
+/** 海纳百川：武学装配多一槽（原「丹田上限 +20%」实测把首达境界 4 提前 8 天，改为与内力节奏无关的容量） */
+export const extraWuxueSlots = (owned: string[]) => (hasNode(owned, 'haina_baichuan') ? 1 : 0);
+/** 讨价还价：市集商品八折（兵器铺 / 衣饰铺）；轻装上路管书肆（武馆秘籍） */
+export const marketDiscount = (owned: string[]) => (hasNode(owned, 'taojia_huanjia') ? 0.8 : 1);
 
-/** 武道笔记：新一轮开局继承阅历 */
-
-/** 再入江湖：机制标签克制提示（retire-copy §7 逐条冻结；组合标签逐条各附，不合成） */
+/** 重出江湖：机制标签克制提示（retire-copy §7 逐条冻结；组合标签逐条各附，不合成） */
 export const COUNTER_HINTS: Record<EnemyTag, string> = {
   高闪: '身法奇快，命中不足者十剑九空',
   破甲: '能削你防御，硬抗流越拖越亏',
@@ -54,6 +74,47 @@ export const COUNTER_HINTS: Record<EnemyTag, string> = {
   高攻: '出手极重，需足够气血或护盾扛住',
 };
 
+// ---- 底蕴：八条可反复购买的战斗属性项（prestige-shop/design.md §2） ----
+
+export type DiyunId = 'qixue' | 'gongji' | 'fangyu' | 'mingzhong' | 'shanbi' | 'huixin' | 'huixin_shanghai' | 'zhenqi';
+export type DiyunLevels = Record<DiyunId, number>;
+
+export interface DiyunDef {
+  id: DiyunId;
+  name: string;
+  /** 首级收益：比例项为基础值的比例，加点项为百分点（0.005 = 0.5 点） */
+  first: number;
+  /** 'pct' 按境界基础值比例乘入；'pts' 直接加点（会心率 / 会心倍率） */
+  kind: 'pct' | 'pts';
+}
+
+export const DIYUN: DiyunDef[] = [
+  { id: 'qixue',           name: '气血',     first: 0.05,  kind: 'pct' },
+  { id: 'gongji',          name: '攻击',     first: 0.05,  kind: 'pct' },
+  { id: 'fangyu',          name: '防御',     first: 0.05,  kind: 'pct' },
+  { id: 'mingzhong',       name: '命中',     first: 0.03,  kind: 'pct' },
+  { id: 'shanbi',          name: '闪避',     first: 0.03,  kind: 'pct' },
+  { id: 'huixin',          name: '会心',     first: 0.005, kind: 'pts' },
+  { id: 'huixin_shanghai', name: '会心伤害', first: 0.05,  kind: 'pts' },
+  { id: 'zhenqi',          name: '真气',     first: 0.05,  kind: 'pct' },
+];
+export const DIYUN_MAP: Record<DiyunId, DiyunDef> = Object.fromEntries(DIYUN.map((d) => [d.id, d])) as Record<DiyunId, DiyunDef>;
+export const DIYUN_IDS = DIYUN.map((d) => d.id);
+export const freshDiyun = (): DiyunLevels => Object.fromEntries(DIYUN_IDS.map((id) => [id, 0])) as DiyunLevels;
+
+/** 价格等比：第 n 级 = round(10 × 1.35^(n−1)) 声望，不限购 */
+export const DIYUN_P0 = 10;
+export const DIYUN_Q = 1.35;
+/** 收益逐级递减：第 n 级 = 首级 × 0.96^(n−1) */
+export const DIYUN_DECAY = 0.96;
+export const diyunPrice = (level: number) => Math.round(DIYUN_P0 * DIYUN_Q ** (level - 1));
+/** 第 level 级这一级给的收益 */
+export const diyunGainAt = (first: number, level: number) => first * DIYUN_DECAY ** (level - 1);
+/** 买到 level 级的累计收益 */
+export const diyunCum = (first: number, level: number) => first * (1 - DIYUN_DECAY ** level) / (1 - DIYUN_DECAY);
+/** 某一条当前的累计收益 */
+export const diyunBonus = (lv: Partial<DiyunLevels> | undefined, id: DiyunId) => diyunCum(DIYUN_MAP[id].first, lv?.[id] ?? 0);
+
 // ---- 产出乘区：宿慧 + 修行感悟（economy.md §2 / §3） ----
 
 /** 宿慧：首达境界 X 的一次性永久产出加成，跨归隐保留（economy.md §2，pacing_sim 表二） */
@@ -64,9 +125,10 @@ export function suhuiTotal(peakRealm: number): number {
   return Object.entries(SUHUI).reduce((sum, [realm, v]) => sum + (Number(realm) <= peakRealm ? v : 0), 0);
 }
 
-/** 修行感悟：第 n 级 +0.2× 基础产出，价格 10 × n 声望，不限购（economy.md §3） */
+/** 修行感悟：第 n 级 +0.2× 基础产出，价格 ⌈8.5 × n⌉ 声望，不限购（economy.md §3；底蕴分走 15% 声望后的补偿价） */
 export const GANWU_GAIN = 0.2;
-export const ganwuPrice = (level: number) => 10 * level;
+export const GANWU_P0 = 8.5;
+export const ganwuPrice = (level: number) => Math.ceil(GANWU_P0 * level);
 
 /** 从当前等级起，用 reputation 最多能连买几级、共花多少（「尽数传承」） */
 export function ganwuAffordable(level: number, reputation: number): { levels: number; cost: number } {

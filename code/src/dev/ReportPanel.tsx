@@ -14,7 +14,7 @@ interface Rect { x: number; y: number; w: number; h: number }
 interface Mark { rect: Rect; els: El[] }
 
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
-const TAB_NAME: Record<string, string> = { cultivate: '修炼', battle: '战斗', bag: '行囊', neigong: '内功', wuxue: '武学', sect: '门派', shop: '市集', rep: '声望阁' };
+const TAB_NAME: Record<string, string> = { cultivate: '修炼', battle: '战斗', bag: '行囊', neigong: '内功', wuxue: '武学', sect: '门派', shop: '市集', rep: '前尘' };
 
 /* 混合元素（文本 + 子元素）只量自己的文字，不量整格：否则横跨整行的名字格会误命中 */
 function textRect(el: Element): DOMRect | { left: number; top: number; right: number; bottom: number; width: number } {

@@ -63,7 +63,7 @@ const PRESETS: Record<string, object> = {
     run: 35, realm: 4, route: 'tangmen', neigong: 'shiguxinfa', zhong: 64, peakRealm: 4,
     dantian: 12_863_420, silver: 2140, xp: 312,
     reputation: 150, repTotal: 180_000, ganwuLevel: 136,
-    ownedRepNodes: ['zairu_jianghu', 'qingzhuang_shanglu', 'wudao_biji', 'shimen_zhiyin'],
+    ownedRepNodes: ['chongchu_jianghu', 'qingzhuang_shanglu', 'gaixian_yizhe', 'baoluo_wanxiang'],
     tiersPassed: 3, chargeHighWater: 5,
     // 早上推完前沿：图 1 初入 / 历练、图 2 初入全通，图 1 绝境、图 2 历练、图 3 初入各推到第 8 关
     clearedStages: [...m1all, ...upto(1, 1), ...upto(1, 2, 8), ...upto(2, 0), ...upto(2, 1, 8), ...m3upto(8)],
@@ -77,7 +77,7 @@ const PRESETS: Record<string, object> = {
     ],
     age: 63, eraStart: 1580,
   },
-  // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证声望阁与节点购买
+  // 第二轮开局态：首轮标准归隐结算后（130 声望未消费），验证前尘页与底蕴 / 机缘购买
   run2: {
     run: 2, realm: 1, route: null, neigong: null, zhong: 0,
     dantian: 0, silver: 0, xp: 0,

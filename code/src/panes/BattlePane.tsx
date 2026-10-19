@@ -299,7 +299,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     {enemy.tags.map((t) => (
                       <span
                         key={t} className="jh-tag"
-                        data-tip={hasNode(s.ownedRepNodes, 'zairu_jianghu') ? `${tagLabel(t)} · ${COUNTER_HINTS[t]}` : undefined}
+                        data-tip={hasNode(s.ownedRepNodes, 'chongchu_jianghu') ? `${tagLabel(t)} · ${COUNTER_HINTS[t]}` : undefined}
                       >{tagLabel(t)}</span>
                     ))}
                     {enemy.name}

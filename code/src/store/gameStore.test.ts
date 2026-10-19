@@ -1,6 +1,7 @@
 /**
  * store 行为测试：单钱包丹田模型 + 埋点事件发射（对齐规格书 §6.1 v0.9 / 埋点规格 §1.2）
  */
+import { freshDiyun } from '../engine/prestige';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { REALMS } from '../engine/content';
 import { zhongCost } from '../engine/neigong';
@@ -10,7 +11,7 @@ import {
 import { getEvents, resetTelemetry } from '../telemetry/telemetry';
 import { TABLES_VERSION, TELEMETRY_SPEC } from '../meta';
 import {
-  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind,
+  buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind, slotCountOf,
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
 import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
@@ -170,7 +171,7 @@ describe('gameStore · 归隐与声望阁', () => {
       dantian: 3400, silver: 830, xp: 59,
       clearedStages: [...m1all, ...m2all], deepestBossEver: 2,
       lifeWeightedHours: 12, fameClaimed: [`stage:${stageKey(1, 0, trackLength(1, 0))}`], fameThisLife: 30, reputation: 30,
-      runPlaySec: 2760, ownedRepNodes: ['wudao_biji'],
+      runPlaySec: 2760, ownedRepNodes: [],
     });
     useGameStore.getState().openRetire();
     useGameStore.getState().proceedRetire();
@@ -185,8 +186,8 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.neigong).toBeNull();
     expect(s.zhong).toBe(0);
     expect(s.ownedNeigong).toEqual(['jingleijue', 'zhenyuegong', 'shiguxinfa']);
-    expect(s.wuxing).toBeGreaterThanOrEqual(0.9);   // 武道笔记：悟性 +0.1
-    expect(s.wuxing).toBeLessThanOrEqual(1.3);
+    expect(s.wuxing).toBeGreaterThanOrEqual(0.8);
+    expect(s.wuxing).toBeLessThanOrEqual(1.2);
     // 基础 120 × 前沿 1.2（本世再败洛阳近郊 Boss，不浅于历来最深）= 144
     expect(s.retireCeremony!.settle.total).toBe(144);
     expect(s.reputation).toBe(30 + 144);
@@ -202,7 +203,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(confirmed.front_mult).toBe(1.2);
     const runStart = getEvents().find((e) => e.e === 'run_start' && e.run === 2)!;
     expect(runStart.wuxing).toBe(s.wuxing);
-    expect(runStart.owned_nodes).toEqual(['wudao_biji']);
+    expect(runStart.owned_nodes).toEqual([]);
   });
 
   it('已拥有的内功跨世保留并持久化；所修内功与重数清零', () => {
@@ -233,34 +234,85 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(ev.step).toBe('confirm');
   });
 
-  it('声望节点购买：扣声望、发 prestige_node_bought；不足拒绝', () => {
-    useGameStore.setState({ reputation: 370 });
-    useGameStore.getState().buyRepNode('zairu_jianghu'); // 150
+  it('转世保留项（prestige-shop/design.md §2b）：敝帚自珍带走最好一件、刻骨铭心保留主修武学、认祖归宗不清门派、驾轻就熟首段台阶视为已过、底蕴跨世', () => {
+    const rng = () => 0.3;
+    const worse = rollGear({ grade: 1, level: 3, clearSilver: 50, slot: '暗器' }, rng);
+    const best = rollGear({ grade: 3, level: 5, clearSilver: 50, slot: '兵器', cat: '剑' }, rng);
+    useGameStore.setState({
+      realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 4, tiersPassed: 1, peakRealm: 3,
+      clearedStages: [...m1all], lifeWeightedHours: 2, reputation: 0,
+      ownedRepNodes: ['bizhou_zizhen', 'kegu_mingxin', 'renzu_guizong', 'jiaqing_jiushu'],
+      worn: { 暗器: worse, 兵器: best }, sect: 'huashan',
+      ownedWuxue: ['liuyunjian', 'qingpingjian'], equipped: ['liuyunjian', 'qingpingjian'],
+      learnedForms: ['liuyunjian:1', 'liuyunjian:2', 'qingpingjian:1'],
+      formCasts: { 'liuyunjian:1': 40, 'qingpingjian:1': 40 },
+      diyun: { ...freshDiyun(), qixue: 2 },
+    });
+    useGameStore.getState().openRetire();
+    useGameStore.getState().proceedRetire();
+    useGameStore.getState().confirmRetire();
+    const s = useGameStore.getState();
+    expect(s.run).toBe(2);
+    expect(Object.keys(s.worn)).toEqual(['兵器']);
+    expect(s.worn.兵器?.id).toBe(best.id);
+    expect(s.equipped).toEqual(['liuyunjian']);
+    expect(s.learnedForms).toEqual(['liuyunjian:1', 'liuyunjian:2']);
+    expect(s.formCasts).toEqual({ 'liuyunjian:1': 40, 'qingpingjian:1': 20 });   // 其它武学熟练仍带一半
+    expect(s.sect).toBe('huashan');
+    expect(s.diyun.qixue).toBe(2);
+    // 驾轻就熟：转世后再选内功，首段台阶视为已过
+    useGameStore.getState().selectNeigong('jingleijue');
+    expect(useGameStore.getState().tiersPassed).toBe(1);
+  });
+
+  it('海纳百川：武学装配槽 +1（prestige-shop/design.md §2b 实装一改）', () => {
+    useGameStore.setState({ realm: 2, ownedRepNodes: [] });
+    expect(slotCountOf(useGameStore.getState())).toBe(2);
+    useGameStore.setState({ ownedRepNodes: ['haina_baichuan'] });
+    expect(slotCountOf(useGameStore.getState())).toBe(3);
+  });
+
+  it('机缘购买：扣声望、发 prestige_node_bought；不足拒绝', () => {
+    useGameStore.setState({ reputation: 130 });
+    useGameStore.getState().buyRepNode('chongchu_jianghu'); // 60
     let s = useGameStore.getState();
-    expect(s.reputation).toBe(220);
-    expect(s.ownedRepNodes).toEqual(['zairu_jianghu']);
-    useGameStore.getState().buyRepNode('qingzhuang_shanglu'); // 220 → 0
-    useGameStore.getState().buyRepNode('wudao_biji'); // 440 > 0，拒绝
+    expect(s.reputation).toBe(70);
+    expect(s.ownedRepNodes).toEqual(['chongchu_jianghu']);
+    useGameStore.getState().buyRepNode('qingzhuang_shanglu'); // 70 → 0
+    useGameStore.getState().buyRepNode('gaixian_yizhe'); // 80 > 0，拒绝
     s = useGameStore.getState();
     expect(s.reputation).toBe(0);
-    expect(s.ownedRepNodes).toEqual(['zairu_jianghu', 'qingzhuang_shanglu']);
+    expect(s.ownedRepNodes).toEqual(['chongchu_jianghu', 'qingzhuang_shanglu']);
     const ev = getEvents().filter((e) => e.e === 'prestige_node_bought');
     expect(ev).toHaveLength(2);
-    expect(ev[0].balance_after).toBe(220);
+    expect(ev[0].balance_after).toBe(70);
+  });
+
+  it('底蕴购买：按条计级、价等比、发 diyun_bought；战斗构筑与真气随之上涨', () => {
+    useGameStore.setState({ reputation: 40, realm: 2, neigong: 'jingleijue', zhong: 1, tiersPassed: 0 });
+    const before = playerBuild(useGameStore.getState());
+    useGameStore.getState().buyDiyun('gongji'); // 10
+    useGameStore.getState().buyDiyun('gongji'); // 14
+    useGameStore.getState().buyDiyun('gongji'); // 18 > 16，拒绝
+    const s = useGameStore.getState();
+    expect(s.diyun.gongji).toBe(2);
+    expect(s.reputation).toBe(16);
+    expect(playerBuild(s).atk).toBeCloseTo(before.atk * (1 + 0.05 + 0.048), 6);
+    expect(getEvents().filter((e) => e.e === 'diyun_bought')).toHaveLength(2);
   });
 
   it('修行感悟：传承一级 / 尽数传承，乘区随之上涨', () => {
     useGameStore.setState({ reputation: 7570, ganwuLevel: 136 });
     useGameStore.getState().buyGanwu('one');
     expect(useGameStore.getState().ganwuLevel).toBe(137);
-    expect(useGameStore.getState().reputation).toBe(7570 - 1370);
+    expect(useGameStore.getState().reputation).toBe(7570 - 1165);
     useGameStore.getState().buyGanwu('all');
     const s = useGameStore.getState();
-    expect(s.ganwuLevel).toBe(141); // 再买 4 级：1,380 + 1,390 + 1,400 + 1,410 = 5,580
-    expect(s.reputation).toBe(7570 - 1370 - 5580);
+    expect(s.ganwuLevel).toBe(142); // 再买 5 级：1,173 + 1,182 + 1,190 + 1,199 + 1,207 = 5,951
+    expect(s.reputation).toBe(7570 - 1165 - 5951);
     const ev = getEvents().filter((e) => e.e === 'ganwu_bought');
-    expect(ev.map((e) => e.level_to)).toEqual([137, 141]);
-    expect(effIdleRate(s)).toBeCloseTo(idleNeiliPerSec(1) * (1 + 141 * 0.2), 6);
+    expect(ev.map((e) => e.level_to)).toEqual([137, 142]);
+    expect(effIdleRate(s)).toBeCloseTo(idleNeiliPerSec(1) * (1 + 142 * 0.2), 6);
   });
 
   it('同路数转修：少 3 重、台阶重新顿悟、收境界 × 100 银两，发 neigong_switched（spec §1.5）', () => {

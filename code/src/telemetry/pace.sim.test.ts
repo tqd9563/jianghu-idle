@@ -36,6 +36,12 @@ const SEEDS = process.env.PACE_SEED ? [Number(process.env.PACE_SEED)] : [7, 42, 
 const MILESTONE: Record<number, number> = { 2: 1, 3: 7, 4: 21, 5: 42, 6: 100 };
 const TOLERANCE = 0.20;
 const MIN_SLACK_DAYS = 2;
+/**
+ * 个别路线 × 境界的放宽（天）：pacing/design.md 裁决 26（2026-10-19 用户裁定）。
+ * 少林首达境界 5 在前尘实装一后四种子平均第 51 天，逐种子 42 / 54 / 44 / 64，基线同种子 48 / 41 / 41 / 54——
+ * 种子 2026 的单样本拖尾所致，不动数值，只把这一格的容差由 ±8 放到 ±10。
+ */
+const ROUTE_SLACK: Partial<Record<RouteId, Record<number, number>>> = { shaolin: { 5: 10 } };
 const MAX_DAYS = 120;
 /** 写记录用的真实日期（测试里时钟是假的） */
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -105,7 +111,7 @@ describe('节奏守卫：真实代码的里程碑天数（多天一世）', () =
     for (const s of means) {
       for (const [realm, target] of Object.entries(MILESTONE)) {
         const got = s.firstDay[Number(realm)];
-        const slack = Math.max(MIN_SLACK_DAYS, Math.round(target * TOLERANCE));
+        const slack = ROUTE_SLACK[s.route]?.[Number(realm)] ?? Math.max(MIN_SLACK_DAYS, Math.round(target * TOLERANCE));
         expect(got, `${s.route} 平均首达境界 ${realm}：第 ${got} 天，目标第 ${target} 天 ±${slack}`)
           .toBeGreaterThanOrEqual(target - slack);
         expect(got, `${s.route} 平均首达境界 ${realm}：第 ${got} 天，目标第 ${target} 天 ±${slack}`)

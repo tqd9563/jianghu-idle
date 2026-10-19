@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   FRONT_MULT, REP_NODES, deepestBoss, ganwuAffordable, ganwuPrice, isBossKey, isEliteKey,
-  outputMult, settleRetire, suhuiTotal,
+  diyunBonus, diyunCum, diyunGainAt, diyunPrice, outputMult, settleRetire, suhuiTotal,
 } from './prestige';
 import { allStages, stageKey, trackLength, type MapId, type TierId } from './enemies';
 
@@ -26,12 +26,11 @@ describe('宿慧（economy.md §2）', () => {
 });
 
 describe('修行感悟（economy.md §3）', () => {
-  it('第 n 级价格 10n', () => {
-    expect(ganwuPrice(1)).toBe(10);
-    expect(ganwuPrice(137)).toBe(1370);
+  it('第 n 级价格 ⌈8.5n⌉（底蕴分走 15% 声望后的补偿价）', () => {
+    expect([1, 2, 3, 10].map(ganwuPrice)).toEqual([9, 17, 26, 85]);
   });
   it('尽数传承：从 136 级、7,570 声望起可连买 5 级、花 6,950', () => {
-    expect(ganwuAffordable(136, 7570)).toEqual({ levels: 5, cost: 6950 });
+    expect(ganwuAffordable(136, 7570)).toEqual({ levels: 6, cost: 7116 });
     expect(ganwuAffordable(0, 5)).toEqual({ levels: 0, cost: 0 });
   });
 });
@@ -87,14 +86,31 @@ describe('Boss 深浅与精英键（难度优先、同档比图序，economy.md 
   });
 });
 
-describe('五件传承（economy.md §4 v2.2）', () => {
-  it('价格 150 / 220 / 440 / 660 / 1,100；三件废止节点不再出现', () => {
-    expect(REP_NODES.map((n) => [n.id, n.price])).toEqual([
-      ['zairu_jianghu', 150], ['qingzhuang_shanglu', 220], ['wudao_biji', 440],
-      ['shimen_zhiyin', 660], ['poguan_xinde', 1100],
+describe('十四件机缘（prestige-shop/design.md §2b）', () => {
+  it('十四件按价升序，合计 4,040；旧三件废止节点不再出现', () => {
+    expect(REP_NODES.map((n) => n.id)).toEqual([
+      'chongchu_jianghu', 'qingzhuang_shanglu', 'gaixian_yizhe', 'baoluo_wanxiang', 'huiyan_shizhu', 'yaodao_bingchu', 'anhun_dingpo',
+      'haina_baichuan', 'jiaqing_jiushu', 'renzu_guizong', 'taojia_huanjia', 'shuangguan_qixia', 'bizhou_zizhen', 'kegu_mingxin',
     ]);
+    expect(REP_NODES.reduce((a, n) => a + n.price, 0)).toBe(4040);
+    expect(REP_NODES.every((n, i) => i === 0 || n.price >= REP_NODES[i - 1].price)).toBe(true);
   });
-  it('武道笔记改为每世悟性 +0.1（sect-neigong/spec.md S9）', () => {
-    expect(REP_NODES.find((n) => n.id === 'wudao_biji')!.desc).toContain('悟性 +0.1');
+});
+
+describe('底蕴（prestige-shop/design.md §2）', () => {
+  it('价格等比：10 · 14 · 18 · 25 · 33；第 20 级 2,995', () => {
+    expect([1, 2, 3, 4, 5].map(diyunPrice)).toEqual([10, 14, 18, 25, 33]);
+    expect(diyunPrice(20)).toBe(2995);
+  });
+  it('收益逐级 × 0.96：气血类 25 级累计约 +80%，上限 125%', () => {
+    expect(diyunGainAt(0.05, 1)).toBeCloseTo(0.05, 10);
+    expect(diyunGainAt(0.05, 2)).toBeCloseTo(0.048, 10);
+    expect(diyunCum(0.05, 25)).toBeCloseTo(0.80, 2);
+    expect(diyunCum(0.05, 1000)).toBeCloseTo(1.25, 3);
+    expect(diyunBonus(undefined, 'qixue')).toBe(0);
+    expect(diyunBonus({ huixin: 3 }, 'huixin')).toBeCloseTo(0.005 * (1 + 0.96 + 0.96 ** 2), 10);
+  });
+  it('修行感悟价 ⌈8.5n⌉：1 / 2 / 137 级 = 9 / 17 / 1,165', () => {
+    expect([1, 2, 137].map(ganwuPrice)).toEqual([9, 17, 1165]);
   });
 });

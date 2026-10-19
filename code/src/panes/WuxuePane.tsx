@@ -58,9 +58,8 @@ export function WuxuePane() {
       <header className="jh-head"><div><h1>武学</h1></div></header>
 
       <div className="wx-seats">
-        {Array.from({ length: 5 }, (_, i) => {
+        {Array.from({ length: slots }, (_, i) => {
           const id = equipped[i];
-          if (i >= slots) return <div key={i} className="wx-seat locked">境界 {i + 1} 开</div>;
           if (!id) return <div key={i} className="wx-seat empty">空槽</div>;
           const d = WUXUE[id];
           return (

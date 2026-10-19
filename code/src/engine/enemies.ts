@@ -112,6 +112,9 @@ interface StageRow {
 interface TrackRow { map: number; tier: number; stages: StageRow[] }
 
 export const trackKey = (map: MapId, tier: TierId) => `${map}-${tier}`;
+/** 第一世 1-7 教学战的敌人强度（关卡当量）：按境界 2 段起点打，裸属性必败；传功后同一关回到缓坡起点（battle-loot/design.md §5.1） */
+export const TEACH_X: number = stageData.teachX;
+
 /** 关卡键：`m{图}t{难度}s{关}`（存档 clearedStages、成就 fameClaimed 共用） */
 export const stageKey = (map: MapId, tier: TierId, stage: number) => `m${map}t${tier}s${stage}`;
 const KEY_RE = /^m(\d)t(\d)s(\d+)$/;

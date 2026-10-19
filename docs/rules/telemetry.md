@@ -1,6 +1,6 @@
 # 埋点规格（合并版）
 
-> **版本**：v3.3
+> **版本**：v3.4
 >
 > **日期**：2026-09-29
 >
@@ -61,6 +61,7 @@
 | `gear_dropped` | 装备掉落（在线每件一条；离线一次挂机结算一条） | 在线：`stage`, `slot`, `grade`, `level`, `sold`（行囊满了卖得的银两）, `offline: false`；离线：`stage`, `count`, `best_grade`, `sold`, `offline: true` |
 | `gear_equipped` | 穿戴一件装备 | `slot`, `grade`, `level`, `afx`（词条数） |
 | `elder_met` | 第一世 1-7 战败后起身行礼（此后可选内功） | — |
+| `gift_wuxue_picked` | 第一世选完内功后，从前辈所授三门里择定一门 | `wuxue` |
 | `market_opened` | 市集开张（传功后第 8 关起首次战败） | `stage` |
 | `black_bought` | 黑市买下一件蒙面货 | `good`（部位 / `pages`）, `price`, `grade` 或 `wuxue` + `form`, `buys`（本世第几件） |
 | `wuxue_dropped` | 武学掉落（在线每次一条；离线一次挂机结算一条） | 在线：`stage`, `wuxue`, `form`, `kind`（`book` 寻常整门 / `page` 残页）, `dup`（已有、折银两）, `offline: false`；离线：`stage`, `books`, `pages`（只计新得的，重复不计）, `offline: true` |
@@ -117,6 +118,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v3.4 | 2026-10-19 | 传功缓坡（battle-loot 裁决 43）：新增 `gift_wuxue_picked`。 |
 | v3.3 | 2026-10-19 | 武学一式一页（battle-loot 裁决 42）：`form_learned` 改为前式圆满接上；`sect_shop_bought` 去掉 `have` / `need`；`wuxue_dropped` 的 `book` 改指整门、离线计数不含重复。 |
 | v3.2 | 2026-10-14 | 实装五：`sect_shop_bought` 残页加 `have` / `need`；`sect` 取值扩到九派 id。 |
 | v3.1 | 2026-10-14 | battle-loot 实装四：新增 `elder_met` / `market_opened` / `black_bought`；`shop_bought` 也记兵器铺 / 衣饰铺（加 `slot`、`grade`）。 |

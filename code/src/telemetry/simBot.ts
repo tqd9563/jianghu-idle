@@ -14,7 +14,7 @@ import { vi } from 'vitest';
 import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
 import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
-import { WUXUE } from '../engine/wuxue';
+import { GIFT_WUXUE_OPTIONS, WUXUE } from '../engine/wuxue';
 import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
 import { betterThanWorn } from '../engine/gear';
 import { BLACK_PER_LIFE } from '../engine/market';
@@ -25,7 +25,7 @@ import { DIYUN_IDS, REP_NODES, diyunPrice, freshDiyun, ganwuPrice } from '../eng
 import { saveGame } from '../save/storage';
 import {
   mapUnlocked, marketGoodsOf, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN,
-  slotCountOf, type MapNo,
+  giftPending, slotCountOf, type MapNo,
 } from '../store/gameStore';
 import type { TierId } from '../engine/enemies';
 
@@ -128,6 +128,7 @@ export function tend(route: RouteId): void {
     st().breakthrough();
     st().dismissCeremony();
     if (st().neigong === null && (st().taught || st().run >= 2)) st().selectNeigong(bestNeigong(route));
+    if (giftPending(st())) st().pickGiftWuxue(GIFT_WUXUE_OPTIONS[0]);   // 前辈所授武学：取罗汉拳
     if (st().realm === realm) break;
   }
   if (st().neigong) {

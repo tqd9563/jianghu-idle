@@ -23,3 +23,21 @@ export function fmtBig(n: number): string {
 export function fmtRate(perSec: number): string {
   return perSec < 1000 ? perSec.toFixed(1) : fmtBig(perSec);
 }
+
+const CN_NUM = ['零', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+
+/** 时长的武侠写法：一个时辰 = 2 小时，一刻 = 15 分钟；满十二个时辰写「一昼夜」 */
+export function shichenText(min: number, verb = '闭关'): string {
+  if (min < 15) return `${verb}片刻`;
+  if (min < 120) return `${verb}${CN_NUM[Math.min(7, Math.round(min / 15))]}刻`;
+  const sc = Math.round(min / 120);
+  return sc >= 12 ? `${verb}一昼夜` : `${verb}${CN_NUM[sc]}个时辰`;
+}
+
+/** 时长的玩家侧措辞：47 分钟 / 2 小时 5 分 */
+export function minText(rawSec: number): string {
+  const min = Math.floor(rawSec / 60);
+  if (min < 1) return '不到 1 分钟';
+  if (min < 60) return `${min} 分钟`;
+  return `${Math.floor(min / 60)} 小时 ${min % 60} 分`;
+}

@@ -460,6 +460,16 @@ function FailureCeremony({ goCultivate }: { goCultivate: () => void }) {
   const chargePct = breakCost !== null ? Math.min(100, Math.round((s.dantian / breakCost) * 100)) : 100;
   const outPct = (v: number) => (st.dmgDealt > 0 ? Math.round((v / st.dmgDealt) * 100) : 0);
   const left = Math.round(f.enemyHpPct * 100);
+  // 推关输了、有关可退：倒计时不选就退回挂机（裁决 44；原型 idle-ux-prototype.html ②）
+  const b = s.battle;
+  const back = b && b.resolved && b.mode === 'push' && b.chainMode === 'idle' && b.chainAt !== null ? b.chainStage : null;
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (back === null) return;
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [back]);
+  const left5 = back !== null ? Math.max(1, Math.ceil((b!.chainAt! - now) / 1000)) : 0;
 
   // 悬停：诊断（公式表 §5）+ 战报（battle.md §2）
   const tip = [
@@ -514,12 +524,23 @@ function FailureCeremony({ goCultivate }: { goCultivate: () => void }) {
           <div className="jh-ink-bar hp"><i style={{ width: `${left}%` }} /></div>
         </div>
         <div className="acts">
-          <button type="button" className="jh-btn quiet" onClick={() => { s.dismissFailure(); s.challengeStage(f.map, f.tier, f.stage); }}>
-            立即重试
-          </button>
-          <button type="button" className="jh-btn" onClick={() => { s.dismissFailure(); goCultivate(); }}>
-            回去修炼 · 周天 <span className="n">{chargePct}</span>%
-          </button>
+          {back !== null ? (
+            <>
+              <button type="button" className="jh-btn quiet" onClick={() => s.retryFailed()}>再战一场</button>
+              <button type="button" className="jh-btn count" onClick={() => s.retreatNow()}>
+                退回第 {back} 关挂机<span className="left">{left5}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="jh-btn quiet" onClick={() => { s.dismissFailure(); s.challengeStage(f.map, f.tier, f.stage); }}>
+                再战一场
+              </button>
+              <button type="button" className="jh-btn" onClick={() => { s.dismissFailure(); goCultivate(); }}>
+                回去修炼 · 周天 <span className="n">{chargePct}</span>%
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>,

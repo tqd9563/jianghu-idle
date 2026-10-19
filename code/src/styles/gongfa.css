@@ -91,8 +91,6 @@
 .wx-seat:hover .x { opacity: 1; }
 .wx-seat[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
 .wx-seat.empty { background: none; box-shadow: inset 0 0 0 1px var(--hair); color: var(--faint); font-size: 13px; display: grid; place-items: center; cursor: default; }
-.wx-seat.locked { background: none; color: oklch(0.45 0.012 262); font-size: 12.5px; display: grid; place-items: center; cursor: default;
-  box-shadow: inset 0 0 0 1px oklch(0.25 0.012 262 / 0.6); }
 
 .wx-empty { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--muted); }
 .wx-empty p { margin: 0; }

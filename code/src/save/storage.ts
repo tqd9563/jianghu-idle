@@ -23,8 +23,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v7 = 图 1 初入最前面补 6 关入门关（境界 1 裸属性可打），原有关卡编号顺延；
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  * v13 = 武学一式一页（battle-loot/design.md §4）：残页从计数改为已得的式，寻常全本并入整门，取消顿悟领悟。
+ * v14 = 传功缓坡（battle-loot/design.md §5.1）：图 1 初入入门关之后插 15 关，第 7 关起原有关卡编号顺延。
  */
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -108,6 +109,7 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 11) out = migrateRumorV10ToV11(out);
   if (fromVer < 12) out = migratePrestigeV11ToV12(out);
   if (fromVer < 13) out = migrateFormPagesV12ToV13(out);
+  if (fromVer < 14) out = migrateTeachRampV13ToV14(out);
   return out;
 }
 
@@ -196,6 +198,40 @@ function migrateIdleV8ToV9<T>(state: T): T {
   if (!s || typeof s !== 'object') return state;
   const out = { ...s };
   for (const k of ['autoAdvance', 'refarmKey', 'refarmCount', 'refarmAt']) delete out[k];
+  return out as T;
+}
+
+/** v14 在入门关之后插入的传功缓坡关数（迁移专用，冻结在 v14 口径，不随关卡表变化） */
+const V14_RAMP_STAGES = 15;
+
+/**
+ * v13 → v14：图 1 初入第 7 关起顺延 15 关（入门关 1–6 不动）。按关卡键记的字段都顺延：
+ * 通关记录、挑战次数、已领成就（'stage:' 前缀）、挂机关。已通过旧第 7 关的存档，缓坡视为已通。
+ */
+function migrateTeachRampV13ToV14<T>(state: T): T {
+  const s = state as {
+    clearedStages?: string[];
+    attempts?: Record<string, number>;
+    fameClaimed?: string[];
+    idle?: { map: number; tier: number; stage: number } | null;
+  };
+  if (!s || typeof s !== 'object') return state;
+  const shift = (key: string) =>
+    key.replace(M1T0_RE, (all, pre: string | undefined, n: string) =>
+      Number(n) > V7_INTRO_STAGES ? `${pre ?? ''}m1t0s${Number(n) + V14_RAMP_STAGES}` : all);
+  const out: typeof s = { ...s };
+  if (Array.isArray(s.clearedStages)) {
+    const passed = s.clearedStages.some((k) => Number(k.match(M1T0_RE)?.[2] ?? 0) > V7_INTRO_STAGES);
+    const ramp = Array.from({ length: V14_RAMP_STAGES }, (_, i) => `m1t0s${V7_INTRO_STAGES + 1 + i}`);
+    out.clearedStages = [...s.clearedStages.map(shift), ...(passed ? ramp : [])];
+  }
+  if (s.attempts && typeof s.attempts === 'object') {
+    out.attempts = Object.fromEntries(Object.entries(s.attempts).map(([k, v]) => [shift(k), v]));
+  }
+  if (Array.isArray(s.fameClaimed)) out.fameClaimed = s.fameClaimed.map(shift);
+  if (s.idle && s.idle.map === 1 && s.idle.tier === 0 && s.idle.stage > V7_INTRO_STAGES) {
+    out.idle = { ...s.idle, stage: s.idle.stage + V14_RAMP_STAGES };
+  }
   return out as T;
 }
 

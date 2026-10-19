@@ -53,6 +53,28 @@ describe('存档迁移 v2 → v3：窍穴 id 重写', () => {
   });
 });
 
+describe('存档迁移 v13 → v14：入门关之后补 15 关传功缓坡', () => {
+  it('第 7 关起顺延 15，入门关不动；过了旧第 7 关的补上缓坡；挂机关跟着顺延', () => {
+    const out = migrate({
+      clearedStages: ['m1t0s1', 'm1t0s6', 'm1t0s7', 'm1t0s30', 'm2t0s7'],
+      attempts: { m1t0s8: 2, m1t0s3: 1 },
+      fameClaimed: ['stage:m1t0s10', 'stage:m2t0s4'],
+      idle: { map: 1, tier: 0, stage: 30, fights: 9 },
+    }, 13, SAVE_VERSION);
+    const ramp = Array.from({ length: 15 }, (_, i) => `m1t0s${7 + i}`);
+    expect(out.clearedStages).toEqual(['m1t0s1', 'm1t0s6', 'm1t0s22', 'm1t0s45', 'm2t0s7', ...ramp]);
+    expect(out.attempts).toEqual({ m1t0s23: 2, m1t0s3: 1 });
+    expect(out.fameClaimed).toEqual(['stage:m1t0s25', 'stage:m2t0s4']);
+    expect(out.idle).toEqual({ map: 1, tier: 0, stage: 45, fights: 9 });
+  });
+
+  it('还在入门关的存档不补缓坡', () => {
+    const out = migrate({ clearedStages: ['m1t0s1', 'm1t0s2'], idle: { map: 1, tier: 0, stage: 2, fights: 0 } }, 13, SAVE_VERSION);
+    expect(out.clearedStages).toEqual(['m1t0s1', 'm1t0s2']);
+    expect(out.idle).toEqual({ map: 1, tier: 0, stage: 2, fights: 0 });
+  });
+});
+
 describe('存档迁移 v6 → v7：图 1 初入补入门关，原关卡编号顺延 6', () => {
   it('按关卡键记的字段都顺延，其它前沿不动', () => {
     const out = migrate({
@@ -61,12 +83,14 @@ describe('存档迁移 v6 → v7：图 1 初入补入门关，原关卡编号顺
       refarmKey: 'm1t0s2',
       fameClaimed: ['stage:m1t0s4', 'meridian:shoutaiyin'],
     }, 6, SAVE_VERSION);
+    // v7 顺延 6 关后，v14 再把第 7 关起顺延 15 关、补上传功缓坡
+    const ramp = Array.from({ length: 15 }, (_, i) => `m1t0s${7 + i}`);
     expect(out.clearedStages).toEqual([
-      'm1t0s1', 'm1t0s2', 'm1t0s3', 'm1t0s4', 'm1t0s5', 'm1t0s6', 'm1t0s7', 'm1t0s8', 'm1t1s1',
+      'm1t0s1', 'm1t0s2', 'm1t0s3', 'm1t0s4', 'm1t0s5', 'm1t0s6', 'm1t0s22', 'm1t0s23', 'm1t1s1', ...ramp,
     ]);
-    expect(out.attempts).toEqual({ m1t0s9: 4, m2t0s1: 1 });
+    expect(out.attempts).toEqual({ m1t0s24: 4, m2t0s1: 1 });
     expect(out.refarmKey).toBeUndefined();   // v9 废止回刷衰减字段，顺延后再删
-    expect(out.fameClaimed).toEqual(['stage:m1t0s10', 'meridian:shoutaiyin']);
+    expect(out.fameClaimed).toEqual(['stage:m1t0s25', 'meridian:shoutaiyin']);
   });
 
   it('v8 → v9：自动连战开关与回刷衰减三字段删掉，其它不动；idle 不补', () => {

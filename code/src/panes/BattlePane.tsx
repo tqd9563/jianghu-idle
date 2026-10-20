@@ -28,33 +28,6 @@ import { formTitle } from '../engine/formNames';
 
 const f0 = (n: number) => fmtBig(Math.round(n));
 
-/** 叠浪潮位条（docs/design/jishi-prototype.html 丙）：按重上涨；引擎一叠满就倾出归零，这里在满时停 0.7 秒再泄空 */
-function TideMeter({ n, need, bursts, brim }: { n: number; need: number; bursts: number; brim: boolean }) {
-  const [full, setFull] = useState(false);
-  const [pour, setPour] = useState(false);
-  const seen = useRef(bursts);
-  // 绘制前切到满格，避免先闪一帧 0
-  useLayoutEffect(() => {
-    if (bursts <= seen.current) { seen.current = bursts; return; }
-    seen.current = bursts;
-    setFull(true);
-    const t1 = setTimeout(() => { setFull(false); setPour(true); }, 700);
-    const t2 = setTimeout(() => setPour(false), 1200);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [bursts]);
-  // brim：触发叠满的那句会心已揭示、排山倒海还在下一拍——引擎此刻已归零，这里先顶满
-  const top = full || brim;
-  const shown = top ? need : n;
-  return (
-    <div className={`meter tide${top ? ' full' : ''}${pour ? ' pour' : ''}`}>
-      <div className="lbl"><span>叠浪</span><span className="n"><b>{shown}</b> / {need}</span></div>
-      <div className="tide-bar">
-        <i style={{ width: `${(shown / need) * 100}%` }} />
-        {Array.from({ length: need - 1 }, (_, k) => <span key={k} className="tick" style={{ left: `${((k + 1) / need) * 100}%` }} />)}
-      </div>
-    </div>
-  );
-}
 /** data-tip 走 innerHTML：拼进去的名字统一转义 */
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
@@ -64,7 +37,8 @@ function unlockHint(map: MapNo, tier: TierId): string {
   return `击败${mapName(map)} · ${TIER_NAMES[(tier - 1) as TierId]} Boss 后开启`;
 }
 
-/** 增减益标记（docs/design/battle-status-prototype.html）：石印图标一行，下挂三点亮几枚余几回合；毒右下角标层数；数值收进悬停 */
+/** 增减益标记（docs/design/battle-status-prototype.html）：石印图标一行。有时限的下挂三点亮几枚余几回合；
+ *  叠层的（毒、叠浪，以后同类机制照此）右下角标层数，叠满会爆发的印面发亮；数值收进悬停 */
 const FX_ICON: Partial<Record<FormEffect, string>> = {
   运劲: 'yunjin', 凝眸: 'ningmou', 轻身: 'qingshen', 卸力: 'xieli', 迷目: 'mimu', 破绽: 'pozhan',
 };
@@ -74,13 +48,13 @@ const FX_SAY: Partial<Record<FormEffect, (v: number) => string>> = {
   运劲: (v) => `攻击 +${pc(v)}%`, 凝眸: (v) => `会心 +${pc(v)}%`, 轻身: (v) => `闪避 +${v}`,
   卸力: (v) => `攻击 −${pc(v)}%`, 迷目: (v) => `命中 −${v}`, 破绽: (v) => `防御 −${pc(v)}%`,
 };
-type FxChip = { key: string; icon: string; side: 'buff' | 'debuff'; tip: string; left?: number; layers?: number };
+type FxChip = { key: string; icon: string; side: 'buff' | 'debuff'; tip: string; left?: number; layers?: number; brim?: boolean };
 
 function FxRow({ chips }: { chips: FxChip[] }) {
   return (
     <div className="fx-row">
       {chips.map((c) => (
-        <div key={c.key} className={`fx ${c.side}${c.left === 1 ? ' last' : ''}`} data-tip={c.tip}>
+        <div key={c.key} className={`fx ${c.side}${c.left === 1 ? ' last' : ''}${c.brim ? ' brim' : ''}`} data-tip={c.tip}>
           <img src={`/art/fx/${c.icon}.png`} alt="" />
           {c.left !== undefined && (
             <span className="pips">{[1, 2, 3].map((n) => <span key={n} className={n <= c.left! ? 'on' : ''} />)}</span>
@@ -92,11 +66,21 @@ function FxRow({ chips }: { chips: FxChip[] }) {
   );
 }
 
+/** 叠浪：重数、所需重数、排山倒海倍率；brim = 触发叠满的会心已揭示、排山倒海还在下一拍（引擎此刻已归零，这里先顶满） */
+type Tide = { need: number; mult: number; brim: boolean };
+
 /** 从当前快照拼出双方的标记；同一特效重新挂上时换 key，让图标重新落印 */
-function fxChips(turns: TurnEvent[], poisonCap: number): { mine: FxChip[]; foe: FxChip[] } {
+function fxChips(turns: TurnEvent[], poisonCap: number, tide: Tide | null): { mine: FxChip[]; foe: FxChip[] } {
   const last = turns[turns.length - 1];
   const mine: FxChip[] = [], foe: FxChip[] = [];
   if (!last) return { mine, foe };
+  if (tide) {
+    const n = tide.brim ? tide.need : Math.floor(last.pSq);
+    if (n > 0) mine.push({
+      key: 'dielang', icon: 'dielang', side: 'buff', layers: n, brim: tide.brim,
+      tip: `<span class="fx-buff">叠浪</span>　${n} / ${tide.need} 重<br><span class="l">叠满：排山倒海 ${Math.round(tide.mult * 100)}%</span>`,
+    });
+  }
   if (last.ePoison > 0) {
     const n = Math.round(last.ePoison);
     foe.push({ key: 'du', icon: 'du', side: 'debuff', layers: n, tip: `<span class="fx-du">毒</span>　${n} / ${poisonCap} 层` });
@@ -155,7 +139,9 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const ehpPct = last ? last.ehpPct : 1;
   // 少林护体：气血墨条上的浅蓝护盾段，自左端伸展、扣盾时右缘削减（2026-07-07 UI 裁决）
   const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
-  const fx = fighting ? fxChips(turns, build.poison.cap || 8) : null;
+  const tide = build.sqNeed < 99 && battle
+    ? { need: build.sqNeed, mult: build.burstMult, brim: battle.result.turns[battle.revealed]?.kind === 'burst' } : null;
+  const fx = fighting ? fxChips(turns, build.poison.cap || 8, tide) : null;
   const qiNow = battle && last && (s.equipped ?? []).length > 0 ? last.pQi : qiCap;
   const idleEnemy = open && total > 0 ? getStage(viewMap, viewTier, idleStage) : null;
   const enemy = battle ? battle.enemy : idleEnemy;
@@ -327,13 +313,6 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                       <div className="lbl"><span>真气</span><span><b>{f0(qiNow)}</b> / {f0(qiCap)}</span></div>
                       <div className="jh-ink-bar qi"><i style={{ width: `${Math.min(1, qiNow / qiCap) * 100}%` }} /></div>
                     </div>
-                  )}
-                  {fighting && last && build.sqNeed < 99 && (
-                    <TideMeter
-                      n={Math.floor(last.pSq)} need={build.sqNeed}
-                      bursts={turns.filter((t) => t.kind === 'burst').length}
-                      brim={battle!.result.turns[battle!.revealed]?.kind === 'burst'}
-                    />
                   )}
                   {fx && fx.mine.length > 0 && <FxRow chips={fx.mine} />}
                 </div>

@@ -84,17 +84,6 @@
 /* 敌方墨条自右向左 */
 .page-battle .side.enemy .jh-ink-bar i { left: auto; right: 0; background: linear-gradient(to left, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30));
   -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); }
-/* 叠浪潮位条（jishi-prototype.html 丙）：一根墨条按重上涨，水青渐金；满时浪头发亮，倾出时一口气泄空 */
-.page-battle .meter.tide .lbl .n, .page-battle .meter.tide .lbl .n b { transition: color .3s; }
-.page-battle .meter.tide.full .lbl .n, .page-battle .meter.tide.full .lbl .n b { color: var(--gold); }
-.page-battle .tide-bar { position: relative; height: 7px; margin-top: 5px; }
-.page-battle .tide-bar::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.7); }
-.page-battle .tide-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .55s var(--ease-sharp);
-  background: linear-gradient(to right, oklch(0.46 0.06 200), oklch(0.62 0.08 190) 55%, var(--gold));
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent); }
-.page-battle .tide-bar .tick { position: absolute; top: 1px; bottom: 1px; width: 1px; background: oklch(0.155 0.013 262 / 0.9); z-index: 1; }
-.page-battle .meter.tide.full .tide-bar i { box-shadow: 0 0 12px oklch(0.78 0.13 78 / 0.55); -webkit-mask-image: none; mask-image: none; }
-.page-battle .meter.tide.pour .tide-bar i { transition: width .45s cubic-bezier(0.6, 0, 0.9, 0.4); }
 /* 增减益标记（battle-status-prototype.html）：石印一行，己方靠左、敌方靠右；下挂三点 = 余几回合，最后一回合明暗呼吸；毒右下角标层数 */
 .page-battle .fx-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; padding-bottom: 8px; }
 .page-battle .side.enemy .fx-row { justify-content: flex-end; }
@@ -106,10 +95,14 @@
 .page-battle .fx.debuff .pips span.on { background: var(--cinnabar); box-shadow: 0 0 4px oklch(0.66 0.14 32 / 0.7); }
 .page-battle .fx .n { position: absolute; right: -5px; bottom: -5px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--bg-deep); color: var(--poison); font-size: 10.5px; line-height: 15px; text-align: center; font-weight: 700; box-shadow: 0 0 0 1px oklch(0.72 0.14 145 / 0.5); }
 .page-battle .fx.last img { animation: fx-fade 1.2s ease-in-out infinite alternate; }
+/* 层数角标随归属着色（毒绿是默认、己方金）；叠满待爆发时印面金光呼吸 */
+.page-battle .fx.buff .n { color: var(--gold); box-shadow: 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+.page-battle .fx.brim img { animation: fx-brim .5s ease-in-out infinite alternate; }
+@keyframes fx-brim { from { filter: drop-shadow(0 0 3px oklch(0.85 0.12 80 / 0.6)); } to { filter: brightness(1.35) drop-shadow(0 0 9px oklch(0.85 0.12 80)); } }
 @keyframes fx-in { from { opacity: 0; transform: scale(1.5); } }
 @keyframes fx-flash { from { filter: brightness(2) drop-shadow(0 0 8px oklch(0.85 0.1 80)); } }
 @keyframes fx-fade { to { opacity: 0.55; } }
-@media (prefers-reduced-motion: reduce) { .page-battle .fx, .page-battle .fx img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .page-battle .fx, .page-battle .fx img, .page-battle .fx.last img, .page-battle .fx.brim img { animation: none; } }
 .jh-tip .fx-buff { color: var(--gold); }
 .jh-tip .fx-debuff { color: oklch(0.74 0.13 32); }
 .jh-tip .fx-du { color: var(--poison); }

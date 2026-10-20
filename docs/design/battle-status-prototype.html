@@ -70,6 +70,10 @@ button { font-family: inherit; }
 .fx.debuff .pips span.on { background: var(--cinnabar); box-shadow: 0 0 4px oklch(0.66 0.14 32 / 0.7); }
 /* 层数：右下角一个数 */
 .fx .n { position: absolute; right: -5px; bottom: -5px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--bg-deep); color: var(--poison); font-size: 10.5px; line-height: 15px; text-align: center; font-weight: 700; box-shadow: 0 0 0 1px oklch(0.72 0.14 145 / 0.5); }
+/* 叠层类：角标随归属着色（己方金、毒绿）；叠满时印面发亮 */
+.fx.buff .n { color: var(--gold); box-shadow: 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
+.fx.brim img { animation: fx-brim .5s ease-in-out infinite alternate; }
+@keyframes fx-brim { from { filter: drop-shadow(0 0 3px oklch(0.85 0.12 80 / 0.6)); } to { filter: brightness(1.35) drop-shadow(0 0 9px oklch(0.85 0.12 80)); } }
 .fx.fresh img { animation: fx-flash .7s ease-out; }
 .fx.last img { animation: fx-fade 1.2s ease-in-out infinite alternate; }
 .fx.gone { animation: fx-out .35s ease-in forwards; }
@@ -88,7 +92,7 @@ button { font-family: inherit; }
 /* 战报两句 + 步进 */
 .log { margin-top: 18px; min-height: 58px; color: var(--muted); line-height: 1.85; }
 .log .rh { font-family: var(--font-display); color: var(--faint); letter-spacing: 0.15em; font-size: 13px; }
-.log .me { color: var(--ink-gold); } .log .sk { color: var(--qi); } .log .foe { color: oklch(0.72 0.12 30); }
+.log .cr { color: oklch(0.70 0.16 45); font-weight: 700; } .log .me { color: var(--ink-gold); } .log .sk { color: var(--qi); } .log .foe { color: oklch(0.72 0.12 30); }
 .ctl { display: flex; gap: 12px; justify-content: center; margin-top: 18px; }
 .btn { border: 0; cursor: pointer; padding: 10px 26px; border-radius: 10px; font-size: 14px; letter-spacing: 0.15em; font-family: var(--font-display); }
 .btn.main { background: var(--gold); color: oklch(0.19 0.03 78); font-weight: 700; }
@@ -101,7 +105,7 @@ button { font-family: inherit; }
 .set[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); }
 .set .nm { font-family: var(--font-display); letter-spacing: 0.2em; color: var(--muted); }
 .set[aria-pressed="true"] .nm { color: var(--gold); }
-.set .icons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.set .icons { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; }
 .set .cell { display: grid; justify-items: center; gap: 6px; }
 .set .cell .sizes { display: flex; align-items: end; gap: 6px; }
 .set .cell img { object-fit: contain; display: block; }
@@ -127,6 +131,12 @@ button { font-family: inherit; }
 <body>
 <div class="proto-bar">
   <span class="t">增减益标记</span>
+  <span class="t" style="font-size:13px">叠浪图案</span>
+  <div class="seg" id="dlSeg">
+    <button data-v="a" aria-pressed="true">甲 · 浪头</button>
+    <button data-v="b" aria-pressed="false">乙 · 三叠浪</button>
+    <button data-v="c" aria-pressed="false">丙 · 拍岸</button>
+  </div>
 
 </div>
 
@@ -135,7 +145,7 @@ button { font-family: inherit; }
     <div class="duel">
       <div class="side">
         <div class="name">你</div>
-        <div class="desc">后天三重 · 蚀骨诀</div>
+        <div class="desc">后天三重 · 百川诀</div>
         <div class="meter"><div class="lbl"><span>气血</span><span><b id="php">1,860</b> / 1,860</span></div><div class="bar hp"><i id="phpBar" style="width:100%"></i></div></div>
         <div class="meter"><div class="lbl"><span>真气</span><span><b id="pqi">120</b> / 120</span></div><div class="bar qi"><i id="pqiBar" style="width:100%"></i></div></div>
         <div class="fx-row" id="pfx"></div>
@@ -164,6 +174,7 @@ button { font-family: inherit; }
 
 <script>
 const FX = {
+  dielang: { nm: '叠浪', side: 'buff',   eff: v => `${v} / 5 重` },
   yunjin:  { nm: '运劲', side: 'buff',   eff: v => `攻击 +${v}%` },
   ningmou: { nm: '凝眸', side: 'buff',   eff: v => `会心 +${v}%` },
   qingshen:{ nm: '轻身', side: 'buff',   eff: v => `闪避 +${v}` },
@@ -173,38 +184,44 @@ const FX = {
   fengxue: { nm: '封穴', side: 'debuff', eff: () => '下一次出手落空' },
   du:      { nm: '毒',   side: 'debuff', eff: v => `${v} 层 · 每回合发作` },
 };
-const ORDER = ['yunjin', 'ningmou', 'qingshen', 'xieli', 'mimu', 'pozhan', 'fengxue', 'du'];
+const ORDER = ['dielang', 'yunjin', 'ningmou', 'qingshen', 'xieli', 'mimu', 'pozhan', 'fengxue', 'du'];
 const STYLES = { '': '石印 · 器物' };
 let style = '';
-const src = k => `../../code/public/art/fx/${k}.png`;
+let dl = 'a';
+const src = k => `../../code/public/art/fx/${k === 'dielang' ? 'dielang-' + dl : k}.png`;
 
 // 剧本：每回合双方身上的状态 [key, 值, 余回合]；毒的「余回合」位放层数
 const STEPS = [
-  { rd: 1, p: [], e: [['du', 2, 0]], php: 1860, ehp: 2310, qi: 120,
+  { rd: 1, p: [['dielang', 1, 0]], e: [['du', 2, 0]], php: 1860, ehp: 2310, qi: 120,
     log: '<span class="me">你</span>抢先出手，指缝间一点乌光没入对方袖口。' },
-  { rd: 2, p: [['yunjin', 14, 3]], e: [['du', 3, 0]], php: 1712, ehp: 2104, qi: 105,
+  { rd: 2, p: [['dielang', 2, 0], ['yunjin', 14, 3]], e: [['du', 3, 0]], php: 1712, ehp: 2104, qi: 105,
     log: '<span class="me">你</span>使出<span class="sk">青萍剑法 · 萍踪乍起</span>，一股劲力贯入四肢，接下来几招更见沉猛。', fresh: ['yunjin'] },
-  { rd: 3, p: [['yunjin', 14, 2]], e: [['du', 4, 0], ['mimu', 24, 3]], php: 1640, ehp: 1872, qi: 85,
+  { rd: 3, p: [['dielang', 2, 0], ['yunjin', 14, 2]], e: [['du', 4, 0], ['mimu', 24, 3]], php: 1640, ehp: 1872, qi: 85,
     log: '<span class="me">你</span>使出<span class="sk">骤雨连珠剑 · 珠帘倒卷</span>，剑光乱人眼目，<span class="foe">黑风寨二当家</span>一时看不真切。', fresh: ['mimu'] },
-  { rd: 4, p: [['yunjin', 14, 1], ['ningmou', 16, 3]], e: [['du', 5, 0], ['mimu', 24, 2], ['pozhan', 24, 3]], php: 1640, ehp: 1530, qi: 60,
+  { rd: 4, p: [['dielang', 3, 0], ['yunjin', 14, 1], ['ningmou', 16, 3]], e: [['du', 5, 0], ['mimu', 24, 2], ['pozhan', 24, 3]], php: 1640, ehp: 1530, qi: 60,
     log: '<span class="me">你</span>使出<span class="sk">孤峰绝壁剑 · 断崖</span>，一剑削开对方护身架势；<span class="foe">黑风寨二当家</span>一刀劈空。', fresh: ['pozhan', 'ningmou'] },
-  { rd: 5, p: [['ningmou', 16, 2], ['qingshen', 24, 3]], e: [['du', 6, 0], ['mimu', 24, 1], ['pozhan', 24, 2], ['fengxue', 0, 0], ['xieli', 16, 3]], php: 1580, ehp: 1102, qi: 40,
+  { rd: 5, p: [['dielang', 4, 0], ['ningmou', 16, 2], ['qingshen', 24, 3]], e: [['du', 6, 0], ['mimu', 24, 1], ['pozhan', 24, 2], ['fengxue', 0, 0], ['xieli', 16, 3]], php: 1580, ehp: 1102, qi: 40,
     log: '<span class="me">你</span>使出<span class="sk">逐浪刀法 · 叠潮</span>，刀背顺势一磕，点中对方肩井穴。', fresh: ['fengxue', 'xieli', 'qingshen'], gone: { p: ['yunjin'] } },
-  { rd: 6, p: [['ningmou', 16, 1], ['qingshen', 24, 2]], e: [['du', 7, 0], ['pozhan', 24, 1], ['xieli', 16, 2]], php: 1580, ehp: 760, qi: 55,
-    log: '<span class="foe">黑风寨二当家</span>半边身子发麻，这一回合没能出手。', gone: { e: ['mimu', 'fengxue'] } },
+  { rd: 6, p: [['dielang', 5, 0], ['ningmou', 16, 1], ['qingshen', 24, 2]], e: [['du', 7, 0], ['pozhan', 24, 1], ['xieli', 16, 2]], php: 1580, ehp: 760, qi: 55,
+    log: '<span class="me">你</span>一剑正中要害，<span class="cr">会心！</span>余劲层层叠起，已到满潮。<span class="foe">黑风寨二当家</span>半边身子发麻，这一回合没能出手。', gone: { e: ['mimu', 'fengxue'] }, brim: true },
+  { rd: 7, p: [['qingshen', 24, 1]], e: [['du', 8, 0], ['xieli', 16, 1]], php: 1520, ehp: 120, qi: 70,
+    log: '<span class="me">你</span>蓄满的劲道一泻而出，<span class="sk">排山倒海</span>，造成 <b>640</b> 点伤害。', gone: { p: ['dielang', 'ningmou'], e: ['pozhan'] } },
 ];
 let i = -1, timer = null;
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('en-US');
 
-function chip(k, v, left, side, fresh, gone) {
+function chip(k, v, left, side, fresh, gone, brim) {
   const d = FX[k], el = document.createElement('div');
-  const lasting = !['du', 'fengxue'].includes(k);
-  el.className = `fx ${d.side}${fresh ? ' fresh' : ''}${lasting && left === 1 ? ' last' : ''}${gone ? ' gone' : ''}`;
+  const stack = ['du', 'dielang'].includes(k);
+  const lasting = !stack && k !== 'fengxue';
+  el.className = `fx ${d.side}${fresh ? ' fresh' : ''}${lasting && left === 1 ? ' last' : ''}${gone ? ' gone' : ''}${brim ? ' brim' : ''}`;
   el.innerHTML = `<img src="${src(k)}" alt="${d.nm}">`
     + (lasting ? `<span class="pips">${[1, 2, 3].map(n => `<span class="${n <= left ? 'on' : ''}"></span>`).join('')}</span>` : '')
-    + (k === 'du' ? `<span class="n">${v}</span>` : '');
-  el.dataset.tip = `<span class="${k === 'du' ? 'du' : d.side}">${d.nm}</span>　${d.eff(v)}` + (lasting ? `<br><span class="l">余 ${left} 回合</span>` : '');
+    + (stack ? `<span class="n">${v}</span>` : '');
+  el.dataset.tip = `<span class="${k === 'du' ? 'du' : d.side}">${d.nm}</span>　${d.eff(v)}`
+    + (lasting ? `<br><span class="l">余 ${left} 回合</span>` : '')
+    + (k === 'dielang' ? '<br><span class="l">叠满：排山倒海 400%</span>' : '');
   if (!fresh) el.style.animation = gone ? '' : 'none';
   return el;
 }
@@ -213,7 +230,7 @@ function render(animate) {
   ['p', 'e'].forEach(sd => {
     const row = $(sd + 'fx'); row.innerHTML = '';
     if (!s) return;
-    s[sd].forEach(([k, v, l]) => row.appendChild(chip(k, v, l, sd, animate && s.fresh?.includes(k), false)));
+    s[sd].forEach(([k, v, l]) => row.appendChild(chip(k, v, l, sd, animate && s.fresh?.includes(k), false, k === 'dielang' && s.brim)));
     if (animate) (s.gone?.[sd] || []).forEach(k => {
       const prev = STEPS[i - 1][sd].find(x => x[0] === k);
       const el = chip(k, prev[1], 0, sd, false, true); row.appendChild(el);
@@ -246,8 +263,8 @@ function sheet() {
     <div class="set" role="button" tabindex="0" data-s="${s}" aria-pressed="${s === style}">
       <div class="nm">${nm}</div>
       <div class="icons">${ORDER.map((k, n) => `
-        <div class="cell${n === 3 ? ' split' : ''}">
-          <div class="sizes">${[48, 30, 22].map(z => `<img src="../../code/public/art/fx/${k}.png" width="${z}" height="${z}" alt="">`).join('')}</div>
+        <div class="cell${n === 4 ? ' split' : ''}">
+          <div class="sizes">${[36, 26, 18].map(z => `<img src="${src(k)}" width="${z}" height="${z}" alt="">`).join('')}</div>
           <div class="lb ${FX[k].side}">${FX[k].nm}</div>
         </div>`).join('')}</div>
     </div>`).join('');
@@ -258,9 +275,13 @@ function sheet() {
 }
 function setStyle(s) {
   style = s;
-  document.querySelectorAll('#styleSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === s));
-  sheet(); render(false);
+    sheet(); render(false);
 }
+document.querySelectorAll('#dlSeg button').forEach(b => b.onclick = () => {
+  dl = b.dataset.v;
+  document.querySelectorAll('#dlSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  sheet(); render(false);
+});
 
 // 悬停
 const tip = $('tip');

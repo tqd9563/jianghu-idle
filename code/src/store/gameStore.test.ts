@@ -4,6 +4,7 @@
 import { freshDiyun } from '../engine/prestige';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { REALMS } from '../engine/content';
+import { computeAttributes } from '../engine/attributes';
 import { zhongCost } from '../engine/neigong';
 import {
   resetLiveTestWindowForTests, startLiveTestWindow as persistLiveTestWindow, loadGame, saveGame, backdateSavedAt,
@@ -14,7 +15,7 @@ import {
   buildLoadout, effBreakCost, effIdleRate, mapUnlocked, nextAfterBattle, playerBuild, putInBag, resetLiveTestVisitForTests, retireKind, slotCountOf,
   rollDropFor, tierUnlocked, useGameStore, zhongGate,
 } from './gameStore';
-import { rollGear, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
+import { rollGear, gearBonusOf, type GearItem, type GearSlot, type WeaponCat } from '../engine/gear';
 import { RETREAT_WAIT_MS, applyWuxueDrop, giftPending, frontierStageOf, handsOf, priceBasisOf, isTeachFailure, learnedFormsOf as learnedFormsOfStore, marketGoodsOf, sectShelfOf } from './gameStore';
 import { BLACK_PER_LIFE, BLACK_UNLOCK_SPENT, STALL_PRICE_MULT } from '../engine/market';
 import { slotCount } from '../engine/wuxue';
@@ -298,6 +299,27 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.reputation).toBe(16);
     expect(playerBuild(s).atk).toBeCloseTo(before.atk * (1 + 0.05 + 0.048), 6);
     expect(getEvents().filter((e) => e.e === 'diyun_bought')).toHaveLength(2);
+  });
+
+  it('底蕴购买：身手展示属性（computeAttributes）与战斗构筑同口径上涨', () => {
+    useGameStore.setState({
+      reputation: 40, realm: 2, route: 'huashan', neigong: 'jingleijue', zhong: 1, tiersPassed: 0,
+      worn: {}, injuries: freshInjuries(), diyun: freshDiyun(),
+    });
+    const attrOf = () => {
+      const s = useGameStore.getState();
+      return computeAttributes(s.realm, s.route, s.zhong, 0, 0, 1, gearBonusOf(s.worn), s.diyun);
+    };
+    const before = attrOf();
+    useGameStore.getState().buyDiyun('gongji'); // 10
+    useGameStore.getState().buyDiyun('qixue'); // 10
+    const s = useGameStore.getState();
+    const after = attrOf();
+    const build = playerBuild(s);
+    expect(after.atk).toBeGreaterThan(before.atk);
+    expect(after.hp).toBeGreaterThan(before.hp);
+    expect(after.atk).toBeCloseTo(build.atk, 0);
+    expect(after.hp).toBeCloseTo(build.hp, 0);
   });
 
   it('修行感悟：传承一级 / 尽数传承，乘区随之上涨', () => {

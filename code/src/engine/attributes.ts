@@ -7,6 +7,7 @@
 import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouRealms, zhaoshiLevel, type RouteId } from './content';
 import { ROUTES } from './routes';
 import type { GearBonus } from './gear';
+import { diyunBonus, type DiyunLevels } from './prestige';
 
 export interface FinalAttributes {
   hp: number;
@@ -27,6 +28,19 @@ export interface FinalAttributes {
     atkTempPct: number;
     defTempPct: number;
     hpTempPct: number;
+    /** 前尘·底蕴累计加成（prestige-shop/design.md §2）；比例项为乘区比例，会心两项为加点 */
+    diyun: {
+      hpPct: number;
+      atkPct: number;
+      defPct: number;
+      hitPct: number;
+      dodgePct: number;
+      critPP: number;
+      cdPP: number;
+    };
+    /** 命中 / 闪避的火候平加值（在底蕴乘区之前加） */
+    hitFlat: number;
+    dodgeFlat: number;
   };
 }
 
@@ -45,6 +59,8 @@ export function computeAttributes(
   huohouMult = 1,
   /** 一身装备的合计加成（battle-loot/spec.md §6：百分比乘进基础值，命中 / 闪避相加，会心封顶 80%） */
   gear?: GearBonus,
+  /** 前尘·底蕴八条级数（prestige-shop/design.md §2）：在火候之后、装备之前乘入 */
+  diyun?: Partial<DiyunLevels>,
 ): FinalAttributes {
   const base = REALMS[realm - 1];
   const def = route ? ROUTES[route] : null;
@@ -61,16 +77,25 @@ export function computeAttributes(
   const hpTempPct = (p.hpPct ?? 0) * L + acupointPct;
 
   const ge = gear ?? { atk: 0, hp: 0, def: 0, hit: 0, dodge: 0, atkPct: 0, hpPct: 0, defPct: 0, critPP: 0, cdPP: 0 };
+  const dq = {
+    hpPct: diyunBonus(diyun, 'qixue'),
+    atkPct: diyunBonus(diyun, 'gongji'),
+    defPct: diyunBonus(diyun, 'fangyu'),
+    hitPct: diyunBonus(diyun, 'mingzhong'),
+    dodgePct: diyunBonus(diyun, 'shanbi'),
+    critPP: diyunBonus(diyun, 'huixin'),
+    cdPP: diyunBonus(diyun, 'huixin_shanghai'),
+  };
   return {
-    hp: Math.round((base.hp * (1 + permPct) * (1 + hpTempPct) * hh.statMult + ge.hp) * (1 + ge.hpPct)),
-    atk: round1((base.atk * (1 + permPct) * (1 + atkTempPct) * hh.statMult + ge.atk) * (1 + ge.atkPct)),
-    def: round1((base.def * (1 + permPct) * (1 + defTempPct) * hh.statMult + ge.def) * (1 + ge.defPct)),
-    accuracy: round1(base.accuracy * (1 + permPct) + hh.hit + ge.hit),
-    evasion: round1(base.evasion * (1 + permPct) + hh.dodge + ge.dodge),
-    critRate: Math.min(0.8, (BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L) * (1 + permPct) + ge.critPP / 100),
-    critDmg: (BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L) * (1 + permPct) + ge.cdPP / 100,
+    hp: Math.round((base.hp * (1 + permPct) * (1 + hpTempPct) * hh.statMult * (1 + dq.hpPct) + ge.hp) * (1 + ge.hpPct)),
+    atk: round1((base.atk * (1 + permPct) * (1 + atkTempPct) * hh.statMult * (1 + dq.atkPct) + ge.atk) * (1 + ge.atkPct)),
+    def: round1((base.def * (1 + permPct) * (1 + defTempPct) * hh.statMult * (1 + dq.defPct) + ge.def) * (1 + ge.defPct)),
+    accuracy: round1((base.accuracy * (1 + permPct) + hh.hit) * (1 + dq.hitPct) + ge.hit),
+    evasion: round1((base.evasion * (1 + permPct) + hh.dodge) * (1 + dq.dodgePct) + ge.dodge),
+    critRate: Math.min(0.8, (BASE_CRIT_RATE + (g.critRatePP ?? 0) + (p.critRatePP ?? 0) * L) * (1 + permPct) + dq.critPP + ge.critPP / 100),
+    critDmg: (BASE_CRIT_DMG + (g.critDmgPP ?? 0) + (p.critDmgPP ?? 0) * L) * (1 + permPct) + dq.cdPP + ge.cdPP / 100,
     basicAtkMult: g.basicAtkMult ?? 1,
     poisonCoef: g.poisonCoef ? g.poisonCoef + (p.poisonCoefPP ?? 0) * L : 0,
-    zones: { atkBase: base.atk, atkPermPct: permPct, atkTempPct, defTempPct, hpTempPct },
+    zones: { atkBase: base.atk, atkPermPct: permPct, atkTempPct, defTempPct, hpTempPct, diyun: dq, hitFlat: hh.hit, dodgeFlat: hh.dodge },
   };
 }

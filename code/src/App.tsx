@@ -116,7 +116,7 @@ export default function App() {
     const through = data ? data.meridians.filter((m) => isMeridianComplete(m, opened)).length : 0;
     return totalAcupointBonus(realm, opened.size, through);
   };
-  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s), gearBonusOf(s.worn));
+  const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s), gearBonusOf(s.worn), s.diyun);
   // 第一世在 1-7 遇见前辈后选内功，第二世起开局即选（battle-loot/design.md §5）
   const neigongSelectOpen = s.neigong === null && (s.taught || s.run >= 2) && s.retireCeremony === null && s.failure === null;
   const retire = retireKind(s);
@@ -265,7 +265,7 @@ export default function App() {
       {s.ceremony !== null && (
         <BreakthroughCeremony
           realmTo={s.ceremony}
-          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, acuPct(s.ceremony - 1), huohouMultOf(s), gearBonusOf(s.worn))}
+          prevAttrs={computeAttributes(s.ceremony - 1, s.route, s.zhong, 0, acuPct(s.ceremony - 1), huohouMultOf(s), gearBonusOf(s.worn), s.diyun)}
           nextAttrs={attrs}
           onClose={s.dismissCeremony}
         />

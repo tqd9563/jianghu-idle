@@ -8,7 +8,7 @@ import { WoundPanel } from '../components/WoundPanel';
 import { freshInjuries } from '../engine/injury';
 import { computeAttributes, type FinalAttributes } from '../engine/attributes';
 import { gearBonusOf } from '../engine/gear';
-import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouRealms } from '../engine/content';
+import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, huohouRealms, zhaoshiLevel } from '../engine/content';
 import { paidThrough, segmentQuotas, zhoutianProgress } from '../engine/formulas';
 import { ROUTES } from '../engine/routes';
 import {
@@ -128,37 +128,50 @@ function ZhoutianRead({ s, breakCost }: { s: State; breakCost: number }) {
 
 function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
   const hhMult = huohouMultOf(s);
-  const a = computeAttributes(s.realm, s.route, s.zhong, 0, acupointPct, hhMult, gearBonusOf(s.worn));
+  const gear = gearBonusOf(s.worn);
+  const a = computeAttributes(s.realm, s.route, s.zhong, 0, acupointPct, hhMult, gear, s.diyun);
   const base = REALMS[s.realm - 1];
   const ng = s.neigong ? NEIGONG[s.neigong] : null;
   const route = s.route ? ROUTES[s.route] : null;
   const dx = s.route ? huohouRealms(s.zhong) * hhMult : 0;
   const hhStat = Math.pow(1.7, dx);
   const qiMax = qiMaxOf(s);
+  const dq = a.zones.diyun;
 
-  // 三项主属性的推导：境界基础 · 内功逐重 · 路数赠予 · 窍穴经脉 · 十重以上火候
-  const statTip = (baseV: number, tempPct: number, grantPct: number, extra: string[] = []): string => {
+  // 三项主属性的推导：境界基础 · 内功逐重 · 路数赠予 · 窍穴经脉 · 十重以上火候 · 底蕴
+  const statTip = (baseV: number, tempPct: number, grantPct: number, diyunPct = 0, extra: string[] = []): string => {
     const parts = [`境界基础 ${baseV}`];
     const ngPart = tempPct - acupointPct - grantPct;
     if (grantPct > 0) parts.push(`路数赠予 +${pct1(grantPct)}`);
     if (ngPart > 1e-9 && ng) parts.push(`${ng.name} 第 ${s.zhong} 重 +${pct1(ngPart)}`);
     if (acupointPct > 0) parts.push(`窍穴经脉 +${pct1(acupointPct)}`);
     if (hhStat > 1.0001) parts.push(`十重以上火候 ×${hhStat.toFixed(2)}`);
+    if (diyunPct > 1e-9) parts.push(`底蕴 +${pct1(diyunPct)}`);
     return [...parts, ...extra].length > 1 ? [...parts, ...extra].join('<br>') : '';
   };
+  const hitTip = (baseV: number, flat: number, diyunPct: number, gearFlat: number): string => {
+    const parts = [`境界基础 ${baseV}`];
+    if (flat > 1e-9) parts.push(`十重以上火候 +${+flat.toFixed(1)}`);
+    if (diyunPct > 1e-9) parts.push(`底蕴 +${pct1(diyunPct)}`);
+    if (gearFlat > 0) parts.push(`装备 +${+gearFlat.toFixed(1)}`);
+    return parts.length > 1 ? parts.join('<br>') : '';
+  };
   const grantDef = route?.grant.defPct ?? 0;
+  const L = route ? zhaoshiLevel(s.zhong) : 0;
+  const critRoutePP = (route?.grant.critRatePP ?? 0) + (route?.perLevel.critRatePP ?? 0) * L;
+  const cdRoutePP = (route?.grant.critDmgPP ?? 0) + (route?.perLevel.critDmgPP ?? 0) * L;
   const rows: [string, string, string][] = [
-    ['气血', String(Math.round(a.hp)), statTip(base.hp, a.zones.hpTempPct, 0)],
+    ['气血', String(Math.round(a.hp)), statTip(base.hp, a.zones.hpTempPct, 0, dq.hpPct)],
     ['真气', qiMax > 0 ? String(qiMax) : '——',
       ng ? `(70 + 15 × (境界 − 2) + 重数) × 气海<br><span class='l'>(70 + 15 × ${Math.max(s.realm, 2) - 2} + ${s.zhong}) × ${ng.name}气海 ${QI_COEF[ng.quality].toFixed(1)}</span>`
         : '未修内功，尚无真气'],
-    ['攻击', String(Math.round(a.atk)), statTip(base.atk, a.zones.atkTempPct, 0,
+    ['攻击', String(Math.round(a.atk)), statTip(base.atk, a.zones.atkTempPct, 0, dq.atkPct,
       a.basicAtkMult !== 1 ? [`普攻系数 ×${a.basicAtkMult.toFixed(2)}（轻手暗器）`] : [])],
-    ['防御', String(Math.round(a.def)), statTip(base.def, a.zones.defTempPct, grantDef)],
-    ['命中', String(Math.round(a.accuracy)), a.accuracy !== base.accuracy ? `境界基础 ${base.accuracy}<br>十重以上火候 +${+(a.accuracy - base.accuracy).toFixed(1)}` : ''],
-    ['闪避', String(Math.round(a.evasion)), a.evasion !== base.evasion ? `境界基础 ${base.evasion}<br>十重以上火候 +${+(a.evasion - base.evasion).toFixed(1)}` : ''],
-    ['会心率', pct1(a.critRate), critTip(a, 'critRate', route?.name)],
-    ['会心伤害', pct(a.critDmg), critTip(a, 'critDmg', route?.name)],
+    ['防御', String(Math.round(a.def)), statTip(base.def, a.zones.defTempPct, grantDef, dq.defPct)],
+    ['命中', String(Math.round(a.accuracy)), hitTip(base.accuracy, a.zones.hitFlat, dq.hitPct, gear.hit)],
+    ['闪避', String(Math.round(a.evasion)), hitTip(base.evasion, a.zones.dodgeFlat, dq.dodgePct, gear.dodge)],
+    ['会心率', pct1(a.critRate), critTip(a, 'critRate', route?.name, critRoutePP, dq.critPP, gear.critPP / 100)],
+    ['会心伤害', pct(a.critDmg), critTip(a, 'critDmg', route?.name, cdRoutePP, dq.cdPP, gear.cdPP / 100)],
   ];
 
   return (
@@ -182,11 +195,20 @@ function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
   );
 }
 
-function critTip(a: FinalAttributes, key: 'critRate' | 'critDmg', routeName?: string): string {
+function critTip(
+  a: FinalAttributes,
+  key: 'critRate' | 'critDmg',
+  routeName?: string,
+  routePP = 0,
+  diyunPP = 0,
+  gearPP = 0,
+): string {
   const baseV = key === 'critRate' ? BASE_CRIT_RATE : BASE_CRIT_DMG;
-  const diff = a[key] - baseV;
-  if (diff < 1e-9) return '';
-  return `基础 ${pct(baseV)}<br>${routeName ?? '路数'} +${pct1(diff)}`;
+  const parts = [`基础 ${pct(baseV)}`];
+  if (routePP > 1e-9) parts.push(`${routeName ?? '路数'} +${pct1(routePP)}`);
+  if (diyunPP > 1e-9) parts.push(`底蕴 +${pct1(diyunPP)}`);
+  if (gearPP > 1e-9) parts.push(`装备 +${pct1(gearPP)}`);
+  return a[key] - baseV < 1e-9 ? '' : parts.join('<br>');
 }
 
 // ─────────────────────────────── 破境

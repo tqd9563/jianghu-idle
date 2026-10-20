@@ -131,12 +131,6 @@ button { font-family: inherit; }
 <body>
 <div class="proto-bar">
   <span class="t">增减益标记</span>
-  <span class="t" style="font-size:13px">叠浪图案</span>
-  <div class="seg" id="dlSeg">
-    <button data-v="a" aria-pressed="true">甲 · 浪头</button>
-    <button data-v="b" aria-pressed="false">乙 · 三叠浪</button>
-    <button data-v="c" aria-pressed="false">丙 · 拍岸</button>
-  </div>
 
 </div>
 
@@ -187,8 +181,7 @@ const FX = {
 const ORDER = ['dielang', 'yunjin', 'ningmou', 'qingshen', 'xieli', 'mimu', 'pozhan', 'fengxue', 'du'];
 const STYLES = { '': '石印 · 器物' };
 let style = '';
-let dl = 'a';
-const src = k => `../../code/public/art/fx/${k === 'dielang' ? 'dielang-' + dl : k}.png`;
+const src = k => `../../code/public/art/fx/${k}.png`;
 
 // 剧本：每回合双方身上的状态 [key, 值, 余回合]；毒的「余回合」位放层数
 const STEPS = [
@@ -277,11 +270,6 @@ function setStyle(s) {
   style = s;
     sheet(); render(false);
 }
-document.querySelectorAll('#dlSeg button').forEach(b => b.onclick = () => {
-  dl = b.dataset.v;
-  document.querySelectorAll('#dlSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
-  sheet(); render(false);
-});
 
 // 悬停
 const tip = $('tip');

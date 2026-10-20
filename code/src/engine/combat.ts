@@ -106,6 +106,10 @@ export interface TurnEvent {
   pSq: number;
   pShield: number;
   ePoison: number;
+  /** 持续特效快照（战斗页增减益标记）：[特效, 余几回合, 数值]；增益挂己方、减益挂敌方由特效决定 */
+  lasting: [FormEffect, number, number][];
+  /** 敌人被封穴、下一次行动会落空 */
+  eSealed: boolean;
   /** 当前真气（装了武学才有，spec §1.4） */
   pQi: number;
   /** 叙事战报用的补充信息（只读展示，不参与结算）：出招的招式键 `武学 id:式序`、本招是否暴击 / 被闪、
@@ -232,6 +236,8 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   const pct = () => ({
     phpPct: Math.max(php, 0) / build.hp, ehpPct: Math.max(ehp, 0) / enemy.hp,
     pSq: sq, pShield: Math.max(pshield, 0), ePoison: elayers, pQi: qi,
+    lasting: (Object.keys(lasting) as FormEffect[]).map((k): [FormEffect, number, number] => [k, lasting[k]![0], lasting[k]![1]]),
+    eSealed: sealed,
   });
   type TurnExtra = Pick<TurnEvent, 'form' | 'crit' | 'missed' | 'absorb' | 'detonate'>;
   const push = (rd: number, side: TurnEvent['side'], kind: TurnEvent['kind'], text: string, dmg?: number, extra?: TurnExtra) =>

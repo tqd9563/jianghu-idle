@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>战斗增减益标记</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet" />
+<style>
+:root {
+  --bg: oklch(0.155 0.013 262); --bg-deep: oklch(0.125 0.012 262); --wash: oklch(0.19 0.014 262); --wash-2: oklch(0.225 0.016 262);
+  --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262); --hair: oklch(0.30 0.016 262 / 0.7);
+  --gold: oklch(0.78 0.13 78); --ink-gold: oklch(0.75 0.075 76); --cinnabar: oklch(0.66 0.14 32);
+  --hp: oklch(0.62 0.17 25); --qi: oklch(0.74 0.10 215); --poison: oklch(0.72 0.14 145); --shield: oklch(0.70 0.10 240);
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --font-body: "LXGW WenKai", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ease-sharp: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.6; font-feature-settings: "tnum"; }
+button { font-family: inherit; }
+
+/* 原型工具条（不进游戏） */
+.proto-bar { position: sticky; top: 0; z-index: 10; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 10px 20px; background: oklch(0.12 0.012 262 / 0.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--hair); }
+.proto-bar .t { font-family: var(--font-display); letter-spacing: 0.2em; color: var(--muted); }
+.seg { display: inline-flex; background: var(--wash); border-radius: 9px; padding: 3px; }
+.seg button { border: 0; background: none; padding: 4px 13px; border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+
+.page { max-width: 1040px; margin: 0 auto; padding: 0 20px 80px; }
+.sec-h { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: 0.2em; color: var(--muted); margin: 44px 0 14px; }
+
+/* ═══ 战斗页：照 battle.css 还原 ═══ */
+.arena-wrap { position: relative; margin-top: 24px; border-radius: 16px; overflow: hidden; padding: 30px 34px 28px; }
+.arena-wrap::before { content: ''; position: absolute; inset: 0; background: url(../../code/public/art/battle-village.jpg) center 30% / cover; opacity: 0.32; filter: saturate(0.6); }
+.arena-wrap::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, oklch(0.155 0.013 262 / 0.2), var(--bg) 92%); }
+.arena-wrap > * { position: relative; z-index: 1; }
+.duel { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr); align-items: start; gap: 12px; }
+.side .name { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; display: flex; align-items: center; gap: 10px; }
+.side .desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.side.enemy { text-align: right; }
+.side.enemy .name { justify-content: flex-end; }
+.seal { font-size: 12px; font-family: var(--font-display); letter-spacing: 0.1em; padding: 1px 6px; border-radius: 3px; color: var(--ink-gold); box-shadow: inset 0 0 0 1px var(--ink-gold); font-weight: 600; transform: rotate(-4deg); }
+.meter { margin-top: 14px; }
+.meter .lbl { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+.side.enemy .meter .lbl { flex-direction: row-reverse; }
+.meter .lbl b { color: var(--ink); font-weight: 600; }
+.bar { position: relative; height: 7px; margin-top: 5px; }
+.bar::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.7); }
+.bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .5s var(--ease-sharp);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); }
+.bar.hp i { background: linear-gradient(to right, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); }
+.bar.qi { height: 5px; }
+.bar.qi i { background: linear-gradient(to right, oklch(0.5 0.08 220), var(--qi)); }
+.side.enemy .bar.hp i { left: auto; right: 0; background: linear-gradient(to left, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30));
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); }
+.vs { text-align: center; padding-top: 16px; font-family: var(--font-display); color: var(--faint); letter-spacing: 0.2em; }
+.vs .big { font-size: 26px; color: var(--muted); letter-spacing: 0.1em; display: block; }
+.vs .rd { font-size: 12px; }
+
+/* ═══ 新增：状态标记一行 ═══ */
+.fx-row { display: flex; gap: 8px; margin-top: 14px; min-height: 40px; flex-wrap: wrap; }
+.side.enemy .fx-row { justify-content: flex-end; }
+.fx { position: relative; width: 30px; height: 30px; display: grid; place-items: center; animation: fx-in .42s var(--ease-sharp); cursor: help; }
+.fx img { width: 30px; height: 30px; object-fit: contain; display: block; }
+/* 剩余回合：图标下三枚小点，亮几枚余几回合 */
+.fx .pips { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); display: flex; gap: 3px; }
+.fx .pips span { width: 4px; height: 4px; border-radius: 50%; background: oklch(0.36 0.014 262); transition: background .3s, box-shadow .3s; }
+.fx.buff .pips span.on { background: var(--gold); box-shadow: 0 0 4px oklch(0.78 0.13 78 / 0.7); }
+.fx.debuff .pips span.on { background: var(--cinnabar); box-shadow: 0 0 4px oklch(0.66 0.14 32 / 0.7); }
+/* 层数：右下角一个数 */
+.fx .n { position: absolute; right: -5px; bottom: -5px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--bg-deep); color: var(--poison); font-size: 10.5px; line-height: 15px; text-align: center; font-weight: 700; box-shadow: 0 0 0 1px oklch(0.72 0.14 145 / 0.5); }
+.fx.fresh img { animation: fx-flash .7s ease-out; }
+.fx.last img { animation: fx-fade 1.2s ease-in-out infinite alternate; }
+.fx.gone { animation: fx-out .35s ease-in forwards; }
+@keyframes fx-in { from { opacity: 0; transform: scale(1.5); } }
+@keyframes fx-out { to { opacity: 0; transform: scale(0.6); } }
+@keyframes fx-flash { 0% { filter: brightness(2) drop-shadow(0 0 8px oklch(0.85 0.1 80)); } 100% { filter: none; } }
+@keyframes fx-fade { to { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .fx, .fx img, .fx.gone { animation: none !important; } }
+
+/* 悬停 */
+.tip { position: fixed; z-index: 50; pointer-events: none; opacity: 0; background: oklch(0.24 0.016 262); color: var(--ink); font-size: 12.5px; line-height: 1.55; padding: 8px 11px; border-radius: 8px; max-width: 260px; box-shadow: 0 8px 26px oklch(0.05 0.01 262 / 0.6); transition: opacity .15s; }
+.tip.on { opacity: 1; }
+.tip .l { color: var(--faint); }
+.tip .buff { color: var(--gold); } .tip .debuff { color: oklch(0.74 0.13 32); } .tip .du { color: var(--poison); }
+
+/* 战报两句 + 步进 */
+.log { margin-top: 18px; min-height: 58px; color: var(--muted); line-height: 1.85; }
+.log .rh { font-family: var(--font-display); color: var(--faint); letter-spacing: 0.15em; font-size: 13px; }
+.log .me { color: var(--ink-gold); } .log .sk { color: var(--qi); } .log .foe { color: oklch(0.72 0.12 30); }
+.ctl { display: flex; gap: 12px; justify-content: center; margin-top: 18px; }
+.btn { border: 0; cursor: pointer; padding: 10px 26px; border-radius: 10px; font-size: 14px; letter-spacing: 0.15em; font-family: var(--font-display); }
+.btn.main { background: var(--gold); color: oklch(0.19 0.03 78); font-weight: 700; }
+.btn.quiet { background: var(--wash-2); color: var(--muted); }
+.btn:focus-visible, .seg button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* ═══ 三组图标对照 ═══ */
+.sheet { display: grid; gap: 10px; }
+.set { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px 16px; border-radius: 12px; background: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3)); cursor: pointer; transition: box-shadow .2s; }
+.set[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); }
+.set .nm { font-family: var(--font-display); letter-spacing: 0.2em; color: var(--muted); }
+.set[aria-pressed="true"] .nm { color: var(--gold); }
+.set .icons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.set .cell { display: grid; justify-items: center; gap: 6px; }
+.set .cell .sizes { display: flex; align-items: end; gap: 6px; }
+.set .cell img { object-fit: contain; display: block; }
+.set .cell .lb { font-size: 12px; color: var(--faint); }
+.set .cell .lb.buff { color: var(--ink-gold); } .set .cell .lb.debuff { color: oklch(0.72 0.12 30); }
+.set .cell.split { border-left: 1px dashed var(--hair); }
+
+@media (max-width: 860px) {
+  .arena-wrap { padding: 22px 16px; }
+  .duel { grid-template-columns: 1fr; gap: 18px; }
+  .side.enemy, .side.enemy .name { text-align: left; justify-content: flex-start; }
+  .side.enemy .meter .lbl { flex-direction: row; }
+  .side.enemy .fx-row { justify-content: flex-start; }
+  .side.enemy .bar.hp i { left: 0; right: auto; }
+  .vs { text-align: left; padding: 0; } .vs .big { display: inline; font-size: 18px; margin-right: 8px; }
+  .set { grid-template-columns: 1fr; }
+  .set .icons { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 14px; }
+  .set .cell.split { border-left: 0; }
+  .set .cell .sizes img:first-child { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <span class="t">增减益标记</span>
+
+</div>
+
+<div class="page">
+  <div class="arena-wrap">
+    <div class="duel">
+      <div class="side">
+        <div class="name">你</div>
+        <div class="desc">后天三重 · 蚀骨诀</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span><b id="php">1,860</b> / 1,860</span></div><div class="bar hp"><i id="phpBar" style="width:100%"></i></div></div>
+        <div class="meter"><div class="lbl"><span>真气</span><span><b id="pqi">120</b> / 120</span></div><div class="bar qi"><i id="pqiBar" style="width:100%"></i></div></div>
+        <div class="fx-row" id="pfx"></div>
+      </div>
+      <div class="vs"><span class="big" id="vsBig">对决</span><span class="rd" id="rd"></span></div>
+      <div class="side enemy">
+        <div class="name"><span class="seal">精英</span>黑风寨二当家</div>
+        <div class="desc">第 14 关 · 推荐境界 3</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span><b id="ehp">2,400</b> / 2,400</span></div><div class="bar hp"><i id="ehpBar" style="width:100%"></i></div></div>
+        <div class="fx-row" id="efx"></div>
+      </div>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="ctl">
+      <button class="btn quiet" id="reset">重来</button>
+      <button class="btn main" id="next">下一回合</button>
+      <button class="btn quiet" id="auto">自动</button>
+    </div>
+  </div>
+
+  <div class="sec-h">图标</div>
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const FX = {
+  yunjin:  { nm: '运劲', side: 'buff',   eff: v => `攻击 +${v}%` },
+  ningmou: { nm: '凝眸', side: 'buff',   eff: v => `会心 +${v}%` },
+  qingshen:{ nm: '轻身', side: 'buff',   eff: v => `闪避 +${v}` },
+  xieli:   { nm: '卸力', side: 'debuff', eff: v => `攻击 −${v}%` },
+  mimu:    { nm: '迷目', side: 'debuff', eff: v => `命中 −${v}` },
+  pozhan:  { nm: '破绽', side: 'debuff', eff: v => `防御 −${v}%` },
+  fengxue: { nm: '封穴', side: 'debuff', eff: () => '下一次出手落空' },
+  du:      { nm: '毒',   side: 'debuff', eff: v => `${v} 层 · 每回合发作` },
+};
+const ORDER = ['yunjin', 'ningmou', 'qingshen', 'xieli', 'mimu', 'pozhan', 'fengxue', 'du'];
+const STYLES = { '': '石印 · 器物' };
+let style = '';
+const src = k => `../../code/public/art/fx/${k}.png`;
+
+// 剧本：每回合双方身上的状态 [key, 值, 余回合]；毒的「余回合」位放层数
+const STEPS = [
+  { rd: 1, p: [], e: [['du', 2, 0]], php: 1860, ehp: 2310, qi: 120,
+    log: '<span class="me">你</span>抢先出手，指缝间一点乌光没入对方袖口。' },
+  { rd: 2, p: [['yunjin', 14, 3]], e: [['du', 3, 0]], php: 1712, ehp: 2104, qi: 105,
+    log: '<span class="me">你</span>使出<span class="sk">青萍剑法 · 萍踪乍起</span>，一股劲力贯入四肢，接下来几招更见沉猛。', fresh: ['yunjin'] },
+  { rd: 3, p: [['yunjin', 14, 2]], e: [['du', 4, 0], ['mimu', 24, 3]], php: 1640, ehp: 1872, qi: 85,
+    log: '<span class="me">你</span>使出<span class="sk">骤雨连珠剑 · 珠帘倒卷</span>，剑光乱人眼目，<span class="foe">黑风寨二当家</span>一时看不真切。', fresh: ['mimu'] },
+  { rd: 4, p: [['yunjin', 14, 1], ['ningmou', 16, 3]], e: [['du', 5, 0], ['mimu', 24, 2], ['pozhan', 24, 3]], php: 1640, ehp: 1530, qi: 60,
+    log: '<span class="me">你</span>使出<span class="sk">孤峰绝壁剑 · 断崖</span>，一剑削开对方护身架势；<span class="foe">黑风寨二当家</span>一刀劈空。', fresh: ['pozhan', 'ningmou'] },
+  { rd: 5, p: [['ningmou', 16, 2], ['qingshen', 24, 3]], e: [['du', 6, 0], ['mimu', 24, 1], ['pozhan', 24, 2], ['fengxue', 0, 0], ['xieli', 16, 3]], php: 1580, ehp: 1102, qi: 40,
+    log: '<span class="me">你</span>使出<span class="sk">逐浪刀法 · 叠潮</span>，刀背顺势一磕，点中对方肩井穴。', fresh: ['fengxue', 'xieli', 'qingshen'], gone: { p: ['yunjin'] } },
+  { rd: 6, p: [['ningmou', 16, 1], ['qingshen', 24, 2]], e: [['du', 7, 0], ['pozhan', 24, 1], ['xieli', 16, 2]], php: 1580, ehp: 760, qi: 55,
+    log: '<span class="foe">黑风寨二当家</span>半边身子发麻，这一回合没能出手。', gone: { e: ['mimu', 'fengxue'] } },
+];
+let i = -1, timer = null;
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('en-US');
+
+function chip(k, v, left, side, fresh, gone) {
+  const d = FX[k], el = document.createElement('div');
+  const lasting = !['du', 'fengxue'].includes(k);
+  el.className = `fx ${d.side}${fresh ? ' fresh' : ''}${lasting && left === 1 ? ' last' : ''}${gone ? ' gone' : ''}`;
+  el.innerHTML = `<img src="${src(k)}" alt="${d.nm}">`
+    + (lasting ? `<span class="pips">${[1, 2, 3].map(n => `<span class="${n <= left ? 'on' : ''}"></span>`).join('')}</span>` : '')
+    + (k === 'du' ? `<span class="n">${v}</span>` : '');
+  el.dataset.tip = `<span class="${k === 'du' ? 'du' : d.side}">${d.nm}</span>　${d.eff(v)}` + (lasting ? `<br><span class="l">余 ${left} 回合</span>` : '');
+  if (!fresh) el.style.animation = gone ? '' : 'none';
+  return el;
+}
+function render(animate) {
+  const s = STEPS[i];
+  ['p', 'e'].forEach(sd => {
+    const row = $(sd + 'fx'); row.innerHTML = '';
+    if (!s) return;
+    s[sd].forEach(([k, v, l]) => row.appendChild(chip(k, v, l, sd, animate && s.fresh?.includes(k), false)));
+    if (animate) (s.gone?.[sd] || []).forEach(k => {
+      const prev = STEPS[i - 1][sd].find(x => x[0] === k);
+      const el = chip(k, prev[1], 0, sd, false, true); row.appendChild(el);
+      setTimeout(() => el.remove(), 380);
+    });
+  });
+  $('vsBig').textContent = s ? '交手' : '对决';
+  $('rd').textContent = s ? `第 ${s.rd} 回合` : '';
+  const php = s?.php ?? 1860, ehp = s?.ehp ?? 2400, qi = s?.qi ?? 120;
+  $('php').textContent = fmt(php); $('phpBar').style.width = php / 1860 * 100 + '%';
+  $('ehp').textContent = fmt(ehp); $('ehpBar').style.width = ehp / 2400 * 100 + '%';
+  $('pqi').textContent = qi; $('pqiBar').style.width = qi / 120 * 100 + '%';
+  $('log').innerHTML = s ? `<div class="rh">第 ${s.rd} 回合</div>${s.log}` : '';
+  $('next').disabled = i >= STEPS.length - 1;
+  $('next').style.opacity = i >= STEPS.length - 1 ? 0.4 : 1;
+}
+$('next').onclick = () => { if (i < STEPS.length - 1) { i++; render(true); } };
+$('reset').onclick = () => { stopAuto(); i = -1; render(false); };
+function stopAuto() { clearInterval(timer); timer = null; $('auto').textContent = '自动'; }
+$('auto').onclick = () => {
+  if (timer) return stopAuto();
+  if (i >= STEPS.length - 1) i = -1;
+  $('auto').textContent = '停';
+  timer = setInterval(() => { if (i >= STEPS.length - 1) return stopAuto(); i++; render(true); }, 1500);
+  i++; render(true);
+};
+
+function sheet() {
+  $('sheet').innerHTML = Object.entries(STYLES).map(([s, nm]) => `
+    <div class="set" role="button" tabindex="0" data-s="${s}" aria-pressed="${s === style}">
+      <div class="nm">${nm}</div>
+      <div class="icons">${ORDER.map((k, n) => `
+        <div class="cell${n === 3 ? ' split' : ''}">
+          <div class="sizes">${[48, 30, 22].map(z => `<img src="../../code/public/art/fx/${k}.png" width="${z}" height="${z}" alt="">`).join('')}</div>
+          <div class="lb ${FX[k].side}">${FX[k].nm}</div>
+        </div>`).join('')}</div>
+    </div>`).join('');
+  document.querySelectorAll('.set').forEach(el => {
+    el.onclick = () => setStyle(el.dataset.s);
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStyle(el.dataset.s); } };
+  });
+}
+function setStyle(s) {
+  style = s;
+  document.querySelectorAll('#styleSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === s));
+  sheet(); render(false);
+}
+
+// 悬停
+const tip = $('tip');
+document.addEventListener('mouseover', e => {
+  const t = e.target.closest('[data-tip]'); if (!t) return tip.classList.remove('on');
+  tip.innerHTML = t.dataset.tip; tip.classList.add('on');
+  const r = t.getBoundingClientRect();
+  tip.style.left = Math.min(innerWidth - tip.offsetWidth - 8, Math.max(8, r.left + r.width / 2 - tip.offsetWidth / 2)) + 'px';
+  tip.style.top = (r.top - tip.offsetHeight - 10) + 'px';
+});
+
+i = 3; sheet(); render(false);
+</script>
+</body>
+</html>

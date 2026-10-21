@@ -85,7 +85,8 @@
 
 /* ═══════ 翻开的书：AI 仿真磁青纸（/art/wuxue-open-ciqing.jpg），书名式名泥金、数值象牙白；内容按页边用容器单位定位 ═══════ */
 .wg-right { position: relative; }
-.wg-open { position: relative; display: grid; grid-template-columns: 1fr 1fr; height: 100%; container-type: size;
+/* 高度随左栏，但左栏没有藏书（空状态）时也不能把书压扁：保底一整栏搁板的高度 */
+.wg-open { position: relative; display: grid; grid-template-columns: 1fr 1fr; height: 100%; min-height: 570px; container-type: size;
   background: linear-gradient(oklch(0.12 0.02 262 / 0.18), oklch(0.12 0.02 262 / 0.18)), url('/art/wuxue-open-ciqing.jpg') center / 100% 100% no-repeat;
   filter: drop-shadow(0 18px 40px oklch(0.05 0.01 262 / 0.7));
   --ink: oklch(0.92 0.025 85); --muted: oklch(0.8 0.025 85); --faint: oklch(0.72 0.025 250); --hair: oklch(0.7 0.03 250 / 0.3); color: var(--ink); }
@@ -224,7 +225,7 @@
   .wg-carry { gap: 12px; }
   .wg-study { grid-template-columns: 1fr; gap: 26px; }
   .wg-shelf { grid-template-columns: repeat(3, 76px); justify-content: space-around; height: auto; grid-template-rows: none; grid-auto-rows: var(--row); }
-  .wg-open { grid-template-columns: 1fr; container-type: inline-size; height: auto; }
+  .wg-open { grid-template-columns: 1fr; container-type: inline-size; height: auto; min-height: 0; }
   .wg-pg, .wg-pg.l, .wg-pg.r { padding: 28px 24px; }
   .wg-forms { overflow: visible; -webkit-mask-image: none; mask-image: none; padding-bottom: 0; margin-bottom: 0; }
   .wg-bigico, .wg-zhu { right: 24px; top: 28px; }

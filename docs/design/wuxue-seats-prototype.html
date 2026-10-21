@@ -9,7 +9,7 @@
   标题下一行是已装武学，三种画法可切（甲 印匣 / 乙 题签 / 丙 书脊），三种都能一眼看出品质。
   下方左窄栏「藏书」3 × 3 一页九本、可翻页；右侧一本翻开的绢本册页显示详情，高度与藏书栏对齐。
   书只在一处：装配后从藏书里移走，卸下即放回。
-  类目图标 code/public/art/cat/*.png（AI 生成，沿用战斗石印模板，朱砂底白剪影）；书页两案可切：绢本 code/public/art/wuxue-open-silk.jpg / 纸本 code/public/art/wuxue-open-paper.jpg。
+  类目图标 code/public/art/cat/*.png（AI 生成，沿用战斗石印模板，朱砂底白剪影）；书页四案可切：绢本 wuxue-open-silk.jpg / 纸本 wuxue-open-paper.jpg / 磁青 wuxue-open-ciqing.jpg（磁青纸泥金写经的路子）/ 烛照（纸本 + CSS 暗角羽化），图都在 code/public/art/。
   已装印匣的印色三案可切：统一朱砂 / 按路数 / 按品质。
   素材相对引用，file:// 直接打开即可。右上角白色面板是原型控制，不是设计内容。
 -->
@@ -87,11 +87,11 @@ button[data-tip] { cursor: pointer; }
 .ya.empty .box { background: none; box-shadow: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; }
 
 /* 印色：同类目的几门靠印色分开。按路数＝路数五色；按品质＝寻常石灰 / 上乘冷青 / 绝学赤金。原图朱砂，用滤镜换色 */
-.seal-route .t-刚猛 .ico { filter: none; }
-.seal-route .t-绵长 .ico { filter: hue-rotate(100deg) saturate(0.7) brightness(1.2); }
-.seal-route .t-守御 .ico { filter: hue-rotate(210deg) saturate(0.85) brightness(1.15); }
-.seal-route .t-诡谲 .ico { filter: hue-rotate(290deg) saturate(0.8) brightness(1.1); }
-.seal-route .t-阴毒 .ico { filter: hue-rotate(160deg) saturate(0.7) brightness(1.0); }
+.seal-route .t-绵长 .ico, .rf.t-绵长 { --rf: hue-rotate(100deg) saturate(0.7) brightness(1.2); }
+.seal-route .t-守御 .ico, .rf.t-守御 { --rf: hue-rotate(210deg) saturate(0.85) brightness(1.15); }
+.seal-route .t-诡谲 .ico, .rf.t-诡谲 { --rf: hue-rotate(290deg) saturate(0.8) brightness(1.1); }
+.seal-route .t-阴毒 .ico, .rf.t-阴毒 { --rf: hue-rotate(160deg) saturate(0.7) brightness(1.0); }
+.seal-route .ico { filter: var(--rf, none); }
 .seal-quality .g1 .ico { filter: grayscale(1) brightness(0.95) contrast(1.05); }
 .seal-quality .g2 .ico { filter: hue-rotate(185deg) saturate(0.85) brightness(1.15); }
 .seal-quality .g3 .ico { filter: hue-rotate(50deg) saturate(1.05) brightness(1.45); }
@@ -173,7 +173,7 @@ button[data-tip] { cursor: pointer; }
 /* 翻开的书：AI 绢本册页底图，高度随藏书栏 */
 .open { position: relative; display: grid; grid-template-columns: 1fr 1fr; height: 100%; min-height: 560px; color: var(--ink); container-type: size;
   background: url('../../code/public/art/wuxue-open-silk.jpg') center / 100% 100% no-repeat; filter: drop-shadow(0 18px 40px oklch(0.05 0.01 262 / 0.7)); }
-.pg { position: relative; padding: calc(6cqh + 22px) calc(4cqw + 22px) calc(8cqh + 20px); display: flex; flex-direction: column; min-height: 0; }
+.pg { position: relative; padding: calc(6cqh + 22px) calc(4cqw + 22px) calc(8cqh + 30px); display: flex; flex-direction: column; min-height: 0; }
 .pg.l { padding-right: calc(2.5cqw + 22px); }
 .pg.r { padding-left: calc(1.5cqw + 22px); }
 .open .ttl { display: flex; align-items: flex-start; gap: 16px; }
@@ -182,10 +182,9 @@ button[data-tip] { cursor: pointer; }
 .ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 3px; width: max-content; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
 .ptag.q2 { color: oklch(0.8 0.08 210); background: oklch(0.74 0.10 215 / 0.10); box-shadow: inset 0 0 0 1px oklch(0.74 0.10 215 / 0.4); }
 .ptag.q3 { color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); background: oklch(0.78 0.13 78 / 0.1); }
-.ptag.rt::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tc); }
-.ptag.rt { color: var(--tc); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 50%, transparent); }
+.ptag.rt { color: color-mix(in oklch, var(--tc) 85%, white); background: color-mix(in oklch, var(--tc) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); }
 .ptag.res { color: var(--cinnabar); box-shadow: inset 0 0 0 1px oklch(0.66 0.14 32 / 0.5); }
-.open .bigico { position: absolute; right: calc(2.5cqw + 20px); top: calc(6cqh + 18px); width: 64px; height: 64px; transform: rotate(-6deg); filter: drop-shadow(0 3px 6px oklch(0.05 0.01 262 / 0.5)); }
+.open .bigico { position: absolute; right: calc(2.5cqw + 20px); top: calc(6cqh + 18px); width: 64px; height: 64px; transform: rotate(-6deg); filter: var(--rf, none) drop-shadow(0 3px 6px oklch(0.05 0.01 262 / 0.5)); }
 .params { display: grid; gap: 11px; margin-top: 34px; font-size: 13px; color: var(--faint); }
 .params > span { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid oklch(0.42 0.014 262 / 0.35); }
 .params b { color: var(--ink); font-weight: 600; font-size: 15px; }
@@ -235,7 +234,7 @@ button[data-tip] { cursor: pointer; }
 .paper .params > span, .paper .shi { border-color: oklch(0.4 0.02 60 / 0.28); }
 .paper .ptag.q2 { color: oklch(0.4 0.09 228); background: oklch(0.42 0.09 228 / 0.08); box-shadow: inset 0 0 0 1px oklch(0.42 0.09 228 / 0.45); }
 .paper .ptag.q3 { color: oklch(0.45 0.11 65); background: oklch(0.7 0.13 78 / 0.18); box-shadow: inset 0 0 0 1px oklch(0.5 0.11 65 / 0.6); }
-.paper .ptag.rt { color: color-mix(in oklch, var(--tc) 50%, oklch(0.2 0.02 55)); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 55%, oklch(0.3 0.02 55)); }
+.paper .ptag.rt { color: color-mix(in oklch, var(--tc) 50%, oklch(0.2 0.02 55)); background: color-mix(in oklch, var(--tc) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 55%, oklch(0.3 0.02 55)); }
 .paper .shi.locked .fx { color: oklch(0.5 0.05 228); }
 .paper .pn b { background: oklch(0.86 0.03 80); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 60); }
 .paper .pn em { color: var(--faint); }
@@ -244,6 +243,23 @@ button[data-tip] { cursor: pointer; }
 .paper .pbtn:hover:not(:disabled) { background: oklch(0.54 0.17 28); }
 .paper .pbtn.quiet { background: none; color: var(--muted); box-shadow: inset 0 0 0 1px oklch(0.4 0.02 60 / 0.5); }
 .paper .pbtn:disabled { background: none; color: oklch(0.52 0.02 60); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 60 / 0.4); }
+/* 磁青：AI 仿真磁青纸（code/public/art/wuxue-open-ciqing.jpg），真纸的纤维与毛边、底色贴近夜色；书名与式名用泥金，数值用象牙白 */
+.open.ciqing { background: linear-gradient(oklch(0.12 0.02 262 / 0.18), oklch(0.12 0.02 262 / 0.18)), url('../../code/public/art/wuxue-open-ciqing.jpg') center / 100% 100% no-repeat;
+  --ink: oklch(0.92 0.025 85); --muted: oklch(0.8 0.025 85); --faint: oklch(0.72 0.025 250); --hair: oklch(0.7 0.03 250 / 0.3);
+  --nijin: oklch(0.83 0.1 82); }
+.open.ciqing .pg, .open.candle .pg { padding: calc(4cqh + 26px) calc(3cqw + 26px) calc(5cqh + 22px); }
+.open.ciqing .pg.l, .open.candle .pg.l { padding-right: calc(1.5cqw + 26px); }
+.open.ciqing .pg.r, .open.candle .pg.r { padding-left: calc(1.5cqw + 26px); }
+.open.ciqing .bigico, .open.candle .bigico { right: calc(1.5cqw + 24px); top: calc(4cqh + 22px); }
+.ciqing .nm, .ciqing .shi .t { color: var(--nijin); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.25); }
+.ciqing .params > span, .ciqing .shi { border-color: oklch(0.7 0.03 250 / 0.22); }
+.ciqing .pn:not(.p) b { background: oklch(0.3 0.04 255); }
+
+/* 烛照：纸本压暗，中心一团烛光、四周沉进夜色，外缘羽化不留硬边 */
+.open.candle { background: radial-gradient(ellipse 70% 75% at 48% 42%, oklch(0.75 0.08 70 / 0.12), transparent 60%),
+    radial-gradient(ellipse 95% 95% at 50% 45%, transparent 55%, oklch(0.12 0.015 262 / 0.4) 88%, oklch(0.12 0.015 262 / 0.8) 100%),
+    linear-gradient(oklch(0.15 0.02 60 / 0.3), oklch(0.15 0.02 60 / 0.3)), url('../../code/public/art/wuxue-open-paper.jpg') center / 100% 100% no-repeat;
+  -webkit-mask-image: radial-gradient(ellipse 75% 80% at 50% 50%, #000 82%, transparent 100%); mask-image: radial-gradient(ellipse 75% 80% at 50% 50%, #000 82%, transparent 100%); filter: none; }
 .open .foot { margin-top: auto; padding-top: 14px; font-size: 11px; color: var(--faint); letter-spacing: 0.3em; text-align: center; }
 </style>
 </head>
@@ -253,7 +269,7 @@ button[data-tip] { cursor: pointer; }
   <div class="head">原型控制</div>
   <div class="row"><span>已装</span><button data-v="a" aria-pressed="true">甲 印匣</button><button data-v="b">乙 题签</button><button data-v="c">丙 书脊</button></div>
   <div class="row"><span>印色</span><button data-seal="red">统一朱砂</button><button data-seal="route" aria-pressed="true">按路数</button><button data-seal="quality">按品质</button></div>
-  <div class="row"><span>书页</span><button data-pg-mode="silk" aria-pressed="true">绢本</button><button data-pg-mode="paper">纸本</button></div>
+  <div class="row"><span>书页</span><button data-pg-mode="silk" aria-pressed="true">绢本</button><button data-pg-mode="paper">纸本</button><button data-pg-mode="ciqing">磁青</button><button data-pg-mode="paper candle">烛照</button></div>
   <div class="row"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
   <div class="row"><span>兵器</span><button data-w="剑">持剑</button><button data-w="刀" aria-pressed="true">持刀</button><button data-w="">赤手</button></div>
   <div class="hint">点已装或藏书任意一门在右侧翻开；「装配 / 卸下」真会把书在两处之间搬动。</div>
@@ -261,6 +277,7 @@ button[data-tip] { cursor: pointer; }
 
 <div class="stage">
   <header class="jh-head"><h1>武学</h1></header>
+  <h2 class="jh-sec">装配</h2>
   <div class="carry js-carry"></div>
   <div class="study">
     <div class="left">
@@ -381,7 +398,7 @@ function renderOpen() {
       <div class="ttl"><span class="nm">${d.n}</span>
         <div class="side"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${d.rt}">${d.rt}</span>
           ${d.res ? '<span class="ptag res" data-tip="与所修内功同路，招式伤害 ×1.15">共鸣</span>' : ''}${d.benmen ? '<span class="ptag res" data-tip="本门武学：练熟所需出招数少两成">本门</span>' : ''}</div></div>
-      <span class="bigico ico" style="background-image:url('../../code/public/art/cat/${ICON[d.cat]}.png')" data-tip="${big} · ${d.cat}"></span>
+      <span class="bigico ico rf t-${d.rt}" style="background-image:url('../../code/public/art/cat/${ICON[d.cat]}.png')" data-tip="${big} · ${d.cat}"></span>
       <div class="params">
         <span>伤害倍率<b>×${d.m0}%</b></span>
         <span>真气消耗<b>${d.cost}</b></span>

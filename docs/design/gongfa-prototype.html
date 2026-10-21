@@ -491,7 +491,8 @@ function renderNgBook() {
   const id = ng.cur && ids.includes(ng.cur) ? ng.cur : ng.id;
   const d = NG[id];
   const main = id === ng.id;
-  const z = main ? ng.z : 0, passed = main ? ng.passed : 0;
+  // 非主修：按转修后的样子——同路重数减 3（engine SAME_ROUTE_ZHONG_LOSS），跨路散功归 0；已过之关都须重新顿悟
+  const z = main ? ng.z : d.r === NG[ng.id].r ? Math.max(0, ng.z - 3) : 0, passed = main ? ng.passed : 0;
   const peak = TIERS[TIER_COUNT[d.q] - 1];
   const up = (k) => (ng.bump && main ? ' up' : '');
   const rows = yaojue(d.r, d.q, ng.realm, z, passed).map((y) => {
@@ -522,8 +523,8 @@ function renderNgBook() {
     } else act = `<div class="need ok">&nbsp;</div><button class="pbtn js-up" data-tip="价格每重 ×1.08；重数转世即散">精进一重　${fmt(cost)} 内力</button>`;
   } else {
     const same = d.r === NG[ng.id].r;
-    act = same ? `<div class="need ok">同为${ROUTE[d.r].name}一路</div><button class="pbtn">转修 · 保留八成功力</button>`
-      : `<div class="need">跨路须散功，重数从头练起</div><button class="pbtn quiet">散功重修</button>`;
+    act = same ? `<div class="need"></div><button class="pbtn">转修 · 保留八成功力</button>`
+      : `<div class="need"></div><button class="pbtn quiet">散功重修</button>`;
   }
   return `
     <div class="pg l">
@@ -539,9 +540,9 @@ function renderNgBook() {
       ${act}
     </div>
     <div class="pg r">
-      <div class="yj-h"><span class="serif">心法要诀</span>${main ? '' : '<small>初练时</small>'}</div>
+      <div class="yj-h"><span class="serif">心法要诀</span></div>
       ${rows}
-      <div class="foot">${d.q}内功 · ${ROUTE[d.r].name}一路</div>
+      <div class="foot">${d.q}内功</div>
     </div>`;
 }
 

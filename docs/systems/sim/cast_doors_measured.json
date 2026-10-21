@@ -73,7 +73,7 @@
  },
  {
   "id": "yanmenqiang",
-  "name": "雁门枪",
+  "name": "雁门枪法",
   "quality": "寻常",
   "type": "折中",
   "effect": "护体",
@@ -82,7 +82,7 @@
  },
  {
   "id": "bailaqiang",
-  "name": "白蜡枪",
+  "name": "惊弦枪法",
   "quality": "寻常",
   "type": "折中",
   "effect": "运劲",
@@ -91,7 +91,7 @@
  },
  {
   "id": "zhongpingqiang",
-  "name": "中平枪",
+  "name": "破晓枪法",
   "quality": "寻常",
   "type": "折中",
   "effect": "连击",
@@ -100,7 +100,7 @@
  },
  {
   "id": "jingsheqiang",
-  "name": "惊蛇枪",
+  "name": "惊蛇枪法",
   "quality": "寻常",
   "type": "折中",
   "effect": "凝眸",
@@ -109,7 +109,7 @@
  },
  {
   "id": "xingzhegun",
-  "name": "行者棍",
+  "name": "渡江棍法",
   "quality": "寻常",
   "type": "折中",
   "effect": "回气",
@@ -118,7 +118,7 @@
  },
  {
   "id": "qimeigun",
-  "name": "齐眉棍",
+  "name": "断云棍法",
   "quality": "寻常",
   "type": "折中",
   "effect": "轻身",
@@ -127,7 +127,7 @@
  },
  {
   "id": "saotanggun",
-  "name": "扫堂棍",
+  "name": "落木棍法",
   "quality": "寻常",
   "type": "折中",
   "effect": "回元",
@@ -136,7 +136,7 @@
  },
  {
   "id": "bengyungun",
-  "name": "崩云棍",
+  "name": "崩云棍法",
   "quality": "寻常",
   "type": "双强",
   "effect": "卸力",
@@ -145,7 +145,7 @@
  },
  {
   "id": "tongbiquan",
-  "name": "通臂拳",
+  "name": "啸猿拳法",
   "quality": "寻常",
   "type": "重击",
   "effect": "必暴",
@@ -154,7 +154,7 @@
  },
  {
   "id": "luohanquan",
-  "name": "罗汉拳",
+  "name": "伏狮拳法",
   "quality": "寻常",
   "type": "折中",
   "effect": "封穴",
@@ -163,7 +163,7 @@
  },
  {
   "id": "bengshanquan",
-  "name": "崩山拳",
+  "name": "撼山拳法",
   "quality": "寻常",
   "type": "双强",
   "effect": "回元",
@@ -172,7 +172,7 @@
  },
  {
   "id": "bajiquan",
-  "name": "八极拳",
+  "name": "震雷拳法",
   "quality": "寻常",
   "type": "重击",
   "effect": "轻身",
@@ -181,7 +181,7 @@
  },
  {
   "id": "kaishanzhang",
-  "name": "开山掌",
+  "name": "摧峰掌法",
   "quality": "寻常",
   "type": "折中",
   "effect": "护体",
@@ -190,7 +190,7 @@
  },
  {
   "id": "zhushazhang",
-  "name": "朱砂掌",
+  "name": "落霞掌法",
   "quality": "寻常",
   "type": "双强",
   "effect": "封穴",
@@ -199,7 +199,7 @@
  },
  {
   "id": "mianrouzhang",
-  "name": "绵柔掌",
+  "name": "拂柳掌法",
   "quality": "寻常",
   "type": "折中",
   "effect": "透劲",
@@ -208,7 +208,7 @@
  },
  {
   "id": "baguazhang",
-  "name": "八卦掌",
+  "name": "穿宫掌法",
   "quality": "寻常",
   "type": "折中",
   "effect": "破绽",
@@ -217,7 +217,7 @@
  },
  {
   "id": "cunjinzhi",
-  "name": "寸劲指",
+  "name": "点睛指法",
   "quality": "寻常",
   "type": "折中",
   "effect": "回气",
@@ -226,7 +226,7 @@
  },
  {
   "id": "chuomaizhi",
-  "name": "戳脉指",
+  "name": "溯泉指法",
   "quality": "寻常",
   "type": "折中",
   "effect": "回元",
@@ -235,7 +235,7 @@
  },
  {
   "id": "tiegouzhi",
-  "name": "铁钩指",
+  "name": "钩月指法",
   "quality": "寻常",
   "type": "双强",
   "effect": "凝眸",
@@ -244,7 +244,7 @@
  },
  {
   "id": "jingangzhi",
-  "name": "金刚指",
+  "name": "穿石指法",
   "quality": "寻常",
   "type": "重击",
   "effect": "透劲",
@@ -253,7 +253,7 @@
  },
  {
   "id": "lianhuantui",
-  "name": "连环腿",
+  "name": "穿花腿法",
   "quality": "寻常",
   "type": "折中",
   "effect": "护体",
@@ -262,7 +262,7 @@
  },
  {
   "id": "chuanlintui",
-  "name": "穿林腿",
+  "name": "烟雨腿法",
   "quality": "寻常",
   "type": "折中",
   "effect": "轻身",
@@ -271,7 +271,7 @@
  },
  {
   "id": "gouguatui",
-  "name": "勾挂腿",
+  "name": "邀月腿法",
   "quality": "寻常",
   "type": "重击",
   "effect": "卸力",
@@ -280,7 +280,7 @@
  },
  {
   "id": "xuanfengtui",
-  "name": "旋风腿",
+  "name": "卷雪腿法",
   "quality": "寻常",
   "type": "折中",
   "effect": "破绽",
@@ -289,7 +289,7 @@
  },
  {
   "id": "xiulizhen",
-  "name": "袖里针",
+  "name": "暗香飞针",
   "quality": "寻常",
   "type": "折中",
   "effect": "附毒",
@@ -298,7 +298,7 @@
  },
  {
   "id": "liuyebiao",
-  "name": "柳叶镖",
+  "name": "折柳飞镖",
   "quality": "寻常",
   "type": "折中",
   "effect": "透劲",
@@ -307,7 +307,7 @@
  },
  {
   "id": "jiliding",
-  "name": "蒺藜钉",
+  "name": "疏星飞钉",
   "quality": "寻常",
   "type": "双强",
   "effect": "回元",
@@ -316,7 +316,7 @@
  },
  {
   "id": "liuxingshi",
-  "name": "流星石",
+  "name": "惊鸦飞石",
   "quality": "寻常",
   "type": "折中",
   "effect": "破绽",
@@ -370,7 +370,7 @@
  },
  {
   "id": "lihuadaiyuqiang",
-  "name": "梨花带雨枪",
+  "name": "千树梨花枪",
   "quality": "上乘",
   "type": "折中",
   "effect": "回气",
@@ -379,7 +379,7 @@
  },
  {
   "id": "panlongraozhugun",
-  "name": "盘龙绕柱棍",
+  "name": "蟠龙九转棍",
   "quality": "上乘",
   "type": "折中",
   "effect": "回气",
@@ -388,7 +388,7 @@
  },
  {
   "id": "fanjiangjiaohaigun",
-  "name": "翻江搅海棍",
+  "name": "怒海擒蛟棍",
   "quality": "上乘",
   "type": "重击",
   "effect": "轻身",
@@ -397,7 +397,7 @@
  },
  {
   "id": "fuhuquan",
-  "name": "黑风伏虎拳",
+  "name": "风生虎啸拳",
   "quality": "上乘",
   "type": "折中",
   "effect": "必暴",
@@ -433,7 +433,7 @@
  },
  {
   "id": "qingshetuxinzhi",
-  "name": "青蛇吐信指",
+  "name": "幽篁蛇影指",
   "quality": "上乘",
   "type": "折中",
   "effect": "附毒",
@@ -451,7 +451,7 @@
  },
  {
   "id": "yuhuanyuanyangtui",
-  "name": "玉环鸳鸯腿",
+  "name": "醉踏流霞腿",
   "quality": "上乘",
   "type": "重击",
   "effect": "必暴",
@@ -478,7 +478,7 @@
  },
  {
   "id": "zimuchuanxinbiao",
-  "name": "子母穿心镖",
+  "name": "双燕穿帘镖",
   "quality": "上乘",
   "type": "重击",
   "effect": "回元",

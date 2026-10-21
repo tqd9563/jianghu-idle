@@ -128,7 +128,7 @@ export function tend(route: RouteId): void {
     st().breakthrough();
     st().dismissCeremony();
     if (st().neigong === null && (st().taught || st().run >= 2)) st().selectNeigong(bestNeigong(route));
-    if (giftPending(st())) st().pickGiftWuxue(GIFT_WUXUE_OPTIONS[0]);   // 前辈所授武学：取罗汉拳
+    if (giftPending(st())) st().pickGiftWuxue(GIFT_WUXUE_OPTIONS[0]);   // 前辈所授武学：取伏狮拳法
     if (st().realm === realm) break;
   }
   if (st().neigong) {

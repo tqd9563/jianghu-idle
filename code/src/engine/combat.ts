@@ -143,6 +143,8 @@ export interface FightStats {
   skillCasts: Record<string, number>;
   skillDmg: Record<string, number>;
   formCasts: Record<string, number>;
+  /** 抽式时这门有式出不起（真气不足滑向轻招）的次数（裁决 45 sim 用） */
+  lowQiCasts: number;
 }
 
 /** 一式招式（倍率已含共鸣；耗气 / 冷却已含熟练加成，battle-loot/spec.md §3.6） */
@@ -154,10 +156,12 @@ export interface CombatForm {
   /** 本式特效数值（四档插值，spec §3.4）；独门机制为 0 */
   fx: number;
   cost: number;
+  /** 未打折的基础耗气，抽式权重用（缺省同 cost） */
+  baseCost?: number;
   cd: number;
 }
 
-/** 一门装配中的武学：只列已领悟的招式；p = 对总触发率的贡献（已含熟练加成） */
+/** 一门装配中的武学：只列已领悟的招式；p = 对总触发率的贡献（不随熟练变，裁决 45） */
 export interface CombatSkill {
   id: string;
   name: string;
@@ -230,7 +234,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     pHitRate: pHit, abStacksMax: 0, purgeCount: 0, thornsTaken: 0,
     dmgDealt: 0, dmgTaken: 0, critCount: 0, burstCount: 0, burstDmg: 0,
     shieldAbsorbed: 0, thornsOut: 0, poisonDmg: 0, poisonBurstCount: 0,
-    casts: 0, skillCasts: {}, skillDmg: {}, formCasts: {},
+    casts: 0, skillCasts: {}, skillDmg: {}, formCasts: {}, lowQiCasts: 0,
   };
   let pAttempts = 0, pHits = 0;
   const pct = () => ({
@@ -272,8 +276,13 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         let i = cand[cand.length - 1];
         for (const c of cand) { r -= loadout[c].p; if (r < 0) { i = c; break; } }
         skill = loadout[i];
+        // 抽式（裁决 45）：出得起的式里按基础耗气加权，贵的出得多；真气不足时自然滑向轻招
         const usable = skill.forms.filter((f) => f.cost <= qi);
-        form = usable[Math.floor(rng() * usable.length)];
+        if (usable.length < skill.forms.length) stats.lowQiCasts += 1;
+        const wsum = usable.reduce((a, f) => a + (f.baseCost ?? f.cost), 0);
+        let w = rng() * wsum;
+        form = usable[usable.length - 1];
+        for (const f of usable) { w -= f.baseCost ?? f.cost; if (w < 0) { form = f; break; } }
         qi -= form.cost;
         cds[i] = form.cd + 1;
       }

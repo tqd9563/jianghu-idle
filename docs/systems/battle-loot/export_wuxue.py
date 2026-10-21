@@ -3,6 +3,8 @@
 合成代码读的名录表 code/src/engine/data/wuxue-catalog.json。只导出第一批（batch 1，66 门）。
 现有 14 门的 id 沿用 wuxue.ts，式名与句子仍在 formNames.ts / narration.ts；新增 52 门的式名与句子从草案并入。
 
+五项参数与类型（重击 / 折中 / 双强）、特效系数由 calib_cast.py --write 写入 wuxue-params.json（裁决 46）。
+
 用法：python3 docs/systems/battle-loot/export_wuxue.py
 """
 import json
@@ -80,7 +82,8 @@ def main() -> None:
             row = {'id': wid, 'source': JUEXUE_SECT.get(name, '挂机'), 'forms': names, 'lines': lines}
         row.update({
             'name': name, 'quality': w['quality'], 'cat': w['cat'], 'route': w['route'], 'effect': w['effect'],
-            'mult0': w['mult0'], 'cost': w['cost'], 'p': w['p'], 'cd': w['cd'],
+            'mult0': w['mult0'], 'mults': w['mults'], 'cost': w['cost'], 'p': w['p'], 'cd': w['cd'],
+            'type': w['type'], 'ek': w['ek'],
         })
         if wid in SIGNATURE:
             row['signature'] = True
@@ -95,6 +98,7 @@ def main() -> None:
         'shulian': params['shulian'],
         'pages': params['pages'],
         'wx_p': params['wx_p'],
+        'calib': params['calib'],
         'wuxue': rows,
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1) + '\n')

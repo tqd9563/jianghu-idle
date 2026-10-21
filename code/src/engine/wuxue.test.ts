@@ -6,8 +6,8 @@ import { fight, makeBuild, type CombatSkill } from './combat';
 import { getStage, trackLength } from './enemies';
 import { FORM_NAMES } from './formNames';
 import {
-  BIG_OF, EFFECT_TAG, QUALITY_PARAMS, TRIGGER_CAP, WUXUE, WUXUE_IDS, effectText, effectValue, formCd, formCost, formMult,
-  shulianMods, usableWith,
+  BIG_OF, EFFECT_TAG, QUALITY_PARAMS, TRIGGER_CAP, WUXUE, WUXUE_IDS, effectText, effectValue, COST_GROWTH, MULT_GROWTH, formBaseCost, formCd, formCost, formMult,
+  usableWith,
 } from './wuxue';
 
 const seeded = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; }; };
@@ -33,31 +33,59 @@ describe('名录读表', () => {
     expect(WUXUE.tianhedaoxuandao.source).toBe('崆峒');
   });
 
-  it('特效四档：寻常 Ⅰ→Ⅱ、上乘 Ⅰ→Ⅲ、绝学 Ⅱ→Ⅳ，中间插值；独门为 0', () => {
-    const qp = WUXUE.qingpingjian;   // 寻常 · 运劲 0.12/0.16/0.20/0.25
-    expect([1, 2, 3].map((k) => effectValue(qp, k))).toEqual([0.12, 0.14, 0.16]);
-    const fp = WUXUE.feipuduanyajian;   // 上乘 · 运劲
-    expect([1, 3, 5].map((k) => effectValue(fp, k))).toEqual([0.12, 0.16, 0.2]);
-    const th = WUXUE.tianhedaoxuandao;  // 绝学 · 透劲 0.25/0.35/0.45/0.55
-    expect([1, 7].map((k) => effectValue(th, k))).toEqual([0.35, 0.55]);
-    const qm = WUXUE.qimeigun;   // 寻常 · 轻身 16/24/32/40：整数列四舍五入
+  it('特效四档 × 类型系数（裁决 46）：寻常 Ⅰ→Ⅱ、上乘 Ⅰ→Ⅲ、绝学 Ⅱ→Ⅳ，中间插值后乘系数；几率类封顶；独门为 0', () => {
+    const qm = WUXUE.qimeigun;   // 寻常 · 折中 ×1 · 轻身 16/24/32/40：整数列四舍五入
+    expect(qm.ek).toBe(1);
     expect([1, 2, 3].map((k) => effectValue(qm, k))).toEqual([16, 20, 24]);
+    const qp = WUXUE.qingpingjian;   // 寻常 · 折中且倍率低 ×1.25 · 运劲 0.12/0.16/0.20/0.25
+    expect(qp.ek).toBe(1.25);
+    expect([1, 2, 3].map((k) => effectValue(qp, k))).toEqual([0.15, 0.175, 0.2]);
+    const fp = WUXUE.feipuduanyajian;   // 上乘 · 重击 ×0.5 · 运劲
+    expect(fp.type).toBe('重击');
+    expect([1, 3, 5].map((k) => effectValue(fp, k))).toEqual([0.06, 0.08, 0.1]);
+    const kb = WUXUE.kaibeidao;   // 寻常 · 双强 ×1.5 · 凝眸
+    expect(kb.type).toBe('双强');
+    expect(effectValue(kb, 1)).toBeCloseTo(0.18, 9);
+    expect(effectValue({ quality: '绝学', effect: '连击', ek: 1.5 }, 7)).toBe(1);   // 0.8 × 1.5 封顶 100%
     expect(effectValue(WUXUE.luoxingjian, 3)).toBe(0);
-    expect(effectText(qp, 1)).toBe('3 回合攻击 +12%');
+    expect(effectText(qp, 1)).toBe('3 回合攻击 +15%');
     expect(effectText(WUXUE.xiulizhen, 1)).toBe('叠毒 +1 层');
     expect(effectText(WUXUE.xiulizhen, 3)).toBe('叠毒 +1 层 · 25% 再 +1');
   });
 
-  it('熟练新口径：不加倍率；熟练 / 精通 / 圆熟 耗气 ×0.92 / ×0.84 / ×0.75、触发 ×1.04 / ×1.08 / ×1.12、圆熟冷却 −1 最低 1', () => {
-    const d = WUXUE.songtaojian;   // cost 15 cd 1
-    expect(formMult(d, 1, false)).toBeCloseTo(1.79, 9);
-    expect(formMult(d, 3, true)).toBeCloseTo((1.79 + 0.08) * 1.1, 9);
-    expect([0, 1, 2, 3].map((t) => formCost(d, t))).toEqual([15, 14, 13, 11]);
-    expect([0, 1, 2, 3].map((t) => formCd(d, t))).toEqual([1, 1, 1, 1]);
-    expect(formCd(WUXUE.kaibeidao, 3)).toBe(2);
-    expect(shulianMods(3)).toEqual({ cost: 0.75, p: 1.12, cd: 1 });
+  it('裁决 45 / 46：倍率每式约 ×1.12（按门浮动、每步至少 +4%、首末式不动）、基础耗气每式 ×1.15、熟练只减耗气、冷却不随熟练变', () => {
+    expect(MULT_GROWTH).toBe(1.12);
+    expect(COST_GROWTH).toBe(1.15);
+    for (const id of WUXUE_IDS) {
+      const w = WUXUE[id], n = QUALITY_PARAMS[w.quality].forms;
+      expect(w.mults).toHaveLength(n);
+      expect(w.mults[0]).toBeCloseTo(w.mult0, 9);
+      expect(w.mults[n - 1]).toBeCloseTo(w.mult0 * 1.12 ** (n - 1), 1);
+      for (let k = 1; k < n; k++) expect(w.mults[k] / w.mults[k - 1], `${id} 第${k + 1}式`).toBeGreaterThan(1.035);
+    }
+    const d = WUXUE.songtaojian;   // 寻常 · cost 19 · cd 1
+    expect(formMult(d, 1, false)).toBeCloseTo(d.mult0, 9);
+    expect(formMult(d, 2, true)).toBeCloseTo(d.mults[1] * 1.1, 9);
+    expect([1, 2, 3].map((k) => formBaseCost(d, k))).toEqual([19, 22, 25]);
+    expect([0, 1, 2, 3].map((t) => formCost(d, 1, t))).toEqual([19, 17, 16, 14]);
+    expect(formCost(d, 3, 3)).toBe(19);
+    expect(formCd(d)).toBe(1);
+    expect(formCd(WUXUE.kaibeidao)).toBe(3);
   });
 
+  it('裁决 46：高品质的式倍率与耗气普遍高于低品质；三个品质都有重击 / 折中 / 双强', () => {
+    const by = (q: string) => WUXUE_IDS.map((id) => WUXUE[id]).filter((d) => d.quality === q && !d.signature);
+    for (const q of ['寻常', '上乘', '绝学']) expect(new Set(by(q).map((d) => d.type))).toEqual(new Set(['重击', '折中', '双强']));
+    const share = (lo: string, hi: string, f: (d: typeof WUXUE[keyof typeof WUXUE]) => number) => {
+      let n = 0, w = 0;
+      for (const a of by(lo)) for (const b of by(hi)) { n++; if (f(b) > f(a)) w++; }
+      return w / n;
+    };
+    for (const [lo, hi] of [['寻常', '上乘'], ['上乘', '绝学']]) {
+      expect(share(lo, hi, (d) => d.mult0)).toBeGreaterThan(0.8);   // 寻常为前期平衡上调过倍率，与上乘的首式约 85% 分得开
+      expect(share(lo, hi, (d) => d.cost)).toBeGreaterThan(0.9);
+    }
+  });
   it('兵器搭配：器械要同类兵器，暗器要暗器，肉身不挑', () => {
     expect(usableWith(WUXUE.liuyunjian, { weapon: '剑', anqi: false })).toBe(true);
     expect(usableWith(WUXUE.liuyunjian, { weapon: '刀', anqi: true })).toBe(false);

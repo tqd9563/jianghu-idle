@@ -1,0 +1,185 @@
+{
+  "generated": "2026-10-21",
+  "trials": 400,
+  "checkpoints": [
+    {
+      "label": "境界1 传功单门",
+      "realm": 1,
+      "zhong": 0,
+      "stage": "1-0-8",
+      "qiMax": 70,
+      "sumP": 0.136,
+      "winrateMastered": 0.6725,
+      "fightSec": 27,
+      "lowQiShare": 0,
+      "share": {
+        "寻常": [
+          0.272,
+          0.345,
+          0.383
+        ]
+      },
+      "unlockRatesPerHour": [
+        130.1,
+        70,
+        50.7
+      ],
+      "threshold": 250,
+      "hoursToLastForm": 5.5,
+      "hoursToSecondForm": 1.9
+    },
+    {
+      "label": "境界2 末 6 门寻常",
+      "realm": 2,
+      "zhong": 40,
+      "stage": "1-0-37",
+      "qiMax": 110,
+      "sumP": 0.753,
+      "winrateMastered": 0.79,
+      "fightSec": 16,
+      "lowQiShare": 0,
+      "share": {
+        "寻常": [
+          0.274,
+          0.316,
+          0.41
+        ]
+      },
+      "unlockRatesPerHour": [
+        124.5,
+        67.4,
+        49.4
+      ],
+      "threshold": 250,
+      "hoursToLastForm": 5.7,
+      "hoursToSecondForm": 2
+    },
+    {
+      "label": "境界3 末 3 上乘 + 4 寻常",
+      "realm": 3,
+      "zhong": 61,
+      "stage": "1-1-22",
+      "qiMax": 161,
+      "sumP": 0.699,
+      "winrateMastered": 0.605,
+      "fightSec": 16,
+      "lowQiShare": 0,
+      "share": {
+        "寻常": [
+          0.287,
+          0.316,
+          0.397
+        ],
+        "上乘": [
+          0.144,
+          0.127,
+          0.205,
+          0.222,
+          0.302
+        ]
+      },
+      "unlockRatesPerHour": [
+        71.9,
+        38.5,
+        27.3,
+        22.2,
+        21.1
+      ],
+      "threshold": 300,
+      "hoursToLastForm": 36.5,
+      "hoursToSecondForm": 4.2
+    },
+    {
+      "label": "境界4 末 3 绝学 + 3 上乘 + 2 寻常",
+      "realm": 4,
+      "zhong": 84,
+      "stage": "1-2-24",
+      "qiMax": 221,
+      "sumP": 0.507,
+      "winrateMastered": 0.58,
+      "fightSec": 16,
+      "lowQiShare": 0.001,
+      "share": {
+        "寻常": [
+          0.297,
+          0.309,
+          0.394
+        ],
+        "绝学": [
+          0.08,
+          0.097,
+          0.148,
+          0.108,
+          0.21,
+          0.159,
+          0.199
+        ],
+        "上乘": [
+          0.114,
+          0.185,
+          0.188,
+          0.226,
+          0.286
+        ]
+      },
+      "unlockRatesPerHour": [
+        42.2,
+        23.1,
+        11.6,
+        10.7,
+        9,
+        9.6,
+        7.9
+      ],
+      "threshold": 350,
+      "hoursToLastForm": 161.7,
+      "hoursToSecondForm": 8.3
+    },
+    {
+      "label": "境界5 末 4 绝学 + 3 上乘 + 2 寻常",
+      "realm": 5,
+      "zhong": 103,
+      "stage": "2-2-9",
+      "qiMax": 262,
+      "sumP": 0.578,
+      "winrateMastered": 0.7075,
+      "fightSec": 15,
+      "lowQiShare": 0.001,
+      "share": {
+        "寻常": [
+          0.282,
+          0.338,
+          0.38
+        ],
+        "绝学": [
+          0.08,
+          0.122,
+          0.122,
+          0.136,
+          0.171,
+          0.182,
+          0.185
+        ],
+        "上乘": [
+          0.175,
+          0.184,
+          0.164,
+          0.217,
+          0.259
+        ]
+      },
+      "unlockRatesPerHour": [
+        46.6,
+        24.7,
+        18.2,
+        15.2,
+        10.3,
+        10,
+        8.8
+      ],
+      "threshold": 350,
+      "hoursToLastForm": 132.9,
+      "hoursToSecondForm": 7.5
+    }
+  ]
+}

@@ -23,7 +23,7 @@ const CN = ['', '一', '二', '三', '四', '五', '六', '七'];
 const CAT_ICON: Partial<Record<WuxueCat, string>> = { 剑: 'jian', 刀: 'dao', 拳: 'quan', 掌: 'quan', 暗器: 'anqi', 棍: 'gun' };
 /** 书封上的类目印：暗器盖「镖」 */
 const SEAL: Partial<Record<WuxueCat, string>> = { 暗器: '镖' };
-const SHU_TEXT = ['', '耗气 ×0.92 · 触发 ×1.04', '耗气 ×0.84 · 触发 ×1.08', '耗气 ×0.75 · 触发 ×1.12 · 冷却 −1'];
+const SHU_TEXT = ['', '耗气 ×0.92', '耗气 ×0.84', '耗气 ×0.75'];
 
 function CatIcon({ cat }: { cat: WuxueCat }) {
   const k = CAT_ICON[cat];
@@ -195,7 +195,7 @@ function WuxueDetail({ id }: { id: WuxueId }) {
           const pos = tier >= 3 ? 100 : ((tier + (c - at[tier]) / (at[tier + 1] - at[tier])) / 3) * 100;
           const tip = (tier >= 3 ? `已出 ${c} 招，已至圆满` : `已出 ${c} 招 · ${at[tier + 1]} 招时入「${TIER4[tier + 1]}」`)
             + (SHU_TEXT[tier] ? ` · ${SHU_TEXT[tier]}` : '')
-            + ` · 本式耗气 ${formCost(d, tier)} · 冷却 ${formCd(d, tier)}`;
+            + ` · 本式耗气 ${formCost(d, k, tier)} · 冷却 ${formCd(d)}`;
           return (
             <div key={k} className="wx-shi">
               {nm}

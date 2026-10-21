@@ -18,8 +18,7 @@ import { BagPane } from './panes/BagPane';
 import { BattlePane } from './panes/BattlePane';
 import { CultivatePane } from './panes/CultivatePane';
 import { RepPane, type RepSub } from './panes/RepPane';
-import { NeigongPane } from './panes/NeigongPane';
-import { WuxuePane } from './panes/WuxuePane';
+import { WugongPane } from './panes/WugongPane';
 import { SectPane } from './panes/SectPane';
 import { ShopPane } from './panes/ShopPane';
 import { SECT_REALM } from './engine/sect';
@@ -39,11 +38,13 @@ const ReportPanel = import.meta.env.DEV ? lazy(() => import('./dev/ReportPanel')
 
 const NEIGONG_NAME = (id: keyof typeof NEIGONG) => NEIGONG[id].name;
 
-type TabId = 'cultivate' | 'battle' | 'bag' | 'neigong' | 'wuxue' | 'sect' | 'shop' | 'rep';
+type TabId = 'cultivate' | 'battle' | 'bag' | 'wugong' | 'sect' | 'shop' | 'rep';
+/** 内功、武学合为「武功」一页（issue #80）：旧页签名（调试 hash、跳页）落到武功页并翻开对应那半 */
+const LEGACY_TAB: Record<string, 'neigong' | 'wuxue'> = { neigong: 'neigong', wuxue: 'wuxue' };
 
 /** 每页一幅底图（code/public/art/，莉刻生成） */
 const PAGE_ART: Record<TabId, string> = {
-  cultivate: 'cultivate.jpg', battle: 'battle-village.jpg', bag: 'wuxue.jpg', neigong: 'neigong.jpg', wuxue: 'wuxue.jpg',
+  cultivate: 'cultivate.jpg', battle: 'battle-village.jpg', bag: 'wuxue.jpg', wugong: 'wuxue.jpg',
   sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep-diyun.jpg',
 };
 /** 前尘页三个栏目各一张底图（prestige-shop/design.md §5） */
@@ -54,6 +55,8 @@ export default function App() {
   const s = useGameStore();
   const [tab, setTabRaw] = useState<TabId>('cultivate');
   const [repSub, setRepSub] = useState<RepSub>('diyun');
+  // 武功页翻开哪一半：从修炼页「详情」等处跳来时指定，key 变了即重挂载
+  const [wgFocus, setWgFocus] = useState<{ kind?: 'neigong' | 'wuxue'; n: number }>({ n: 0 });
   // 点开页签即记入「已见」，新开页签的金点随之消失
   const setTab = (t: TabId) => { setTabRaw(t); useGameStore.getState().seeTab(t); };
   const [observerOpen, setObserverOpen] = useState(false);
@@ -61,7 +64,11 @@ export default function App() {
 
   useEffect(() => {
     const { tab: debugTab, fight: autoFight, retire: debugRetire, observer, livetest } = applyDebugHash();
-    if (debugTab) setTabRaw(debugTab as TabId);   // init 之前不记「已见」
+    if (debugTab) {   // init 之前不记「已见」
+      const legacy = LEGACY_TAB[debugTab];
+      if (legacy) setWgFocus({ kind: legacy, n: 1 });
+      setTabRaw((legacy ? 'wugong' : debugTab) as TabId);
+    }
     if (observer) setObserverOpen(true);
     s.init();
     useGameStore.getState().applyLiveTestSwitch(livetest);
@@ -86,7 +93,7 @@ export default function App() {
 
   // 新一世内功页签随之隐藏：停在内功页的玩家退回修炼页
   useEffect(() => {
-    if ((tab === 'bag' || tab === 'neigong' || tab === 'wuxue') && s.started && s.neigong === null) setTabRaw('cultivate');
+    if ((tab === 'bag' || tab === 'wugong') && s.started && s.neigong === null) setTabRaw('cultivate');
     if (tab === 'shop' && s.started && !s.marketOpen) setTabRaw('cultivate');
     if (tab === 'sect' && s.started && s.realm < SECT_REALM) setTabRaw('cultivate');
   }, [tab, s.started, s.neigong, s.realm, s.marketOpen]);
@@ -100,7 +107,9 @@ export default function App() {
 
   useEffect(() => {
     if (s.pendingTab) {
-      setTab(s.pendingTab as TabId);
+      const legacy = LEGACY_TAB[s.pendingTab];
+      if (legacy) setWgFocus((f) => ({ kind: legacy, n: f.n + 1 }));
+      setTab((legacy ? 'wugong' : s.pendingTab) as TabId);
       useGameStore.setState({ pendingTab: null });
     }
   }, [s.pendingTab]);
@@ -135,8 +144,8 @@ export default function App() {
     { id: 'cultivate', name: '修炼', show: true, fresh: false },
     { id: 'battle', name: '战斗', show: true, fresh: false },
     { id: 'bag', name: '行囊', show: !!s.neigong, fresh: !seen.includes('bag') },
-    { id: 'neigong', name: '内功', show: !!s.neigong, fresh: !seen.includes('neigong') },
-    { id: 'wuxue', name: '武学', show: !!s.neigong, fresh: !seen.includes('wuxue') },
+    // 旧存档两页都看过的不再亮金点
+    { id: 'wugong', name: '武功', show: !!s.neigong, fresh: !seen.includes('wugong') && !(seen.includes('neigong') && seen.includes('wuxue')) },
     { id: 'sect', name: '门派', show: s.realm >= SECT_REALM, fresh: !seen.includes('sect') },
     { id: 'shop', name: '市集', show: shopUnlocked, fresh: !seen.includes('shop') },
     { id: 'rep', name: '前尘', show: repUnlocked, fresh: !seen.includes('rep') },
@@ -232,8 +241,7 @@ export default function App() {
             {tab === 'cultivate' && <CultivatePane />}
             {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}
             {tab === 'bag' && s.neigong && <BagPane />}
-            {tab === 'neigong' && s.neigong && <NeigongPane />}
-            {tab === 'wuxue' && s.neigong && <WuxuePane />}
+            {tab === 'wugong' && s.neigong && <WugongPane key={wgFocus.n} focus={wgFocus.kind} />}
             {tab === 'sect' && s.realm >= SECT_REALM && <SectPane />}
             {tab === 'shop' && shopUnlocked && <ShopPane />}
             {tab === 'rep' && <RepPane sub={repSub} onSub={setRepSub} />}

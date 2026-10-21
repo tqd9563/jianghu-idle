@@ -15,6 +15,9 @@
     底部精进一重，点了重数、属性、要诀数值同步刷新并闪一下金。临关或内力不足时按钮置灰，缘由写在上方一行。
   · 心法要诀：只在翻开的书里出现一次。每条一行：名目 + 当前生效值；右侧挂会改它的关名（已过墨金、下一关暖金、再往后淡出、本品质够不着更淡），
     改了什么只写在悬停里，不铺在页面上。悬停一个关名，所有受同一关影响的要诀同时亮起。
+  · 主修另备「印匣」对比案（原型控制可切）：同武学装配印匣，石印换路数印（归海浪 / 镇岳山 / 蚀骨蝎，code/public/art/route/）。
+  · 精进后基础属性从旧值一格格跳到新值（约 0.9 秒）。
+  · 换书翻页：点藏经 / 藏书里另一本时，书先合上露出封面（同书封、题签写书名），停 0.3 秒后以中缝为轴翻开约 1 秒，左页内容等封面落定再淡入；切页签、换预设不翻；系统开了「减少动态效果」则直接换。
   · 武学页即上一轮定稿：装配用印匣（印色按路数），书页磁青。
 
   素材：code/public/art/ 下 neigong.jpg、wuxue.jpg（页底图）、book-q1/2/3.png（书封）、cat/*.png（类目石印）、wuxue-open-ciqing.jpg（磁青书页）。
@@ -266,6 +269,26 @@ body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="wuxue"] .p
 @keyframes up { 0% { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.8); } }
 .yj .v b.up { animation: up 1.2s var(--ease-sharp); }
 
+/* 主修印匣（对比案）：同武学装配印匣，石印换路数印 */
+.zx-yin { display: flex; margin-bottom: 26px; }
+.zx-yin .ya .mt { font-family: var(--font-display); font-size: 13px; color: var(--gold); letter-spacing: 0.05em; }
+
+/* 翻页：换书时先合上露出封面（同藏书书封、题签写书名），再以中缝为轴翻开；左页内容等封面落定再淡入 */
+.right { position: relative; }
+.flip-wrap { position: absolute; left: 50%; top: 0; width: 50%; height: 100%; perspective: 2200px; perspective-origin: 0% 50%; z-index: 5; pointer-events: none; }
+.flipper { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; transition: transform .95s cubic-bezier(.5, .05, .25, 1); }
+.flipper.go { transform: rotateY(-180deg); }
+.flipper .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 2px 6px 6px 2px; overflow: hidden; }
+.flipper .front { box-shadow: 0 18px 40px oklch(0.05 0.01 262 / 0.7); }
+.flipper .front .slip { font-size: 26px; letter-spacing: 0.22em; }
+.flipper .front .seal { width: 46px; height: 46px; font-size: 26px; border-radius: 5px; }
+.flipper .back { transform: rotateY(180deg); background: linear-gradient(to right, oklch(0.12 0.02 262 / 0.18), oklch(0.08 0.02 262 / 0.45)), url('../../code/public/art/wuxue-open-ciqing.jpg') left center / 200% 100% no-repeat; }
+.open .pg.l > * { transition: opacity .3s; }
+.open.closed { clip-path: inset(0 0 0 50%); }
+.open.closed .pg.l > * { opacity: 0; transition: none; }
+.open.closed.opening { clip-path: inset(0 0 0 0); transition: clip-path .5s cubic-bezier(.2, .6, .3, 1) .45s; }
+@media (prefers-reduced-motion: reduce) { .flip-wrap { display: none; } .open.closed { clip-path: none; } .open.closed .pg.l > * { opacity: 1; } }
+
 /* 心法要诀（内功右页） */
 .yj-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
 .yj-h .serif { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.3em; color: var(--nijin); }
@@ -298,6 +321,7 @@ body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="wuxue"] .p
 <div class="proto">
   <div class="head">原型控制<button class="js-fold" aria-label="收起">—</button></div>
   <div class="row" data-only="neigong"><span>主修</span><button data-pre="a" aria-pressed="true">蚀骨 5 重</button><button data-pre="b">蚀骨 6 重临关</button><button data-pre="c">沧海 13 重</button><button data-pre="d">菩提 27 重</button></div>
+  <div class="row" data-only="neigong"><span>主修</span><button data-zx="line" aria-pressed="true">一行</button><button data-zx="yin">印匣</button></div>
   <div class="row" data-only="neigong"><span>模拟</span><button data-sim="dan">内力 +1 万</button><button data-sim="wu">顿悟成功</button></div>
   <div class="row" data-only="wuxue"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
   <div class="row" data-only="wuxue"><span>兵器</span><button data-w="剑">持剑</button><button data-w="刀" aria-pressed="true">持刀</button><button data-w="">赤手</button></div>
@@ -363,7 +387,8 @@ const PRESET = {
 };
 const REALM = ['', '江湖新丁', '初窥门径', '小有所成', '炉火纯青', '一流高手', '一代宗师', '登峰造极'];
 const RATE = 14.1;
-const ng = { pre: 'a', ...structuredClone(PRESET.a), cur: null, cat: 'all' };
+const ng = { pre: 'a', ...structuredClone(PRESET.a), cur: null, cat: 'all', zx: 'line' };
+const RICON = { huashan: 'guihai', shaolin: 'zhenyue', tangmen: 'shigu' };
 const zhongCost = (n) => Math.round(3490 * Math.pow(1.08, n - 1));
 const qiMax = (realm, z, q) => Math.round((70 + 15 * (Math.max(realm, 2) - 2) + z) * QI_COEF[q]);
 const pctx = (v) => `${Math.round(v * 10) / 10}`;
@@ -438,6 +463,10 @@ function ngAttrs(id, realm, z) {
 }
 function renderJinjing() {
   const d = NG[ng.id];
+  if (ng.zx === 'yin') return `
+    <h2 class="jh-sec">主修</h2>
+    <div class="zx-yin"><button class="ya g${QN[d.q]} rf t-${ROUTE[d.r].tag}" data-ng="${ng.id}" data-tip="${d.q} · ${ROUTE[d.r].name}一路" aria-current="true">
+      <span class="box"><i class="ico" style="background-image:url('${A}route/${RICON[d.r]}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${ng.z} 重</span></button></div>`;
   return `
     <h2 class="jh-sec">主修</h2>
     <button class="zx" data-ng="${ng.id}"><span class="nmx">${d.name}</span><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span><span class="zz">第 ${ng.z}<small>重</small></span></button>`;
@@ -479,7 +508,12 @@ function renderNgBook() {
     return `<div class="yj${y.lock ? ' lock' : ''}" data-rows="${y.tiers.map(([i]) => i).join(' ')}"><div class="h"><span class="lb">${y.lb}</span><span class="chips">${chips}</span></div><div class="v">${ng.bump && main ? y.v.replaceAll('<b>', '<b class="up">') : y.v}</div></div>`;
   }).join('');
   const at = ngAttrs(id, ng.realm, z);
-  const val = (v, tip) => (v ? `<b class="${up()}" data-tip="${tip}">+${fmt(v)}</b>` : `<b class="nil">—</b>`);
+  const prev = ng.bump && main && ng.prevAt ? ng.prevAt : null;
+  const val = (v, tip, k) => {
+    if (!v) return `<b class="nil">—</b>`;
+    const from = prev ? (typeof prev[k] === 'object' ? prev[k].v : prev[k]) : null;
+    return from != null && from !== v ? `<b class="up" data-tip="${tip}" data-from="${from}" data-to="${v}">+${fmt(from)}</b>` : `<b data-tip="${tip}">+${fmt(v)}</b>`;
+  };
   // 精进：只有主修那本有；临关 / 内力不足时置灰，缘由写在按钮上方一行
   let act;
   if (main) {
@@ -503,8 +537,8 @@ function renderNgBook() {
           <span class="zcap">最高至${peak.name} · ${peak.at} 重</span></div></div>
       ${main ? '<span class="zhu">主修</span>' : ''}
       <div class="attrs">
-        <span>气血${val(at.hp.v, at.hp.tip)}</span><span>攻击${val(at.atk.v, at.atk.tip)}</span><span>防御${val(at.def.v, at.def.tip)}</span>
-        <span>命中${val(at.hit, '火候折合境界 × 12')}</span><span>闪避${val(at.dodge, '火候折合境界 × 3')}</span>
+        <span>气血${val(at.hp.v, at.hp.tip, 'hp')}</span><span>攻击${val(at.atk.v, at.atk.tip, 'atk')}</span><span>防御${val(at.def.v, at.def.tip, 'def')}</span>
+        <span>命中${val(at.hit, '火候折合境界 × 12', 'hit')}</span><span>闪避${val(at.dodge, '火候折合境界 × 3', 'dodge')}</span>
       </div>
       ${act}
     </div>
@@ -642,10 +676,36 @@ function render() {
   if (ui.tab !== 'neigong') { $('.js-realm').innerHTML = `${REALM[3]}<small>第三境</small>`; $('.js-dan').textContent = '7,098'; }
   $('.js-page').innerHTML = ui.tab === 'neigong' ? renderNeigong() : ui.tab === 'wuxue' ? renderWuxue() : `<div class="placeholder">此页原型未画，沿用线上</div>`;
 }
+/** 打字机式上涨：从旧值一格格跳到新值 */
+function countUp() {
+  document.querySelectorAll('[data-to]').forEach((el) => {
+    const from = +el.dataset.from, to = +el.dataset.to, steps = Math.min(Math.abs(to - from), 18), dur = 900;
+    for (let i = 1; i <= steps; i++) setTimeout(() => { el.textContent = `+${fmt(from + (to - from) * i / steps)}`; }, (dur / steps) * i);
+  });
+}
+/** 换书时合上再翻开：封面同藏书书封，题签写书名 */
+const lastOpen = { neigong: null, wuxue: null };
+function flipIfChanged() {
+  const id = ui.tab === 'neigong' ? (ng.cur && ng.owned.includes(ng.cur) ? ng.cur : ng.id) : ui.tab === 'wuxue' ? wx.cur : null;
+  if (!id) return;
+  const prev = lastOpen[ui.tab]; lastOpen[ui.tab] = id;
+  if (prev === null || prev === id || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const open = $('.open'), right = $('.right');
+  let cover;
+  if (ui.tab === 'wuxue') { const d = WX[id]; cover = `<div class="face front wx q${QN[d.q]}${d.ghost ? ' ghost' : ''}"><i class="cv"></i><span class="slip">${d.n}</span><span class="seal">${SEAL[d.cat] ?? d.cat}</span></div>`; }
+  else { const d = NG[id]; cover = `<div class="face front ng q${QN[d.q]}"><i class="cv"></i><span class="slip">${d.name}</span></div>`; }
+  open.classList.add('closed');
+  right.insertAdjacentHTML('beforeend', `<div class="flip-wrap"><div class="flipper">${cover}<div class="face back"></div></div></div>`);
+  const wrap = right.querySelector('.flip-wrap'), fl = wrap.firstElementChild;
+  setTimeout(() => { fl.classList.add('go'); open.classList.add('opening'); }, 320);
+  setTimeout(() => { wrap.remove(); open.classList.remove('closed', 'opening'); }, 320 + 1000);
+}
 function rerenderSame() { // 同页内刷新不重播入场动画
   const page = $('.js-page');
   page.style.animation = 'none';
   render();
+  flipIfChanged();
+  countUp();
   requestAnimationFrame(() => { page.style.animation = ''; });
 }
 
@@ -653,11 +713,11 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
   const press = (sel) => document.querySelectorAll(`.proto ${sel}`).forEach((x) => x.setAttribute('aria-pressed', x === b));
-  if (b.closest('.js-nav')) { ui.tab = b.dataset.tab; render(); return; }
+  if (b.closest('.js-nav')) { ui.tab = b.dataset.tab; render(); lastOpen.neigong = null; lastOpen.wuxue = null; flipIfChanged(); return; }
   if (b.classList.contains('js-fold')) { b.closest('.proto').classList.toggle('folded'); return; }
-  if (b.dataset.pre) { Object.assign(ng, structuredClone(PRESET[b.dataset.pre]), { pre: b.dataset.pre, cur: null, cat: 'all' }); press('[data-pre]'); }
+  if (b.dataset.pre) { lastOpen.neigong = null; Object.assign(ng, structuredClone(PRESET[b.dataset.pre]), { pre: b.dataset.pre, cur: null, cat: 'all' }); press('[data-pre]'); }
   ng.bump = false;
-  if (b.classList.contains('js-up')) { ng.dan -= zhongCost(ng.z + 1); ng.z += 1; ng.cur = ng.id; ng.bump = true; }
+  if (b.classList.contains('js-up')) { ng.prevAt = ngAttrs(ng.id, ng.realm, ng.z); ng.dan -= zhongCost(ng.z + 1); ng.z += 1; ng.cur = ng.id; ng.bump = true; }
   if (b.dataset.sim === 'dan') ng.dan += 10000;
   if (b.dataset.sim === 'wu') { const g = gateOf(NG[ng.id].q, ng.z, ng.passed); if (g) { ng.passed += 1; ng.cur = ng.id; ng.bump = true; } }
   if (b.dataset.ng) ng.cur = b.dataset.ng;
@@ -666,6 +726,7 @@ document.addEventListener('click', (e) => {
   if (b.dataset.wxcat) { wx.cat = b.dataset.wxcat; wx.page = 0; }
   if (b.dataset.pg) wx.page += +b.dataset.pg;
   if (b.hasAttribute('data-toggle')) { const i = wx.desk.indexOf(wx.cur); i >= 0 ? wx.desk.splice(i, 1) : wx.desk.push(wx.cur); }
+  if (b.dataset.zx) { ng.zx = b.dataset.zx; press('[data-zx]'); }
   if (b.dataset.s) { wx.slots = +b.dataset.s; wx.desk = wx.desk.slice(0, wx.slots); press('[data-s]'); }
   if (b.dataset.w != null && b.closest('.proto')) { wx.weapon = b.dataset.w; press('[data-w]'); }
   rerenderSame();
@@ -686,6 +747,7 @@ document.addEventListener('mouseover', (e) => {
   }
 });
 render();
+flipIfChanged();
 </script>
 </body>
 </html>

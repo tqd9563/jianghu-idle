@@ -1,7 +1,11 @@
 {
  "source": "export_stage_table.py（longline_sim.solve）",
  "stageGap": 0.05,
- "eliteEvery": 4,
+ "stageGapByBand": {
+  "2": 0.14
+ },
+ "teachGap": 0.15,
+ "eliteEvery": 8,
  "teachX": 2.7435,
  "tagMods": {
   "高闪": {
@@ -97,7 +101,7 @@
      "stage": 8,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 2.05,
+     "x": 2.15,
      "tags": [],
      "recommendedRealm": 1,
      "silver": 8,
@@ -107,7 +111,7 @@
      "stage": 9,
      "kind": "normal",
      "name": "山贼喽啰",
-     "x": 2.1,
+     "x": 2.3,
      "tags": [],
      "recommendedRealm": 1,
      "silver": 8,
@@ -117,66 +121,6 @@
      "stage": 10,
      "kind": "normal",
      "name": "剪径毛贼",
-     "x": 2.15,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 8,
-     "xp": 1
-    },
-    {
-     "stage": 11,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 2.2,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 8,
-     "xp": 1
-    },
-    {
-     "stage": 12,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 2.25,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 8,
-     "xp": 1
-    },
-    {
-     "stage": 13,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 2.3,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 8,
-     "xp": 1
-    },
-    {
-     "stage": 14,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 2.35,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 9,
-     "xp": 1
-    },
-    {
-     "stage": 15,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 2.4,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 9,
-     "xp": 1
-    },
-    {
-     "stage": 16,
-     "kind": "normal",
-     "name": "山野猎户",
      "x": 2.45,
      "tags": [],
      "recommendedRealm": 1,
@@ -184,27 +128,7 @@
      "xp": 1
     },
     {
-     "stage": 17,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 2.5,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 9,
-     "xp": 1
-    },
-    {
-     "stage": 18,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 2.55,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 9,
-     "xp": 1
-    },
-    {
-     "stage": 19,
+     "stage": 11,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 2.6,
@@ -214,27 +138,7 @@
      "xp": 1
     },
     {
-     "stage": 20,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 2.65,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 9,
-     "xp": 1
-    },
-    {
-     "stage": 21,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 2.7,
-     "tags": [],
-     "recommendedRealm": 1,
-     "silver": 9,
-     "xp": 1
-    },
-    {
-     "stage": 22,
+     "stage": 12,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 2.7435,
@@ -244,145 +148,49 @@
      "xp": 1
     },
     {
-     "stage": 23,
+     "stage": 13,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 2.7935,
+     "x": 2.8835,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 10,
      "xp": 1
     },
     {
-     "stage": 24,
+     "stage": 14,
      "kind": "normal",
      "name": "山贼喽啰",
-     "x": 2.8435,
+     "x": 3.0235,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 10,
      "xp": 1
     },
     {
-     "stage": 25,
-     "kind": "elite",
-     "name": "「独眼」胡三",
-     "x": 2.6779,
-     "tags": [
-      "高闪"
-     ],
+     "stage": 15,
+     "kind": "normal",
+     "name": "剪径毛贼",
+     "x": 3.1635,
+     "tags": [],
      "recommendedRealm": 2,
-     "silver": 28,
-     "xp": 5
+     "silver": 11,
+     "xp": 1
     },
     {
-     "stage": 26,
+     "stage": 16,
      "kind": "normal",
      "name": "拦路泼皮",
-     "x": 2.9435,
+     "x": 3.3035,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 10,
+     "silver": 11,
      "xp": 1
     },
     {
-     "stage": 27,
+     "stage": 17,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 2.9935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 10,
-     "xp": 1
-    },
-    {
-     "stage": 28,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 3.0435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 10,
-     "xp": 1
-    },
-    {
-     "stage": 29,
-     "kind": "elite",
-     "name": "「快刀」刘七",
-     "x": 3.064,
-     "tags": [
-      "破甲"
-     ],
-     "recommendedRealm": 2,
-     "silver": 31,
-     "xp": 5
-    },
-    {
-     "stage": 30,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 3.1435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 11,
-     "xp": 1
-    },
-    {
-     "stage": 31,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 3.1935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 11,
-     "xp": 1
-    },
-    {
-     "stage": 32,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 3.2435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 11,
-     "xp": 1
-    },
-    {
-     "stage": 33,
-     "kind": "elite",
-     "name": "「铁尺」孙五",
-     "x": 2.4644,
-     "tags": [
-      "高血"
-     ],
-     "recommendedRealm": 2,
-     "silver": 26,
-     "xp": 5
-    },
-    {
-     "stage": 34,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 3.3435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 11,
-     "xp": 1
-    },
-    {
-     "stage": 35,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 3.3935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 11,
-     "xp": 1
-    },
-    {
-     "stage": 36,
-     "kind": "normal",
-     "name": "山贼喽啰",
      "x": 3.4435,
      "tags": [],
      "recommendedRealm": 2,
@@ -390,147 +198,51 @@
      "xp": 1
     },
     {
-     "stage": 37,
+     "stage": 18,
+     "kind": "normal",
+     "name": "山贼喽啰",
+     "x": 3.5835,
+     "tags": [],
+     "recommendedRealm": 2,
+     "silver": 12,
+     "xp": 1
+    },
+    {
+     "stage": 19,
      "kind": "elite",
-     "name": "「夜猫」钱六",
-     "x": 3.2779,
+     "name": "「独眼」胡三",
+     "x": 3.5079,
      "tags": [
       "高闪"
      ],
      "recommendedRealm": 2,
-     "silver": 33,
+     "silver": 35,
      "xp": 5
     },
     {
-     "stage": 38,
+     "stage": 20,
      "kind": "normal",
      "name": "拦路泼皮",
-     "x": 3.5435,
+     "x": 3.8635,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 12,
+     "silver": 13,
      "xp": 1
     },
     {
-     "stage": 39,
+     "stage": 21,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 3.5935,
+     "x": 4.0035,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 12,
+     "silver": 13,
      "xp": 1
     },
     {
-     "stage": 40,
+     "stage": 22,
      "kind": "normal",
      "name": "山贼喽啰",
-     "x": 3.6435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 12,
-     "xp": 1
-    },
-    {
-     "stage": 41,
-     "kind": "elite",
-     "name": "「黑鹞」马九",
-     "x": 3.664,
-     "tags": [
-      "破甲"
-     ],
-     "recommendedRealm": 2,
-     "silver": 36,
-     "xp": 5
-    },
-    {
-     "stage": 42,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 3.7435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 12,
-     "xp": 1
-    },
-    {
-     "stage": 43,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 3.7935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 12,
-     "xp": 1
-    },
-    {
-     "stage": 44,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 3.8435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 13,
-     "xp": 1
-    },
-    {
-     "stage": 45,
-     "kind": "elite",
-     "name": "「白眉」赵老",
-     "x": 3.0644,
-     "tags": [
-      "高血"
-     ],
-     "recommendedRealm": 2,
-     "silver": 31,
-     "xp": 5
-    },
-    {
-     "stage": 46,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 3.9435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 13,
-     "xp": 1
-    },
-    {
-     "stage": 47,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 3.9935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 13,
-     "xp": 1
-    },
-    {
-     "stage": 48,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 4.0435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 13,
-     "xp": 1
-    },
-    {
-     "stage": 49,
-     "kind": "elite",
-     "name": "「钻山豹」侯四",
-     "x": 3.8584,
-     "tags": [
-      "高闪"
-     ],
-     "recommendedRealm": 2,
-     "silver": 38,
-     "xp": 5
-    },
-    {
-     "stage": 50,
-     "kind": "normal",
-     "name": "拦路泼皮",
      "x": 4.1435,
      "tags": [],
      "recommendedRealm": 2,
@@ -538,156 +250,50 @@
      "xp": 1
     },
     {
-     "stage": 51,
+     "stage": 23,
      "kind": "normal",
-     "name": "山野猎户",
-     "x": 4.1935,
+     "name": "剪径毛贼",
+     "x": 4.2835,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 14,
      "xp": 1
     },
     {
-     "stage": 52,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 4.2435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 14,
-     "xp": 1
-    },
-    {
-     "stage": 53,
-     "kind": "elite",
-     "name": "「草上飞」燕八",
-     "x": 4.2552,
-     "tags": [
-      "破甲"
-     ],
-     "recommendedRealm": 2,
-     "silver": 42,
-     "xp": 5
-    },
-    {
-     "stage": 54,
+     "stage": 24,
      "kind": "normal",
      "name": "拦路泼皮",
-     "x": 4.3435,
+     "x": 4.4235,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 14,
+     "silver": 15,
      "xp": 1
     },
     {
-     "stage": 55,
+     "stage": 25,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 4.3935,
+     "x": 4.5635,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 15,
      "xp": 1
     },
     {
-     "stage": 56,
+     "stage": 26,
      "kind": "normal",
      "name": "山贼喽啰",
-     "x": 4.4435,
+     "x": 4.7035,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 15,
+     "silver": 16,
      "xp": 1
     },
     {
-     "stage": 57,
+     "stage": 27,
      "kind": "elite",
-     "name": "「疤脸」屠二",
-     "x": 3.5929,
-     "tags": [
-      "高血"
-     ],
-     "recommendedRealm": 2,
-     "silver": 36,
-     "xp": 5
-    },
-    {
-     "stage": 58,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 4.5435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 15,
-     "xp": 1
-    },
-    {
-     "stage": 59,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 4.5935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 15,
-     "xp": 1
-    },
-    {
-     "stage": 60,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 4.6435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 16,
-     "xp": 1
-    },
-    {
-     "stage": 61,
-     "kind": "elite",
-     "name": "「笑弥勒」钱大肚",
-     "x": 4.4584,
-     "tags": [
-      "高闪"
-     ],
-     "recommendedRealm": 2,
-     "silver": 45,
-     "xp": 5
-    },
-    {
-     "stage": 62,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 4.7435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 16,
-     "xp": 1
-    },
-    {
-     "stage": 63,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 4.7935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 16,
-     "xp": 1
-    },
-    {
-     "stage": 64,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 4.8435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 16,
-     "xp": 1
-    },
-    {
-     "stage": 65,
-     "kind": "elite",
-     "name": "「断指」吴老六",
-     "x": 4.8552,
+     "name": "「快刀」刘七",
+     "x": 4.8052,
      "tags": [
       "破甲"
      ],
@@ -696,133 +302,47 @@
      "xp": 5
     },
     {
-     "stage": 66,
+     "stage": 28,
      "kind": "normal",
      "name": "拦路泼皮",
-     "x": 4.9435,
+     "x": 4.9835,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 17,
      "xp": 1
     },
     {
-     "stage": 67,
+     "stage": 29,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 4.9935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 17,
-     "xp": 1
-    },
-    {
-     "stage": 68,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 5.0435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 17,
-     "xp": 1
-    },
-    {
-     "stage": 69,
-     "kind": "elite",
-     "name": "「独脚」鲁十三",
-     "x": 4.1929,
-     "tags": [
-      "高血"
-     ],
-     "recommendedRealm": 2,
-     "silver": 42,
-     "xp": 5
-    },
-    {
-     "stage": 70,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 5.1435,
+     "x": 5.1235,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 18,
      "xp": 1
     },
     {
-     "stage": 71,
+     "stage": 30,
      "kind": "normal",
-     "name": "山野猎户",
-     "x": 5.1935,
+     "name": "山贼喽啰",
+     "x": 5.2635,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 18,
      "xp": 1
     },
     {
-     "stage": 72,
+     "stage": 31,
      "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 5.2435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 18,
-     "xp": 1
-    },
-    {
-     "stage": 73,
-     "kind": "elite",
-     "name": "「血手」阎奎",
-     "x": 5.0584,
-     "tags": [
-      "高闪"
-     ],
-     "recommendedRealm": 2,
-     "silver": 52,
-     "xp": 5
-    },
-    {
-     "stage": 74,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 5.3435,
+     "name": "剪径毛贼",
+     "x": 5.4035,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 19,
      "xp": 1
     },
     {
-     "stage": 75,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 5.3935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 19,
-     "xp": 1
-    },
-    {
-     "stage": 76,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 5.4435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 19,
-     "xp": 1
-    },
-    {
-     "stage": 77,
-     "kind": "elite",
-     "name": "「过山风」庞彪",
-     "x": 5.4554,
-     "tags": [
-      "破甲"
-     ],
-     "recommendedRealm": 2,
-     "silver": 58,
-     "xp": 5
-    },
-    {
-     "stage": 78,
+     "stage": 32,
      "kind": "normal",
      "name": "拦路泼皮",
      "x": 5.5435,
@@ -832,145 +352,51 @@
      "xp": 1
     },
     {
-     "stage": 79,
+     "stage": 33,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 5.5935,
+     "x": 5.6835,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 20,
+     "silver": 21,
      "xp": 1
     },
     {
-     "stage": 80,
+     "stage": 34,
      "kind": "normal",
      "name": "山贼喽啰",
-     "x": 5.6435,
+     "x": 5.8235,
      "tags": [],
      "recommendedRealm": 2,
-     "silver": 20,
+     "silver": 21,
      "xp": 1
     },
     {
-     "stage": 81,
+     "stage": 35,
      "kind": "elite",
-     "name": "「黑狗」丁全",
-     "x": 4.7638,
+     "name": "「铁尺」孙五",
+     "x": 5.0626,
      "tags": [
       "高血"
      ],
      "recommendedRealm": 2,
-     "silver": 48,
+     "silver": 52,
      "xp": 5
     },
     {
-     "stage": 82,
+     "stage": 36,
      "kind": "normal",
      "name": "拦路泼皮",
-     "x": 5.7435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 21,
-     "xp": 1
-    },
-    {
-     "stage": 83,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 5.7935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 21,
-     "xp": 1
-    },
-    {
-     "stage": 84,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 5.8435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 21,
-     "xp": 1
-    },
-    {
-     "stage": 85,
-     "kind": "elite",
-     "name": "「瘸腿」邓八",
-     "x": 5.6584,
-     "tags": [
-      "高闪"
-     ],
-     "recommendedRealm": 2,
-     "silver": 61,
-     "xp": 5
-    },
-    {
-     "stage": 86,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 5.9435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 22,
-     "xp": 1
-    },
-    {
-     "stage": 87,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 5.9935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 22,
-     "xp": 1
-    },
-    {
-     "stage": 88,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 6.0435,
+     "x": 6.1035,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 23,
      "xp": 1
     },
     {
-     "stage": 89,
-     "kind": "elite",
-     "name": "「独臂」崔九",
-     "x": 6.0557,
-     "tags": [
-      "破甲"
-     ],
-     "recommendedRealm": 2,
-     "silver": 68,
-     "xp": 5
-    },
-    {
-     "stage": 90,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 6.1435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 23,
-     "xp": 1
-    },
-    {
-     "stage": 91,
+     "stage": 37,
      "kind": "normal",
      "name": "山野猎户",
-     "x": 6.1935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 23,
-     "xp": 1
-    },
-    {
-     "stage": 92,
-     "kind": "normal",
-     "name": "山贼喽啰",
      "x": 6.2435,
      "tags": [],
      "recommendedRealm": 2,
@@ -978,91 +404,27 @@
      "xp": 1
     },
     {
-     "stage": 93,
-     "kind": "elite",
-     "name": "「赤发」罗鬼",
-     "x": 5.3637,
-     "tags": [
-      "高血"
-     ],
-     "recommendedRealm": 2,
-     "silver": 57,
-     "xp": 5
-    },
-    {
-     "stage": 94,
+     "stage": 38,
      "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 6.3435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 24,
-     "xp": 1
-    },
-    {
-     "stage": 95,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 6.3935,
+     "name": "山贼喽啰",
+     "x": 6.3835,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 25,
      "xp": 1
     },
     {
-     "stage": 96,
+     "stage": 39,
      "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 6.4435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 25,
-     "xp": 1
-    },
-    {
-     "stage": 97,
-     "kind": "elite",
-     "name": "「铁牛」包大",
-     "x": 6.2584,
-     "tags": [
-      "高闪"
-     ],
-     "recommendedRealm": 2,
-     "silver": 72,
-     "xp": 5
-    },
-    {
-     "stage": 98,
-     "kind": "normal",
-     "name": "拦路泼皮",
-     "x": 6.5435,
+     "name": "剪径毛贼",
+     "x": 6.5235,
      "tags": [],
      "recommendedRealm": 2,
      "silver": 26,
      "xp": 1
     },
     {
-     "stage": 99,
-     "kind": "normal",
-     "name": "山野猎户",
-     "x": 6.5935,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 26,
-     "xp": 1
-    },
-    {
-     "stage": 100,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 6.6435,
-     "tags": [],
-     "recommendedRealm": 2,
-     "silver": 26,
-     "xp": 1
-    },
-    {
-     "stage": 101,
+     "stage": 40,
      "kind": "boss",
      "name": "山贼头目",
      "x": 7.0095,
@@ -1093,15 +455,13 @@
     },
     {
      "stage": 2,
-     "kind": "elite",
-     "name": "「癞头」田七",
-     "x": 7.5263,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 7.5628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 100,
-     "xp": 5
+     "silver": 34,
+     "xp": 1
     },
     {
      "stage": 3,
@@ -1115,13 +475,15 @@
     },
     {
      "stage": 4,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 7.6628,
-     "tags": [],
+     "kind": "elite",
+     "name": "「夜猫」钱六",
+     "x": 7.2605,
+     "tags": [
+      "高闪"
+     ],
      "recommendedRealm": 3,
-     "silver": 34,
-     "xp": 1
+     "silver": 93,
+     "xp": 5
     },
     {
      "stage": 5,
@@ -1135,15 +497,13 @@
     },
     {
      "stage": 6,
-     "kind": "elite",
-     "name": "「钻天鼠」耿六",
-     "x": 6.8526,
-     "tags": [
-      "高血"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 7.7628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 84,
-     "xp": 5
+     "silver": 35,
+     "xp": 1
     },
     {
      "stage": 7,
@@ -1177,15 +537,13 @@
     },
     {
      "stage": 10,
-     "kind": "elite",
-     "name": "「山魈」殷老三",
-     "x": 7.7077,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 7.9628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 105,
-     "xp": 5
+     "silver": 37,
+     "xp": 1
     },
     {
      "stage": 11,
@@ -1199,13 +557,15 @@
     },
     {
      "stage": 12,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 8.0628,
-     "tags": [],
+     "kind": "elite",
+     "name": "「黑鹞」马九",
+     "x": 8.0264,
+     "tags": [
+      "破甲"
+     ],
      "recommendedRealm": 3,
-     "silver": 38,
-     "xp": 1
+     "silver": 114,
+     "xp": 5
     },
     {
      "stage": 13,
@@ -1219,15 +579,13 @@
     },
     {
      "stage": 14,
-     "kind": "elite",
-     "name": "「泥鳅」鲍小乙",
-     "x": 8.1265,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 8.1628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 117,
-     "xp": 5
+     "silver": 39,
+     "xp": 1
     },
     {
      "stage": 15,
@@ -1261,15 +619,13 @@
     },
     {
      "stage": 18,
-     "kind": "elite",
-     "name": "「青面」焦猛",
-     "x": 7.4308,
-     "tags": [
-      "高血"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 8.3628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 97,
-     "xp": 5
+     "silver": 41,
+     "xp": 1
     },
     {
      "stage": 19,
@@ -1283,13 +639,15 @@
     },
     {
      "stage": 20,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 8.4628,
-     "tags": [],
+     "kind": "elite",
+     "name": "「白眉」赵老",
+     "x": 7.5598,
+     "tags": [
+      "高血"
+     ],
      "recommendedRealm": 3,
-     "silver": 43,
-     "xp": 1
+     "silver": 101,
+     "xp": 5
     },
     {
      "stage": 21,
@@ -1303,15 +661,13 @@
     },
     {
      "stage": 22,
-     "kind": "elite",
-     "name": "「一撮毛」郝十二",
-     "x": 8.0535,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 8.5628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 115,
-     "xp": 5
+     "silver": 44,
+     "xp": 1
     },
     {
      "stage": 23,
@@ -1345,15 +701,13 @@
     },
     {
      "stage": 26,
-     "kind": "elite",
-     "name": "「夜枭」卜七",
-     "x": 8.7267,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 8.7628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 137,
-     "xp": 5
+     "silver": 46,
+     "xp": 1
     },
     {
      "stage": 27,
@@ -1367,13 +721,15 @@
     },
     {
      "stage": 28,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 8.8628,
-     "tags": [],
+     "kind": "elite",
+     "name": "「钻山豹」侯四",
+     "x": 8.394,
+     "tags": [
+      "高闪"
+     ],
      "recommendedRealm": 3,
-     "silver": 47,
-     "xp": 1
+     "silver": 125,
+     "xp": 5
     },
     {
      "stage": 29,
@@ -1387,15 +743,13 @@
     },
     {
      "stage": 30,
-     "kind": "elite",
-     "name": "「铁拐」秦老幺",
-     "x": 8.0597,
-     "tags": [
-      "高血"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 8.9628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 115,
-     "xp": 5
+     "silver": 48,
+     "xp": 1
     },
     {
      "stage": 31,
@@ -1429,15 +783,13 @@
     },
     {
      "stage": 34,
-     "kind": "elite",
-     "name": "「花臂」常胜",
-     "x": 8.694,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 9.1628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 136,
-     "xp": 5
+     "silver": 51,
+     "xp": 1
     },
     {
      "stage": 35,
@@ -1451,13 +803,15 @@
     },
     {
      "stage": 36,
-     "kind": "normal",
-     "name": "剪径毛贼",
-     "x": 9.2628,
-     "tags": [],
+     "kind": "elite",
+     "name": "「草上飞」燕八",
+     "x": 9.2267,
+     "tags": [
+      "破甲"
+     ],
      "recommendedRealm": 3,
-     "silver": 52,
-     "xp": 1
+     "silver": 156,
+     "xp": 5
     },
     {
      "stage": 37,
@@ -1491,25 +845,25 @@
     },
     {
      "stage": 2,
-     "kind": "elite",
-     "name": "「矮脚虎」葛三",
-     "x": 9.8652,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 9.9013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 184,
-     "xp": 5
+     "silver": 62,
+     "xp": 1
     },
     {
      "stage": 3,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 9.9513,
-     "tags": [],
+     "kind": "elite",
+     "name": "「疤脸」屠二",
+     "x": 9.0193,
+     "tags": [
+      "高血"
+     ],
      "recommendedRealm": 4,
-     "silver": 63,
-     "xp": 1
+     "silver": 148,
+     "xp": 5
     },
     {
      "stage": 4,
@@ -1533,15 +887,13 @@
     },
     {
      "stage": 6,
-     "kind": "elite",
-     "name": "「哑巴」石头",
-     "x": 9.1818,
-     "tags": [
-      "高血"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 10.1013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 154,
-     "xp": 5
+     "silver": 65,
+     "xp": 1
     },
     {
      "stage": 7,
@@ -1575,25 +927,25 @@
     },
     {
      "stage": 10,
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 10.3013,
+     "tags": [],
+     "recommendedRealm": 4,
+     "silver": 69,
+     "xp": 1
+    },
+    {
+     "stage": 11,
      "kind": "elite",
-     "name": "「赤脚」谭五",
-     "x": 9.793,
+     "name": "「笑弥勒」钱大肚",
+     "x": 9.843,
      "tags": [
       "高闪"
      ],
      "recommendedRealm": 4,
-     "silver": 181,
+     "silver": 183,
      "xp": 5
-    },
-    {
-     "stage": 11,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 10.3513,
-     "tags": [],
-     "recommendedRealm": 4,
-     "silver": 70,
-     "xp": 1
     },
     {
      "stage": 12,
@@ -1617,15 +969,13 @@
     },
     {
      "stage": 14,
-     "kind": "elite",
-     "name": "「老鸹」聂九",
-     "x": 10.478,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 10.5013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 216,
-     "xp": 5
+     "silver": 73,
+     "xp": 1
     },
     {
      "stage": 15,
@@ -1659,25 +1009,25 @@
     },
     {
      "stage": 18,
-     "kind": "elite",
-     "name": "「双刀」史彪",
-     "x": 9.789,
-     "tags": [
-      "高血"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 10.7013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 181,
-     "xp": 5
+     "silver": 76,
+     "xp": 1
     },
     {
      "stage": 19,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 10.7513,
-     "tags": [],
+     "kind": "elite",
+     "name": "「断指」吴老六",
+     "x": 10.7295,
+     "tags": [
+      "破甲"
+     ],
      "recommendedRealm": 4,
-     "silver": 77,
-     "xp": 1
+     "silver": 231,
+     "xp": 5
     },
     {
      "stage": 20,
@@ -1701,15 +1051,13 @@
     },
     {
      "stage": 22,
-     "kind": "elite",
-     "name": "「麻脸」尤四",
-     "x": 10.4299,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 10.9013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 214,
-     "xp": 5
+     "silver": 81,
+     "xp": 1
     },
     {
      "stage": 23,
@@ -1743,25 +1091,25 @@
     },
     {
      "stage": 26,
-     "kind": "elite",
-     "name": "「铜锤」窦二",
-     "x": 11.0655,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 11.1013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 252,
-     "xp": 5
+     "silver": 85,
+     "xp": 1
     },
     {
      "stage": 27,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 11.1513,
-     "tags": [],
+     "kind": "elite",
+     "name": "「独脚」鲁十三",
+     "x": 10.2478,
+     "tags": [
+      "高血"
+     ],
      "recommendedRealm": 4,
-     "silver": 86,
-     "xp": 1
+     "silver": 204,
+     "xp": 5
     },
     {
      "stage": 28,
@@ -1785,15 +1133,13 @@
     },
     {
      "stage": 30,
-     "kind": "elite",
-     "name": "「夜游」洪七",
-     "x": 10.3978,
-     "tags": [
-      "高血"
-     ],
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 11.3013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 212,
-     "xp": 5
+     "silver": 90,
+     "xp": 1
     },
     {
      "stage": 31,
@@ -1827,25 +1173,25 @@
     },
     {
      "stage": 34,
+     "kind": "normal",
+     "name": "山野猎户",
+     "x": 11.5013,
+     "tags": [],
+     "recommendedRealm": 4,
+     "silver": 94,
+     "xp": 1
+    },
+    {
+     "stage": 35,
      "kind": "elite",
-     "name": "「豁牙」苟大",
-     "x": 11.0844,
+     "name": "「血手」阎奎",
+     "x": 11.1344,
      "tags": [
       "高闪"
      ],
      "recommendedRealm": 4,
-     "silver": 254,
+     "silver": 257,
      "xp": 5
-    },
-    {
-     "stage": 35,
-     "kind": "normal",
-     "name": "山贼喽啰",
-     "x": 11.5513,
-     "tags": [],
-     "recommendedRealm": 4,
-     "silver": 96,
-     "xp": 1
     },
     {
      "stage": 36,
@@ -1919,15 +1265,13 @@
     },
     {
      "stage": 4,
-     "kind": "elite",
-     "name": "「铁臂」法空",
-     "x": 7.2605,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "恶寺武僧",
+     "x": 7.6628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 93,
-     "xp": 5
+     "silver": 34,
+     "xp": 1
     },
     {
      "stage": 5,
@@ -1962,13 +1306,13 @@
     {
      "stage": 8,
      "kind": "elite",
-     "name": "「追魂」柳三娘",
-     "x": 7.8264,
+     "name": "「铁臂」法空",
+     "x": 7.6077,
      "tags": [
-      "破甲"
+      "高闪"
      ],
      "recommendedRealm": 3,
-     "silver": 108,
+     "silver": 102,
      "xp": 5
     },
     {
@@ -2003,15 +1347,13 @@
     },
     {
      "stage": 12,
-     "kind": "elite",
-     "name": "「笑面」吴通",
-     "x": 7.662,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "恶寺武僧",
+     "x": 8.0628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 103,
-     "xp": 5
+     "silver": 38,
+     "xp": 1
     },
     {
      "stage": 13,
@@ -2046,13 +1388,13 @@
     {
      "stage": 16,
      "kind": "elite",
-     "name": "「断魂刀」彭虎",
-     "x": 7.7535,
+     "name": "「追魂」柳三娘",
+     "x": 8.2265,
      "tags": [
-      "高闪"
+      "破甲"
      ],
      "recommendedRealm": 3,
-     "silver": 106,
+     "silver": 120,
      "xp": 5
     },
     {
@@ -2087,15 +1429,13 @@
     },
     {
      "stage": 20,
-     "kind": "elite",
-     "name": "「金算盘」贾仁",
-     "x": 8.4265,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "恶寺武僧",
+     "x": 8.4628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 126,
-     "xp": 5
+     "silver": 43,
+     "xp": 1
     },
     {
      "stage": 21,
@@ -2130,7 +1470,7 @@
     {
      "stage": 24,
      "kind": "elite",
-     "name": "「过江龙」韩霸",
+     "name": "「笑面」吴通",
      "x": 8.1303,
      "tags": [
       "反伤"
@@ -2171,15 +1511,13 @@
     },
     {
      "stage": 28,
-     "kind": "elite",
-     "name": "「催命判官」薛冷",
-     "x": 8.394,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "恶寺武僧",
+     "x": 8.8628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 125,
-     "xp": 5
+     "silver": 47,
+     "xp": 1
     },
     {
      "stage": 29,
@@ -2214,13 +1552,13 @@
     {
      "stage": 32,
      "kind": "elite",
-     "name": "「一掌开碑」石敢",
-     "x": 9.0267,
+     "name": "「断魂刀」彭虎",
+     "x": 8.594,
      "tags": [
-      "破甲"
+      "高闪"
      ],
      "recommendedRealm": 3,
-     "silver": 148,
+     "silver": 132,
      "xp": 5
     },
     {
@@ -2255,15 +1593,13 @@
     },
     {
      "stage": 36,
-     "kind": "elite",
-     "name": "「玉面狐」苏媚",
-     "x": 8.7159,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "恶寺武僧",
+     "x": 9.2628,
+     "tags": [],
      "recommendedRealm": 3,
-     "silver": 136,
-     "xp": 5
+     "silver": 52,
+     "xp": 1
     },
     {
      "stage": 37,
@@ -2308,15 +1644,13 @@
     },
     {
      "stage": 3,
-     "kind": "elite",
-     "name": "「铁头」陀罗僧",
-     "x": 9.4544,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 9.9513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 165,
-     "xp": 5
+     "silver": 63,
+     "xp": 1
     },
     {
      "stage": 4,
@@ -2340,25 +1674,25 @@
     },
     {
      "stage": 6,
-     "kind": "normal",
-     "name": "镖局逃卒",
-     "x": 10.1013,
-     "tags": [],
-     "recommendedRealm": 4,
-     "silver": 65,
-     "xp": 1
-    },
-    {
-     "stage": 7,
      "kind": "elite",
-     "name": "「夺命书生」温如玉",
-     "x": 10.128,
+     "name": "「金算盘」贾仁",
+     "x": 10.078,
      "tags": [
       "破甲"
      ],
      "recommendedRealm": 4,
-     "silver": 197,
+     "silver": 195,
      "xp": 5
+    },
+    {
+     "stage": 7,
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 10.1513,
+     "tags": [],
+     "recommendedRealm": 4,
+     "silver": 66,
+     "xp": 1
     },
     {
      "stage": 8,
@@ -2392,15 +1726,13 @@
     },
     {
      "stage": 11,
-     "kind": "elite",
-     "name": "「神拳」武烈",
-     "x": 9.8083,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 10.3513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 182,
-     "xp": 5
+     "silver": 70,
+     "xp": 1
     },
     {
      "stage": 12,
@@ -2424,25 +1756,25 @@
     },
     {
      "stage": 14,
-     "kind": "normal",
-     "name": "镖局逃卒",
-     "x": 10.5013,
-     "tags": [],
+     "kind": "elite",
+     "name": "「过江龙」韩霸",
+     "x": 9.9583,
+     "tags": [
+      "反伤"
+     ],
      "recommendedRealm": 4,
-     "silver": 73,
-     "xp": 1
+     "silver": 189,
+     "xp": 5
     },
     {
      "stage": 15,
-     "kind": "elite",
-     "name": "「千手观音」梅三姑",
-     "x": 10.0418,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 10.5513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 193,
-     "xp": 5
+     "silver": 74,
+     "xp": 1
     },
     {
      "stage": 16,
@@ -2476,15 +1808,13 @@
     },
     {
      "stage": 19,
-     "kind": "elite",
-     "name": "「黑煞」屠千山",
-     "x": 10.7295,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 10.7513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 231,
-     "xp": 5
+     "silver": 77,
+     "xp": 1
     },
     {
      "stage": 20,
@@ -2508,25 +1838,25 @@
     },
     {
      "stage": 22,
-     "kind": "normal",
-     "name": "镖局逃卒",
-     "x": 10.9013,
-     "tags": [],
+     "kind": "elite",
+     "name": "「催命判官」薛冷",
+     "x": 10.4299,
+     "tags": [
+      "高闪"
+     ],
      "recommendedRealm": 4,
-     "silver": 81,
-     "xp": 1
+     "silver": 214,
+     "xp": 5
     },
     {
      "stage": 23,
-     "kind": "elite",
-     "name": "「醉拳」刘伶儿",
-     "x": 10.37,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 10.9513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 210,
-     "xp": 5
+     "silver": 82,
+     "xp": 1
     },
     {
      "stage": 24,
@@ -2560,15 +1890,13 @@
     },
     {
      "stage": 27,
-     "kind": "elite",
-     "name": "「铁琵琶」沈娘子",
-     "x": 10.7167,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 11.1513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 230,
-     "xp": 5
+     "silver": 86,
+     "xp": 1
     },
     {
      "stage": 28,
@@ -2592,25 +1920,25 @@
     },
     {
      "stage": 30,
-     "kind": "normal",
-     "name": "镖局逃卒",
-     "x": 11.3013,
-     "tags": [],
-     "recommendedRealm": 4,
-     "silver": 90,
-     "xp": 1
-    },
-    {
-     "stage": 31,
      "kind": "elite",
-     "name": "「九节鞭」雷霆",
-     "x": 11.3155,
+     "name": "「一掌开碑」石敢",
+     "x": 11.2655,
      "tags": [
       "破甲"
      ],
      "recommendedRealm": 4,
-     "silver": 270,
+     "silver": 266,
      "xp": 5
+    },
+    {
+     "stage": 31,
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 11.3513,
+     "tags": [],
+     "recommendedRealm": 4,
+     "silver": 91,
+     "xp": 1
     },
     {
      "stage": 32,
@@ -2644,15 +1972,13 @@
     },
     {
      "stage": 35,
-     "kind": "elite",
-     "name": "「白衣」楚不凡",
-     "x": 10.9459,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "游侠儿",
+     "x": 11.5513,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 245,
-     "xp": 5
+     "silver": 96,
+     "xp": 1
     },
     {
      "stage": 36,
@@ -2707,25 +2033,25 @@
     },
     {
      "stage": 2,
-     "kind": "elite",
-     "name": "「鬼手」卓天成",
-     "x": 11.983,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 12.4067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 321,
-     "xp": 5
+     "silver": 120,
+     "xp": 1
     },
     {
      "stage": 3,
-     "kind": "normal",
-     "name": "游侠儿",
-     "x": 12.4567,
-     "tags": [],
+     "kind": "elite",
+     "name": "「玉面狐」苏媚",
+     "x": 11.8416,
+     "tags": [
+      "反伤"
+     ],
      "recommendedRealm": 5,
-     "silver": 121,
-     "xp": 1
+     "silver": 309,
+     "xp": 5
     },
     {
      "stage": 4,
@@ -2749,15 +2075,13 @@
     },
     {
      "stage": 6,
-     "kind": "elite",
-     "name": "「飞刀」李寻",
-     "x": 12.5743,
-     "tags": [
-      "破甲"
-     ],
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 12.6067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 375,
-     "xp": 5
+     "silver": 126,
+     "xp": 1
     },
     {
      "stage": 7,
@@ -2791,25 +2115,25 @@
     },
     {
      "stage": 10,
-     "kind": "elite",
-     "name": "「大力」牛二虎",
-     "x": 12.1804,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 12.8067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 338,
-     "xp": 5
+     "silver": 133,
+     "xp": 1
     },
     {
      "stage": 11,
-     "kind": "normal",
-     "name": "游侠儿",
-     "x": 12.8567,
-     "tags": [],
+     "kind": "elite",
+     "name": "「铁头」陀罗僧",
+     "x": 12.4462,
+     "tags": [
+      "高闪"
+     ],
      "recommendedRealm": 5,
-     "silver": 135,
-     "xp": 1
+     "silver": 363,
+     "xp": 5
     },
     {
      "stage": 12,
@@ -2833,15 +2157,13 @@
     },
     {
      "stage": 14,
-     "kind": "elite",
-     "name": "「银枪」罗小七",
-     "x": 12.6283,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 13.0067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 380,
-     "xp": 5
+     "silver": 140,
+     "xp": 1
     },
     {
      "stage": 15,
@@ -2875,25 +2197,25 @@
     },
     {
      "stage": 18,
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 13.2067,
+     "tags": [],
+     "recommendedRealm": 5,
+     "silver": 148,
+     "xp": 1
+    },
+    {
+     "stage": 19,
      "kind": "elite",
-     "name": "「铁掌」范无咎",
-     "x": 13.1714,
+     "name": "「夺命书生」温如玉",
+     "x": 13.2214,
      "tags": [
       "破甲"
      ],
      "recommendedRealm": 5,
-     "silver": 439,
+     "silver": 444,
      "xp": 5
-    },
-    {
-     "stage": 19,
-     "kind": "normal",
-     "name": "游侠儿",
-     "x": 13.2567,
-     "tags": [],
-     "recommendedRealm": 5,
-     "silver": 150,
-     "xp": 1
     },
     {
      "stage": 20,
@@ -2917,15 +2239,13 @@
     },
     {
      "stage": 22,
-     "kind": "elite",
-     "name": "「夜行」褚三更",
-     "x": 12.7372,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 13.4067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 391,
-     "xp": 5
+     "silver": 156,
+     "xp": 1
     },
     {
      "stage": 23,
@@ -2959,25 +2279,25 @@
     },
     {
      "stage": 26,
-     "kind": "elite",
-     "name": "「双钩」庄不平",
-     "x": 13.2548,
-     "tags": [
-      "高闪"
-     ],
+     "kind": "normal",
+     "name": "镖局逃卒",
+     "x": 13.6067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 448,
-     "xp": 5
+     "silver": 164,
+     "xp": 1
     },
     {
      "stage": 27,
-     "kind": "normal",
-     "name": "游侠儿",
-     "x": 13.6567,
-     "tags": [],
+     "kind": "elite",
+     "name": "「神拳」武烈",
+     "x": 12.9872,
+     "tags": [
+      "反伤"
+     ],
      "recommendedRealm": 5,
-     "silver": 166,
-     "xp": 1
+     "silver": 418,
+     "xp": 5
     },
     {
      "stage": 28,
@@ -3052,15 +2372,13 @@
     },
     {
      "stage": 4,
-     "kind": "elite",
-     "name": "「清风」道人",
-     "x": 9.4563,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "黑风寨卒",
+     "x": 10.0013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 166,
-     "xp": 5
+     "silver": 64,
+     "xp": 1
     },
     {
      "stage": 5,
@@ -3095,13 +2413,13 @@
     {
      "stage": 8,
      "kind": "elite",
-     "name": "「青锋」秦朗",
-     "x": 9.7438,
+     "name": "「清风」道人",
+     "x": 9.6583,
      "tags": [
-      "毒"
+      "反伤"
      ],
      "recommendedRealm": 4,
-     "silver": 178,
+     "silver": 175,
      "xp": 5
     },
     {
@@ -3136,15 +2454,13 @@
     },
     {
      "stage": 12,
-     "kind": "elite",
-     "name": "「寒梅」卓小婉",
-     "x": 9.8493,
-     "tags": [
-      "净化"
-     ],
+     "kind": "normal",
+     "name": "黑风寨卒",
+     "x": 10.4013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 183,
-     "xp": 5
+     "silver": 71,
+     "xp": 1
     },
     {
      "stage": 13,
@@ -3179,13 +2495,13 @@
     {
      "stage": 16,
      "kind": "elite",
-     "name": "「落雁」宁远",
-     "x": 10.0574,
+     "name": "「青锋」秦朗",
+     "x": 10.1448,
      "tags": [
-      "反伤"
+      "毒"
      ],
      "recommendedRealm": 4,
-     "silver": 194,
+     "silver": 198,
      "xp": 5
     },
     {
@@ -3220,15 +2536,13 @@
     },
     {
      "stage": 20,
-     "kind": "elite",
-     "name": "「孤鸿」叶千山",
-     "x": 10.3433,
-     "tags": [
-      "毒"
-     ],
+     "kind": "normal",
+     "name": "黑风寨卒",
+     "x": 10.8013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 209,
-     "xp": 5
+     "silver": 79,
+     "xp": 1
     },
     {
      "stage": 21,
@@ -3263,7 +2577,7 @@
     {
      "stage": 24,
      "kind": "elite",
-     "name": "「冷面」严霜",
+     "name": "「寒梅」卓小婉",
      "x": 10.4483,
      "tags": [
       "净化"
@@ -3304,15 +2618,13 @@
     },
     {
      "stage": 28,
-     "kind": "elite",
-     "name": "「松风」何清远",
-     "x": 10.5959,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "黑风寨卒",
+     "x": 11.2013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 223,
-     "xp": 5
+     "silver": 87,
+     "xp": 1
     },
     {
      "stage": 29,
@@ -3347,13 +2659,13 @@
     {
      "stage": 32,
      "kind": "elite",
-     "name": "「断剑」萧离",
-     "x": 10.9468,
+     "name": "「落雁」宁远",
+     "x": 10.7959,
      "tags": [
-      "毒"
+      "反伤"
      ],
      "recommendedRealm": 4,
-     "silver": 245,
+     "silver": 235,
      "xp": 5
     },
     {
@@ -3388,15 +2700,13 @@
     },
     {
      "stage": 36,
-     "kind": "elite",
-     "name": "「回雁」卫青衣",
-     "x": 11.0467,
-     "tags": [
-      "净化"
-     ],
+     "kind": "normal",
+     "name": "黑风寨卒",
+     "x": 11.6013,
+     "tags": [],
      "recommendedRealm": 4,
-     "silver": 251,
-     "xp": 5
+     "silver": 97,
+     "xp": 1
     },
     {
      "stage": 37,
@@ -3451,15 +2761,13 @@
     },
     {
      "stage": 3,
-     "kind": "elite",
-     "name": "「残雪」顾长亭",
-     "x": 11.8416,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 12.4567,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 309,
-     "xp": 5
+     "silver": 121,
+     "xp": 1
     },
     {
      "stage": 4,
@@ -3483,25 +2791,25 @@
     },
     {
      "stage": 6,
-     "kind": "normal",
-     "name": "荆棘武者",
-     "x": 12.6067,
-     "tags": [],
-     "recommendedRealm": 5,
-     "silver": 126,
-     "xp": 1
-    },
-    {
-     "stage": 7,
      "kind": "elite",
-     "name": "「孤灯」慧明",
-     "x": 12.1939,
+     "name": "「孤鸿」叶千山",
+     "x": 12.1439,
      "tags": [
       "毒"
      ],
      "recommendedRealm": 5,
-     "silver": 339,
+     "silver": 335,
      "xp": 5
+    },
+    {
+     "stage": 7,
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 12.6567,
+     "tags": [],
+     "recommendedRealm": 5,
+     "silver": 128,
+     "xp": 1
     },
     {
      "stage": 8,
@@ -3535,15 +2843,13 @@
     },
     {
      "stage": 11,
-     "kind": "elite",
-     "name": "「流霜」纪无声",
-     "x": 12.3005,
-     "tags": [
-      "净化"
-     ],
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 12.8567,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 349,
-     "xp": 5
+     "silver": 135,
+     "xp": 1
     },
     {
      "stage": 12,
@@ -3567,25 +2873,25 @@
     },
     {
      "stage": 14,
-     "kind": "normal",
-     "name": "荆棘武者",
-     "x": 13.0067,
-     "tags": [],
+     "kind": "elite",
+     "name": "「冷面」严霜",
+     "x": 12.4484,
+     "tags": [
+      "净化"
+     ],
      "recommendedRealm": 5,
-     "silver": 140,
-     "xp": 1
+     "silver": 363,
+     "xp": 5
     },
     {
      "stage": 15,
-     "kind": "elite",
-     "name": "「拂衣」陆沉舟",
-     "x": 12.4083,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 13.0567,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 359,
-     "xp": 5
+     "silver": 142,
+     "xp": 1
     },
     {
      "stage": 16,
@@ -3619,15 +2925,13 @@
     },
     {
      "stage": 19,
-     "kind": "elite",
-     "name": "「惊蛰」雷远山",
-     "x": 12.8061,
-     "tags": [
-      "毒"
-     ],
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 13.2567,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 399,
-     "xp": 5
+     "silver": 150,
+     "xp": 1
     },
     {
      "stage": 20,
@@ -3651,25 +2955,25 @@
     },
     {
      "stage": 22,
-     "kind": "normal",
-     "name": "荆棘武者",
-     "x": 13.4067,
-     "tags": [],
+     "kind": "elite",
+     "name": "「松风」何清远",
+     "x": 12.7372,
+     "tags": [
+      "反伤"
+     ],
      "recommendedRealm": 5,
-     "silver": 156,
-     "xp": 1
+     "silver": 391,
+     "xp": 5
     },
     {
      "stage": 23,
-     "kind": "elite",
-     "name": "「听潮」沈听澜",
-     "x": 12.8976,
-     "tags": [
-      "净化"
-     ],
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 13.4567,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 408,
-     "xp": 5
+     "silver": 158,
+     "xp": 1
     },
     {
      "stage": 24,
@@ -3703,15 +3007,13 @@
     },
     {
      "stage": 27,
-     "kind": "elite",
-     "name": "「断云」裴望岳",
-     "x": 12.9872,
-     "tags": [
-      "反伤"
-     ],
+     "kind": "normal",
+     "name": "落魄镖师",
+     "x": 13.6567,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 418,
-     "xp": 5
+     "silver": 166,
+     "xp": 1
     },
     {
      "stage": 28,
@@ -3786,15 +3088,13 @@
     },
     {
      "stage": 4,
-     "kind": "elite",
-     "name": "「毒蛊」婆婆",
-     "x": 12.0432,
-     "tags": [
-      "毒"
-     ],
+     "kind": "normal",
+     "name": "铁壁甲士",
+     "x": 12.5067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 326,
-     "xp": 5
+     "silver": 123,
+     "xp": 1
     },
     {
      "stage": 5,
@@ -3829,13 +3129,13 @@
     {
      "stage": 8,
      "kind": "elite",
-     "name": "「锁喉」孟七",
-     "x": 12.15,
+     "name": "「毒蛊」婆婆",
+     "x": 12.2442,
      "tags": [
-      "净化"
+      "毒"
      ],
      "recommendedRealm": 5,
-     "silver": 336,
+     "silver": 344,
      "xp": 5
     },
     {
@@ -3870,15 +3170,13 @@
     },
     {
      "stage": 12,
-     "kind": "elite",
-     "name": "「飞檐」燕无痕",
-     "x": 12.4805,
-     "tags": [
-      "高攻"
-     ],
+     "kind": "normal",
+     "name": "铁壁甲士",
+     "x": 12.9067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 366,
-     "xp": 5
+     "silver": 136,
+     "xp": 1
     },
     {
      "stage": 13,
@@ -3913,13 +3211,13 @@
     {
      "stage": 16,
      "kind": "elite",
-     "name": "「断崖」石青松",
-     "x": 12.6499,
+     "name": "「锁喉」孟七",
+     "x": 12.5492,
      "tags": [
-      "毒"
+      "净化"
      ],
      "recommendedRealm": 5,
-     "silver": 383,
+     "silver": 373,
      "xp": 5
     },
     {
@@ -3954,15 +3252,13 @@
     },
     {
      "stage": 20,
-     "kind": "elite",
-     "name": "「蜀道」巴蛮子",
-     "x": 12.7476,
-     "tags": [
-      "净化"
-     ],
+     "kind": "normal",
+     "name": "铁壁甲士",
+     "x": 13.3067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 392,
-     "xp": 5
+     "silver": 152,
+     "xp": 1
     },
     {
      "stage": 21,
@@ -3997,7 +3293,7 @@
     {
      "stage": 24,
      "kind": "elite",
-     "name": "「栈道」龚铁手",
+     "name": "「飞檐」燕无痕",
      "x": 13.1194,
      "tags": [
       "高攻"
@@ -4038,15 +3334,13 @@
     },
     {
      "stage": 28,
-     "kind": "elite",
-     "name": "「鬼哭」乌蒙",
-     "x": 13.2631,
-     "tags": [
-      "毒"
-     ],
+     "kind": "normal",
+     "name": "铁壁甲士",
+     "x": 13.7067,
+     "tags": [],
      "recommendedRealm": 5,
-     "silver": 449,
-     "xp": 5
+     "silver": 168,
+     "xp": 1
     },
     {
      "stage": 29,

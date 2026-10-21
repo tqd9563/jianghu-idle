@@ -6,15 +6,16 @@
 本脚本决定每条前沿（图 × 难度）有几关、每关当量多少、精英与 Boss 放在哪、带什么标签、叫什么名字。
 
 摆放规则：
-  · 普通关：从本段首日最慢路线刚好打得过的当量起，每关 +STAGE_GAP，铺到本段末日前沿。
-  · 精英：每 ELITE_EVERY 关一个（同段各前沿错开）。标签只增加代价不挡路（用户 2026-09-29 裁决「甲」）：
+  · 普通关：从本段首日最慢路线刚好打得过的当量起，每关 +stage_gap(段)，铺到本段末日前沿。
+          境界 2 段跨度大，关距放宽到 0.14，图 1 初入压到 40 关左右（longline_sim.STAGE_GAP_BY_BAND）。
+  · 精英：每 ELITE_EVERY（8）关一个（同段各前沿错开）。标签只增加代价不挡路（用户 2026-09-29 裁决「甲」）：
           精英当天（最慢路线首次够到该格的那天），三条路线每一条都要打得过——
           当量 = 格位当量 − 该天各路线因标签损失的最大当量。
   · Boss（段末）：三条路线在下一境界首日都打得过（含破关心得），带双标签。
     （图 1 初入中段的头目只在「境界 1 段」存在时出现；多天一世后首日在线即入境界 2，该段已不存在。）
   · 入门关（图 1 初入最前面）：境界 1 还没择路、练不了武学，只有裸属性。从当量 INTRO_X0 起每关 +INTRO_GAP，
           铺到裸属性 EV 前沿减 INTRO_MARGIN（实战胜率约 95% 以上），让第一世开局的几个小时有关可推。
-  · 传功缓坡（入门关之后、境界 2 段之前）：从 TEACH_X0 起每关 +STAGE_GAP，铺到境界 2 段起点。
+  · 传功缓坡（入门关之后、境界 2 段之前）：从 TEACH_X0 起每关 +TEACH_GAP，铺到境界 2 段起点。
           刚传功（0 重、只有前辈所授的一门寻常拳脚）就能连推几关，之后随内功升重、装备掉落一关关往上走。
           第 7 关那场教学战另按境界 2 段起点的强度打（teachX），保证裸属性必败、前辈照常出场。
 
@@ -86,6 +87,7 @@ INTRO_GAP = 0.15
 INTRO_MARGIN = 0.25   # EV 前沿 2.04 − 0.25 ≈ 1.79，实战（RNG）胜率约 95% 以上
 # 传功缓坡起点：真实代码实测（battle-loot/spec.md §4），百川诀 0 重 + 罗汉拳在 2.0 胜率约 92%（开山掌 / 旋风腿同样 ≥ 90%）、裸属性约 46%
 TEACH_X0 = 2.0
+TEACH_GAP = 0.15      # 缓坡关距（原 0.05 铺 15 关；2026-10-21 放宽到 0.15 铺 5 关，与入门关同一步幅）
 # 每条前沿的终点上抬（battle-loot/spec.md §5，2026-10-14 实装四）：约 10 关，段末回到装备前的日子
 END_LIFT = 0.5
 
@@ -108,10 +110,10 @@ def intro_stages() -> list[dict]:
 
 
 def teach_stages(n_intro: int, x_end: float) -> list[dict]:
-    """传功缓坡：入门关之后从 TEACH_X0 起每关 +STAGE_GAP，铺到境界 2 段起点之前；名字沿用图 1 普通敌人"""
-    n = max(0, math.ceil((x_end - TEACH_X0) / L.STAGE_GAP - 1e-9))
+    """传功缓坡：入门关之后从 TEACH_X0 起每关 +TEACH_GAP，铺到境界 2 段起点之前；名字沿用图 1 普通敌人"""
+    n = max(0, math.ceil((x_end - TEACH_X0) / TEACH_GAP - 1e-9))
     return [dict(stage=n_intro + i + 1, kind="normal", name=NORMALS[1][i % len(NORMALS[1])],
-                 x=round(TEACH_X0 + i * L.STAGE_GAP, 4), tags=[], recommendedRealm=1)
+                 x=round(TEACH_X0 + i * TEACH_GAP, 4), tags=[], recommendedRealm=1)
             for i in range(n)]
 
 # 奖励（content.md §2.0，暂定）：关卡不掉内力；银两随当量涨，阅历按类别给
@@ -159,9 +161,10 @@ def main():
         base = n_intro if (mp, tier) == (1, 0) else 0   # 入门关与传功缓坡不参与精英排位与普通敌人轮换，原有关卡只顺延编号
         stagger = L.TRACKS[b].index((mp, tier_name)) * L.ELITE_EVERY // len(L.TRACKS[b])
         # 段末上抬（battle-loot/spec.md §5）：装备让段内关卡提前耗尽，每条前沿的终点抬 END_LIFT 当量；Boss 门槛不动
-        n = max(0, math.floor((top + END_LIFT - x0) / L.STAGE_GAP))
+        gap = L.stage_gap(b)
+        n = max(0, math.floor((top + END_LIFT - x0) / gap))
         for i in range(n):
-            slot = x0 + i * L.STAGE_GAP
+            slot = x0 + i * gap
             no = len(stages) + 1
             seg_no = no - base
             if (seg_no + stagger) % L.ELITE_EVERY == 0:
@@ -199,6 +202,8 @@ def main():
     print(json.dumps({
         "source": "export_stage_table.py（longline_sim.solve）",
         "stageGap": L.STAGE_GAP,
+        "stageGapByBand": L.STAGE_GAP_BY_BAND,
+        "teachGap": TEACH_GAP,
         "eliteEvery": L.ELITE_EVERY,
         "teachX": round(teach_x, 4),
         "tagMods": L.TAG_MODS,

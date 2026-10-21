@@ -10,10 +10,10 @@ import {
 } from './enemies';
 
 describe('长线关卡表', () => {
-  it('开放 9 条前沿、共 379 关（段末上抬 0.5 当量约 10 关；火候从第 1 重起与底蕴进标准构筑后前沿整体上抬；传功缓坡 15 关）；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
+  it('开放 9 条前沿、共 318 关（一图一难度 40 关上下：境界 2 段关距 0.14、传功缓坡 5 关；其余前沿 30–38 关）；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
     const open = MAP_IDS.flatMap((m) => TIERS.filter((t) => !isSealed(m, t)).map((t) => `${m}-${t}`));
     expect(open).toEqual(['1-0', '1-1', '1-2', '2-0', '2-1', '2-2', '3-0', '3-1', '4-0']);
-    expect(allStages()).toHaveLength(379);
+    expect(allStages()).toHaveLength(318);
     expect(trackLength(5, 0)).toBe(0);
   });
 
@@ -29,7 +29,7 @@ describe('长线关卡表', () => {
     }
   });
 
-  it('精英每 4 关一个、带机制标签、有名号；普通关不带标签', () => {
+  it('精英每 8 关一个、带机制标签、有名号；普通关不带标签', () => {
     for (const e of allStages()) {
       if (e.kind === 'elite') {
         expect(e.tags.length).toBeGreaterThan(0);
@@ -38,7 +38,7 @@ describe('长线关卡表', () => {
       if (e.kind === 'normal') expect(e.tags).toEqual([]);
     }
     const elites = allStages().filter((e) => e.kind === 'elite');
-    expect(elites.length).toBeGreaterThanOrEqual(25);
+    expect(elites.length).toBe(35);
     expect(new Set(elites.map((e) => e.name)).size).toBe(elites.length);   // 名号不重复
   });
 
@@ -62,13 +62,13 @@ describe('长线关卡表', () => {
     expect(getStage(1, 0, 7).recommendedRealm).toBe(1);
   });
 
-  it('传功缓坡（第 7–21 关）：每关 +0.05；刚传功的百川诀 + 前辈所授任一门打第 7 关胜率 ≥ 90%，裸属性打教学战强度全败；第 22 关起要境界 2', () => {
-    for (let st = 7; st <= 21; st++) {
+  it('传功缓坡（第 7–11 关）：每关 +0.15；刚传功的百川诀 + 前辈所授任一门打第 7 关胜率 ≥ 90%，裸属性打教学战强度全败；第 12 关起要境界 2', () => {
+    for (let st = 7; st <= 11; st++) {
       expect(getStage(1, 0, st).recommendedRealm).toBe(1);
-      expect(getStage(1, 0, st).x).toBeCloseTo(2 + (st - 7) * 0.05, 4);
+      expect(getStage(1, 0, st).x).toBeCloseTo(2 + (st - 7) * 0.15, 4);
     }
-    expect(getStage(1, 0, 22).recommendedRealm).toBe(2);
-    expect(getStage(1, 0, 22).x).toBeCloseTo(TEACH_X, 4);
+    expect(getStage(1, 0, 12).recommendedRealm).toBe(2);
+    expect(getStage(1, 0, 12).x).toBeCloseTo(TEACH_X, 4);
     for (const gift of GIFT_WUXUE_OPTIONS) {
       const taught = { realm: 1, neigong: 'jingleijue' as const, zhong: 0, tiersPassed: 0, injuries: undefined,
         ownedWuxue: [gift], equipped: [gift], formCasts: {}, pages: [] };

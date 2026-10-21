@@ -610,7 +610,7 @@ function wxShelfInner() {
 function ngYin() {
   const d = NG[ng.id];
   const cur = ui.wgOpen === 'neigong' && (!ng.cur || ng.cur === ng.id);
-  return `<button class="ya g${QN[d.q]} rf t-${ROUTE[d.r].tag} ngya" data-ng="${ng.id}" data-tip="${d.q}内功 · ${ROUTE[d.r].name}一路" aria-current="${cur}">
+  return `<button class="ya g${QN[d.q]} rf t-${ROUTE[d.r].tag} ngya" data-ng="${ng.id}" aria-current="${cur}">
     <span class="box"><i class="ico" style="background-image:url('${A}neigong/${ng.id}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${ng.z} 重</span></button>`;
 }
 function sheetHTML() {

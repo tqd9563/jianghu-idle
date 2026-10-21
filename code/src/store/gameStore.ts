@@ -12,7 +12,7 @@ import {
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
 } from '../engine/neigong';
 import {
-  BOSS_DROPS, DUPLICATE_SILVER, GIFT_WUXUE_OPTIONS, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianMods, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
+  BOSS_DROPS, DUPLICATE_SILVER, GIFT_WUXUE_OPTIONS, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formBaseCost, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
   SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
@@ -578,17 +578,16 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
     const res = d.route !== null && d.route === route;
     const benmen = isBenmen(s.sect ?? null, id);
     const forms = learnedFormsOf(s, id);
-    // 熟练（battle-loot/spec.md §3.6）：耗气与冷却按抽中的那一式；这门的触发几率加成取已领悟各式的平均
+    // 熟练只减这一式的耗气（battle-loot/design.md 裁决 45）；触发几率与冷却不随熟练变
     const tiers = forms.map((k) => shulianTier(d.quality, (s.formCasts ?? {})[formKey(id, k)] ?? 0, benmen));
-    const pMult = tiers.length ? tiers.reduce((a, t) => a + shulianMods(t).p, 0) / tiers.length : 1;
     return {
-      id, name: d.name, p: d.p * pMult,
+      id, name: d.name, p: d.p,
       forms: forms.map((k, i) => ({
         key: formKey(id, k), name: formName(k),
         // 侠名录九类器械线：该类武学伤害 +10 / 20 / 30%
         mult: formMult(d, k, res) * wxMult * (1 + catDmgBonus(s, d.cat)),
         effect: d.effect, fx: effectValue(d, k),
-        cost: formCost(d, tiers[i]), cd: formCd(d, tiers[i]),
+        cost: formCost(d, k, tiers[i]), baseCost: formBaseCost(d, k), cd: formCd(d),
       })),
     };
   });

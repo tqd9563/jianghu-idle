@@ -1082,7 +1082,7 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
     useGameStore.setState({
-      realm: 5, route: 'huashan', neigong: 'jingleijue', zhong: 40, tiersPassed: 3,
+      realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 20, tiersPassed: 3,
       ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], formCasts: { 'liuyunjian:1': 24 },
       clearedStages: m1all,
     });
@@ -1228,7 +1228,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(zhongGate({ ...s, ownedScrolls: ['juance:yuntaixinfa'] })?.needScroll).toBe(false);
   });
 
-  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 5 次，拜华山即到「熟练」档（耗气 ×0.92、触发 ×1.04，倍率不变）', () => {
+  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 5 次，拜华山即到「熟练」档（耗气 ×0.92；触发与倍率不变）', () => {
     const base = {
       realm: 4, neigong: 'shiguxinfa' as const, zhong: 10, ownedWuxue: ['cangyajianjue' as const], ownedScrolls: [],
       equipped: ['cangyajianjue' as const], formCasts: { 'cangyajianjue:1': 5 }, pages: ['cangyajianjue:1'],
@@ -1238,7 +1238,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(lo(null).forms[0].cost).toBe(55);
     expect(lo('shaolin').forms[0].cost).toBe(55);
     expect(lo('huashan').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);
-    expect(lo('huashan').p).toBeCloseTo(0.25 * 1.04, 9);   // 触发加成取能出各式的平均（只有第一式）
+    expect(lo('huashan').p).toBeCloseTo(0.25, 9);   // 触发几率不随熟练变（裁决 45）
   });
 
   it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次；解锁图 2 / 图 3 初入各说一次新派', () => {

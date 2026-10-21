@@ -88,7 +88,7 @@ export const QUALITY_PARAMS: Record<Quality, QualityParams> = {
   绝学: { forms: 7, shulian: [6, 15, 32] },
 };
 
-export const MULT_STEP = 0.04;
+export const MULT_STEP = 0.08;
 export const QI_REGEN = 20;
 export const RESONANCE_MULT = 1.1;
 /** 总触发率上限（spec §3.3） */
@@ -116,25 +116,28 @@ export function shulianTier(quality: Quality, casts: number, benmen = false): nu
   return casts >= th[2] ? 3 : casts >= th[1] ? 2 : casts >= th[0] ? 1 : 0;
 }
 
-/** 练熟了更顺手（spec §3.6）：耗气倍率、触发几率加成、冷却减少 */
-export interface ShulianMods { cost: number; p: number; cd: number }
-const SHU = catalog.shulian as unknown as Record<string, [number, number, number]>;
-export function shulianMods(tier: number): ShulianMods {
-  const [cost, p, cd] = SHU[String(tier)] ?? SHU['0'];
-  return { cost, p: 1 + p, cd };
-}
 
 /** 第 k 式的倍率（含共鸣；熟练不再加倍率） */
 export function formMult(def: Pick<WuxueDef, 'mult0'>, k: number, resonance: boolean): number {
   return (def.mult0 + MULT_STEP * (k - 1)) * (resonance ? RESONANCE_MULT : 1);
 }
 
-/** 这一式实际耗气（取整）与冷却 */
-export function formCost(def: Pick<WuxueDef, 'cost'>, tier: number): number {
-  return Math.round(def.cost * shulianMods(tier).cost);
+/** 各式耗气倍比（battle-loot/design.md 裁决 45 `[待 sim]`）：第 k 式基础耗气 = 门基础耗气 × 倍比^(k − 1) */
+export const COST_STEP: Record<Quality, number> = { 寻常: 1.3, 上乘: 1.2, 绝学: 1.1 };
+/** 熟练只减耗气（裁决 45）：生疏 / 熟练 / 精通 / 圆熟的耗气倍率 `[待 sim]` */
+export const SHULIAN_COST: [number, number, number, number] = [1, 0.92, 0.84, 0.75];
+
+/** 第 k 式未经熟练打折的基础耗气（抽式权重用它，不然练熟的招反而少出） */
+export function formBaseCost(def: Pick<WuxueDef, 'cost' | 'quality'>, k: number): number {
+  return Math.round(def.cost * COST_STEP[def.quality] ** (k - 1));
 }
-export function formCd(def: Pick<WuxueDef, 'cd'>, tier: number): number {
-  return Math.max(1, def.cd - shulianMods(tier).cd);
+/** 第 k 式实际耗气：基础耗气 × 熟练倍率（取整） */
+export function formCost(def: Pick<WuxueDef, 'cost' | 'quality'>, k: number, tier: number): number {
+  return Math.round(formBaseCost(def, k) * SHULIAN_COST[tier]);
+}
+/** 冷却不再随熟练变（裁决 45） */
+export function formCd(def: Pick<WuxueDef, 'cd'>): number {
+  return Math.max(1, def.cd);
 }
 
 // ---------------------------------------------------------------- 特效分档（spec §3.4）

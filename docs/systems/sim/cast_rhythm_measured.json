@@ -1,0 +1,2055 @@
+{
+  "generated": "2026-10-21",
+  "trials": 240,
+  "checkpoints": [
+    {
+      "label": "境界1 传功单门",
+      "realm": 1,
+      "zhong": 0,
+      "stage": "1-0-8",
+      "qiMax": 70,
+      "tunings": {
+        "A": {
+          "all0": {
+            "winrate": 0.7708333333333334,
+            "rounds": 9.3,
+            "fightSec": 28,
+            "fightsPerHour": 130,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.97
+              },
+              "0.08": {
+                "寻常": 0.97
+              },
+              "0.12": {
+                "寻常": 0.97
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 315
+            }
+          },
+          "all3": {
+            "winrate": 0.7708333333333334,
+            "rounds": 9.2,
+            "fightSec": 27,
+            "fightsPerHour": 132,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                0.257,
+                0.337,
+                0.406
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005
+              },
+              "0.08": {
+                "寻常": 1.039
+              },
+              "0.12": {
+                "寻常": 1.074
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 309
+            }
+          },
+          "baseCosts": [
+            15,
+            18,
+            22
+          ],
+          "anchorRatio": [
+            0.93,
+            0.94
+          ]
+        },
+        "B": {
+          "all0": {
+            "winrate": 0.7708333333333334,
+            "rounds": 9.3,
+            "fightSec": 28,
+            "fightsPerHour": 130,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.97
+              },
+              "0.08": {
+                "寻常": 0.97
+              },
+              "0.12": {
+                "寻常": 0.97
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 315
+            }
+          },
+          "all3": {
+            "winrate": 0.7791666666666667,
+            "rounds": 9.2,
+            "fightSec": 27,
+            "fightsPerHour": 132,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                0.231,
+                0.349,
+                0.42
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.006
+              },
+              "0.08": {
+                "寻常": 1.042
+              },
+              "0.12": {
+                "寻常": 1.078
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 308
+            }
+          },
+          "baseCosts": [
+            15,
+            20,
+            25
+          ],
+          "anchorRatio": [
+            1,
+            0.95
+          ]
+        },
+        "C": {
+          "all0": {
+            "winrate": 0.7708333333333334,
+            "rounds": 9.3,
+            "fightSec": 28,
+            "fightsPerHour": 130,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.97
+              },
+              "0.08": {
+                "寻常": 0.97
+              },
+              "0.12": {
+                "寻常": 0.97
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 315
+            }
+          },
+          "all3": {
+            "winrate": 0.7791666666666667,
+            "rounds": 9.2,
+            "fightSec": 27,
+            "fightsPerHour": 132,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                0.215,
+                0.333,
+                0.453
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.007
+              },
+              "0.08": {
+                "寻常": 1.045
+              },
+              "0.12": {
+                "寻常": 1.082
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 308
+            }
+          },
+          "baseCosts": [
+            15,
+            21,
+            29
+          ],
+          "anchorRatio": [
+            1.07,
+            1.05
+          ]
+        },
+        "D": {
+          "all0": {
+            "winrate": 0.7708333333333334,
+            "rounds": 9.3,
+            "fightSec": 28,
+            "fightsPerHour": 130,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.97
+              },
+              "0.08": {
+                "寻常": 0.97
+              },
+              "0.12": {
+                "寻常": 0.97
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 315
+            }
+          },
+          "all3": {
+            "winrate": 0.7791666666666667,
+            "rounds": 9.2,
+            "fightSec": 27,
+            "fightsPerHour": 132,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                0.199,
+                0.335,
+                0.467
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.008
+              },
+              "0.08": {
+                "寻常": 1.047
+              },
+              "0.12": {
+                "寻常": 1.085
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 308
+            }
+          },
+          "baseCosts": [
+            15,
+            23,
+            34
+          ],
+          "anchorRatio": [
+            1.13,
+            1.13
+          ]
+        }
+      },
+      "unlockRatesPerHour": {
+        "B": [
+          303,
+          164,
+          118
+        ],
+        "C": [
+          303,
+          167,
+          128
+        ]
+      }
+    },
+    {
+      "label": "境界2 末 6 门寻常",
+      "realm": 2,
+      "zhong": 40,
+      "stage": "1-0-37",
+      "qiMax": 110,
+      "tunings": {
+        "A": {
+          "all0": {
+            "winrate": 0.7541666666666667,
+            "rounds": 5.2,
+            "fightSec": 17,
+            "fightsPerHour": 216,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969
+              },
+              "0.08": {
+                "寻常": 0.969
+              },
+              "0.12": {
+                "寻常": 0.969
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 75,
+              "liuyunjian": 109,
+              "pofengdao": 182,
+              "jiyujian": 171,
+              "qingpingjian": 163,
+              "songtaojian": 141
+            }
+          },
+          "all3": {
+            "winrate": 0.8125,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 223,
+            "lowQiShare": 0.002,
+            "share": {
+              "寻常": [
+                0.249,
+                0.335,
+                0.417
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005
+              },
+              "0.08": {
+                "寻常": 1.041
+              },
+              "0.12": {
+                "寻常": 1.077
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 86,
+              "liuyunjian": 111,
+              "pofengdao": 173,
+              "jiyujian": 183,
+              "qingpingjian": 159,
+              "songtaojian": 128
+            }
+          },
+          "baseCosts": [
+            25,
+            30,
+            36
+          ],
+          "anchorRatio": [
+            0.92,
+            0.9
+          ]
+        },
+        "B": {
+          "all0": {
+            "winrate": 0.7541666666666667,
+            "rounds": 5.2,
+            "fightSec": 17,
+            "fightsPerHour": 216,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969
+              },
+              "0.08": {
+                "寻常": 0.969
+              },
+              "0.12": {
+                "寻常": 0.969
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 75,
+              "liuyunjian": 109,
+              "pofengdao": 182,
+              "jiyujian": 171,
+              "qingpingjian": 163,
+              "songtaojian": 141
+            }
+          },
+          "all3": {
+            "winrate": 0.8125,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 224,
+            "lowQiShare": 0.003,
+            "share": {
+              "寻常": [
+                0.222,
+                0.338,
+                0.44
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.007
+              },
+              "0.08": {
+                "寻常": 1.044
+              },
+              "0.12": {
+                "寻常": 1.082
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 81,
+              "liuyunjian": 117,
+              "pofengdao": 172,
+              "jiyujian": 181,
+              "qingpingjian": 164,
+              "songtaojian": 129
+            }
+          },
+          "baseCosts": [
+            25,
+            33,
+            42
+          ],
+          "anchorRatio": [
+            1,
+            0.97
+          ]
+        },
+        "C": {
+          "all0": {
+            "winrate": 0.7541666666666667,
+            "rounds": 5.2,
+            "fightSec": 17,
+            "fightsPerHour": 216,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969
+              },
+              "0.08": {
+                "寻常": 0.969
+              },
+              "0.12": {
+                "寻常": 0.969
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 75,
+              "liuyunjian": 109,
+              "pofengdao": 182,
+              "jiyujian": 171,
+              "qingpingjian": 163,
+              "songtaojian": 141
+            }
+          },
+          "all3": {
+            "winrate": 0.8166666666666667,
+            "rounds": 5.2,
+            "fightSec": 17,
+            "fightsPerHour": 218,
+            "lowQiShare": 0.027,
+            "share": {
+              "寻常": [
+                0.221,
+                0.314,
+                0.464
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.007
+              },
+              "0.08": {
+                "寻常": 1.046
+              },
+              "0.12": {
+                "寻常": 1.084
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 87,
+              "liuyunjian": 119,
+              "pofengdao": 168,
+              "jiyujian": 177,
+              "qingpingjian": 168,
+              "songtaojian": 122
+            }
+          },
+          "baseCosts": [
+            25,
+            35,
+            49
+          ],
+          "anchorRatio": [
+            1.04,
+            1.06
+          ]
+        },
+        "D": {
+          "all0": {
+            "winrate": 0.7541666666666667,
+            "rounds": 5.2,
+            "fightSec": 17,
+            "fightsPerHour": 216,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969
+              },
+              "0.08": {
+                "寻常": 0.969
+              },
+              "0.12": {
+                "寻常": 0.969
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 75,
+              "liuyunjian": 109,
+              "pofengdao": 182,
+              "jiyujian": 171,
+              "qingpingjian": 163,
+              "songtaojian": 141
+            }
+          },
+          "all3": {
+            "winrate": 0.8041666666666667,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 222,
+            "lowQiShare": 0.049,
+            "share": {
+              "寻常": [
+                0.223,
+                0.307,
+                0.47
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.008
+              },
+              "0.08": {
+                "寻常": 1.046
+              },
+              "0.12": {
+                "寻常": 1.084
+              }
+            },
+            "castsPerDoorHour": {
+              "kaibeidao": 78,
+              "liuyunjian": 114,
+              "qingpingjian": 157,
+              "pofengdao": 163,
+              "jiyujian": 181,
+              "songtaojian": 127
+            }
+          },
+          "baseCosts": [
+            25,
+            38,
+            56
+          ],
+          "anchorRatio": [
+            1.16,
+            1.11
+          ]
+        }
+      },
+      "unlockRatesPerHour": {
+        "B": [
+          142,
+          79,
+          56
+        ],
+        "C": [
+          142,
+          82,
+          56
+        ]
+      }
+    },
+    {
+      "label": "境界3 末 3 上乘 + 4 寻常",
+      "realm": 3,
+      "zhong": 61,
+      "stage": "1-1-21",
+      "qiMax": 161,
+      "tunings": {
+        "A": {
+          "all0": {
+            "winrate": 0.5,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 155,
+              "jinghongjian": 107,
+              "feipuduanyajian": 90,
+              "qingpingjian": 149,
+              "duanshuidao": 102,
+              "songtaojian": 121,
+              "liuyunjian": 103
+            }
+          },
+          "all3": {
+            "winrate": 0.5875,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 220,
+            "lowQiShare": 0.006,
+            "share": {
+              "寻常": [
+                0.29,
+                0.322,
+                0.388
+              ],
+              "上乘": [
+                0.148,
+                0.142,
+                0.202,
+                0.261,
+                0.247
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.003,
+                "上乘": 1.006
+              },
+              "0.08": {
+                "寻常": 1.037,
+                "上乘": 1.053
+              },
+              "0.12": {
+                "寻常": 1.071,
+                "上乘": 1.1
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 166,
+              "jinghongjian": 100,
+              "feipuduanyajian": 118,
+              "qingpingjian": 150,
+              "duanshuidao": 104,
+              "songtaojian": 107,
+              "liuyunjian": 108
+            }
+          },
+          "baseCosts": [
+            40,
+            46,
+            53,
+            61,
+            70
+          ],
+          "anchorRatio": [
+            0.88,
+            0.87,
+            0.87,
+            0.87
+          ]
+        },
+        "B": {
+          "all0": {
+            "winrate": 0.5,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 155,
+              "jinghongjian": 107,
+              "feipuduanyajian": 90,
+              "qingpingjian": 149,
+              "duanshuidao": 102,
+              "songtaojian": 121,
+              "liuyunjian": 103
+            }
+          },
+          "all3": {
+            "winrate": 0.6125,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0.023,
+            "share": {
+              "寻常": [
+                0.262,
+                0.305,
+                0.433
+              ],
+              "上乘": [
+                0.119,
+                0.135,
+                0.192,
+                0.267,
+                0.286
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005,
+                "上乘": 1.009
+              },
+              "0.08": {
+                "寻常": 1.041,
+                "上乘": 1.059
+              },
+              "0.12": {
+                "寻常": 1.077,
+                "上乘": 1.109
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 152,
+              "jinghongjian": 94,
+              "feipuduanyajian": 114,
+              "qingpingjian": 140,
+              "duanshuidao": 91,
+              "songtaojian": 116,
+              "liuyunjian": 119
+            }
+          },
+          "baseCosts": [
+            40,
+            48,
+            58,
+            69,
+            83
+          ],
+          "anchorRatio": [
+            0.9,
+            0.92,
+            0.9,
+            0.9
+          ]
+        },
+        "C": {
+          "all0": {
+            "winrate": 0.5,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 155,
+              "jinghongjian": 107,
+              "feipuduanyajian": 90,
+              "qingpingjian": 149,
+              "duanshuidao": 102,
+              "songtaojian": 121,
+              "liuyunjian": 103
+            }
+          },
+          "all3": {
+            "winrate": 0.5833333333333334,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 223,
+            "lowQiShare": 0.073,
+            "share": {
+              "寻常": [
+                0.252,
+                0.319,
+                0.429
+              ],
+              "上乘": [
+                0.147,
+                0.15,
+                0.192,
+                0.248,
+                0.264
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005,
+                "上乘": 1.007
+              },
+              "0.08": {
+                "寻常": 1.042,
+                "上乘": 1.054
+              },
+              "0.12": {
+                "寻常": 1.078,
+                "上乘": 1.101
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 158,
+              "jinghongjian": 84,
+              "feipuduanyajian": 101,
+              "qingpingjian": 160,
+              "duanshuidao": 101,
+              "songtaojian": 114,
+              "liuyunjian": 108
+            }
+          },
+          "baseCosts": [
+            40,
+            52,
+            68,
+            88,
+            114
+          ],
+          "anchorRatio": [
+            0.98,
+            0.98,
+            0.97,
+            0.98
+          ]
+        },
+        "D": {
+          "all0": {
+            "winrate": 0.5,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 155,
+              "jinghongjian": 107,
+              "feipuduanyajian": 90,
+              "qingpingjian": 149,
+              "duanshuidao": 102,
+              "songtaojian": 121,
+              "liuyunjian": 103
+            }
+          },
+          "all3": {
+            "winrate": 0.5625,
+            "rounds": 4.9,
+            "fightSec": 16,
+            "fightsPerHour": 228,
+            "lowQiShare": 0.088,
+            "share": {
+              "寻常": [
+                0.248,
+                0.296,
+                0.456
+              ],
+              "上乘": [
+                0.09,
+                0.19,
+                0.166,
+                0.29,
+                0.266
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.006,
+                "上乘": 1.009
+              },
+              "0.08": {
+                "寻常": 1.044,
+                "上乘": 1.059
+              },
+              "0.12": {
+                "寻常": 1.081,
+                "上乘": 1.108
+              }
+            },
+            "castsPerDoorHour": {
+              "jiyujian": 155,
+              "jinghongjian": 101,
+              "feipuduanyajian": 85,
+              "qingpingjian": 150,
+              "duanshuidao": 90,
+              "songtaojian": 130,
+              "liuyunjian": 117
+            }
+          },
+          "baseCosts": [
+            40,
+            54,
+            73,
+            98,
+            133
+          ],
+          "anchorRatio": [
+            1.02,
+            1.02,
+            1.01,
+            1.02
+          ]
+        }
+      },
+      "unlockRatesPerHour": {
+        "B": [
+          109,
+          62,
+          37,
+          30,
+          25
+        ],
+        "C": [
+          109,
+          57,
+          37,
+          29,
+          20
+        ]
+      }
+    },
+    {
+      "label": "境界4 末 3 绝学 + 3 上乘 + 2 寻常",
+      "realm": 4,
+      "zhong": 84,
+      "stage": "1-2-18",
+      "qiMax": 221,
+      "tunings": {
+        "A": {
+          "all0": {
+            "winrate": 0.7208333333333333,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 222,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 166,
+              "cangyajianjue": 90,
+              "liuyunjian": 105,
+              "luoxingjian": 97,
+              "feipuduanyajian": 105,
+              "duanshuidao": 94,
+              "tianhedaoxuandao": 98,
+              "jinghongjian": 83
+            }
+          },
+          "all3": {
+            "winrate": 0.7375,
+            "rounds": 5.2,
+            "fightSec": 16,
+            "fightsPerHour": 218,
+            "lowQiShare": 0.023,
+            "share": {
+              "寻常": [
+                0.288,
+                0.262,
+                0.45
+              ],
+              "绝学": [
+                0.098,
+                0.098,
+                0.145,
+                0.161,
+                0.142,
+                0.145,
+                0.211
+              ],
+              "上乘": [
+                0.138,
+                0.164,
+                0.204,
+                0.239,
+                0.255
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005,
+                "绝学": 1.015,
+                "上乘": 1.006
+              },
+              "0.08": {
+                "寻常": 1.041,
+                "绝学": 1.135,
+                "上乘": 1.053
+              },
+              "0.12": {
+                "寻常": 1.076,
+                "绝学": 1.256,
+                "上乘": 1.1
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 139,
+              "cangyajianjue": 86,
+              "liuyunjian": 107,
+              "luoxingjian": 99,
+              "feipuduanyajian": 106,
+              "tianhedaoxuandao": 103,
+              "jinghongjian": 94,
+              "duanshuidao": 90
+            }
+          },
+          "baseCosts": [
+            55,
+            61,
+            67,
+            73,
+            81,
+            89,
+            97
+          ],
+          "anchorRatio": [
+            0.84,
+            0.82,
+            0.82,
+            0.84,
+            0.83,
+            0.82
+          ]
+        },
+        "B": {
+          "all0": {
+            "winrate": 0.7208333333333333,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 222,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 166,
+              "cangyajianjue": 90,
+              "liuyunjian": 105,
+              "luoxingjian": 97,
+              "feipuduanyajian": 105,
+              "duanshuidao": 94,
+              "tianhedaoxuandao": 98,
+              "jinghongjian": 83
+            }
+          },
+          "all3": {
+            "winrate": 0.7125,
+            "rounds": 5.2,
+            "fightSec": 17,
+            "fightsPerHour": 217,
+            "lowQiShare": 0.038,
+            "share": {
+              "寻常": [
+                0.247,
+                0.261,
+                0.491
+              ],
+              "绝学": [
+                0.103,
+                0.113,
+                0.144,
+                0.119,
+                0.191,
+                0.119,
+                0.21
+              ],
+              "上乘": [
+                0.105,
+                0.178,
+                0.207,
+                0.21,
+                0.299
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.007,
+                "绝学": 1.013,
+                "上乘": 1.008
+              },
+              "0.08": {
+                "寻常": 1.046,
+                "绝学": 1.132,
+                "上乘": 1.057
+              },
+              "0.12": {
+                "寻常": 1.084,
+                "绝学": 1.25,
+                "上乘": 1.106
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 149,
+              "cangyajianjue": 92,
+              "liuyunjian": 110,
+              "luoxingjian": 99,
+              "feipuduanyajian": 100,
+              "tianhedaoxuandao": 97,
+              "jinghongjian": 98,
+              "duanshuidao": 85
+            }
+          },
+          "baseCosts": [
+            55,
+            61,
+            67,
+            73,
+            81,
+            89,
+            97
+          ],
+          "anchorRatio": [
+            0.84,
+            0.82,
+            0.82,
+            0.84,
+            0.83,
+            0.82
+          ]
+        },
+        "C": {
+          "all0": {
+            "winrate": 0.7208333333333333,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 222,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 166,
+              "cangyajianjue": 90,
+              "liuyunjian": 105,
+              "luoxingjian": 97,
+              "feipuduanyajian": 105,
+              "duanshuidao": 94,
+              "tianhedaoxuandao": 98,
+              "jinghongjian": 83
+            }
+          },
+          "all3": {
+            "winrate": 0.725,
+            "rounds": 4.9,
+            "fightSec": 16,
+            "fightsPerHour": 229,
+            "lowQiShare": 0.113,
+            "share": {
+              "寻常": [
+                0.255,
+                0.296,
+                0.449
+              ],
+              "绝学": [
+                0.108,
+                0.119,
+                0.112,
+                0.142,
+                0.173,
+                0.156,
+                0.19
+              ],
+              "上乘": [
+                0.151,
+                0.183,
+                0.183,
+                0.204,
+                0.28
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.006,
+                "绝学": 1.013,
+                "上乘": 1.006
+              },
+              "0.08": {
+                "寻常": 1.043,
+                "绝学": 1.132,
+                "上乘": 1.052
+              },
+              "0.12": {
+                "寻常": 1.079,
+                "绝学": 1.251,
+                "上乘": 1.098
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 136,
+              "cangyajianjue": 97,
+              "liuyunjian": 118,
+              "luoxingjian": 102,
+              "jinghongjian": 90,
+              "feipuduanyajian": 93,
+              "duanshuidao": 82,
+              "tianhedaoxuandao": 82
+            }
+          },
+          "baseCosts": [
+            55,
+            63,
+            73,
+            84,
+            96,
+            111,
+            127
+          ],
+          "anchorRatio": [
+            0.85,
+            0.87,
+            0.86,
+            0.86,
+            0.86,
+            0.86
+          ]
+        },
+        "D": {
+          "all0": {
+            "winrate": 0.7208333333333333,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 222,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 166,
+              "cangyajianjue": 90,
+              "liuyunjian": 105,
+              "luoxingjian": 97,
+              "feipuduanyajian": 105,
+              "duanshuidao": 94,
+              "tianhedaoxuandao": 98,
+              "jinghongjian": 83
+            }
+          },
+          "all3": {
+            "winrate": 0.7625,
+            "rounds": 5.2,
+            "fightSec": 16,
+            "fightsPerHour": 219,
+            "lowQiShare": 0.211,
+            "share": {
+              "寻常": [
+                0.286,
+                0.253,
+                0.461
+              ],
+              "绝学": [
+                0.105,
+                0.15,
+                0.115,
+                0.168,
+                0.133,
+                0.112,
+                0.217
+              ],
+              "上乘": [
+                0.18,
+                0.187,
+                0.156,
+                0.228,
+                0.248
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005,
+                "绝学": 1.01,
+                "上乘": 1.004
+              },
+              "0.08": {
+                "寻常": 1.042,
+                "绝学": 1.125,
+                "上乘": 1.047
+              },
+              "0.12": {
+                "寻常": 1.078,
+                "绝学": 1.24,
+                "上乘": 1.091
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 152,
+              "cangyajianjue": 85,
+              "liuyunjian": 120,
+              "jinghongjian": 86,
+              "tianhedaoxuandao": 85,
+              "luoxingjian": 91,
+              "feipuduanyajian": 90,
+              "duanshuidao": 93
+            }
+          },
+          "baseCosts": [
+            55,
+            66,
+            79,
+            95,
+            114,
+            137,
+            164
+          ],
+          "anchorRatio": [
+            0.91,
+            0.89,
+            0.9,
+            0.91,
+            0.9,
+            0.9
+          ]
+        }
+      },
+      "unlockRatesPerHour": {
+        "B": [
+          100,
+          49,
+          32,
+          26,
+          24,
+          18,
+          18
+        ],
+        "C": [
+          100,
+          50,
+          32,
+          28,
+          22,
+          17,
+          11
+        ]
+      }
+    },
+    {
+      "label": "境界5 末 4 绝学 + 3 上乘 + 2 寻常",
+      "realm": 5,
+      "zhong": 103,
+      "stage": "2-2-9",
+      "qiMax": 262,
+      "tunings": {
+        "A": {
+          "all0": {
+            "winrate": 0.6291666666666667,
+            "rounds": 4.8,
+            "fightSec": 16,
+            "fightsPerHour": 232,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 137,
+              "cangyajianjue": 80,
+              "liuyunjian": 105,
+              "luoxingjian": 92,
+              "feipuduanyajian": 86,
+              "tianhedaoxuandao": 94,
+              "duanshuidao": 97,
+              "bawangxiejiaqiang": 56,
+              "jinghongjian": 89
+            }
+          },
+          "all3": {
+            "winrate": 0.675,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 223,
+            "lowQiShare": 0.013,
+            "share": {
+              "寻常": [
+                0.262,
+                0.343,
+                0.395
+              ],
+              "绝学": [
+                0.109,
+                0.112,
+                0.115,
+                0.139,
+                0.172,
+                0.178,
+                0.175
+              ],
+              "上乘": [
+                0.138,
+                0.152,
+                0.23,
+                0.205,
+                0.276
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.004,
+                "绝学": 1.014,
+                "上乘": 1.007
+              },
+              "0.08": {
+                "寻常": 1.039,
+                "绝学": 1.132,
+                "上乘": 1.054
+              },
+              "0.12": {
+                "寻常": 1.074,
+                "绝学": 1.251,
+                "上乘": 1.101
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 139,
+              "cangyajianjue": 97,
+              "liuyunjian": 91,
+              "luoxingjian": 86,
+              "feipuduanyajian": 97,
+              "tianhedaoxuandao": 95,
+              "duanshuidao": 82,
+              "jinghongjian": 84,
+              "bawangxiejiaqiang": 62
+            }
+          },
+          "baseCosts": [
+            55,
+            61,
+            67,
+            73,
+            81,
+            89,
+            97
+          ],
+          "anchorRatio": [
+            0.84,
+            0.82,
+            0.82,
+            0.84,
+            0.83,
+            0.82
+          ]
+        },
+        "B": {
+          "all0": {
+            "winrate": 0.6291666666666667,
+            "rounds": 4.8,
+            "fightSec": 16,
+            "fightsPerHour": 232,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 137,
+              "cangyajianjue": 80,
+              "liuyunjian": 105,
+              "luoxingjian": 92,
+              "feipuduanyajian": 86,
+              "tianhedaoxuandao": 94,
+              "duanshuidao": 97,
+              "bawangxiejiaqiang": 56,
+              "jinghongjian": 89
+            }
+          },
+          "all3": {
+            "winrate": 0.6541666666666667,
+            "rounds": 5.1,
+            "fightSec": 16,
+            "fightsPerHour": 222,
+            "lowQiShare": 0.012,
+            "share": {
+              "寻常": [
+                0.223,
+                0.344,
+                0.434
+              ],
+              "绝学": [
+                0.115,
+                0.11,
+                0.113,
+                0.152,
+                0.158,
+                0.177,
+                0.175
+              ],
+              "上乘": [
+                0.147,
+                0.126,
+                0.225,
+                0.225,
+                0.277
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.007,
+                "绝学": 1.013,
+                "上乘": 1.007
+              },
+              "0.08": {
+                "寻常": 1.044,
+                "绝学": 1.13,
+                "上乘": 1.055
+              },
+              "0.12": {
+                "寻常": 1.081,
+                "绝学": 1.248,
+                "上乘": 1.103
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 149,
+              "cangyajianjue": 93,
+              "liuyunjian": 88,
+              "luoxingjian": 87,
+              "feipuduanyajian": 94,
+              "tianhedaoxuandao": 88,
+              "duanshuidao": 82,
+              "jinghongjian": 88,
+              "bawangxiejiaqiang": 61
+            }
+          },
+          "baseCosts": [
+            55,
+            61,
+            67,
+            73,
+            81,
+            89,
+            97
+          ],
+          "anchorRatio": [
+            0.84,
+            0.82,
+            0.82,
+            0.84,
+            0.83,
+            0.82
+          ]
+        },
+        "C": {
+          "all0": {
+            "winrate": 0.6291666666666667,
+            "rounds": 4.8,
+            "fightSec": 16,
+            "fightsPerHour": 232,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 137,
+              "cangyajianjue": 80,
+              "liuyunjian": 105,
+              "luoxingjian": 92,
+              "feipuduanyajian": 86,
+              "tianhedaoxuandao": 94,
+              "duanshuidao": 97,
+              "bawangxiejiaqiang": 56,
+              "jinghongjian": 89
+            }
+          },
+          "all3": {
+            "winrate": 0.6041666666666666,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0.075,
+            "share": {
+              "寻常": [
+                0.239,
+                0.336,
+                0.425
+              ],
+              "绝学": [
+                0.127,
+                0.108,
+                0.099,
+                0.172,
+                0.163,
+                0.136,
+                0.196
+              ],
+              "上乘": [
+                0.132,
+                0.202,
+                0.157,
+                0.226,
+                0.282
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.006,
+                "绝学": 1.012,
+                "上乘": 1.007
+              },
+              "0.08": {
+                "寻常": 1.042,
+                "绝学": 1.128,
+                "上乘": 1.053
+              },
+              "0.12": {
+                "寻常": 1.079,
+                "绝学": 1.245,
+                "上乘": 1.1
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 141,
+              "cangyajianjue": 88,
+              "liuyunjian": 92,
+              "luoxingjian": 79,
+              "duanshuidao": 86,
+              "bawangxiejiaqiang": 64,
+              "tianhedaoxuandao": 82,
+              "feipuduanyajian": 87,
+              "jinghongjian": 98
+            }
+          },
+          "baseCosts": [
+            55,
+            63,
+            73,
+            84,
+            96,
+            111,
+            127
+          ],
+          "anchorRatio": [
+            0.85,
+            0.87,
+            0.86,
+            0.86,
+            0.86,
+            0.86
+          ]
+        },
+        "D": {
+          "all0": {
+            "winrate": 0.6291666666666667,
+            "rounds": 4.8,
+            "fightSec": 16,
+            "fightsPerHour": 232,
+            "lowQiShare": 0,
+            "share": {
+              "寻常": [
+                1
+              ],
+              "绝学": [
+                1
+              ],
+              "上乘": [
+                1
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.08": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              },
+              "0.12": {
+                "寻常": 0.969,
+                "绝学": 0.895,
+                "上乘": 0.96
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 137,
+              "cangyajianjue": 80,
+              "liuyunjian": 105,
+              "luoxingjian": 92,
+              "feipuduanyajian": 86,
+              "tianhedaoxuandao": 94,
+              "duanshuidao": 97,
+              "bawangxiejiaqiang": 56,
+              "jinghongjian": 89
+            }
+          },
+          "all3": {
+            "winrate": 0.65,
+            "rounds": 5,
+            "fightSec": 16,
+            "fightsPerHour": 226,
+            "lowQiShare": 0.145,
+            "share": {
+              "寻常": [
+                0.242,
+                0.344,
+                0.414
+              ],
+              "绝学": [
+                0.09,
+                0.125,
+                0.131,
+                0.118,
+                0.187,
+                0.165,
+                0.184
+              ],
+              "上乘": [
+                0.146,
+                0.19,
+                0.186,
+                0.219,
+                0.259
+              ]
+            },
+            "avgMultRatio": {
+              "0.04": {
+                "寻常": 1.005,
+                "绝学": 1.015,
+                "上乘": 1.005
+              },
+              "0.08": {
+                "寻常": 1.041,
+                "绝学": 1.135,
+                "上乘": 1.051
+              },
+              "0.12": {
+                "寻常": 1.077,
+                "绝学": 1.255,
+                "上乘": 1.096
+              }
+            },
+            "castsPerDoorHour": {
+              "qingpingjian": 131,
+              "cangyajianjue": 82,
+              "liuyunjian": 99,
+              "luoxingjian": 75,
+              "tianhedaoxuandao": 84,
+              "jinghongjian": 84,
+              "feipuduanyajian": 91,
+              "bawangxiejiaqiang": 61,
+              "duanshuidao": 84
+            }
+          },
+          "baseCosts": [
+            55,
+            66,
+            79,
+            95,
+            114,
+            137,
+            164
+          ],
+          "anchorRatio": [
+            0.91,
+            0.89,
+            0.9,
+            0.91,
+            0.9,
+            0.9
+          ]
+        }
+      },
+      "unlockRatesPerHour": {
+        "B": [
+          78,
+          46,
+          32,
+          25,
+          19,
+          15,
+          14
+        ],
+        "C": [
+          78,
+          44,
+          31,
+          26,
+          19,
+          14,
+          14
+        ]
+      }
+    }
+  ]
+}

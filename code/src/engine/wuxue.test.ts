@@ -6,8 +6,8 @@ import { fight, makeBuild, type CombatSkill } from './combat';
 import { getStage, trackLength } from './enemies';
 import { FORM_NAMES } from './formNames';
 import {
-  BIG_OF, EFFECT_TAG, QUALITY_PARAMS, TRIGGER_CAP, WUXUE, WUXUE_IDS, effectText, effectValue, formCd, formCost, formMult,
-  shulianMods, usableWith,
+  BIG_OF, EFFECT_TAG, QUALITY_PARAMS, TRIGGER_CAP, WUXUE, WUXUE_IDS, effectText, effectValue, formBaseCost, formCd, formCost, formMult,
+  usableWith,
 } from './wuxue';
 
 const seeded = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; }; };
@@ -48,16 +48,16 @@ describe('名录读表', () => {
     expect(effectText(WUXUE.xiulizhen, 3)).toBe('叠毒 +1 层 · 25% 再 +1');
   });
 
-  it('熟练新口径：不加倍率；熟练 / 精通 / 圆熟 耗气 ×0.92 / ×0.84 / ×0.75、触发 ×1.04 / ×1.08 / ×1.12、圆熟冷却 −1 最低 1', () => {
-    const d = WUXUE.songtaojian;   // cost 15 cd 1
+  it('裁决 45：各式耗气按倍比递增、熟练只减耗气、冷却不随熟练变', () => {
+    const d = WUXUE.songtaojian;   // 寻常 cost 15 cd 1 · 倍比 1.3
     expect(formMult(d, 1, false)).toBeCloseTo(1.79, 9);
-    expect(formMult(d, 3, true)).toBeCloseTo((1.79 + 0.08) * 1.1, 9);
-    expect([0, 1, 2, 3].map((t) => formCost(d, t))).toEqual([15, 14, 13, 11]);
-    expect([0, 1, 2, 3].map((t) => formCd(d, t))).toEqual([1, 1, 1, 1]);
-    expect(formCd(WUXUE.kaibeidao, 3)).toBe(2);
-    expect(shulianMods(3)).toEqual({ cost: 0.75, p: 1.12, cd: 1 });
+    expect(formMult(d, 3, true)).toBeCloseTo((1.79 + 0.16) * 1.1, 9);   // 倍率台阶 0.08 / 式（裁决 45）
+    expect([1, 2, 3].map((k) => formBaseCost(d, k))).toEqual([15, 20, 25]);
+    expect([0, 1, 2, 3].map((t) => formCost(d, 1, t))).toEqual([15, 14, 13, 11]);
+    expect(formCost(d, 3, 3)).toBe(19);
+    expect(formCd(d)).toBe(1);
+    expect(formCd(WUXUE.kaibeidao)).toBe(3);
   });
-
   it('兵器搭配：器械要同类兵器，暗器要暗器，肉身不挑', () => {
     expect(usableWith(WUXUE.liuyunjian, { weapon: '剑', anqi: false })).toBe(true);
     expect(usableWith(WUXUE.liuyunjian, { weapon: '刀', anqi: true })).toBe(false);

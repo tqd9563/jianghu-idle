@@ -6,7 +6,7 @@
 <title>内功武学原型</title>
 <!--
   issue #80 内功页 + 武学页改版 · 原型（只画桌面宽度）
-  合并案（默认）：内功、武学并成一页「武功」——装配一行（主修印匣 | 武学印匣）、藏书一栏标题旁切内功 / 武学、右侧一本书翻开点中的那本。原型控制可切回分开的两页对比。
+  定稿：内功、武学并成一页「武功」——装配一行（主修印匣 | 武学印匣）、藏书一栏标题旁切内功 / 武学、右侧一本书翻开点中的那本。
   外壳照现行 App.tsx：左侧人物卷侧栏 + 舞台、每页底图同位；侧栏可在「内功」「武学」间切换，其余页签原型未画。
   两页同一套骨架：页头 → 上方一条「现在用着的」（内功＝主修进境，武学＝装配）→ 下方左「藏经 / 藏书」3 × 3 窄栏，右一本翻开的磁青书。
 
@@ -16,7 +16,7 @@
     底部精进一重，点了重数、属性、要诀数值同步刷新并闪一下金。临关或内力不足时按钮置灰，缘由写在上方一行。
   · 心法要诀：只在翻开的书里出现一次。每条一行：名目 + 当前生效值；右侧挂会改它的关名（已过墨金、下一关暖金、再往后淡出、本品质够不着更淡），
     改了什么只写在悬停里，不铺在页面上。悬停一个关名，所有受同一关影响的要诀同时亮起。
-  · 主修另备「印匣」对比案（原型控制可切）：同武学装配印匣，石印换路数印（归海浪 / 镇岳山 / 蚀骨蝎，code/public/art/route/）。
+  · 主修印匣：同武学装配印匣，石印换路数印（归海浪 / 镇岳山 / 蚀骨蝎，code/public/art/route/），印色按路数、描边与名字按品质，下写第几重。原型控制「样张」可看九部心法的印匣。
   · 精进后基础属性从旧值一格格跳到新值（约 0.9 秒）。
   · 换书翻页：点藏经 / 藏书里另一本时，书先合上露出封面（同书封、题签写书名），停 0.3 秒后以中缝为轴翻开约 1 秒，左页内容等封面落定再淡入；切页签、换预设不翻；系统开了「减少动态效果」则直接换。
   · 武学页即上一轮定稿：装配用印匣（印色按路数），书页磁青。
@@ -66,9 +66,7 @@ button[data-tip] { cursor: pointer; }
 .proto.folded > :not(.head) { display: none !important; }
 .proto .hint { color: oklch(0.45 0 0); line-height: 1.4; }
 .proto [data-only] { display: none; }
-body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="neigong"] .proto [data-only="ngonly"], body[data-tab="wuxue"] .proto [data-only="wuxue"], body[data-tab="wugong"] .proto [data-only] { display: flex; }
-body[data-tab="wugong"] .proto [data-only="ngonly"] { display: none; }
-body[data-nav="merge"] .js-nav [data-tab="neigong"], body[data-nav="merge"] .js-nav [data-tab="wuxue"], body[data-nav="split"] .js-nav [data-tab="wugong"] { display: none; }
+body[data-tab="wugong"] .proto [data-only] { display: flex; }
 
 /* ═══ 外壳（shell.css 照搬） ═══ */
 .jh-app { position: relative; z-index: 1; display: grid; min-height: 100vh; grid-template-columns: var(--rail-w) minmax(0, 1fr);
@@ -250,15 +248,6 @@ body[data-nav="merge"] .js-nav [data-tab="neigong"], body[data-nav="merge"] .js-
 .ya.empty { cursor: default; }
 .ya.empty .box { background: none; box-shadow: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; }
 
-/* ═══ 内功：主修一行 —— 心法名 + 品质 / 路数章 + 重数，点它翻开主修那本 ═══ */
-.zx { display: flex; align-items: baseline; gap: 14px; margin-bottom: 30px; padding: 4px 0 14px; border: 0; background: none; cursor: pointer; text-align: left;
-  border-bottom: 1px solid var(--hair); width: 100%; }
-.zx .nmx { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: 0.2em; color: var(--ink); }
-.zx .ptag { align-self: center; font-size: 11.5px; }
-.zx .zz { margin-left: auto; font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: 0.05em; }
-.zx .zz small { font-size: 15px; margin-left: 3px; color: var(--muted); font-weight: 600; }
-.zx:hover .nmx { color: var(--gold); }
-
 /* 书页左页（内功）：书名旁写重数，下列内功提供的基础属性，底部精进 */
 .zline { margin-top: 4px; font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: 0.05em; line-height: 1.1; cursor: help; }
 .zline small { font-size: 13px; color: var(--muted); margin-left: 2px; font-weight: 600; }
@@ -280,9 +269,14 @@ body[data-nav="merge"] .js-nav [data-tab="neigong"], body[data-nav="merge"] .js-
 .sec-head .jh-sec { margin: 0; }
 .jh-seg.kind button { font-family: var(--font-display); letter-spacing: 0.2em; padding: 3px 12px; }
 
-/* 主修印匣（对比案）：同武学装配印匣，石印换路数印 */
-.zx-yin { display: flex; margin-bottom: 26px; }
-.zx-yin .ya .mt { font-family: var(--font-display); font-size: 13px; color: var(--gold); letter-spacing: 0.05em; }
+/* 原型样张（非设计内容）：九部心法印匣 */
+.sheet { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: oklch(0.08 0.01 262 / 0.75); }
+.sheet .pane { background: var(--bg); border-radius: 14px; padding: 26px 34px 30px; box-shadow: 0 20px 60px oklch(0 0 0 / 0.6); }
+.sheet h3 { margin: 0 0 18px; font-family: var(--font-display); font-size: 16px; letter-spacing: 0.3em; font-weight: 600; }
+.sheet table { border-collapse: collapse; }
+.sheet th { font-family: var(--font-display); font-weight: 600; font-size: 13px; letter-spacing: 0.25em; color: var(--faint); padding: 0 18px 10px; }
+.sheet th.r { padding: 0 18px 0 0; text-align: right; }
+.sheet td { padding: 8px 18px; }
 
 /* 翻页：换书时先合上露出封面（同藏书书封、题签写书名），再以中缝为轴翻开；左页内容等封面落定再淡入 */
 .right { position: relative; }
@@ -328,16 +322,15 @@ body[data-nav="merge"] .js-nav [data-tab="neigong"], body[data-nav="merge"] .js-
 .facts .gold { color: var(--nijin); }
 </style>
 </head>
-<body data-tab="wugong" data-nav="merge">
+<body data-tab="wugong">
 <div class="proto">
   <div class="head">原型控制<button class="js-fold" aria-label="收起">—</button></div>
-  <div class="row"><span>页签</span><button data-nav="merge" aria-pressed="true">合并为「武功」</button><button data-nav="split">内功 / 武学分开</button></div>
+  <div class="row"><span>样张</span><button data-sheet>九部心法印匣</button></div>
   <div class="row" data-only="neigong"><span>主修</span><button data-pre="a" aria-pressed="true">蚀骨 5 重</button><button data-pre="b">蚀骨 6 重临关</button><button data-pre="c">沧海 13 重</button><button data-pre="d">菩提 27 重</button></div>
-  <div class="row" data-only="ngonly"><span>主修</span><button data-zx="line" aria-pressed="true">一行</button><button data-zx="yin">印匣</button></div>
   <div class="row" data-only="neigong"><span>模拟</span><button data-sim="dan">内力 +1 万</button><button data-sim="wu">顿悟成功</button></div>
   <div class="row" data-only="wuxue"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
   <div class="row" data-only="wuxue"><span>兵器</span><button data-w="剑">持剑</button><button data-w="刀" aria-pressed="true">持刀</button><button data-w="">赤手</button></div>
-  <div class="hint">侧栏可切「内功 / 武学」，其余页签原型未画。内功页：悬停进境线上的关口或要诀右侧的关名，二者互相点亮；「精进一重」可点。</div>
+  <div class="hint">侧栏只画了「武功」页。点装配印匣或藏书里任意一本，右侧翻开；悬停要诀右侧的关名，同一关影响的几条一起亮；「精进一重」「装配 / 卸下」都可点。</div>
 </div>
 
 <div class="jh-app">
@@ -355,7 +348,7 @@ body[data-nav="merge"] .js-nav [data-tab="neigong"], body[data-nav="merge"] .js-
     <svg class="jh-brush" viewBox="0 0 200 8" preserveAspectRatio="none" aria-hidden="true"><path d="M2 5 C 40 2, 90 6, 140 3.5 S 190 4, 198 3" stroke="oklch(0.55 0.02 262)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
     <div class="jh-nav js-nav">
       <button data-tab="cultivate">修炼</button><button data-tab="battle">战斗</button><button data-tab="bag">行囊</button>
-      <button data-tab="wugong" aria-current="page">武功</button><button data-tab="neigong">内功</button><button data-tab="wuxue">武学</button><button data-tab="sect">门派</button>
+      <button data-tab="wugong" aria-current="page">武功</button><button data-tab="sect">门派</button>
     </div>
     <div class="jh-rail-foot"><button class="jh-ghost ready">转世</button><button class="jh-ghost icon" aria-label="设置">⚙</button></div>
   </nav>
@@ -375,7 +368,7 @@ const CN = ['', '一', '二', '三', '四'];
 const NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
 const QN = { 寻常: 1, 上乘: 2, 绝学: 3 };
-const ui = { tab: 'wugong', nav: 'merge', wgShelf: 'wuxue', wgOpen: 'wuxue' };
+const ui = { tab: 'wugong', wgShelf: 'wuxue', wgOpen: 'wuxue' };
 
 /* ═════════════ 内功 ═════════════ */
 const TIERS = [
@@ -473,25 +466,6 @@ function ngAttrs(id, realm, z) {
   };
   return { hp: one('hp'), atk: one('atk'), def: one('def'), hit: Math.round(12 * dx), dodge: Math.round(3 * dx), dx };
 }
-function renderJinjing() {
-  const d = NG[ng.id];
-  if (ng.zx === 'yin') return `
-    <h2 class="jh-sec">主修</h2>
-    <div class="zx-yin"><button class="ya g${QN[d.q]} rf t-${ROUTE[d.r].tag}" data-ng="${ng.id}" data-tip="${d.q} · ${ROUTE[d.r].name}一路" aria-current="true">
-      <span class="box"><i class="ico" style="background-image:url('${A}route/${RICON[d.r]}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${ng.z} 重</span></button></div>`;
-  return `
-    <h2 class="jh-sec">主修</h2>
-    <button class="zx" data-ng="${ng.id}"><span class="nmx">${d.name}</span><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span><span class="zz">第 ${ng.z}<small>重</small></span></button>`;
-}
-
-function renderNgShelf() {
-  const ids = [...ng.owned].sort((a, b) => QN[NG[b].q] - QN[NG[a].q]);
-  const routes = ['huashan', 'shaolin', 'tangmen'].filter((r) => ids.some((id) => NG[id].r === r));
-  const shown = ids.filter((id) => ng.cat === 'all' || NG[id].r === ng.cat);
-  const sel = ng.cur && ids.includes(ng.cur) ? ng.cur : ng.id;
-  return `
-    <h2 class="jh-sec">藏经</h2>${ngShelfInner()}`;
-}
 function ngShelfInner() {
   const ids = [...ng.owned].sort((a, b) => QN[NG[b].q] - QN[NG[a].q]);
   const routes = ['huashan', 'shaolin', 'tangmen'].filter((r) => ids.some((id) => NG[id].r === r));
@@ -568,18 +542,6 @@ function renderNgBook() {
     </div>`;
 }
 
-function renderNeigong() {
-  const d = NG[ng.id];
-  $('.js-realm').innerHTML = `${REALM[ng.realm]}<small>第${NUM[ng.realm]}境</small>`;
-  $('.js-dan').textContent = fmt(ng.dan);
-  return `
-    <header class="jh-head"><h1>内功</h1></header>
-    ${renderJinjing()}
-    <div class="study">
-      <div class="left">${renderNgShelf()}</div>
-      <div class="right"><div class="open">${renderNgBook()}</div></div>
-    </div>`;
-}
 
 /* ═════════════ 武学（上一轮定稿：印匣按路数、磁青） ═════════════ */
 const FORMS = { 寻常: 2, 上乘: 3, 绝学: 4 };
@@ -640,16 +602,6 @@ function wxShelfInner() {
         <div class="shelf">${books}</div>
         <div class="pager">${pages > 1 ? `<button data-pg="-1" ${wx.page === 0 ? 'disabled' : ''}>‹</button><span><b>${wx.page + 1}</b> / ${pages}</span><button data-pg="1" ${wx.page >= pages - 1 ? 'disabled' : ''}>›</button>` : ''}</div>`;
 }
-function renderWuxue() {
-  return `
-    <header class="jh-head"><h1>武学</h1></header>
-    <h2 class="jh-sec">装配</h2>
-    <div class="carry">${wxCarry()}</div>
-    <div class="study">
-      <div class="left"><h2 class="jh-sec">藏书</h2>${wxShelfInner()}</div>
-      <div class="right"><div class="open">${renderWxBook()}</div></div>
-    </div>`;
-}
 
 /* ═════════════ 合并页「武功」：装配一行（主修印匣 | 武学印匣），藏书一栏可切内功 / 武学，右侧一本书 ═════════════ */
 function ngYin() {
@@ -657,6 +609,16 @@ function ngYin() {
   const cur = ui.wgOpen === 'neigong' && (!ng.cur || ng.cur === ng.id);
   return `<button class="ya g${QN[d.q]} rf t-${ROUTE[d.r].tag} ngya" data-ng="${ng.id}" data-tip="${d.q}内功 · ${ROUTE[d.r].name}一路" aria-current="${cur}">
     <span class="box"><i class="ico" style="background-image:url('${A}route/${RICON[d.r]}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${ng.z} 重</span></button>`;
+}
+function sheetHTML() {
+  const routes = ['huashan', 'shaolin', 'tangmen'], qs = ['寻常', '上乘', '绝学'];
+  const z = { 寻常: 6, 上乘: 18, 绝学: 33 };
+  const by = (r, q) => Object.keys(NG).find((id) => NG[id].r === r && NG[id].q === q);
+  return `<div class="sheet js-sheet"><div class="pane"><h3>九部心法 · 主修印匣</h3><table>
+    <tr><th></th>${routes.map((r) => `<th>${ROUTE[r].name}</th>`).join('')}</tr>
+    ${qs.map((q) => `<tr><th class="r">${q}</th>${routes.map((r) => { const id = by(r, q), d = NG[id];
+      return `<td><span class="ya g${QN[q]} rf t-${ROUTE[r].tag} ngya"><span class="box"><i class="ico" style="background-image:url('${A}route/${RICON[r]}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${z[q]} 重</span></span></td>`; }).join('')}</tr>`).join('')}
+  </table></div></div>`;
 }
 function renderWugong() {
   const k = ui.wgShelf;
@@ -719,10 +681,9 @@ function render() {
   $('.js-art').style.setProperty('--art', `url('${A}${ART[ui.tab]}')`);
   document.querySelectorAll('.js-nav button').forEach((b) => b.toggleAttribute('aria-current', b.dataset.tab === ui.tab) || b.removeAttribute('aria-current'));
   document.querySelectorAll('.js-nav button').forEach((b) => { if (b.dataset.tab === ui.tab) b.setAttribute('aria-current', 'page'); });
-  document.body.dataset.nav = ui.nav;
   if (ui.tab === 'wugong') { $('.js-realm').innerHTML = `${REALM[ng.realm]}<small>第${NUM[ng.realm]}境</small>`; $('.js-dan').textContent = fmt(ng.dan); }
   else if (ui.tab !== 'neigong') { $('.js-realm').innerHTML = `${REALM[3]}<small>第三境</small>`; $('.js-dan').textContent = '7,098'; }
-  $('.js-page').innerHTML = ui.tab === 'neigong' ? renderNeigong() : ui.tab === 'wuxue' ? renderWuxue() : ui.tab === 'wugong' ? renderWugong() : `<div class="placeholder">此页原型未画，沿用线上</div>`;
+  $('.js-page').innerHTML = ui.tab === 'wugong' ? renderWugong() : `<div class="placeholder">此页原型未画，沿用线上</div>`;
 }
 /** 打字机式上涨：从旧值一格格跳到新值 */
 function countUp() {
@@ -761,8 +722,10 @@ function rerenderSame() { // 同页内刷新不重播入场动画
 }
 
 document.addEventListener('click', (e) => {
+  if (e.target.closest('.js-sheet')) { e.target.closest('.js-sheet').remove(); return; }
   const b = e.target.closest('button');
   if (!b) return;
+  if (b.hasAttribute('data-sheet')) { document.body.insertAdjacentHTML('beforeend', sheetHTML()); return; }
   const press = (sel) => document.querySelectorAll(`.proto ${sel}`).forEach((x) => x.setAttribute('aria-pressed', x === b));
   if (b.closest('.js-nav')) { ui.tab = b.dataset.tab; render(); lastOpen.neigong = null; lastOpen.wuxue = null; lastOpen.wugong = null; flipIfChanged(); return; }
   if (b.classList.contains('js-fold')) { b.closest('.proto').classList.toggle('folded'); return; }
@@ -775,11 +738,9 @@ document.addEventListener('click', (e) => {
   if (b.dataset.ngcat) ng.cat = b.dataset.ngcat;
   if (b.dataset.wx) { wx.cur = b.dataset.wx; ui.wgOpen = 'wuxue'; if (b.closest('.carry')) ui.wgShelf = 'wuxue'; }
   if (b.dataset.kind) ui.wgShelf = b.dataset.kind;
-  if (b.dataset.nav && b.closest('.proto')) { ui.nav = b.dataset.nav; press('[data-nav]'); if (ui.nav === 'merge' && ui.tab !== 'wugong' && (ui.tab === 'neigong' || ui.tab === 'wuxue')) ui.tab = 'wugong'; if (ui.nav === 'split' && ui.tab === 'wugong') ui.tab = 'neigong'; lastOpen[ui.tab] = null; }
   if (b.dataset.wxcat) { wx.cat = b.dataset.wxcat; wx.page = 0; }
   if (b.dataset.pg) wx.page += +b.dataset.pg;
   if (b.hasAttribute('data-toggle')) { const i = wx.desk.indexOf(wx.cur); i >= 0 ? wx.desk.splice(i, 1) : wx.desk.push(wx.cur); }
-  if (b.dataset.zx) { ng.zx = b.dataset.zx; press('[data-zx]'); }
   if (b.dataset.s) { wx.slots = +b.dataset.s; wx.desk = wx.desk.slice(0, wx.slots); press('[data-s]'); }
   if (b.dataset.w != null && b.closest('.proto')) { wx.weapon = b.dataset.w; press('[data-w]'); }
   rerenderSame();
@@ -787,6 +748,7 @@ document.addEventListener('click', (e) => {
 
 // 悬停提示 + 关口与要诀互相点亮
 const tip = $('.js-tip');
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelector('.js-sheet')?.remove(); });
 document.addEventListener('mouseover', (e) => {
   const t = e.target.closest('[data-tip]');
   if (t) { const r = t.getBoundingClientRect(); tip.innerHTML = t.dataset.tip; tip.style.left = `${Math.min(r.left, innerWidth - 310)}px`; tip.style.top = `${r.bottom + 6}px`; tip.classList.add('on'); }

@@ -9,7 +9,8 @@
   标题下一行是已装武学，三种画法可切（甲 印匣 / 乙 题签 / 丙 书脊），三种都能一眼看出品质。
   下方左窄栏「藏书」3 × 3 一页九本、可翻页；右侧一本翻开的绢本册页显示详情，高度与藏书栏对齐。
   书只在一处：装配后从藏书里移走，卸下即放回。
-  类目图标 code/public/art/cat/*.png（AI 生成，沿用战斗石印模板，朱砂底白剪影）；绢本底图 code/public/art/wuxue-open-silk.jpg。
+  类目图标 code/public/art/cat/*.png（AI 生成，沿用战斗石印模板，朱砂底白剪影）；书页两案可切：绢本 code/public/art/wuxue-open-silk.jpg / 纸本 code/public/art/wuxue-open-paper.jpg。
+  已装印匣的印色三案可切：统一朱砂 / 按路数 / 按品质。
   素材相对引用，file:// 直接打开即可。右上角白色面板是原型控制，不是设计内容。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,6 +85,16 @@ button[data-tip] { cursor: pointer; }
 .ya[aria-current="true"] .box { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 14px oklch(0.78 0.13 78 / 0.45); }
 .ya.empty { cursor: default; }
 .ya.empty .box { background: none; box-shadow: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; }
+
+/* 印色：同类目的几门靠印色分开。按路数＝路数五色；按品质＝寻常石灰 / 上乘冷青 / 绝学赤金。原图朱砂，用滤镜换色 */
+.seal-route .t-刚猛 .ico { filter: none; }
+.seal-route .t-绵长 .ico { filter: hue-rotate(100deg) saturate(0.7) brightness(1.2); }
+.seal-route .t-守御 .ico { filter: hue-rotate(210deg) saturate(0.85) brightness(1.15); }
+.seal-route .t-诡谲 .ico { filter: hue-rotate(290deg) saturate(0.8) brightness(1.1); }
+.seal-route .t-阴毒 .ico { filter: hue-rotate(160deg) saturate(0.7) brightness(1.0); }
+.seal-quality .g1 .ico { filter: grayscale(1) brightness(0.95) contrast(1.05); }
+.seal-quality .g2 .ico { filter: hue-rotate(185deg) saturate(0.85) brightness(1.15); }
+.seal-quality .g3 .ico { filter: hue-rotate(50deg) saturate(1.05) brightness(1.45); }
 
 /* ═══ 乙 题签 —— 横放的题签牌：石印 + 名 + 一行参数；品质靠牌面描边与底晕 ═══ */
 .yb { border: 0; padding: 0 16px 0 10px; cursor: pointer; display: flex; align-items: center; gap: 11px; width: 178px; height: 62px; border-radius: 8px; text-align: left;
@@ -213,6 +224,26 @@ button[data-tip] { cursor: pointer; }
 .pn.p em { color: var(--ink-gold); }
 .pn.c b { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.45); }
 .pn.c em { color: var(--gold); font-weight: 600; }
+/* 纸本：AI 仿真宣纸底图（code/public/art/wuxue-open-paper.jpg），压一层薄暗免得刺眼；文字整套换深墨，局部覆盖 token */
+.open.paper { background: linear-gradient(oklch(0.2 0.02 60 / 0.12), oklch(0.2 0.02 60 / 0.12)), url('../../code/public/art/wuxue-open-paper.jpg') center / 100% 100% no-repeat;
+  --ink: oklch(0.22 0.02 55); --muted: oklch(0.33 0.02 55); --faint: oklch(0.43 0.02 60); --hair: oklch(0.4 0.02 60 / 0.35);
+  --qi: oklch(0.42 0.09 228); --gold: oklch(0.5 0.16 30); --ink-gold: oklch(0.42 0.07 62); --done-line: oklch(0.38 0.06 60); --todo-line: oklch(0.45 0.02 60 / 0.6); --cinnabar: oklch(0.48 0.16 30); }
+.open.paper .pg { padding: calc(4cqh + 26px) calc(3cqw + 26px) calc(5cqh + 22px); }
+.open.paper .pg.l { padding-right: calc(1.5cqw + 26px); }
+.open.paper .pg.r { padding-left: calc(1.5cqw + 26px); }
+.open.paper .bigico { right: calc(1.5cqw + 24px); top: calc(4cqh + 22px); }
+.paper .params > span, .paper .shi { border-color: oklch(0.4 0.02 60 / 0.28); }
+.paper .ptag.q2 { color: oklch(0.4 0.09 228); background: oklch(0.42 0.09 228 / 0.08); box-shadow: inset 0 0 0 1px oklch(0.42 0.09 228 / 0.45); }
+.paper .ptag.q3 { color: oklch(0.45 0.11 65); background: oklch(0.7 0.13 78 / 0.18); box-shadow: inset 0 0 0 1px oklch(0.5 0.11 65 / 0.6); }
+.paper .ptag.rt { color: color-mix(in oklch, var(--tc) 50%, oklch(0.2 0.02 55)); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 55%, oklch(0.3 0.02 55)); }
+.paper .shi.locked .fx { color: oklch(0.5 0.05 228); }
+.paper .pn b { background: oklch(0.86 0.03 80); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 60); }
+.paper .pn em { color: var(--faint); }
+.paper .lk .leaf { outline-color: oklch(0.45 0.02 60); }
+.paper .pbtn { background: oklch(0.5 0.17 28 / 0.92); color: oklch(0.95 0.03 60); box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.6), 0 2px 6px oklch(0.2 0.02 60 / 0.3); }
+.paper .pbtn:hover:not(:disabled) { background: oklch(0.54 0.17 28); }
+.paper .pbtn.quiet { background: none; color: var(--muted); box-shadow: inset 0 0 0 1px oklch(0.4 0.02 60 / 0.5); }
+.paper .pbtn:disabled { background: none; color: oklch(0.52 0.02 60); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 60 / 0.4); }
 .open .foot { margin-top: auto; padding-top: 14px; font-size: 11px; color: var(--faint); letter-spacing: 0.3em; text-align: center; }
 </style>
 </head>
@@ -221,8 +252,10 @@ button[data-tip] { cursor: pointer; }
 <div class="proto">
   <div class="head">原型控制</div>
   <div class="row"><span>已装</span><button data-v="a" aria-pressed="true">甲 印匣</button><button data-v="b">乙 题签</button><button data-v="c">丙 书脊</button></div>
+  <div class="row"><span>印色</span><button data-seal="red">统一朱砂</button><button data-seal="route" aria-pressed="true">按路数</button><button data-seal="quality">按品质</button></div>
+  <div class="row"><span>书页</span><button data-pg-mode="silk" aria-pressed="true">绢本</button><button data-pg-mode="paper">纸本</button></div>
   <div class="row"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
-  <div class="row"><span>兵器</span><button data-w="剑" aria-pressed="true">持剑</button><button data-w="刀">持刀</button><button data-w="">赤手</button></div>
+  <div class="row"><span>兵器</span><button data-w="剑">持剑</button><button data-w="刀" aria-pressed="true">持刀</button><button data-w="">赤手</button></div>
   <div class="hint">点已装或藏书任意一门在右侧翻开；「装配 / 卸下」真会把书在两处之间搬动。</div>
 </div>
 
@@ -264,11 +297,12 @@ const WX = {
   yyz: { n: '一阳指', q: '绝学', cat: '指', rt: '绵长', p: 21, cd: 4, cost: 26, m0: 195, fx: '封穴', forms: [['一阳', '命中封对方一处穴道', 195, 12], ['二阳', '', 235, 0], ['三阳', '', 275, 0], ['九阳', '', 330, 0]], pages: 2 },
   wlg: { n: '五郎八卦棍', q: '上乘', cat: '棍', rt: '守御', p: 26, cd: 3, cost: 18, m0: 160, fx: '格挡', forms: [['挑', '', 160, 100], ['扫', '', 180, 4], ['封', '', 205, 0]], pages: 2 },
   smt: { n: '三脚猫', q: '寻常', cat: '腿', rt: '诡谲', p: 34, cd: 2, cost: 9, m0: 120, fx: '闪身', forms: [['虚踢', '闪避加一成', 120, 100], ['实踹', '', 135, 22]] },
+  whd: { n: '五虎断门刀', q: '上乘', cat: '刀', rt: '刚猛', p: 26, cd: 3, cost: 19, m0: 170, fx: '破甲', forms: [['猛虎出林', '无视对方两成守御', 170, 100], ['饿虎扑食', '无视对方三成守御', 190, 52], ['虎尾剪', '', 215, 0]], pages: 3 },
   lyd: { n: '柳叶刀', q: '寻常', cat: '刀', rt: '绵长', p: 31, cd: 2, cost: 13, m0: 145, fx: '回气', forms: [['拂柳', '命中回真气 4', 145, 70], ['折枝', '', 165, 0]] },
 };
 const QN = { 寻常: 1, 上乘: 2, 绝学: 3 };
 const PER = 9;
-const ui = { v: 'a', slots: 5, weapon: '剑', desk: ['xfl', 'lyj', 'tzcq'], cur: 'lyj', cat: '全部', page: 0 };
+const ui = { v: 'a', mode: 'silk', seal: 'route', slots: 5, weapon: '刀', desk: ['lyd', 'whd', 'lhq', 'tzcq'], cur: 'whd', cat: '全部', page: 0 };
 const $ = (q) => document.querySelector(q);
 const shelfIds = () => Object.keys(WX).filter((id) => !ui.desk.includes(id)).sort((a, b) => QN[WX[b].q] - QN[WX[a].q]);
 const tier = (c) => (c >= TH[2] ? 3 : c >= TH[1] ? 2 : c >= TH[0] ? 1 : 0);
@@ -277,7 +311,7 @@ const tipOf = (d) => `${d.q} · ${d.cat} · 触发 ${d.p}% · 冷却 ${d.cd}`;
 
 function carry() {
   const el = $('.js-carry');
-  el.className = `carry js-carry ${ui.v}`;
+  el.className = `carry js-carry ${ui.v} seal-${ui.seal}`;
   el.style.setProperty('--n', ui.slots);
   el.innerHTML = Array.from({ length: ui.slots }, (_, i) => {
     const id = ui.desk[i];
@@ -285,7 +319,7 @@ function carry() {
     const g = d ? `g${QN[d.q]}` : '';
     const cur = id === ui.cur;
     if (ui.v === 'a') return d
-      ? `<button class="ya ${g}" data-open="${id}" aria-current="${cur}" data-tip="${tipOf(d)}"><span class="box">${ico(d.cat)}</span><span class="nm">${d.n}</span><span class="mt">触发 ${d.p}%</span></button>`
+      ? `<button class="ya ${g} t-${d.rt}" data-open="${id}" aria-current="${cur}" data-tip="${tipOf(d)}"><span class="box">${ico(d.cat)}</span><span class="nm">${d.n}</span><span class="mt">触发 ${d.p}%</span></button>`
       : `<span class="ya empty"><span class="box"></span></span>`;
     if (ui.v === 'b') return d
       ? `<button class="yb ${g}" data-open="${id}" aria-current="${cur}" data-tip="${tipOf(d)}">${ico(d.cat)}<span class="tx"><span class="nm">${d.n}</span><span class="mt">触发 ${d.p}% · 冷却 ${d.cd}</span></span></button>`
@@ -341,6 +375,7 @@ function renderOpen() {
     const why = !got ? `<span>缺少残页</span>` : prevOn ? `<span>待第${CN[k]}式圆满</span><span class="cnt">${d.forms[k - 1][3]} <small>/ ${TH[2]}</small></span>` : `<span>待第${CN[k]}式圆满</span>`;
     return `<div class="shi locked">${head}<div class="lk">${d.q !== '寻常' ? `<i class="leaf${got ? ' got' : ''}"></i>` : ''}${why}</div></div>`;
   }).join('');
+  $('.js-open').className = `open js-open ${ui.mode}`;
   $('.js-open').innerHTML = `
     <div class="pg l">
       <div class="ttl"><span class="nm">${d.n}</span>
@@ -360,7 +395,7 @@ function renderOpen() {
 }
 
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-open],[data-cat],[data-toggle],[data-s],[data-w],[data-v],[data-pg]');
+  const b = e.target.closest('[data-open],[data-cat],[data-toggle],[data-s],[data-w],[data-v],[data-pg],[data-seal],[data-pg-mode]');
   if (!b) return;
   const press = (sel) => document.querySelectorAll(`.proto ${sel}`).forEach((x) => x.setAttribute('aria-pressed', x === b));
   if (b.dataset.open) ui.cur = b.dataset.open;
@@ -368,6 +403,8 @@ document.addEventListener('click', (e) => {
   if (b.dataset.pg) ui.page += +b.dataset.pg;
   if (b.hasAttribute('data-toggle')) { const i = ui.desk.indexOf(ui.cur); i >= 0 ? ui.desk.splice(i, 1) : ui.desk.push(ui.cur); }
   if (b.dataset.v) { ui.v = b.dataset.v; press('[data-v]'); }
+  if (b.dataset.pgMode) { ui.mode = b.dataset.pgMode; press('[data-pg-mode]'); }
+  if (b.dataset.seal) { ui.seal = b.dataset.seal; press('[data-seal]'); }
   if (b.dataset.s) { ui.slots = +b.dataset.s; ui.desk = ui.desk.slice(0, ui.slots); press('[data-s]'); }
   if (b.dataset.w != null && b.closest('.proto')) { ui.weapon = b.dataset.w; press('[data-w]'); }
   render();

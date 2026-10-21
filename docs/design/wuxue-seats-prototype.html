@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>武学装配槽方案</title>
+<title>武学书房原型</title>
 <!--
-  issue #80 武学装配槽位 UI 优化 · 三方案并排原型
-  现状：五个等宽盒子写「空槽」，是 DESIGN.md 禁止的「一格一框」；且与下方藏书的线装书封语言脱节。
-  三方案都遵守：未解锁槽位不显示；暖金只标当前选中；不写解释性小字；不嵌套卡片。
-  素材相对引用 code/public/art/，file:// 直接打开即可。右上角白色面板是原型控制，不是设计内容。
+  issue #80 武学页改「书房」· 原型（只画桌面宽度）
+  三块东西放进一个空间：左栏上方「书案」= 在练的几册（原装配槽），左栏下方「书架」= 藏书，右栏「翻开的书」= 详情，固定不随滚动。
+  书只在一处：上案即从架上消失，归架即回到架上。文案「上案 / 归架」替代「装配 / 卸下」。
+  素材相对引用 code/public/art/，file:// 直接打开即可。左下角白色面板是原型控制，不是设计内容。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,14 +17,13 @@
 <style>
 :root {
   color-scheme: dark;
-  --bg: oklch(0.155 0.013 262); --bg-deep: oklch(0.125 0.012 262);
-  --wash: oklch(0.19 0.014 262); --wash-2: oklch(0.225 0.016 262);
+  --bg: oklch(0.155 0.013 262); --wash: oklch(0.19 0.014 262); --wash-2: oklch(0.225 0.016 262);
   --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262);
   --hair: oklch(0.30 0.016 262 / 0.7);
   --gold: oklch(0.78 0.13 78); --primary-ink: oklch(0.19 0.03 78); --ink-gold: oklch(0.75 0.075 76);
   --done-line: oklch(0.50 0.045 70); --todo-line: oklch(0.40 0.014 262 / 0.7);
   --cinnabar: oklch(0.66 0.14 32); --qi: oklch(0.74 0.10 215);
-  --card: linear-gradient(135deg, oklch(0.25 0.017 262 / 0.55), oklch(0.2 0.014 262 / 0.3));
+  --paper: oklch(0.86 0.03 82); --paper-2: oklch(0.82 0.032 80); --paper-ink: oklch(0.24 0.02 60); --paper-muted: oklch(0.42 0.02 60); --paper-faint: oklch(0.55 0.02 65);
   --font-body: "LXGW WenKai", -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-display: "Noto Serif SC", "Songti SC", "STSong", serif;
   --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
@@ -37,183 +36,265 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-i
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 button { font: inherit; color: inherit; }
 .serif { font-family: var(--font-display); }
+[data-tip] { cursor: help; }
 
 /* 原型控制（非设计内容） */
-.proto { position: fixed; right: 14px; top: 14px; z-index: 60; background: oklch(0.97 0 0); color: oklch(0.2 0 0); border-radius: 10px;
-  padding: 10px 12px; font-size: 12px; box-shadow: 0 8px 30px oklch(0 0 0 / 0.5); display: grid; gap: 6px; width: 250px; font-family: -apple-system, "PingFang SC", sans-serif; }
+.proto { position: fixed; left: 14px; bottom: 14px; z-index: 60; background: oklch(0.97 0 0); color: oklch(0.2 0 0); border-radius: 10px;
+  padding: 10px 12px; font-size: 12px; box-shadow: 0 8px 30px oklch(0 0 0 / 0.5); display: grid; gap: 6px; width: 230px; font-family: -apple-system, "PingFang SC", sans-serif; }
 .proto .row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 .proto .row > span { width: 44px; flex: 0 0 44px; color: oklch(0.45 0 0); }
 .proto button { border: 1px solid oklch(0.8 0 0); background: white; border-radius: 6px; padding: 2px 8px; cursor: pointer; color: oklch(0.2 0 0); }
 .proto button[aria-pressed="true"] { background: oklch(0.25 0 0); color: white; border-color: oklch(0.25 0 0); }
 .proto .head { font-weight: 700; }
+.proto .hint { color: oklch(0.45 0 0); line-height: 1.4; }
 
 .page-art { position: fixed; left: 0; right: 0; top: 0; height: 100vh; z-index: 0; pointer-events: none;
   background: var(--art) center top / cover no-repeat; opacity: 0.5; filter: brightness(0.75) saturate(0.5);
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%);
           mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%); }
-.stage { position: relative; z-index: 1; padding: 30px clamp(16px, 3.2vw, 48px) 80px; max-width: 1080px; margin: 0 auto; }
+.stage { position: relative; z-index: 1; padding: 30px clamp(16px, 3.2vw, 48px) 80px; max-width: 1180px; margin: 0 auto; }
 .jh-head h1 { margin: 0 0 22px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; }
-.opt { margin-bottom: 64px; }
-.opt > .lbl { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; color: var(--faint); font-size: 12px; letter-spacing: 0.12em; }
-.opt > .lbl b { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.25em; color: var(--ink); font-weight: 600; }
-.jh-sec { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.25em; margin: 0 0 12px; font-weight: 600; }
-.cat-ico { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; background: currentColor; margin-right: 4px;
-  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.jh-sec { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.25em; margin: 0; font-weight: 600; display: flex; align-items: baseline; gap: 12px; }
+.jh-sec small { font-family: var(--font-body); font-size: 12px; letter-spacing: 0.05em; color: var(--faint); font-weight: 400; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.jh-seg { display: inline-flex; background: var(--wash); border-radius: 9px; padding: 3px; flex-wrap: wrap; }
+.jh-seg button { border: 0; background: none; padding: 4px 12px; border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 13px; }
+.jh-seg button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+.jh-seg button:disabled { color: oklch(0.45 0.012 262); cursor: not-allowed; }
+.jh-seg button small { color: var(--faint); margin-left: 3px; }
+.jh-seg .grp { color: var(--faint); font-size: 11px; letter-spacing: 0.15em; padding: 4px 4px 4px 10px; align-self: center; }
 
-/* 共用：书封（同藏书 .wx-cover，缩小） */
+/* 书房：左栏（书案 + 书架）/ 右栏（翻开的书，固定） */
+.study { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 34px; align-items: start; }
+.study > .right { position: sticky; top: 24px; }
+
+/* 共用：书封 */
 .cv { position: absolute; inset: 0; background: url('../../code/public/art/book-q1.png') center / 100% 100% no-repeat; filter: sepia(0.7) saturate(0.55) brightness(0.8); }
 .q2 .cv { filter: hue-rotate(60deg) saturate(0.85) brightness(0.8); }
 .q3 .cv { background-image: url('../../code/public/art/book-q3.png'); filter: hue-rotate(-28deg) saturate(1.5) brightness(0.9); }
-.slip { writing-mode: vertical-rl; font-family: var(--font-display); letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap;
+.ghost .cv { filter: sepia(0.7) saturate(0.3) brightness(0.5); } .ghost.q2 .cv { filter: hue-rotate(60deg) saturate(0.55) brightness(0.5); } .ghost.q3 .cv { filter: hue-rotate(-28deg) saturate(0.9) brightness(0.5); }
+.slip { position: absolute; left: 12%; width: 16%; top: 11%; height: 54%; writing-mode: vertical-rl; font-family: var(--font-display); letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap;
   background: oklch(0.88 0.035 85); box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45), 0 1px 2px oklch(0.05 0.01 262 / 0.4); display: grid; place-items: center; }
-.seal { display: grid; place-items: center; font-family: var(--font-display); line-height: 1; color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px;
+.q3 .slip { left: 13%; width: 18%; top: 7%; height: 60%; }
+.ghost .slip { background: oklch(0.66 0.02 85); color: oklch(0.3 0.02 60); }
+.seal { position: absolute; right: 13%; bottom: 10%; display: grid; place-items: center; font-family: var(--font-display); line-height: 1; color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px;
   box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.75), 0 1px 3px oklch(0.05 0.01 262 / 0.5); transform: rotate(-6deg); }
+.ghost .seal { opacity: 0.5; }
+.book { position: relative; border: 0; padding: 0; background: none; cursor: pointer; color: inherit; filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); transition: transform .25s var(--ease-sharp), filter .25s; }
+.book:hover { transform: translateY(-3px); }
+.book[aria-current="true"] { transform: translateY(-6px); filter: drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.4)); }
+.book small { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 7px; font-size: 11px; letter-spacing: 0.08em; color: var(--faint); white-space: nowrap; }
+.book small .rt { color: var(--tc); }
 
-/* ═══ 方案 A · 案头书册：装着的武学就是摊在案上的那几册 ═══ */
-.desk { position: relative; display: flex; gap: 34px; align-items: flex-end; padding: 10px 14px 46px; margin-bottom: 30px; }
-.desk::after { content: ''; position: absolute; left: 0; right: 0; bottom: 42px; height: 1px; background: linear-gradient(to right, transparent, var(--hair) 12%, var(--hair) 88%, transparent); }
-.desk::before { content: ''; position: absolute; left: 8%; right: 8%; bottom: 32px; height: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, oklch(0.05 0.01 262 / 0.45), transparent 70%); }
-.dk { position: relative; width: 78px; height: 118px; border: 0; padding: 0; background: none; cursor: pointer; z-index: 1;
-  filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); transition: transform .25s var(--ease-sharp), filter .25s; }
-.dk .slip { position: absolute; left: 12%; width: 17%; top: 10%; height: 56%; font-size: 11.5px; letter-spacing: 0.1em; }
-.dk .seal { position: absolute; right: 13%; bottom: 10%; width: 18px; height: 18px; font-size: 11px; }
-.dk small { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 8px; font-size: 11px; color: var(--faint); white-space: nowrap; letter-spacing: 0.04em; display: grid; justify-items: center; line-height: 1.5; }
-.dk:hover { transform: translateY(-3px); }
-.dk[aria-pressed="true"] { transform: translateY(-5px); filter: drop-shadow(0 0 9px oklch(0.78 0.13 78 / 0.32)); }
-.dk.empty { cursor: default; filter: none; }
-.dk.empty .ghost { position: absolute; inset: 2px 6px; border-radius: 2px 4px 4px 2px; outline: 1px dashed oklch(0.42 0.014 262 / 0.8); outline-offset: -1px; }
-.dk.empty .ghost::before { content: ''; position: absolute; left: 9px; top: 0; bottom: 0; width: 1px; background: repeating-linear-gradient(to bottom, oklch(0.42 0.014 262 / 0.6) 0 5px, transparent 5px 18px); }
-.dk.empty:hover { transform: none; }
+/* 书案 */
+.desk { position: relative; display: flex; gap: 26px; align-items: flex-end; padding: 12px 22px 40px; margin-bottom: 34px; }
+.desk::after { content: ''; position: absolute; left: 0; right: 0; bottom: 36px; height: 1px; background: linear-gradient(to right, transparent, var(--hair) 8%, var(--hair) 92%, transparent); }
+.desk::before { content: ''; position: absolute; left: 6%; right: 6%; bottom: 26px; height: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, oklch(0.05 0.01 262 / 0.45), transparent 70%); }
+.desk .book { width: 66px; height: 101px; z-index: 1; }
+.desk .slip { font-size: 11px; letter-spacing: 0.08em; }
+.desk .seal { width: 16px; height: 16px; font-size: 10px; }
+.desk .empty { position: relative; width: 66px; height: 101px; }
+.desk .empty::before { content: ''; position: absolute; inset: 2px 5px; border-radius: 2px 4px 4px 2px; outline: 1px dashed oklch(0.42 0.014 262 / 0.8); outline-offset: -1px; }
+.desk .empty::after { content: ''; position: absolute; left: 12px; top: 2px; bottom: 2px; width: 1px; background: repeating-linear-gradient(to bottom, oklch(0.42 0.014 262 / 0.6) 0 5px, transparent 5px 16px); }
 
-/* ═══ 方案 B · 悬签：只挂题签，一根墨线吊着 ═══ */
-.tags { position: relative; display: flex; gap: 30px; padding: 0 18px 16px; margin-bottom: 30px; align-items: flex-start; }
-.tags::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(to right, transparent, var(--hair) 8%, var(--hair) 92%, transparent); }
-.tg { position: relative; border: 0; padding: 0; background: none; cursor: pointer; display: grid; justify-items: center; gap: 0; transition: transform .25s var(--ease-sharp); }
-.tg .str { width: 1px; height: 14px; background: oklch(0.6 0.02 80 / 0.7); }
-.tg .slip { width: 30px; height: 128px; font-size: 14.5px; letter-spacing: 0.18em; border-radius: 1px 1px 2px 2px; padding: 8px 0 34px;
-  filter: drop-shadow(0 6px 10px oklch(0.05 0.01 262 / 0.55)); }
-.tg .slip .seal { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%) rotate(-6deg); width: 18px; height: 18px; font-size: 11px; writing-mode: horizontal-tb; }
-.tg small { margin-top: 8px; font-size: 11px; color: var(--faint); white-space: nowrap; display: grid; justify-items: center; line-height: 1.5; }
-.tg:hover { transform: translateY(2px) rotate(-1deg); }
-.tg[aria-pressed="true"] .slip { box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45), 0 0 0 1px var(--gold), 0 0 12px oklch(0.78 0.13 78 / 0.45); }
-.tg.empty { cursor: default; }
-.tg.empty .slip { background: none; box-shadow: none; filter: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.8); outline-offset: -1px; }
-.tg.empty .str { background: oklch(0.42 0.014 262 / 0.6); }
-.tg.empty:hover { transform: none; }
+/* 书架：多行，每行一块搁板 */
+.shelf { --row: 178px; display: grid; grid-template-columns: repeat(auto-fill, 92px); gap: 0 26px; grid-auto-rows: var(--row); padding: 0 18px; align-items: start;
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--row) - 30px), oklch(0.3 0.02 60 / 0.75) calc(var(--row) - 30px) calc(var(--row) - 27px), oklch(0.18 0.015 50 / 0.5) calc(var(--row) - 27px) calc(var(--row) - 24px), transparent calc(var(--row) - 24px) var(--row)); }
+.shelf .book { width: 92px; aspect-ratio: 0.65; margin-top: 4px; }
+.shelf .slip { font-size: 12.5px; }
+.shelf .seal { width: 22px; height: 22px; font-size: 13px; }
+.shelf .pgc { color: var(--faint); }
+.shelf-empty { color: var(--faint); font-size: 13px; padding: 20px 18px; }
 
-/* ═══ 方案 C · 一线五穴：进度线语言，名字长在线旁，不要任何框 ═══ */
-.line { position: relative; height: 72px; margin: 10px 60px 30px 40px; }
-.line .rail { position: absolute; left: 0; right: 0; top: 14px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
-.line .rail i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: var(--done-line); }
-.nd { position: absolute; top: 0; transform: translateX(-50%); border: 0; background: none; padding: 0; display: grid; justify-items: center; gap: 9px; cursor: pointer; }
-.nd b { width: 13px; height: 13px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.42 0.015 262); transition: box-shadow .2s; }
-.nd .nm { font-family: var(--font-display); font-size: 15.5px; letter-spacing: 0.12em; white-space: nowrap; line-height: 1.2; }
-.nd small { font-size: 11px; color: var(--faint); white-space: nowrap; display: block; letter-spacing: 0.04em; margin-top: 2px; }
-.nd.on b { background: var(--ink-gold); box-shadow: none; }
-.nd.on:hover b { box-shadow: 0 0 8px oklch(0.75 0.075 76 / 0.5); }
-.nd[aria-pressed="true"] b { background: var(--gold); box-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.55); }
-.nd[aria-pressed="true"] .nm { color: var(--gold); }
-.nd.empty { cursor: default; }
-.nd.empty b { box-shadow: inset 0 0 0 1px oklch(0.36 0.014 262); }
+/* 路数色 */
+.t-刚猛 { --tc: oklch(0.72 0.16 28); } .t-绵长 { --tc: oklch(0.76 0.11 135); } .t-守御 { --tc: oklch(0.74 0.10 245); } .t-诡谲 { --tc: oklch(0.74 0.11 320); } .t-阴毒 { --tc: oklch(0.70 0.10 175); }
 
-/* 下方藏书（只为看上下文，缩略） */
-.shelf { display: flex; gap: 22px; padding: 6px 4px 20px; }
-.bk { position: relative; width: 92px; aspect-ratio: 0.65; filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); }
-.bk .slip { position: absolute; left: 12%; width: 16%; top: 11%; height: 54%; font-size: 12.5px; }
-.bk .seal { position: absolute; right: 13%; bottom: 10%; width: 22px; height: 22px; font-size: 13px; }
-.bk .eq { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: var(--gold); color: var(--primary-ink); }
-.ctx { opacity: 0.55; }
-.ctx .jh-sec { margin-top: 0; }
+/* 翻开的书：两页纸，中缝线装 */
+.open { position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 560px; border-radius: 3px;
+  background: linear-gradient(to right, var(--paper) 0 46%, var(--paper-2) 49.5%, oklch(0.72 0.03 75) 50%, var(--paper-2) 50.5%, var(--paper) 54% 100%);
+  color: var(--paper-ink); box-shadow: 0 18px 44px oklch(0.05 0.01 262 / 0.7), inset 0 0 60px oklch(0.6 0.04 70 / 0.25); }
+.open::before { content: ''; position: absolute; left: calc(50% - 0.5px); top: 0; bottom: 0; width: 1px; background: repeating-linear-gradient(to bottom, oklch(0.4 0.03 60 / 0.6) 0 7px, transparent 7px 26px); }
+.open::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.12; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.pg { position: relative; padding: 26px 22px 24px; display: flex; flex-direction: column; }
+.pg.l { padding-right: 26px; }
+.pg.r { padding-left: 26px; }
+.open .ttl { display: flex; align-items: flex-start; gap: 14px; }
+.open .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: 0.22em; line-height: 1; padding: 6px 0; height: 170px; white-space: nowrap; }
+.open .side { display: grid; gap: 6px; align-content: start; padding-top: 4px; }
+.ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 1px 7px; border-radius: 3px; width: max-content; color: var(--paper-muted); box-shadow: inset 0 0 0 1px oklch(0.45 0.03 60 / 0.4); }
+.ptag.q2 { color: oklch(0.38 0.08 215); box-shadow: inset 0 0 0 1px oklch(0.45 0.08 215 / 0.5); }
+.ptag.q3 { color: oklch(0.42 0.1 60); box-shadow: inset 0 0 0 1px oklch(0.55 0.12 70 / 0.7); background: oklch(0.78 0.13 78 / 0.18); }
+.ptag.rt::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tc); }
+.ptag.rt { color: color-mix(in oklch, var(--tc) 70%, black); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 60%, transparent); }
+.ptag.res { color: oklch(0.45 0.12 32); box-shadow: inset 0 0 0 1px oklch(0.55 0.14 32 / 0.5); }
+.open .cat { font-size: 12px; color: var(--paper-faint); letter-spacing: 0.08em; }
+.open .bigseal { position: absolute; right: 24px; top: 30px; width: 44px; height: 44px; font-size: 26px; transform: rotate(-8deg); opacity: 0.92; }
+.params { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 26px; font-size: 13px; color: var(--paper-muted); }
+.params b { color: var(--paper-ink); font-weight: 600; font-size: 15px; margin-left: 4px; }
+.params .dotted { position: relative; }
+.params .dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.45 0.06 60) 0 2px, transparent 2px 5px); }
+.need { margin-top: auto; padding-top: 24px; font-size: 12.5px; color: var(--paper-faint); }
+.need.ok { color: var(--paper-muted); }
+.pbtn { margin-top: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-size: 14px; letter-spacing: 0.2em; padding: 8px 0; border-radius: 6px; width: 100%;
+  background: oklch(0.5 0.17 28 / 0.92); color: oklch(0.95 0.03 60); box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.6), 0 2px 6px oklch(0.05 0.01 262 / 0.35); transition: filter .2s; }
+.pbtn:hover:not(:disabled) { filter: brightness(1.08); }
+.pbtn.quiet { background: none; color: var(--paper-muted); box-shadow: inset 0 0 0 1px oklch(0.45 0.03 60 / 0.5); }
+.pbtn:disabled { background: none; color: var(--paper-faint); box-shadow: inset 0 0 0 1px oklch(0.55 0.02 60 / 0.4); cursor: default; }
 
-@media (max-width: 860px) {
-  .desk { gap: 14px; padding: 10px 6px 18px; } .dk { width: 56px; height: 86px; } .dk small { font-size: 10px; }
-  .tags { gap: 16px; padding: 0 8px 16px; } .tg .slip { width: 26px; height: 100px; font-size: 13px; }
-  .line { margin: 10px 36px 30px 28px; } .nd .nm { font-size: 13.5px; } .nd small { display: none; }
-}
+.shi { padding: 12px 0; border-top: 1px solid oklch(0.45 0.03 60 / 0.3); }
+.shi:first-child { border-top: 0; padding-top: 0; }
+.shi .h { display: flex; align-items: baseline; gap: 10px; }
+.shi .k { font-size: 11.5px; color: var(--paper-faint); }
+.shi .t { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; font-weight: 600; }
+.shi .mul { margin-left: auto; font-weight: 600; font-size: 14px; }
+.shi .fx { font-size: 12.5px; color: oklch(0.38 0.08 215); margin-top: 2px; }
+.shi .fx::before { content: '◈ '; font-size: 10px; }
+.shi.locked .t, .shi.locked .mul { color: var(--paper-faint); }
+.shi.locked .fx { color: oklch(0.55 0.04 215); }
+.lk { display: flex; align-items: center; gap: 9px; margin-top: 8px; font-size: 12px; color: var(--paper-faint); min-height: 22px; }
+.lk .leaf { flex: none; width: 9px; height: 12px; border-radius: 1px; outline: 1px dashed oklch(0.5 0.03 60); outline-offset: -1px; }
+.lk .leaf.got { background: oklch(0.45 0.1 215); outline: 0; }
+.lk .cnt { color: oklch(0.45 0.09 70); font-weight: 600; }
+.lk .cnt small { color: var(--paper-faint); font-weight: 400; }
+.prof { position: relative; height: 34px; margin: 10px 10px 0; }
+.prof-line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.55 0.03 60) 0 3px, transparent 3px 6px); }
+.prof-line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: oklch(0.45 0.09 70); }
+.pn { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 5px; }
+.pn b { width: 11px; height: 11px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 1px oklch(0.55 0.03 60); }
+.pn em { font-style: normal; font-size: 11px; color: var(--paper-faint); white-space: nowrap; }
+.pn.p b { background: oklch(0.45 0.09 70); box-shadow: none; }
+.pn.p em { color: oklch(0.42 0.07 70); }
+.pn.c b { box-shadow: inset 0 0 0 1.5px oklch(0.5 0.17 28), 0 0 6px oklch(0.5 0.17 28 / 0.35); }
+.pn.c em { color: oklch(0.45 0.14 32); font-weight: 600; }
+.open .foot { margin-top: auto; padding-top: 18px; font-size: 11px; color: var(--paper-faint); letter-spacing: 0.3em; text-align: center; }
 </style>
 </head>
 <body>
 <div class="page-art"></div>
 <div class="proto">
   <div class="head">原型控制</div>
-  <div class="row"><span>已装</span><button data-n="1">1</button><button data-n="2" aria-pressed="true">2</button><button data-n="4">4</button><button data-n="5">5</button></div>
-  <div class="row"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="6">6</button></div>
-  <div class="row"><span>选中</span><button data-c="xfl" aria-pressed="true">旋风腿</button><button data-c="lyj">流云剑</button></div>
+  <div class="row"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
+  <div class="row"><span>兵器</span><button data-w="剑" aria-pressed="true">持剑</button><button data-w="刀">持刀</button><button data-w="">赤手</button></div>
+  <div class="hint">点任意一册在右侧翻开；「上案 / 归架」真会把书在案与架之间搬动。</div>
 </div>
 
 <div class="stage">
   <header class="jh-head"><h1>武学</h1></header>
+  <div class="study">
+    <div class="left">
+      <div class="sec-head"><h2 class="jh-sec">书案<small class="js-cnt"></small></h2></div>
+      <div class="desk js-desk"></div>
 
-  <section class="opt">
-    <div class="lbl"><b>甲 · 案头书册</b>装着的几门，就是摊在案头的那几册；和下方藏书同一套书封，缩小一号。空位是一册书的虚线影子。</div>
-    <div class="desk js-a"></div>
-  </section>
-
-  <section class="opt">
-    <div class="lbl"><b>乙 · 悬签</b>一根墨线下挂着几枚题签，签上写名、盖类目印。比整册轻，一眼能数出还剩几枚空钩。</div>
-    <div class="tags js-b"></div>
-  </section>
-
-  <section class="opt">
-    <div class="lbl"><b>丙 · 一线五穴</b>借全站进度线语言：实心墨金点是已装，空心是空位，名字长在点下，整段没有一个框。</div>
-    <div class="line js-c"></div>
-  </section>
-
-  <section class="ctx">
-    <h2 class="jh-sec">藏书</h2>
-    <div class="shelf">
-      <div class="bk q1"><i class="cv"></i><span class="eq">装</span><span class="slip">旋风腿</span><span class="seal">腿</span></div>
-      <div class="bk q2"><i class="cv"></i><span class="eq">装</span><span class="slip">流云剑</span><span class="seal">剑</span></div>
-      <div class="bk q1"><i class="cv"></i><span class="slip">罗汉拳</span><span class="seal">拳</span></div>
-      <div class="bk q3"><i class="cv"></i><span class="slip">太祖长拳</span><span class="seal">拳</span></div>
+      <div class="sec-head">
+        <h2 class="jh-sec">书架</h2>
+        <div class="jh-seg js-seg" role="group" aria-label="按类目筛选"></div>
+      </div>
+      <div class="shelf js-shelf"></div>
     </div>
-  </section>
+    <div class="right"><div class="open js-open"></div></div>
+  </div>
 </div>
 
 <script>
-const WX = {
-  xfl: { n: '旋风腿', q: 1, cat: '腿', p: 33, cd: 2 },
-  lyj: { n: '流云剑', q: 2, cat: '剑', p: 28, cd: 3 },
-  lhq: { n: '罗汉拳', q: 1, cat: '拳', p: 30, cd: 2 },
-  tzcq: { n: '太祖长拳', q: 3, cat: '拳', p: 22, cd: 4 },
-  fyb: { n: '飞蝗镖', q: 1, cat: '暗器', p: 25, cd: 2 },
-};
-const ORDER = ['xfl', 'lyj', 'lhq', 'tzcq', 'fyb'];
+const CN = ['', '一', '二', '三', '四'];
+const TIER4 = ['生疏', '熟练', '精通', '圆满'];
+const FORMS = { 寻常: 2, 上乘: 3, 绝学: 4 };
+const TH = [12, 40, 100];
+const BIG = { 剑: '器械', 刀: '器械', 枪: '器械', 棍: '器械', 拳: '肉身', 掌: '肉身', 指: '肉身', 腿: '肉身', 暗器: '暗器' };
 const SEAL = { 暗器: '镖' };
-const ui = { n: 2, s: 5, c: 'xfl' };
+const WX = {
+  xfl: { n: '旋风腿', q: '寻常', cat: '腿', rt: '刚猛', p: 33, cd: 2, cost: 14, m0: 150, fx: '击退', forms: [['扫叶', '命中后对方下回合出招几率减半', 150, 46], ['旋踢', '连踢两下，第二下七成', 170, 9]] },
+  lyj: { n: '流云剑', q: '上乘', cat: '剑', rt: '绵长', p: 28, cd: 3, cost: 18, m0: 165, fx: '回气', forms: [['云起', '命中回真气 6', 165, 100], ['云舒', '命中回真气 10，下回合耗气减半', 185, 21], ['云归', '本回合回气翻倍', 210, 0]], pages: 2, res: true },
+  lhq: { n: '罗汉拳', q: '寻常', cat: '拳', rt: '守御', p: 30, cd: 2, cost: 12, m0: 140, fx: '护体', forms: [['合十', '命中后本回合受伤减三成', 140, 100], ['伏虎', '受伤减半', 160, 12]] },
+  ksz: { n: '开山掌', q: '寻常', cat: '掌', rt: '刚猛', p: 30, cd: 2, cost: 15, m0: 155, fx: '破甲', forms: [['劈山', '无视对方三成守御', 155, 0], ['裂石', '无视守御', 175, 0]] },
+  tzcq: { n: '太祖长拳', q: '绝学', cat: '拳', rt: '刚猛', p: 22, cd: 4, cost: 24, m0: 200, fx: '会心', forms: [['冲天炮', '会心几率加两成', 200, 58], ['黑虎掏心', '会心必带内伤', 240, 3], ['拦腰斩', '', 280, 0], ['反身捶', '', 330, 0]], pages: 2, benmen: true },
+  fhb: { n: '飞蝗镖', q: '寻常', cat: '暗器', rt: '阴毒', p: 25, cd: 2, cost: 10, m0: 120, fx: '中毒', forms: [['一字', '命中附毒 3 回合', 120, 100], ['连珠', '三镖连发', 130, 100]] },
+  zfd: { n: '追风刀', q: '上乘', cat: '刀', rt: '诡谲', p: 26, cd: 3, cost: 17, m0: 160, fx: '追击', forms: [['追风', '', 160, 0], ['逐月', '', 180, 0], ['断流', '', 205, 0]], pages: 1, ghost: true },
+};
+const QN = { 寻常: 1, 上乘: 2, 绝学: 3 };
+const GROUPS = { 器械: ['刀', '枪', '剑', '棍'], 肉身: ['拳', '掌', '指', '腿'], 暗器: ['暗器'] };
+const ui = { slots: 5, weapon: '剑', desk: ['xfl', 'lyj', 'lhq'], cur: 'lyj', cat: '全部' };
 const $ = (q) => document.querySelector(q);
-const meta = (d) => `${d.cat} · 触发 ${d.p}% · 冷却 ${d.cd}`;
-const seats = () => Array.from({ length: ui.s }, (_, i) => (i < ui.n ? ORDER[i] : null));
+const owned = (id) => !WX[id].ghost;
+const shelfIds = () => Object.keys(WX).filter((id) => !ui.desk.includes(id)).sort((a, b) => QN[WX[b].q] - QN[WX[a].q]);
+const tier = (c) => (c >= TH[2] ? 3 : c >= TH[1] ? 2 : c >= TH[0] ? 1 : 0);
+const learned = (d) => { const out = []; for (let k = 0; k < d.forms.length; k++) { if (d.ghost) break; if (d.pages != null && k >= d.pages) break; if (k > 0 && tier(d.forms[k - 1][3]) < 3) break; out.push(k); } return out; };
 
+function cover(id, cls = '') {
+  const d = WX[id];
+  return `<i class="cv"></i><span class="slip">${d.n}</span><span class="seal">${SEAL[d.cat] ?? d.cat}</span>`;
+}
 function render() {
-  const ss = seats();
-  $('.js-a').innerHTML = ss.map((id) => {
-    if (!id) return `<div class="dk empty"><span class="ghost"></span></div>`;
+  const n = ui.desk.length;
+  $('.js-cnt').textContent = `在练 ${n} / ${ui.slots}`;
+  $('.js-desk').innerHTML = Array.from({ length: ui.slots }, (_, i) => {
+    const id = ui.desk[i];
+    if (!id) return `<div class="empty"></div>`;
     const d = WX[id];
-    return `<button class="dk q${d.q}" data-c="${id}" aria-pressed="${id === ui.c}"><i class="cv"></i><span class="slip">${d.n}</span><span class="seal">${SEAL[d.cat] ?? d.cat}</span><small><span>触发 ${d.p}%</span><span>冷却 ${d.cd}</span></small></button>`;
+    return `<button class="book q${QN[d.q]}" data-open="${id}" aria-current="${id === ui.cur}">${cover(id)}<small>触发 ${d.p}%</small></button>`;
   }).join('');
-  $('.js-b').innerHTML = ss.map((id) => {
-    if (!id) return `<div class="tg empty"><span class="str"></span><span class="slip"></span></div>`;
+
+  const ids = shelfIds();
+  const cnt = (c) => ids.filter((id) => c === '全部' || WX[id].cat === c).length;
+  $('.js-seg').innerHTML = `<button data-cat="全部" aria-pressed="${ui.cat === '全部'}">全部<small>${ids.length}</small></button>` +
+    Object.entries(GROUPS).map(([g, cs]) => `<span class="grp">${g}</span>` + cs.map((c) => `<button data-cat="${c}" aria-pressed="${ui.cat === c}" ${cnt(c) ? '' : 'disabled'}>${c}<small>${cnt(c)}</small></button>`).join('')).join('');
+  const shown = ids.filter((id) => ui.cat === '全部' || WX[id].cat === ui.cat);
+  $('.js-shelf').innerHTML = shown.length ? shown.map((id) => {
     const d = WX[id];
-    return `<button class="tg" data-c="${id}" aria-pressed="${id === ui.c}"><span class="str"></span><span class="slip" style="position:relative">${d.n}<span class="seal">${SEAL[d.cat] ?? d.cat}</span></span><small><span>触发 ${d.p}%</span><span>冷却 ${d.cd}</span></small></button>`;
+    const sub = d.ghost ? `<span class="pgc">残页 ${d.pages} / ${FORMS[d.q]}</span>` : `${d.q} · <span class="rt t-${d.rt}">${d.rt}</span>`;
+    return `<button class="book q${QN[d.q]}${d.ghost ? ' ghost' : ''}" data-open="${id}" aria-current="${id === ui.cur}">${cover(id)}<small>${sub}</small></button>`;
+  }).join('') : `<div class="shelf-empty">这一类架上没有书。</div>`;
+
+  renderOpen();
+}
+function renderOpen() {
+  const id = ui.cur, d = WX[id];
+  const on = ui.desk.includes(id), full = ui.desk.length >= ui.slots;
+  const big = BIG[d.cat];
+  const need = d.ghost ? { ok: false, text: '缺第一式残页' }
+    : big === '肉身' ? { ok: true, text: '肉身功夫 · 不拘兵器' }
+    : big === '暗器' ? { ok: true, text: '暗器槽已备飞蝗镖 · 可上案' }
+    : ui.weapon === d.cat ? { ok: true, text: `现持${d.cat} · 可上案` } : { ok: false, text: `须持${d.cat}方可上案${ui.weapon ? ` · 现持${ui.weapon}` : ' · 现在赤手'}` };
+  const ok = !d.ghost && need.ok;
+  const btn = on ? `<button class="pbtn quiet" data-toggle>归 架</button>`
+    : `<button class="pbtn" data-toggle ${full || !ok ? 'disabled' : ''}>${full ? '案上已满' : ok ? '上 案' : '不能上案'}</button>`;
+  const lr = learned(d);
+  const rows = d.forms.map((f, k) => {
+    const [t, fx, m, c] = f;
+    const head = `<div class="h"><span class="k">第${CN[k + 1]}式</span><span class="t">${t}</span><span class="mul">×${d.res ? Math.round(m * 1.15) : m}%</span></div>${fx ? `<div class="fx">${fx}</div>` : ''}`;
+    if (lr.includes(k)) {
+      const tr = tier(c), at = [0, ...TH];
+      const pos = tr >= 3 ? 100 : ((tr + (c - at[tr]) / (at[tr + 1] - at[tr])) / 3) * 100;
+      return `<div class="shi">${head}<div class="prof" data-tip="已出 ${c} 招"><div class="prof-line"><i style="width:${pos}%"></i></div>${TIER4.map((x, i) => `<span class="pn${i < tr ? ' p' : i === tr ? ' c' : ''}" style="left:${(i / 3) * 100}%"><b></b><em>${x}</em></span>`).join('')}</div></div>`;
+    }
+    const got = d.pages == null ? true : k < d.pages;
+    const prevOn = lr.includes(k - 1);
+    const why = !got ? `<span>缺少残页</span>` : prevOn ? `<span>待第${CN[k]}式圆满</span><span class="cnt">${d.forms[k - 1][3]} <small>/ ${TH[2]}</small></span>` : `<span>待第${CN[k]}式圆满</span>`;
+    return `<div class="shi locked">${head}<div class="lk">${d.q !== '寻常' ? `<i class="leaf${got ? ' got' : ''}"></i>` : ''}${why}</div></div>`;
   }).join('');
-  const nOn = ss.filter(Boolean).length;
-  const pct = (i) => (ss.length === 1 ? 0 : (i / (ss.length - 1)) * 100);
-  $('.js-c').innerHTML = `<div class="rail"><i style="width:${nOn > 1 ? pct(nOn - 1) : 0}%"></i></div>` + ss.map((id, i) => {
-    if (!id) return `<div class="nd empty" style="left:${pct(i)}%"><b></b></div>`;
-    const d = WX[id];
-    return `<button class="nd on" data-c="${id}" aria-pressed="${id === ui.c}" style="left:${pct(i)}%"><b></b><span><span class="nm">${d.n}</span><small>${meta(d)}</small></span></button>`;
-  }).join('');
-  document.querySelectorAll('.proto [data-n]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.n === ui.n));
-  document.querySelectorAll('.proto [data-s]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.s === ui.s));
-  document.querySelectorAll('.proto [data-c]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.c === ui.c));
+  $('.js-open').innerHTML = `
+    <div class="pg l">
+      <div class="ttl"><span class="nm">${d.n}</span>
+        <div class="side"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${d.rt}">${d.rt}</span>
+          ${d.res ? '<span class="ptag res">共鸣</span>' : ''}${d.benmen ? '<span class="ptag res">本门</span>' : ''}
+          <span class="cat">${big} · ${d.cat}</span></div></div>
+      <span class="seal bigseal">${SEAL[d.cat] ?? d.cat}</span>
+      <div class="params">
+        <span>倍率<b>×${d.m0}%</b></span><span>耗气<b>${d.cost}</b></span><span>冷却<b>${d.cd}</b> 回合</span>
+        <span><span class="dotted">触发</span><b>${d.p}%</b></span><span>特效<b>${d.fx}</b></span></div>
+      <div class="need${need.ok ? ' ok' : ''}">${need.text}</div>${btn}
+    </div>
+    <div class="pg r">${rows}<div class="foot">${d.q}${BIG[d.cat] === '暗器' ? '暗器' : d.cat + '法'} · 共${CN[d.forms.length]}式</div></div>`;
 }
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-n],[data-s],[data-c]');
+  const b = e.target.closest('[data-open],[data-cat],[data-toggle],[data-s],[data-w]');
   if (!b) return;
-  if (b.dataset.n) ui.n = Math.min(+b.dataset.n, ui.s);
-  if (b.dataset.s) { ui.s = +b.dataset.s; ui.n = Math.min(ui.n, ui.s); }
-  if (b.dataset.c) ui.c = b.dataset.c;
+  if (b.dataset.open) ui.cur = b.dataset.open;
+  if (b.dataset.cat) ui.cat = b.dataset.cat;
+  if (b.hasAttribute('data-toggle')) { const i = ui.desk.indexOf(ui.cur); i >= 0 ? ui.desk.splice(i, 1) : ui.desk.push(ui.cur); }
+  if (b.dataset.s) { ui.slots = +b.dataset.s; ui.desk = ui.desk.slice(0, ui.slots); document.querySelectorAll('.proto [data-s]').forEach((x) => x.setAttribute('aria-pressed', x === b)); }
+  if (b.dataset.w != null && b.closest('.proto')) { ui.weapon = b.dataset.w; document.querySelectorAll('.proto [data-w]').forEach((x) => x.setAttribute('aria-pressed', x === b)); }
   render();
 });
 render();

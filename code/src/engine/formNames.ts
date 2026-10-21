@@ -8,14 +8,14 @@ import { CATALOG_FORMS, type WuxueId } from './wuxue';
 const FORM_NAMES_BASE: Record<WuxueId, readonly string[]> = {
   // 寻常
   liuyunjian: ['流云出岫', '回风拂柳', '云断秋江'],
-  kaishanzhang: ['推山式', '裂石式', '开山式'],
-  xiulizhen: ['暗香', '疏影', '落梅'],
-  xingzhegun: ['拨草寻蛇', '横担山河', '行者问路'],
+  kaishanzhang: ['巨灵擘山', '劈峡分流', '万仞开天'],
+  xiulizhen: ['暗香浮动', '疏影横斜', '梅落寒枝'],
+  xingzhegun: ['一苇渡江', '拨草瞻风', '行脚问禅'],
   // 上乘
   jinghongjian: ['惊鸿一瞥', '翩若游龙', '鸿飞冥冥', '孤鸿掠影', '惊鸿照影'],
-  fuhuquan: ['猛虎出林', '黑虎掏心', '卧虎回头', '虎啸山岗', '降龙伏虎'],
+  fuhuquan: ['猛虎出林', '虎扑寒林', '卧虎回眸', '啸震千峰', '伏虎归山'],
   feihuangshi: ['弹石惊雀', '流星赶月', '飞蝗过野', '乱石穿空', '满天星雨'],
-  duanshuidao: ['抽刀', '断流', '逝水', '回澜', '东去'],
+  duanshuidao: ['抽刀断水', '中流击楫', '逝者如斯', '惊澜回卷', '大江东去'],
   // 绝学
   cangyajianjue: ['苍松迎客', '崖前观云', '白虹贯日', '苍龙出海', '危崖独立', '万壑松风', '苍崖一剑'],
   luoxingjian: ['星垂平野', '北斗横斜', '流星追月', '银河倒挂', '天璇落照', '七星连珠', '落星沉海'],

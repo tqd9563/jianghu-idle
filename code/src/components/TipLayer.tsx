@@ -10,10 +10,12 @@ export function TipLayer() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const tip = ref.current!;
+    let anchor: HTMLElement | null = null, shown = '';
     const over = (e: MouseEvent) => {
       const t = (e.target as Element | null)?.closest?.('[data-tip]') as HTMLElement | null;
       if (!t || !t.dataset.tip) return;
-      tip.innerHTML = t.dataset.tip;
+      anchor = t;
+      tip.innerHTML = shown = t.dataset.tip;
       tip.classList.add('on');
       const r = t.getBoundingClientRect();
       const w = tip.offsetWidth;
@@ -21,11 +23,18 @@ export function TipLayer() {
       tip.style.top = `${r.bottom + 8 + tip.offsetHeight > innerHeight ? r.top - tip.offsetHeight - 8 : r.bottom + 8}px`;
     };
     const out = (e: MouseEvent) => {
-      if ((e.target as Element | null)?.closest?.('[data-tip]')) tip.classList.remove('on');
+      if ((e.target as Element | null)?.closest?.('[data-tip]')) { tip.classList.remove('on'); anchor = null; }
     };
+    // 悬停中的元素被重渲染移除（如增减益到期、新一场开打）不会触发 mouseout，浮层会残留；悬停中改了文案也跟着换
+    const mo = new MutationObserver(() => {
+      if (!anchor) return;
+      if (!anchor.isConnected || !anchor.dataset.tip) { tip.classList.remove('on'); anchor = null; }
+      else if (shown !== anchor.dataset.tip) tip.innerHTML = shown = anchor.dataset.tip;
+    });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-tip'] });
     document.addEventListener('mouseover', over);
     document.addEventListener('mouseout', out);
-    return () => { document.removeEventListener('mouseover', over); document.removeEventListener('mouseout', out); };
+    return () => { mo.disconnect(); document.removeEventListener('mouseover', over); document.removeEventListener('mouseout', out); };
   }, []);
   return createPortal(<div ref={ref} className="jh-tip" role="tooltip" />, document.body);
 }

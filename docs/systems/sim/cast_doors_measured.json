@@ -5,8 +5,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "必暴",
-  "p": 0.048,
-  "margin": 0.291
+  "p": 0.051,
+  "margin": 0.303
  },
  {
   "id": "qingpingjian",
@@ -14,8 +14,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "运劲",
-  "p": 0.141,
-  "margin": 0.309
+  "p": 0.136,
+  "margin": 0.308
  },
  {
   "id": "songtaojian",
@@ -23,8 +23,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "回气",
-  "p": 0.191,
-  "margin": 0.301
+  "p": 0.185,
+  "margin": 0.304
  },
  {
   "id": "jiyujian",
@@ -32,8 +32,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "连击",
-  "p": 0.114,
-  "margin": 0.297
+  "p": 0.116,
+  "margin": 0.306
  },
  {
   "id": "pofengdao",
@@ -41,8 +41,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "回气",
-  "p": 0.191,
-  "margin": 0.301
+  "p": 0.197,
+  "margin": 0.304
  },
  {
   "id": "kaibeidao",
@@ -50,8 +50,8 @@
   "quality": "寻常",
   "type": "双强",
   "effect": "凝眸",
-  "p": 0.064,
-  "margin": 0.295
+  "p": 0.068,
+  "margin": 0.314
  },
  {
   "id": "shuangfengdao",
@@ -59,7 +59,7 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "透劲",
-  "p": 0.148,
+  "p": 0.144,
   "margin": 0.305
  },
  {
@@ -68,8 +68,8 @@
   "quality": "寻常",
   "type": "重击",
   "effect": "运劲",
-  "p": 0.105,
-  "margin": 0.302
+  "p": 0.103,
+  "margin": 0.303
  },
  {
   "id": "yanmenqiang",
@@ -78,7 +78,7 @@
   "type": "折中",
   "effect": "护体",
   "p": 0.128,
-  "margin": 0.303
+  "margin": 0.304
  },
  {
   "id": "bailaqiang",
@@ -86,8 +86,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "运劲",
-  "p": 0.141,
-  "margin": 0.309
+  "p": 0.136,
+  "margin": 0.311
  },
  {
   "id": "zhongpingqiang",
@@ -95,8 +95,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "连击",
-  "p": 0.116,
-  "margin": 0.299
+  "p": 0.115,
+  "margin": 0.303
  },
  {
   "id": "jingsheqiang",
@@ -104,8 +104,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "凝眸",
-  "p": 0.096,
-  "margin": 0.307
+  "p": 0.095,
+  "margin": 0.305
  },
  {
   "id": "xingzhegun",
@@ -113,8 +113,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "回气",
-  "p": 0.212,
-  "margin": 0.306
+  "p": 0.219,
+  "margin": 0.299
  },
  {
   "id": "qimeigun",
@@ -122,8 +122,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "轻身",
-  "p": 0.13,
-  "margin": 0.299
+  "p": 0.133,
+  "margin": 0.307
  },
  {
   "id": "saotanggun",
@@ -132,7 +132,7 @@
   "type": "折中",
   "effect": "回元",
   "p": 0.26,
-  "margin": 0.297
+  "margin": 0.294
  },
  {
   "id": "bengyungun",
@@ -140,8 +140,8 @@
   "quality": "寻常",
   "type": "双强",
   "effect": "卸力",
-  "p": 0.073,
-  "margin": 0.302
+  "p": 0.074,
+  "margin": 0.303
  },
  {
   "id": "tongbiquan",
@@ -149,8 +149,8 @@
   "quality": "寻常",
   "type": "重击",
   "effect": "必暴",
-  "p": 0.045,
-  "margin": 0.29
+  "p": 0.047,
+  "margin": 0.298
  },
  {
   "id": "luohanquan",
@@ -158,8 +158,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "封穴",
-  "p": 0.128,
-  "margin": 0.321
+  "p": 0.136,
+  "margin": 0.346
  },
  {
   "id": "bengshanquan",
@@ -168,7 +168,7 @@
   "type": "双强",
   "effect": "回元",
   "p": 0.142,
-  "margin": 0.3
+  "margin": 0.306
  },
  {
   "id": "bajiquan",
@@ -176,8 +176,8 @@
   "quality": "寻常",
   "type": "重击",
   "effect": "轻身",
-  "p": 0.113,
-  "margin": 0.306
+  "p": 0.112,
+  "margin": 0.288
  },
  {
   "id": "kaishanzhang",
@@ -185,7 +185,7 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "护体",
-  "p": 0.144,
+  "p": 0.153,
   "margin": 0.328
  },
  {
@@ -194,8 +194,8 @@
   "quality": "寻常",
   "type": "双强",
   "effect": "封穴",
-  "p": 0.077,
-  "margin": 0.3
+  "p": 0.078,
+  "margin": 0.303
  },
  {
   "id": "mianrouzhang",
@@ -204,7 +204,7 @@
   "type": "折中",
   "effect": "透劲",
   "p": 0.26,
-  "margin": 0.318
+  "margin": 0.322
  },
  {
   "id": "baguazhang",
@@ -212,8 +212,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "破绽",
-  "p": 0.197,
-  "margin": 0.31
+  "p": 0.198,
+  "margin": 0.296
  },
  {
   "id": "cunjinzhi",
@@ -221,8 +221,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "回气",
-  "p": 0.212,
-  "margin": 0.306
+  "p": 0.207,
+  "margin": 0.313
  },
  {
   "id": "chuomaizhi",
@@ -231,7 +231,7 @@
   "type": "折中",
   "effect": "回元",
   "p": 0.26,
-  "margin": 0.297
+  "margin": 0.299
  },
  {
   "id": "tiegouzhi",
@@ -239,8 +239,8 @@
   "quality": "寻常",
   "type": "双强",
   "effect": "凝眸",
-  "p": 0.069,
-  "margin": 0.298
+  "p": 0.07,
+  "margin": 0.3
  },
  {
   "id": "jingangzhi",
@@ -248,8 +248,8 @@
   "quality": "寻常",
   "type": "重击",
   "effect": "透劲",
-  "p": 0.138,
-  "margin": 0.302
+  "p": 0.142,
+  "margin": 0.307
  },
  {
   "id": "lianhuantui",
@@ -257,8 +257,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "护体",
-  "p": 0.129,
-  "margin": 0.3
+  "p": 0.13,
+  "margin": 0.306
  },
  {
   "id": "chuanlintui",
@@ -266,8 +266,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "轻身",
-  "p": 0.138,
-  "margin": 0.302
+  "p": 0.139,
+  "margin": 0.301
  },
  {
   "id": "gouguatui",
@@ -275,8 +275,8 @@
   "quality": "寻常",
   "type": "重击",
   "effect": "卸力",
-  "p": 0.112,
-  "margin": 0.316
+  "p": 0.105,
+  "margin": 0.288
  },
  {
   "id": "xuanfengtui",
@@ -284,8 +284,8 @@
   "quality": "寻常",
   "type": "折中",
   "effect": "破绽",
-  "p": 0.22,
-  "margin": 0.326
+  "p": 0.238,
+  "margin": 0.34
  },
  {
   "id": "xiulizhen",
@@ -294,7 +294,7 @@
   "type": "折中",
   "effect": "附毒",
   "p": 0.137,
-  "margin": 0.298
+  "margin": 0.304
  },
  {
   "id": "liuyebiao",
@@ -303,7 +303,7 @@
   "type": "折中",
   "effect": "透劲",
   "p": 0.26,
-  "margin": 0.318
+  "margin": 0.316
  },
  {
   "id": "jiliding",
@@ -311,8 +311,8 @@
   "quality": "寻常",
   "type": "双强",
   "effect": "回元",
-  "p": 0.142,
-  "margin": 0.3
+  "p": 0.143,
+  "margin": 0.305
  },
  {
   "id": "liuxingshi",
@@ -321,7 +321,7 @@
   "type": "折中",
   "effect": "破绽",
   "p": 0.26,
-  "margin": 0.304
+  "margin": 0.305
  },
  {
   "id": "jinghongjian",
@@ -329,8 +329,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "回气",
-  "p": 0.084,
-  "margin": 0.331
+  "p": 0.087,
+  "margin": 0.34
  },
  {
   "id": "feipuduanyajian",
@@ -339,7 +339,7 @@
   "type": "重击",
   "effect": "运劲",
   "p": 0.058,
-  "margin": 0.332
+  "margin": 0.335
  },
  {
   "id": "duanshuidao",
@@ -348,7 +348,7 @@
   "type": "折中",
   "effect": "附毒",
   "p": 0.066,
-  "margin": 0.332
+  "margin": 0.333
  },
  {
   "id": "nutaolieandao",
@@ -356,8 +356,8 @@
   "quality": "上乘",
   "type": "重击",
   "effect": "连击",
-  "p": 0.054,
-  "margin": 0.331
+  "p": 0.051,
+  "margin": 0.315
  },
  {
   "id": "chuanyunpoyueqiang",
@@ -365,8 +365,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "必暴",
-  "p": 0.036,
-  "margin": 0.333
+  "p": 0.037,
+  "margin": 0.341
  },
  {
   "id": "lihuadaiyuqiang",
@@ -374,8 +374,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "回气",
-  "p": 0.084,
-  "margin": 0.331
+  "p": 0.085,
+  "margin": 0.33
  },
  {
   "id": "panlongraozhugun",
@@ -383,8 +383,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "回气",
-  "p": 0.113,
-  "margin": 0.33
+  "p": 0.114,
+  "margin": 0.339
  },
  {
   "id": "fanjiangjiaohaigun",
@@ -392,8 +392,8 @@
   "quality": "上乘",
   "type": "重击",
   "effect": "轻身",
-  "p": 0.062,
-  "margin": 0.333
+  "p": 0.061,
+  "margin": 0.331
  },
  {
   "id": "fuhuquan",
@@ -401,8 +401,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "必暴",
-  "p": 0.038,
-  "margin": 0.339
+  "p": 0.036,
+  "margin": 0.334
  },
  {
   "id": "jinzhongzhendianquan",
@@ -410,8 +410,8 @@
   "quality": "上乘",
   "type": "双强",
   "effect": "破绽",
-  "p": 0.071,
-  "margin": 0.326
+  "p": 0.068,
+  "margin": 0.331
  },
  {
   "id": "kaibeilieshizhang",
@@ -419,8 +419,8 @@
   "quality": "上乘",
   "type": "双强",
   "effect": "护体",
-  "p": 0.053,
-  "margin": 0.328
+  "p": 0.054,
+  "margin": 0.34
  },
  {
   "id": "yinfengguikuzhang",
@@ -428,7 +428,7 @@
   "quality": "上乘",
   "type": "双强",
   "effect": "回元",
-  "p": 0.07,
+  "p": 0.068,
   "margin": 0.333
  },
  {
@@ -437,8 +437,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "附毒",
-  "p": 0.075,
-  "margin": 0.333
+  "p": 0.079,
+  "margin": 0.334
  },
  {
   "id": "duanjinsuiyuzhi",
@@ -446,8 +446,8 @@
   "quality": "上乘",
   "type": "重击",
   "effect": "迷目",
-  "p": 0.069,
-  "margin": 0.333
+  "p": 0.071,
+  "margin": 0.341
  },
  {
   "id": "yuhuanyuanyangtui",
@@ -455,8 +455,8 @@
   "quality": "上乘",
   "type": "重击",
   "effect": "必暴",
-  "p": 0.028,
-  "margin": 0.326
+  "p": 0.029,
+  "margin": 0.334
  },
  {
   "id": "zhudianliuxingtui",
@@ -465,7 +465,7 @@
   "type": "折中",
   "effect": "回元",
   "p": 0.113,
-  "margin": 0.33
+  "margin": 0.335
  },
  {
   "id": "feihuangshi",
@@ -473,8 +473,8 @@
   "quality": "上乘",
   "type": "折中",
   "effect": "护体",
-  "p": 0.075,
-  "margin": 0.33
+  "p": 0.073,
+  "margin": 0.332
  },
  {
   "id": "zimuchuanxinbiao",
@@ -482,7 +482,7 @@
   "quality": "上乘",
   "type": "重击",
   "effect": "回元",
-  "p": 0.072,
+  "p": 0.067,
   "margin": 0.332
  },
  {
@@ -492,7 +492,7 @@
   "type": "折中",
   "effect": "必暴",
   "p": 0.028,
-  "margin": 0.359
+  "margin": 0.361
  },
  {
   "id": "tianhedaoxuandao",
@@ -500,8 +500,8 @@
   "quality": "绝学",
   "type": "重击",
   "effect": "透劲",
-  "p": 0.044,
-  "margin": 0.375
+  "p": 0.043,
+  "margin": 0.359
  },
  {
   "id": "bawangxiejiaqiang",
@@ -509,8 +509,8 @@
   "quality": "绝学",
   "type": "双强",
   "effect": "连击",
-  "p": 0.037,
-  "margin": 0.36
+  "p": 0.038,
+  "margin": 0.361
  },
  {
   "id": "luohanfumogun",
@@ -519,7 +519,7 @@
   "type": "折中",
   "effect": "护体",
   "p": 0.053,
-  "margin": 0.363
+  "margin": 0.362
  },
  {
   "id": "lianhualuodigun",
@@ -528,7 +528,7 @@
   "type": "折中",
   "effect": "破绽",
   "p": 0.071,
-  "margin": 0.365
+  "margin": 0.361
  },
  {
   "id": "zhenwudangmoquan",
@@ -536,8 +536,8 @@
   "quality": "绝学",
   "type": "折中",
   "effect": "轻身",
-  "p": 0.055,
-  "margin": 0.369
+  "p": 0.057,
+  "margin": 0.358
  },
  {
   "id": "qianshesixinzhang",
@@ -545,8 +545,8 @@
   "quality": "绝学",
   "type": "重击",
   "effect": "迷目",
-  "p": 0.052,
-  "margin": 0.36
+  "p": 0.053,
+  "margin": 0.359
  },
  {
   "id": "hanchanqiqiezhang",
@@ -554,8 +554,8 @@
   "quality": "绝学",
   "type": "折中",
   "effect": "附毒",
-  "p": 0.056,
-  "margin": 0.365
+  "p": 0.055,
+  "margin": 0.351
  },
  {
   "id": "luoyingfeizhen",
@@ -563,7 +563,7 @@
   "quality": "绝学",
   "type": "折中",
   "effect": "附毒",
-  "p": 0.055,
-  "margin": 0.357
+  "p": 0.057,
+  "margin": 0.363
  }
 ]

@@ -20,8 +20,10 @@ from __future__ import annotations
   --write：改写 wuxue-params.json（再跑 export_wuxue.py 生成代码读的名录）。
 """
 import importlib.util
+import hashlib
 import itertools
 import json
+import math
 import os
 import statistics as st
 import sys
@@ -79,6 +81,44 @@ def ek_of(r: dict) -> float:
     return TYPE_EK[t]
 
 
+MULT_JITTER = 0.06                                      # 每步倍率在 ×MULT_GROWTH 上下浮动的幅度（对数），首式与末式不动
+MIN_STEP = 1.04                                         # 每往后一式至少涨 4%
+
+
+def step_curve(name: str, n: int) -> list[float]:
+    """各式相对第一式的倍数：每步 = MULT_GROWTH × e^(d_k)，d_k 按武学名固定取值、和为 0（末式仍是 MULT_GROWTH^(n−1)）。
+    让每门有自己的成长节奏（有的式跳得大、有的式跳得小），整门平均威力基本不变，校准不受影响。"""
+    if n <= 1:
+        return [1.0]
+    h = int(hashlib.md5(name.encode("utf-8")).hexdigest(), 16)
+    d = []
+    for _ in range(n - 1):
+        d.append(((h % 10007) / 10006 * 2 - 1) * MULT_JITTER)
+        h //= 10007
+    mean = sum(d) / len(d)
+    d = [x - mean for x in d]
+    lo = math.log(MIN_STEP / MULT_GROWTH)
+    for _ in range(20):                                  # 夹住最小步长后重新配平，保证和为 0
+        d = [max(lo, x) for x in d]
+        mean = sum(d) / len(d)
+        if abs(mean) < 1e-12:
+            break
+        free = [i for i, x in enumerate(d) if x > lo]
+        for i in free:
+            d[i] -= mean * len(d) / len(free)
+    out, acc = [1.0], 1.0
+    for x in d:
+        acc *= MULT_GROWTH * math.exp(x)
+        out.append(acc)
+    return out
+
+
+def form_mults(r: dict, m0: float | None = None) -> list[float]:
+    """各式倍率（两位小数）：第一式 × 本门的成长曲线"""
+    m0 = mult0_of(r) if m0 is None else m0
+    return [round(m0 * c, 2) for c in step_curve(r["name"], NFORMS[r["quality"]])]
+
+
 def mult0_of(r: dict) -> float:
     t = type_of(r)
     if r["effect"] in SIGNATURE:
@@ -124,7 +164,7 @@ def strength(r: dict, p: float, mult0: float | None = None, ek: float | None = N
     cd = cd_of(r)
     f = 1.0 / (cd + 1.0 / p)
     ws = form_weights(q)
-    mult_avg = sum(w * m0 * MULT_GROWTH ** i for i, w in enumerate(ws))
+    mult_avg = sum(w * m for w, m in zip(ws, form_mults(r, m0)))
     out = (1 - f) + f * mult_avg
     rr = 0.0
     e_hit0 = REF["e_hit"] / (REF["e_hit"] + REF["p_dodge"])
@@ -226,13 +266,13 @@ def calibrate() -> dict:
     for r in S.CATALOG:
         q = r["quality"]
         p = P_REF[q] if r["effect"] in SIGNATURE else round(min(P_REF[q] * P_CAP_K, solve_p(r, tg[q]) * corr_of(r, corr)) * PRACTICAL.get(r["name"], 1.0), 3)
-        out[r["name"]] = dict(mult0=mult0_of(r), cost=cost0_of(r), p=p, cd=cd_of(r), type=type_of(r), ek=ek_of(r))
+        out[r["name"]] = dict(mult0=mult0_of(r), mults=form_mults(r), cost=cost0_of(r), p=p, cd=cd_of(r), type=type_of(r), ek=ek_of(r))
     return out, tg
 
 
 def forms_of(r: dict, prm: dict) -> list[tuple[int, float]]:
     n = NFORMS[r["quality"]]
-    return [(round(prm["cost"] * COST_GROWTH ** i), prm["mult0"] * MULT_GROWTH ** i) for i in range(n)]
+    return [(round(prm["cost"] * COST_GROWTH ** i), m) for i, m in zip(range(n), prm["mults"])]
 
 
 def report(params: dict, tg: dict) -> bool:
@@ -265,7 +305,8 @@ def report(params: dict, tg: dict) -> bool:
     for q in QUAL:
         g = rows(q, 1)
         f = [forms_of(r, params[r["name"]]) for r in g]
-        print(f"  {q}：相邻式倍率差 {(MULT_GROWTH - 1) * 100:.0f}% · 末 / 首 倍率 {MULT_GROWTH ** (NFORMS[q] - 1):.2f} · 末 / 首 耗气 {st.median(x[-1][0] / x[0][0] for x in f):.2f}")
+        steps = [b[1] / a[1] - 1 for x in f for a, b in zip(x, x[1:])]
+        print(f"  {q}：相邻式倍率差 {min(steps) * 100:.0f}%–{max(steps) * 100:.0f}%（中位 {st.median(steps) * 100:.0f}%）· 末 / 首 倍率 {st.median(x[-1][1] / x[0][1] for x in f):.2f} · 末 / 首 耗气 {st.median(x[-1][0] / x[0][0] for x in f):.2f}")
     print("\n【四】要求 2：同序号的式，高品质 > 低品质 的比例（第一批两两比较；独门除外）")
     for a, b in (("寻常", "上乘"), ("上乘", "绝学"), ("寻常", "绝学")):
         A = [r for r in rows(a, 1) if r["effect"] not in SIGNATURE]

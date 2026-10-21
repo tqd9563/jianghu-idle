@@ -82,7 +82,7 @@ def main() -> None:
             row = {'id': wid, 'source': JUEXUE_SECT.get(name, '挂机'), 'forms': names, 'lines': lines}
         row.update({
             'name': name, 'quality': w['quality'], 'cat': w['cat'], 'route': w['route'], 'effect': w['effect'],
-            'mult0': w['mult0'], 'cost': w['cost'], 'p': w['p'], 'cd': w['cd'],
+            'mult0': w['mult0'], 'mults': w['mults'], 'cost': w['cost'], 'p': w['p'], 'cd': w['cd'],
             'type': w['type'], 'ek': w['ek'],
         })
         if wid in SIGNATURE:

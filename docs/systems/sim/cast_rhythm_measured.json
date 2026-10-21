@@ -8,24 +8,24 @@
       "zhong": 0,
       "stage": "1-0-8",
       "qiMax": 70,
-      "sumP": 0.137,
-      "winrateMastered": 0.6775,
+      "sumP": 0.136,
+      "winrateMastered": 0.6725,
       "fightSec": 27,
       "lowQiShare": 0,
       "share": {
         "寻常": [
-          0.267,
-          0.337,
-          0.396
+          0.272,
+          0.345,
+          0.383
         ]
       },
       "unlockRatesPerHour": [
-        128.8,
-        74,
-        52.3
+        130.1,
+        70,
+        50.7
       ],
       "threshold": 250,
-      "hoursToLastForm": 5.3,
+      "hoursToLastForm": 5.5,
       "hoursToSecondForm": 1.9
     },
     {
@@ -34,24 +34,24 @@
       "zhong": 40,
       "stage": "1-0-37",
       "qiMax": 110,
-      "sumP": 0.749,
-      "winrateMastered": 0.7775,
-      "fightSec": 17,
+      "sumP": 0.753,
+      "winrateMastered": 0.79,
+      "fightSec": 16,
       "lowQiShare": 0,
       "share": {
         "寻常": [
-          0.294,
-          0.297,
-          0.409
+          0.274,
+          0.316,
+          0.41
         ]
       },
       "unlockRatesPerHour": [
-        124,
-        69.5,
-        49.7
+        124.5,
+        67.4,
+        49.4
       ],
       "threshold": 250,
-      "hoursToLastForm": 5.6,
+      "hoursToLastForm": 5.7,
       "hoursToSecondForm": 2
     },
     {
@@ -60,126 +60,126 @@
       "zhong": 61,
       "stage": "1-1-22",
       "qiMax": 161,
-      "sumP": 0.702,
-      "winrateMastered": 0.5925,
+      "sumP": 0.699,
+      "winrateMastered": 0.605,
       "fightSec": 16,
       "lowQiShare": 0,
       "share": {
         "寻常": [
-          0.28,
-          0.337,
-          0.383
+          0.287,
+          0.316,
+          0.397
         ],
         "上乘": [
-          0.16,
-          0.128,
-          0.203,
-          0.218,
-          0.291
+          0.144,
+          0.127,
+          0.205,
+          0.222,
+          0.302
         ]
       },
       "unlockRatesPerHour": [
-        68.2,
-        41,
-        28.7,
-        24,
-        20.3
+        71.9,
+        38.5,
+        27.3,
+        22.2,
+        21.1
       ],
       "threshold": 300,
-      "hoursToLastForm": 34.7,
-      "hoursToSecondForm": 4.4
+      "hoursToLastForm": 36.5,
+      "hoursToSecondForm": 4.2
     },
     {
       "label": "境界4 末 3 绝学 + 3 上乘 + 2 寻常",
       "realm": 4,
       "zhong": 84,
-      "stage": "1-2-20",
+      "stage": "1-2-24",
       "qiMax": 221,
-      "sumP": 0.506,
-      "winrateMastered": 0.675,
-      "fightSec": 15,
-      "lowQiShare": 0.002,
+      "sumP": 0.507,
+      "winrateMastered": 0.58,
+      "fightSec": 16,
+      "lowQiShare": 0.001,
       "share": {
         "寻常": [
-          0.283,
-          0.317,
-          0.4
+          0.297,
+          0.309,
+          0.394
         ],
         "绝学": [
-          0.067,
-          0.119,
-          0.113,
-          0.124,
-          0.191,
-          0.18,
-          0.206
+          0.08,
+          0.097,
+          0.148,
+          0.108,
+          0.21,
+          0.159,
+          0.199
         ],
         "上乘": [
-          0.139,
-          0.193,
-          0.168,
-          0.22,
-          0.28
+          0.114,
+          0.185,
+          0.188,
+          0.226,
+          0.286
         ]
       },
       "unlockRatesPerHour": [
-        41,
-        22.4,
-        16.8,
-        11.3,
-        9.2,
-        8.1,
-        7.8
+        42.2,
+        23.1,
+        11.6,
+        10.7,
+        9,
+        9.6,
+        7.9
       ],
       "threshold": 350,
-      "hoursToLastForm": 157.2,
-      "hoursToSecondForm": 8.5
+      "hoursToLastForm": 161.7,
+      "hoursToSecondForm": 8.3
     },
     {
       "label": "境界5 末 4 绝学 + 3 上乘 + 2 寻常",
       "realm": 5,
       "zhong": 103,
-      "stage": "2-2-13",
+      "stage": "2-2-9",
       "qiMax": 262,
-      "sumP": 0.577,
-      "winrateMastered": 0.6725,
+      "sumP": 0.578,
+      "winrateMastered": 0.7075,
       "fightSec": 15,
       "lowQiShare": 0.001,
       "share": {
         "寻常": [
-          0.322,
-          0.332,
-          0.346
+          0.282,
+          0.338,
+          0.38
         ],
         "绝学": [
-          0.061,
-          0.115,
-          0.125,
-          0.15,
-          0.157,
-          0.188,
-          0.204
+          0.08,
+          0.122,
+          0.122,
+          0.136,
+          0.171,
+          0.182,
+          0.185
         ],
         "上乘": [
-          0.136,
-          0.198,
+          0.175,
           0.184,
-          0.178,
-          0.304
+          0.164,
+          0.217,
+          0.259
         ]
       },
       "unlockRatesPerHour": [
-        46,
-        26.2,
-        19,
-        12.9,
-        11.6,
-        11.8,
-        8.4
+        46.6,
+        24.7,
+        18.2,
+        15.2,
+        10.3,
+        10,
+        8.8
       ],
       "threshold": 350,
-      "hoursToLastForm": 126.4,
-      "hoursToSecondForm": 7.6
+      "hoursToLastForm": 132.9,
+      "hoursToSecondForm": 7.5
     }
   ]
 }

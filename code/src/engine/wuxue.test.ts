@@ -53,12 +53,19 @@ describe('名录读表', () => {
     expect(effectText(WUXUE.xiulizhen, 3)).toBe('叠毒 +1 层 · 25% 再 +1');
   });
 
-  it('裁决 45 / 46：倍率每式 ×1.12、基础耗气每式 ×1.15、熟练只减耗气、冷却不随熟练变', () => {
-    const d = WUXUE.songtaojian;   // 寻常 · cost 19 · cd 1 · mult0 1.48
+  it('裁决 45 / 46：倍率每式约 ×1.12（按门浮动、每步至少 +4%、首末式不动）、基础耗气每式 ×1.15、熟练只减耗气、冷却不随熟练变', () => {
     expect(MULT_GROWTH).toBe(1.12);
     expect(COST_GROWTH).toBe(1.15);
+    for (const id of WUXUE_IDS) {
+      const w = WUXUE[id], n = QUALITY_PARAMS[w.quality].forms;
+      expect(w.mults).toHaveLength(n);
+      expect(w.mults[0]).toBeCloseTo(w.mult0, 9);
+      expect(w.mults[n - 1]).toBeCloseTo(w.mult0 * 1.12 ** (n - 1), 1);
+      for (let k = 1; k < n; k++) expect(w.mults[k] / w.mults[k - 1], `${id} 第${k + 1}式`).toBeGreaterThan(1.035);
+    }
+    const d = WUXUE.songtaojian;   // 寻常 · cost 19 · cd 1
     expect(formMult(d, 1, false)).toBeCloseTo(d.mult0, 9);
-    expect(formMult(d, 3, true)).toBeCloseTo(d.mult0 * 1.12 ** 2 * 1.1, 9);
+    expect(formMult(d, 2, true)).toBeCloseTo(d.mults[1] * 1.1, 9);
     expect([1, 2, 3].map((k) => formBaseCost(d, k))).toEqual([19, 22, 25]);
     expect([0, 1, 2, 3].map((t) => formCost(d, 1, t))).toEqual([19, 17, 16, 14]);
     expect(formCost(d, 3, 3)).toBe(19);

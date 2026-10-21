@@ -48,8 +48,10 @@ export interface WuxueDef {
   /** 门派独门机制（蓄势 / 反震 / 引爆），不分档 */
   signature?: boolean;
   source: WuxueSource;
-  /** 第 1 式倍率（相对普攻），往后每式 ×MULT_GROWTH（裁决 46） */
+  /** 第 1 式倍率（相对普攻） */
   mult0: number;
+  /** 各式倍率：每步约 ×MULT_GROWTH、按门固定浮动，首末式不动（裁决 46；calib_cast.py 生成） */
+  mults: readonly number[];
   /** 每次出招耗真气（生疏口径） */
   cost: number;
   /** 这门武学对总触发率的贡献 */
@@ -73,7 +75,7 @@ const ROWS = catalog.wuxue as CatalogRow[];
 
 export const WUXUE: Record<WuxueId, WuxueDef> = Object.fromEntries(ROWS.map((r) => [r.id, {
   id: r.id, name: r.name, quality: r.quality, cat: r.cat, route: (r.route ?? null) as RouteId | null, effect: r.effect,
-  ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, cost: r.cost, p: r.p, cd: r.cd,
+  ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, mults: r.mults, cost: r.cost, p: r.p, cd: r.cd,
   type: r.type, ek: r.ek,
 }]));
 export const WUXUE_IDS: WuxueId[] = ROWS.map((r) => r.id);
@@ -127,9 +129,10 @@ export function shulianTier(quality: Quality, casts: number, benmen = false): nu
 }
 
 
-/** 第 k 式的倍率（含共鸣；熟练不加倍率）：第一式 × MULT_GROWTH^(k − 1) */
-export function formMult(def: Pick<WuxueDef, 'mult0'>, k: number, resonance: boolean): number {
-  return def.mult0 * MULT_GROWTH ** (k - 1) * (resonance ? RESONANCE_MULT : 1);
+/** 第 k 式的倍率（含共鸣；熟练不加倍率）：读名录的逐式倍率；没有时按第一式 × MULT_GROWTH^(k − 1) */
+export function formMult(def: Pick<WuxueDef, 'mult0'> & { mults?: readonly number[] }, k: number, resonance: boolean): number {
+  const m = def.mults?.[k - 1] ?? def.mult0 * MULT_GROWTH ** (k - 1);
+  return m * (resonance ? RESONANCE_MULT : 1);
 }
 
 /** 熟练只减耗气（裁决 45）：生疏 / 熟练 / 精通 / 圆熟的耗气倍率 `[待 sim]` */

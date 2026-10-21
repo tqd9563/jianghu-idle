@@ -24,8 +24,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v8 = 门径并入内功（issue #36）：路线 → 同路数寻常内功、武学等级 → 重数、机制节点 → 台阶，秘籍阁废止。
  * v13 = 武学一式一页（battle-loot/design.md §4）：残页从计数改为已得的式，寻常全本并入整门，取消顿悟领悟。
  * v14 = 传功缓坡（battle-loot/design.md §5.1）：图 1 初入入门关之后插 15 关，第 7 关起原有关卡编号顺延。
+ * v15 = 关卡精简（content.md v2.12）：图 1 初入 101 → 40 关，缓坡与主段按当量折算到新编号。
  */
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -99,7 +100,7 @@ export function loadGameWithVersion<T>(): { state: T; version: number } | null {
  * v2→v3 重写窍穴 id（见 ACUPOINT_ID_V2_TO_V3）：acupointProgress 的键与
  * acupointLog 的元素都按 id 存，两处都要换；映射不到的键原样保留，不静默丢弃玩家进度。
  */
-export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
+export function migrate<T>(state: T, fromVer: number, toVer: number): T {
   let out = state;
   if (fromVer < 3) out = migrateAcupointIdsV2ToV3(out);
   if (fromVer < 7) out = migrateIntroStagesV6ToV7(out);
@@ -110,6 +111,7 @@ export function migrate<T>(state: T, fromVer: number, _toVer: number): T {
   if (fromVer < 12) out = migratePrestigeV11ToV12(out);
   if (fromVer < 13) out = migrateFormPagesV12ToV13(out);
   if (fromVer < 14) out = migrateTeachRampV13ToV14(out);
+  if (fromVer < 15 && toVer >= 15) out = migrateStageCompressV14ToV15(out);   // 旧用例只迁到 14 时不折算
   return out;
 }
 
@@ -232,6 +234,40 @@ function migrateTeachRampV13ToV14<T>(state: T): T {
   if (s.idle && s.idle.map === 1 && s.idle.tier === 0 && s.idle.stage > V7_INTRO_STAGES) {
     out.idle = { ...s.idle, stage: s.idle.stage + V14_RAMP_STAGES };
   }
+  return out as T;
+}
+
+/**
+ * v14 → v15：图 1 初入 101 → 40 关（content.md v2.12）。旧关号按当量折到新关号（取当量不高于旧关的最后一关）：
+ * 入门关 1–6 不动；缓坡 7–21（每关 +0.05）→ 7–11（每关 +0.15）；主段 22–100（每关 +0.05）→ 12–39（每关 +0.14）；Boss 101 → 40。
+ * 通关记录、挑战次数、已领成就、挂机关都照此折算；折到同一关的去重、次数相加。公式冻结在 v15 口径，不随关卡表变化。
+ */
+function v15StageOf(n: number): number {
+  if (n <= 6) return n;
+  if (n <= 21) return 7 + Math.floor((n - 7) / 3);
+  if (n <= 100) return 12 + Math.floor(((n - 22) * 5) / 14);
+  return 40;
+}
+
+function migrateStageCompressV14ToV15<T>(state: T): T {
+  const s = state as {
+    clearedStages?: string[];
+    attempts?: Record<string, number>;
+    fameClaimed?: string[];
+    idle?: { map: number; tier: number; stage: number } | null;
+  };
+  if (!s || typeof s !== 'object') return state;
+  const fold = (key: string) =>
+    key.replace(M1T0_RE, (_all, pre: string | undefined, n: string) => `${pre ?? ''}m1t0s${v15StageOf(Number(n))}`);
+  const out: typeof s = { ...s };
+  if (Array.isArray(s.clearedStages)) out.clearedStages = [...new Set(s.clearedStages.map(fold))];
+  if (s.attempts && typeof s.attempts === 'object') {
+    const merged: Record<string, number> = {};
+    for (const [k, v] of Object.entries(s.attempts)) merged[fold(k)] = (merged[fold(k)] ?? 0) + v;
+    out.attempts = merged;
+  }
+  if (Array.isArray(s.fameClaimed)) out.fameClaimed = [...new Set(s.fameClaimed.map(fold))];
+  if (s.idle && s.idle.map === 1 && s.idle.tier === 0) out.idle = { ...s.idle, stage: v15StageOf(s.idle.stage) };
   return out as T;
 }
 

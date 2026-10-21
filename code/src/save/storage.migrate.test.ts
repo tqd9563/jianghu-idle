@@ -60,7 +60,7 @@ describe('存档迁移 v13 → v14：入门关之后补 15 关传功缓坡', () 
       attempts: { m1t0s8: 2, m1t0s3: 1 },
       fameClaimed: ['stage:m1t0s10', 'stage:m2t0s4'],
       idle: { map: 1, tier: 0, stage: 30, fights: 9 },
-    }, 13, SAVE_VERSION);
+    }, 13, 14);
     const ramp = Array.from({ length: 15 }, (_, i) => `m1t0s${7 + i}`);
     expect(out.clearedStages).toEqual(['m1t0s1', 'm1t0s6', 'm1t0s22', 'm1t0s45', 'm2t0s7', ...ramp]);
     expect(out.attempts).toEqual({ m1t0s23: 2, m1t0s3: 1 });
@@ -69,9 +69,30 @@ describe('存档迁移 v13 → v14：入门关之后补 15 关传功缓坡', () 
   });
 
   it('还在入门关的存档不补缓坡', () => {
-    const out = migrate({ clearedStages: ['m1t0s1', 'm1t0s2'], idle: { map: 1, tier: 0, stage: 2, fights: 0 } }, 13, SAVE_VERSION);
+    const out = migrate({ clearedStages: ['m1t0s1', 'm1t0s2'], idle: { map: 1, tier: 0, stage: 2, fights: 0 } }, 13, 14);
     expect(out.clearedStages).toEqual(['m1t0s1', 'm1t0s2']);
     expect(out.idle).toEqual({ map: 1, tier: 0, stage: 2, fights: 0 });
+  });
+});
+
+describe('存档迁移 v14 → v15：图 1 初入 101 → 40 关，旧关号按当量折算', () => {
+  it('入门关不动；缓坡三关折一关、主段 14 关折 5 关、Boss 101 → 40；折到同一关的去重、次数相加', () => {
+    const out = migrate({
+      clearedStages: ['m1t0s1', 'm1t0s6', 'm1t0s7', 'm1t0s9', 'm1t0s10', 'm1t0s21', 'm1t0s22', 'm1t0s35', 'm1t0s36', 'm1t0s100', 'm1t0s101', 'm2t0s7'],
+      attempts: { m1t0s22: 2, m1t0s23: 3, m1t0s3: 1 },
+      fameClaimed: ['stage:m1t0s25', 'stage:m1t0s101', 'stage:m2t0s4'],
+      idle: { map: 1, tier: 0, stage: 64, fights: 9 },
+    }, 14, SAVE_VERSION);
+    expect(out.clearedStages).toEqual(['m1t0s1', 'm1t0s6', 'm1t0s7', 'm1t0s8', 'm1t0s11', 'm1t0s12', 'm1t0s16', 'm1t0s17', 'm1t0s39', 'm1t0s40', 'm2t0s7']);
+    expect(out.attempts).toEqual({ m1t0s12: 5, m1t0s3: 1 });
+    expect(out.fameClaimed).toEqual(['stage:m1t0s13', 'stage:m1t0s40', 'stage:m2t0s4']);
+    expect(out.idle).toEqual({ map: 1, tier: 0, stage: 27, fights: 9 });
+  });
+
+  it('旧存档全通 1–101 折算后恰好是新表 1–40 连续通关', () => {
+    const all = Array.from({ length: 101 }, (_, i) => `m1t0s${i + 1}`);
+    const out = migrate({ clearedStages: all }, 14, SAVE_VERSION);
+    expect(out.clearedStages).toEqual(Array.from({ length: 40 }, (_, i) => `m1t0s${i + 1}`));
   });
 });
 
@@ -82,7 +103,7 @@ describe('存档迁移 v6 → v7：图 1 初入补入门关，原关卡编号顺
       attempts: { m1t0s3: 4, m2t0s1: 1 },
       refarmKey: 'm1t0s2',
       fameClaimed: ['stage:m1t0s4', 'meridian:shoutaiyin'],
-    }, 6, SAVE_VERSION);
+    }, 6, 14);
     // v7 顺延 6 关后，v14 再把第 7 关起顺延 15 关、补上传功缓坡
     const ramp = Array.from({ length: 15 }, (_, i) => `m1t0s${7 + i}`);
     expect(out.clearedStages).toEqual([

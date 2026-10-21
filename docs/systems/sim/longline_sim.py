@@ -51,11 +51,21 @@ PRICE_Q = 1.08
 PRICE_0 = 3490                    # 5a 已实装（formulas.md §3.4）；原取境界 1 总额的 1%，境界 1 总额随多天一世重解后脱钩
 
 STAGE_GAP = 0.05                  # 相邻两关的敌人差（境界当量）；0.05 ≈ 属性 +2.7%，等于 1 级火候
+# 境界 2 段的战力跨度约 3.5 当量，是其它段的两三倍，按 0.05 铺出 80 多关。把这一段的关距放宽到 0.14
+# （属性 +7.7%），图 1 初入压到 40 关左右，与其它前沿一个量级（2026-10-21 用户裁决：一图一难度 ≈ 40 关）
+STAGE_GAP_BY_BAND = {2: 0.14}
+
+
+def stage_gap(band: int) -> float:
+    """第 band 境界段的关距"""
+    return STAGE_GAP_BY_BAND.get(band, STAGE_GAP)
+
+
 # 判据：任何一天起，最多连续这么多天推不出新关（全部前沿合计）。
 #   多天一世后前沿只在每一世的末段才超过历来最强，后期一世 5 天、每天只强约 1%，
 #   偶尔一整世没越过一个关距 ⇒ 上限放宽到两世（原「每天一世」时为 7 天）
 MAX_STALL_DAYS = 2 * ps.LIFE_DAYS[5]
-ELITE_EVERY = 4                   # 每条前沿每 4 关一个精英（有名号的对手），末尾是 Boss
+ELITE_EVERY = 8                   # 每条前沿每 8 关一个精英（有名号的对手），末尾是 Boss（原每 4 关，2026-10-21 用户裁决减半）
 ELITE_REP = 0.04                  # 首通精英：当天基础声望的这一比例（一次性）
 BOSS_REP = 0.15                   # 首通 Boss：同上
 MERIDIAN_REP = 0.50               # 首次贯通一条经脉：当天基础声望的这一比例（每境界 2 条，按首达下一境界当天计）
@@ -350,12 +360,13 @@ def main():
               f"{'' if math.isnan(jump) else f' · 突破当天跳 {jump:+.3f}'} {'✓' if ok else '✗'}")
 
     # ── 关卡：同一前沿相邻两关差 STAGE_GAP；前沿从本段首日能打到的位置铺到下一境界首日（Boss）
-    print(f"\n【四】关卡与难度（关距 {STAGE_GAP} 境界 ≈ 属性 +{1.7 ** STAGE_GAP - 1:.1%}）")
+    print(f"\n【四】关卡与难度（关距 {STAGE_GAP} 境界 ≈ 属性 +{1.7 ** STAGE_GAP - 1:.1%}；"
+          f"境界 2 段 {stage_gap(2)} ≈ +{1.7 ** stage_gap(2) - 1:.1%}）")
     tracks = {k: (v[0], v[2]) for k, v in S["tracks"].items()}   # (图, 难度, 段) → (起点 x, Boss x)
     for (mp, tier, b), (x0, xb) in tracks.items():
         ds = plateaus[b]
         top = x_min[ds[-1]]
-        n = max(0, math.floor((top - x0) / STAGE_GAP))
+        n = max(0, math.floor((top - x0) / stage_gap(b)))
         boss = f"Boss x {xb:.2f}（下一境界首日可过）" if b < 5 else f"Boss x {xb:.2f}（需境界 6，本版收官）"
         print(f"  图{mp} {tier:<2}（境界 {b} 段，第{ds[0]:>3}–{ds[-1]:>3} 天）：x {x0:.2f}→{top:.2f} · 约 {n:>2} 关 · {boss}")
 
@@ -371,7 +382,7 @@ def main():
 
     # ── 每天推出的新关（全部前沿合计）：前沿每越过一个关距算一关
     print("\n【五】每天推出的新关（最慢路线，全部前沿合计）")
-    cleared = {d: math.floor(x_min[d] / STAGE_GAP) for d in days}
+    cleared = {d: math.floor(x_min[d] / stage_gap(band_of(combat[d][0]))) for d in days}
     live = {d: len(TRACKS[band_of(combat[d][0])]) for d in days}
     new = {d: (0 if band_of(combat[d][0]) != band_of(combat[d - 1][0]) else
                max(0, cleared[d] - cleared[d - 1]) * live[d]) for d in days[1:]}
@@ -404,10 +415,10 @@ def main():
         ds = plateaus[b]
         t_idx = TRACKS[b].index((mp, tier))
         stagger = t_idx * ELITE_EVERY // len(TRACKS[b])   # 同段各前沿的精英错开，不挤在同一天
-        i0 = math.floor(x0 / STAGE_GAP) - stagger
+        i0 = math.floor(x0 / stage_gap(b)) - stagger
         prev = i0
         for d in ds:
-            cur = math.floor(x_min[d] / STAGE_GAP)
+            cur = math.floor(x_min[d] / stage_gap(b))
             for k in range(prev + 1, cur + 1):
                 if (k - i0) % ELITE_EVERY == 0:
                     elite_n += 1; one_time += ELITE_REP * base[d]; events.append(d)

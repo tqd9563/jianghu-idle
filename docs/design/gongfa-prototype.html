@@ -10,14 +10,15 @@
   两页同一套骨架：页头 → 上方一条「现在用着的」（内功＝主修进境，武学＝装配）→ 下方左「藏经 / 藏书」3 × 3 窄栏，右一本翻开的磁青书。
 
   内功页要点：
-  · 主修进境：一条按重数刻度的进境线。五关之间等宽，段内每一重一个刻度，所以 2 / 4 / 6 / 20 / 40 重的真实距离看得出来；
-    已走实线、未走虚线；关口有已过 / 静候顿悟 / 未至 / 品质不可达四态。右侧精进一重，内力不够时写还差多少、约多久。
+  · 主修：左一本主修书（同藏经书封放大，下挂品质 / 路数章）；右一幅磁青手卷（AI 生图切成卷首 / 卷身 / 卷尾三段拼接）。
+    卷首题签竖写「第五重」；卷身五关竖写成栏，五段等宽、段内一重一个圈点：读过的朱点、当前一枚大朱点、下一重金圈、本品质够不着的段压暗；
+    关名已过泥金、临关暖金呼吸并写「静候顿悟」。卷尾一枚朱印即「精进」，内力不足变灰印并写还差多少、约多久，临关变「顿悟」金边印。
   · 心法要诀：只在翻开的书里出现一次（不再与页头卡片重复）。每条要诀一行：名目 + 当前生效值，右侧挂「哪几关会改它」——
     已过的关墨金、下一关暖金并写出变化、再往后的关淡出、本品质够不着的关更淡；逐重成长的要诀挂「逐重」。
     悬停进境线上的关口，要诀里受它影响的那几行同时亮起；反过来也一样。
   · 武学页即上一轮定稿：装配用印匣（印色按路数），书页磁青。
 
-  素材：code/public/art/ 下 neigong.jpg、wuxue.jpg（页底图）、book-q1/2/3.png（书封）、cat/*.png（类目石印）、wuxue-open-ciqing.jpg（磁青书页）。
+  素材：code/public/art/ 下 neigong.jpg、wuxue.jpg（页底图）、neigong-scroll-l/m/r.png（磁青手卷）、book-q1/2/3.png（书封）、cat/*.png（类目石印）、wuxue-open-ciqing.jpg（磁青书页）。
   file:// 直接打开即可。右下角白色面板是原型控制（可收起），不是设计内容。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,6 +39,7 @@
   --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
   --rail-w: 248px;
   --shelf-h: 450px;
+  --nijin: oklch(0.83 0.1 82);
   --A: '../../code/public/art/';
 }
 * { box-sizing: border-box; }
@@ -243,47 +245,58 @@ body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="wuxue"] .p
 .ya.empty { cursor: default; }
 .ya.empty .box { background: none; box-shadow: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; }
 
-/* ═══ 内功：主修进境 ═══ */
-.jx { margin-bottom: 34px; }
-.jx-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
-.jx-who { display: grid; gap: 4px; }
-.jx-who .line { display: flex; align-items: center; gap: 10px; }
-.jx-who .nmx { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.2em; color: var(--muted); }
-.jx-who .ptag { font-size: 11.5px; }
-.jx-z { font-family: var(--font-display); font-size: 44px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.05; }
-.jx-z small { font-size: 18px; font-weight: 600; margin-left: 4px; color: var(--muted); }
-.jx-act { display: grid; justify-items: end; gap: 6px; }
-.jx-act .jh-btn { min-width: 172px; }
-.jx-act .eta { font-size: 12px; color: var(--faint); display: flex; align-items: center; gap: 8px; }
-.jx-act .eta i { display: block; width: 120px; height: 3px; border-radius: 2px; background: oklch(0.3 0.014 262 / 0.8); position: relative; overflow: hidden; }
-.jx-act .eta i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--f); background: var(--ink-gold); border-radius: 2px; }
+/* ═══ 内功：主修 —— 左一本主修书（同藏经书封放大），右一幅磁青手卷：卷首题签写重数，卷身一重一个圈点，五关竖写成栏，卷尾一枚朱印精进 ═══ */
+.zx { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 30px; align-items: center; margin-bottom: 34px; }
+.zx-book { display: grid; justify-items: center; gap: 10px; }
+.zx-book .book { width: 104px; margin: 0; cursor: default; filter: drop-shadow(0 10px 16px oklch(0.05 0.01 262 / 0.65)) drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.18)); }
+.zx-book .book:hover { transform: none; }
+.zx-book .slip { font-size: 13.5px; }
+.zx-book .tags { display: flex; gap: 5px; }
+.zx-book .ptag { font-size: 11px; padding: 0 6px; }
 
-.scale { position: relative; height: 76px; margin: 0 16px; }
-.scale .rail, .scale .walk { position: absolute; left: 0; top: 30px; height: 1px; }
-.scale .rail { right: 0; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
-.scale .walk { height: 2px; top: 29.5px; border-radius: 1px; background: linear-gradient(to right, var(--done-line), var(--ink-gold)); }
-.scale .seg-dim { position: absolute; top: 18px; height: 26px; background: linear-gradient(to right, transparent, oklch(0.155 0.013 262 / 0.0)); }
-.tk { position: absolute; top: 26px; width: 1px; height: 9px; background: oklch(0.42 0.014 262 / 0.8); transform: translateX(-0.5px); }
-.tk.on { background: var(--ink-gold); }
-.tk.dim { opacity: 0.35; }
-.tk.next { width: 7px; height: 7px; top: 27px; border-radius: 50%; background: none; box-shadow: inset 0 0 0 1px var(--gold); transform: translateX(-3.5px); }
-.cur { position: absolute; top: 24px; width: 13px; height: 13px; border-radius: 50%; transform: translateX(-6.5px); background: var(--gold); box-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.6); z-index: 2; }
-.gate { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 0; cursor: help; z-index: 3; }
-.gate .gn { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.2em; line-height: 1; height: 20px; white-space: nowrap; padding-left: 0.2em; }
-.gate .dm { width: 13px; height: 13px; transform: rotate(45deg); margin-top: 3.5px; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.5 0.015 262); transition: box-shadow .2s, background .2s; }
-.gate .gz { margin-top: 9px; font-size: 11px; color: var(--faint); white-space: nowrap; }
-.gate.done .gn { color: var(--ink-gold); }
-.gate.done .dm { background: var(--ink-gold); box-shadow: none; }
-.gate.wait .gn { color: var(--gold); }
-.gate.wait .dm { background: oklch(0.78 0.13 78 / 0.25); box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 12px oklch(0.78 0.13 78 / 0.55); animation: wait 2.4s ease-in-out infinite; }
-.gate.wait .gz { color: var(--gold); }
-@keyframes wait { 50% { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 4px oklch(0.78 0.13 78 / 0.2); } }
-.gate.next .gn { color: var(--ink); }
-.gate.next .dm { box-shadow: inset 0 0 0 1.5px oklch(0.78 0.13 78 / 0.7); }
-.gate.na .gn, .gate.na .gz { color: oklch(0.45 0.012 262); }
-.gate.na .dm { box-shadow: inset 0 0 0 1px oklch(0.34 0.012 262); }
-.gate.hl .dm { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 14px oklch(0.78 0.13 78 / 0.6); }
-.gate.hl .gn { color: var(--gold); }
+.scroll { position: relative; height: 158px; display: grid; grid-template-columns: 62px minmax(0, 1fr) 96px; align-items: stretch;
+  padding: 14px 40px; filter: drop-shadow(0 12px 22px oklch(0.05 0.01 262 / 0.6)); }
+.scroll::before { content: ''; position: absolute; inset: 0; z-index: -1; background:
+    url('../../code/public/art/neigong-scroll-l.png') left center / auto 100% no-repeat,
+    url('../../code/public/art/neigong-scroll-r.png') right center / auto 100% no-repeat,
+    url('../../code/public/art/neigong-scroll-m.png') center / calc(100% - var(--cap) * 2 + 2px) 100% no-repeat; --cap: 33px; }
+/* 卷首题签：同书封题签，竖写重数 */
+.tq { align-self: center; justify-self: center; writing-mode: vertical-rl; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0.2em; color: oklch(0.2 0.02 60);
+  background: oklch(0.88 0.035 85); padding: 12px 6px; border-radius: 1px; box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.5), 0 2px 6px oklch(0.05 0.01 262 / 0.45); white-space: nowrap; cursor: help; }
+/* 卷身：五段等宽，段内一重一个圈点 */
+.juan { position: relative; margin: 0 6px 0 14px; }
+.juan .col { position: absolute; top: 58px; bottom: 30px; width: 1px; background: linear-gradient(to bottom, transparent, oklch(0.83 0.1 82 / 0.35) 15%, oklch(0.83 0.1 82 / 0.35) 85%, transparent); }
+.juan .gt { position: absolute; top: 16px; bottom: 14px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: help; z-index: 2; padding: 0 3px; }
+.juan .gt .gn { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.25em; line-height: 1; color: oklch(0.6 0.03 250); transition: color .2s, text-shadow .2s; padding: 3px 1px; }
+.juan .gt .gz { font-size: 10.5px; color: oklch(0.6 0.02 250); white-space: nowrap; padding: 0 2px; }
+.juan .gt .zy { position: absolute; top: 44%; left: 50%; width: 18px; height: 18px; transform: translate(-50%, -50%) rotate(-8deg); display: grid; place-items: center;
+  font-family: var(--font-display); font-size: 10px; font-weight: 700; color: oklch(0.95 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 2px; box-shadow: inset 0 0 0 1px oklch(0.93 0.03 60 / 0.6); }
+.juan .gt.done .gn { color: var(--nijin); }
+.juan .gt.done .gz { color: oklch(0.75 0.06 80); }
+.juan .gt.wait .gn { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.7); animation: wait 2.4s ease-in-out infinite; }
+.juan .gt.wait .gz { color: var(--gold); }
+.juan .gt.next .gn { color: oklch(0.86 0.03 85); }
+.juan .gt.na .gn, .juan .gt.na .gz { color: oklch(0.45 0.02 250); }
+.juan .gt.hl .gn { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.7); }
+@keyframes wait { 50% { text-shadow: 0 0 3px oklch(0.78 0.13 78 / 0.2); } }
+.dot { position: absolute; top: 50%; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: inset 0 0 0 1px oklch(0.75 0.02 250 / 0.45); }
+.dot.on { background: oklch(0.56 0.17 30); box-shadow: 0 0 4px oklch(0.56 0.17 30 / 0.5); }
+.dot.cur { width: 13px; height: 13px; background: oklch(0.6 0.18 30); box-shadow: 0 0 0 3px oklch(0.6 0.18 30 / 0.22), 0 0 12px oklch(0.6 0.18 30 / 0.7); }
+.dot.next { width: 9px; height: 9px; box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.5); }
+.dot.dim { opacity: 0.35; }
+/* 卷尾：朱印精进 */
+.jj { align-self: center; justify-self: center; display: grid; justify-items: center; gap: 7px; }
+.jj .yin { width: 58px; height: 58px; border: 0; cursor: pointer; display: grid; place-items: center; writing-mode: vertical-rl; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0.08em; line-height: 1;
+  color: oklch(0.96 0.03 60); background: oklch(0.52 0.18 29); border-radius: 5px; transform: rotate(-6deg);
+  box-shadow: inset 0 0 0 2px oklch(0.95 0.03 60 / 0.7), inset 0 0 14px oklch(0.3 0.12 28 / 0.5), 0 4px 10px oklch(0.05 0.01 262 / 0.55); transition: transform .2s var(--ease-sharp), filter .2s, box-shadow .2s; }
+.jj .yin:hover:not(:disabled) { transform: rotate(-6deg) scale(1.06); filter: brightness(1.1); box-shadow: inset 0 0 0 2px oklch(0.95 0.03 60 / 0.8), 0 0 18px oklch(0.6 0.18 30 / 0.55), 0 4px 10px oklch(0.05 0.01 262 / 0.55); }
+.jj .yin:active:not(:disabled) { transform: rotate(-6deg) scale(0.94); }
+.jj .yin:disabled { cursor: default; color: oklch(0.72 0.02 250); background: oklch(0.32 0.025 255); box-shadow: inset 0 0 0 1.5px oklch(0.6 0.02 250 / 0.5), 0 3px 8px oklch(0.05 0.01 262 / 0.5); }
+.jj .yin.wait:disabled { color: var(--gold); box-shadow: inset 0 0 0 1.5px oklch(0.78 0.13 78 / 0.6), 0 0 14px oklch(0.78 0.13 78 / 0.3); }
+.jj .cost { font-size: 11.5px; color: oklch(0.85 0.03 85); white-space: nowrap; text-align: center; line-height: 1.35; }
+.jj .cost.short { color: oklch(0.7 0.02 250); }
+.jj .cost i { display: block; width: 64px; height: 2px; margin: 4px auto 0; border-radius: 1px; background: oklch(0.4 0.02 250 / 0.7); position: relative; overflow: hidden; }
+.jj .cost i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--f); background: var(--nijin); }
 
 /* 心法要诀（内功右页） */
 .yj-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
@@ -443,6 +456,7 @@ function tierState(i, q, z, passed) {
 }
 const gateOf = (q, z, passed) => (passed < TIER_COUNT[q] && z >= TIERS[passed].at ? TIERS[passed] : null);
 
+const CNUM = (n) => n <= 10 ? NUM[n] : n < 20 ? `十${n % 10 ? NUM[n % 10] : ''}` : `${NUM[Math.floor(n / 10)]}十${n % 10 ? NUM[n % 10] : ''}`;
 function renderJinjing() {
   const d = NG[ng.id];
   const gate = gateOf(d.q, ng.z, ng.passed);
@@ -450,44 +464,41 @@ function renderJinjing() {
   const short = cost - ng.dan;
   const reach = TIER_COUNT[d.q];
   const fold = (ng.z / 20 * HH[d.q]).toFixed(2);
-  // 刻度：每一重一根；走过的亮、本品质够不着的段压暗；下一重（可精进时）一枚空心金点
-  let ticks = '';
-  for (let k = 0; k < SEGS.length; k++) {
-    const [a, b] = SEGS[k];
-    for (let t = a + 1; t < b; t++) {
-      const cls = t <= ng.z ? 'on' : (t === ng.z + 1 && !gate ? 'next' : (k >= reach ? 'dim' : ''));
-      ticks += `<i class="tk ${cls}" style="left:${xOf(t)}%"></i>`;
-    }
+  // 圈点：一重一点；读过的朱点、当前一枚大朱点、下一重金圈、够不着的段压暗
+  let dots = '';
+  for (let t = 1; t <= 40; t++) {
+    if (TIERS.some((x) => x.at === t)) continue;
+    const seg = SEGS.findIndex(([a, b]) => t > a && t <= b);
+    const cls = t < ng.z ? 'on' : t === ng.z ? 'cur' : (t === ng.z + 1 && !gate ? 'next' : (seg >= reach ? 'dim' : ''));
+    dots += `<i class="dot ${cls}" style="left:${xOf(t)}%"></i>`;
   }
-  const gates = TIERS.map((t, i) => {
+  const cols = TIERS.map((t, i) => {
     const st = tierState(i, d.q, ng.z, ng.passed);
     const tip = st === 'na' ? `${t.name} · 第 ${t.at} 重 · ${i === 3 ? '上乘' : '绝学'}内功可达`
       : st === 'wait' ? `临「${t.name}」之关：挂机修炼每 10 分钟一判，此刻约 ${Math.round(t.p * 100)}%；内力照常积累`
       : `${t.name} · 第 ${t.at} 重${st === 'done' ? ' · 已过' : ''}`;
-    const gz = st === 'wait' ? '静候顿悟' : `第 ${t.at} 重`;
-    return `<div class="gate ${st}" data-tier="${i}" data-tip="${tip}" style="left:${xOf(t.at)}%"><span class="gn">${t.name}</span><span class="dm"></span><span class="gz">${gz}</span></div>`;
+    // 当前重数正落在关上（已过或在等）时，关栏中间压一枚当前朱点
+    const here = ng.z === t.at ? `<i class="dot cur" style="left:50%"></i>` : '';
+    return `<i class="col" style="left:${xOf(t.at)}%"></i><div class="gt ${st}" data-tier="${i}" data-tip="${tip}" style="left:${xOf(t.at)}%"><span class="gn">${t.name}</span>${here}<span class="gz">${st === 'wait' ? '静候顿悟' : `${CNUM(t.at)}重`}</span></div>`;
   }).join('');
-  const walked = xOf(ng.z);
-  let btn, eta = '';
-  if (gate) btn = `<button class="jh-btn" disabled data-tip="挂机修炼每 10 分钟一判顿悟，此刻约 ${Math.round(gate.p * 100)}%">静候顿悟<small>内力照常积累</small></button>`;
+  let seal, cost2;
+  if (gate) { seal = `<button class="yin wait" disabled data-tip="挂机修炼每 10 分钟一判顿悟，此刻约 ${Math.round(gate.p * 100)}%">顿悟</button>`; cost2 = `<span class="cost">内力照常积累</span>`; }
   else if (short > 0) {
     const sec = short / RATE, t = sec < 3600 ? `约 ${Math.ceil(sec / 60)} 分钟` : `约 ${(sec / 3600).toFixed(1)} 小时`;
-    btn = `<button class="jh-btn" disabled>精进一重<small>${fmt(cost)} 内力</small></button>`;
-    eta = `<span class="eta"><i style="--f:${Math.round(ng.dan / cost * 100)}%"></i>还差 ${fmt(short)} · ${t}</span>`;
-  } else btn = `<button class="jh-btn js-up" data-tip="每重气血、攻击、防御约 +2.7%；价格每重 ×1.08；转世即散">精进一重<small>${fmt(cost)} 内力</small></button>`;
+    seal = `<button class="yin" disabled>精进</button>`;
+    cost2 = `<span class="cost short">还差 ${fmt(short)}<br>${t}<i style="--f:${Math.round(ng.dan / cost * 100)}%"></i></span>`;
+  } else { seal = `<button class="yin js-up" data-tip="精进一重：每重气血、攻击、防御约 +2.7%；价格每重 ×1.08；转世即散">精进</button>`; cost2 = `<span class="cost">${fmt(cost)} 内力</span>`; }
   return `
-    <section class="jx">
-      <h2 class="jh-sec">主修</h2>
-      <div class="jx-top">
-        <div class="jx-who">
-          <div class="line"><span class="nmx">${d.name}</span><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span></div>
-          <div class="jx-z" data-tip="火候折合 ${fold} 个境界：每 20 重折合一个境界">第 ${ng.z}<small>重</small></div>
-        </div>
-        <div class="jx-act">${btn}${eta}</div>
+    <h2 class="jh-sec">主修</h2>
+    <section class="zx">
+      <div class="zx-book">
+        <div class="book ng q${QN[d.q]}"><i class="cv"></i><span class="slip">${d.name}</span></div>
+        <div class="tags"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span></div>
       </div>
-      <div class="scale" role="img" aria-label="进境：第 ${ng.z} 重">
-        <div class="rail"></div><div class="walk" style="width:${walked}%"></div>
-        ${ticks}<i class="cur" style="left:${walked}%"></i>${gates}
+      <div class="scroll">
+        <span class="tq" data-tip="火候折合 ${fold} 个境界：每 20 重折合一个境界">第${CNUM(ng.z)}重</span>
+        <div class="juan" role="img" aria-label="进境：第 ${ng.z} 重">${dots}${cols}</div>
+        <div class="jj">${seal}${cost2}</div>
       </div>
     </section>`;
 }

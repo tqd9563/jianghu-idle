@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>武学书房原型</title>
+<title>武学页改版原型</title>
 <!--
-  issue #80 武学页改「书房」· 原型（只画桌面宽度）
-  三块东西放进一个空间：左栏上方「书案」= 在练的几册（原装配槽），左栏下方「书架」= 藏书，右栏「翻开的书」= 详情，固定不随滚动。
-  书只在一处：上案即从架上消失，归架即回到架上。文案「上案 / 归架」替代「装配 / 卸下」。
+  issue #80 武学页改版 · 原型（只画桌面宽度）
+  标题下一行「随身」：已装几门压成「类目印 + 名」，空位是虚线方印；不再单设一段。
+  下方左窄栏「藏书」三列陈列，右侧大块「翻开的书」显示详情，固定不随滚动；书页用 AI 绢本册页底图（烛下纸本试过，暗纸深字对比度不够，弃）。
+  书只在一处：装配后从藏书里消失，卸下即回到藏书。
   素材相对引用 code/public/art/，file:// 直接打开即可。左下角白色面板是原型控制，不是设计内容。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,9 +65,23 @@ button { font: inherit; color: inherit; }
 .jh-seg button small { color: var(--faint); margin-left: 3px; }
 .jh-seg .grp { color: var(--faint); font-size: 11px; letter-spacing: 0.15em; padding: 4px 4px 4px 10px; align-self: center; }
 
-/* 书房：左栏（书案 + 书架）/ 右栏（翻开的书，固定） */
-.study { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 34px; align-items: start; }
+/* 布局：随身一行在标题下；藏书窄栏（三列）在左，翻开的书在右占大头，固定不随滚动 */
+.study { display: grid; grid-template-columns: 352px minmax(0, 1fr); gap: 40px; align-items: start; }
 .study > .right { position: sticky; top: 24px; }
+
+/* 随身：已装几门压成一行「类目印 + 名」，空位是虚线方印；悬停看触发 / 冷却 */
+.carry { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 0; margin: -6px 0 30px; }
+.ci { display: inline-flex; align-items: center; gap: 9px; border: 0; background: none; cursor: pointer; padding: 6px 18px 6px 0; margin-right: 18px; position: relative; color: var(--muted); }
+.ci::after { content: ''; position: absolute; right: 0; top: 9px; bottom: 9px; width: 1px; background: var(--hair); }
+.ci:last-child::after { display: none; }
+.ci .seal { position: static; width: 20px; height: 20px; font-size: 12px; }
+.ci .nm { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.14em; transition: color .2s; }
+.ci:hover .nm { color: var(--ink); }
+.ci[aria-current="true"] .nm { color: var(--gold); }
+.ci.empty { cursor: default; }
+.ci.empty i { width: 20px; height: 20px; border-radius: 3px; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; transform: rotate(-6deg); }
+.jh-tip { position: fixed; z-index: 80; pointer-events: none; opacity: 0; background: oklch(0.24 0.016 262); color: var(--ink); font-size: 12.5px; padding: 6px 10px; border-radius: 8px; box-shadow: 0 8px 26px oklch(0.05 0.01 262 / 0.6); transition: opacity .15s; }
+.jh-tip.on { opacity: 1; }
 
 /* 共用：书封 */
 .cv { position: absolute; inset: 0; background: url('../../code/public/art/book-q1.png') center / 100% 100% no-repeat; filter: sepia(0.7) saturate(0.55) brightness(0.8); }
@@ -86,88 +101,76 @@ button { font: inherit; color: inherit; }
 .book small { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 7px; font-size: 11px; letter-spacing: 0.08em; color: var(--faint); white-space: nowrap; }
 .book small .rt { color: var(--tc); }
 
-/* 书案 */
-.desk { position: relative; display: flex; gap: 26px; align-items: flex-end; padding: 12px 22px 40px; margin-bottom: 34px; }
-.desk::after { content: ''; position: absolute; left: 0; right: 0; bottom: 36px; height: 1px; background: linear-gradient(to right, transparent, var(--hair) 8%, var(--hair) 92%, transparent); }
-.desk::before { content: ''; position: absolute; left: 6%; right: 6%; bottom: 26px; height: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, oklch(0.05 0.01 262 / 0.45), transparent 70%); }
-.desk .book { width: 66px; height: 101px; z-index: 1; }
-.desk .slip { font-size: 11px; letter-spacing: 0.08em; }
-.desk .seal { width: 16px; height: 16px; font-size: 10px; }
-.desk .empty { position: relative; width: 66px; height: 101px; }
-.desk .empty::before { content: ''; position: absolute; inset: 2px 5px; border-radius: 2px 4px 4px 2px; outline: 1px dashed oklch(0.42 0.014 262 / 0.8); outline-offset: -1px; }
-.desk .empty::after { content: ''; position: absolute; left: 12px; top: 2px; bottom: 2px; width: 1px; background: repeating-linear-gradient(to bottom, oklch(0.42 0.014 262 / 0.6) 0 5px, transparent 5px 16px); }
-
 /* 书架：多行，每行一块搁板 */
-.shelf { --row: 178px; display: grid; grid-template-columns: repeat(auto-fill, 92px); gap: 0 26px; grid-auto-rows: var(--row); padding: 0 18px; align-items: start;
+.shelf { --row: 172px; display: grid; grid-template-columns: repeat(3, 92px); gap: 0 22px; grid-auto-rows: var(--row); padding: 0 4px; align-items: start;
   background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--row) - 30px), oklch(0.3 0.02 60 / 0.75) calc(var(--row) - 30px) calc(var(--row) - 27px), oklch(0.18 0.015 50 / 0.5) calc(var(--row) - 27px) calc(var(--row) - 24px), transparent calc(var(--row) - 24px) var(--row)); }
 .shelf .book { width: 92px; aspect-ratio: 0.65; margin-top: 4px; }
 .shelf .slip { font-size: 12.5px; }
 .shelf .seal { width: 22px; height: 22px; font-size: 13px; }
 .shelf .pgc { color: var(--faint); }
-.shelf-empty { color: var(--faint); font-size: 13px; padding: 20px 18px; }
+.shelf-empty { color: var(--faint); font-size: 13px; padding: 20px 4px; }
+.seg-row { margin-bottom: 14px; }
 
 /* 路数色 */
 .t-刚猛 { --tc: oklch(0.72 0.16 28); } .t-绵长 { --tc: oklch(0.76 0.11 135); } .t-守御 { --tc: oklch(0.74 0.10 245); } .t-诡谲 { --tc: oklch(0.74 0.11 320); } .t-阴毒 { --tc: oklch(0.70 0.10 175); }
 
-/* 翻开的书：两页纸，中缝线装 */
-.open { position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 560px; border-radius: 3px;
-  background: linear-gradient(to right, var(--paper) 0 46%, var(--paper-2) 49.5%, oklch(0.72 0.03 75) 50%, var(--paper-2) 50.5%, var(--paper) 54% 100%);
-  color: var(--paper-ink); box-shadow: 0 18px 44px oklch(0.05 0.01 262 / 0.7), inset 0 0 60px oklch(0.6 0.04 70 / 0.25); }
-.open::before { content: ''; position: absolute; left: calc(50% - 0.5px); top: 0; bottom: 0; width: 1px; background: repeating-linear-gradient(to bottom, oklch(0.4 0.03 60 / 0.6) 0 7px, transparent 7px 26px); }
-.open::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.12; mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-.pg { position: relative; padding: 26px 22px 24px; display: flex; flex-direction: column; }
-.pg.l { padding-right: 26px; }
-.pg.r { padding-left: 26px; }
-.open .ttl { display: flex; align-items: flex-start; gap: 14px; }
-.open .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: 0.22em; line-height: 1; padding: 6px 0; height: 170px; white-space: nowrap; }
-.open .side { display: grid; gap: 6px; align-content: start; padding-top: 4px; }
-.ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 1px 7px; border-radius: 3px; width: max-content; color: var(--paper-muted); box-shadow: inset 0 0 0 1px oklch(0.45 0.03 60 / 0.4); }
-.ptag.q2 { color: oklch(0.38 0.08 215); box-shadow: inset 0 0 0 1px oklch(0.45 0.08 215 / 0.5); }
-.ptag.q3 { color: oklch(0.42 0.1 60); box-shadow: inset 0 0 0 1px oklch(0.55 0.12 70 / 0.7); background: oklch(0.78 0.13 78 / 0.18); }
+/* 翻开的书：AI 绢本册页底图（code/public/art/wuxue-open-silk.jpg），文字沿用夜色 token；内容落在两页描金框内 */
+.open { --t-ink: var(--ink); --t-muted: var(--muted); --t-faint: var(--faint); --t-qi: var(--qi); --t-qi-off: oklch(0.55 0.05 215); --t-line: oklch(0.42 0.014 262 / 0.6);
+  --t-todo: var(--todo-line); --t-done: var(--done-line); --t-pass: var(--ink-gold); --t-cur: var(--gold); --t-node: oklch(0.42 0.015 262); --t-dot-bg: oklch(0.16 0.012 262); --t-cnt: var(--ink-gold);
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; aspect-ratio: 3 / 2; min-height: 500px; color: var(--t-ink);
+  background: url('../../code/public/art/wuxue-open-silk.jpg') center / 100% 100% no-repeat; filter: drop-shadow(0 18px 40px oklch(0.05 0.01 262 / 0.7)); }
+.pg { position: relative; padding: 13% 9% 14%; display: flex; flex-direction: column; min-height: 0; }
+.pg.l { padding-left: 13%; }
+.pg.r { padding-right: 13%; overflow: auto; }
+.open .ttl { display: flex; align-items: flex-start; gap: 16px; }
+.open .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: 0.22em; line-height: 1; padding: 4px 0; white-space: nowrap; }
+.open .side { display: grid; gap: 7px; align-content: start; padding-top: 2px; }
+.ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 1px 7px; border-radius: 3px; width: max-content; color: var(--t-muted); box-shadow: inset 0 0 0 1px var(--t-line); }
+.ptag.q2 { color: var(--t-qi); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--t-qi) 50%, transparent); }
+.ptag.q3 { color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); background: oklch(0.78 0.13 78 / 0.1); }
 .ptag.rt::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tc); }
-.ptag.rt { color: color-mix(in oklch, var(--tc) 70%, black); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 60%, transparent); }
-.ptag.res { color: oklch(0.45 0.12 32); box-shadow: inset 0 0 0 1px oklch(0.55 0.14 32 / 0.5); }
-.open .cat { font-size: 12px; color: var(--paper-faint); letter-spacing: 0.08em; }
-.open .bigseal { position: absolute; right: 24px; top: 30px; width: 44px; height: 44px; font-size: 26px; transform: rotate(-8deg); opacity: 0.92; }
-.params { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 26px; font-size: 13px; color: var(--paper-muted); }
-.params b { color: var(--paper-ink); font-weight: 600; font-size: 15px; margin-left: 4px; }
+.ptag.rt { color: var(--tc); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 50%, transparent); }
+.ptag.res { color: var(--cinnabar); box-shadow: inset 0 0 0 1px oklch(0.66 0.14 32 / 0.5); }
+.open .cat { font-size: 12px; color: var(--t-faint); letter-spacing: 0.08em; }
+.open .bigseal { position: absolute; right: 12%; top: 13%; width: 42px; height: 42px; font-size: 24px; transform: rotate(-8deg); opacity: 0.9; }
+.params { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 28px; font-size: 13px; color: var(--t-faint); }
+.params b { color: var(--t-ink); font-weight: 600; font-size: 15px; margin-left: 4px; }
 .params .dotted { position: relative; }
-.params .dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.45 0.06 60) 0 2px, transparent 2px 5px); }
-.need { margin-top: auto; padding-top: 24px; font-size: 12.5px; color: var(--paper-faint); }
-.need.ok { color: var(--paper-muted); }
-.pbtn { margin-top: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-size: 14px; letter-spacing: 0.2em; padding: 8px 0; border-radius: 6px; width: 100%;
-  background: oklch(0.5 0.17 28 / 0.92); color: oklch(0.95 0.03 60); box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.6), 0 2px 6px oklch(0.05 0.01 262 / 0.35); transition: filter .2s; }
-.pbtn:hover:not(:disabled) { filter: brightness(1.08); }
-.pbtn.quiet { background: none; color: var(--paper-muted); box-shadow: inset 0 0 0 1px oklch(0.45 0.03 60 / 0.5); }
-.pbtn:disabled { background: none; color: var(--paper-faint); box-shadow: inset 0 0 0 1px oklch(0.55 0.02 60 / 0.4); cursor: default; }
+.params .dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: repeating-linear-gradient(to right, var(--t-pass) 0 2px, transparent 2px 5px); }
+.need { margin-top: auto; padding-top: 20px; font-size: 12.5px; color: var(--t-faint); }
+.need.ok { color: var(--t-muted); }
+.pbtn { margin-top: 10px; border: 0; cursor: pointer; font-family: var(--font-display); font-size: 14px; letter-spacing: 0.2em; padding: 8px 0; border-radius: 8px; width: 100%;
+  background: oklch(0.78 0.13 78 / 0.08); color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.45); transition: background .2s, box-shadow .2s; }
+.pbtn:hover:not(:disabled) { background: oklch(0.78 0.13 78 / 0.14); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.8); }
+.pbtn.quiet { background: none; color: var(--t-muted); box-shadow: inset 0 0 0 1px var(--t-line); }
+.pbtn:disabled { background: none; color: var(--t-faint); box-shadow: inset 0 0 0 1px var(--t-line); cursor: default; }
 
-.shi { padding: 12px 0; border-top: 1px solid oklch(0.45 0.03 60 / 0.3); }
+.shi { padding: 11px 0; border-top: 1px solid var(--t-line); }
 .shi:first-child { border-top: 0; padding-top: 0; }
 .shi .h { display: flex; align-items: baseline; gap: 10px; }
-.shi .k { font-size: 11.5px; color: var(--paper-faint); }
+.shi .k { font-size: 11.5px; color: var(--t-faint); }
 .shi .t { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; font-weight: 600; }
 .shi .mul { margin-left: auto; font-weight: 600; font-size: 14px; }
-.shi .fx { font-size: 12.5px; color: oklch(0.38 0.08 215); margin-top: 2px; }
+.shi .fx { font-size: 12.5px; color: var(--t-qi); margin-top: 2px; }
 .shi .fx::before { content: '◈ '; font-size: 10px; }
-.shi.locked .t, .shi.locked .mul { color: var(--paper-faint); }
-.shi.locked .fx { color: oklch(0.55 0.04 215); }
-.lk { display: flex; align-items: center; gap: 9px; margin-top: 8px; font-size: 12px; color: var(--paper-faint); min-height: 22px; }
-.lk .leaf { flex: none; width: 9px; height: 12px; border-radius: 1px; outline: 1px dashed oklch(0.5 0.03 60); outline-offset: -1px; }
-.lk .leaf.got { background: oklch(0.45 0.1 215); outline: 0; }
-.lk .cnt { color: oklch(0.45 0.09 70); font-weight: 600; }
-.lk .cnt small { color: var(--paper-faint); font-weight: 400; }
-.prof { position: relative; height: 34px; margin: 10px 10px 0; }
-.prof-line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, oklch(0.55 0.03 60) 0 3px, transparent 3px 6px); }
-.prof-line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: oklch(0.45 0.09 70); }
+.shi.locked .t, .shi.locked .mul { color: var(--t-faint); }
+.shi.locked .fx { color: var(--t-qi-off); }
+.lk { display: flex; align-items: center; gap: 9px; margin-top: 7px; font-size: 12px; color: var(--t-faint); min-height: 20px; }
+.lk .leaf { flex: none; width: 9px; height: 12px; border-radius: 1px; outline: 1px dashed var(--t-node); outline-offset: -1px; }
+.lk .leaf.got { background: var(--t-qi); outline: 0; }
+.lk .cnt { color: var(--t-cnt); font-weight: 600; }
+.lk .cnt small { color: var(--t-faint); font-weight: 400; }
+.prof { position: relative; height: 32px; margin: 9px 10px 0; }
+.prof-line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, var(--t-todo) 0 3px, transparent 3px 6px); }
+.prof-line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: var(--t-done); }
 .pn { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 5px; }
-.pn b { width: 11px; height: 11px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 1px oklch(0.55 0.03 60); }
-.pn em { font-style: normal; font-size: 11px; color: var(--paper-faint); white-space: nowrap; }
-.pn.p b { background: oklch(0.45 0.09 70); box-shadow: none; }
-.pn.p em { color: oklch(0.42 0.07 70); }
-.pn.c b { box-shadow: inset 0 0 0 1.5px oklch(0.5 0.17 28), 0 0 6px oklch(0.5 0.17 28 / 0.35); }
-.pn.c em { color: oklch(0.45 0.14 32); font-weight: 600; }
-.open .foot { margin-top: auto; padding-top: 18px; font-size: 11px; color: var(--paper-faint); letter-spacing: 0.3em; text-align: center; }
+.pn b { width: 11px; height: 11px; border-radius: 50%; background: var(--t-dot-bg); box-shadow: inset 0 0 0 1px var(--t-node); }
+.pn em { font-style: normal; font-size: 11px; color: var(--t-faint); white-space: nowrap; }
+.pn.p b { background: var(--t-pass); box-shadow: none; }
+.pn.p em { color: var(--t-pass); }
+.pn.c b { box-shadow: inset 0 0 0 1.5px var(--t-cur), 0 0 8px color-mix(in oklch, var(--t-cur) 45%, transparent); }
+.pn.c em { color: var(--t-cur); font-weight: 600; }
+.open .foot { margin-top: auto; padding-top: 14px; font-size: 11px; color: var(--t-faint); letter-spacing: 0.3em; text-align: center; }
 </style>
 </head>
 <body>
@@ -176,25 +179,22 @@ button { font: inherit; color: inherit; }
   <div class="head">原型控制</div>
   <div class="row"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
   <div class="row"><span>兵器</span><button data-w="剑" aria-pressed="true">持剑</button><button data-w="刀">持刀</button><button data-w="">赤手</button></div>
-  <div class="hint">点任意一册在右侧翻开；「上案 / 归架」真会把书在案与架之间搬动。</div>
+  <div class="hint">点随身或藏书任意一门在右侧翻开；「装配 / 卸下」真会把书在两处之间搬动。</div>
 </div>
 
 <div class="stage">
   <header class="jh-head"><h1>武学</h1></header>
+  <div class="carry js-carry"></div>
   <div class="study">
     <div class="left">
-      <div class="sec-head"><h2 class="jh-sec">书案<small class="js-cnt"></small></h2></div>
-      <div class="desk js-desk"></div>
-
-      <div class="sec-head">
-        <h2 class="jh-sec">书架</h2>
-        <div class="jh-seg js-seg" role="group" aria-label="按类目筛选"></div>
-      </div>
+      <div class="sec-head"><h2 class="jh-sec">藏书</h2></div>
+      <div class="seg-row"><div class="jh-seg js-seg" role="group" aria-label="按类目筛选"></div></div>
       <div class="shelf js-shelf"></div>
     </div>
     <div class="right"><div class="open js-open"></div></div>
   </div>
 </div>
+<div class="jh-tip js-tip"></div>
 
 <script>
 const CN = ['', '一', '二', '三', '四'];
@@ -226,19 +226,18 @@ function cover(id, cls = '') {
   return `<i class="cv"></i><span class="slip">${d.n}</span><span class="seal">${SEAL[d.cat] ?? d.cat}</span>`;
 }
 function render() {
-  const n = ui.desk.length;
-  $('.js-cnt').textContent = `在练 ${n} / ${ui.slots}`;
-  $('.js-desk').innerHTML = Array.from({ length: ui.slots }, (_, i) => {
+  $('.js-carry').innerHTML = Array.from({ length: ui.slots }, (_, i) => {
     const id = ui.desk[i];
-    if (!id) return `<div class="empty"></div>`;
+    if (!id) return `<span class="ci empty"><i></i></span>`;
     const d = WX[id];
-    return `<button class="book q${QN[d.q]}" data-open="${id}" aria-current="${id === ui.cur}">${cover(id)}<small>触发 ${d.p}%</small></button>`;
+    return `<button class="ci" data-open="${id}" data-tip="${d.cat} · 触发 ${d.p}% · 冷却 ${d.cd}" aria-current="${id === ui.cur}"><span class="seal">${SEAL[d.cat] ?? d.cat}</span><span class="nm">${d.n}</span></button>`;
   }).join('');
 
   const ids = shelfIds();
   const cnt = (c) => ids.filter((id) => c === '全部' || WX[id].cat === c).length;
   $('.js-seg').innerHTML = `<button data-cat="全部" aria-pressed="${ui.cat === '全部'}">全部<small>${ids.length}</small></button>` +
-    Object.entries(GROUPS).map(([g, cs]) => `<span class="grp">${g}</span>` + cs.map((c) => `<button data-cat="${c}" aria-pressed="${ui.cat === c}" ${cnt(c) ? '' : 'disabled'}>${c}<small>${cnt(c)}</small></button>`).join('')).join('');
+    Object.values(GROUPS).flat().filter((c) => cnt(c) > 0).map((c) => `<button data-cat="${c}" aria-pressed="${ui.cat === c}">${c}<small>${cnt(c)}</small></button>`).join('');
+  if (ui.cat !== '全部' && !cnt(ui.cat)) ui.cat = '全部';
   const shown = ids.filter((id) => ui.cat === '全部' || WX[id].cat === ui.cat);
   $('.js-shelf').innerHTML = shown.length ? shown.map((id) => {
     const d = WX[id];
@@ -254,11 +253,11 @@ function renderOpen() {
   const big = BIG[d.cat];
   const need = d.ghost ? { ok: false, text: '缺第一式残页' }
     : big === '肉身' ? { ok: true, text: '肉身功夫 · 不拘兵器' }
-    : big === '暗器' ? { ok: true, text: '暗器槽已备飞蝗镖 · 可上案' }
-    : ui.weapon === d.cat ? { ok: true, text: `现持${d.cat} · 可上案` } : { ok: false, text: `须持${d.cat}方可上案${ui.weapon ? ` · 现持${ui.weapon}` : ' · 现在赤手'}` };
+    : big === '暗器' ? { ok: true, text: '暗器槽已备飞蝗镖 · 可装配' }
+    : ui.weapon === d.cat ? { ok: true, text: `现持${d.cat} · 可装配` } : { ok: false, text: `须持${d.cat}方可装配${ui.weapon ? ` · 现持${ui.weapon}` : ' · 现在赤手'}` };
   const ok = !d.ghost && need.ok;
-  const btn = on ? `<button class="pbtn quiet" data-toggle>归 架</button>`
-    : `<button class="pbtn" data-toggle ${full || !ok ? 'disabled' : ''}>${full ? '案上已满' : ok ? '上 案' : '不能上案'}</button>`;
+  const btn = on ? `<button class="pbtn quiet" data-toggle>卸 下</button>`
+    : `<button class="pbtn" data-toggle ${full || !ok ? 'disabled' : ''}>${full ? '装配已满' : ok ? '装 配' : '不能装'}</button>`;
   const lr = learned(d);
   const rows = d.forms.map((f, k) => {
     const [t, fx, m, c] = f;
@@ -297,6 +296,9 @@ document.addEventListener('click', (e) => {
   if (b.dataset.w != null && b.closest('.proto')) { ui.weapon = b.dataset.w; document.querySelectorAll('.proto [data-w]').forEach((x) => x.setAttribute('aria-pressed', x === b)); }
   render();
 });
+const tip = $('.js-tip');
+document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t) { tip.classList.remove('on'); return; }
+  const r = t.getBoundingClientRect(); tip.textContent = t.dataset.tip; tip.style.left = `${r.left}px`; tip.style.top = `${r.bottom + 6}px`; tip.classList.add('on'); });
 render();
 </script>
 </body>

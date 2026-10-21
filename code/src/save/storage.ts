@@ -25,8 +25,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v13 = 武学一式一页（battle-loot/design.md §4）：残页从计数改为已得的式，寻常全本并入整门，取消顿悟领悟。
  * v14 = 传功缓坡（battle-loot/design.md §5.1）：图 1 初入入门关之后插 15 关，第 7 关起原有关卡编号顺延。
  * v15 = 关卡精简（content.md v2.12）：图 1 初入 101 → 40 关，缓坡与主段按当量折算到新编号。
+ * v16 = 熟练阈值重标（issue #79）：每式出招数按「新圆满 ÷ 旧圆满」放大，已解锁的式不收回。
  */
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -112,6 +113,7 @@ export function migrate<T>(state: T, fromVer: number, toVer: number): T {
   if (fromVer < 13) out = migrateFormPagesV12ToV13(out);
   if (fromVer < 14) out = migrateTeachRampV13ToV14(out);
   if (fromVer < 15 && toVer >= 15) out = migrateStageCompressV14ToV15(out);   // 旧用例只迁到 14 时不折算
+  if (fromVer < 16 && toVer >= 16) out = migrateShulianV15ToV16(out);
   return out;
 }
 
@@ -269,6 +271,24 @@ function migrateStageCompressV14ToV15<T>(state: T): T {
   if (Array.isArray(s.fameClaimed)) out.fameClaimed = [...new Set(s.fameClaimed.map(fold))];
   if (s.idle && s.idle.map === 1 && s.idle.tier === 0) out.idle = { ...s.idle, stage: v15StageOf(s.idle.stage) };
   return out as T;
+}
+
+/** v16 熟练放大倍数 = 新圆满 ÷ 旧圆满（寻常 250/25、上乘 300/28、绝学 350/32）；冻结在 v16 口径 */
+const V16_SHULIAN_K = { 寻常: 10, 上乘: 300 / 28, 绝学: 350 / 32 } as const;
+
+/**
+ * v15 → v16（issue #79 熟练阈值重标）：每式出招数 × 新旧圆满之比、向上取整。旧档已圆满的式照旧圆满，
+ * 靠它接上的下一式不收回；未知武学按寻常倍数。
+ */
+function migrateShulianV15ToV16<T>(state: T): T {
+  const s = state as { formCasts?: Record<string, number> };
+  if (!s || typeof s !== 'object' || !s.formCasts || typeof s.formCasts !== 'object') return state;
+  const formCasts: Record<string, number> = {};
+  for (const [k, v] of Object.entries(s.formCasts)) {
+    const q = WUXUE[k.split(':')[0] as WuxueId]?.quality ?? '寻常';
+    formCasts[k] = Math.ceil(v * V16_SHULIAN_K[q] - 1e-9);
+  }
+  return { ...s, formCasts } as T;
 }
 
 /** v7 在图 1 初入最前面插入的入门关数（迁移专用，冻结在 v7 口径，不随关卡表变化） */

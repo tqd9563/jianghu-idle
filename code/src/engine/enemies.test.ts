@@ -9,6 +9,8 @@ import {
   allStages, enemyStatsAt, getStage, isSealed, MAP_IDS, parseStageKey, stageKey, TEACH_X, TIERS, trackLength,
 } from './enemies';
 
+const lcg = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; }; };
+
 describe('长线关卡表', () => {
   it('开放 9 条前沿、共 318 关（一图一难度 40 关上下：境界 2 段关距 0.14、传功缓坡 5 关；其余前沿 30–38 关）；图 3 绝境、图 4 历练 / 绝境、图 5 全部封存', () => {
     const open = MAP_IDS.flatMap((m) => TIERS.filter((t) => !isSealed(m, t)).map((t) => `${m}-${t}`));
@@ -73,11 +75,12 @@ describe('长线关卡表', () => {
       const taught = { realm: 1, neigong: 'jingleijue' as const, zhong: 0, tiersPassed: 0, injuries: undefined,
         ownedWuxue: [gift], equipped: [gift], formCasts: {}, pages: [] };
       const b = playerBuild(taught);
+      const rng = lcg(7);   // 固定种子、2000 场：胜率贴着 90% 时，400 场的随机波动（约 ±1.5 pp）会让用例时过时不过
       let wins = 0;
-      for (let i = 0; i < 400; i++) {
-        if (fight(b, getStage(1, 0, 7), { mode: 'rng', loadout: buildLoadout(taught), qiMax: qiMaxOf(taught) }).win) wins++;
+      for (let i = 0; i < 2000; i++) {
+        if (fight(b, getStage(1, 0, 7), { mode: 'rng', rng, loadout: buildLoadout(taught), qiMax: qiMaxOf(taught) }).win) wins++;
       }
-      expect(wins / 400, gift).toBeGreaterThanOrEqual(0.9);
+      expect(wins / 2000, gift).toBeGreaterThanOrEqual(0.9);
     }
     const bare = playerBuild({ realm: 1, neigong: null, zhong: 0, tiersPassed: 0, injuries: undefined });
     const teach = { ...getStage(1, 0, 7), ...enemyStatsAt(TEACH_X) };

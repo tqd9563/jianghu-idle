@@ -48,7 +48,7 @@ export interface WuxueDef {
   /** 门派独门机制（蓄势 / 反震 / 引爆），不分档 */
   signature?: boolean;
   source: WuxueSource;
-  /** 第 1 式倍率（相对普攻），往后每式 +0.04 */
+  /** 第 1 式倍率（相对普攻），往后每式 ×MULT_GROWTH（裁决 46） */
   mult0: number;
   /** 每次出招耗真气（生疏口径） */
   cost: number;
@@ -56,7 +56,13 @@ export interface WuxueDef {
   p: number;
   /** 出招后停几回合 */
   cd: number;
+  /** 类型（裁决 46）：重击 = 高倍率弱特效 · 折中 · 双强 = 高倍率强特效 */
+  type: WuxueType;
+  /** 特效数值系数：重击 0.5 · 折中 1（倍率低的 1.25）· 双强 1.5 */
+  ek: number;
 }
+
+export type WuxueType = '重击' | '折中' | '双强';
 
 interface CatalogRow extends Omit<WuxueDef, 'route'> {
   route: string | null;
@@ -68,6 +74,7 @@ const ROWS = catalog.wuxue as CatalogRow[];
 export const WUXUE: Record<WuxueId, WuxueDef> = Object.fromEntries(ROWS.map((r) => [r.id, {
   id: r.id, name: r.name, quality: r.quality, cat: r.cat, route: (r.route ?? null) as RouteId | null, effect: r.effect,
   ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, cost: r.cost, p: r.p, cd: r.cd,
+  type: r.type, ek: r.ek,
 }]));
 export const WUXUE_IDS: WuxueId[] = ROWS.map((r) => r.id);
 /** 第一批新增 52 门的式名与每式句子（现有 14 门仍在 formNames.ts / narration.ts） */
@@ -78,17 +85,20 @@ export const CATALOG_LINES: Record<WuxueId, readonly string[]> = Object.fromEntr
 
 export interface QualityParams {
   forms: number;
-  /** 单式累计出招 → 熟练 / 精通 / 圆熟 */
+  /** 单式累计出招 → 熟练 / 精通 / 圆熟（issue #79 按挂机节奏重标：寻常整门约半天、上乘约一天、绝学约三天） */
   shulian: [number, number, number];
 }
 
 export const QUALITY_PARAMS: Record<Quality, QualityParams> = {
-  寻常: { forms: 3, shulian: [4, 10, 25] },
-  上乘: { forms: 5, shulian: [5, 12, 28] },
-  绝学: { forms: 7, shulian: [6, 15, 32] },
+  寻常: { forms: 3, shulian: [40, 100, 250] },
+  上乘: { forms: 5, shulian: [50, 125, 300] },
+  绝学: { forms: 7, shulian: [60, 150, 350] },
 };
 
-export const MULT_STEP = 0.08;
+/** 每式倍率与基础耗气的倍数（裁决 46；calib_cast.py 定，读名录） */
+const CALIB = (catalog as unknown as { calib: { mult_growth: number; cost_growth: number } }).calib;
+export const MULT_GROWTH: number = CALIB.mult_growth;
+export const COST_GROWTH: number = CALIB.cost_growth;
 export const QI_REGEN = 20;
 export const RESONANCE_MULT = 1.1;
 /** 总触发率上限（spec §3.3） */
@@ -117,22 +127,20 @@ export function shulianTier(quality: Quality, casts: number, benmen = false): nu
 }
 
 
-/** 第 k 式的倍率（含共鸣；熟练不再加倍率） */
+/** 第 k 式的倍率（含共鸣；熟练不加倍率）：第一式 × MULT_GROWTH^(k − 1) */
 export function formMult(def: Pick<WuxueDef, 'mult0'>, k: number, resonance: boolean): number {
-  return (def.mult0 + MULT_STEP * (k - 1)) * (resonance ? RESONANCE_MULT : 1);
+  return def.mult0 * MULT_GROWTH ** (k - 1) * (resonance ? RESONANCE_MULT : 1);
 }
 
-/** 各式耗气倍比（battle-loot/design.md 裁决 45 `[待 sim]`）：第 k 式基础耗气 = 门基础耗气 × 倍比^(k − 1) */
-export const COST_STEP: Record<Quality, number> = { 寻常: 1.3, 上乘: 1.2, 绝学: 1.1 };
 /** 熟练只减耗气（裁决 45）：生疏 / 熟练 / 精通 / 圆熟的耗气倍率 `[待 sim]` */
 export const SHULIAN_COST: [number, number, number, number] = [1, 0.92, 0.84, 0.75];
 
 /** 第 k 式未经熟练打折的基础耗气（抽式权重用它，不然练熟的招反而少出） */
-export function formBaseCost(def: Pick<WuxueDef, 'cost' | 'quality'>, k: number): number {
-  return Math.round(def.cost * COST_STEP[def.quality] ** (k - 1));
+export function formBaseCost(def: Pick<WuxueDef, 'cost'>, k: number): number {
+  return Math.round(def.cost * COST_GROWTH ** (k - 1));
 }
 /** 第 k 式实际耗气：基础耗气 × 熟练倍率（取整） */
-export function formCost(def: Pick<WuxueDef, 'cost' | 'quality'>, k: number, tier: number): number {
+export function formCost(def: Pick<WuxueDef, 'cost'>, k: number, tier: number): number {
   return Math.round(formBaseCost(def, k) * SHULIAN_COST[tier]);
 }
 /** 冷却不再随熟练变（裁决 45） */
@@ -154,15 +162,19 @@ function effectValues(effect: FormEffect): number[] | null {
   return row[key] as number[];
 }
 
-/** 第 k 式的特效数值：第 1 式取本品质起档、末式取止档，中间线性插值；整数列四舍五入 */
-export function effectValue(def: Pick<WuxueDef, 'quality' | 'effect'>, k: number): number {
+/** 几率类特效（连击 / 封穴 / 附毒再 +1）乘系数后封顶 100% */
+const PROB_EFFECTS = new Set<FormEffect>(['连击', '封穴', '附毒']);
+
+/** 第 k 式的特效数值：第 1 式取本品质起档、末式取止档，中间线性插值，再乘类型系数（裁决 46）；整数列四舍五入 */
+export function effectValue(def: Pick<WuxueDef, 'quality' | 'effect'> & { ek?: number }, k: number): number {
   const vals = effectValues(def.effect);
   if (!vals) return 0;
   const n = QUALITY_PARAMS[def.quality].forms;
   const [lo, hi] = TIER_SPAN[def.quality];
   const t = n > 1 ? lo + ((hi - lo) * (k - 1)) / (n - 1) : lo;
   const i = Math.min(Math.floor(t), 3);
-  const v = vals[i] + (vals[Math.min(i + 1, 3)] - vals[i]) * (t - i);
+  const raw = (vals[i] + (vals[Math.min(i + 1, 3)] - vals[i]) * (t - i)) * (def.ek ?? 1);
+  const v = PROB_EFFECTS.has(def.effect) ? Math.min(1, raw) : raw;
   const integer = vals.every((x) => Number.isInteger(x));
   return integer ? Math.round(v) : Math.round(v * 1000) / 1000;
 }
@@ -176,7 +188,7 @@ const EFFECT_SAY: Record<FormEffect, string> = {
   蓄势: '本场每出过一招，本式倍率 +10%', 反震: '按攻击加防御计伤', 引爆: '引爆对方身上毒层',
 };
 const PCT_EFFECTS: ReadonlySet<FormEffect> = new Set(['必暴', '回气', '护体', '附毒', '运劲', '凝眸', '连击', '透劲', '封穴', '卸力', '破绽']);
-export function effectText(def: Pick<WuxueDef, 'quality' | 'effect'>, k: number): string {
+export function effectText(def: Pick<WuxueDef, 'quality' | 'effect'> & { ek?: number }, k: number): string {
   const v = effectValue(def, k);
   const shown = PCT_EFFECTS.has(def.effect) ? Math.round(v * 100) : v;
   if (def.effect === '附毒' && shown === 0) return '叠毒 +1 层';

@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { migrate, SAVE_VERSION } from './storage';
+import { learnedFormsOf as learnedFormsOfStore } from '../store/gameStore';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 
 describe('存档迁移 v2 → v3：窍穴 id 重写', () => {
@@ -186,5 +187,18 @@ describe('v12 → v13（武学一式一页）', () => {
     ]);
     expect(out.ownedScrolls).toEqual(['juance:yuntaixinfa']);
     for (const k of ['books', 'learnedForms', 'pastLearned']) expect(out).not.toHaveProperty(k);
+  });
+});
+
+describe('v15 → v16（熟练阈值重标，issue #79）', () => {
+  it('每式出招数按新旧圆满之比放大、向上取整：旧档已圆满的式照旧圆满，接上的下一式不收回', () => {
+    const before = { ownedWuxue: ['liuyunjian', 'jinghongjian', 'cangyajianjue'], pages: ['jinghongjian:1', 'jinghongjian:2', 'cangyajianjue:1', 'cangyajianjue:2'],
+      formCasts: { 'liuyunjian:1': 25, 'liuyunjian:2': 3, 'jinghongjian:1': 28, 'cangyajianjue:1': 32, 'cangyajianjue:2': 1, 'weizhi:1': 2 } };
+    const out = migrate(before as Record<string, unknown>, 15, SAVE_VERSION) as typeof before;
+    expect(out.formCasts).toEqual({ 'liuyunjian:1': 250, 'liuyunjian:2': 30, 'jinghongjian:1': 300, 'cangyajianjue:1': 350, 'cangyajianjue:2': 11, 'weizhi:1': 20 });
+    expect(learnedFormsOfStore(out, 'liuyunjian')).toEqual([1, 2]);
+    expect(learnedFormsOfStore(out, 'jinghongjian')).toEqual([1, 2]);
+    expect(learnedFormsOfStore(out, 'cangyajianjue')).toEqual([1, 2]);
+    expect(migrate({ realm: 2 }, 15, SAVE_VERSION)).toEqual({ realm: 2 });
   });
 });

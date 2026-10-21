@@ -1,0 +1,569 @@
+[
+ {
+  "id": "liuyunjian",
+  "name": "流云剑法",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "必暴",
+  "p": 0.048,
+  "margin": 0.291
+ },
+ {
+  "id": "qingpingjian",
+  "name": "青萍剑法",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "运劲",
+  "p": 0.141,
+  "margin": 0.309
+ },
+ {
+  "id": "songtaojian",
+  "name": "松涛剑法",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.191,
+  "margin": 0.301
+ },
+ {
+  "id": "jiyujian",
+  "name": "疾雨剑法",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "连击",
+  "p": 0.114,
+  "margin": 0.297
+ },
+ {
+  "id": "pofengdao",
+  "name": "破风刀法",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.191,
+  "margin": 0.301
+ },
+ {
+  "id": "kaibeidao",
+  "name": "开碑刀法",
+  "quality": "寻常",
+  "type": "双强",
+  "effect": "凝眸",
+  "p": 0.064,
+  "margin": 0.295
+ },
+ {
+  "id": "shuangfengdao",
+  "name": "霜锋刀法",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "透劲",
+  "p": 0.148,
+  "margin": 0.305
+ },
+ {
+  "id": "jiejiangdao",
+  "name": "截江刀法",
+  "quality": "寻常",
+  "type": "重击",
+  "effect": "运劲",
+  "p": 0.105,
+  "margin": 0.302
+ },
+ {
+  "id": "yanmenqiang",
+  "name": "雁门枪",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "护体",
+  "p": 0.128,
+  "margin": 0.303
+ },
+ {
+  "id": "bailaqiang",
+  "name": "白蜡枪",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "运劲",
+  "p": 0.141,
+  "margin": 0.309
+ },
+ {
+  "id": "zhongpingqiang",
+  "name": "中平枪",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "连击",
+  "p": 0.116,
+  "margin": 0.299
+ },
+ {
+  "id": "jingsheqiang",
+  "name": "惊蛇枪",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "凝眸",
+  "p": 0.096,
+  "margin": 0.307
+ },
+ {
+  "id": "xingzhegun",
+  "name": "行者棍",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.212,
+  "margin": 0.306
+ },
+ {
+  "id": "qimeigun",
+  "name": "齐眉棍",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "轻身",
+  "p": 0.13,
+  "margin": 0.299
+ },
+ {
+  "id": "saotanggun",
+  "name": "扫堂棍",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "回元",
+  "p": 0.26,
+  "margin": 0.297
+ },
+ {
+  "id": "bengyungun",
+  "name": "崩云棍",
+  "quality": "寻常",
+  "type": "双强",
+  "effect": "卸力",
+  "p": 0.073,
+  "margin": 0.302
+ },
+ {
+  "id": "tongbiquan",
+  "name": "通臂拳",
+  "quality": "寻常",
+  "type": "重击",
+  "effect": "必暴",
+  "p": 0.045,
+  "margin": 0.29
+ },
+ {
+  "id": "luohanquan",
+  "name": "罗汉拳",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "封穴",
+  "p": 0.128,
+  "margin": 0.321
+ },
+ {
+  "id": "bengshanquan",
+  "name": "崩山拳",
+  "quality": "寻常",
+  "type": "双强",
+  "effect": "回元",
+  "p": 0.142,
+  "margin": 0.3
+ },
+ {
+  "id": "bajiquan",
+  "name": "八极拳",
+  "quality": "寻常",
+  "type": "重击",
+  "effect": "轻身",
+  "p": 0.113,
+  "margin": 0.306
+ },
+ {
+  "id": "kaishanzhang",
+  "name": "开山掌",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "护体",
+  "p": 0.144,
+  "margin": 0.328
+ },
+ {
+  "id": "zhushazhang",
+  "name": "朱砂掌",
+  "quality": "寻常",
+  "type": "双强",
+  "effect": "封穴",
+  "p": 0.077,
+  "margin": 0.3
+ },
+ {
+  "id": "mianrouzhang",
+  "name": "绵柔掌",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "透劲",
+  "p": 0.26,
+  "margin": 0.318
+ },
+ {
+  "id": "baguazhang",
+  "name": "八卦掌",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "破绽",
+  "p": 0.197,
+  "margin": 0.31
+ },
+ {
+  "id": "cunjinzhi",
+  "name": "寸劲指",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.212,
+  "margin": 0.306
+ },
+ {
+  "id": "chuomaizhi",
+  "name": "戳脉指",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "回元",
+  "p": 0.26,
+  "margin": 0.297
+ },
+ {
+  "id": "tiegouzhi",
+  "name": "铁钩指",
+  "quality": "寻常",
+  "type": "双强",
+  "effect": "凝眸",
+  "p": 0.069,
+  "margin": 0.298
+ },
+ {
+  "id": "jingangzhi",
+  "name": "金刚指",
+  "quality": "寻常",
+  "type": "重击",
+  "effect": "透劲",
+  "p": 0.138,
+  "margin": 0.302
+ },
+ {
+  "id": "lianhuantui",
+  "name": "连环腿",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "护体",
+  "p": 0.129,
+  "margin": 0.3
+ },
+ {
+  "id": "chuanlintui",
+  "name": "穿林腿",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "轻身",
+  "p": 0.138,
+  "margin": 0.302
+ },
+ {
+  "id": "gouguatui",
+  "name": "勾挂腿",
+  "quality": "寻常",
+  "type": "重击",
+  "effect": "卸力",
+  "p": 0.112,
+  "margin": 0.316
+ },
+ {
+  "id": "xuanfengtui",
+  "name": "旋风腿",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "破绽",
+  "p": 0.22,
+  "margin": 0.326
+ },
+ {
+  "id": "xiulizhen",
+  "name": "袖里针",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "附毒",
+  "p": 0.137,
+  "margin": 0.298
+ },
+ {
+  "id": "liuyebiao",
+  "name": "柳叶镖",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "透劲",
+  "p": 0.26,
+  "margin": 0.318
+ },
+ {
+  "id": "jiliding",
+  "name": "蒺藜钉",
+  "quality": "寻常",
+  "type": "双强",
+  "effect": "回元",
+  "p": 0.142,
+  "margin": 0.3
+ },
+ {
+  "id": "liuxingshi",
+  "name": "流星石",
+  "quality": "寻常",
+  "type": "折中",
+  "effect": "破绽",
+  "p": 0.26,
+  "margin": 0.304
+ },
+ {
+  "id": "jinghongjian",
+  "name": "惊鸿照影剑",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.084,
+  "margin": 0.331
+ },
+ {
+  "id": "feipuduanyajian",
+  "name": "飞瀑断崖剑",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "运劲",
+  "p": 0.058,
+  "margin": 0.332
+ },
+ {
+  "id": "duanshuidao",
+  "name": "大江断流刀",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "附毒",
+  "p": 0.066,
+  "margin": 0.332
+ },
+ {
+  "id": "nutaolieandao",
+  "name": "怒涛裂岸刀",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "连击",
+  "p": 0.054,
+  "margin": 0.331
+ },
+ {
+  "id": "chuanyunpoyueqiang",
+  "name": "穿云破月枪",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "必暴",
+  "p": 0.036,
+  "margin": 0.333
+ },
+ {
+  "id": "lihuadaiyuqiang",
+  "name": "梨花带雨枪",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.084,
+  "margin": 0.331
+ },
+ {
+  "id": "panlongraozhugun",
+  "name": "盘龙绕柱棍",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.113,
+  "margin": 0.33
+ },
+ {
+  "id": "fanjiangjiaohaigun",
+  "name": "翻江搅海棍",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "轻身",
+  "p": 0.062,
+  "margin": 0.333
+ },
+ {
+  "id": "fuhuquan",
+  "name": "黑风伏虎拳",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "必暴",
+  "p": 0.038,
+  "margin": 0.339
+ },
+ {
+  "id": "jinzhongzhendianquan",
+  "name": "金钟震殿拳",
+  "quality": "上乘",
+  "type": "双强",
+  "effect": "破绽",
+  "p": 0.071,
+  "margin": 0.326
+ },
+ {
+  "id": "kaibeilieshizhang",
+  "name": "开碑裂石掌",
+  "quality": "上乘",
+  "type": "双强",
+  "effect": "护体",
+  "p": 0.053,
+  "margin": 0.328
+ },
+ {
+  "id": "yinfengguikuzhang",
+  "name": "阴风鬼哭掌",
+  "quality": "上乘",
+  "type": "双强",
+  "effect": "回元",
+  "p": 0.07,
+  "margin": 0.333
+ },
+ {
+  "id": "qingshetuxinzhi",
+  "name": "青蛇吐信指",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "附毒",
+  "p": 0.075,
+  "margin": 0.333
+ },
+ {
+  "id": "duanjinsuiyuzhi",
+  "name": "断金碎玉指",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "迷目",
+  "p": 0.069,
+  "margin": 0.333
+ },
+ {
+  "id": "yuhuanyuanyangtui",
+  "name": "玉环鸳鸯腿",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "必暴",
+  "p": 0.028,
+  "margin": 0.326
+ },
+ {
+  "id": "zhudianliuxingtui",
+  "name": "逐电流星腿",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "回元",
+  "p": 0.113,
+  "margin": 0.33
+ },
+ {
+  "id": "feihuangshi",
+  "name": "飞蝗蔽日石",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "护体",
+  "p": 0.075,
+  "margin": 0.33
+ },
+ {
+  "id": "zimuchuanxinbiao",
+  "name": "子母穿心镖",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "回元",
+  "p": 0.072,
+  "margin": 0.332
+ },
+ {
+  "id": "cangyajianjue",
+  "name": "苍崖九叠剑",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "必暴",
+  "p": 0.028,
+  "margin": 0.359
+ },
+ {
+  "id": "tianhedaoxuandao",
+  "name": "天河倒悬刀",
+  "quality": "绝学",
+  "type": "重击",
+  "effect": "透劲",
+  "p": 0.044,
+  "margin": 0.375
+ },
+ {
+  "id": "bawangxiejiaqiang",
+  "name": "霸王卸甲枪",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "连击",
+  "p": 0.037,
+  "margin": 0.36
+ },
+ {
+  "id": "luohanfumogun",
+  "name": "罗汉伏魔棍",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "护体",
+  "p": 0.053,
+  "margin": 0.363
+ },
+ {
+  "id": "lianhualuodigun",
+  "name": "莲花落地棍",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "破绽",
+  "p": 0.071,
+  "margin": 0.365
+ },
+ {
+  "id": "zhenwudangmoquan",
+  "name": "真武荡魔拳",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "轻身",
+  "p": 0.055,
+  "margin": 0.369
+ },
+ {
+  "id": "qianshesixinzhang",
+  "name": "千蛇噬心掌",
+  "quality": "绝学",
+  "type": "重击",
+  "effect": "迷目",
+  "p": 0.052,
+  "margin": 0.36
+ },
+ {
+  "id": "hanchanqiqiezhang",
+  "name": "寒蝉凄切掌",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "附毒",
+  "p": 0.056,
+  "margin": 0.365
+ },
+ {
+  "id": "luoyingfeizhen",
+  "name": "落英缤纷针",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "附毒",
+  "p": 0.055,
+  "margin": 0.357
+ }
+]

@@ -245,7 +245,7 @@ describe('gameStore · 归隐与声望阁', () => {
       ownedRepNodes: ['bizhou_zizhen', 'kegu_mingxin', 'renzu_guizong', 'jiaqing_jiushu'],
       worn: { 暗器: worse, 兵器: best }, sect: 'huashan',
       ownedWuxue: ['liuyunjian', 'qingpingjian'], equipped: ['liuyunjian', 'qingpingjian'],
-      formCasts: { 'liuyunjian:1': 40, 'qingpingjian:1': 40 },
+      formCasts: { 'liuyunjian:1': 250, 'qingpingjian:1': 250 },
       diyun: { ...freshDiyun(), qixue: 2 },
     });
     useGameStore.getState().openRetire();
@@ -256,7 +256,7 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(Object.keys(s.worn)).toEqual(['兵器']);
     expect(s.worn.兵器?.id).toBe(best.id);
     expect(s.equipped).toEqual(['liuyunjian']);
-    expect(s.formCasts).toEqual({ 'liuyunjian:1': 40 });   // 主修原样带走，其它武学熟练清零
+    expect(s.formCasts).toEqual({ 'liuyunjian:1': 250 });   // 主修原样带走，其它武学熟练清零
     expect(learnedFormsOfStore(s, 'liuyunjian')).toEqual([1, 2]);
     expect(s.sect).toBe('huashan');
     expect(s.diyun.qixue).toBe(2);
@@ -1081,23 +1081,26 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
   it('战后累计每式熟练；前一式圆满即接上下一式，不判顿悟', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
+    // 松涛剑法触发几率高、冷却 1：几场回刷 Boss 内必有出招；离圆满差 1 招
     useGameStore.setState({
       realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 20, tiersPassed: 3,
-      ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], formCasts: { 'liuyunjian:1': 24 },
+      ownedWuxue: ['songtaojian'], equipped: ['songtaojian'], formCasts: { 'songtaojian:1': 249 },
       clearedStages: m1all,
     });
-    useGameStore.getState().challengeStage(1, 0, trackLength(1, 0)); // 回刷 Boss：回合够多
-    for (let i = 0; i < 400 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
-      vi.setSystemTime(Date.now() + 700);
-      useGameStore.getState().tick(Date.now());
+    // 每场开打前重置推关失败的弹窗与伤势，免得输一场就卡住；看存档里的累计数，不逐场累加
+    for (let fightN = 0; fightN < 20 && (useGameStore.getState().formCasts['songtaojian:1'] ?? 0) < 250; fightN++) {
+      useGameStore.setState({ battle: null, injuries: freshInjuries() });
+      useGameStore.getState().challengeStage(1, 0, trackLength(1, 0)); // 回刷 Boss：回合够多
+      for (let i = 0; i < 400 && !(useGameStore.getState().battle?.resolved ?? false); i++) {
+        vi.setSystemTime(Date.now() + 700);
+        useGameStore.getState().tick(Date.now());
+      }
     }
     vi.useRealTimers();
     const s = useGameStore.getState();
-    const casts = s.battle!.result.stats.formCasts['liuyunjian:1'] ?? 0;
-    expect(casts).toBeGreaterThan(0);
-    expect(s.formCasts['liuyunjian:1']).toBe(24 + casts);
-    // 第一式 25 招入圆满，第二式接上；第三式要等第二式也圆满
-    expect(learnedFormsOfStore(s, 'liuyunjian')).toEqual([1, 2]);
+    expect(s.formCasts['songtaojian:1']).toBeGreaterThanOrEqual(250);
+    // 第一式 250 招入圆满，第二式接上；第三式要等第二式也圆满
+    expect(learnedFormsOfStore(s, 'songtaojian')).toEqual([1, 2]);
     expect(s.dunwuNotice).toContain('第二式');
     expect(getEvents().some((e) => e.e === 'form_learned')).toBe(true);
   });
@@ -1106,7 +1109,7 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
     useGameStore.setState({
       realm: 3, clearedStages: [], runPlaySec: 100,
       ownedWuxue: ['liuyunjian', 'jinghongjian'], equipped: ['liuyunjian'], pages: ['jinghongjian:1', 'jinghongjian:3'],
-      formCasts: { 'liuyunjian:1': 25, 'liuyunjian:2': 1 }, dropsClaimed: ['1-0'],
+      formCasts: { 'liuyunjian:1': 250, 'liuyunjian:2': 1 }, dropsClaimed: ['1-0'],
     });
     useGameStore.setState({ retireStep: 'confirm' });
     useGameStore.getState().confirmRetire();
@@ -1218,7 +1221,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(st().ownedNeigong).toContain('yuntaixinfa');
     expect(st().contrib).toBe(5000 - 420 - 360 - 200 - 600 - 500);
     // 有一、二、五式：第一式圆满后只接得上第二式，第五式被缺的三、四式隔开
-    useGameStore.setState({ formCasts: { 'cangyajianjue:1': 99, 'cangyajianjue:2': 99 } });
+    useGameStore.setState({ formCasts: { 'cangyajianjue:1': 999, 'cangyajianjue:2': 999 } });
     expect(learnedFormsOfStore(st(), 'cangyajianjue')).toEqual([1, 2]);
   });
 
@@ -1228,17 +1231,18 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(zhongGate({ ...s, ownedScrolls: ['juance:yuntaixinfa'] })?.needScroll).toBe(false);
   });
 
-  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 5 次，拜华山即到「熟练」档（耗气 ×0.92；触发与倍率不变）', () => {
+  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 48 次，拜华山即到「熟练」档（耗气 ×0.92；触发与倍率不变）', () => {
     const base = {
       realm: 4, neigong: 'shiguxinfa' as const, zhong: 10, ownedWuxue: ['cangyajianjue' as const], ownedScrolls: [],
-      equipped: ['cangyajianjue' as const], formCasts: { 'cangyajianjue:1': 5 }, pages: ['cangyajianjue:1'],
+      equipped: ['cangyajianjue' as const], formCasts: { 'cangyajianjue:1': 48 }, pages: ['cangyajianjue:1'],
     };
     const lo = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0];
-    expect(lo('huashan').forms[0].cost).toBe(Math.round(55 * 0.92));
-    expect(lo(null).forms[0].cost).toBe(55);
-    expect(lo('shaolin').forms[0].cost).toBe(55);
+    const cost = WUXUE.cangyajianjue.cost;
+    expect(lo('huashan').forms[0].cost).toBe(Math.round(cost * 0.92));
+    expect(lo(null).forms[0].cost).toBe(cost);
+    expect(lo('shaolin').forms[0].cost).toBe(cost);
     expect(lo('huashan').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);
-    expect(lo('huashan').p).toBeCloseTo(0.25, 9);   // 触发几率不随熟练变（裁决 45）
+    expect(lo('huashan').p).toBeCloseTo(WUXUE.cangyajianjue.p, 9);   // 触发几率不随熟练变（裁决 45）
   });
 
   it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次；解锁图 2 / 图 3 初入各说一次新派', () => {
@@ -1416,9 +1420,9 @@ describe('武学掉落、书匣与兵器搭配（battle-loot/design.md §3.7 / �
     expect(a).toEqual({ ownedWuxue: ['jiyujian'], pages: [], dup: false, silver: 0 });
     const s0 = { ownedWuxue: a.ownedWuxue };
     expect(learnedFormsOfStore(s0, 'jiyujian')).toEqual([1]);
-    expect(learnedFormsOfStore({ ...s0, formCasts: { 'jiyujian:1': 24 } }, 'jiyujian')).toEqual([1]);   // 精通还不够
-    expect(learnedFormsOfStore({ ...s0, formCasts: { 'jiyujian:1': 25 } }, 'jiyujian')).toEqual([1, 2]);
-    expect(learnedFormsOfStore({ ...s0, formCasts: { 'jiyujian:1': 25, 'jiyujian:2': 25 } }, 'jiyujian')).toEqual([1, 2, 3]);
+    expect(learnedFormsOfStore({ ...s0, formCasts: { 'jiyujian:1': 249 } }, 'jiyujian')).toEqual([1]);   // 精通还不够
+    expect(learnedFormsOfStore({ ...s0, formCasts: { 'jiyujian:1': 250 } }, 'jiyujian')).toEqual([1, 2]);
+    expect(learnedFormsOfStore({ ...s0, formCasts: { 'jiyujian:1': 250, 'jiyujian:2': 250 } }, 'jiyujian')).toEqual([1, 2, 3]);
     const dup = applyWuxueDrop(a, { id: 'jiyujian', k: 1, kind: 'book' });
     expect(dup).toMatchObject({ ownedWuxue: ['jiyujian'], dup: true, silver: DUP_DROP_SILVER.book });
   });
@@ -1431,7 +1435,7 @@ describe('武学掉落、书匣与兵器搭配（battle-loot/design.md §3.7 / �
     const r = applyWuxueDrop(s, { id: 'feipuduanyajian', k: 1, kind: 'page' });
     expect(r).toEqual({ ownedWuxue: ['feipuduanyajian'], pages: ['feipuduanyajian:3', 'feipuduanyajian:1'], dup: false, silver: 0 });
     // 有一、三式，第一式圆满了也接不上第三式
-    expect(learnedFormsOfStore({ ...r, formCasts: { 'feipuduanyajian:1': 99 } }, 'feipuduanyajian')).toEqual([1]);
+    expect(learnedFormsOfStore({ ...r, formCasts: { 'feipuduanyajian:1': 999 } }, 'feipuduanyajian')).toEqual([1]);
     const more = applyWuxueDrop(r, { id: 'feipuduanyajian', k: 1, kind: 'page' });
     expect(more).toMatchObject({ dup: true, silver: DUP_DROP_SILVER.page, pages: r.pages });
   });

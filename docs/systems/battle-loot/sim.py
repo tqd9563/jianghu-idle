@@ -40,8 +40,8 @@ _spec.loader.exec_module(W)
 
 QUICK = "--quick" in sys.argv
 ROUTES = L.ROUTES
-ROUTE_NAME = {"huashan": "惊雷", "shaolin": "镇岳", "tangmen": "蚀骨"}
-ROUTE_OF = {"惊雷": "huashan", "镇岳": "shaolin", "蚀骨": "tangmen", "—": None}
+ROUTE_NAME = {"huashan": "归海", "shaolin": "镇岳", "tangmen": "蚀骨"}
+ROUTE_OF = {"归海": "huashan", "惊雷": "huashan", "镇岳": "shaolin", "蚀骨": "tangmen", "—": None}
 QUAL = ["寻常", "上乘", "绝学"]
 QI = {"寻常": 0, "上乘": 1, "绝学": 2}
 

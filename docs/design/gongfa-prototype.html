@@ -16,7 +16,7 @@
     底部精进一重，点了重数、属性、要诀数值同步刷新并闪一下金。临关或内力不足时按钮置灰，缘由写在上方一行。
   · 心法要诀：只在翻开的书里出现一次。每条一行：名目 + 当前生效值；右侧挂会改它的关名（已过墨金、下一关暖金、再往后淡出、本品质够不着更淡），
     改了什么只写在悬停里，不铺在页面上。悬停一个关名，所有受同一关影响的要诀同时亮起。
-  · 主修印匣：同武学装配印匣，石印换路数印（归海浪 / 镇岳山 / 蚀骨蝎，code/public/art/route/），印色按路数、描边与名字按品质，下写第几重。原型控制「样张」可看九部心法的印匣。
+  · 主修印匣：同武学装配印匣，石印一部一枚、按心法名取象（百川诀溪流、沧海功浪、沧溟真经鲸、镇岳功山、磐石功巨石、菩提心功菩提叶、蚀骨心法骨、玄阴诀蛇、千蛊心诀蝎，code/public/art/neigong/），印色按路数、描边与名字按品质，下写第几重。原型控制「样张」可看九部心法的印匣。
   · 精进后基础属性从旧值一格格跳到新值（约 0.9 秒）。
   · 换书翻页：点藏经 / 藏书里另一本时，书先合上露出封面（同书封、题签写书名），停 0.3 秒后以中缝为轴翻开约 1 秒，左页内容等封面落定再淡入；切页签、换预设不翻；系统开了「减少动态效果」则直接换。
   · 武学页即上一轮定稿：装配用印匣（印色按路数），书页磁青。
@@ -165,11 +165,14 @@ body[data-tab="wugong"] .proto [data-only] { display: flex; }
 .ng .cv { filter: brightness(0.85); }
 .ng.q2 .cv { background-image: url('../../code/public/art/book-q2.png'); }
 .ng.q3 .cv { background-image: url('../../code/public/art/book-q3.png'); }
-.slip { position: absolute; left: 12%; width: 16%; top: 11%; height: 54%; writing-mode: vertical-rl; font-family: var(--font-display); font-size: 11.5px; letter-spacing: 0.12em; color: oklch(0.2 0.02 60); white-space: nowrap;
+/* 题签按书封原图上画好的米色签量位：q1 / q2 / q3 三张图各不同 */
+.slip { position: absolute; left: 11%; width: 17%; top: 6.5%; height: 62%; writing-mode: vertical-rl; font-family: var(--font-display); font-size: 11.5px; letter-spacing: 0.12em; color: oklch(0.2 0.02 60); white-space: nowrap;
   background: oklch(0.88 0.035 85); box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45); display: grid; place-items: center; }
-.wx.q3 .slip { left: 13%; width: 18%; top: 7%; height: 60%; }
+.wx.q3 .slip { left: 12.7%; width: 18.8%; top: 8%; height: 63%; }
 .wx.ghost .slip { background: oklch(0.66 0.02 85); color: oklch(0.3 0.02 60); }
-.ng .slip { left: 21%; width: 15%; top: 16%; height: 44%; background: none; box-shadow: none; }
+.ng .slip { background: none; box-shadow: none; }
+.ng.q2 .slip { left: 16%; width: 16.5%; top: 8%; height: 61.5%; }
+.ng.q3 .slip { left: 12.7%; width: 18.8%; top: 8%; height: 63%; }
 .seal { position: absolute; right: 13%; bottom: 10%; width: 19px; height: 19px; display: grid; place-items: center; font-family: var(--font-display); font-size: 13px; line-height: 1; color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px;
   box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.75), 0 1px 3px oklch(0.05 0.01 262 / 0.5); transform: rotate(-6deg); }
 .wx.ghost .seal { opacity: 0.5; }
@@ -608,7 +611,7 @@ function ngYin() {
   const d = NG[ng.id];
   const cur = ui.wgOpen === 'neigong' && (!ng.cur || ng.cur === ng.id);
   return `<button class="ya g${QN[d.q]} rf t-${ROUTE[d.r].tag} ngya" data-ng="${ng.id}" data-tip="${d.q}内功 · ${ROUTE[d.r].name}一路" aria-current="${cur}">
-    <span class="box"><i class="ico" style="background-image:url('${A}route/${RICON[d.r]}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${ng.z} 重</span></button>`;
+    <span class="box"><i class="ico" style="background-image:url('${A}neigong/${ng.id}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${ng.z} 重</span></button>`;
 }
 function sheetHTML() {
   const routes = ['huashan', 'shaolin', 'tangmen'], qs = ['寻常', '上乘', '绝学'];
@@ -617,7 +620,7 @@ function sheetHTML() {
   return `<div class="sheet js-sheet"><div class="pane"><h3>九部心法 · 主修印匣</h3><table>
     <tr><th></th>${routes.map((r) => `<th>${ROUTE[r].name}</th>`).join('')}</tr>
     ${qs.map((q) => `<tr><th class="r">${q}</th>${routes.map((r) => { const id = by(r, q), d = NG[id];
-      return `<td><span class="ya g${QN[q]} rf t-${ROUTE[r].tag} ngya"><span class="box"><i class="ico" style="background-image:url('${A}route/${RICON[r]}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${z[q]} 重</span></span></td>`; }).join('')}</tr>`).join('')}
+      return `<td><span class="ya g${QN[q]} rf t-${ROUTE[r].tag} ngya"><span class="box"><i class="ico" style="background-image:url('${A}neigong/${id}.png')"></i></span><span class="nm">${d.name}</span><span class="mt">第 ${z[q]} 重</span></span></td>`; }).join('')}</tr>`).join('')}
   </table></div></div>`;
 }
 function renderWugong() {

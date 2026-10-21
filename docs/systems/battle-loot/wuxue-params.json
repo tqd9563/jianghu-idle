@@ -1120,7 +1120,7 @@
    ]
   },
   {
-   "name": "顾影枪法",
+   "name": "返照枪法",
    "quality": "寻常",
    "cat": "枪",
    "route": "tangmen",
@@ -1140,7 +1140,7 @@
    ]
   },
   {
-   "name": "裂帛枪法",
+   "name": "裂云枪法",
    "quality": "寻常",
    "cat": "枪",
    "route": "tangmen",
@@ -1967,7 +1967,7 @@
    ]
   },
   {
-   "name": "随波拳法",
+   "name": "回澜拳法",
    "quality": "寻常",
    "cat": "拳",
    "route": null,
@@ -2031,7 +2031,7 @@
    ]
   },
   {
-   "name": "菩萨低眉拳",
+   "name": "铁佛镇山拳",
    "quality": "上乘",
    "cat": "拳",
    "route": "shaolin",
@@ -2053,7 +2053,7 @@
    ]
   },
   {
-   "name": "天风海雨拳",
+   "name": "雷动千山拳",
    "quality": "上乘",
    "cat": "拳",
    "route": "huashan",
@@ -2351,7 +2351,7 @@
    ]
   },
   {
-   "name": "扬尘掌法",
+   "name": "掩月掌法",
    "quality": "寻常",
    "cat": "掌",
    "route": null,
@@ -2479,7 +2479,7 @@
    ]
   },
   {
-   "name": "江月流霜掌",
+   "name": "海潮吞月掌",
    "quality": "上乘",
    "cat": "掌",
    "route": "huashan",
@@ -2501,7 +2501,7 @@
    ]
   },
   {
-   "name": "杨花扑面掌",
+   "name": "乱红飞渡掌",
    "quality": "上乘",
    "cat": "掌",
    "route": null,
@@ -2675,7 +2675,7 @@
    ]
   },
   {
-   "name": "叩钟指法",
+   "name": "定海指法",
    "quality": "寻常",
    "cat": "指",
    "route": "huashan",
@@ -3119,7 +3119,7 @@
    ]
   },
   {
-   "name": "登峰腿法",
+   "name": "凌云腿法",
    "quality": "寻常",
    "cat": "腿",
    "route": "huashan",
@@ -3713,7 +3713,7 @@
    ]
   },
   {
-   "name": "珠落玉盘钉",
+   "name": "天狼射月钉",
    "quality": "上乘",
    "cat": "暗器",
    "route": null,

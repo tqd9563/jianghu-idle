@@ -10,15 +10,14 @@
   两页同一套骨架：页头 → 上方一条「现在用着的」（内功＝主修进境，武学＝装配）→ 下方左「藏经 / 藏书」3 × 3 窄栏，右一本翻开的磁青书。
 
   内功页要点：
-  · 主修：左一本主修书（同藏经书封放大，下挂品质 / 路数章）；右一幅磁青手卷（AI 生图切成卷首 / 卷身 / 卷尾三段拼接）。
-    卷首题签竖写「第五重」；卷身五关竖写成栏，五段等宽、段内一重一个圈点：读过的朱点、当前一枚大朱点、下一重金圈、本品质够不着的段压暗；
-    关名已过泥金、临关暖金呼吸并写「静候顿悟」。卷尾一枚朱印即「精进」，内力不足变灰印并写还差多少、约多久，临关变「顿悟」金边印。
-  · 心法要诀：只在翻开的书里出现一次（不再与页头卡片重复）。每条要诀一行：名目 + 当前生效值，右侧挂「哪几关会改它」——
-    已过的关墨金、下一关暖金并写出变化、再往后的关淡出、本品质够不着的关更淡；逐重成长的要诀挂「逐重」。
-    悬停进境线上的关口，要诀里受它影响的那几行同时亮起；反过来也一样。
+  · 主修：页头下一行，心法名 + 品质 / 路数章 + 重数，点它翻开主修那本。
+  · 书页左页：书名旁写第几重与最高可至；下列内功提供的基础属性（气血 / 攻击 / 防御 / 命中 / 闪避，悬停看火候倍率与路数加成）；
+    底部精进一重，点了重数、属性、要诀数值同步刷新并闪一下金。临关或内力不足时按钮置灰，缘由写在上方一行。
+  · 心法要诀：只在翻开的书里出现一次。每条一行：名目 + 当前生效值；右侧挂会改它的关名（已过墨金、下一关暖金、再往后淡出、本品质够不着更淡），
+    改了什么只写在悬停里，不铺在页面上。悬停一个关名，所有受同一关影响的要诀同时亮起。
   · 武学页即上一轮定稿：装配用印匣（印色按路数），书页磁青。
 
-  素材：code/public/art/ 下 neigong.jpg、wuxue.jpg（页底图）、neigong-scroll-l/m/r.png（磁青手卷）、book-q1/2/3.png（书封）、cat/*.png（类目石印）、wuxue-open-ciqing.jpg（磁青书页）。
+  素材：code/public/art/ 下 neigong.jpg、wuxue.jpg（页底图）、book-q1/2/3.png（书封）、cat/*.png（类目石印）、wuxue-open-ciqing.jpg（磁青书页）。
   file:// 直接打开即可。右下角白色面板是原型控制（可收起），不是设计内容。
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -245,58 +244,27 @@ body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="wuxue"] .p
 .ya.empty { cursor: default; }
 .ya.empty .box { background: none; box-shadow: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; }
 
-/* ═══ 内功：主修 —— 左一本主修书（同藏经书封放大），右一幅磁青手卷：卷首题签写重数，卷身一重一个圈点，五关竖写成栏，卷尾一枚朱印精进 ═══ */
-.zx { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 30px; align-items: center; margin-bottom: 34px; }
-.zx-book { display: grid; justify-items: center; gap: 10px; }
-.zx-book .book { width: 104px; margin: 0; cursor: default; filter: drop-shadow(0 10px 16px oklch(0.05 0.01 262 / 0.65)) drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.18)); }
-.zx-book .book:hover { transform: none; }
-.zx-book .slip { font-size: 13.5px; }
-.zx-book .tags { display: flex; gap: 5px; }
-.zx-book .ptag { font-size: 11px; padding: 0 6px; }
+/* ═══ 内功：主修一行 —— 心法名 + 品质 / 路数章 + 重数，点它翻开主修那本 ═══ */
+.zx { display: flex; align-items: baseline; gap: 14px; margin-bottom: 30px; padding: 4px 0 14px; border: 0; background: none; cursor: pointer; text-align: left;
+  border-bottom: 1px solid var(--hair); width: 100%; }
+.zx .nmx { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: 0.2em; color: var(--ink); }
+.zx .ptag { align-self: center; font-size: 11.5px; }
+.zx .zz { margin-left: auto; font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: 0.05em; }
+.zx .zz small { font-size: 15px; margin-left: 3px; color: var(--muted); font-weight: 600; }
+.zx:hover .nmx { color: var(--gold); }
 
-.scroll { position: relative; height: 158px; display: grid; grid-template-columns: 62px minmax(0, 1fr) 96px; align-items: stretch;
-  padding: 14px 40px; filter: drop-shadow(0 12px 22px oklch(0.05 0.01 262 / 0.6)); }
-.scroll::before { content: ''; position: absolute; inset: 0; z-index: -1; background:
-    url('../../code/public/art/neigong-scroll-l.png') left center / auto 100% no-repeat,
-    url('../../code/public/art/neigong-scroll-r.png') right center / auto 100% no-repeat,
-    url('../../code/public/art/neigong-scroll-m.png') center / calc(100% - var(--cap) * 2 + 2px) 100% no-repeat; --cap: 33px; }
-/* 卷首题签：同书封题签，竖写重数 */
-.tq { align-self: center; justify-self: center; writing-mode: vertical-rl; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0.2em; color: oklch(0.2 0.02 60);
-  background: oklch(0.88 0.035 85); padding: 12px 6px; border-radius: 1px; box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.5), 0 2px 6px oklch(0.05 0.01 262 / 0.45); white-space: nowrap; cursor: help; }
-/* 卷身：五段等宽，段内一重一个圈点 */
-.juan { position: relative; margin: 0 6px 0 14px; }
-.juan .col { position: absolute; top: 58px; bottom: 30px; width: 1px; background: linear-gradient(to bottom, transparent, oklch(0.83 0.1 82 / 0.35) 15%, oklch(0.83 0.1 82 / 0.35) 85%, transparent); }
-.juan .gt { position: absolute; top: 16px; bottom: 14px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: help; z-index: 2; padding: 0 3px; }
-.juan .gt .gn { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.25em; line-height: 1; color: oklch(0.6 0.03 250); transition: color .2s, text-shadow .2s; padding: 3px 1px; }
-.juan .gt .gz { font-size: 10.5px; color: oklch(0.6 0.02 250); white-space: nowrap; padding: 0 2px; }
-.juan .gt .zy { position: absolute; top: 44%; left: 50%; width: 18px; height: 18px; transform: translate(-50%, -50%) rotate(-8deg); display: grid; place-items: center;
-  font-family: var(--font-display); font-size: 10px; font-weight: 700; color: oklch(0.95 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 2px; box-shadow: inset 0 0 0 1px oklch(0.93 0.03 60 / 0.6); }
-.juan .gt.done .gn { color: var(--nijin); }
-.juan .gt.done .gz { color: oklch(0.75 0.06 80); }
-.juan .gt.wait .gn { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.7); animation: wait 2.4s ease-in-out infinite; }
-.juan .gt.wait .gz { color: var(--gold); }
-.juan .gt.next .gn { color: oklch(0.86 0.03 85); }
-.juan .gt.na .gn, .juan .gt.na .gz { color: oklch(0.45 0.02 250); }
-.juan .gt.hl .gn { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.7); }
-@keyframes wait { 50% { text-shadow: 0 0 3px oklch(0.78 0.13 78 / 0.2); } }
-.dot { position: absolute; top: 50%; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: inset 0 0 0 1px oklch(0.75 0.02 250 / 0.45); }
-.dot.on { background: oklch(0.56 0.17 30); box-shadow: 0 0 4px oklch(0.56 0.17 30 / 0.5); }
-.dot.cur { width: 13px; height: 13px; background: oklch(0.6 0.18 30); box-shadow: 0 0 0 3px oklch(0.6 0.18 30 / 0.22), 0 0 12px oklch(0.6 0.18 30 / 0.7); }
-.dot.next { width: 9px; height: 9px; box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.5); }
-.dot.dim { opacity: 0.35; }
-/* 卷尾：朱印精进 */
-.jj { align-self: center; justify-self: center; display: grid; justify-items: center; gap: 7px; }
-.jj .yin { width: 58px; height: 58px; border: 0; cursor: pointer; display: grid; place-items: center; writing-mode: vertical-rl; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0.08em; line-height: 1;
-  color: oklch(0.96 0.03 60); background: oklch(0.52 0.18 29); border-radius: 5px; transform: rotate(-6deg);
-  box-shadow: inset 0 0 0 2px oklch(0.95 0.03 60 / 0.7), inset 0 0 14px oklch(0.3 0.12 28 / 0.5), 0 4px 10px oklch(0.05 0.01 262 / 0.55); transition: transform .2s var(--ease-sharp), filter .2s, box-shadow .2s; }
-.jj .yin:hover:not(:disabled) { transform: rotate(-6deg) scale(1.06); filter: brightness(1.1); box-shadow: inset 0 0 0 2px oklch(0.95 0.03 60 / 0.8), 0 0 18px oklch(0.6 0.18 30 / 0.55), 0 4px 10px oklch(0.05 0.01 262 / 0.55); }
-.jj .yin:active:not(:disabled) { transform: rotate(-6deg) scale(0.94); }
-.jj .yin:disabled { cursor: default; color: oklch(0.72 0.02 250); background: oklch(0.32 0.025 255); box-shadow: inset 0 0 0 1.5px oklch(0.6 0.02 250 / 0.5), 0 3px 8px oklch(0.05 0.01 262 / 0.5); }
-.jj .yin.wait:disabled { color: var(--gold); box-shadow: inset 0 0 0 1.5px oklch(0.78 0.13 78 / 0.6), 0 0 14px oklch(0.78 0.13 78 / 0.3); }
-.jj .cost { font-size: 11.5px; color: oklch(0.85 0.03 85); white-space: nowrap; text-align: center; line-height: 1.35; }
-.jj .cost.short { color: oklch(0.7 0.02 250); }
-.jj .cost i { display: block; width: 64px; height: 2px; margin: 4px auto 0; border-radius: 1px; background: oklch(0.4 0.02 250 / 0.7); position: relative; overflow: hidden; }
-.jj .cost i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--f); background: var(--nijin); }
+/* 书页左页（内功）：书名旁写重数，下列内功提供的基础属性，底部精进 */
+.zline { margin-top: 4px; font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: 0.05em; line-height: 1.1; cursor: help; }
+.zline small { font-size: 13px; color: var(--muted); margin-left: 2px; font-weight: 600; }
+.zcap { font-size: 11.5px; color: var(--faint); }
+.attrs { display: grid; gap: 8px; margin-top: 20px; font-size: 13px; color: var(--faint); }
+.attrs .hd { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.3em; color: var(--nijin); margin-bottom: 2px; }
+.attrs > span { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 6px; border-bottom: 1px solid oklch(0.7 0.03 250 / 0.22); }
+.attrs b { color: var(--ink); font-weight: 600; font-size: 15px; }
+.attrs b.up { animation: up 1.2s var(--ease-sharp); }
+.attrs b.nil { color: oklch(0.55 0.02 250); font-weight: 400; }
+@keyframes up { 0% { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.8); } }
+.yj .v b.up { animation: up 1.2s var(--ease-sharp); }
 
 /* 心法要诀（内功右页） */
 .yj-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
@@ -319,8 +287,6 @@ body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="wuxue"] .p
 .ch.wait { color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.35); background: oklch(0.78 0.13 78 / 0.14); }
 .ch.later { color: oklch(0.66 0.02 250); box-shadow: inset 0 0 0 1px oklch(0.6 0.02 250 / 0.3); }
 .ch.na { color: oklch(0.5 0.015 250); box-shadow: inset 0 0 0 1px oklch(0.5 0.015 250 / 0.22); }
-.ch.zz { color: var(--qi); box-shadow: inset 0 0 0 1px oklch(0.74 0.10 215 / 0.35); }
-.ch.zz.full { color: oklch(0.62 0.04 215); box-shadow: inset 0 0 0 1px oklch(0.62 0.04 215 / 0.25); }
 .ch.hl { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 10px oklch(0.78 0.13 78 / 0.45); color: var(--gold); }
 .zhu { position: absolute; right: calc(1.5cqw + 26px); top: calc(4cqh + 24px); width: 46px; height: 46px; display: grid; place-items: center; writing-mode: vertical-rl;
   font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 0.05em; line-height: 1; color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.9); border-radius: 4px;
@@ -332,6 +298,7 @@ body[data-tab="neigong"] .proto [data-only="neigong"], body[data-tab="wuxue"] .p
 <div class="proto">
   <div class="head">原型控制<button class="js-fold" aria-label="收起">—</button></div>
   <div class="row" data-only="neigong"><span>主修</span><button data-pre="a" aria-pressed="true">蚀骨 5 重</button><button data-pre="b">蚀骨 6 重临关</button><button data-pre="c">沧海 13 重</button><button data-pre="d">菩提 27 重</button></div>
+  <div class="row" data-only="neigong"><span>模拟</span><button data-sim="dan">内力 +1 万</button><button data-sim="wu">顿悟成功</button></div>
   <div class="row" data-only="wuxue"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
   <div class="row" data-only="wuxue"><span>兵器</span><button data-w="剑">持剑</button><button data-w="刀" aria-pressed="true">持刀</button><button data-w="">赤手</button></div>
   <div class="hint">侧栏可切「内功 / 武学」，其余页签原型未画。内功页：悬停进境线上的关口或要诀右侧的关名，二者互相点亮；「精进一重」可点。</div>
@@ -402,7 +369,7 @@ const qiMax = (realm, z, q) => Math.round((70 + 15 * (Math.max(realm, 2) - 2) + 
 const pctx = (v) => `${Math.round(v * 10) / 10}`;
 
 /**
- * 心法要诀：每条 { lb 名目, v 当前值（HTML）, tiers 会改它的关 [序号, 变化], zz 逐重每重加多少（无则不逐重）, need 未得时要哪一关 }
+ * 心法要诀：每条 { lb 名目, v 当前值（HTML）, tiers 会改它的关 [序号, 变化], need 未得时要哪一关 }
  * 数值公式同 engine/routes.ts + neigong.ts（已用真实引擎对拍过 5 / 13 / 27 重三个点）。
  */
 function yaojue(r, q, realm, z, passed) {
@@ -413,31 +380,31 @@ function yaojue(r, q, realm, z, passed) {
     const coef = 12 + 1.8 * L + (P(3) ? 3 : 0) + (P(4) ? 2 : 0);
     return [
       { lb: '施毒', v: `开战施毒 <b>${init}</b> 层，每次命中 <b>+1</b> 层`, tiers: [[0, '初始 +2 层']] },
-      { lb: '毒伤', v: `攻击 × <b>${pctx(coef)}%</b> × 层数，<b>无视防御</b>`, tiers: [[3, '+3pp'], [4, '+2pp']], zz: '+1.8pp' },
+      { lb: '毒伤', v: `攻击 × <b>${pctx(coef)}%</b> × 层数，<b>无视防御</b>`, tiers: [[3, '+3pp'], [4, '+2pp']] },
       { lb: '毒层', v: `上限 <b>${cap}</b> 层`, tiers: [[1, '8 → 10 层']] },
       { lb: '毒爆', v: `满层引爆 <b>${burst}%</b>`, tiers: [[2, '50% → 80%']] },
       { lb: '代价', v: `普攻伤害 <b>×0.60</b>`, tiers: [] },
-      { lb: '气海', v: `×<b>${QI_COEF[q].toFixed(1)}</b> · 真气上限 <b>${qiMax(realm, z, q)}</b>`, tiers: [], zz: '+1 真气' },
+      { lb: '气海', v: `×<b>${QI_COEF[q].toFixed(1)}</b> · 真气上限 <b>${qiMax(realm, z, q)}</b>`, tiers: [] },
     ];
   }
   if (r === 'huashan') {
     const cr = 10 + 2.5 * L, cd = 20 + 8 * L + (P(4) ? 20 : 0), sq = P(2) ? 3 : P(0) ? 4 : 5, bm = 400 + (P(1) ? 150 : 0) + (P(3) ? 50 : 0);
     return [
-      { lb: '会心', v: `会心率 <b>+${pctx(cr)}pp</b>，会心伤害 <b>+${pctx(cd)}pp</b>`, tiers: [[4, '暴伤 +20pp']], zz: '+2.5pp / +8pp' },
+      { lb: '会心', v: `会心率 <b>+${pctx(cr)}pp</b>，会心伤害 <b>+${pctx(cd)}pp</b>`, tiers: [[4, '暴伤 +20pp']] },
       { lb: '先手', v: `开战首击<b>必定会心</b>`, tiers: [] },
       { lb: '叠浪', v: `每次会心叠 1 重，叠满 <b>${sq}</b> 重`, tiers: [[0, '5 → 4 重'], [2, '4 → 3 重']] },
       { lb: '排山倒海', v: `叠满时施展 <b>${bm}%</b>`, tiers: [[1, '400% → 550%'], [3, '+50pp']] },
-      { lb: '气海', v: `×<b>${QI_COEF[q].toFixed(1)}</b> · 真气上限 <b>${qiMax(realm, z, q)}</b>`, tiers: [], zz: '+1 真气' },
+      { lb: '气海', v: `×<b>${QI_COEF[q].toFixed(1)}</b> · 真气上限 <b>${qiMax(realm, z, q)}</b>`, tiers: [] },
     ];
   }
   const sh = 30 + (P(0) ? 15 : 0) + (P(4) ? 8 : 0), th = 25 + 3 * L + (P(1) ? 15 : 0) + (P(3) ? 5 : 0), df = 20 + 6 * L;
   return [
     { lb: '护盾', v: `开战得 <b>${sh}%</b> 气血护盾`, tiers: [[0, '+15pp'], [4, '+8pp']] },
-    { lb: '反伤', v: `受击反伤 <b>${th}%</b>`, tiers: [[1, '+15pp'], [3, '+5pp']], zz: '+3pp' },
-    { lb: '防御', v: `防御 <b>+${df}%</b>`, tiers: [], zz: '+6%' },
+    { lb: '反伤', v: `受击反伤 <b>${th}%</b>`, tiers: [[1, '+15pp'], [3, '+5pp']] },
+    { lb: '防御', v: `防御 <b>+${df}%</b>`, tiers: [] },
     P(2) ? { lb: '濒危', v: `气血低于 30% 时受伤 <b>−30%</b>`, tiers: [[2, '得此诀']] }
          : { lb: '濒危', v: `气血低于 30% 时受伤 <b>−30%</b>`, tiers: [[2, '得此诀']], lock: true },
-    { lb: '气海', v: `×<b>${QI_COEF[q].toFixed(1)}</b> · 真气上限 <b>${qiMax(realm, z, q)}</b>`, tiers: [], zz: '+1 真气' },
+    { lb: '气海', v: `×<b>${QI_COEF[q].toFixed(1)}</b> · 真气上限 <b>${qiMax(realm, z, q)}</b>`, tiers: [] },
   ];
 }
 
@@ -457,50 +424,23 @@ function tierState(i, q, z, passed) {
 const gateOf = (q, z, passed) => (passed < TIER_COUNT[q] && z >= TIERS[passed].at ? TIERS[passed] : null);
 
 const CNUM = (n) => n <= 10 ? NUM[n] : n < 20 ? `十${n % 10 ? NUM[n % 10] : ''}` : `${NUM[Math.floor(n / 10)]}十${n % 10 ? NUM[n % 10] : ''}`;
+const BASE = { 3: { hp: 2900, atk: 290, def: 150 }, 4: { hp: 4950, atk: 490, def: 260 }, 6: { hp: 16800, atk: 1680, def: 880 } };
+const ROUTE_PCT = { huashan: (L) => ({ atk: 0.06 * L }), shaolin: (L) => ({ hp: 0.06 * L, def: 0.20 + 0.06 * L }), tangmen: (L) => ({ atk: 0.01 * L }) };
+/** 内功提供的基础属性 = 境界底数 × (火候倍率 × (1 + 路数加成) − 1)；命中 / 闪避按折合境界。同 engine/combat.ts makeBuild + neigong.ts neigongBuild */
+function ngAttrs(id, realm, z) {
+  const d = NG[id], base = BASE[realm];
+  const dx = z / 20 * HH[d.q], M = Math.pow(1.7, dx), rp = ROUTE_PCT[d.r](Math.min(z, 10));
+  const one = (k) => {
+    const pct = rp[k] ?? 0;
+    return { v: Math.round(base[k] * ((1 + pct) * M - 1)), tip: `火候 ×${M.toFixed(2)}${pct ? ` · ${ROUTE[d.r].name}一路 +${Math.round(pct * 100)}%` : ''}` };
+  };
+  return { hp: one('hp'), atk: one('atk'), def: one('def'), hit: Math.round(12 * dx), dodge: Math.round(3 * dx), dx };
+}
 function renderJinjing() {
   const d = NG[ng.id];
-  const gate = gateOf(d.q, ng.z, ng.passed);
-  const cost = zhongCost(ng.z + 1);
-  const short = cost - ng.dan;
-  const reach = TIER_COUNT[d.q];
-  const fold = (ng.z / 20 * HH[d.q]).toFixed(2);
-  // 圈点：一重一点；读过的朱点、当前一枚大朱点、下一重金圈、够不着的段压暗
-  let dots = '';
-  for (let t = 1; t <= 40; t++) {
-    if (TIERS.some((x) => x.at === t)) continue;
-    const seg = SEGS.findIndex(([a, b]) => t > a && t <= b);
-    const cls = t < ng.z ? 'on' : t === ng.z ? 'cur' : (t === ng.z + 1 && !gate ? 'next' : (seg >= reach ? 'dim' : ''));
-    dots += `<i class="dot ${cls}" style="left:${xOf(t)}%"></i>`;
-  }
-  const cols = TIERS.map((t, i) => {
-    const st = tierState(i, d.q, ng.z, ng.passed);
-    const tip = st === 'na' ? `${t.name} · 第 ${t.at} 重 · ${i === 3 ? '上乘' : '绝学'}内功可达`
-      : st === 'wait' ? `临「${t.name}」之关：挂机修炼每 10 分钟一判，此刻约 ${Math.round(t.p * 100)}%；内力照常积累`
-      : `${t.name} · 第 ${t.at} 重${st === 'done' ? ' · 已过' : ''}`;
-    // 当前重数正落在关上（已过或在等）时，关栏中间压一枚当前朱点
-    const here = ng.z === t.at ? `<i class="dot cur" style="left:50%"></i>` : '';
-    return `<i class="col" style="left:${xOf(t.at)}%"></i><div class="gt ${st}" data-tier="${i}" data-tip="${tip}" style="left:${xOf(t.at)}%"><span class="gn">${t.name}</span>${here}<span class="gz">${st === 'wait' ? '静候顿悟' : `${CNUM(t.at)}重`}</span></div>`;
-  }).join('');
-  let seal, cost2;
-  if (gate) { seal = `<button class="yin wait" disabled data-tip="挂机修炼每 10 分钟一判顿悟，此刻约 ${Math.round(gate.p * 100)}%">顿悟</button>`; cost2 = `<span class="cost">内力照常积累</span>`; }
-  else if (short > 0) {
-    const sec = short / RATE, t = sec < 3600 ? `约 ${Math.ceil(sec / 60)} 分钟` : `约 ${(sec / 3600).toFixed(1)} 小时`;
-    seal = `<button class="yin" disabled>精进</button>`;
-    cost2 = `<span class="cost short">还差 ${fmt(short)}<br>${t}<i style="--f:${Math.round(ng.dan / cost * 100)}%"></i></span>`;
-  } else { seal = `<button class="yin js-up" data-tip="精进一重：每重气血、攻击、防御约 +2.7%；价格每重 ×1.08；转世即散">精进</button>`; cost2 = `<span class="cost">${fmt(cost)} 内力</span>`; }
   return `
     <h2 class="jh-sec">主修</h2>
-    <section class="zx">
-      <div class="zx-book">
-        <div class="book ng q${QN[d.q]}"><i class="cv"></i><span class="slip">${d.name}</span></div>
-        <div class="tags"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span></div>
-      </div>
-      <div class="scroll">
-        <span class="tq" data-tip="火候折合 ${fold} 个境界：每 20 重折合一个境界">第${CNUM(ng.z)}重</span>
-        <div class="juan" role="img" aria-label="进境：第 ${ng.z} 重">${dots}${cols}</div>
-        <div class="jj">${seal}${cost2}</div>
-      </div>
-    </section>`;
+    <button class="zx" data-ng="${ng.id}"><span class="nmx">${d.name}</span><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span><span class="zz">第 ${ng.z}<small>重</small></span></button>`;
 }
 
 function renderNgShelf() {
@@ -528,34 +468,43 @@ function renderNgBook() {
   const main = id === ng.id;
   const z = main ? ng.z : 0, passed = main ? ng.passed : 0;
   const peak = TIERS[TIER_COUNT[d.q] - 1];
+  const up = (k) => (ng.bump && main ? ' up' : '');
   const rows = yaojue(d.r, d.q, ng.realm, z, passed).map((y) => {
     const chips = y.tiers.map(([i, delta]) => {
       const t = TIERS[i];
       const st = tierState(i, d.q, z, passed);
-      const tip = `${t.name}（第 ${t.at} 重）：${delta}${st === 'na' ? ` · ${i === 3 ? '上乘' : '绝学'}内功可达` : st === 'done' ? ' · 已得' : ''}`;
-      const txt = st === 'next' || st === 'wait' ? `${t.name} ${delta}` : t.name;
-      return `<span class="ch ${st}" data-tier="${i}" data-tip="${tip}">${txt}</span>`;
+      const tip = `${t.name}（第 ${t.at} 重）：${delta}${st === 'na' ? ` · ${i === 3 ? '上乘' : '绝学'}内功可达` : st === 'done' ? ' · 已得' : st === 'wait' ? ' · 静候顿悟' : ''}`;
+      return `<span class="ch ${st}" data-tier="${i}" data-tip="${tip}">${t.name}</span>`;
     }).join('');
-    const L = Math.min(z, 10);
-    const zz = y.zz ? (y.lb === '气海'
-      ? `<span class="ch zz" data-tip="每精进一重真气上限 +1">逐重</span>`
-      : `<span class="ch zz${L >= 10 ? ' full' : ''}" data-tip="第 1–10 重每重 ${y.zz}，已计 ${L} / 10 重">逐重${L >= 10 ? '已满' : ''}</span>`) : '';
-    return `<div class="yj${y.lock ? ' lock' : ''}" data-rows="${y.tiers.map(([i]) => i).join(' ')}"><div class="h"><span class="lb">${y.lb}</span><span class="chips">${zz}${chips}</span></div><div class="v">${y.v}</div></div>`;
+    return `<div class="yj${y.lock ? ' lock' : ''}" data-rows="${y.tiers.map(([i]) => i).join(' ')}"><div class="h"><span class="lb">${y.lb}</span><span class="chips">${chips}</span></div><div class="v">${ng.bump && main ? y.v.replaceAll('<b>', '<b class="up">') : y.v}</div></div>`;
   }).join('');
-  const same = d.r === NG[ng.id].r;
-  const act = main ? '' : same
-    ? `<div class="need ok">同为${ROUTE[d.r].name}一路</div><button class="pbtn">转修 · 保留八成功力</button>`
-    : `<div class="need">跨路须散功，重数从头练起</div><button class="pbtn quiet">散功重修</button>`;
+  const at = ngAttrs(id, ng.realm, z);
+  const val = (v, tip) => (v ? `<b class="${up()}" data-tip="${tip}">+${fmt(v)}</b>` : `<b class="nil">—</b>`);
+  // 精进：只有主修那本有；临关 / 内力不足时置灰，缘由写在按钮上方一行
+  let act;
+  if (main) {
+    const gate = gateOf(d.q, ng.z, ng.passed);
+    const cost = zhongCost(ng.z + 1), short = cost - ng.dan;
+    if (gate) act = `<div class="need">临「${gate.name}」之关</div><button class="pbtn" disabled data-tip="挂机修炼每 10 分钟一判顿悟，此刻约 ${Math.round(gate.p * 100)}%；内力照常积累">静候顿悟</button>`;
+    else if (short > 0) {
+      const sec = short / RATE, t = sec < 3600 ? `约 ${Math.ceil(sec / 60)} 分钟` : `约 ${(sec / 3600).toFixed(1)} 小时`;
+      act = `<div class="need">还差 ${fmt(short)} 内力 · ${t}</div><button class="pbtn" disabled>精进一重　${fmt(cost)} 内力</button>`;
+    } else act = `<div class="need ok">&nbsp;</div><button class="pbtn js-up" data-tip="价格每重 ×1.08；重数转世即散">精进一重　${fmt(cost)} 内力</button>`;
+  } else {
+    const same = d.r === NG[ng.id].r;
+    act = same ? `<div class="need ok">同为${ROUTE[d.r].name}一路</div><button class="pbtn">转修 · 保留八成功力</button>`
+      : `<div class="need">跨路须散功，重数从头练起</div><button class="pbtn quiet">散功重修</button>`;
+  }
   return `
     <div class="pg l">
       <div class="ttl"><span class="nm">${d.name}</span>
-        <div class="side"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span></div></div>
+        <div class="side"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${ROUTE[d.r].tag}">${ROUTE[d.r].name}</span>
+          <div class="zline${up()}" data-tip="火候折合 ${at.dx.toFixed(2)} 个境界：每 20 重折合一个境界">第 ${z}<small>重</small></div>
+          <span class="zcap">最高至${peak.name} · ${peak.at} 重</span></div></div>
       ${main ? '<span class="zhu">主修</span>' : ''}
-      <div class="params facts">
-        <span>最高可至<b class="gold">${peak.name} · 第 ${peak.at} 重</b></span>
-        <span>气海<b>×${QI_COEF[d.q].toFixed(1)}</b></span>
-        <span>真气上限<b>${qiMax(ng.realm, z, d.q)}</b></span>
-        ${main ? `<span>已过之关<b>${ng.passed ? TIERS.slice(0, ng.passed).map((t) => t.name).join(' · ') : '尚无'}</b></span>` : `<span>初练<b>第 0 重</b></span>`}
+      <div class="attrs">
+        <span>气血${val(at.hp.v, at.hp.tip)}</span><span>攻击${val(at.atk.v, at.atk.tip)}</span><span>防御${val(at.def.v, at.def.tip)}</span>
+        <span>命中${val(at.hit, '火候折合境界 × 12')}</span><span>闪避${val(at.dodge, '火候折合境界 × 3')}</span>
       </div>
       ${act}
     </div>
@@ -707,7 +656,10 @@ document.addEventListener('click', (e) => {
   if (b.closest('.js-nav')) { ui.tab = b.dataset.tab; render(); return; }
   if (b.classList.contains('js-fold')) { b.closest('.proto').classList.toggle('folded'); return; }
   if (b.dataset.pre) { Object.assign(ng, structuredClone(PRESET[b.dataset.pre]), { pre: b.dataset.pre, cur: null, cat: 'all' }); press('[data-pre]'); }
-  if (b.classList.contains('js-up')) { ng.dan -= zhongCost(ng.z + 1); ng.z += 1; }
+  ng.bump = false;
+  if (b.classList.contains('js-up')) { ng.dan -= zhongCost(ng.z + 1); ng.z += 1; ng.cur = ng.id; ng.bump = true; }
+  if (b.dataset.sim === 'dan') ng.dan += 10000;
+  if (b.dataset.sim === 'wu') { const g = gateOf(NG[ng.id].q, ng.z, ng.passed); if (g) { ng.passed += 1; ng.cur = ng.id; ng.bump = true; } }
   if (b.dataset.ng) ng.cur = b.dataset.ng;
   if (b.dataset.ngcat) ng.cat = b.dataset.ngcat;
   if (b.dataset.wx) wx.cur = b.dataset.wx;

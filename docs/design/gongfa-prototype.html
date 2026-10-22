@@ -189,6 +189,8 @@ body[data-tab="wugong"] .proto [data-only] { display: flex; }
 .open .ttl { display: flex; align-items: flex-start; gap: 16px; }
 .open .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.22em; line-height: 1; padding: 4px 0; white-space: nowrap; color: var(--nijin); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.25); }
 .open .side { display: grid; gap: 8px; align-content: start; padding-top: 2px; }
+/* 武学批注：一行横排（用户选定） */
+.open .ep { display: block; margin-top: 10px; font-family: var(--font-display); font-size: 14px; line-height: 1.5; letter-spacing: 0.1em; color: color-mix(in oklch, var(--muted) 82%, transparent); white-space: nowrap; }
 .ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 3px; width: max-content; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
 .ptag.q1 { background: oklch(0.3 0.014 262 / 0.55); }
 .ptag.q2 { color: oklch(0.8 0.08 210); background: oklch(0.74 0.10 215 / 0.10); box-shadow: inset 0 0 0 1px oklch(0.74 0.10 215 / 0.4); }
@@ -557,20 +559,20 @@ const ORDER = ['剑', '刀', '枪', '棍', '拳', '掌', '指', '腿', '暗器']
 const SEAL = { 暗器: '镖' };
 const ico = (cat, cls = '') => `<i class="ico ${cls}" style="background-image:url('${A}cat/${ICON[cat]}.png')"></i>`;
 const WX = {
-  xfl: { n: '旋风腿', q: '寻常', cat: '腿', rt: '刚猛', p: 33, cd: 2, cost: 14, m0: 150, fx: '击退', forms: [['扫叶', '命中后对方下回合出招几率减半', 150, 46], ['旋踢', '连踢两下，第二下七成', 170, 9]] },
-  lyj: { n: '流云剑', q: '上乘', cat: '剑', rt: '绵长', p: 28, cd: 3, cost: 18, m0: 165, fx: '回气', forms: [['云起', '命中回真气 6', 165, 100], ['云舒', '命中回真气 10，下回合耗气减半', 185, 21], ['云归', '本回合回气翻倍', 210, 0]], pages: 2, res: true },
-  lhq: { n: '罗汉拳', q: '寻常', cat: '拳', rt: '守御', p: 30, cd: 2, cost: 12, m0: 140, fx: '护体', forms: [['合十', '命中后本回合受伤减三成', 140, 100], ['伏虎', '受伤减半', 160, 12]] },
-  tzcq: { n: '太祖长拳', q: '绝学', cat: '拳', rt: '刚猛', p: 22, cd: 4, cost: 24, m0: 200, fx: '会心', forms: [['冲天炮', '会心几率加两成', 200, 58], ['黑虎掏心', '会心必带内伤', 240, 3], ['拦腰斩', '', 280, 0], ['反身捶', '', 330, 0]], pages: 2, benmen: true },
-  ksz: { n: '开山掌', q: '寻常', cat: '掌', rt: '刚猛', p: 30, cd: 2, cost: 15, m0: 155, fx: '破甲', forms: [['劈山', '无视对方三成守御', 155, 0], ['裂石', '无视守御', 175, 0]] },
-  fhb: { n: '飞蝗镖', q: '寻常', cat: '暗器', rt: '阴毒', p: 25, cd: 2, cost: 10, m0: 120, fx: '中毒', forms: [['一字', '命中附毒 3 回合', 120, 100], ['连珠', '三镖连发', 130, 100]] },
-  zfd: { n: '追风刀', q: '上乘', cat: '刀', rt: '诡谲', p: 26, cd: 3, cost: 17, m0: 160, fx: '追击', forms: [['追风', '', 160, 0], ['逐月', '', 180, 0], ['断流', '', 205, 0]], pages: 1, ghost: true },
-  yjq: { n: '杨家枪', q: '上乘', cat: '枪', rt: '刚猛', p: 27, cd: 3, cost: 19, m0: 170, fx: '贯穿', forms: [['拦拿', '无视对方两成守御', 170, 100], ['回马', '受击后反刺一枪', 190, 64], ['梨花', '', 215, 0]], pages: 3 },
-  dgb: { n: '打狗棒', q: '绝学', cat: '棍', rt: '诡谲', p: 20, cd: 4, cost: 22, m0: 190, fx: '缠绊', forms: [['绊字诀', '对方下回合闪避减半', 190, 30], ['劈字诀', '', 230, 0], ['缠字诀', '', 270, 0], ['天下无狗', '', 320, 0]], pages: 1 },
-  yyz: { n: '一阳指', q: '绝学', cat: '指', rt: '绵长', p: 21, cd: 4, cost: 26, m0: 195, fx: '封穴', forms: [['一阳', '命中封对方一处穴道', 195, 12], ['二阳', '', 235, 0], ['三阳', '', 275, 0], ['九阳', '', 330, 0]], pages: 2 },
-  wlg: { n: '五郎八卦棍', q: '上乘', cat: '棍', rt: '守御', p: 26, cd: 3, cost: 18, m0: 160, fx: '格挡', forms: [['挑', '', 160, 100], ['扫', '', 180, 4], ['封', '', 205, 0]], pages: 2 },
-  smt: { n: '三脚猫', q: '寻常', cat: '腿', rt: '诡谲', p: 34, cd: 2, cost: 9, m0: 120, fx: '闪身', forms: [['虚踢', '闪避加一成', 120, 100], ['实踹', '', 135, 22]] },
-  whd: { n: '五虎断门刀', q: '上乘', cat: '刀', rt: '刚猛', p: 26, cd: 3, cost: 19, m0: 170, fx: '破甲', forms: [['猛虎出林', '无视对方两成守御', 170, 100], ['饿虎扑食', '无视对方三成守御', 190, 52], ['虎尾剪', '', 215, 0]], pages: 3 },
-  lyd: { n: '柳叶刀', q: '寻常', cat: '刀', rt: '绵长', p: 31, cd: 2, cost: 13, m0: 145, fx: '回气', forms: [['拂柳', '命中回真气 4', 145, 70], ['折枝', '', 165, 0]] },
+  xfl: { n: '旋风腿', ep: '北风卷地，满庭飞雪', q: '寻常', cat: '腿', rt: '刚猛', p: 33, cd: 2, cost: 14, m0: 150, fx: '击退', forms: [['扫叶', '命中后对方下回合出招几率减半', 150, 46], ['旋踢', '连踢两下，第二下七成', 170, 9]] },
+  lyj: { n: '流云剑', ep: '白云出远岫，青锋本无心', q: '上乘', cat: '剑', rt: '绵长', p: 28, cd: 3, cost: 18, m0: 165, fx: '回气', forms: [['云起', '命中回真气 6', 165, 100], ['云舒', '命中回真气 10，下回合耗气减半', 185, 21], ['云归', '本回合回气翻倍', 210, 0]], pages: 2, res: true },
+  lhq: { n: '罗汉拳', ep: '石狮守夜，钟鼓惊禅', q: '寻常', cat: '拳', rt: '守御', p: 30, cd: 2, cost: 12, m0: 140, fx: '护体', forms: [['合十', '命中后本回合受伤减三成', 140, 100], ['伏虎', '受伤减半', 160, 12]] },
+  tzcq: { n: '太祖长拳', ep: '黄袍未加日，长拳定山河', q: '绝学', cat: '拳', rt: '刚猛', p: 22, cd: 4, cost: 24, m0: 200, fx: '会心', forms: [['冲天炮', '会心几率加两成', 200, 58], ['黑虎掏心', '会心必带内伤', 240, 3], ['拦腰斩', '', 280, 0], ['反身捶', '', 330, 0]], pages: 2, benmen: true },
+  ksz: { n: '开山掌', ep: '巨灵擘山，大河东去', q: '寻常', cat: '掌', rt: '刚猛', p: 30, cd: 2, cost: 15, m0: 155, fx: '破甲', forms: [['劈山', '无视对方三成守御', 155, 0], ['裂石', '无视守御', 175, 0]] },
+  fhb: { n: '飞蝗镖', ep: '飞蝗蔽日，寒雨穿林', q: '寻常', cat: '暗器', rt: '阴毒', p: 25, cd: 2, cost: 10, m0: 120, fx: '中毒', forms: [['一字', '命中附毒 3 回合', 120, 100], ['连珠', '三镖连发', 130, 100]] },
+  zfd: { n: '追风刀', ep: '刃底生长风，追月到天涯', q: '上乘', cat: '刀', rt: '诡谲', p: 26, cd: 3, cost: 17, m0: 160, fx: '追击', forms: [['追风', '', 160, 0], ['逐月', '', 180, 0], ['断流', '', 205, 0]], pages: 1, ghost: true },
+  yjq: { n: '杨家枪', ep: '金沙滩上血，枪冷雁门秋', q: '上乘', cat: '枪', rt: '刚猛', p: 27, cd: 3, cost: 19, m0: 170, fx: '贯穿', forms: [['拦拿', '无视对方两成守御', 170, 100], ['回马', '受击后反刺一枪', 190, 64], ['梨花', '', 215, 0]], pages: 3 },
+  dgb: { n: '打狗棒', ep: '青竹如碧玉，风骨傲千秋', q: '绝学', cat: '棍', rt: '诡谲', p: 20, cd: 4, cost: 22, m0: 190, fx: '缠绊', forms: [['绊字诀', '对方下回合闪避减半', 190, 30], ['劈字诀', '', 230, 0], ['缠字诀', '', 270, 0], ['天下无狗', '', 320, 0]], pages: 1 },
+  yyz: { n: '一阳指', ep: '朝阳生指底，万穴尽回春', q: '绝学', cat: '指', rt: '绵长', p: 21, cd: 4, cost: 26, m0: 195, fx: '封穴', forms: [['一阳', '命中封对方一处穴道', 195, 12], ['二阳', '', 235, 0], ['三阳', '', 275, 0], ['九阳', '', 330, 0]], pages: 2 },
+  wlg: { n: '五郎八卦棍', ep: '五台钟声远，棍底八门开', q: '上乘', cat: '棍', rt: '守御', p: 26, cd: 3, cost: 18, m0: 160, fx: '格挡', forms: [['挑', '', 160, 100], ['扫', '', 180, 4], ['封', '', 205, 0]], pages: 2 },
+  smt: { n: '三脚猫', ep: '猫行无声，月影错落', q: '寻常', cat: '腿', rt: '诡谲', p: 34, cd: 2, cost: 9, m0: 120, fx: '闪身', forms: [['虚踢', '闪避加一成', 120, 100], ['实踹', '', 135, 22]] },
+  whd: { n: '五虎断门刀', ep: '五虎下山岗，刀风断门来', q: '上乘', cat: '刀', rt: '刚猛', p: 26, cd: 3, cost: 19, m0: 170, fx: '破甲', forms: [['猛虎出林', '无视对方两成守御', 170, 100], ['饿虎扑食', '无视对方三成守御', 190, 52], ['虎尾剪', '', 215, 0]], pages: 3 },
+  lyd: { n: '柳叶刀', ep: '柳丝拂面，刃过无声', q: '寻常', cat: '刀', rt: '绵长', p: 31, cd: 2, cost: 13, m0: 145, fx: '回气', forms: [['拂柳', '命中回真气 4', 145, 70], ['折枝', '', 165, 0]] },
 };
 const PER = 9;
 const wx = { slots: 5, weapon: '刀', desk: ['lyd', 'whd', 'lhq', 'tzcq'], cur: 'whd', cat: '全部', page: 0 };
@@ -667,7 +669,8 @@ function renderWxBook() {
     <div class="pg l">
       <div class="ttl"><span class="nm">${d.n}</span>
         <div class="side"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${d.rt}">${d.rt}</span>
-          ${d.res ? '<span class="ptag res" data-tip="与所修内功同路，招式伤害 ×1.15">共鸣</span>' : ''}${d.benmen ? '<span class="ptag res" data-tip="本门武学：练熟所需出招数少两成">本门</span>' : ''}</div></div>
+          ${d.res ? '<span class="ptag res" data-tip="与所修内功同路，招式伤害 ×1.15">共鸣</span>' : ''}${d.benmen ? '<span class="ptag res" data-tip="本门武学：练熟所需出招数少两成">本门</span>' : ''}
+          ${d.ep ? `<span class="ep">${d.ep}</span>` : ''}</div></div>
       <span class="bigico ico rf t-${d.rt}" style="background-image:url('${A}cat/${ICON[d.cat]}.png')" data-tip="${big} · ${d.cat}"></span>
       <div class="params">
         <span>伤害倍率<b>×${d.m0}%</b></span><span>真气消耗<b>${d.cost}</b></span><span>冷却回合<b>${d.cd}</b></span>

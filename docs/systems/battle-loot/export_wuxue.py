@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""把 wuxue-params.json（sim 生成的 171 门参数）与 rules/copy/wuxue-forms.md（第一批式名与战报句）
-合成代码读的名录表 code/src/engine/data/wuxue-catalog.json。只导出第一批（batch 1，66 门）。
+"""把 wuxue-params.json（sim 生成的 171 门参数）、rules/copy/wuxue-forms.md（第一批式名与战报句）
+与 rules/copy/wuxue-epigraphs.md（批注）合成代码读的名录表 code/src/engine/data/wuxue-catalog.json。只导出第一批（batch 1，66 门）。
 现有 14 门的 id 沿用 wuxue.ts，式名与句子仍在 formNames.ts / narration.ts；新增 52 门的式名与句子从草案并入。
 
 五项参数与类型（重击 / 折中 / 双强）、特效系数由 calib_cast.py --write 写入 wuxue-params.json（裁决 46）。
@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 PARAMS = ROOT / 'docs/systems/battle-loot/wuxue-params.json'
 FORMS = ROOT / 'docs/archive/copy/wuxue-forms.md'
+EPIGRAPHS = ROOT / 'docs/rules/copy/wuxue-epigraphs.md'
 OUT = ROOT / 'code/src/engine/data/wuxue-catalog.json'
 
 # 现有 14 门：新名 → 旧 id（名录 §7.2 改名对照）
@@ -65,9 +66,16 @@ def parse_forms(md: str) -> dict:
     return out
 
 
+def parse_epigraphs(md: str) -> dict:
+    """第一批一节的表格行「| 武学 | 批注 |」"""
+    sec = md[md.index('## 1. 第一批'):md.index('## 2. 第二批')]
+    return dict(re.findall(r'^\| (\S+) \| (\S+，\S+) \|$', sec, re.M))
+
+
 def main() -> None:
     params = json.loads(PARAMS.read_text())
     forms = parse_forms(FORMS.read_text())
+    eps = parse_epigraphs(EPIGRAPHS.read_text())
     rows = []
     for w in params['wuxue']:
         if w['batch'] != 1:
@@ -83,15 +91,16 @@ def main() -> None:
         row.update({
             'name': name, 'quality': w['quality'], 'cat': w['cat'], 'route': w['route'], 'effect': w['effect'],
             'mult0': w['mult0'], 'mults': w['mults'], 'cost': w['cost'], 'p': w['p'], 'cd': w['cd'],
-            'type': w['type'], 'ek': w['ek'],
+            'type': w['type'], 'ek': w['ek'], 'epigraph': eps[name],
         })
         if wid in SIGNATURE:
             row['signature'] = True
         rows.append(row)
     ids = [r['id'] for r in rows]
     assert len(ids) == len(set(ids)) == 66, len(ids)
+    assert len(eps) == 66, len(eps)
     out = {
-        'source': 'docs/systems/battle-loot/export_wuxue.py（wuxue-params.json + rules/copy/wuxue-forms.md）',
+        'source': 'docs/systems/battle-loot/export_wuxue.py（wuxue-params.json + rules/copy/wuxue-forms.md + wuxue-epigraphs.md）',
         'trigger_cap': params['trigger_cap'],
         'effects': params['effects'],
         'tier_span': params['tier_span'],

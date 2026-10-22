@@ -1257,7 +1257,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     };
     const lo = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0];
     const cost = WUXUE.cangyajianjue.cost;
-    expect(lo('huashan').forms[0].cost).toBe(Math.round(cost * 0.92));
+    expect(lo('huashan').forms[0].cost).toBe(Math.round(cost / 10 * 0.92) * 10);   // 按 sim 尺度取整再 × QI_SCALE
     expect(lo(null).forms[0].cost).toBe(cost);
     expect(lo('shaolin').forms[0].cost).toBe(cost);
     expect(lo('huashan').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);

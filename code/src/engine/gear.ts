@@ -4,7 +4,7 @@
  * 名表出自 docs/rules/copy/gear-names.md（一名一图，图在 public/art/gear/）。数值一律整数（裁决 37）。
  */
 import type { Build } from './combat';
-import { STAT_SCALE } from './content';
+import { QI_SCALE, STAT_SCALE } from './content';
 
 export type GearSlot = '兵器' | '暗器' | '衣甲' | '佩饰';
 export type WeaponCat = '剑' | '刀' | '枪' | '棍';
@@ -36,7 +36,7 @@ export interface GearItem {
   /** 道具图 key（public/art/gear/<key>.png） */
   img: string;
   base: Partial<Record<BaseKey, number>>;
-  /** 词条：[词条, 整数数值]，百分比 / pp 按 1% 计，命中 / 闪避 / 真气按 1 计 */
+  /** 词条：[词条, 整数数值]，百分比 / pp 按 1% 计，命中 / 闪避 / 真气按 1 计（真气是 QI_SCALE 的倍数） */
   afx: [AffixKey, number][];
   /** 出售价（两） */
   sell: number;
@@ -89,7 +89,7 @@ export const AFFIX_POOL: Record<GearSlot, readonly AffixKey[]> = {
   衣甲: ['hp', 'def', 'dodge', 'qi'],
   佩饰: ['crit', 'hit', 'dodge', 'qi', 'wx'],
 };
-/** 白装区间；命中 / 闪避另乘 (1 + ℓ/5) */
+/** 白装区间；命中 / 闪避另乘 (1 + ℓ/5)；真气是 sim 尺度，取整后 × QI_SCALE */
 const AFFIX_RANGE: Record<AffixKey, readonly [number, number]> = {
   atk: [1.7, 2.7], crit: [0.7, 1.1], cd: [1.7, 3.0], hit: [1.7, 2.7], boss: [2.0, 3.4],
   hp: [1.7, 2.7], def: [1.7, 2.7], dodge: [1.0, 1.7], qi: [3.4, 5.1], wx: [1.7, 2.7],
@@ -151,7 +151,7 @@ function rollAffixes(slot: GearSlot, grade: GearGrade, level: number, rng: () =>
     const k = pool.splice(Math.floor(rng() * pool.length), 1)[0];
     let v = lerp(AFFIX_RANGE[k], rng()) * GRADE_AFFIX[grade];
     if (LEVEL_SCALED.has(k)) v *= 1 + level / 5;
-    out.push([k, iv(v)]);
+    out.push([k, k === 'qi' ? iv(v) * QI_SCALE : iv(v)]);
   }
   return out;
 }
@@ -222,7 +222,7 @@ export const bagFits = (bag: readonly GearItem[], it: GearItem, cells = BAG_CELL
 // ---------------------------------------------------------------- 名字与数值
 
 /** 词条相对白装区间中位的强度，用于前缀排序（数值从高到低，裁决 29） */
-const affixStrength = ([k, v]: [AffixKey, number]) => v / ((AFFIX_RANGE[k][0] + AFFIX_RANGE[k][1]) / 2);
+const affixStrength = ([k, v]: [AffixKey, number]) => (k === 'qi' ? v / QI_SCALE : v) / ((AFFIX_RANGE[k][0] + AFFIX_RANGE[k][1]) / 2);
 
 /** 前缀部分（「锋锐凌厉的」）；无词条为空串 */
 export function gearPrefix(it: Pick<GearItem, 'afx'>): string {

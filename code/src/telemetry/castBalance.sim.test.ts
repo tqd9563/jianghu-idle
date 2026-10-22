@@ -21,9 +21,9 @@ const lcg = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 
 
 interface Checkpoint { label: string; realm: number; zhong: number; nq: Quality; doors: WuxueId[] }
 const CHECKPOINTS: Checkpoint[] = [
-  { label: '境界1 传功 罗汉拳', realm: 1, zhong: 0, nq: '寻常', doors: ['luohanquan'] },
-  { label: '境界1 传功 开山掌', realm: 1, zhong: 0, nq: '寻常', doors: ['kaishanzhang'] },
-  { label: '境界1 传功 旋风腿', realm: 1, zhong: 0, nq: '寻常', doors: ['xuanfengtui'] },
+  { label: '境界1 传功 伏狮拳法', realm: 1, zhong: 0, nq: '寻常', doors: ['luohanquan'] },
+  { label: '境界1 传功 摧峰掌法', realm: 1, zhong: 0, nq: '寻常', doors: ['kaishanzhang'] },
+  { label: '境界1 传功 卷雪腿法', realm: 1, zhong: 0, nq: '寻常', doors: ['xuanfengtui'] },
   { label: '境界2 末 6 门寻常', realm: 2, zhong: 40, nq: '寻常', doors: ['liuyunjian', 'qingpingjian', 'songtaojian', 'jiyujian', 'pofengdao', 'kaibeidao'] },
   { label: '境界3 末 3 上乘 + 4 寻常', realm: 3, zhong: 61, nq: '上乘', doors: ['jinghongjian', 'feipuduanyajian', 'duanshuidao', 'liuyunjian', 'qingpingjian', 'songtaojian', 'jiyujian'] },
   { label: '境界4 末 3 绝学 + 3 上乘 + 2 寻常', realm: 4, zhong: 84, nq: '绝学', doors: ['cangyajianjue', 'tianhedaoxuandao', 'bawangxiejiaqiang', 'jinghongjian', 'feipuduanyajian', 'duanshuidao', 'liuyunjian', 'qingpingjian'] },

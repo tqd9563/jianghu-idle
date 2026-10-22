@@ -7,7 +7,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RUMORS } from '../engine/sect';
-import { DIAG_TEXTS, type FightResult, type TurnEvent } from '../engine/combat';
+import { DIAG_TEXTS, type TurnEvent } from '../engine/combat';
 import { WUXUE, formName, type FormEffect, type WuxueId } from '../engine/wuxue';
 import { NEIGONG } from '../engine/neigong';
 import { REALMS } from '../engine/content';
@@ -15,7 +15,8 @@ import {
   getStage, isSealed, MAP_IDS, mapName, stageKey, TIER_NAMES, TIERS, trackLength,
   type EnemyDef, type EnemyTag, type TierId,
 } from '../engine/enemies';
-import { narrateTurn, type NarrCtx, type Seg } from '../engine/narration';
+import { narrateTurn, type Hand, type NarrCtx, type Seg } from '../engine/narration';
+import { armorBroken, rate, tallyTurns, type MechKey } from '../engine/battleTally';
 import { COUNTER_HINTS, FAME_BOSS, FAME_ELITE, hasNode } from '../engine/prestige';
 import {
   currentMult, effBreakCost, mapUnlocked, nextStageOf, playerBuild, tierUnlocked,
@@ -164,6 +165,14 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
     neigongName: s.neigong ? NEIGONG[s.neigong].name : null,
     sqNeed: build.sqNeed, poisonCap: build.poison.cap, seed: battle?.seed ?? 0,
   } : null;
+
+  // 战报 / 战况同一处切换（issue #77）：打完时「战况」亮金点，看过这一场即灭
+  const [logTab, setLogTab] = useState<'log' | 'tally'>('log');
+  const [tallySeen, setTallySeen] = useState<number | null>(null);
+  const hasTally = battle !== null && turns.length > 0;
+  const tab = hasTally ? logTab : 'log';
+  useEffect(() => { if (tab === 'tally' && battle && battleDone) setTallySeen(battle.seed ?? 0); }, [tab, battle, battleDone]);
+  const tallyDot = hasTally && battleDone && tab !== 'tally' && tallySeen !== (battle!.seed ?? 0);
 
   // 战报跟随最新一段滚动
   const logRef = useRef<HTMLDivElement>(null);
@@ -358,6 +367,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                 <div className="btns">
                   {fighting ? (
                     <button type="button" className="jh-btn fight" disabled>交手中 · 第 {Math.max(1, last?.rd ?? 1)} 回合</button>
+                  ) : battle && battle.chainAt !== null && battle.chainMode === 'push' && battle.chainStage !== null && !s.failure ? (
+                    <button type="button" className="jh-btn fight" disabled>即将挑战 · 第 {battle.chainStage} 关</button>
                   ) : idling ? (
                     next !== null && (
                       <button type="button" className="jh-btn fight" onClick={() => s.challengeStage(viewMap, viewTier, next)}>
@@ -379,6 +390,11 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     </button>
                   )}
                 </div>
+                <label className="bt-chain">
+                  <input type="checkbox" checked={s.autoChain ?? false} onChange={(e) => s.setAutoChain(e.target.checked)} />
+                  <span className="box" aria-hidden="true" />
+                  <span className="t">自动连战</span>
+                </label>
               </div>
             </div>
           )}
@@ -386,8 +402,23 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
       )}
 
       <section className="bt-log-wrap">
-        <h2 className="jh-sec">战报</h2>
-        <div className="bt-log" ref={logRef}>
+        <div className="bt-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'log'} className="jh-sec" onClick={() => setLogTab('log')}>战报</button>
+          {hasTally && (
+            <button type="button" role="tab" aria-selected={tab === 'tally'} className="jh-sec" onClick={() => setLogTab('tally')}>
+              战况{tallyDot && <span className="dot" aria-label="新" />}
+            </button>
+          )}
+          {hasTally && (
+            <span className={`res${battleDone ? (battle!.result.win ? ' win' : ' lose') : ''}`}>
+              {battleDone ? `${battle!.result.win ? '胜' : '败'} · ${battle!.result.rounds} 回合` : `第 ${Math.max(1, last?.rd ?? 1)} 回合`}
+            </span>
+          )}
+        </div>
+        {tab === 'tally' && battle && narrCtx ? (
+          <BattleTally turns={turns} abStacks={battleDone ? armorBroken(battle.result.stats) : 0} hand={narrCtx.hand} route={narrCtx.route} />
+        ) : (
+        <div className="bt-log" ref={logRef} role="tabpanel">
           {!!battle?.rumor && <div className="p rumor"><span className="serif">江湖传闻</span>　{RUMORS[battle.rumor as 1 | 2 | 3]}</div>}
           {turns.length === 0 && !battle?.rumor && <div className="empty">尚未交手</div>}
           {narrCtx && <Narration turns={turns} ctx={narrCtx} />}
@@ -415,9 +446,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             </>
           )}
         </div>
+        )}
       </section>
-
-      {battle && battleDone && battle.result.stats.casts > 0 && <CastStats stats={battle.result.stats} />}
 
       {s.failure && <FailureCeremony goCultivate={goCultivate} />}
     </>
@@ -449,32 +479,69 @@ function Segs({ segs }: { segs: Seg[] }) {
   return <>{segs.map((g, i) => (g.k === 'txt' ? <Fragment key={i}>{g.v}</Fragment> : <span key={i} className={g.k}>{g.v}</span>))}</>;
 }
 
-/** 武学出招统计（spec §4.7）：每门武学出招次数、伤害占比；路数机制与普攻也列出，便于看出机制没有变弱 */
-function CastStats({ stats }: { stats: FightResult['stats'] }) {
-  const total = stats.dmgDealt || 1;
-  const skillSum = Object.values(stats.skillDmg).reduce((a, b) => a + b, 0);
-  const mech = stats.burstDmg + stats.thornsOut + stats.poisonDmg;
-  const plain = Math.max(0, total - skillSum - mech);
-  const rows: { name: string; n: string; dmg: number; serif: boolean }[] = [
-    ...Object.entries(stats.skillCasts)
-      .sort((a, b) => (stats.skillDmg[b[0]] ?? 0) - (stats.skillDmg[a[0]] ?? 0))
-      .map(([id, n]) => ({ name: WUXUE[id as WuxueId].name, n: `出招 ${n} 次`, dmg: stats.skillDmg[id] ?? 0, serif: true })),
-    { name: '路数机制', n: stats.burstCount > 0 ? `排山倒海 ${stats.burstCount} 次` : '', dmg: mech, serif: false },
-    { name: '普攻', n: '', dmg: plain, serif: false },
+/** 普攻一行的称呼跟手里的家伙走（同战报普攻句）：赤手写拳脚（少林拳掌），持兵器写「剑击」之类 */
+const PLAIN_LABEL: Record<Hand, string> = { none: '拳脚', 剑: '剑击', 刀: '刀击', 枪: '枪击', 棍: '棍击', 暗器: '暗器' };
+/** 路数行配色：毒发毒绿、排山倒海会心橙、反震墨金（金钟），都避开武学青 */
+const MECH_ORDER: MechKey[] = ['排山倒海', '毒发', '反震'];
+const MECH_CLS: Record<MechKey, string> = { 排山倒海: 'm-burst', 毒发: 'm-poison', 反震: 'm-thorns' };
+const TALLY_SKILLS_SHOWN = 6;
+
+/**
+ * 战况（issue #77，原型 docs/design/battle-stats-prototype.html）：交手 / 武学两块，一本账不装盒子。
+ * 全部从已揭示的回合事件现数（engine/battleTally.ts），交手中逐回合刷新；细项为 0 不画，未出招的武学不列。
+ */
+function BattleTally({ turns, abStacks, hand, route }: { turns: TurnEvent[]; abStacks: number; hand: Hand; route: NarrCtx['route'] }) {
+  const t = tallyTurns(turns);
+  const [more, setMore] = useState(false);
+  const skills = Object.entries(t.skills)
+    .filter(([, v]) => v.casts > 0)
+    .map(([id, v]) => ({ key: id, name: WUXUE[id as WuxueId]?.name ?? id, cnt: `${v.casts} 招`, dmg: v.dmg, cls: '' }))
+    .sort((a, b) => b.dmg - a.dmg);
+  const tail = [
+    ...MECH_ORDER.filter((k) => (t.mech[k]?.dmg ?? 0) > 0)
+      .map((k) => ({ key: k, name: k, cnt: k === '排山倒海' ? `${t.mech[k]!.n} 次` : '', dmg: t.mech[k]!.dmg, cls: `mech ${MECH_CLS[k]}` })),
+    { key: 'plain', name: hand === 'none' && route === 'shaolin' ? '拳掌' : PLAIN_LABEL[hand], cnt: `${t.plain.n} 下`, dmg: t.plain.dmg, cls: 'plain' },
   ];
+  const max = Math.max(1, ...skills.map((r) => r.dmg), ...tail.map((r) => r.dmg));
+  const shown = more ? skills : skills.slice(0, TALLY_SKILLS_SHOWN);
+  const rest = skills.length - shown.length;
+  const row = (r: (typeof tail)[number]) => (
+    <div key={r.key} className={`wx ${r.cls}`} data-tip={`${r.name}　伤害 ${f0(r.dmg)}`}>
+      <span className="n">{r.name}</span>
+      <span className="c">{r.cnt}</span>
+      <span className="bar"><i style={{ transform: `scaleX(${r.dmg / max})` }} /></span>
+      <span className="p">{rate(r.dmg, t.out)}%</span>
+    </div>
+  );
+  const li = (k: string, v: string, sub = false) => (
+    <div className={`li${sub ? ' sub' : ''}`}><span className="k">{k}</span><span className="lead" /><span className="v">{v}</span></div>
+  );
   return (
-    <div className="jh-card bt-casts">
-      <div className="head"><span className="serif">武学出招</span><small>本场出招 {stats.casts} 次</small></div>
-      <div className="jh-rows">
-        {rows.map((r) => (
-          <div key={r.name} className="jh-row">
-            <div className="t"><span className={r.serif ? 'serif' : 'plain'}>{r.name}</span>{r.n && <small>{r.n}</small>}</div>
-            <div className="a">
-              <span className="share"><i style={{ width: `${(r.dmg / total) * 100}%` }} /></span>
-              <span className="pct">{Math.round((r.dmg / total) * 100)}%</span>
-            </div>
-          </div>
-        ))}
+    <div className="bt-tally" role="tabpanel">
+      <div className="grp">
+        <div className="sh">交手</div>
+        <div className="ledger">
+          {li('出手', String(t.acts))}
+          {li('出招率', `${rate(t.casts, t.acts)}%`)}
+          {li('命中', `${rate(t.hits, t.acts)}%`)}
+          {li('会心', `${rate(t.crits, t.hits)}%`)}
+          {li('闪避', `${rate(t.dodges, t.foeActs)}%`)}
+        </div>
+        <div className="ledger dmg">
+          {li('输出', f0(t.out))}
+          {t.maxHit > 0 && li('最重一击', f0(t.maxHit), true)}
+          {li('承伤', f0(t.taken))}
+          {t.shield > 0 && li('护盾吸收', f0(t.shield), true)}
+          {t.thornsIn > 0 && li('受反伤', f0(t.thornsIn), true)}
+          {abStacks > 0 && li('身中破甲', `${abStacks} 层`, true)}
+          {t.purged > 0 && li('毒被化解', `${t.purged} 次`, true)}
+        </div>
+      </div>
+      <div className="wxb">
+        <div className="sh">武学</div>
+        {shown.map(row)}
+        {rest > 0 && <button type="button" className="more" onClick={() => setMore(true)}>余 {rest} 门</button>}
+        {tail.map(row)}
       </div>
     </div>
   );

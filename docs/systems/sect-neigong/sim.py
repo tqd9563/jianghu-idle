@@ -316,7 +316,7 @@ def checkpoints():
     out = []
     for b, ds in sorted(plateaus.items()):
         d = ds[-1]
-        realm, lv = combat[d]
+        realm, lv = combat[d][:2]          # combat 现为 (境界, 重数, 底蕴级)；本 sim 不计底蕴
         out.append((d, realm, lv))
     return out
 

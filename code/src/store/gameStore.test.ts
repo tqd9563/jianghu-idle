@@ -598,6 +598,25 @@ describe('gameStore · 归隐与声望阁', () => {
     const all = Array.from({ length: n }, (_, i) => stageKey(1, 0, i + 1));
     expect(nextAfterBattle(null, { map: 1, tier: 0, stage: n, mode: 'push' }, true, all))
       .toEqual({ idle: { map: 1, tier: 0, stage: n, fights: 0 }, chainStage: n, chainMode: 'idle' });
+
+    // 没勾自动连战（issue #77）：推关胜就停；挑战前在本段挂机的回到原挂机关；本段打穿照旧在末关挂着
+    const won22 = [...cleared, stageKey(1, 0, 22)];
+    expect(nextAfterBattle(null, { map: 1, tier: 0, stage: 22, mode: 'push' }, true, won22, false))
+      .toEqual({ idle: null, chainStage: null, chainMode: null });
+    expect(nextAfterBattle(idle6, { map: 1, tier: 0, stage: 22, mode: 'push' }, true, won22, false))
+      .toEqual({ idle: idle6, chainStage: 6, chainMode: 'idle' });
+    const idleOther = { map: 2 as const, tier: 0 as const, stage: 3, fights: 1 };
+    expect(nextAfterBattle(idleOther, { map: 1, tier: 0, stage: 22, mode: 'push' }, true, won22, false).chainStage).toBeNull();
+    expect(nextAfterBattle(null, { map: 1, tier: 0, stage: n, mode: 'push' }, true, all, false).chainMode).toBe('idle');
+    // 输了不看勾选：照旧退回
+    expect(nextAfterBattle(idle6, { map: 1, tier: 0, stage: 22, mode: 'push' }, false, cleared, false).chainStage).toBe(6);
+  });
+
+  it('自动连战默认不勾、存档并跨世保留', () => {
+    expect(useGameStore.getState().autoChain).toBe(false);
+    useGameStore.getState().setAutoChain(true);
+    expect(useGameStore.getState().autoChain).toBe(true);
+    expect(loadGame<{ autoChain: boolean }>()!.autoChain).toBe(true);
   });
 });
 
@@ -1238,7 +1257,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     };
     const lo = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0];
     const cost = WUXUE.cangyajianjue.cost;
-    expect(lo('huashan').forms[0].cost).toBe(Math.round(cost * 0.92));
+    expect(lo('huashan').forms[0].cost).toBe(Math.round(cost / 10 * 0.92) * 10);   // 按 sim 尺度取整再 × QI_SCALE
     expect(lo(null).forms[0].cost).toBe(cost);
     expect(lo('shaolin').forms[0].cost).toBe(cost);
     expect(lo('huashan').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);

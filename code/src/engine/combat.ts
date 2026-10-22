@@ -397,7 +397,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       stats.thornsTaken += refl;
       stats.dmgTaken += refl;
       stats.shieldAbsorbed += absorb;
-      push(rd, 'enemy', 'thorns_to_player', `${enemy.name}反弹了你的攻势，你受到 ${f1(refl - absorb)} 反伤`, f1(refl - absorb));
+      push(rd, 'enemy', 'thorns_to_player', `${enemy.name}反弹了你的攻势，你受到 ${f1(refl - absorb)} 反伤`, f1(refl - absorb), absorb > 0 ? { absorb: f1(absorb) } : undefined);
     }
     if (ehp <= 0) return finish(true, rd);
 

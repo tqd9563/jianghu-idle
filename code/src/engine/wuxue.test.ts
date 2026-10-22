@@ -33,10 +33,22 @@ describe('名录读表', () => {
     expect(WUXUE.tianhedaoxuandao.source).toBe('崆峒');
   });
 
+  it('批注：每门一联，寻常四字、上乘与绝学五字', () => {
+    for (const id of WUXUE_IDS) {
+      const d = WUXUE[id];
+      const [a, b, ...rest] = d.epigraph.split('，');
+      expect(rest, d.name).toHaveLength(0);
+      expect([a.length, b.length], d.name).toEqual(d.quality === '寻常' ? [4, 4] : [5, 5]);
+    }
+    expect(WUXUE.luoxingjian.epigraph).toBe('星垂沧海夜，剑落暮潮寒');
+  });
+
   it('特效四档 × 类型系数（裁决 46）：寻常 Ⅰ→Ⅱ、上乘 Ⅰ→Ⅲ、绝学 Ⅱ→Ⅳ，中间插值后乘系数；几率类封顶；独门为 0', () => {
     const qm = WUXUE.qimeigun;   // 寻常 · 折中 ×1 · 轻身 16/24/32/40：整数列四舍五入
     expect(qm.ek).toBe(1);
     expect([1, 2, 3].map((k) => effectValue(qm, k))).toEqual([16, 20, 24]);
+    // 回元回的是真气点数：sim 尺度取整后 × QI_SCALE（裁决 48）
+    expect([1, 2, 3].map((k) => effectValue({ quality: '寻常', effect: '回元' }, k))).toEqual([160, 200, 240]);
     const qp = WUXUE.qingpingjian;   // 寻常 · 折中且倍率低 ×1.25 · 运劲 0.12/0.16/0.20/0.25
     expect(qp.ek).toBe(1.25);
     expect([1, 2, 3].map((k) => effectValue(qp, k))).toEqual([0.15, 0.175, 0.2]);
@@ -63,12 +75,12 @@ describe('名录读表', () => {
       expect(w.mults[n - 1]).toBeCloseTo(w.mult0 * 1.12 ** (n - 1), 1);
       for (let k = 1; k < n; k++) expect(w.mults[k] / w.mults[k - 1], `${id} 第${k + 1}式`).toBeGreaterThan(1.035);
     }
-    const d = WUXUE.songtaojian;   // 寻常 · cost 19 · cd 1
+    const d = WUXUE.songtaojian;   // 寻常 · 名录 cost 19（游戏内 ×10）· cd 1
     expect(formMult(d, 1, false)).toBeCloseTo(d.mult0, 9);
     expect(formMult(d, 2, true)).toBeCloseTo(d.mults[1] * 1.1, 9);
-    expect([1, 2, 3].map((k) => formBaseCost(d, k))).toEqual([19, 22, 25]);
-    expect([0, 1, 2, 3].map((t) => formCost(d, 1, t))).toEqual([19, 17, 16, 14]);
-    expect(formCost(d, 3, 3)).toBe(19);
+    expect([1, 2, 3].map((k) => formBaseCost(d, k))).toEqual([190, 220, 250]);
+    expect([0, 1, 2, 3].map((t) => formCost(d, 1, t))).toEqual([190, 170, 160, 140]);
+    expect(formCost(d, 3, 3)).toBe(190);
     expect(formCd(d)).toBe(1);
     expect(formCd(WUXUE.kaibeidao)).toBe(3);
   });
@@ -133,8 +145,9 @@ describe('战斗：触发求和与新特效', () => {
     const plain = fight(build, enemy, { mode: 'rng', rng: seeded(4), loadout: [sk('y', null, 0)], qiMax: 500 });
     expect(yj.stats.dmgDealt).toBeGreaterThan(plain.stats.dmgDealt);
 
-    const hy = fight(build, enemy, { mode: 'rng', rng: seeded(5), loadout: [sk('h', '回元', 40, 0.25, 50, 1)], qiMax: 60 });
-    const none = fight(build, enemy, { mode: 'rng', rng: seeded(5), loadout: [sk('h', null, 0, 0.25, 50, 1)], qiMax: 60 });
+    // 真气数按 QI_SCALE 放大（普攻回 200）：上限 600、耗气 500、回元 400
+    const hy = fight(build, enemy, { mode: 'rng', rng: seeded(5), loadout: [sk('h', '回元', 400, 0.25, 500, 1)], qiMax: 600 });
+    const none = fight(build, enemy, { mode: 'rng', rng: seeded(5), loadout: [sk('h', null, 0, 0.25, 500, 1)], qiMax: 600 });
     expect(hy.stats.casts).toBeGreaterThan(none.stats.casts);
   });
 });

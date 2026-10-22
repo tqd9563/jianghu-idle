@@ -1,68 +1,198 @@
-/* 内功页、武学页（issue #26 视觉大改；基准 docs/design/ui-overhaul-prototype.html + DESIGN.md） */
+/* 武功页（内功 + 武学合一）—— 定稿原型 docs/design/gongfa-prototype.html（issue #80）。
+ * 骨架：页头 → 装配一行（主修印匣 | 武学印匣）→ 左「藏书」3 × 3 窄栏（标题旁切内功 / 武学）/ 右一本翻开的磁青书。 */
 
-/* ═══════ 两页共用：陈列区抬头（区标题 + 分段筛选） ═══════ */
-.gf-shelf-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
-.gf-shelf-head .jh-sec { margin: 0; }
-.jh-seg .cat-ico { margin-right: 4px; }
+.wg { --nijin: oklch(0.83 0.1 82); }
+/* 键盘可达：印匣、书封、切换与书页按钮都给一道暖金焦点线 */
+.wg :is(button, [data-tip]):focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
 
-/* 武学类别图标：AI 简笔图做遮罩，颜色跟随文字 */
-.cat-ico { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; background: currentColor;
-  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+/* ═══════ 品质 / 路数色、石印 ═══════ */
+.qg1 { --qc: oklch(0.72 0.015 85); --qa: oklch(0.6 0.015 85 / 0.35); }
+.qg2 { --qc: oklch(0.78 0.09 212); --qa: oklch(0.74 0.10 215 / 0.45); }
+.qg3 { --qc: var(--gold); --qa: oklch(0.78 0.13 78 / 0.6); }
+.wg-ico { display: block; background: center / contain no-repeat; }
+/* 石印原图朱砂，按路数换色（刚猛即原色） */
+.rf.t-绵长 { --rf: hue-rotate(100deg) saturate(0.7) brightness(1.2); }
+.rf.t-守御 { --rf: hue-rotate(210deg) saturate(0.85) brightness(1.15); }
+.rf.t-诡谲 { --rf: hue-rotate(290deg) saturate(0.8) brightness(1.1); }
+.rf.t-阴毒 { --rf: hue-rotate(160deg) saturate(0.7) brightness(1.0); }
+.rf .wg-ico, .wg-ico.rf { filter: var(--rf, none); }
 
-/* ═══════ 内功 ═══════ */
-.ng-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; margin-bottom: 26px; }
-.ng-top .jh-head { margin: 0; }
-.ng-lv { text-align: right; }
-.ng-lv .z { font-family: var(--font-display); font-size: 44px; font-weight: 700; line-height: 1; }
-.ng-lv .z small { font-size: 18px; margin-left: 4px; color: var(--muted); }
+/* ═══════ 装配：印匣 —— 石印放在品质色描边的方匣里，名字着品质色 ═══════ */
+.wg-carry { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 30px; align-items: stretch; }
+.wg-carry .sep { width: 1px; margin: 6px 0 24px; background: linear-gradient(to bottom, transparent, var(--hair) 20%, var(--hair) 80%, transparent); }
+.ya { border: 0; background: none; padding: 0; cursor: pointer; display: grid; justify-items: center; align-content: start; gap: 7px; width: 78px; color: inherit; }
+.ya .box { width: 64px; height: 64px; border-radius: 8px; display: grid; place-items: center; transition: transform .25s var(--ease-sharp), box-shadow .25s;
+  background: radial-gradient(circle at 50% 60%, color-mix(in oklch, var(--qc) 16%, transparent), oklch(0.17 0.012 262 / 0.6) 70%); box-shadow: inset 0 0 0 1px var(--qa); }
+.ya.qg3 .box { box-shadow: inset 0 0 0 1px var(--qa), 0 0 14px oklch(0.78 0.13 78 / 0.25); }
+.ya .wg-ico { width: 44px; height: 44px; }
+.ya .nm { font-family: var(--font-display); font-size: 14.5px; letter-spacing: 0.1em; color: var(--qc); white-space: nowrap; line-height: 1.2; }
+.ya .mt { font-size: 11px; color: var(--faint); white-space: nowrap; line-height: 1; }
+.ya.ng .mt { font-family: var(--font-display); font-size: 13px; color: var(--gold); letter-spacing: 0.05em; }
+.ya:hover .box { transform: translateY(-2px); }
+.ya[aria-current="true"] .box { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 14px oklch(0.78 0.13 78 / 0.45); }
+.ya.empty { cursor: default; }
+.ya.empty .box { background: none; box-shadow: none; outline: 1px dashed oklch(0.42 0.014 262 / 0.9); outline-offset: -1px; }
 
-/* 五关节点路：实线已走、虚线未走；已过金点、当前金圈、品质不可达淡显 */
-.ng-ladder { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); margin: 8px 0 30px; }
-.ng-ladder::before { content: ''; position: absolute; left: 10%; right: 10%; top: 10px; height: 1px;
-  background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
-.ng-ladder .walked { position: absolute; left: 10%; top: 9.5px; height: 1.5px; background: var(--done-line); }
-.ng-node { position: relative; text-align: center; display: grid; justify-items: center; align-content: start; gap: 4px; padding: 0 6px; }
-.ng-node .k { width: 21px; height: 21px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.45 0.02 262);
-  display: grid; place-items: center; font-size: 11px; color: var(--faint); }
-.ng-node.done .k { background: var(--ink-gold); box-shadow: none; color: var(--primary-ink); }
-.ng-node.wait .k { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 12px oklch(0.78 0.13 78 / 0.35); color: var(--gold); }
-.ng-node .n { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.2em; margin-top: 4px; }
-.ng-node .z { font-size: 12px; color: var(--faint); }
-.ng-node .e { font-size: 12.5px; color: var(--muted); max-width: 150px; }
-.ng-node.done .n { color: var(--ink-gold); }
-.ng-node.na { opacity: 0.45; }
+/* ═══════ 左栏藏书 / 右翻开的书，等高 ═══════ */
+.wg-study { display: grid; grid-template-columns: 296px minmax(0, 1fr); gap: 36px; align-items: stretch; }
+.wg-left { display: flex; flex-direction: column; }
+.wg-sechead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.wg-sechead .jh-sec { margin: 0; }
+.jh-seg.kind button { font-family: var(--font-display); letter-spacing: 0.2em; padding: 3px 12px; }
+.wg-segrow { margin-bottom: 14px; }
+.jh-seg.icons { flex-wrap: nowrap; align-items: center; gap: 1px; }
+.jh-seg.icons button { padding: 4px 4.5px; display: inline-flex; align-items: center; }
+.jh-seg.icons .wg-ico { width: 19px; height: 19px; filter: saturate(0.55) brightness(0.8); transition: filter .2s; }
+.jh-seg.icons button[aria-pressed="true"] .wg-ico, .jh-seg.icons button:hover .wg-ico { filter: none; }
+.wg-shelf { --row: 150px; height: calc(var(--row) * 3); display: grid; grid-template-columns: repeat(3, 76px); justify-content: space-between; grid-template-rows: repeat(3, var(--row)); padding: 0 6px; align-items: start;
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--row) - 30px), oklch(0.3 0.02 60 / 0.75) calc(var(--row) - 30px) calc(var(--row) - 27px), oklch(0.18 0.015 50 / 0.5) calc(var(--row) - 27px) calc(var(--row) - 24px), transparent calc(var(--row) - 24px) var(--row)); }
+.wg-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: auto; padding-top: 6px; font-size: 12.5px; color: var(--faint); min-height: 34px; }
+.wg-pager button { border: 0; background: none; cursor: pointer; color: var(--muted); width: 28px; height: 28px; border-radius: 7px; font-size: 15px; line-height: 1; }
+.wg-pager button:hover:not(:disabled) { background: var(--wash); color: var(--ink); }
+.wg-pager button:disabled { color: oklch(0.38 0.012 262); cursor: default; }
+.wg-pager b { color: var(--ink); font-weight: 600; }
+.wg-empty { display: grid; gap: 12px; justify-items: start; color: var(--muted); padding: 8px 4px; }
+.wg-empty p { margin: 0; }
 
-.ng-act { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
-.ng-act .note { color: var(--faint); font-size: 12.5px; }
+/* 书封：武学同一套封面按品阶换色（寻常麻灰、上乘绛紫、绝学朱红）；内功蓝 / 青 / 金三张原图。题签按原图上画好的米色签量位 */
+.wg-book { position: relative; width: 76px; aspect-ratio: 0.65; margin-top: 4px; border: 0; padding: 0; background: none; cursor: pointer; color: inherit;
+  filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); transition: transform .25s var(--ease-sharp), filter .25s; }
+.wg-book:hover { transform: translateY(-3px); }
+.wg-book[aria-current="true"] { transform: translateY(-6px); filter: drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.4)); }
+.wg-book small { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 7px; font-size: 11px; letter-spacing: 0.08em; color: var(--faint); white-space: nowrap; }
+.wg-book small .rt { color: var(--tc); }
+.cover .cv { position: absolute; inset: 0; background: url('/art/book-q1.png') center / 100% 100% no-repeat; }
+.cover.wx .cv { filter: sepia(0.7) saturate(0.55) brightness(0.8); }
+.cover.wx.q2 .cv { filter: hue-rotate(60deg) saturate(0.85) brightness(0.8); }
+.cover.wx.q3 .cv { background-image: url('/art/book-q3.png'); filter: hue-rotate(-28deg) saturate(1.5) brightness(0.9); }
+.cover.wx.ghost .cv { filter: sepia(0.7) saturate(0.3) brightness(0.5); }
+.cover.wx.ghost.q2 .cv { filter: hue-rotate(60deg) saturate(0.55) brightness(0.5); }
+.cover.wx.ghost.q3 .cv { filter: hue-rotate(-28deg) saturate(0.9) brightness(0.5); }
+.cover.ng .cv { filter: brightness(0.85); }
+.cover.ng.q2 .cv { background-image: url('/art/book-q2.png'); }
+.cover.ng.q3 .cv { background-image: url('/art/book-q3.png'); }
+.cover .slip { position: absolute; left: 11%; width: 17%; top: 6.5%; height: 62%; display: grid; place-items: center; writing-mode: vertical-rl;
+  font-family: var(--font-display); font-size: 11.5px; letter-spacing: 0.12em; color: oklch(0.2 0.02 60); white-space: nowrap;
+  background: oklch(0.88 0.035 85); box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45); }
+.cover.wx.q3 .slip, .cover.ng.q3 .slip { left: 12.7%; width: 18.8%; top: 8%; height: 63%; }
+.cover.wx.ghost .slip { background: oklch(0.66 0.02 85); color: oklch(0.3 0.02 60); }
+.cover.ng .slip { background: none; box-shadow: none; }
+.cover.ng.q2 .slip { left: 16%; width: 16.5%; top: 8%; height: 61.5%; }
+.cover .seal { position: absolute; right: 13%; bottom: 10%; width: 19px; height: 19px; display: grid; place-items: center; font-family: var(--font-display); font-size: 12px; line-height: 1;
+  color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px; box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.75), 0 1px 3px oklch(0.05 0.01 262 / 0.5); transform: rotate(-6deg); }
+.cover.wx.ghost .seal { opacity: 0.5; }
+.wg-book .on { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.45 0.14 30); color: oklch(0.95 0.02 80); }
 
-.ng-mech { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.ng-mech li { color: var(--muted); }
-.ng-mech li b { color: var(--ink); font-weight: 600; }
-.jh-card .head small.jh-dotted { cursor: help; }
+/* ═══════ 翻开的书：AI 仿真磁青纸（/art/wuxue-open-ciqing.jpg），书名式名泥金、数值象牙白；内容按页边用容器单位定位 ═══════ */
+.wg-right { position: relative; }
+/* 高度随左栏，但左栏没有藏书（空状态）时也不能把书压扁：保底一整栏搁板的高度 */
+.wg-open { position: relative; display: grid; grid-template-columns: 1fr 1fr; height: 100%; min-height: 570px; container-type: size;
+  background: linear-gradient(oklch(0.12 0.02 262 / 0.18), oklch(0.12 0.02 262 / 0.18)), url('/art/wuxue-open-ciqing.jpg') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 18px 40px oklch(0.05 0.01 262 / 0.7));
+  --ink: oklch(0.92 0.025 85); --muted: oklch(0.8 0.025 85); --faint: oklch(0.72 0.025 250); --hair: oklch(0.7 0.03 250 / 0.3); color: var(--ink); }
+.wg-pg { position: relative; padding: calc(4cqh + 26px) calc(3cqw + 26px) calc(5cqh + 22px); display: flex; flex-direction: column; min-height: 0; }
+.wg-pg.l { padding-right: calc(1.5cqw + 26px); }
+.wg-pg.r { padding-left: calc(1.5cqw + 26px); }
+.wg-ttl { display: flex; align-items: flex-start; gap: 16px; }
+.wg-ttl .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.22em; line-height: 1; padding: 4px 0; white-space: nowrap;
+  color: var(--nijin); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.25); }
+.wg-ttl .side { display: grid; gap: 8px; align-content: start; justify-items: start; padding-top: 2px; }
+.wg-ttl .ep { margin-top: 10px; font-family: var(--font-display); font-size: 14px; line-height: 1.5; letter-spacing: 0.1em; color: color-mix(in oklch, var(--muted) 82%, transparent); white-space: nowrap; }
+.ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 3px; width: max-content; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+.ptag.q1 { background: oklch(0.3 0.014 262 / 0.55); }
+.ptag.q2 { color: oklch(0.8 0.08 210); background: oklch(0.74 0.10 215 / 0.10); box-shadow: inset 0 0 0 1px oklch(0.74 0.10 215 / 0.4); }
+.ptag.q3 { color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); background: oklch(0.78 0.13 78 / 0.1); }
+.ptag.rt { color: color-mix(in oklch, var(--tc) 85%, white); background: color-mix(in oklch, var(--tc) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); }
+.ptag.res { color: var(--cinnabar); box-shadow: inset 0 0 0 1px oklch(0.66 0.14 32 / 0.5); cursor: help; }
+.wg-bigico { position: absolute; right: calc(1.5cqw + 24px); top: calc(4cqh + 22px); width: 64px; height: 64px; transform: rotate(-6deg); filter: var(--rf, none) drop-shadow(0 3px 6px oklch(0.05 0.01 262 / 0.5)); cursor: help; }
+.wg-zhu { position: absolute; right: calc(1.5cqw + 26px); top: calc(4cqh + 24px); width: 46px; height: 46px; display: grid; place-items: center; writing-mode: vertical-rl;
+  font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 0.05em; line-height: 1; color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.9); border-radius: 4px;
+  box-shadow: inset 0 0 0 2px oklch(0.93 0.03 60 / 0.7), 0 2px 6px oklch(0.05 0.01 262 / 0.5); transform: rotate(-7deg); }
+.wg-zline { margin-top: 4px; font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.1; cursor: help; }
+.wg-zline small { font-size: 13px; color: var(--muted); margin-left: 2px; font-weight: 600; }
+.wg-zcap { font-size: 11.5px; color: var(--faint); }
+.wg-rows { display: grid; gap: 9px; margin-top: 22px; font-size: 13px; color: var(--faint); }
+.wg-rows > span { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid oklch(0.7 0.03 250 / 0.22); }
+.wg-rows b { color: var(--ink); font-weight: 600; font-size: 15px; }
+.wg-rows b.nil { color: oklch(0.55 0.02 250); font-weight: 400; }
+.wg-rows b.up { color: var(--gold); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.6); transition: color .6s, text-shadow .6s; }
+.wg-need { margin-top: auto; padding-top: 20px; font-size: 12.5px; color: var(--faint); min-height: 1.6em; }
+.wg-need.ok { color: var(--muted); }
+.wg-btn { margin-top: 10px; border: 0; cursor: pointer; font-family: var(--font-display); font-size: 14px; letter-spacing: 0.3em; padding: 8px 0; border-radius: 8px; width: 100%;
+  background: oklch(0.78 0.13 78 / 0.08); color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.45); transition: background .2s, box-shadow .2s; }
+.wg-btn:hover:not(:disabled) { background: oklch(0.78 0.13 78 / 0.14); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.8); }
+.wg-btn.quiet { background: none; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); letter-spacing: 0.15em; }
+.wg-btn:disabled { background: none; color: oklch(0.55 0.02 250); box-shadow: inset 0 0 0 1px oklch(0.6 0.02 250 / 0.35); cursor: default; }
+.wg-foot { margin-top: auto; padding-top: 14px; font-size: 11px; color: var(--faint); letter-spacing: 0.3em; text-align: center; }
+.wg-dotted { position: relative; cursor: help; }
+.wg-dotted::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: repeating-linear-gradient(to right, var(--ink-gold) 0 2px, transparent 2px 5px); }
 
-/* 藏经：线装书册封面陈列（透明底 AI 图），书名竖写在题签上；按品质换封面 */
-.gf-shelf-head:has(+ .ng-scrolls) { margin-top: 34px; }
-.ng-scrolls { display: flex; flex-wrap: wrap; gap: 26px 22px; margin-bottom: 36px; padding: 6px 4px 0; }
-.ng-book { position: relative; width: 112px; aspect-ratio: 0.65; border: 0; padding: 0; cursor: pointer; color: inherit;
-  background: url('/art/book-q1.png') center / 100% 100% no-repeat;
-  filter: brightness(0.85) drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6));
-  transition: transform .25s var(--ease-sharp), filter .25s; }
-.ng-book.q2 { background-image: url('/art/book-q2.png'); }
-.ng-book.q3 { background-image: url('/art/book-q3.png'); }
-.ng-book .t { position: absolute; left: 21%; top: 16%; width: 15%; height: 44%; display: grid; place-items: center;
-  writing-mode: vertical-rl; font-family: var(--font-display); font-size: 13.5px; letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap; }
-.ng-book small { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
-.ng-book:hover { transform: translateY(-3px); filter: brightness(0.95) drop-shadow(0 10px 16px oklch(0.05 0.01 262 / 0.6)); }
-.ng-book[aria-current="true"] { transform: translateY(-6px); filter: brightness(1.05) drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.45)); }
-.ng-book .on { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.45 0.14 30); color: oklch(0.95 0.02 80); }
+/* 武学右页：每一式一行 + 熟练线 / 锁定行。绝学七式放不下一页：列表在页内滚动，底部淡出示意还有 */
+.wg-forms { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: 26px; margin-bottom: -14px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); }
+.wg-forms::-webkit-scrollbar { display: none; }
+.wg-shi { padding: 9px 0; border-top: 1px solid oklch(0.7 0.03 250 / 0.22); }
+.wg-shi:first-child { border-top: 0; padding-top: 0; }
+.wg-shi .h { display: flex; align-items: baseline; gap: 10px; }
+.wg-shi .k { font-size: 11.5px; color: var(--faint); }
+.wg-shi .t { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.1em; font-weight: 600; color: var(--nijin); }
+.wg-shi .mul { margin-left: auto; font-weight: 600; font-size: 14px; cursor: help; }
+.wg-shi .fx { font-size: 12px; color: var(--qi); margin-top: 2px; line-height: 1.45; }
+.wg-shi .fx::before { content: '◈ '; font-size: 10px; }
+.wg-shi.locked .t, .wg-shi.locked .mul { color: var(--faint); }
+.wg-shi.locked .fx { color: oklch(0.6 0.05 215); }
+.wg-shi .lk { display: flex; align-items: center; gap: 9px; margin-top: 5px; font-size: 12px; color: var(--faint); min-height: 20px; }
+.wg-shi .lk .leaf { flex: none; width: 9px; height: 12px; border-radius: 1px; outline: 1px dashed oklch(0.6 0.02 250); outline-offset: -1px; cursor: help; }
+.wg-shi .lk .leaf.got { background: var(--qi); outline: 0; }
+.wg-shi .lk .cnt { color: var(--ink-gold); font-weight: 600; }
+.wg-shi .lk .cnt small { color: var(--faint); font-weight: 400; }
+.wg-prof { position: relative; height: 28px; margin: 7px 10px 0; cursor: help; }
+.wg-prof .line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
+.wg-prof .line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: var(--done-line); }
+.wg-prof .pn { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 5px; }
+.wg-prof .pn b { width: 11px; height: 11px; border-radius: 50%; background: oklch(0.3 0.04 255); box-shadow: inset 0 0 0 1px oklch(0.55 0.02 250); }
+.wg-prof .pn em { font-style: normal; font-size: 11px; color: oklch(0.6 0.015 250); white-space: nowrap; }
+.wg-prof .pn.p b { background: var(--ink-gold); box-shadow: none; }
+.wg-prof .pn.p em { color: var(--ink-gold); }
+.wg-prof .pn.c b { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.45); }
+.wg-prof .pn.c em { color: var(--gold); font-weight: 600; }
 
-.ng-detail .head, .wx-card .head { flex-wrap: wrap; align-items: center; }
-.ng-detail .ttl, .wx-card .ttl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.ng-cur { font-size: 13px; color: var(--ink-gold); white-space: nowrap; }
-.ng-facts { display: flex; gap: 18px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin: -4px 0 12px; }
-.ng-facts b { color: var(--ink); font-weight: 600; }
+/* 内功右页：心法要诀，每条右侧挂会改它的关名；改了什么只放悬停 */
+.wg-yjh { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.3em; color: var(--nijin); margin-bottom: 6px; }
+.wg-yj { padding: 8px 0 9px; border-top: 1px solid oklch(0.7 0.03 250 / 0.22); border-radius: 2px; transition: background .2s; }
+.wg-yj:first-of-type { border-top: 0; padding-top: 2px; }
+.wg-yj .h { display: flex; align-items: center; gap: 8px; }
+.wg-yj .lb { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.12em; color: var(--nijin); }
+.wg-yj .chips { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.wg-yj .v { margin-top: 2px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.wg-yj .v b { color: var(--ink); font-weight: 600; font-size: 14px; }
+.wg-yj.lock .lb, .wg-yj.lock .v { color: oklch(0.58 0.02 250); }
+.wg-yj.lock .v b { color: oklch(0.65 0.02 250); }
+.wg-yj.hl { background: linear-gradient(to right, oklch(0.78 0.13 78 / 0.1), transparent 85%); }
+.wg-ch { font-size: 11px; line-height: 1; padding: 3px 6px; border-radius: 3px; white-space: nowrap; cursor: help; letter-spacing: 0.05em; transition: box-shadow .2s, color .2s; }
+.wg-ch.done { color: var(--ink-gold); background: oklch(0.75 0.075 76 / 0.12); }
+.wg-ch.done::before { content: '✓ '; font-size: 9.5px; }
+.wg-ch.next { color: var(--gold); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.6); background: oklch(0.78 0.13 78 / 0.08); }
+.wg-ch.wait { color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.35); background: oklch(0.78 0.13 78 / 0.14); }
+.wg-ch.later { color: oklch(0.72 0.02 250); box-shadow: inset 0 0 0 1px oklch(0.6 0.02 250 / 0.3); }
+.wg-ch.na { color: oklch(0.62 0.015 250); box-shadow: inset 0 0 0 1px oklch(0.6 0.015 250 / 0.25); }
+.wg-ch.hl { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 10px oklch(0.78 0.13 78 / 0.45); color: var(--gold); }
 
-/* 转修 / 散功重修：轻量对话框（不是整屏演出） */
+/* ═══════ 换书翻页：先合上露出封面，再以中缝为轴翻开；左页内容等封面落定再淡入 ═══════ */
+.wg-flip { position: absolute; left: 50%; top: 0; width: 50%; height: 100%; perspective: 2200px; perspective-origin: 0% 50%; z-index: 5; pointer-events: none; }
+.wg-flipper { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; transition: transform .95s cubic-bezier(.5, .05, .25, 1); }
+.wg-flipper.go { transform: rotateY(-180deg); }
+.wg-flipper .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 2px 6px 6px 2px; overflow: hidden; }
+.wg-flipper .front { box-shadow: 0 18px 40px oklch(0.05 0.01 262 / 0.7); }
+.wg-flipper .front .slip { font-size: 26px; letter-spacing: 0.22em; }
+.wg-flipper .front .seal { width: 46px; height: 46px; font-size: 26px; border-radius: 5px; }
+.wg-flipper .back { transform: rotateY(180deg); background: linear-gradient(to right, oklch(0.12 0.02 262 / 0.18), oklch(0.08 0.02 262 / 0.45)), url('/art/wuxue-open-ciqing.jpg') left center / 200% 100% no-repeat; }
+.wg-open .wg-pg.l > * { transition: opacity .3s; }
+.wg-open.closed { clip-path: inset(0 0 0 50%); }
+.wg-open.closed .wg-pg.l > * { opacity: 0; transition: none; }
+.wg-open.closed.opening { clip-path: inset(0 0 0 0); transition: clip-path .5s cubic-bezier(.2, .6, .3, 1) .45s; }
+
+/* ═══════ 转修 / 散功重修：轻量对话框（不是整屏演出） ═══════ */
 .gf-veil { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 20px;
   background: oklch(0.08 0.01 262 / 0.78); backdrop-filter: blur(3px); animation: gf-veil-in .3s var(--ease-sharp); }
 @keyframes gf-veil-in { from { opacity: 0; } }
@@ -81,132 +211,33 @@
 .gf-dlg .note { margin: 14px 0 0; font-size: 13px; color: var(--faint); }
 .gf-dlg .acts { display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; flex-wrap: wrap; }
 
-/* ═══════ 武学 ═══════ */
-.wx-seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 26px; }
-.wx-seat { position: relative; border: 0; text-align: left; border-radius: 10px; padding: 12px 14px; cursor: pointer; min-height: 70px; color: inherit;
-  background: var(--card); box-shadow: var(--card-edge); }
-.wx-seat .n { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; display: block; }
-.wx-seat .m { font-size: 12px; color: var(--faint); }
-.wx-seat .x { position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--faint); opacity: 0; transition: opacity .2s; }
-.wx-seat:hover .x { opacity: 1; }
-.wx-seat[aria-pressed="true"] { box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.5); }
-.wx-seat.empty { background: none; box-shadow: inset 0 0 0 1px var(--hair); color: var(--faint); font-size: 13px; display: grid; place-items: center; cursor: default; }
+/* ═══════ 路数章：与品质章同形的实底章（同色淡底 + 同色细描边）；色相避开品质灰 / 青 / 金与装备品阶 ═══════ */
+.jh-tag.tag { --tc: var(--muted); color: color-mix(in oklch, var(--tc) 85%, white); background: color-mix(in oklch, var(--tc) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); }
+.jh-tag.tag.t-刚猛, .tagc-刚猛, .t-刚猛 { --tc: oklch(0.72 0.16 28); }
+.jh-tag.tag.t-绵长, .tagc-绵长, .t-绵长 { --tc: oklch(0.76 0.11 135); }
+.jh-tag.tag.t-守御, .tagc-守御, .t-守御 { --tc: oklch(0.74 0.10 245); }
+.jh-tag.tag.t-诡谲, .tagc-诡谲, .t-诡谲 { --tc: oklch(0.74 0.11 320); }
+.jh-tag.tag.t-阴毒, .tagc-阴毒, .t-阴毒 { --tc: oklch(0.70 0.10 175); }
+.tagc-刚猛, .tagc-绵长, .tagc-守御, .tagc-诡谲, .tagc-阴毒 { color: var(--tc); }
 
-.wx-empty { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--muted); }
-.wx-empty p { margin: 0; }
-
-/* 藏书：线装书脊陈列，按品质换布色，底部类别图标 */
-.wx-shelf { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; padding: 12px 4px 16px; margin-bottom: 18px; position: relative; }
-.wx-shelf::after { content: ''; position: absolute; left: 0; right: 0; bottom: 6px; height: 4px; border-radius: 2px;
-  background: linear-gradient(to bottom, oklch(0.3 0.02 60 / 0.8), oklch(0.18 0.015 50 / 0.6)); }
-.wx-book { position: relative; z-index: 1; width: 58px; height: 206px; border: 0; cursor: pointer; border-radius: 3px 5px 5px 3px; padding: 14px 0 10px; color: inherit;
-  display: flex; flex-direction: column; align-items: center; justify-content: space-between; transition: transform .25s var(--ease-sharp), box-shadow .25s;
-  background: linear-gradient(to right, oklch(0.2 0.02 255), oklch(0.27 0.025 255) 30%, oklch(0.23 0.022 255)); box-shadow: 0 6px 14px oklch(0.05 0.01 262 / 0.5); }
-.wx-book::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 1px;
-  background: repeating-linear-gradient(to bottom, oklch(0.6 0.02 80 / 0.5) 0 6px, transparent 6px 22px); }
-.wx-book .bt { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.18em; white-space: nowrap; padding: 8px 4px;
-  background: oklch(0.88 0.03 85 / 0.9); color: oklch(0.2 0.02 262); border-radius: 2px; }
-.wx-book.q2 { background: linear-gradient(to right, oklch(0.2 0.035 215), oklch(0.29 0.045 215) 30%, oklch(0.24 0.04 215)); }
-.wx-book.q3 { background: linear-gradient(to right, oklch(0.22 0.04 55), oklch(0.32 0.06 60) 30%, oklch(0.26 0.05 58)); }
-.wx-book.q3 .bt { background: oklch(0.8 0.1 80); }
-.wx-book .bi { display: grid; place-items: center; width: 22px; height: 22px; color: oklch(0.85 0.03 85 / 0.8); }
-.wx-book .bi .cat-ico { width: 22px; height: 22px; }
-.wx-book:hover { transform: translateY(-6px); }
-.wx-book[aria-current="true"] { transform: translateY(-10px); box-shadow: 0 10px 22px oklch(0.05 0.01 262 / 0.6), 0 0 0 1px oklch(0.78 0.13 78 / 0.6); }
-.wx-book .eq { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 4px; background: var(--gold); color: var(--primary-ink); }
-
-/* 武学详情：参数行 + 每一式一行 */
-.wx-card .params { display: flex; gap: 18px; flex-wrap: wrap; color: var(--faint); font-size: 12.5px; margin-bottom: 4px; }
-.wx-card .params b { color: var(--ink); font-weight: 600; }
-.wx-shi { display: grid; grid-template-columns: 200px minmax(0, 1fr) 64px; gap: 6px 18px; align-items: center; padding: 13px 0; border-top: 1px solid var(--hair); }
-.wx-shi .nm { display: grid; }
-.wx-shi .nm .k { font-size: 11.5px; color: var(--faint); }
-.wx-shi .nm .serif { font-size: 15.5px; letter-spacing: 0.1em; }
-.wx-shi .fx { font-size: 12px; color: var(--qi); margin-top: 3px; line-height: 1.5; }
-.wx-shi .fx::before { content: '◈ '; font-size: 10px; }
-.wx-shi .mul { text-align: right; font-weight: 600; }
-.wx-shi.locked .nm .serif, .wx-shi.locked .mul { color: var(--faint); }
-.wx-shi.locked .fx { color: oklch(0.55 0.05 215); }
-/* 锁定行（wuxue-form-unlock 原型）：一页一式，有页实心青、缺页虚线空框；原因一句短话，近在眼前的那一式带进度 */
-.lk { display: flex; align-items: center; gap: 9px; margin: 0 14px; font-size: 12.5px; color: var(--faint); min-height: 34px; }
-.lk .leaf { flex: none; width: 9px; height: 12px; border-radius: 1px; outline: 1px dashed oklch(0.48 0.014 262); outline-offset: -1px; cursor: help; }
-.lk .leaf.got { background: var(--qi); outline: 0; }
-.lk .why.near { color: var(--muted); }
-.lk .cnt { color: var(--ink-gold); font-weight: 600; }
-.lk .cnt small { color: var(--faint); font-weight: 400; font-size: 12px; }
-
-/* 熟练度：一条线四个节点（生疏 · 熟练 · 精通 · 圆满） */
-.prof { position: relative; height: 34px; margin: 0 14px; cursor: help; }
-.prof-line { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 3px, transparent 3px 6px); }
-.prof-line i { position: absolute; left: 0; top: -0.5px; height: 1.5px; border-radius: 1px; background: var(--done-line); }
-.pn { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 5px; }
-.pn b { width: 11px; height: 11px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0.42 0.015 262); }
-.pn em { font-style: normal; font-size: 11.5px; color: oklch(0.46 0.012 262); white-space: nowrap; }
-.pn.p b { background: var(--ink-gold); box-shadow: none; }
-.pn.p em { color: var(--ink-gold); }
-.pn.c b { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px oklch(0.78 0.13 78 / 0.45); }
-.pn.c em { color: var(--gold); font-weight: 600; }
-
-/* ═══════ 手机宽度 ═══════ */
+/* ═══════ 手机宽度：藏书与书上下叠，书的两页也上下叠 ═══════ */
 @media (max-width: 860px) {
-  .ng-top { grid-template-columns: 1fr; gap: 10px; }
-  .ng-lv { text-align: left; }
-  .ng-ladder { grid-template-columns: repeat(5, minmax(56px, 1fr)); overflow-x: auto; }
-  .ng-node .e { display: none; }
-  .ng-scrolls { gap: 26px 16px; }
-  .ng-book { width: 96px; }
-  .wx-seats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .wx-book { width: 50px; height: 190px; }
-  .wx-shi { grid-template-columns: 1fr 56px; }
-  .wx-shi > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
-  .lk { margin: 0; min-height: 0; }
-  .prof { margin: 4px 14px 0; }
+  .wg-carry { gap: 12px; }
+  .wg-study { grid-template-columns: 1fr; gap: 26px; }
+  .wg-shelf { grid-template-columns: repeat(3, 76px); justify-content: space-around; height: auto; grid-template-rows: none; grid-auto-rows: var(--row); }
+  .wg-open { grid-template-columns: 1fr; container-type: inline-size; height: auto; min-height: 0; }
+  .wg-pg, .wg-pg.l, .wg-pg.r { padding: 28px 24px; }
+  .wg-forms { overflow: visible; -webkit-mask-image: none; mask-image: none; padding-bottom: 0; margin-bottom: 0; }
+  .wg-bigico, .wg-zhu { right: 24px; top: 28px; }
+  .wg-flip { display: none; }
+  .wg-open.closed { clip-path: none; }
+  .wg-open.closed .wg-pg.l > * { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gf-veil, .gf-dlg { animation: none; }
-  .ng-book, .wx-book { transition: none; }
+  .wg-book, .ya .box { transition: none; }
+  .wg-flip { display: none; }
+  .wg-open.closed { clip-path: none; }
+  .wg-open.closed .wg-pg.l > * { opacity: 1; }
 }
-
-/* ═══════ 武学藏书（battle-loot 原型）：同一套 AI 书封，封面按品阶换色，右下类目印；路数章；残页 ═══════ */
-.jh-seg .grp-wrap { display: contents; }
-.jh-seg .grp { color: var(--faint); font-size: 11px; letter-spacing: 0.15em; padding: 4px 6px 4px 12px; align-self: center; }
-.wx-shelf.covers { gap: 26px 22px; align-items: flex-start; padding: 6px 4px 30px; margin-bottom: 10px; }
-.wx-shelf.covers::after { display: none; }
-.wx-cover { position: relative; width: 112px; aspect-ratio: 0.65; border: 0; padding: 0; cursor: pointer; background: none; color: inherit;
-  filter: drop-shadow(0 8px 14px oklch(0.05 0.01 262 / 0.6)); transition: transform .25s var(--ease-sharp), filter .25s; }
-.wx-cover .cv { position: absolute; inset: 0; background: url('/art/book-q1.png') center / 100% 100% no-repeat; filter: sepia(0.7) saturate(0.55) brightness(0.8); }
-.wx-cover.q2 .cv { filter: hue-rotate(60deg) saturate(0.85) brightness(0.8); }
-.wx-cover.q3 .cv { background-image: url('/art/book-q3.png'); filter: hue-rotate(-28deg) saturate(1.5) brightness(0.9); }
-.wx-cover .t { position: absolute; left: 12%; width: 16%; top: 11%; height: 54%; display: grid; place-items: center; writing-mode: vertical-rl;
-  font-family: var(--font-display); font-size: 13.5px; letter-spacing: 0.15em; color: oklch(0.2 0.02 60); white-space: nowrap;
-  background: oklch(0.88 0.035 85); box-shadow: inset 0 0 0 1px oklch(0.55 0.05 70 / 0.45), 0 1px 2px oklch(0.05 0.01 262 / 0.4); }
-.wx-cover.q3 .t { left: 13%; width: 18%; top: 7%; height: 60%; }
-.wx-cover .seal { position: absolute; right: 13%; bottom: 10%; width: 24px; height: 24px; display: grid; place-items: center; font-family: var(--font-display); font-size: 14px; line-height: 1;
-  color: oklch(0.93 0.03 60); background: oklch(0.5 0.17 28 / 0.92); border-radius: 3px; box-shadow: inset 0 0 0 1.5px oklch(0.93 0.03 60 / 0.75), 0 1px 3px oklch(0.05 0.01 262 / 0.5); transform: rotate(-6deg); }
-.wx-cover small { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--faint); white-space: nowrap; }
-.wx-cover:hover { transform: translateY(-3px); }
-.wx-cover[aria-current="true"] { transform: translateY(-6px); filter: drop-shadow(0 0 12px oklch(0.78 0.13 78 / 0.45)); }
-.wx-cover.ghost .cv { filter: sepia(0.7) saturate(0.3) brightness(0.5); }
-.wx-cover.ghost.q2 .cv { filter: hue-rotate(60deg) saturate(0.55) brightness(0.5); }
-.wx-cover.ghost.q3 .cv { filter: hue-rotate(-28deg) saturate(0.9) brightness(0.5); }
-.wx-cover.ghost .t { background: oklch(0.66 0.02 85); color: oklch(0.3 0.02 60); }
-.wx-cover.ghost .seal { opacity: 0.5; }
-.wx-cover .eq { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: var(--gold); color: var(--primary-ink); font-family: var(--font-body); }
-.wx-cover .need { position: absolute; top: -8px; right: -6px; font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: oklch(0.42 0.02 262); color: var(--ink); font-family: var(--font-body); }
-
-/* 路数章：透明底 + 1px 同色描边 + 前置亮点，与品质的填充章分开；色相避开品质灰 / 青 / 金与装备品阶绿 / 青 / 紫 / 橙 */
-.jh-tag.tag { --tc: var(--muted); color: var(--tc); background: none; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tc) 45%, transparent); display: inline-flex; align-items: center; gap: 5px; }
-.jh-tag.tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tc); box-shadow: 0 0 6px color-mix(in oklch, var(--tc) 60%, transparent); }
-.jh-tag.tag.t-刚猛, .tagc-刚猛 { --tc: oklch(0.72 0.16 28); }
-.jh-tag.tag.t-绵长, .tagc-绵长 { --tc: oklch(0.76 0.11 135); }
-.jh-tag.tag.t-守御, .tagc-守御 { --tc: oklch(0.74 0.10 245); }
-.jh-tag.tag.t-诡谲, .tagc-诡谲 { --tc: oklch(0.74 0.11 320); }
-.jh-tag.tag.t-阴毒, .tagc-阴毒 { --tc: oklch(0.70 0.10 175); }
-.tagc-刚猛, .tagc-绵长, .tagc-守御, .tagc-诡谲, .tagc-阴毒 { color: var(--tc); }
-.wx-card .wtag { font-size: 11px; color: var(--faint); padding: 1px 6px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
-
-/* 兵器搭配一行与残页 */
-.wx-need { font-size: 12.5px; color: oklch(0.72 0.12 30); margin: -2px 0 10px; }
-.wx-need.ok { color: var(--ink-gold); }
-.wx-cover small .pgc { color: var(--qi); }
-@media (max-width: 860px) { .wx-cover { width: 86px; } }

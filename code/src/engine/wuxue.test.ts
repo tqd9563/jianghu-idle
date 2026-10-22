@@ -33,6 +33,16 @@ describe('名录读表', () => {
     expect(WUXUE.tianhedaoxuandao.source).toBe('崆峒');
   });
 
+  it('批注：每门一联，寻常四字、上乘与绝学五字', () => {
+    for (const id of WUXUE_IDS) {
+      const d = WUXUE[id];
+      const [a, b, ...rest] = d.epigraph.split('，');
+      expect(rest, d.name).toHaveLength(0);
+      expect([a.length, b.length], d.name).toEqual(d.quality === '寻常' ? [4, 4] : [5, 5]);
+    }
+    expect(WUXUE.luoxingjian.epigraph).toBe('星垂沧海夜，剑落暮潮寒');
+  });
+
   it('特效四档 × 类型系数（裁决 46）：寻常 Ⅰ→Ⅱ、上乘 Ⅰ→Ⅲ、绝学 Ⅱ→Ⅳ，中间插值后乘系数；几率类封顶；独门为 0', () => {
     const qm = WUXUE.qimeigun;   // 寻常 · 折中 ×1 · 轻身 16/24/32/40：整数列四舍五入
     expect(qm.ek).toBe(1);

@@ -189,14 +189,8 @@ body[data-tab="wugong"] .proto [data-only] { display: flex; }
 .open .ttl { display: flex; align-items: flex-start; gap: 16px; }
 .open .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.22em; line-height: 1; padding: 4px 0; white-space: nowrap; color: var(--nijin); text-shadow: 0 0 10px oklch(0.78 0.13 78 / 0.25); }
 .open .side { display: grid; gap: 8px; align-content: start; padding-top: 2px; }
-/* 武学批注（三种排法，原型控制「批注」切换） */
-.open .ep { display: grid; gap: 4px; margin-top: 10px; font-family: var(--font-display); font-size: 14px; line-height: 1.5; letter-spacing: 0.14em; color: color-mix(in oklch, var(--muted) 82%, transparent); white-space: nowrap; }
-.open .ep i { display: none; font-style: normal; }
-.open .ep b { font-weight: 400; }
-body[data-ep="b"] .open .ep { display: block; letter-spacing: 0.1em; }
-body[data-ep="b"] .open .ep i { display: inline; }
-body[data-ep="c"] .open .ep { writing-mode: vertical-rl; display: block; margin-top: 12px; letter-spacing: 0.16em; line-height: 1.6; }
-body[data-ep="c"] .open .ep b { display: block; }
+/* 武学批注：一行横排（用户选定） */
+.open .ep { display: block; margin-top: 10px; font-family: var(--font-display); font-size: 14px; line-height: 1.5; letter-spacing: 0.1em; color: color-mix(in oklch, var(--muted) 82%, transparent); white-space: nowrap; }
 .ptag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 3px; width: max-content; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
 .ptag.q1 { background: oklch(0.3 0.014 262 / 0.55); }
 .ptag.q2 { color: oklch(0.8 0.08 210); background: oklch(0.74 0.10 215 / 0.10); box-shadow: inset 0 0 0 1px oklch(0.74 0.10 215 / 0.4); }
@@ -333,13 +327,12 @@ body[data-ep="c"] .open .ep b { display: block; }
 .facts .gold { color: var(--nijin); }
 </style>
 </head>
-<body data-tab="wugong" data-ep="a">
+<body data-tab="wugong">
 <div class="proto">
   <div class="head">原型控制<button class="js-fold" aria-label="收起">—</button></div>
   <div class="row"><span>样张</span><button data-sheet>九部心法印匣</button></div>
   <div class="row" data-only="neigong"><span>主修</span><button data-pre="a" aria-pressed="true">蚀骨 5 重</button><button data-pre="b">蚀骨 6 重临关</button><button data-pre="c">沧海 13 重</button><button data-pre="d">菩提 27 重</button></div>
   <div class="row" data-only="neigong"><span>模拟</span><button data-sim="dan">内力 +1 万</button><button data-sim="wu">顿悟成功</button></div>
-  <div class="row" data-only="wuxue"><span>批注</span><button data-ep="a" aria-pressed="true">两行横排</button><button data-ep="b">一行横排</button><button data-ep="c">竖排两列</button></div>
   <div class="row" data-only="wuxue"><span>槽数</span><button data-s="5" aria-pressed="true">5（境界 1）</button><button data-s="7">7</button></div>
   <div class="row" data-only="wuxue"><span>兵器</span><button data-w="剑">持剑</button><button data-w="刀" aria-pressed="true">持刀</button><button data-w="">赤手</button></div>
   <div class="hint">侧栏只画了「武功」页。点装配印匣或藏书里任意一本，右侧翻开；悬停要诀右侧的关名，同一关影响的几条一起亮；「精进一重」「装配 / 卸下」都可点。</div>
@@ -677,7 +670,7 @@ function renderWxBook() {
       <div class="ttl"><span class="nm">${d.n}</span>
         <div class="side"><span class="ptag q${QN[d.q]}">${d.q}</span><span class="ptag rt t-${d.rt}">${d.rt}</span>
           ${d.res ? '<span class="ptag res" data-tip="与所修内功同路，招式伤害 ×1.15">共鸣</span>' : ''}${d.benmen ? '<span class="ptag res" data-tip="本门武学：练熟所需出招数少两成">本门</span>' : ''}
-          ${d.ep ? `<span class="ep">${d.ep.split('，').map((x) => `<b>${x}</b>`).join('<i>，</i>')}</span>` : ''}</div></div>
+          ${d.ep ? `<span class="ep">${d.ep}</span>` : ''}</div></div>
       <span class="bigico ico rf t-${d.rt}" style="background-image:url('${A}cat/${ICON[d.cat]}.png')" data-tip="${big} · ${d.cat}"></span>
       <div class="params">
         <span>伤害倍率<b>×${d.m0}%</b></span><span>真气消耗<b>${d.cost}</b></span><span>冷却回合<b>${d.cd}</b></span>
@@ -755,7 +748,6 @@ document.addEventListener('click', (e) => {
   if (b.dataset.wxcat) { wx.cat = b.dataset.wxcat; wx.page = 0; }
   if (b.dataset.pg) wx.page += +b.dataset.pg;
   if (b.hasAttribute('data-toggle')) { const i = wx.desk.indexOf(wx.cur); i >= 0 ? wx.desk.splice(i, 1) : wx.desk.push(wx.cur); }
-  if (b.dataset.ep) { document.body.dataset.ep = b.dataset.ep; press('[data-ep]'); }
   if (b.dataset.s) { wx.slots = +b.dataset.s; wx.desk = wx.desk.slice(0, wx.slots); press('[data-s]'); }
   if (b.dataset.w != null && b.closest('.proto')) { wx.weapon = b.dataset.w; press('[data-w]'); }
   rerenderSame();

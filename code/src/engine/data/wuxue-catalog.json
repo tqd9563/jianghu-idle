@@ -1,5 +1,5 @@
 {
- "source": "docs/systems/battle-loot/export_wuxue.py（wuxue-params.json + rules/copy/wuxue-forms.md）",
+ "source": "docs/systems/battle-loot/export_wuxue.py（wuxue-params.json + rules/copy/wuxue-forms.md + wuxue-epigraphs.md）",
  "trigger_cap": 0.75,
  "effects": {
   "运劲": {
@@ -200,7 +200,8 @@
    "p": 0.051,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "白云出岫，青锋无心"
   },
   {
    "id": "qingpingjian",
@@ -230,7 +231,8 @@
    "p": 0.136,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "风起萍末，寒透青锋"
   },
   {
    "id": "songtaojian",
@@ -260,7 +262,8 @@
    "p": 0.185,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "松声入剑，涛起空山"
   },
   {
    "id": "jiyujian",
@@ -290,7 +293,8 @@
    "p": 0.116,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "檐声急雨，剑影疏灯"
   },
   {
    "id": "jinghongjian",
@@ -312,7 +316,8 @@
    "p": 0.087,
    "cd": 3,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "惊鸿曾照影，剑过不留痕"
   },
   {
    "id": "feipuduanyajian",
@@ -348,7 +353,8 @@
    "p": 0.058,
    "cd": 4,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "绝壁垂白练，寒光落深潭"
   },
   {
    "id": "cangyajianjue",
@@ -372,7 +378,8 @@
    "p": 0.028,
    "cd": 4,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "苍崖云九叠，孤剑雪千秋"
   },
   {
    "id": "luoxingjian",
@@ -397,6 +404,7 @@
    "cd": 5,
    "type": "折中",
    "ek": 1.0,
+   "epigraph": "星垂沧海夜，剑落暮潮寒",
    "signature": true
   },
   {
@@ -427,7 +435,8 @@
    "p": 0.197,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "风裂长空，刃留秋声"
   },
   {
    "id": "kaibeidao",
@@ -457,7 +466,8 @@
    "p": 0.068,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "断碣残碑，刀痕犹新"
   },
   {
    "id": "shuangfengdao",
@@ -487,7 +497,8 @@
    "p": 0.144,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "月照寒锋，霜满关河"
   },
   {
    "id": "jiejiangdao",
@@ -517,7 +528,8 @@
    "p": 0.103,
    "cd": 3,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "刀横大江，涛声忽断"
   },
   {
    "id": "duanshuidao",
@@ -539,7 +551,8 @@
    "p": 0.066,
    "cd": 3,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "抽刀何曾断，江水自东流"
   },
   {
    "id": "nutaolieandao",
@@ -575,7 +588,8 @@
    "p": 0.051,
    "cd": 4,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "乱石崩云处，刀声裂岸来"
   },
   {
    "id": "tianhedaoxuandao",
@@ -617,7 +631,8 @@
    "p": 0.043,
    "cd": 5,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "银汉倒垂处，刀光落九天"
   },
   {
    "id": "yanmenqiang",
@@ -647,7 +662,8 @@
    "p": 0.128,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "雁声过塞，枪影横秋"
   },
   {
    "id": "bailaqiang",
@@ -677,7 +693,8 @@
    "p": 0.136,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "弦惊雁阵，月满雕弓"
   },
   {
    "id": "zhongpingqiang",
@@ -707,7 +724,8 @@
    "p": 0.115,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "残星欲坠，晓色先寒"
   },
   {
    "id": "jingsheqiang",
@@ -737,7 +755,8 @@
    "p": 0.095,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "风过草低，寒芒乍起"
   },
   {
    "id": "chuanyunpoyueqiang",
@@ -773,7 +792,8 @@
    "p": 0.037,
    "cd": 2,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "枪出穿重云，月碎落寒江"
   },
   {
    "id": "lihuadaiyuqiang",
@@ -809,7 +829,8 @@
    "p": 0.085,
    "cd": 3,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "东风吹夜雪，千树尽梨花"
   },
   {
    "id": "bawangxiejiaqiang",
@@ -851,7 +872,8 @@
    "p": 0.038,
    "cd": 5,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "楚歌四面起，乌骓不渡江"
   },
   {
    "id": "xingzhegun",
@@ -871,7 +893,8 @@
    "p": 0.219,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "苇叶横江，禅心照水"
   },
   {
    "id": "qimeigun",
@@ -901,7 +924,8 @@
    "p": 0.133,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "岭头云断，眉际风生"
   },
   {
    "id": "saotanggun",
@@ -931,7 +955,8 @@
    "p": 0.26,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "霜林落木，万壑秋声"
   },
   {
    "id": "bengyungun",
@@ -961,7 +986,8 @@
    "p": 0.074,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "云崩山低，天风满袖"
   },
   {
    "id": "panlongraozhugun",
@@ -997,7 +1023,8 @@
    "p": 0.114,
    "cd": 2,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "潜龙渊底卧，风雨自天来"
   },
   {
    "id": "fanjiangjiaohaigun",
@@ -1033,7 +1060,8 @@
    "p": 0.061,
    "cd": 4,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "鲸波千丈起，蛟龙伏棍前"
   },
   {
    "id": "luohanfumogun",
@@ -1057,7 +1085,8 @@
    "p": 0.053,
    "cd": 4,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "罗汉低眉处，群魔尽皈依"
   },
   {
    "id": "xiangmochufa",
@@ -1082,6 +1111,7 @@
    "cd": 5,
    "type": "折中",
    "ek": 1.0,
+   "epigraph": "金刚怒目立，宝杵荡妖氛",
    "signature": true
   },
   {
@@ -1124,7 +1154,8 @@
    "p": 0.071,
    "cd": 3,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "檀板声声里，青莲落地开"
   },
   {
    "id": "tongbiquan",
@@ -1154,7 +1185,8 @@
    "p": 0.047,
    "cd": 3,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "猿啸千峰，月冷空山"
   },
   {
    "id": "luohanquan",
@@ -1184,7 +1216,8 @@
    "p": 0.136,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "石狮守夜，钟鼓惊禅"
   },
   {
    "id": "bengshanquan",
@@ -1214,7 +1247,8 @@
    "p": 0.142,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "拳落千峰，云归幽壑"
   },
   {
    "id": "bajiquan",
@@ -1244,7 +1278,8 @@
    "p": 0.112,
    "cd": 3,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "惊蛰雷动，八荒风雨"
   },
   {
    "id": "fuhuquan",
@@ -1266,7 +1301,8 @@
    "p": 0.036,
    "cd": 3,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "风从林下起，虎啸万山秋"
   },
   {
    "id": "jinzhongzhendianquan",
@@ -1302,7 +1338,8 @@
    "p": 0.068,
    "cd": 4,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "晨钟惊宿鸟，殿宇落梁尘"
   },
   {
    "id": "zhenwudangmoquan",
@@ -1344,7 +1381,8 @@
    "p": 0.057,
    "cd": 4,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "太和云似海，玄帝披发来"
   },
   {
    "id": "kaishanzhang",
@@ -1364,7 +1402,8 @@
    "p": 0.153,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "巨灵擘山，大河东去"
   },
   {
    "id": "zhushazhang",
@@ -1394,7 +1433,8 @@
    "p": 0.078,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "落霞孤鹜，掌底秋红"
   },
   {
    "id": "mianrouzhang",
@@ -1424,7 +1464,8 @@
    "p": 0.26,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "拂面如柳，穿石如泉"
   },
   {
    "id": "baguazhang",
@@ -1454,7 +1495,8 @@
    "p": 0.198,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "九宫星转，八卦门开"
   },
   {
    "id": "kaibeilieshizhang",
@@ -1490,7 +1532,8 @@
    "p": 0.054,
    "cd": 4,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "古碑苔藓尽，掌下石成尘"
   },
   {
    "id": "yinfengguikuzhang",
@@ -1526,7 +1569,8 @@
    "p": 0.068,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "荒冢阴风起，寒林鬼火青"
   },
   {
    "id": "qianshesixinzhang",
@@ -1568,7 +1612,8 @@
    "p": 0.053,
    "cd": 5,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "幽窟千蛇出，寒心寸寸灰"
   },
   {
    "id": "hanchanqiqiezhang",
@@ -1610,7 +1655,8 @@
    "p": 0.055,
    "cd": 4,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "长亭骤雨歇，掌底噤寒蝉"
   },
   {
    "id": "cunjinzhi",
@@ -1640,7 +1686,8 @@
    "p": 0.207,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "龙成待点，指落云生"
   },
   {
    "id": "chuomaizhi",
@@ -1670,7 +1717,8 @@
    "p": 0.26,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "循溪到源，泉出空山"
   },
   {
    "id": "tiegouzhi",
@@ -1700,7 +1748,8 @@
    "p": 0.07,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "新月如钩，寒星似点"
   },
   {
    "id": "jingangzhi",
@@ -1730,7 +1779,8 @@
    "p": 0.142,
    "cd": 3,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "檐雨千年，石亦穿心"
   },
   {
    "id": "qingshetuxinzhi",
@@ -1766,7 +1816,8 @@
    "p": 0.079,
    "cd": 3,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "独坐幽篁里，青蛇吐信时"
   },
   {
    "id": "duanjinsuiyuzhi",
@@ -1802,7 +1853,8 @@
    "p": 0.071,
    "cd": 4,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "金石鸣空谷，碎玉落寒阶"
   },
   {
    "id": "lianhuantui",
@@ -1832,7 +1884,8 @@
    "p": 0.13,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "蛱蝶穿花，落红不惊"
   },
   {
    "id": "chuanlintui",
@@ -1862,7 +1915,8 @@
    "p": 0.139,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "何妨吟啸，且自徐行"
   },
   {
    "id": "gouguatui",
@@ -1892,7 +1946,8 @@
    "p": 0.105,
    "cd": 3,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "举杯邀月，踏影无痕"
   },
   {
    "id": "xuanfengtui",
@@ -1922,7 +1977,8 @@
    "p": 0.238,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "北风卷地，满庭飞雪"
   },
   {
    "id": "yuhuanyuanyangtui",
@@ -1958,7 +2014,8 @@
    "p": 0.029,
    "cd": 4,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "醉卧流霞里，醒来月满襟"
   },
   {
    "id": "zhudianliuxingtui",
@@ -1994,7 +2051,8 @@
    "p": 0.113,
    "cd": 2,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "电过不留影，星落不闻声"
   },
   {
    "id": "xiulizhen",
@@ -2014,7 +2072,8 @@
    "p": 0.137,
    "cd": 2,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "梅边月下，香暗针寒"
   },
   {
    "id": "liuyebiao",
@@ -2044,7 +2103,8 @@
    "p": 0.26,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "灞桥折柳，此去无归"
   },
   {
    "id": "jiliding",
@@ -2074,7 +2134,8 @@
    "p": 0.143,
    "cd": 3,
    "type": "双强",
-   "ek": 1.5
+   "ek": 1.5,
+   "epigraph": "疏星满地，夜路生寒"
   },
   {
    "id": "liuxingshi",
@@ -2104,7 +2165,8 @@
    "p": 0.26,
    "cd": 1,
    "type": "折中",
-   "ek": 1.25
+   "ek": 1.25,
+   "epigraph": "石落空山，惊起寒鸦"
   },
   {
    "id": "feihuangshi",
@@ -2126,7 +2188,8 @@
    "p": 0.073,
    "cd": 3,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "飞蝗遮白日，乱石落如雨"
   },
   {
    "id": "zimuchuanxinbiao",
@@ -2162,7 +2225,8 @@
    "p": 0.067,
    "cd": 4,
    "type": "重击",
-   "ek": 0.5
+   "ek": 0.5,
+   "epigraph": "双燕穿帘过，回首已无声"
   },
   {
    "id": "luoyingfeizhen",
@@ -2186,7 +2250,8 @@
    "p": 0.057,
    "cd": 4,
    "type": "折中",
-   "ek": 1.0
+   "ek": 1.0,
+   "epigraph": "桃花流水杳，落英深处寒"
   },
   {
    "id": "qianjibiao",
@@ -2211,6 +2276,7 @@
    "cd": 4,
    "type": "折中",
    "ek": 1.0,
+   "epigraph": "机关藏细线，魂断月明中",
    "signature": true
   }
  ]

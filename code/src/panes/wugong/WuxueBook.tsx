@@ -1,6 +1,6 @@
 /**
  * 武功页 · 武学书页（磁青书两页）—— docs/design/gongfa-prototype.html。
- * 左页：竖写书名、品质 / 路数章（共鸣、本门）、类目石印（按路数着色）、五项参数、兵器搭配一行、装配 / 卸下。
+ * 左页：竖写书名、品质 / 路数章（共鸣、本门）、批注一联、类目石印（按路数着色）、五项参数、兵器搭配一行、装配 / 卸下。
  * 右页：每一式一行（式名、特效、倍率），能出的画熟练四节点，锁定的写缺页或「待前式圆满」。
  * 数值出自 docs/systems/battle-loot/spec.md §3；解锁规则见 battle-loot/design.md §4。
  */
@@ -55,6 +55,7 @@ export function WuxueBook({ id }: { id: WuxueId }) {
             <span className={`ptag rt t-${tag}`}>{tag}</span>
             {res && <span className="ptag res" data-tip={`与所修内功同为${ROUTES[d.route!].name}一路，招式伤害 ×${RESONANCE_MULT}`}>共鸣</span>}
             {benmen && <span className="ptag res" data-tip="本门武学：每一式练到熟练、精通、圆满所需的出招数少两成">本门</span>}
+            <span className="ep">{d.epigraph}</span>
           </div>
         </div>
         <i className={`wg-bigico wg-ico rf t-${tag}`} style={catIcon(d.cat)} data-tip={`${big} · ${d.cat}`} />

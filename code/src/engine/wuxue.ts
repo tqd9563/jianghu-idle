@@ -40,6 +40,8 @@ export type WuxueSource = '书肆' | 'Boss' | '挂机' | '华山' | '少林' | '
 export interface WuxueDef {
   id: WuxueId;
   name: string;
+  /** 批注：一联题词，书页左页标签下显示（docs/rules/copy/wuxue-epigraphs.md） */
+  epigraph: string;
   quality: Quality;
   cat: WuxueCat;
   /** 路数：与所修内功同路数吃共鸣；null = 不吃任何共鸣 */
@@ -74,7 +76,7 @@ interface CatalogRow extends Omit<WuxueDef, 'route'> {
 const ROWS = catalog.wuxue as CatalogRow[];
 
 export const WUXUE: Record<WuxueId, WuxueDef> = Object.fromEntries(ROWS.map((r) => [r.id, {
-  id: r.id, name: r.name, quality: r.quality, cat: r.cat, route: (r.route ?? null) as RouteId | null, effect: r.effect,
+  id: r.id, name: r.name, epigraph: r.epigraph, quality: r.quality, cat: r.cat, route: (r.route ?? null) as RouteId | null, effect: r.effect,
   ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, mults: r.mults, cost: r.cost, p: r.p, cd: r.cd,
   type: r.type, ek: r.ek,
 }]));

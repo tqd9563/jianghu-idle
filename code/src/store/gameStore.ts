@@ -136,6 +136,8 @@ interface PersistedState {
   retiredNodes?: string[];
   /** 本世已用掉的免伤次数（侠名录·战败线） */
   freeHurtUsed: number;
+  /** 自动连战（issue #77）：勾上 = 推关打赢后接着挑战下一关；默认不勾，打赢就停。玩家偏好，跨世保留 */
+  autoChain: boolean;
   /** 本世乘区加权有效时长（小时）：基础声望 = 10 × 它（economy.md §1.1）；在线全额、离线 × 60% */
   lifeWeightedHours: number;
   /** 历来击败过的最深 Boss（跨世保留）：行为乘数「打到自己的前沿」的比较基准（economy.md §1.2） */
@@ -392,6 +394,8 @@ interface GameState extends PersistedState {
   idleAt: (map: MapNo, tier: TierId, stage: number) => void;
   /** 收手：这一场打完就停，不再接着打 */
   stopIdle: () => void;
+  /** 自动连战开关（战斗页挑战按钮下的勾选） */
+  setAutoChain: (on: boolean) => void;
   dismissIdleSummary: () => void;
   /** 传功选完内功后，从三门里择一门武学（battle-loot/design.md §5.1） */
   pickGiftWuxue: (id: WuxueId) => void;
@@ -439,7 +443,7 @@ const FRESH: PersistedState = {
   acupointProgress: {}, acupointLog: [],
   injuries: freshInjuries(), lifespanLost: 0,
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
-  peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), achv: {}, freeHurtUsed: 0, lifeWeightedHours: 0,
+  peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), achv: {}, freeHurtUsed: 0, autoChain: false, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
   tiersUnlocked: ['1-0'],
   ownedWuxue: [], ownedScrolls: [], pages: [], equipped: [], formCasts: {}, dropsClaimed: [],
@@ -1449,6 +1453,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     startBattle(set, get, map, tier, stage, isRefarm ? 'single' : 'push');
   },
 
+  setAutoChain: (on) => {
+    set({ autoChain: on });
+    persist(get());
+  },
+
   idleAt: (map, tier, stage) => {
     const s = get();
     if (!s.clearedStages.includes(stageKey(map, tier, stage))) return; // 只能在已通关的关挂
@@ -1799,6 +1808,7 @@ function rebirth(
     diyun: { ...freshDiyun(), ...(s.diyun ?? {}) },
     achv: s.achv ?? {},
     retiredNodes: s.retiredNodes ?? [],
+    autoChain: s.autoChain ?? false,
     deepestBossEver: Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages)),
     fameClaimed: s.fameClaimed ?? [],
     idle: null,
@@ -1856,6 +1866,7 @@ export function lastClearedBelow(map: MapNo, tier: TierId, stage: number, cleare
 /** 一场打完接着打哪关（纯函数，便于测试）：返回新的挂机状态与连战目标 */
 export function nextAfterBattle(
   idle: IdleState | null, b: Pick<BattleState, 'map' | 'tier' | 'stage' | 'mode'>, win: boolean, cleared: readonly string[],
+  autoChain = true,
 ): { idle: IdleState | null; chainStage: number | null; chainMode: BattleMode | null } {
   const sameTrack = idle !== null && idle.map === b.map && idle.tier === b.tier;
   const idleHere = (stage: number, fights: number): IdleState => ({ map: b.map, tier: b.tier, stage, fights });
@@ -1870,7 +1881,9 @@ export function nextAfterBattle(
   if (b.mode === 'push') {
     if (win) {
       const next = nextStageOf(b.map, b.tier, cleared);
-      if (next !== null) return { idle, chainStage: next, chainMode: 'push' };
+      if (next !== null && autoChain) return { idle, chainStage: next, chainMode: 'push' };
+      // 没勾自动连战：打赢就停；挑战前在本段挂机的，回到原挂机关接着挂（issue #77）
+      if (next !== null) return sameTrack ? { idle, chainStage: idle!.stage, chainMode: 'idle' } : { idle, chainStage: null, chainMode: null };
       // 本段打穿：在最后一关挂着
       const here = idleHere(b.stage, sameTrack ? idle!.fights : 0);
       return { idle: here, chainStage: here.stage, chainMode: 'idle' };
@@ -2158,7 +2171,7 @@ function resolveBattle(
   //   推关：赢了接着往前，到头了就在这一关挂着；输了退回挂机关（没有就退回本段最后一个已通关）
   //   挂机：赢了原地再打；输了退一关继续挂，退无可退才停
   //   单打一次：打完就停
-  let { idle: idle0, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages);
+  let { idle: idle0, chainStage, chainMode } = nextAfterBattle(s.idle, b, result.win, clearedStages, s.autoChain ?? false);
   // 第一世 1-7 的那场战败要停下来见前辈（design.md §5.1）：不退回挂机、不连战，免得演出被下一场冲掉
   if (failure && isTeachFailure({ failure, run: s.run, neigong: s.neigong, taught: s.taught })) {
     idle0 = null; chainStage = null; chainMode = null;

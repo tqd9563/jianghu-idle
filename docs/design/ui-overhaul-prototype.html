@@ -1355,7 +1355,7 @@ document.addEventListener('mouseover', e => {
 document.addEventListener('mouseout', e => { if (e.target.closest('[data-tip],[data-tip-html]')) tip.classList.remove('on'); });
 
 /* ───── 属性谱（不显示突破后数值；推导放悬停） ───── */
-const ATTRS = [['气血', '184', '境界基础 170 · 内功加成 +8%'], ['真气', '73', '(70 + 重数 3) × 惊雷诀气海 1.0<br>开战满，普攻每回合回 20'], ['攻击', '18.4', '境界基础 17 · 惊雷诀第 3 重 +8%'], ['防御', '9.7', '境界基础 9 · 路数赠予 +8%'],
+const ATTRS = [['气血', '184', '境界基础 170 · 内功加成 +8%'], ['真气', '73', '(70 + 重数 3) × 惊雷诀气海 1.0<br>开战满'], ['攻击', '18.4', '境界基础 17 · 惊雷诀第 3 重 +8%'], ['防御', '9.7', '境界基础 9 · 路数赠予 +8%'],
   ['命中', '112'], ['闪避', '13'], ['暴击率', '5%'], ['暴击伤害', '150%']];
 function renderAttrs() {
   const html = `<dl class="attr-list">${ATTRS.map(([k, v, why]) =>

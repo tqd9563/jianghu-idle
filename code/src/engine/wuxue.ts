@@ -103,8 +103,6 @@ export const QUALITY_PARAMS: Record<Quality, QualityParams> = {
 const CALIB = (catalog as unknown as { calib: { mult_growth: number; cost_growth: number } }).calib;
 export const MULT_GROWTH: number = CALIB.mult_growth;
 export const COST_GROWTH: number = CALIB.cost_growth;
-/** 普攻一回合回的真气 */
-export const QI_REGEN = 20 * QI_SCALE;
 export const RESONANCE_MULT = 1.1;
 /** 总触发率上限（spec §3.3） */
 export const TRIGGER_CAP: number = catalog.trigger_cap;

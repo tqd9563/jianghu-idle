@@ -7,7 +7,7 @@ import { BASE_CRIT_DMG, BASE_CRIT_RATE, REALMS, STAT_SCALE, huohouEffect, zhaosh
 import type { EnemyDef } from './enemies';
 import { HIT_FLOOR, mitigationMultiplier } from './formulas';
 import { ROUTES } from './routes';
-import { EFFECT_ROUNDS, LASTING_EFFECTS, QI_REGEN, TRIGGER_CAP, type FormEffect } from './wuxue';
+import { EFFECT_ROUNDS, LASTING_EFFECTS, TRIGGER_CAP, type FormEffect } from './wuxue';
 import { assertNever } from './exhaustive';
 
 // 敌人标签参数（公式表，与 sim 常量一致）
@@ -308,8 +308,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     const edefNow = enemy.def * (1 - lv('破绽')) * (eff === '透劲' ? 1 - fv : 1);
     let dealt = baseAtk * mult * critEv * mitigationMultiplier(edefNow, defK) * hitRoll * dmgMult
       * (form ? 1 : build.plainMult) * spread();
-    if (form) fightCasts += 1;
-    else if (useSkills) qi = Math.min(qiMax, qi + QI_REGEN);
+    if (form) fightCasts += 1;   // 普攻不回真气（battle-loot 裁决 47）：真气只靠开场满池与回气 / 回元
     if (form && eff) {
       switch (eff) {
         case '护体': pshield += fv * build.hp; fx = eff; break;

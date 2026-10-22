@@ -202,3 +202,24 @@ describe('v15 → v16（熟练阈值重标，issue #79）', () => {
     expect(migrate({ realm: 2 }, 15, SAVE_VERSION)).toEqual({ realm: 2 });
   });
 });
+
+describe('v16 → v17（真气 ×10）', () => {
+  it('行囊、身上、挂机小结、黑市揭晓货里的蕴气词条都 ×10，其它词条与字段不动', () => {
+    const item = (afx: [string, number][]) => ({ id: 'g', slot: '佩饰', name: '青玉佩', base: { 闪避: 3 }, afx, sell: 1, fresh: false });
+    const before = {
+      realm: 3,
+      bag: [item([['qi', 5], ['crit', 2]])],
+      worn: { 衣甲: item([['hp', 3], ['qi', 4]]) },
+      idle: { map: 1, tier: 0, stage: 3, fights: 2, sess: { best: item([['qi', 6]]) } },
+      blackGoods: [{ id: 'b', revealed: { gear: item([['qi', 3]]) } }, { id: 'c', revealed: null }],
+    };
+    const out = migrate(before as Record<string, unknown>, 16, SAVE_VERSION) as typeof before;
+    expect(out.bag[0].afx).toEqual([['qi', 50], ['crit', 2]]);
+    expect(out.worn.衣甲.afx).toEqual([['hp', 3], ['qi', 40]]);
+    expect(out.idle.sess.best.afx).toEqual([['qi', 60]]);
+    expect(out.blackGoods[0].revealed!.gear.afx).toEqual([['qi', 30]]);
+    expect(out.blackGoods[1]).toEqual({ id: 'c', revealed: null });
+    expect(out.realm).toBe(3);
+    expect(migrate(out as Record<string, unknown>, 17, SAVE_VERSION)).toEqual(out);
+  });
+});

@@ -5,7 +5,7 @@
  * 参数一律读 data/wuxue-catalog.json（由 docs/systems/battle-loot/export_wuxue.py 从 sim 产物生成），禁止在此调参。
  * 第一批 66 门；第二批不进池、不上架。
  */
-import type { RouteId } from './content';
+import { QI_SCALE, type RouteId } from './content';
 import type { Quality } from './neigong';
 import catalog from './data/wuxue-catalog.json';
 
@@ -77,7 +77,7 @@ const ROWS = catalog.wuxue as CatalogRow[];
 
 export const WUXUE: Record<WuxueId, WuxueDef> = Object.fromEntries(ROWS.map((r) => [r.id, {
   id: r.id, name: r.name, epigraph: r.epigraph, quality: r.quality, cat: r.cat, route: (r.route ?? null) as RouteId | null, effect: r.effect,
-  ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, mults: r.mults, cost: r.cost, p: r.p, cd: r.cd,
+  ...(r.signature ? { signature: true } : {}), source: r.source, mult0: r.mult0, mults: r.mults, cost: r.cost * QI_SCALE, p: r.p, cd: r.cd,
   type: r.type, ek: r.ek,
 }]));
 export const WUXUE_IDS: WuxueId[] = ROWS.map((r) => r.id);
@@ -103,7 +103,8 @@ export const QUALITY_PARAMS: Record<Quality, QualityParams> = {
 const CALIB = (catalog as unknown as { calib: { mult_growth: number; cost_growth: number } }).calib;
 export const MULT_GROWTH: number = CALIB.mult_growth;
 export const COST_GROWTH: number = CALIB.cost_growth;
-export const QI_REGEN = 20;
+/** 普攻一回合回的真气 */
+export const QI_REGEN = 20 * QI_SCALE;
 export const RESONANCE_MULT = 1.1;
 /** 总触发率上限（spec §3.3） */
 export const TRIGGER_CAP: number = catalog.trigger_cap;
@@ -140,13 +141,13 @@ export function formMult(def: Pick<WuxueDef, 'mult0'> & { mults?: readonly numbe
 /** 熟练只减耗气（裁决 45）：生疏 / 熟练 / 精通 / 圆熟的耗气倍率 `[待 sim]` */
 export const SHULIAN_COST: [number, number, number, number] = [1, 0.92, 0.84, 0.75];
 
-/** 第 k 式未经熟练打折的基础耗气（抽式权重用它，不然练熟的招反而少出） */
+/** 第 k 式未经熟练打折的基础耗气（抽式权重用它，不然练熟的招反而少出）；按 sim 尺度取整再 × QI_SCALE */
 export function formBaseCost(def: Pick<WuxueDef, 'cost'>, k: number): number {
-  return Math.round(def.cost * COST_GROWTH ** (k - 1));
+  return Math.round(def.cost / QI_SCALE * COST_GROWTH ** (k - 1)) * QI_SCALE;
 }
-/** 第 k 式实际耗气：基础耗气 × 熟练倍率（取整） */
+/** 第 k 式实际耗气：基础耗气 × 熟练倍率（同样按 sim 尺度取整） */
 export function formCost(def: Pick<WuxueDef, 'cost'>, k: number, tier: number): number {
-  return Math.round(formBaseCost(def, k) * SHULIAN_COST[tier]);
+  return Math.round(formBaseCost(def, k) / QI_SCALE * SHULIAN_COST[tier]) * QI_SCALE;
 }
 /** 冷却不再随熟练变（裁决 45） */
 export function formCd(def: Pick<WuxueDef, 'cd'>): number {
@@ -181,6 +182,8 @@ export function effectValue(def: Pick<WuxueDef, 'quality' | 'effect'> & { ek?: n
   const raw = (vals[i] + (vals[Math.min(i + 1, 3)] - vals[i]) * (t - i)) * (def.ek ?? 1);
   const v = PROB_EFFECTS.has(def.effect) ? Math.min(1, raw) : raw;
   const integer = vals.every((x) => Number.isInteger(x));
+  // 回元回的是真气点数，名录是 sim 尺度，取整后 × QI_SCALE
+  if (def.effect === '回元') return Math.round(v) * QI_SCALE;
   return integer ? Math.round(v) : Math.round(v * 1000) / 1000;
 }
 

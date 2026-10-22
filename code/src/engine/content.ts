@@ -29,6 +29,12 @@ export interface RealmDef {
  */
 export const STAT_SCALE = 10;
 
+/**
+ * 真气展示尺度（battle-loot/design.md 裁决 48）：真气上限、每回合回气、各式耗气、回元、蕴气词条一律是 sim 数值的 10 倍。
+ * 都先按 sim 尺度取整再乘倍数，所以出招序列与胜负和改尺度前逐项一致；百分比类（底蕴真气、回气返还比例）不动。
+ */
+export const QI_SCALE = 10;
+
 /** 境界表（content.md §1 v2.3，已含 STAT_SCALE）。基础暴击率 5%、暴击伤害 150% 全境界一致 */
 export const REALMS: RealmDef[] = [
   { realm: 1, name: '江湖新丁', hp: 1000, atk: 100, def: 50,  accuracy: 100, evasion: 10, leaveCost: 87_100,     zhoutianCount: 4, acupointPoolSize: 3 },

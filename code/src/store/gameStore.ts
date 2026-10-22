@@ -6,7 +6,7 @@
  */
 import { create } from 'zustand';
 import { diagnose, fight, type Build, type CombatSkill, type FightResult, type FightStats } from '../engine/combat';
-import { REALMS, type RouteId } from '../engine/content';
+import { QI_SCALE, REALMS, type RouteId } from '../engine/content';
 import {
   DUNWU_INTERVAL_SEC, HUOHOU_MULT, NEIGONG, STARTER_NEIGONG, dunwuChance, neigongBuild,
   neigongOf, qiMax, rollWuxing, switchFee, tierGate, zhongAfterSwitch, zhongCost, type NeigongId,
@@ -555,8 +555,10 @@ export function handsOf(s: Partial<Pick<PersistedState, 'worn'>>): Hands {
 
 /** 当前真气上限（未选内功为 0） */
 export function qiMaxOf(s: Pick<PersistedState, 'realm' | 'neigong' | 'zhong'> & Partial<Pick<PersistedState, 'worn' | 'diyun'>>): number {
-  // 蕴气词条加真气上限（battle-loot/design.md §3.2）；底蕴「真气」按比例乘在内功真气上
-  return s.neigong ? Math.round(qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) * (1 + diyunBonus(s.diyun, 'zhenqi'))) + gearBonusOf(s.worn).qi : 0;
+  // 蕴气词条加真气上限（battle-loot/design.md §3.2）；底蕴「真气」按比例乘在内功真气上，按 sim 尺度取整再 × QI_SCALE
+  if (!s.neigong) return 0;
+  const base = qiMax(s.realm, s.zhong, NEIGONG[s.neigong].quality) / QI_SCALE;
+  return Math.round(base * (1 + diyunBonus(s.diyun, 'zhenqi'))) * QI_SCALE + gearBonusOf(s.worn).qi;
 }
 
 /** 这一式到手没有：寻常得了这门就是整门，上乘 / 绝学看这一式的残页 */

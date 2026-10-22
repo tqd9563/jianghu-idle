@@ -26,8 +26,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v14 = 传功缓坡（battle-loot/design.md §5.1）：图 1 初入入门关之后插 15 关，第 7 关起原有关卡编号顺延。
  * v15 = 关卡精简（content.md v2.12）：图 1 初入 101 → 40 关，缓坡与主段按当量折算到新编号。
  * v16 = 熟练阈值重标（issue #79）：每式出招数按「新圆满 ÷ 旧圆满」放大，已解锁的式不收回。
+ * v17 = 真气展示尺度 ×10（battle-loot/design.md 裁决 48）：装备「蕴气」词条数值 ×10。
  */
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -114,6 +115,7 @@ export function migrate<T>(state: T, fromVer: number, toVer: number): T {
   if (fromVer < 14) out = migrateTeachRampV13ToV14(out);
   if (fromVer < 15 && toVer >= 15) out = migrateStageCompressV14ToV15(out);   // 旧用例只迁到 14 时不折算
   if (fromVer < 16 && toVer >= 16) out = migrateShulianV15ToV16(out);
+  if (fromVer < 17 && toVer >= 17) out = migrateQiScaleV16ToV17(out);
   return out;
 }
 
@@ -271,6 +273,26 @@ function migrateStageCompressV14ToV15<T>(state: T): T {
   if (Array.isArray(s.fameClaimed)) out.fameClaimed = [...new Set(s.fameClaimed.map(fold))];
   if (s.idle && s.idle.map === 1 && s.idle.tier === 0) out.idle = { ...s.idle, stage: v15StageOf(s.idle.stage) };
   return out as T;
+}
+
+/** v17 真气倍数；冻结在 v17 口径，不随 QI_SCALE 变化 */
+const V17_QI_SCALE = 10;
+
+/**
+ * v16 → v17（真气 ×10）：存档里唯一的真气绝对值是装备的「蕴气」词条。装备散在行囊、身上、挂机小结、
+ * 黑市揭晓货等多处，所以整棵存档树里凡是「有 slot 和 afx 的对象」都当装备处理，qi 词条 ×10。
+ */
+function migrateQiScaleV16ToV17<T>(state: T): T {
+  const walk = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(walk);
+    if (!v || typeof v !== 'object') return v;
+    const o = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) as Record<string, unknown>;
+    if (typeof o.slot === 'string' && Array.isArray(o.afx)) {
+      o.afx = (o.afx as unknown[]).map((a) => Array.isArray(a) && a[0] === 'qi' && typeof a[1] === 'number' ? ['qi', a[1] * V17_QI_SCALE] : a);
+    }
+    return o;
+  };
+  return walk(state) as T;
 }
 
 /** v16 熟练放大倍数 = 新圆满 ÷ 旧圆满（寻常 250/25、上乘 300/28、绝学 350/32）；冻结在 v16 口径 */

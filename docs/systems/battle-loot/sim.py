@@ -288,11 +288,15 @@ def equip(route: str, skills) -> list:
 SLOTS = ["兵器", "暗器", "衣甲", "佩饰"]
 GRADES = ["白", "绿", "蓝", "紫", "橙"]
 GI = {g: i for i, g in enumerate(GRADES)}
-GRADE_K = {"白": 1.00, "绿": 1.10, "蓝": 1.20, "紫": 1.30, "橙": 1.40}   # 基础属性的品阶系数
-AFFIX_K = {"白": 1.0, "绿": 1.2, "蓝": 1.4, "紫": 1.6, "橙": 1.8}         # 词条取值的品阶系数
+# 裁决 49（2026-10-22）：基础属性拿大头、词条做点缀。品阶阶梯拉陡到每升一阶 +23–25%（判据 20），
+# 词条取值系数压平（橙只比白高约 1.7 倍），整套强度不变（判据 4 / 5 / 6）。旧值：基础 1.0–1.4、词条 1.0–1.8
+GRADE_K = {"白": 1.00, "绿": 1.25, "蓝": 1.55, "紫": 1.90, "橙": 2.35}   # 基础属性的品阶系数
+AFFIX_K = {"白": 0.6, "绿": 0.7, "蓝": 0.8, "紫": 0.9, "橙": 1.0}         # 词条取值的品阶系数
 AFFIX_N = {"白": (0, 1), "绿": (1, 2), "蓝": (2, 3), "紫": (3, 4), "橙": (4, 4)}
 # 基础属性占「同当量玩家属性」的比例（曲线 1.7^(等级−1) 与敌我同形）
-BASE_FRAC = dict(weapon_atk=0.034, dart_atk=0.017, dart_hit=0.85, armor_hp=0.034, armor_dfs=0.034, trinket=1.35)
+# 裁决 49：兵器攻击 0.034 → 0.036、暗器攻击 0.017 → 0.021（基础占比上调）；衣甲 0.034 → 0.0175（原先单件最强，压回）；
+# 命中 / 闪避类（暗器命中、佩饰、兵器轻型命中）按「蓝品不变」折算：0.85 → 0.65、1.35 → 1.05、0.4 → 0.31
+BASE_FRAC = dict(weapon_atk=0.036, dart_atk=0.021, dart_hit=0.65, armor_hp=0.0175, armor_dfs=0.0175, trinket=1.05)
 ROLL = (0.90, 1.10)
 INTEGER_STATS = "--float" not in sys.argv   # 界面不出小数：装备数值生成时就取整
 # 词条池按部位（design.md §3.2），取值区间按品阶（下限, 上限）
@@ -685,6 +689,10 @@ def track_stages(mp: int, tier: int) -> list[dict]:
     return [t for t in d["tracks"] if t["map"] == mp and t["tier"] == tier][0]["stages"]
 
 
+# 第一世 1-7 教学战按 teachX 打（裁决 43：传功后同一关回到缓坡起点，关卡表第 7 关是缓坡首关）
+TEACH_X = json.load(open(STAGES_JSON, encoding="utf-8"))["teachX"]
+
+
 def zhong_at(hours: float) -> int:
     """境界 1 内：内力产出的 SKILL_SHARE 份额进内功重数（第 n 重 3,490 × 1.08^(n−1)）"""
     wallet = ps.rate(1) * hours * 3600 * ps.SKILL_SHARE
@@ -757,9 +765,10 @@ def realm1_session(route: str, params: dict, seed: int = 1, hours: float = R1_HO
         if target > len(stages):
             break
         sdef = stages[target - 1]
-        e = L.enemy_at(sdef["x"], tuple(sdef["tags"]))
+        sx = TEACH_X if (target == 7 and not route_chosen) else sdef["x"]
+        e = L.enemy_at(sx, tuple(sdef["tags"]))
         st = {}
-        win, rd, _ = fight_y(b, e, lo, def_k=L.def_k(sdef["x"]), rng=rng, stats=st)
+        win, rd, _ = fight_y(b, e, lo, def_k=L.def_k(sx), rng=rng, stats=st)
         t += battle_seconds(rd) / 3600
         if win:
             if target > cleared:
@@ -811,6 +820,7 @@ GEAR_MAX_CAP = 0.60                 # 满配装备 ≤ 0.6
 TOTAL_CAP = 1.20                    # 装备 + 武学满配 ≤ 1.2
 MC_NOISE = 0.02                     # 期望前沿的 MC 噪声（200 次 × 0.05 格）
 STYLE_SPREAD_CAP = 0.15             # MC 复核：同品质各风格 / 各特效的余量相差 ≤ 0.15
+SOLO_WEAPON = (0.10, 0.17)          # 裁决 49：只穿一件中位掷的橙兵器（4 词条、等级 = 前沿 − 0.3），约 2–3 关
 
 
 def main():
@@ -1033,7 +1043,7 @@ def main():
     # ───────── 【六】境界 1 ─────────
     print(f"\n【六】境界 1（{R1_HOURS:.1f} 小时）：入门关 → 1-7 必败 → 传功 → 推关")
     bare = E.bare_build(1)
-    x7 = track_stages(1, 0)[6]["x"]
+    x7 = TEACH_X
     wr_bare = winrate(bare, x7, (), n=500)
     print(f"  裸属性打 1-7（当量 {x7}）：胜率 {wr_bare:.1%}")
     ok6a = wr_bare <= 0.02
@@ -1092,6 +1102,64 @@ def main():
         print(f"  图{mp}{tier}（境界 {b} 段）段末 {top:.2f}：原第 {d0} 天 → 第 {d1} 天"
               + ("" if d0 is None or d1 is None else f"（提前 {d0 - d1} 天）"))
     print("  真实代码的节奏守卫（pace.sim.test.ts）待实装后回归；这里只能说明装备不进内力线。")
+
+    # ───────── 【八】单件可感知（裁决 49）─────────
+    print("\n【八】单件可感知：同部位升一品阶，主属性涨多少；只穿一件时的余量")
+    print("  主属性 = 兵器 / 暗器攻击、衣甲气血、佩饰命中或闪避；中位掷、等级 = 前沿 − 0.3，展示尺度（content.md §1 v2.9）整数")
+    ok8a = True
+    lv_rows = [("入门关", 1.0), ("1-7 缓坡末", 2.6)] + [(f"第{d}天境界{rl}", L.frontier_x(build_at("huashan", rl, lv_)) - 0.3)
+                                                    for d, rl, lv_ in cps]
+    disp = {"兵器": lambda l, g: BASE_FRAC["weapon_atk"] * 100 * curve(l) * GRADE_K[g],
+            "暗器": lambda l, g: BASE_FRAC["dart_atk"] * 100 * curve(l) * GRADE_K[g],
+            "衣甲": lambda l, g: BASE_FRAC["armor_hp"] * 1000 * curve(l) * GRADE_K[g],
+            "佩饰": lambda l, g: BASE_FRAC["trinket"] * GRADE_K[g] * (1 + l / 5)}
+    for label, lvl in lv_rows:
+        cells = []
+        for sl in SLOTS:
+            vals = [disp[sl](lvl, g) for g in GRADES]
+            ints = [max(1, int(math.floor(v + 0.5))) for v in vals]
+            steps = [b / a - 1 for a, b in zip(vals, vals[1:])]           # 浮点（品阶阶梯本身）
+            isteps = [b / a - 1 for a, b in zip(ints, ints[1:])]          # 界面整数
+            if label.startswith("第") and sl != "佩饰":                     # 佩饰是小整数，按浮点判（见 spec §1.1）
+                ok8a &= min(isteps) >= 0.20
+            ok8a &= min(steps) >= 0.20
+            cells.append(f"{sl} " + "/".join(str(v) for v in ints) + f"（每阶 +{min(isteps):.0%}–{max(isteps):.0%}）")
+        print(f"  {label:<12}" + " · ".join(cells))
+    crit.append(("同部位升一品阶，主属性相对该件 +≥20%（兵器 / 暗器 / 衣甲按界面整数，佩饰按阶梯）", ok8a, ""))
+
+    def solo(sl, g, x, key=None):
+        it = make_item(sl, g, x, roll=0.5, affix_roll=0.5, n_affix=AFFIX_N[g][0] if g != "橙" else 4)
+        if key:                                        # 佩饰闪避型
+            v = next(iter(it["stats"].values()))
+            it["stats"] = {key: v}
+        return [it]
+    pieces = [(sl, None) for sl in SLOTS] + [("佩饰", "dodge")]
+    tasks, keys = [], []
+    for d, realm, lv in cps:
+        for r in ROUTES:
+            base = build_at(r, realm, lv)
+            x0 = L.frontier_x(base)
+            tasks.append((base, [], [], (), x0)); keys.append((realm, r, "base"))
+            for sl, key in pieces:
+                for g in (GRADES if realm == 3 else ["白", "橙"]):
+                    tasks.append((base, solo(sl, g, x0 - 0.3, key), [], (), x0)); keys.append((realm, r, (sl, key, g)))
+    res8 = dict(zip(keys, run_tasks(tasks)))
+    name8 = lambda sl, key: sl + ("（闪避）" if key else "（命中）" if sl == "佩饰" else "")
+    print("  单件余量（第 20 天境界 3，三路数平均；词条数取该品阶下限，橙 4 条；中位掷）")
+    print(f"  {'部位':<8}" + "".join(f"{g:>7}" for g in GRADES))
+    for sl, key in pieces:
+        row = [sum(res8[(3, r, (sl, key, g))] - res8[(3, r, "base")] for r in ROUTES) / 3 for g in GRADES]
+        print(f"  {name8(sl, key):<8}" + "".join(f"{v:>+7.2f}" for v in row))
+    print("  单件橙 / 白余量，各检查点三路数范围；括号里是白换橙多出的当量")
+    ok8b = True
+    for sl, key in pieces:
+        o = [res8[(rl, r, (sl, key, "橙"))] - res8[(rl, r, "base")] for _, rl, _ in cps for r in ROUTES]
+        w = [res8[(rl, r, (sl, key, "白"))] - res8[(rl, r, "base")] for _, rl, _ in cps for r in ROUTES]
+        dd = [a - b for a, b in zip(o, w)]
+        if sl == "兵器":
+            ok8b = SOLO_WEAPON[0] <= min(o) and max(o) <= SOLO_WEAPON[1]
+        print(f"  {name8(sl, key):<8} 橙 {min(o):+.2f}–{max(o):+.2f} · 白 {min(w):+.2f}–{max(w):+.2f}（白换橙 +{min(dd):.2f}–{max(dd):.2f}）")
+    crit.append((f"单件橙兵器余量 {SOLO_WEAPON[0]}–{SOLO_WEAPON[1]}（约 2–3 关，目标 +0.12）", ok8b, ""))
 
     print("\n----- 判据 -----")
     for label, ok, note in crit:

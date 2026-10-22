@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>战况面板原型</title>
+<!-- issue #77：战报末端「武学出招」卡片突兀 → 改做「战况」统计。已定 B 案：战报 / 战况同一处切换。
+     第二轮：删分数列、战况内统一正文字体、补护盾吸收等统计、未出招武学不列。
+     第三轮：口径不在页面呈现；左侧两栏合加「交手」小标题，与「武学」同款同高；挑战按钮下加「自动连战」勾选（默认不勾）。
+     口径（实装参考）：出手 = 我方每回合一次行动，连击追加另算一次；出招率 = 武学出招 ÷ 出手；命中 = 没被闪开的出手 ÷ 出手；
+       会心 = 会心的出手 ÷ 命中的出手；闪避 = 闪开对手的攻击 ÷ 对手出手（被封穴的回合不算）；最重一击 = 单次出手最高伤害（含并入的排山倒海）；
+       护盾吸收 / 受反伤已含在承伤里；身中破甲 = 破甲叠到的最高层数；毒被化解 = 对手净化清毒次数；右栏占比 = 占本场输出几成，条长按最大一项满格。
+       出现规则：细项为 0 不画；路数行为 0 不画；未出招武学不列；武学超过 6 门收进「余 n 门」；未交手没有「战况」页签；打完「战况」亮金点，点开即灭。
+       数据来源：FightStats 已有出招、会心、输出、承伤、护盾吸收、反伤、破甲、净化、各武学伤害；出手、命中、闪避、最重一击由回合事件现数。
+     自动连战：勾上 = 推关打赢后接着挑战下一关（现行 0.9 秒）；不勾 = 打赢就停，挑战前在挂机的回到原挂机关；打输的退回逻辑不变。偏好存档，跨场次保持。
+     token 照 code/src/styles/tokens.css 与 DESIGN.md frontmatter；底图用真实战斗页那幅。 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet" />
+<style>
+:root {
+  --bg: oklch(0.155 0.013 262); --bg-deep: oklch(0.125 0.012 262); --wash: oklch(0.19 0.014 262); --wash-2: oklch(0.225 0.016 262);
+  --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262); --hair: oklch(0.30 0.016 262 / 0.7);
+  --gold: oklch(0.78 0.13 78); --ink-gold: oklch(0.75 0.075 76); --done-line: oklch(0.50 0.045 70); --todo-line: oklch(0.40 0.014 262 / 0.7);
+  --cinnabar: oklch(0.66 0.14 32); --hp: oklch(0.62 0.17 25); --qi: oklch(0.74 0.10 215); --poison: oklch(0.72 0.14 145); --crit: oklch(0.70 0.16 45);
+  --foe: oklch(0.72 0.12 30); --shield: oklch(0.70 0.10 240);
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --font-body: "LXGW WenKai", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ease-sharp: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --rail-w: 248px;
+  --z-sticky: 20; --z-tip: 60;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.6; font-feature-settings: "tnum"; }
+button { font-family: inherit; }
+
+/* ═══════ 原型控制条（不属于游戏界面） ═══════ */
+.proto-bar { position: sticky; top: 0; z-index: var(--z-sticky); display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding: 9px 20px; background: oklch(0.1 0.01 262 / 0.94); border-bottom: 1px solid var(--hair); font-size: 13px; }
+.proto-bar .t { font-family: var(--font-display); letter-spacing: 0.2em; color: var(--muted); }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--wash); }
+.seg button { border: 0; background: none; padding: 4px 12px; border-radius: 7px; color: var(--faint); cursor: pointer; font-size: 13px; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+.seg button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
+.proto-bar .lbl { color: var(--faint); }
+
+/* ═══════ 游戏外壳：侧栏 + 舞台 ═══════ */
+.shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); min-height: calc(100vh - 46px); }
+.rail { background: var(--bg-deep); padding: 26px 22px; display: flex; flex-direction: column; gap: 4px; }
+.rail .brand { font-family: var(--font-display); letter-spacing: 0.25em; color: var(--faint); font-size: 12.5px; }
+.rail .realm { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; margin-top: 18px; }
+.rail .realm small { font-size: 12.5px; color: var(--ink-gold); letter-spacing: 0.1em; margin-left: 6px; font-weight: 500; }
+.rail .who { color: var(--muted); font-size: 12.5px; }
+.rail nav { margin-top: 40px; display: grid; gap: 4px; }
+.rail nav span { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.3em; padding: 8px 12px; border-radius: 8px; color: var(--muted); }
+.rail nav span.on { background: oklch(0.78 0.13 78 / 0.12); color: var(--gold); }
+.stage { position: relative; isolation: isolate; padding: 30px 56px 70px; min-width: 0; }
+.stage::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 100vh; z-index: -1; pointer-events: none;
+  background: url('../../code/public/art/battle-village.jpg') center top / cover no-repeat, var(--bg); opacity: 0.5; filter: brightness(0.75) saturate(0.5);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%); mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.35) 62%, transparent 92%); }
+
+.page-h { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; margin: 0; }
+.page-sub { color: var(--muted); font-size: 12.5px; }
+
+/* 对阵（照 battle.css .duel） */
+.duel { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr); gap: 12px; margin-top: 34px; }
+.side .name { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; }
+.side .desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.side.enemy { text-align: right; }
+.meter { margin-top: 14px; }
+.meter .lbl { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+.side.enemy .meter .lbl { flex-direction: row-reverse; }
+.ink-bar { position: relative; height: 7px; margin-top: 5px; }
+.ink-bar::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.7); }
+.ink-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; transition: width .5s var(--ease-sharp);
+  background: linear-gradient(to right, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); }
+.side.enemy .ink-bar i { left: auto; right: 0; background: linear-gradient(to left, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); }
+.ink-bar.qi { height: 5px; } .ink-bar.qi i { background: linear-gradient(to right, oklch(0.5 0.08 220), var(--qi)); }
+.vs { text-align: center; padding-top: 16px; font-family: var(--font-display); color: var(--faint); letter-spacing: 0.2em; }
+.vs .big { font-size: 26px; color: var(--muted); letter-spacing: 0.1em; display: block; }
+.vs .rd { font-size: 12px; }
+.act { margin-top: 26px; display: grid; justify-items: center; gap: 10px; }
+/* 自动连战：按钮下一枚小方框，勾上墨金对勾；默认不勾 */
+.chain { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: var(--faint); font-size: 12.5px; user-select: none; padding: 2px 4px; border-radius: 4px; transition: color .15s; }
+.chain:hover { color: var(--muted); }
+.chain input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chain .box { position: relative; width: 13px; height: 13px; border-radius: 3px; box-shadow: inset 0 0 0 1px oklch(0.5 0.014 262); transition: box-shadow .15s, background .15s; }
+.chain:hover .box { box-shadow: inset 0 0 0 1px var(--muted); }
+.chain input:checked + .box { background: oklch(0.78 0.13 78 / 0.14); box-shadow: inset 0 0 0 1px var(--ink-gold); }
+.chain input:checked + .box::after { content: ''; position: absolute; left: 4px; top: 1.5px; width: 3.5px; height: 7px; border: solid var(--gold); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+.chain input:checked ~ .t { color: var(--muted); }
+.chain input:focus-visible + .box { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+.btn { border: 0; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.16em; padding: 11px 26px; border-radius: 10px; min-width: 220px; color: var(--gold); cursor: pointer;
+  background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.16), oklch(0.78 0.13 78 / 0.05)); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); }
+.btn:disabled { color: var(--faint); background: none; box-shadow: inset 0 0 0 1px var(--hair); cursor: default; font-size: 14px; letter-spacing: 0.12em; font-weight: 500; }
+
+/* 节标题（照 shell.css .jh-sec） */
+.jh-sec { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.25em; color: var(--ink); margin: 0; font-weight: 600; }
+
+/* 战报（照 battle.css .bt-log） */
+.bt-log { height: 250px; overflow-y: auto; padding: 6px 2px 4px; scrollbar-width: thin; scrollbar-color: oklch(0.3 0.016 262) transparent;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 44px); mask-image: linear-gradient(to bottom, transparent, #000 44px); }
+.bt-log .empty { color: var(--faint); padding: 40px 0; text-align: center; font-family: var(--font-display); letter-spacing: 0.2em; }
+.bt-log .rh { font-family: var(--font-display); color: var(--faint); letter-spacing: 0.15em; margin: 12px 0 4px; font-size: 13px; }
+.bt-log .p { color: var(--muted); line-height: 1.85; padding: 1px 0; max-width: 46em; }
+.bt-log .me { color: var(--ink-gold); } .bt-log .foe { color: var(--foe); } .bt-log .sk { color: var(--qi); } .bt-log .dm { color: var(--ink); font-weight: 600; }
+.bt-log .p.win { color: var(--ink-gold); margin-top: 10px; } .bt-log .p.lose { color: var(--muted); margin-top: 10px; }
+.bt-log .p.loot { color: var(--gold); }
+
+/* ═══════════════════════════════════════════════
+   战况：一本账，不装盒子
+   · 全部用正文字体（与战报正文一致），只靠颜色分武学 / 路数 / 拳脚
+   · 数字靠右，点线引到标签，像账册里的一行
+   ═══════════════════════════════════════════════ */
+.tally { font-family: var(--font-body); }
+.tally .ledger { display: grid; align-content: start; }
+.tally .li { display: flex; align-items: baseline; gap: 8px; min-height: 30px; padding: 3px 0; }
+.tally .li .k { color: var(--muted); font-size: 13.5px; white-space: nowrap; }
+.tally .li .lead { flex: 1; min-width: 12px; align-self: center; height: 1px; transform: translateY(3px);
+  background: repeating-linear-gradient(to right, var(--todo-line) 0 2px, transparent 2px 6px); }
+.tally .li .v { color: var(--ink); font-size: 16px; min-width: 3.2em; text-align: right; white-space: nowrap; transition: color .6s var(--ease-sharp); }
+.tally .li .v.bump { color: var(--gold); transition: none; }
+.tally .li.sum .v { font-size: 15px; }
+.tally .li.sum + .li.sum, .tally .li.sub + .li.sum { margin-top: 8px; }
+.tally .li.sub { min-height: 26px; }
+.tally .li.sub .k { color: var(--faint); font-size: 12.5px; padding-left: 1em; }
+.tally .li.sub .v { font-size: 13px; color: var(--muted); }
+.tally .rule { height: 1px; background: var(--hair); margin: 10px 0 8px; }
+
+.tally .wxb { display: grid; align-content: start; }
+.tally .grp { display: grid; grid-template-columns: 200px 220px; gap: 0 52px; align-content: start; }
+.tally .grp > .sh { grid-column: 1 / -1; }
+.tally .sh { color: var(--faint); font-size: 13px; margin: 3px 0 6px; }
+.tally .wx { display: grid; grid-template-columns: 6.5em 3.6em minmax(48px, 1fr) 3em; align-items: center; gap: 0 12px; min-height: 30px; }
+.tally .wx .n { color: var(--qi); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tally .wx .n.plain { color: var(--muted); }
+.tally .wx .n.route { color: var(--route); }
+.tally .wx .c { color: var(--faint); font-size: 12.5px; text-align: right; white-space: nowrap; }
+.tally .wx .bar { position: relative; height: 3px; }
+.tally .wx .bar::before { content: ''; position: absolute; left: 0; right: 0; top: 1px; height: 1px; background: repeating-linear-gradient(to right, var(--todo-line) 0 2px, transparent 2px 5px); }
+.tally .wx .bar i { position: absolute; left: 0; top: 0; height: 3px; border-radius: 2px; background: var(--qi); transition: width .5s var(--ease-sharp); }
+.tally .wx .bar i.plain { background: oklch(0.55 0.014 262); }
+.tally .wx .bar i.route { background: var(--route); }
+.tally .wx .p { text-align: right; color: var(--ink); font-size: 13px; }
+.tally .more { justify-self: start; border: 0; background: none; padding: 2px 0 6px; color: var(--ink-gold); font-size: 12.5px; cursor: pointer; font-family: inherit; }
+.tally .more:hover { color: var(--gold); }
+.tally .more:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
+
+.res { font-family: var(--font-display); letter-spacing: 0.15em; font-size: 13px; }
+.res.win { color: var(--ink-gold); } .res.lose { color: var(--cinnabar); } .res.live { color: var(--faint); }
+
+/* 战报 / 战况：同一处切换 */
+.lower { margin-top: 30px; }
+.tabs { display: flex; gap: 26px; align-items: baseline; margin-bottom: 12px; }
+.tabs button { border: 0; background: none; padding: 0 0 4px; cursor: pointer; font-family: var(--font-display); font-size: 16px; letter-spacing: 0.25em; font-weight: 600; color: var(--faint); position: relative; }
+.tabs button[aria-selected="true"] { color: var(--ink); }
+.tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 0; right: 0.25em; bottom: -2px; height: 1.5px; background: var(--ink-gold); }
+.tabs button:hover { color: var(--ink); }
+.tabs button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; border-radius: 3px; }
+.tabs button .dot { position: absolute; right: -4px; top: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.tabs .res { margin-left: auto; }
+.pane-t { min-height: 250px; display: grid; grid-template-columns: auto minmax(0, 340px); justify-content: start; gap: 0 64px; align-content: start; padding: 6px 2px; animation: pane-in .25s var(--ease-sharp); }
+@keyframes pane-in { from { opacity: 0; } }
+
+/* 悬停浮层（照 shell.css .jh-tip） */
+.jh-tip { position: fixed; z-index: var(--z-tip); pointer-events: none; opacity: 0; background: oklch(0.24 0.016 262); color: var(--ink); font-size: 12.5px; line-height: 1.6;
+  padding: 8px 11px; border-radius: 8px; max-width: 280px; box-shadow: 0 8px 26px oklch(0.05 0.01 262 / 0.6); transition: opacity .15s; }
+.jh-tip.on { opacity: 1; }
+[data-tip] { cursor: help; }
+
+
+@media (max-width: 1100px) { .pane-t { grid-template-columns: minmax(0, 1fr); } .tally .grp { grid-template-columns: 1fr 1fr; gap: 0 40px; } .pane-t .wxb { margin-top: 18px; } }
+@media (max-width: 560px) { .tally .grp { grid-template-columns: minmax(0, 1fr); } .pane-t .ledger + .ledger { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--hair); } }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); } .rail { display: none; }
+  .stage { padding: 22px 16px 60px; }
+  .duel { grid-template-columns: 1fr; gap: 16px; } .side.enemy { text-align: left; } .side.enemy .meter .lbl { flex-direction: row; }
+  .side.enemy .ink-bar i { left: 0; right: auto; }
+  .vs { text-align: left; padding: 0; } .vs .big { display: inline; font-size: 18px; margin-right: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chain, .chain .box { transition: none; }
+  .pane-t { animation: none; }
+  .tally .li .v { transition: none; } .tally .li .v.bump { color: var(--ink); }
+  .ink-bar i, .tally .wx .bar i { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <span class="t">战况 · 原型</span>
+  <span class="lbl">状态</span>
+  <div class="seg" id="seg-s">
+    <button type="button" data-s="live" aria-pressed="true">交手中</button>
+    <button type="button" data-s="win" aria-pressed="false">胜 · 唐门</button>
+    <button type="button" data-s="lose" aria-pressed="false">败 · 遇破甲</button>
+    <button type="button" data-s="shaolin" aria-pressed="false">胜 · 少林</button>
+    <button type="button" data-s="full" aria-pressed="false">十二门</button>
+    <button type="button" data-s="none" aria-pressed="false">未交手</button>
+  </div>
+</div>
+<div class="shell">
+  <aside class="rail" aria-hidden="true">
+    <div class="brand">江湖无尽录</div>
+    <div class="realm">炉火纯青<small>第四境</small></div>
+    <div class="who">第 35 世 · 63 岁 · 江湖历 1625 年</div>
+    <nav><span>修 炼</span><span class="on">战 斗</span><span>行 囊</span><span>武 功</span><span>门 派</span><span>前 尘</span></nav>
+  </aside>
+
+  <main class="stage">
+    <h1 class="page-h">华山古道</h1>
+    <div class="page-sub">初入 · 已过 8 / 38 关 · 精英首杀 1 / 4</div>
+
+    <div class="duel">
+      <div class="side">
+        <div class="name">你</div>
+        <div class="desc">炉火纯青 · 蚀骨心法</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span id="php-t"></span></div><div class="ink-bar"><i id="php"></i></div></div>
+        <div class="meter"><div class="lbl"><span>真气</span><span>164 / 164</span></div><div class="ink-bar qi"><i style="width:100%"></i></div></div>
+      </div>
+      <div class="vs"><span class="big" id="vs-big">交手</span><span class="rd" id="vs-rd"></span></div>
+      <div class="side enemy">
+        <div class="name">古道剑客</div>
+        <div class="desc">第 9 关 · 推荐境界 4</div>
+        <div class="meter"><div class="lbl"><span>气血</span><span id="ehp-t"></span></div><div class="ink-bar"><i id="ehp"></i></div></div>
+      </div>
+    </div>
+    <div class="act">
+      <button type="button" class="btn" id="act-btn"></button>
+      <label class="chain"><input type="checkbox" id="chain" /><span class="box" aria-hidden="true"></span><span class="t">自动连战</span></label>
+    </div>
+
+    <div id="lower"></div>
+
+  </main>
+</div>
+
+<div class="jh-tip" id="tip" role="tooltip"></div>
+<script>
+/* ───────── mock 数据（境界 4 · 第 9 关 古道剑客） ───────── */
+const E_HP = 81302, P_HP = 27042;
+const fmt = (n) => Math.round(n).toLocaleString('en-US');
+const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0) + '%';
+
+// route: 路数行 { n, d, c? }；extra: 承伤下的细项（为 0 不画）
+const WIN = {
+  rd: 14, result: 'win', acts: 15, casts: 6, hits: 13, crits: 4, eActs: 13, dodges: 5,
+  out: 81302, maxHit: 12480, taken: 22610, shield: 3120, thornsIn: 0, ab: 0, purged: 0,
+  skills: [{ n: '旋风腿', c: 3, d: 25203 }, { n: '开山掌', c: 2, d: 14634 }, { n: '袖里针', c: 1, d: 4878 }],
+  route: { n: '毒发', d: 17074 }, plain: 19513,
+};
+const LOSE = {
+  rd: 31, result: 'lose', acts: 31, casts: 9, hits: 25, crits: 5, eActs: 30, dodges: 8,
+  out: 50407, maxHit: 9210, taken: 27042, shield: 0, thornsIn: 0, ab: 3, purged: 2,
+  skills: [{ n: '旋风腿', c: 5, d: 15122 }, { n: '开山掌', c: 4, d: 10585 }],
+  route: { n: '毒发', d: 13610 }, plain: 11090,
+};
+const SHAOLIN = {
+  rd: 18, result: 'win', acts: 19, casts: 7, hits: 17, crits: 3, eActs: 17, dodges: 4,
+  out: 81302, maxHit: 10950, taken: 30410, shield: 11860, thornsIn: 2440, ab: 0, purged: 0,
+  skills: [{ n: '罗汉拳', c: 4, d: 21950 }, { n: '行者棍', c: 3, d: 17074 }],
+  route: { n: '反震', d: 19513 }, plain: 22765,
+};
+const FULL = {
+  rd: 12, result: 'win', acts: 13, casts: 8, hits: 12, crits: 5, eActs: 11, dodges: 4,
+  out: 81302, maxHit: 14634, taken: 15880, shield: 5410, thornsIn: 1236, ab: 0, purged: 0,
+  skills: [
+    { n: '惊鸿剑', c: 2, d: 14634 }, { n: '伏虎拳', c: 1, d: 9756 }, { n: '旋风腿', c: 1, d: 8130 }, { n: '开山掌', c: 1, d: 7317 },
+    { n: '流云剑', c: 1, d: 6504 }, { n: '袖里针', c: 1, d: 4065 }, { n: '飞蝗石', c: 1, d: 3252 },
+  ],
+  route: { n: '毒发', d: 15447 }, plain: 12197,
+};
+// 交手中：逐回合累加，到第 9 回合后从头循环
+// [武学名或 null=普攻, 命中, 会心, 我方伤害, 对手出手, 闪开, 承伤, 毒发, 护盾吸收]
+const LIVE_ROUNDS = [
+  [null, 1, 0, 3120, 1, 0, 1840, 1210, 0],
+  ['旋风腿', 1, 1, 8240, 1, 1, 0, 1630, 0],
+  [null, 0, 0, 0, 1, 0, 2110, 1630, 0],
+  ['开山掌', 1, 0, 6980, 1, 0, 1960, 2020, 820],
+  [null, 1, 0, 3310, 1, 1, 0, 2020, 0],
+  ['旋风腿', 1, 0, 7020, 1, 0, 2240, 2410, 640],
+  [null, 1, 1, 6150, 1, 0, 1980, 2410, 0],
+  ['开山掌', 1, 0, 7660, 1, 1, 0, 2790, 0],
+  [null, 1, 0, 3290, 1, 0, 2350, 2790, 0],
+];
+function liveAt(r) {
+  const m = { rd: r, result: 'live', acts: 0, casts: 0, hits: 0, crits: 0, eActs: 0, dodges: 0, out: 0, maxHit: 0, taken: 0,
+    shield: 0, thornsIn: 0, ab: 0, purged: 0, skills: [], route: { n: '毒发', d: 0 }, plain: 0 };
+  const sk = {};
+  for (let i = 0; i < r; i++) {
+    const [n, h, c, d, ea, dg, tk, po, sh] = LIVE_ROUNDS[i];
+    m.acts += 1; m.hits += h; m.crits += c; m.eActs += ea; m.dodges += dg; m.taken += tk; m.route.d += po; m.shield += sh;
+    m.out += d + po; m.maxHit = Math.max(m.maxHit, d);
+    if (n) { m.casts += 1; sk[n] = sk[n] || { n, c: 0, d: 0 }; sk[n].c += 1; sk[n].d += d; } else m.plain += d;
+  }
+  m.skills = Object.values(sk);
+  return m;
+}
+
+/* ───────── 渲染 ───────── */
+let S = 'live', liveR = 1, liveTimer = null, tab = 'log', dot = false, expanded = false, prev = {};
+const MODELS = { win: WIN, lose: LOSE, shaolin: SHAOLIN, full: FULL };
+const model = () => (S === 'live' ? liveAt(liveR) : MODELS[S] || null);
+
+function resTag(m) {
+  if (!m) return '';
+  if (m.result === 'win') return `<span class="res win">胜 · ${m.rd} 回合</span>`;
+  if (m.result === 'lose') return `<span class="res lose">败 · ${m.rd} 回合</span>`;
+  return `<span class="res live">第 ${m.rd} 回合</span>`;
+}
+function li(key, k, v, cls = '') {
+  const bump = prev[key] !== undefined && prev[key] !== v ? ' bump' : '';
+  prev[key] = v;
+  return `<div class="li ${cls}"><span class="k">${k}</span><span class="lead"></span><span class="v${bump}">${v}</span></div>`;
+}
+// 左栏：五个比率；中栏：输出 / 承伤及其细项（细项为 0 不画）
+function rates(m) {
+  return `<div class="ledger">
+    ${li('acts', '出手', String(m.acts))}
+    ${li('cr', '出招率', pct(m.casts, m.acts))}
+    ${li('hit', '命中', pct(m.hits, m.acts))}
+    ${li('crit', '会心', pct(m.crits, m.hits))}
+    ${li('dodge', '闪避', pct(m.dodges, m.eActs))}
+  </div>`;
+}
+function dmg(m) {
+  const sub = (key, k, v, show) => (show ? li(key, k, v, 'sub') : '');
+  return `<div class="ledger">
+    ${li('out', '输出', fmt(m.out), 'sum')}
+    ${sub('max', '最重一击', fmt(m.maxHit), m.maxHit > 0)}
+    ${li('taken', '承伤', fmt(m.taken), 'sum')}
+    ${sub('shield', '护盾吸收', fmt(m.shield), m.shield > 0)}
+    ${sub('thin', '受反伤', fmt(m.thornsIn), m.thornsIn > 0)}
+    ${sub('ab', '身中破甲', m.ab + ' 层', m.ab > 0)}
+    ${sub('purge', '毒被化解', m.purged + ' 次', m.purged > 0)}
+  </div>`;
+}
+// 路数行随路数取色：毒发 = 毒绿、排山倒海 = 会心橙、反震 = 墨金（金钟），都取现有配色，避开武学青
+const ROUTE_C = { 毒发: 'var(--poison)', 排山倒海: 'var(--crit)', 反震: 'var(--ink-gold)' };
+function wxRow(r, out, max) {
+  const share = out > 0 ? r.d / out : 0;
+  const w = max > 0 ? r.d / max : 0;   // 条长按本场最大一项满格，百分比照实写
+  const rc = r.cls === 'route' ? ` style="--route:${ROUTE_C[r.n]}"` : '';
+  return `<div class="wx"${rc} data-tip="${r.n}　伤害 ${fmt(r.d)}"><span class="n ${r.cls}">${r.n}</span><span class="c">${r.cnt || ''}</span><span class="bar"><i class="${r.cls}" style="width:${(w * 100).toFixed(1)}%"></i></span><span class="p">${Math.round(share * 100)}%</span></div>`;
+}
+function wxBlock(m) {
+  const list = m.skills.filter((s) => s.c > 0).map((s) => ({ ...s, cls: '', cnt: `${s.c} 招` })).sort((a, b) => b.d - a.d);
+  const tail = [];
+  if (m.route.d > 0) tail.push({ n: m.route.n, d: m.route.d, cls: 'route' });
+  tail.push({ n: '拳脚', d: m.plain, cls: 'plain', cnt: `${m.acts - m.casts} 下` });
+  const max = Math.max(...list.map((r) => r.d), ...tail.map((r) => r.d));
+  const shown = expanded ? list : list.slice(0, 6);
+  const rest = list.length - shown.length;
+  return `<div class="wxb">
+    <div class="sh">武学</div>
+    ${shown.map((r) => wxRow(r, m.out, max)).join('')}
+    ${rest > 0 ? `<button type="button" class="more" data-act="more">余 ${rest} 门</button>` : ''}
+    ${tail.map((r) => wxRow(r, m.out, max)).join('')}
+  </div>`;
+}
+
+function logHTML(m) {
+  if (!m) return '<div class="empty">尚未交手</div>';
+  const end = m.result === 'win'
+    ? '<div class="p win">古道剑客长剑脱手，踉跄退开，再无还手之力。</div><div class="p loot">获得：银两 38</div><div class="p loot">拾得：<span class="sk">袖里针</span> 残页 · 第二式</div>'
+    : m.result === 'lose' ? '<div class="p lose">你气力已竭，只得收势退下。</div>' : '';
+  return `
+    <div class="rh">【第 ${Math.max(1, m.rd - 1)} 回合】</div>
+    <div class="p"><span class="me">你</span>原地一转，一招<span class="sk">平地起风</span>脚下卷起一阵风，扫中<span class="foe">古道剑客</span>，伤了他<span class="dm">8240</span>点。</div>
+    <div class="p"><span class="foe">古道剑客</span>来势正急，<span class="me">你</span>侧身让过，反掌按落其肩头。</div>
+    <div class="rh">【第 ${m.rd} 回合】</div>
+    <div class="p"><span class="foe">古道剑客</span>伤处隐隐泛黑，毒性又深一分，蚀去<span class="dm">2790</span>点气血。</div>
+    <div class="p"><span class="me">你</span>双掌平推，一招<span class="sk">推山式</span>势如推山，<span class="foe">古道剑客</span>胸口一闷，伤了他<span class="dm">7660</span>点。</div>
+    ${end}`;
+}
+
+function renderDuel(m) {
+  const ehp = !m ? 1 : m.result === 'win' ? 0 : m.result === 'lose' ? 0.38 : Math.max(0, 1 - m.out / E_HP);
+  const php = !m ? 1 : m.result === 'lose' ? 0 : Math.max(0.05, 1 - m.taken / P_HP);
+  document.getElementById('ehp').style.width = (ehp * 100) + '%';
+  document.getElementById('php').style.width = (php * 100) + '%';
+  document.getElementById('ehp-t').textContent = `${fmt(ehp * E_HP)} / ${fmt(E_HP)}`;
+  document.getElementById('php-t').textContent = `${fmt(php * P_HP)} / ${fmt(P_HP)}`;
+  document.getElementById('vs-big').textContent = !m ? 'VS' : m.result === 'live' ? '交手' : m.result === 'win' ? '胜' : '败';
+  document.getElementById('vs-rd').textContent = m ? `第 ${m.rd} 回合` : '';
+  const btn = document.getElementById('act-btn');
+  const chain = document.getElementById('chain').checked;
+  btn.textContent = m && m.result === 'live' ? `交手中 · 第 ${m.rd} 回合`
+    : m && m.result === 'win' ? (chain ? '即将挑战 · 第 10 关' : '挑战 · 第 10 关') : '挑战 · 第 9 关';
+  btn.disabled = (!!m && m.result === 'live') || (!!m && m.result === 'win' && chain);
+}
+
+function render() {
+  const m = model();
+  renderDuel(m);
+  const t = m ? tab : 'log';
+  const lower = document.getElementById('lower');
+  lower.className = 'lower';
+  lower.innerHTML = `
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="${t === 'log'}" data-tab="log">战报</button>
+      ${m ? `<button type="button" role="tab" aria-selected="${t === 'tally'}" data-tab="tally">战况${dot && t !== 'tally' ? '<span class="dot" aria-label="新"></span>' : ''}</button>` : ''}
+      ${resTag(m)}
+    </div>
+    ${t === 'log' ? `<div class="bt-log" role="tabpanel">${logHTML(m)}</div>` : `<div class="pane-t tally" role="tabpanel"><div class="grp"><div class="sh">交手</div>${rates(m)}${dmg(m)}</div>${wxBlock(m)}</div>`}`;
+  const log = lower.querySelector('.bt-log');
+  if (log) log.scrollTop = log.scrollHeight;
+  requestAnimationFrame(() => setTimeout(() => document.querySelectorAll('.v.bump').forEach((e) => e.classList.remove('bump')), 220));
+}
+
+function setLive(on) {
+  clearInterval(liveTimer);
+  if (!on) return;
+  liveR = 1;
+  liveTimer = setInterval(() => {
+    liveR = liveR >= LIVE_ROUNDS.length ? 1 : liveR + 1;
+    if (liveR === 1) prev = {};
+    render();
+  }, 1100);
+}
+
+document.getElementById('seg-s').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  S = b.dataset.s;
+  document.querySelectorAll('#seg-s button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  prev = {}; expanded = false;
+  dot = S !== 'live' && S !== 'none'; tab = S === 'live' ? 'tally' : 'log';
+  setLive(S === 'live'); render();
+});
+document.getElementById('lower').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (t) { tab = t.dataset.tab; if (tab === 'tally') dot = false; prev = {}; render(); return; }
+  if (e.target.closest('[data-act="more"]')) { expanded = true; render(); }
+});
+
+const tip = document.getElementById('tip');
+document.addEventListener('mouseover', (e) => {
+  const el = e.target.closest('[data-tip]');
+  if (!el) { tip.classList.remove('on'); return; }
+  tip.textContent = el.dataset.tip;
+  const r = el.getBoundingClientRect();
+  tip.classList.add('on');
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+  tip.style.top = (r.top - h - 8 < 50 ? r.bottom + 8 : r.top - h - 8) + 'px';
+});
+
+// 勾选只影响打赢之后：原型里切到「胜」可看按钮变化（勾上 = 即将挑战下一关，不勾 = 停在原地等手动挑战）
+document.getElementById('chain').addEventListener('change', () => render());
+tab = 'tally';
+setLive(true);
+render();
+</script>
+</body>
+</html>

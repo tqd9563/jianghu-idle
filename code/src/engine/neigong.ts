@@ -3,7 +3,7 @@
  * 路数（归海 / 镇岳 / 蚀骨）沿用路线 id：huashan / shaolin / tangmen，路数参数仍在 routes.ts。
  * 寻常内功 = 原「招式十成 + 火候」构筑（spec §7 判据零），所以关卡与敌人不用重调。禁止在此调参。
  */
-import { huohouRealms, type RouteId } from './content';
+import { QI_SCALE, huohouRealms, type RouteId } from './content';
 import { makeBuild, type Build } from './combat';
 
 export type Quality = '寻常' | '上乘' | '绝学';
@@ -137,9 +137,9 @@ export function neigongBuild(id: NeigongId, realm: number, zhong: number, passed
 
 export const QI_COEF: Record<Quality, number> = { 寻常: 1.0, 上乘: 1.1, 绝学: 1.2 };
 
-/** 真气上限 = (70 + 15 × (境界 − 2) + 重数) × 品质系数 */
+/** 真气上限 = (700 + 150 × (境界 − 2) + 10 × 重数) × 品质系数：sim 尺度先取整再 × QI_SCALE，所以总是 10 的倍数 */
 export function qiMax(realm: number, zhong: number, quality: Quality): number {
-  return Math.round((70 + 15 * (Math.max(realm, 2) - 2) + zhong) * QI_COEF[quality]);
+  return Math.round((70 + 15 * (Math.max(realm, 2) - 2) + zhong) * QI_COEF[quality]) * QI_SCALE;
 }
 
 // ---------------------------------------------------------------- 转修（spec §1.5）

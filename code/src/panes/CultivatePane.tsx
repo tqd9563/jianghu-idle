@@ -163,7 +163,7 @@ function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
   const rows: [string, string, string][] = [
     ['气血', String(Math.round(a.hp)), statTip(base.hp, a.zones.hpTempPct, 0, dq.hpPct)],
     ['真气', qiMax > 0 ? String(qiMax) : '——',
-      ng ? `(70 + 15 × (境界 − 2) + 重数) × 气海<br><span class='l'>(70 + 15 × ${Math.max(s.realm, 2) - 2} + ${s.zhong}) × ${ng.name}气海 ${QI_COEF[ng.quality].toFixed(1)}</span>`
+      ng ? `(700 + 150 × (境界 − 2) + 10 × 重数) × 气海<br><span class='l'>(700 + 150 × ${Math.max(s.realm, 2) - 2} + 10 × ${s.zhong}) × ${ng.name}气海 ${QI_COEF[ng.quality].toFixed(1)}</span>`
         : '未修内功，尚无真气'],
     ['攻击', String(Math.round(a.atk)), statTip(base.atk, a.zones.atkTempPct, 0, dq.atkPct,
       a.basicAtkMult !== 1 ? [`普攻系数 ×${a.basicAtkMult.toFixed(2)}（轻手暗器）`] : [])],

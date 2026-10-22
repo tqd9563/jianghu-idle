@@ -57,10 +57,27 @@ describe('gear · 生成', () => {
 
   it('装备等级沿 1.7^(ℓ−1) 放大：第 5 当量的兵器攻击约为第 1 当量的 8 倍', () => {
     const at = (level: number) => rollGear({ slot: '兵器', grade: 1, level, clearSilver: 1 }, seq([0.1, 0.1, 0.5, 0.5, 0.9])).base.攻击!;
-    // 展示尺度（content.md §1 v2.9）：第 1 当量 0.034 × 100 × 1.08 ≈ 3.67 → 4；第 5 当量 × 1.7^4 ≈ 30.7 → 31
+    // 展示尺度（content.md §1 v2.9）：第 1 当量 0.036 × 100 × 1.08 ≈ 3.89 → 4；第 5 当量 × 1.7^4 ≈ 32.5 → 32
     expect(at(1)).toBe(4);
-    expect(at(5)).toBe(31);
-    expect(at(9)).toBe(Math.round(0.034 * 100 * Math.pow(1.7, 8) * 1.08));
+    expect(at(5)).toBe(32);
+    expect(at(9)).toBe(Math.round(0.036 * 100 * Math.pow(1.7, 8) * 1.08));
+  });
+
+  it('品阶阶梯（裁决 49）：同部位同等级，每升一阶主属性 +20% 以上，橙约为白的 2.35 倍', () => {
+    // 掷骰序列：型 0.1（第一型）→ 浮动取中位 0.5 → 词条全取 0.5
+    const main = (slot: GearItem['slot'], grade: GearItem['grade'], level: number) => {
+      const it = rollGear({ slot, cat: '刀', grade, level, clearSilver: 1 }, seq([0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
+      return slot === '衣甲' ? it.base.气血! : it.base.攻击!;
+    };
+    for (const slot of ['兵器', '暗器', '衣甲'] as const) {
+      for (const level of [6, 9, 12]) {
+        const v = ([1, 2, 3, 4, 5] as const).map((g) => main(slot, g, level));
+        for (let g = 1; g < 5; g++) expect(v[g] / v[g - 1]).toBeGreaterThanOrEqual(1.2);
+        expect(v[4] / v[0]).toBeCloseTo(2.35, 1);
+      }
+    }
+    // 境界 3 前沿附近（当量 8.4）的刀：凡品 → 极品
+    expect([main('兵器', 1, 8.4), main('兵器', 5, 8.4)]).toEqual([Math.round(0.036 * 100 * 1.7 ** 7.4 * 1.08), Math.round(0.036 * 100 * 1.7 ** 7.4 * 1.08 * 2.35)]);
   });
 });
 

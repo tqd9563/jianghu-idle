@@ -96,18 +96,21 @@ const AFFIX_RANGE: Record<AffixKey, readonly [number, number]> = {
 };
 const LEVEL_SCALED: ReadonlySet<AffixKey> = new Set(['hit', 'dodge']);
 
-/** 品阶系数（spec §1.1）：基础属性 / 词条取值 / 词条条数 / 出售倍率 */
-const GRADE_BASE = [0, 1.0, 1.1, 1.2, 1.3, 1.4];
-const GRADE_AFFIX = [0, 1.0, 1.2, 1.4, 1.6, 1.8];
+/** 品阶系数（spec §1.1）：基础属性 / 词条取值 / 词条条数 / 出售倍率。
+ *  基础属性每升一阶 +23–25%、词条压平做点缀（design.md 裁决 49） */
+const GRADE_BASE = [0, 1.0, 1.25, 1.55, 1.9, 2.35];
+const GRADE_AFFIX = [0, 0.6, 0.7, 0.8, 0.9, 1.0];
 const AFFIX_COUNT: readonly (readonly [number, number])[] = [[0, 0], [0, 1], [1, 2], [2, 3], [3, 4], [4, 4]];
 export const SELL_MULT = [0, 0.5, 1, 2, 5, 15];
 
 // ---------------------------------------------------------------- 基础属性（spec §1.1）
 
 const BASE_ATK = 10 * STAT_SCALE, BASE_HP = 100 * STAT_SCALE, BASE_DEF = 5 * STAT_SCALE;
-const GEAR_RATIO = 0.034;
+/** 白装基础属性占「同当量玩家属性」的比例（spec §1.1） */
+const WEAPON_ATK = 0.036, DART_ATK = 0.021, ARMOR_RATIO = 0.0175;
+/** 命中 / 闪避类基础（不随 1.7^ℓ 放大） */
+const DART_HIT = 0.65, TRINKET = 1.05, WEAPON_LIGHT_HIT = 0.31;
 const FLOAT: readonly [number, number] = [0.90, 1.10];
-const WEAPON_LIGHT_HIT = 0.4;
 
 const lerp = (r: readonly [number, number], t: number) => r[0] + (r[1] - r[0]) * t;
 const iv = (v: number) => Math.max(1, Math.round(v));
@@ -119,21 +122,21 @@ function rollBase(slot: GearSlot, form: 0 | 1, grade: GearGrade, level: number, 
   const f = () => lerp(FLOAT, rng());
   switch (slot) {
     case '兵器': {
-      const atk = GEAR_RATIO * BASE_ATK * curve * f() * (form === 0 ? 1.08 : 0.92);
+      const atk = WEAPON_ATK * BASE_ATK * curve * f() * (form === 0 ? 1.08 : 0.92);
       return form === 0 ? { 攻击: iv(atk) } : { 攻击: iv(atk), 命中: iv(WEAPON_LIGHT_HIT * g * lv * f()) };
     }
     case '暗器': {
-      const atk = GEAR_RATIO * BASE_ATK * 0.5 * curve * f() * (form === 0 ? 1.15 : 0.85);
-      const hit = 0.85 * g * f() * lv * (form === 0 ? 0.85 : 1.15);
+      const atk = DART_ATK * BASE_ATK * curve * f() * (form === 0 ? 1.15 : 0.85);
+      const hit = DART_HIT * g * f() * lv * (form === 0 ? 0.85 : 1.15);
       return { 攻击: iv(atk), 命中: iv(hit) };
     }
     case '衣甲': {
-      const hp = GEAR_RATIO * BASE_HP * curve * f() * (form === 0 ? 1.15 : 0.85);
-      const def = GEAR_RATIO * BASE_DEF * curve * f() * (form === 0 ? 0.85 : 1.15);
+      const hp = ARMOR_RATIO * BASE_HP * curve * f() * (form === 0 ? 1.15 : 0.85);
+      const def = ARMOR_RATIO * BASE_DEF * curve * f() * (form === 0 ? 0.85 : 1.15);
       return { 气血: iv(hp), 防御: iv(def) };
     }
     case '佩饰': {
-      const v = iv(1.35 * g * f() * lv);
+      const v = iv(TRINKET * g * f() * lv);
       return form === 0 ? { 命中: v } : { 闪避: v };
     }
   }

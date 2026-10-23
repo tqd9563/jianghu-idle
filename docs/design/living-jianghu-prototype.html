@@ -268,6 +268,25 @@ div.bust { background: var(--bust) center bottom / contain no-repeat; }
 div.bust.round { width: 112px; height: 112px; align-self: end; margin-bottom: 18px; border-radius: 50%; background: var(--bust) center / cover no-repeat; -webkit-mask-image: none; mask-image: none; box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 div.bust.round.me { box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
+/* 长卷对阵：整条水墨底带，两端人物以水墨画收尾、向中间化开；中间大字「对」，按钮落在带内 */
+.duel.band { grid-template-columns: 24% minmax(0, 1fr) 96px minmax(0, 1fr) 24%; gap: 0 22px; align-items: center; min-height: 250px; margin: -60px -40px 0; padding: 0;
+  background: url('../../code/public/art/scene/duel-band.jpg') center / cover no-repeat;
+  box-shadow: inset 0 1px 0 oklch(0.45 0.03 76 / 0.55), inset 0 -1px 0 oklch(0.45 0.03 76 / 0.35); }
+.duel.band div.bust, .duel.band div.bust.round { align-self: stretch; width: auto; height: auto; margin: 0; border-radius: 0; box-shadow: none; background: var(--cap) center / cover no-repeat; }
+.duel.band div.bust.me { background-position: left center; }
+.duel.band div.bust.foe:not(.pt) { background-position: right center; }
+.duel.band div.bust.me { -webkit-mask-image: linear-gradient(to right, #000 55%, transparent); mask-image: linear-gradient(to right, #000 55%, transparent); }
+.duel.band div.bust.foe { -webkit-mask-image: linear-gradient(to left, #000 55%, transparent); mask-image: linear-gradient(to left, #000 55%, transparent); }
+/* 守关人没有长卷像时，用其头像去色压暗，同样向中间化开 */
+.duel.band div.bust.foe.pt { background-position: center 30%; filter: grayscale(0.7) contrast(1.1) brightness(0.85); }
+.duel.band .side { padding: 0 0 64px; }
+.duel.band .side .name { font-size: 28px; }
+.duel.band .vs { padding: 0 0 64px; font-size: 64px; font-weight: 700; color: oklch(0.82 0.06 76); opacity: 1; text-shadow: 0 0 24px oklch(0.05 0.01 262), 0 0 8px oklch(0.05 0.01 262); }
+.duel.band + .act { position: relative; margin-top: -84px; margin-bottom: 40px; }
+.duel.band + .act .btn { min-width: 300px; padding: 20px 40px; border-radius: 0; font-size: 22px; letter-spacing: 0.4em; color: oklch(0.86 0.08 80); text-shadow: 0 1px 0 #000;
+  background: url('../../code/public/art/scene/duel-btn.png') center / 100% 100% no-repeat; box-shadow: none; }
+.duel.band + .act .btn:hover { filter: brightness(1.15); box-shadow: none; }
+.duel.band + .act .btn::before, .duel.band + .act .btn::after { display: none; }
 /* 挑战按钮：两侧各一道墨线收于菱形 */
 .btn.orn { position: relative; }
 .btn.orn::before, .btn.orn::after { content: ''; position: absolute; top: 50%; width: 70px; height: 1px; background: linear-gradient(to var(--d, left), transparent, oklch(0.78 0.13 78 / 0.6)); }
@@ -460,9 +479,11 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第八轮</span>
+  <span class="t">活江湖原型 · 第九轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
+  <span class="lbl">对阵</span>
+  <div class="seg" id="duelSeg"><button aria-pressed="false" data-u="round">圆形头像</button><button aria-pressed="true" data-u="band">长卷</button></div>
   <span class="lbl">跳到</span>
   <button class="go" data-go="map">江湖舆图</button>
   <button class="go" data-go="vol">放大到江南</button>
@@ -519,8 +540,8 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
         <div class="nodes" id="nodes"></div>
         <div id="trk"></div>
       </div>
-      <div class="duel">
-        <div class="bust round me" style="--bust:url('../../code/public/art/scene/p-hero.png')"></div>
+      <div class="duel band" id="duel">
+        <div class="bust round me" style="--bust:url('../../code/public/art/scene/p-hero.png'); --cap:url('../../code/public/art/scene/duel-hero.jpg')"></div>
         <div class="side">
           <div class="name">沈砚</div>
           <div class="desc">百川诀 · 第 9 重</div>
@@ -776,6 +797,8 @@ function renderFight() {
   }
   foeBust.className = 'bust round foe' + (role === 'boss' ? ' boss' : '');
   foeBust.style.setProperty('--bust', `url('${ART}${s.who?.pt ?? 'p-guard'}.png')`);
+  foeBust.style.setProperty('--cap', s.who?.pt ? `url('${ART}${s.who.pt}.png')` : `url('${ART}duel-foe.jpg')`);
+  foeBust.classList.toggle('pt', !!s.who?.pt);
   fightBtn.textContent = `挑战第${cnNum(selStage)}关`;
   renderLog(m, s);
 }
@@ -897,6 +920,10 @@ document.querySelectorAll('.dock .tabs button').forEach((b) => b.onclick = () =>
 });
 
 /* ═══════ 控制条 ═══════ */
+duelSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
+  duelSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  duel.classList.toggle('band', b.dataset.u === 'band');
+});
 map.style.setProperty('--map-art', "url('../../code/public/art/jianghu-map-2.jpg')");
 
 /* ═══════ 页签与编年摆法 ═══════

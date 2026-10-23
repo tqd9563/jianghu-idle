@@ -50,6 +50,7 @@
 | `systems/sim/cast_doors_measured.json` / `cast_rhythm_measured.json` | 武学逐门余量与出招节奏实测（`code/src/telemetry/castDoors.sim.test.ts` SIM_DOORS=1、`castRhythm.sim.test.ts` SIM_CAST=1；改版前后战力对拍用 `castBalance.sim.test.ts` SIM_BAL=1） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/living-jianghu/design.md` | 活江湖（草案）：世内事件 / 江湖兴衰 / 正邪的落地顺序与前置裁决；定稿后取代转世设定 §4 / §5 / §7 的落地口径 | — |
+| `systems/living-jianghu/sim.py` | 活江湖结构 sim（卷 · 章 · 图 · 关单线的台阶高度、停留天数、首杀体量；读 longline_sim） | — |
 | `systems/prestige-shop/design.md` | 前尘（声望阁改版）设定：底蕴八条可反复购买且逐级递减、感悟价补偿、页面分段切换；sim 判据已过，原型待审 | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |
 | `systems/injury/design.md` | 受伤系统设定（内伤/外伤/毒伤：获取/恢复/战斗影响/战死接口） | — |

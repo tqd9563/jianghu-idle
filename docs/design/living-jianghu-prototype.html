@@ -259,13 +259,14 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .grp { position: absolute; transform: translate(-50%, 0); font-family: var(--font-display); font-size: 12.5px; letter-spacing: 0.1em; color: var(--faint); white-space: nowrap; text-shadow: 0 0 8px #000, 0 0 3px #000; pointer-events: none; }
 
 /* ═══════ 对阵（照 battle.css .duel） ═══════ */
-.duel { position: relative; display: grid; grid-template-columns: 150px minmax(0, 1fr) 70px minmax(0, 1fr) 150px; gap: 12px 18px; align-items: end; margin: -90px -40px 0; padding: 0 40px;
+.duel { position: relative; display: grid; grid-template-columns: 128px minmax(0, 1fr) 70px minmax(0, 1fr) 128px; gap: 12px 18px; align-items: end; margin: -90px -40px 0; padding: 0 40px;
   background: radial-gradient(ellipse 60% 100% at 50% 100%, oklch(0.2 0.015 262 / 0.9), transparent 70%); }
 .duel .side { padding-bottom: 20px; }
 .duel .vs { padding: 0 0 34px; font-size: 40px; color: var(--ink-gold); opacity: 0.85; }
 .bust { width: 150px; height: 200px; object-fit: contain; object-position: bottom; -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent); mask-image: linear-gradient(to bottom, #000 70%, transparent); }
 div.bust { background: var(--bust) center bottom / contain no-repeat; }
-div.bust.round { width: 128px; height: 128px; align-self: center; margin-bottom: 26px; border-radius: 50%; background: var(--bust) center / cover no-repeat; -webkit-mask-image: none; mask-image: none; box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
+div.bust.round { width: 112px; height: 112px; align-self: end; margin-bottom: 18px; border-radius: 50%; background: var(--bust) center / cover no-repeat; -webkit-mask-image: none; mask-image: none; box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
+div.bust.round.me { box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 /* 挑战按钮：两侧各一道墨线收于菱形 */
 .btn.orn { position: relative; }
@@ -379,6 +380,9 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 .shell.dock-min.dock-open .dock .tabs { display: flex; }
 .shell.dock-min.dock-open .dock .edge { display: none; }
 .dock .close { display: none; }
+.dock .fold { margin-left: auto; padding: 0 2px 10px !important; font-size: 20px !important; line-height: 1; letter-spacing: 0 !important; color: var(--faint) !important; }
+.dock .fold:hover { color: var(--ink) !important; }
+.shell.dock-min .dock .fold { display: none; }
 .shell.dock-min.dock-open .dock .close { display: block; margin-left: auto; border: 0; background: none; color: var(--faint); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 0 10px; }
 @keyframes drawin { from { transform: translateX(24px); opacity: 0; } }
 /* 其余页签：只画出版面占位，示意宽度 */
@@ -456,7 +460,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第七轮</span>
+  <span class="t">活江湖原型 · 第八轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
   <span class="lbl">跳到</span>
@@ -516,7 +520,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
         <div id="trk"></div>
       </div>
       <div class="duel">
-        <img class="bust me" src="../../code/public/art/scene/hero.png" alt="">
+        <div class="bust round me" style="--bust:url('../../code/public/art/scene/p-hero.png')"></div>
         <div class="side">
           <div class="name">沈砚</div>
           <div class="desc">百川诀 · 第 9 重</div>
@@ -544,6 +548,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
       <button role="tab" aria-selected="true" data-t="now">江湖</button>
       <button role="tab" aria-selected="false" data-t="past">往世</button>
       <button class="close" id="dockClose" aria-label="收起">×</button>
+      <button class="fold" id="dockFold" aria-label="收起江湖编年" data-tip="收起">›</button>
     </div>
     <div class="feed" id="feed"></div>
   </aside>
@@ -769,8 +774,8 @@ function renderFight() {
     foeDesc.textContent = fac ? `${fac.fac} · ${m.name}` : m.name;
     foeHp.textContent = '6,380 / 6,380';
   }
-  foeBust.className = 'bust foe' + (s.who?.pt ? ' round' + (role === 'boss' ? ' boss' : '') : '');
-  foeBust.style.setProperty('--bust', `url('${ART}${s.who?.pt ?? 'foe'}.png')`);
+  foeBust.className = 'bust round foe' + (role === 'boss' ? ' boss' : '');
+  foeBust.style.setProperty('--bust', `url('${ART}${s.who?.pt ?? 'p-guard'}.png')`);
   fightBtn.textContent = `挑战第${cnNum(selStage)}关`;
   renderLog(m, s);
 }
@@ -923,8 +928,12 @@ function setTab(t) {
   if (!battle) pg.innerHTML = `<header class="jh-head"><h1>${t}</h1></header><p class="ph-note">原型占位：此页内容不在本轮范围，只示意版面宽度。</p>${PH[t]}`;
   renderNav(); applyDock();
 }
+// 修炼、战斗页上编年可手动收起；记住这个选择（只存本机）
+let userFold = false;
+try { userFold = localStorage.getItem('jh-dock-fold') === '1'; } catch (e) {}
+const saveFold = () => { try { localStorage.setItem('jh-dock-fold', userFold ? '1' : '0'); } catch (e) {} };
 function applyDock() {
-  const min = dockMode === 'B' && !WATCH.includes(tab);
+  const min = (dockMode === 'B' && !WATCH.includes(tab)) || (WATCH.includes(tab) && userFold);
   shell.classList.toggle('dock-min', min);
   if (!min) { shell.classList.remove('dock-open'); unread = 0; unreadBig = false; }
   renderUnread();
@@ -933,7 +942,10 @@ function renderUnread() {
   unreadEl.hidden = !unread; unreadEl.textContent = unread; unreadEl.classList.toggle('big', unreadBig);
 }
 const unreadEl = document.getElementById('unread');
-edge.onclick = () => { shell.classList.add('dock-open'); unread = 0; unreadBig = false; renderUnread(); };
+dockFold.onclick = () => { userFold = true; saveFold(); applyDock(); };
+edge.onclick = () => {
+  if (WATCH.includes(tab)) { userFold = false; saveFold(); applyDock(); return; }
+  shell.classList.add('dock-open'); unread = 0; unreadBig = false; renderUnread(); };
 dockClose.onclick = () => shell.classList.remove('dock-open');
 document.addEventListener('click', (e) => {
   if (shell.classList.contains('dock-open') && !e.target.closest('.dock') && !e.target.closest('.proto-bar')) shell.classList.remove('dock-open');

@@ -119,7 +119,7 @@ def main() -> None:
     print(f"  图 {road_maps + ju_maps}（赶路 {road_maps} · 据点 {ju_maps}）  关 {stages}（现行 {OLD['stages']}）")
     print(f"  精英 {elites}（现行 {OLD['elites']}，标准玩家 100 天打 {STD['elites']}）  Boss {bosses}（现行 {OLD['bosses']}）")
     print("  成就层占累计声望（全部打完、单价按倍数缩放；经脉 10 条不变；不含侠名录加成）：")
-    for k in (1.0, 1 / 1.5, 1 / 3.17):
+    for k in (1.0, 0.7, 1 / 3.17):
         print(f"    精英 / Boss 单价 ×{k:.2f}：约 {STD['share'] * weight(elites, bosses, k) / base:.1f}%（上限 10%）")
 
 if __name__ == "__main__":

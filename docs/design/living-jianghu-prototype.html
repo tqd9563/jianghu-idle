@@ -269,7 +269,7 @@ div.bust.round { width: 112px; height: 112px; align-self: end; margin-bottom: 18
 div.bust.round.me { box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 /* 长卷对阵：整条水墨底带，两端人物以水墨画收尾、向中间化开；中间大字「对」，按钮落在带内 */
-.duel.band { grid-template-columns: 24% minmax(0, 1fr) 96px minmax(0, 1fr) 24%; gap: 0 22px; align-items: center; min-height: 250px; margin: -60px -40px 0; padding: 0;
+.duel.band { grid-template-columns: minmax(96px, 22%) minmax(180px, 1fr) 76px minmax(180px, 1fr) minmax(96px, 22%); gap: 0 18px; align-items: center; min-height: 250px; margin: -60px -40px 0; padding: 0;
   background: url('../../code/public/art/scene/duel-band.jpg') center / cover no-repeat;
   box-shadow: inset 0 1px 0 oklch(0.45 0.03 76 / 0.55), inset 0 -1px 0 oklch(0.45 0.03 76 / 0.35); }
 .duel.band div.bust, .duel.band div.bust.round { align-self: stretch; width: auto; height: auto; margin: 0; border-radius: 0; box-shadow: none; background: var(--cap) center / cover no-repeat; }
@@ -280,13 +280,33 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 /* 守关人没有长卷像时，用其头像去色压暗，同样向中间化开 */
 .duel.band div.bust.foe.pt { background-position: center 30%; filter: grayscale(0.7) contrast(1.1) brightness(0.85); }
 .duel.band .side { padding: 0 0 64px; }
-.duel.band .side .name { font-size: 28px; }
-.duel.band .vs { padding: 0 0 64px; font-size: 64px; font-weight: 700; color: oklch(0.82 0.06 76); opacity: 1; text-shadow: 0 0 24px oklch(0.05 0.01 262), 0 0 8px oklch(0.05 0.01 262); }
+.duel.band .side .name { font-size: 28px; white-space: nowrap; }
+.duel.band .side .desc { white-space: nowrap; }
+.duel.band .vs { padding: 0 0 64px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); opacity: 1; }
 .duel.band + .act { position: relative; margin-top: -84px; margin-bottom: 40px; }
-.duel.band + .act .btn { min-width: 300px; padding: 20px 40px; border-radius: 0; font-size: 22px; letter-spacing: 0.4em; color: oklch(0.86 0.08 80); text-shadow: 0 1px 0 #000;
-  background: url('../../code/public/art/scene/duel-btn.png') center / 100% 100% no-repeat; box-shadow: none; }
+.duel.band + .act .btn { min-width: 320px; padding: 22px 56px; border-radius: 0; font-size: 22px; letter-spacing: 0.4em; color: oklch(0.86 0.08 80); text-shadow: 0 1px 0 #000;
+  background: url('../../code/public/art/scene/duel-btn2.png') center / 100% 100% no-repeat; box-shadow: none; color: oklch(0.17 0.012 262); text-shadow: none; font-weight: 700; }
 .duel.band + .act .btn:hover { filter: brightness(1.15); box-shadow: none; }
 .duel.band + .act .btn::before, .duel.band + .act .btn::after { display: none; }
+/* 气血 / 真气：一笔干笔刷痕，满的部分着色、空的部分留暗；敌方镜像 */
+.bars { display: grid; gap: 5px; margin-top: 14px; }
+.bb { position: relative; height: 15px; background: oklch(0.1 0.01 262 / 0.75);
+  -webkit-mask: url('../../code/public/art/scene/brush.png') center / 100% 100% no-repeat; mask: url('../../code/public/art/scene/brush.png') center / 100% 100% no-repeat; }
+.bb i { position: absolute; inset: 0 auto 0 0; width: var(--p, 100%); }
+.bb.hp i { background: linear-gradient(to right, oklch(0.55 0.15 27), oklch(0.66 0.15 30)); }
+.bb.qi { height: 9px; width: 82%; }
+.bb.qi i { background: linear-gradient(to right, oklch(0.55 0.08 225), var(--qi)); }
+.side.enemy .bb { transform: scaleX(-1); }
+.side.enemy .bb.qi { margin-left: auto; }
+.nums { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 8px; font-size: 12.5px; color: var(--faint); white-space: nowrap; }
+.nums b { color: var(--muted); font-weight: 500; }
+.side.enemy .nums { justify-content: flex-end; }
+/* 底带上沿：微有起伏、正中一处隆起，压一道淡墨金线 */
+.duel.band { -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20250%27%20preserveAspectRatio%3D%27none%27%3E%3Cpath%20d%3D%27M0%2012.4%20L0%2012.4%20L20%2012.6%20L40%2014.9%20L60%2013.6%20L80%2015.6%20L100%2015.4%20L120%2014.7%20L140%2016.2%20L160%2014.7%20L180%2015.7%20L200%2014.2%20L220%2013.7%20L240%2014.2%20L260%2014.8%20L280%2011.9%20L300%2011.5%20L320%2012.1%20L340%2012.5%20L360%2010.8%20L380%209.8%20L400%2011.4%20L420%208.4%20L440%2011.0%20L460%209.2%20L480%205.6%20L500%202.0%20L520%205.6%20L540%209.2%20L560%2011.8%20L580%2013.8%20L600%2014.6%20L620%2014.4%20L640%2015.5%20L660%2014.4%20L680%2014.6%20L700%2015.2%20L720%2016.7%20L740%2015.8%20L760%2015.1%20L780%2015.5%20L800%2014.5%20L820%2013.3%20L840%2014.2%20L860%2013.2%20L880%2011.1%20L900%2011.5%20L920%2010.8%20L940%2011.5%20L960%2010.7%20L980%209.1%20L1000%2011.4%20L1000%20250%20L0%20250Z%27%20fill%3D%27black%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20250%27%20preserveAspectRatio%3D%27none%27%3E%3Cpath%20d%3D%27M0%2012.4%20L0%2012.4%20L20%2012.6%20L40%2014.9%20L60%2013.6%20L80%2015.6%20L100%2015.4%20L120%2014.7%20L140%2016.2%20L160%2014.7%20L180%2015.7%20L200%2014.2%20L220%2013.7%20L240%2014.2%20L260%2014.8%20L280%2011.9%20L300%2011.5%20L320%2012.1%20L340%2012.5%20L360%2010.8%20L380%209.8%20L400%2011.4%20L420%208.4%20L440%2011.0%20L460%209.2%20L480%205.6%20L500%202.0%20L520%205.6%20L540%209.2%20L560%2011.8%20L580%2013.8%20L600%2014.6%20L620%2014.4%20L640%2015.5%20L660%2014.4%20L680%2014.6%20L700%2015.2%20L720%2016.7%20L740%2015.8%20L760%2015.1%20L780%2015.5%20L800%2014.5%20L820%2013.3%20L840%2014.2%20L860%2013.2%20L880%2011.1%20L900%2011.5%20L920%2010.8%20L940%2011.5%20L960%2010.7%20L980%209.1%20L1000%2011.4%20L1000%20250%20L0%20250Z%27%20fill%3D%27black%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.duel .rim { display: none; }
+.duel.band .rim { display: block; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.duel.band .rim path { fill: none; stroke: oklch(0.62 0.06 76 / 0.7); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.duel.band .rim .gem { fill: oklch(0.12 0.01 262); stroke: var(--ink-gold); }
 /* 挑战按钮：两侧各一道墨线收于菱形 */
 .btn.orn { position: relative; }
 .btn.orn::before, .btn.orn::after { content: ''; position: absolute; top: 50%; width: 70px; height: 1px; background: linear-gradient(to var(--d, left), transparent, oklch(0.78 0.13 78 / 0.6)); }
@@ -304,7 +324,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 .ink-bar::before { content: ''; position: absolute; inset: 2px 0; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.7); }
 .ink-bar i { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; border-radius: 4px; background: linear-gradient(to right, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent); }
 .side.enemy .ink-bar i { left: auto; right: 0; background: linear-gradient(to left, oklch(0.5 0.16 25), var(--hp) 70%, oklch(0.7 0.16 30)); -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 14px), transparent); }
-.vs { text-align: center; padding-top: 16px; font-family: var(--font-display); color: var(--muted); font-size: 26px; }
+.vs { text-align: center; padding-top: 16px; font-family: var(--font-display); color: var(--muted); font-size: 24px; letter-spacing: 0.12em; }
 .act { margin-top: 26px; display: grid; justify-items: center; }
 .btn { border: 0; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.16em; padding: 11px 26px; border-radius: 10px; min-width: 220px; color: var(--gold); cursor: pointer;
   background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.16), oklch(0.78 0.13 78 / 0.05)); box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55); transition: box-shadow .2s; }
@@ -479,7 +499,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第九轮</span>
+  <span class="t">活江湖原型 · 第十轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
   <span class="lbl">对阵</span>
@@ -541,17 +561,20 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
         <div id="trk"></div>
       </div>
       <div class="duel band" id="duel">
+        <svg class="rim" viewBox="0 0 1000 250" preserveAspectRatio="none" aria-hidden="true"><path d="M0 13.9 L0 13.9 L20 14.1 L40 16.4 L60 15.1 L80 17.1 L100 16.9 L120 16.2 L140 17.7 L160 16.2 L180 17.2 L200 15.7 L220 15.2 L240 15.7 L260 16.3 L280 13.4 L300 13.0 L320 13.6 L340 14.0 L360 12.3 L380 11.3 L400 12.9 L420 9.9 L440 12.5 L460 10.7 L480 7.1 L500 3.5 L520 7.1 L540 10.7 L560 13.3 L580 15.3 L600 16.1 L620 15.9 L640 17.0 L660 15.9 L680 16.1 L700 16.7 L720 18.2 L740 17.3 L760 16.6 L780 17.0 L800 16.0 L820 14.8 L840 15.7 L860 14.7 L880 12.6 L900 13.0 L920 12.3 L940 13.0 L960 12.2 L980 10.6 L1000 12.9"/><path class="gem" d="M500 -3 L506 3.5 L500 10 L494 3.5Z"/></svg>
         <div class="bust round me" style="--bust:url('../../code/public/art/scene/p-hero.png'); --cap:url('../../code/public/art/scene/duel-hero.jpg')"></div>
         <div class="side">
           <div class="name">沈砚</div>
           <div class="desc">百川诀 · 第 9 重</div>
-          <div class="meter"><div class="lbl"><span>气血</span><span>6,420 / 6,420</span></div><div class="ink-bar"><i></i></div></div>
+          <div class="bars"><div class="bb hp"><i></i></div><div class="bb qi"><i></i></div></div>
+          <div class="nums"><span>气血 <b>6,420 / 6,420</b></span><span>真气 <b>1,860 / 1,860</b></span></div>
         </div>
-        <div class="vs">对</div>
+        <div class="vs">VS</div>
         <div class="side enemy">
           <div class="name" id="foeName"></div>
           <div class="desc" id="foeDesc"></div>
-          <div class="meter"><div class="lbl"><span>气血</span><span id="foeHp"></span></div><div class="ink-bar"><i></i></div></div>
+          <div class="bars"><div class="bb hp"><i></i></div><div class="bb qi"><i></i></div></div>
+          <div class="nums"><span>气血 <b id="foeHp"></b></span><span>真气 <b id="foeQi"></b></span></div>
         </div>
         <div class="bust foe" id="foeBust"></div>
       </div>
@@ -790,10 +813,12 @@ function renderFight() {
     foeName.innerHTML = h ? `<span class="hao">${h[1]}</span>${h[2]}` : s.who.name;
     foeDesc.innerHTML = `<span data-tip="${whoTip(m, s.who)}">${fac.fac}${s.who.post}</span>`;
     foeHp.textContent = s.kind === 'boss' ? '21,800 / 21,800' : '9,960 / 9,960';
+    foeQi.textContent = s.kind === 'boss' ? '4,200 / 4,200' : '2,400 / 2,400';
   } else {
     foeName.textContent = m.foe;
     foeDesc.textContent = fac ? `${fac.fac} · ${m.name}` : m.name;
     foeHp.textContent = '6,380 / 6,380';
+    foeQi.textContent = '1,500 / 1,500';
   }
   foeBust.className = 'bust round foe' + (role === 'boss' ? ' boss' : '');
   foeBust.style.setProperty('--bust', `url('${ART}${s.who?.pt ?? 'p-guard'}.png')`);

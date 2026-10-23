@@ -1,6 +1,6 @@
 {
  "schemaVersion": 2,
- "generatedAt": "2026-10-13T16:16:02.470803",
+ "generatedAt": "2026-10-23T10:07:28Z",
  "title": "Design System: 江湖无尽录",
  "extensions": {
   "colorMeta": {
@@ -93,6 +93,81 @@
     "role": "tertiary",
     "displayName": "灯笼 暖金",
     "canonical": "oklch(0.8 0.08 70)"
+   },
+   "camp-zheng": {
+    "role": "tertiary",
+    "displayName": "正道石青",
+    "canonical": "oklch(0.76 0.09 245)",
+    "tonalRamp": [
+     "oklch(0.15 0.09 245)",
+     "oklch(0.25 0.09 245)",
+     "oklch(0.35 0.09 245)",
+     "oklch(0.45 0.09 245)",
+     "oklch(0.55 0.09 245)",
+     "oklch(0.65 0.09 245)",
+     "oklch(0.78 0.09 245)",
+     "oklch(0.92 0.09 245)"
+    ]
+   },
+   "camp-xie": {
+    "role": "tertiary",
+    "displayName": "邪道紫",
+    "canonical": "oklch(0.72 0.11 320)",
+    "tonalRamp": [
+     "oklch(0.15 0.11 320)",
+     "oklch(0.25 0.11 320)",
+     "oklch(0.35 0.11 320)",
+     "oklch(0.45 0.11 320)",
+     "oklch(0.55 0.11 320)",
+     "oklch(0.65 0.11 320)",
+     "oklch(0.78 0.11 320)",
+     "oklch(0.92 0.11 320)"
+    ]
+   },
+   "camp-court": {
+    "role": "tertiary",
+    "displayName": "朝廷竹青",
+    "canonical": "oklch(0.76 0.10 135)",
+    "tonalRamp": [
+     "oklch(0.15 0.1 135)",
+     "oklch(0.25 0.1 135)",
+     "oklch(0.35 0.1 135)",
+     "oklch(0.45 0.1 135)",
+     "oklch(0.55 0.1 135)",
+     "oklch(0.65 0.1 135)",
+     "oklch(0.78 0.1 135)",
+     "oklch(0.92 0.1 135)"
+    ]
+   },
+   "camp-jianghu": {
+    "role": "neutral",
+    "displayName": "江湖银灰",
+    "canonical": "oklch(0.78 0.012 262)",
+    "tonalRamp": [
+     "oklch(0.15 0.012 262)",
+     "oklch(0.25 0.012 262)",
+     "oklch(0.35 0.012 262)",
+     "oklch(0.45 0.012 262)",
+     "oklch(0.55 0.012 262)",
+     "oklch(0.65 0.012 262)",
+     "oklch(0.78 0.012 262)",
+     "oklch(0.92 0.012 262)"
+    ]
+   },
+   "mist": {
+    "role": "neutral",
+    "displayName": "云雾",
+    "canonical": "oklch(0.72 0.01 262 / 0.9)",
+    "tonalRamp": [
+     "oklch(0.15 0.01 262)",
+     "oklch(0.25 0.01 262)",
+     "oklch(0.35 0.01 262)",
+     "oklch(0.45 0.01 262)",
+     "oklch(0.55 0.01 262)",
+     "oklch(0.65 0.01 262)",
+     "oklch(0.78 0.01 262)",
+     "oklch(0.92 0.01 262)"
+    ]
    }
   },
   "typographyMeta": {
@@ -145,6 +220,26 @@
     "name": "wipe-in",
     "value": "clip-path inset(0 100% 0 0) → inset(0) 0.45s ease-out",
     "purpose": "进黑市的整页拉黑转场"
+   },
+   {
+    "name": "map-zoom",
+    "value": "transform 0.9s cubic-bezier(0.25, 1, 0.5, 1)",
+    "purpose": "舆图放大到一卷；走完后 0.7s 淡入地域分图。"
+   },
+   {
+    "name": "hp-ghost",
+    "value": "width 0.7s 0.45s cubic-bezier(0.25, 1, 0.5, 1)",
+    "purpose": "刷痕条受击残影：着色部分 0.28s 先缩，残影停顿后跟上。"
+   },
+   {
+    "name": "damage-pop",
+    "value": "1.1s cubic-bezier(0.25, 1, 0.5, 1) forwards",
+    "purpose": "伤害飘字上飘淡出，置于独立最上层。"
+   },
+   {
+    "name": "drawer-in",
+    "value": "0.35s cubic-bezier(0.25, 1, 0.5, 1)",
+    "purpose": "操作页编年窄边点开后从右侧浮出。"
    }
   ],
   "breakpoints": [
@@ -194,17 +289,44 @@
    "description": "黑市的一张蒙面货：问号遮罩、名、价；买下即揭晓。",
    "html": "<button class=\"ds-mask\"><span class=\"ds-veil\">？</span><span class=\"ds-nm\">一柄剑</span><span class=\"ds-pr\">来路不明 · 1,800 两</span></button>",
    "css": ".ds-mask{width:200px;border:0;border-radius:10px;padding:10px 8px;display:grid;justify-items:center;gap:6px;color:oklch(0.91 0.012 85);background:oklch(0.18 0.03 300 / 0.8);box-shadow:inset 0 0 0 1px oklch(0.45 0.08 300 / 0.4);cursor:pointer;transition:box-shadow .2s}.ds-mask:hover,.ds-mask:focus-visible{outline:none;box-shadow:inset 0 0 0 1px oklch(0.6 0.12 300 / 0.7)}.ds-veil{width:120px;height:150px;border-radius:6px;display:grid;place-items:center;font-family:\"Noto Serif SC\",serif;font-size:40px;color:oklch(0.6 0.08 300);background:linear-gradient(160deg,oklch(0.3 0.04 300),oklch(0.18 0.03 300));box-shadow:inset 0 0 0 1px oklch(0.5 0.08 300 / 0.5)}.ds-nm{font-family:\"Noto Serif SC\",serif;font-size:15px;letter-spacing:.08em}.ds-pr{font-size:12.5px;color:oklch(0.76 0.015 85)}"
+  },
+  {
+   "name": "编年头条简讯",
+   "kind": "custom",
+   "refersTo": "chronicle-big",
+   "description": "江湖编年右栏「江湖」页签：大事头条 + 类别筛选 + 一行一事。",
+   "html": "<div class=\"ds-chr\"><div class=\"ds-chr-k\">江湖大事<span>江湖历 217 年</span></div><div class=\"ds-chr-t\">千蛇窟与苍崖派会于淮上，各折一名护法，两家自此结怨。</div><div class=\"ds-chr-chips\"><button aria-pressed=\"true\">全部</button><button>沈砚</button><button>正道</button><button>邪道</button></div><p class=\"ds-chr-b me\"><b>沈砚</b>沈砚破千岩寺云栈香市。<span>220 年 春</span></p><p class=\"ds-chr-b xie\"><b>邪道</b>夜阑风雨楼「惊蛰」易人。<span>220 年 春</span></p></div>",
+   "css": ".ds-chr{width:300px;background:oklch(0.125 0.012 262);padding:6px 20px;font-family:'LXGW WenKai',sans-serif;color:oklch(0.76 0.015 85)} .ds-chr-k{font-family:'Noto Serif SC',serif;color:oklch(0.66 0.14 32);font-size:13px;letter-spacing:.25em} .ds-chr-k span{color:oklch(0.64 0.014 262);font-size:12px;margin-left:8px;letter-spacing:.05em} .ds-chr-t{font-family:'Noto Serif SC',serif;font-size:19px;line-height:1.6;color:oklch(0.91 0.012 85);margin:8px 0 14px} .ds-chr-chips{display:flex;gap:4px;margin-bottom:6px} .ds-chr-chips button{border:0;background:none;padding:3px 7px;border-radius:6px;font-size:12.5px;color:oklch(0.64 0.014 262);cursor:pointer} .ds-chr-chips button:hover{color:oklch(0.91 0.012 85)} .ds-chr-chips button[aria-pressed=true]{background:oklch(0.225 0.016 262);color:oklch(0.91 0.012 85)} .ds-chr-b{margin:0;padding:7px 0;font-size:13.5px;line-height:1.7} .ds-chr-b b{font-family:'Noto Serif SC',serif;font-size:12.5px;margin-right:8px} .ds-chr-b span{color:oklch(0.64 0.014 262);font-size:11.5px;margin-left:6px} .ds-chr-b.me{color:oklch(0.91 0.012 85)} .ds-chr-b.me b{color:oklch(0.75 0.075 76)} .ds-chr-b.xie b{color:oklch(0.72 0.11 320)}"
+  },
+  {
+   "name": "场景关卡节点",
+   "kind": "custom",
+   "refersTo": "stage-check",
+   "description": "据点场景路上的关卡点：已过对勾、当前烛光底座、守关圆形头像。",
+   "html": "<div class=\"ds-nodes\"><span class=\"ds-ck\">✓<i>第三关</i></span><span class=\"ds-cur\"><b></b><i>第四关</i></span><span class=\"ds-md\"><em>副</em><i>第十关</i></span></div>",
+   "css": ".ds-nodes{display:flex;gap:46px;align-items:center;padding:30px 24px 34px;background:oklch(0.19 0.014 262)} .ds-nodes i{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);font-style:normal;font-family:'Noto Serif SC',serif;font-size:13px;letter-spacing:.12em;white-space:nowrap;color:oklch(0.76 0.015 85)} .ds-ck{position:relative;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:oklch(0.12 0.01 262 / .85);box-shadow:inset 0 0 0 1.5px oklch(0.75 0.075 76);color:oklch(0.75 0.075 76);font-size:13px} .ds-ck i{color:oklch(0.75 0.075 76)} .ds-cur{position:relative;width:46px;height:13px;border-radius:50%;background:oklch(0.78 0.13 78 / .15);box-shadow:0 0 0 1.5px oklch(0.78 0.13 78),0 0 14px oklch(0.78 0.13 78)} .ds-cur i{color:oklch(0.78 0.13 78)} .ds-md{position:relative;width:56px;height:56px;border-radius:50%;background:oklch(0.125 0.012 262);box-shadow:0 0 0 2px oklch(0.75 0.075 76),0 0 0 4px oklch(0.12 0.01 262 / .8)} .ds-md em{position:absolute;right:-16px;top:4px;writing-mode:vertical-rl;font-style:normal;font-family:'Noto Serif SC',serif;font-weight:700;font-size:12px;padding:4px 2px;border-radius:3px;background:oklch(0.12 0.01 262 / .9);color:oklch(0.75 0.075 76);box-shadow:inset 0 0 0 1px oklch(0.75 0.075 76 / .8)}"
+  },
+  {
+   "name": "刷痕气血条",
+   "kind": "custom",
+   "refersTo": "",
+   "description": "长卷对阵区的气血 / 真气：名目与现值在上，干笔刷痕条在下。",
+   "html": "<div class=\"ds-mt\"><div class=\"ds-ml\"><span>气血</span><span><b>5,392</b> / 6,420</span></div><div class=\"ds-bb\"><i style=\"width:84%\"></i></div></div>",
+   "css": ".ds-mt{width:260px;padding:12px;background:oklch(0.13 0.011 262);font-family:'LXGW WenKai',sans-serif} .ds-ml{display:flex;justify-content:space-between;font-size:13px;color:oklch(0.76 0.015 85);margin-bottom:4px} .ds-ml b{color:oklch(0.91 0.012 85);font-weight:500} .ds-bb{position:relative;height:15px;background:oklch(0.1 0.01 262 / .75);clip-path:polygon(0 30%,3% 5%,60% 12%,100% 40%,97% 70%,100% 95%,40% 88%,2% 100%)} .ds-bb i{position:absolute;inset:0 auto 0 0;background:linear-gradient(to right,oklch(0.55 0.15 27),oklch(0.66 0.15 30));transition:width .28s}"
   }
  ],
  "narrative": {
   "northStar": "月下水墨卷",
   "overview": "每一页背后固定铺一幅 AI 水墨画，信息浮在画上；外壳只有人物卷侧栏一层；情绪集中在四个整屏演出。",
   "keyCharacteristics": [
-   "一层外壳",
-   "底图铺满舞台",
-   "卡片不嵌套",
-   "实线已完成、虚线剩余",
-   "思源宋体 + 霞鹜文楷"
+   "一层外壳：人物卷侧栏 + 舞台 + 江湖编年右栏；修炼、战斗页编年常驻（可手动收起），其余页收成窄边。手机宽度改为顶部资源条 + 底部页签栏。",
+   "战斗页是一卷地图：江湖舆图 → 地域分图（据点画在地里）→ 据点场景（关卡点立在画里的路上）。状态用雾、烛光、印、对钩、剪影这些游戏手法说，不靠图例。",
+   "底图固定铺满舞台背后，所有页同位；人物、对阵等主画面直接画在底图上，不加底框。",
+   "卡片只用于真正成组的信息（身手、破境、伤势、心法要诀、商店），从不嵌套。",
+   "进度线全站一个规则：实线已完成、虚线剩余。",
+   "标题用思源宋体，正文用霞鹜文楷，数字等宽。",
+   "装备数值一律整数；界面上不写解释性小字，规则靠形态和悬停说清。",
+   "道具图走写实材质（金属、皮革、玉石），与水墨底图、线装书封有意对比；一名一图。"
   ],
   "rules": [
    {
@@ -231,26 +353,56 @@
     "name": "The Grade On The Edge, Route In The Seal Rule",
     "body": "品阶靠描边和名字色说，路数靠一枚描边章说；两者不共用色相，不共用形态。",
     "section": "colors"
+   },
+   {
+    "name": "The Camp Color Stays In The Chronicle Rule",
+    "body": "正邪朝廷的类别色只出现在编年、势力印与势力名牌上，不进武功页、行囊与战斗数值——那里同色相的是路数色，两套不得同屏混用。",
+    "section": "colors"
+   },
+   {
+    "name": "The Grade Is The Metal Rule",
+    "body": "成就的品质长在徽记材质上（铜币 → 银币 → 金币），不加框、不加字；和装备「品阶在描边」是两套语言，不混用。",
+    "section": "colors"
+   },
+   {
+    "name": "The Painted-In Rule",
+    "body": "地图上的建筑、据点不能是贴上去的小图：把那块地图截出来图生图，让建筑画进地里，再用 HTML 热区与雾 / 烛光 / 印表达状态。贴图无论怎么调色都看得出来。",
+    "section": "elevation"
+   },
+   {
+    "name": "The Torn Edge Rule",
+    "body": "画面（场景）与操作区（对阵底带）之间要分得清，但不画亮线、不一刀直切：底带顶边一道细毛边墨痕（噪点位移 9），下压 30px 暗影唇口。",
+    "section": "elevation"
    }
   ],
   "dos": [
-   "底图固定同位、上浓下淡",
-   "空状态收起",
-   "公式放悬停",
-   "只摊开眼前需要的",
+   "Do 让每页的 AI 底图固定铺在舞台背后同一位置，上浓下淡（遮罩 100% → 35% → 0）。",
+   "Do 空状态收起：无伤只在侧栏写一行「身无伤病」，有伤才出现伤势卡，且排在最下，不挤动其它卡片。",
+   "Do 把公式与推导放进悬停（带点状下划线的数值可悬停）。",
+   "Do 一次只摊开眼前需要的：据点场景只画眼前五关的人影，更远的收成一组。",
+   "Do 用游戏手法表达状态：未开被云雾遮住、在打的有烛光、已破落印、已过打钩，不用菱形圆点加图例。",
+   "Do 用「转世」称呼玩家主动结束一世（归隐是转世的一种，不再作为玩家可见的动作名）。",
    "Do 让装备的品阶不点开也能看出来：描边、底晕、角标三重信号，凡品素色。",
-   "Do 把数量用物件表示：剩余次数是一排铜钱，剩余件数是还蒙着的牌，倒计时是更漏。"
+   "Do 把数量用物件表示：剩余次数是一排铜钱，剩余件数是还蒙着的牌，倒计时是更漏。",
+   "Do 让成就的品质长在徽记材质上（铜 / 银 / 金三套图），进度收进悬停。",
+   "Do 把可反复购买项写成「现 +x · 下一级 +y」，每买一级都看得见下一级给多少。"
   ],
   "donts": [
-   "廉价页游感",
-   "低幼卡通",
-   "SaaS 仪表盘气质",
-   "主界面提示点与开发用语",
-   "彩色侧条、渐变文字、装饰毛玻璃",
-   "实心金色大按钮",
-   "Don't 加解释性小字：规则靠形态、文案靠悬停。",
-   "Don't 在界面上出现小数。",
-   "Don't 在黑市解锁前露任何入口或进度提示；不公示概率与保底。"
+   "Don't 做廉价页游感：闪烁按钮、满屏红点、战力飙升弹字。",
+   "Don't 做低幼卡通休闲风。",
+   "Don't 做通用 SaaS 仪表盘气质：不要表格表头、不要一格一框、不要卡片套卡片。",
+   "Don't 在主界面放提示点，也不要把「开发用语」给玩家看（「前沿」「台阶」「乘区」「第 0 重基础效果」）。",
+   "Don't 用 `border-left` / `border-right` 大于 1px 做彩色侧条；不要渐变文字；不要装饰性毛玻璃。",
+   "Don't 用实心金色大按钮、扁平分段色块进度条。",
+   "Don't 在人物属性里显示「突破后」数值——突破前后对比只在突破演出里出现。",
+   "Don't 加解释性小字：按钮下的规则说明、面板里的「装备等级越高属性越高」、页标题下的副标题一律不写；规则靠形态、文案靠悬停。效果说明一律短句（「行囊空间 +2」「丹田上限提高两成」），不写「夜里少散功」这类白话。",
+   "Don't 用「一二三」印或描边表示成就层级；也不要在成就卡面放进度条或「铜 / 银 / 金」字样。",
+   "Don't 在界面上出现小数：装备数值生成时就取整，装备等级这类内部数不露出。",
+   "Don't 在黑市解锁前露任何入口或进度提示；不公示概率与保底。",
+   "Don't 让武学书封照搬内功的三色；也不要让路数章与品质章同色相。",
+   "Don't 把关卡画成一排数字按钮或网页分页器、步骤条；关卡长在场景的路上。",
+   "Don't 在地图上贴地标小图，或在场景与对阵区之间画亮金分隔线。",
+   "Don't 把设计文档术语给玩家看：「资源点」写「外围」，「岗位」「推演」不出现。"
   ]
  }
 }

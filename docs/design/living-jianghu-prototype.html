@@ -4,12 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>活江湖原型</title>
-<!-- 活江湖第一期原型（docs/systems/living-jianghu/design.md）第二轮。
-     ① 战斗页三层：江湖舆图（AI 水墨底图，十卷标在图上）→ 点卷放大到那片地域、露出本卷据点 → 点据点进战斗（关卡线、对阵、战报）。
-     ② 江湖编年常驻右栏：此世一条时间流，玩家的事与江湖大事混排、按类别标签；往世折叠。
-     ③ 新一世「转世醒来」演出；措辞改书面。
+<!-- 活江湖第一期原型（docs/systems/living-jianghu/design.md）第三轮。
+     ① 战斗页三层：江湖舆图（AI 水墨底图，十卷标在图上）→ 点卷放大到那片地域、据点以地标小画浮出 → 点据点进战斗（关卡线、对阵、战报）。
+     ② 江湖编年右栏：两种摆法可切换——A 每页常驻；B 修炼、战斗两页常驻，其余页收成窄边，点开浮出。
+     ③ 新一世「转世醒来」演出。
      mock 数据照设计稿：第四世沈砚（会稽人氏），江湖历 220 年，第二境，正走到卷三江南。
-     舆图样张两张：code/public/art/jianghu-map-1.jpg / -2.jpg（liclick gpt-image-2.5-sunburst，16:9 2K），控制条可切换。 -->
+     舆图用样张二 code/public/art/jianghu-map-2.jpg；据点地标 code/public/art/lm/*.png（均 liclick gpt-image-2.5-sunburst）。 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet" />
 <style>
@@ -24,7 +24,7 @@
   --ease-sharp: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --rail-w: 248px; --dock-w: 320px;
-  --z-sticky: 20; --z-ceremony: 40; --z-tip: 60;
+  --z-sticky: 20; --z-drawer: 30; --z-ceremony: 40; --z-tip: 60;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -43,7 +43,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .proto-bar .go { border: 0; background: none; color: var(--ink-gold); cursor: pointer; font-size: 13px; padding: 4px 6px; }
 
 /* ═══════ 外壳：人物卷侧栏 + 舞台 + 编年栏 ═══════ */
-.shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--dock-w); min-height: calc(100vh - 46px); }
+.shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--dock-col, var(--dock-w)); min-height: calc(100vh - 46px); }
 .rail { background: var(--bg-deep); padding: 26px 22px; display: flex; flex-direction: column; gap: 4px; }
 .rail .brand { font-family: var(--font-display); letter-spacing: 0.25em; color: var(--faint); font-size: 12.5px; }
 .rail .realm { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: 0.12em; margin-top: 18px; line-height: 1.3; }
@@ -55,8 +55,9 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .rail .res b { color: var(--ink); font-weight: 600; }
 .rail .brush { height: 1px; margin: 22px 0 14px; background: linear-gradient(to right, transparent, oklch(0.5 0.03 76 / 0.6) 20%, oklch(0.5 0.03 76 / 0.6) 80%, transparent); }
 .rail nav { display: grid; gap: 4px; }
-.rail nav span { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.35em; padding: 9px 12px; border-radius: 8px; color: var(--muted); }
-.rail nav span.on { background: oklch(0.78 0.13 78 / 0.09); color: var(--gold); }
+.rail nav button { border: 0; background: none; text-align: left; cursor: pointer; font-family: var(--font-display); font-size: 18px; letter-spacing: 0.35em; padding: 9px 12px; border-radius: 8px; color: var(--muted); }
+.rail nav button:hover { color: var(--ink); }
+.rail nav button[aria-current="page"] { background: oklch(0.78 0.13 78 / 0.09); color: var(--gold); }
 .stage { position: relative; isolation: isolate; padding: 30px 40px 70px; min-width: 0; }
 .stage.arted::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 100vh; z-index: -1; pointer-events: none;
   background: url('../../code/public/art/battle-village.jpg') center top / cover no-repeat, var(--bg); opacity: 0.5; filter: brightness(0.75) saturate(0.5);
@@ -79,11 +80,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
   -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 62%, transparent 100%); }
 .map-in { position: absolute; inset: 0; transform-origin: 0 0; transition: transform .9s var(--ease-quart); --k: 1; }
 .map-in .art { position: absolute; inset: 0; background: var(--map-art) center / cover no-repeat; filter: brightness(0.92) saturate(0.7); }
-.map-in svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.map-in svg.route { transition: opacity .4s; }
-.map-in path { fill: none; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
-.map-in .walk { stroke: var(--ink-gold); }
-.map-in .todo { stroke: oklch(0.65 0.02 262 / 0.65); stroke-dasharray: 4 5; }
+.map.zoomed .art { filter: brightness(0.68) saturate(0.55); transition: filter .6s .3s; }
 /* 卷名标签：反向缩放保持字号 */
 .vlab { position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--k))); display: grid; justify-items: center; gap: 4px; border: 0; background: none; padding: 6px 8px; cursor: pointer; transition: opacity .35s; }
 .vlab .dot { width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; background: oklch(0.12 0.01 262 / 0.75); box-shadow: inset 0 0 0 1px oklch(0.6 0.02 262 / 0.7); }
@@ -98,31 +95,27 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .vlab.here .nm { color: var(--gold); }
 .vlab[aria-disabled="true"] { cursor: default; }
 .vlab.here:hover .nm { text-shadow: 0 0 12px oklch(0.78 0.13 78 / 0.6), 0 0 3px #000; }
-.map.zoomed .vlab, .map.zoomed svg.route { opacity: 0; pointer-events: none; }
-/* 据点：放大后才浮出 */
-.pin { position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--k))); display: grid; justify-items: center; gap: 3px; border: 0; background: none; padding: 4px 6px; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .4s .5s; }
-.map.zoomed .pin { opacity: 1; pointer-events: auto; }
-.pin .mk { width: 12px; height: 12px; transform: rotate(45deg); background: oklch(0.12 0.01 262 / 0.85); box-shadow: inset 0 0 0 1.5px oklch(0.6 0.04 76); }
-.pin.door .mk { width: 14px; height: 14px; box-shadow: inset 0 0 0 1.5px var(--cinnabar); }
-.pin.road .mk { border-radius: 50%; transform: none; }
-.pin.done .mk { background: var(--ink-gold); box-shadow: none; }
-.pin.door.done .mk { background: var(--cinnabar); }
-.pin.cur .mk { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 12px var(--gold); }
-.pin .nm { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000; white-space: nowrap; }
-.pin .ct { font-size: 11px; color: var(--muted); text-shadow: 0 0 6px #000; white-space: nowrap; }
-.pin.locked { cursor: default; }
-.pin.locked .nm { color: var(--faint); }
-.pin:not(.locked):hover .nm { color: var(--gold); }
-/* 势力名牌：一章一枚，靠近它的两处据点 */
-.fac { position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--k))); display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity .4s .5s; pointer-events: none; }
-.map.zoomed .fac { opacity: 1; pointer-events: auto; }
-.fac .al { font-family: var(--font-display); font-size: 11px; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.8); }
-.fac .al.z { color: var(--zheng); box-shadow: inset 0 0 0 1px oklch(0.76 0.09 245 / 0.7); }
-.fac .al.x { color: var(--xie); box-shadow: inset 0 0 0 1px oklch(0.72 0.11 320 / 0.7); }
-.fac .fn { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.2em; color: var(--ink-gold); text-shadow: 0 0 10px #000, 0 0 3px #000; white-space: nowrap; cursor: default; }
-.map-in svg.links { opacity: 0; transition: opacity .4s .5s; }
-.map.zoomed svg.links { opacity: 1; }
-.map.zoomed .links path { stroke-width: 0.47; }  /* CSS 放大 3 倍，线宽反向收回 */
+.map.zoomed .vlab { opacity: 0; pointer-events: none; }
+/* 据点地标：放大后浮出；一处据点一幅小画，画下是名字与归属。
+   状态全靠画本身：已破的褪成墨金、正在打的有烛光、没开的灰下去 */
+.lm { position: absolute; width: 132px; transform: translate(-50%, -60%) scale(calc(1 / var(--k))); display: grid; justify-items: center; border: 0; background: none; padding: 0; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .4s .5s; }
+.map.zoomed .lm { opacity: 1; pointer-events: auto; }
+.lm img { width: 112px; height: 104px; object-fit: contain; filter: drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); transition: filter .25s, transform .25s var(--ease-quart); }
+.lm.door img { width: 128px; height: 118px; }
+.lm .nm { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000; white-space: nowrap; margin-top: -4px; }
+.lm .sm { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); text-shadow: 0 0 6px #000; white-space: nowrap; }
+.lm .al { font-family: var(--font-display); font-size: 10.5px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.8); }
+.lm .al.z { color: var(--zheng); box-shadow: inset 0 0 0 1px oklch(0.76 0.09 245 / 0.7); }
+.lm .al.x { color: var(--xie); box-shadow: inset 0 0 0 1px oklch(0.72 0.11 320 / 0.7); }
+.lm.done img { filter: sepia(0.5) saturate(0.7) brightness(0.8) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
+.lm.done .nm { color: var(--ink-gold); }
+.lm.cur img { filter: drop-shadow(0 0 16px oklch(0.78 0.13 78 / 0.55)) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
+.lm.cur .nm { color: var(--gold); }
+.lm.locked { cursor: default; }
+.lm.locked img { filter: grayscale(1) brightness(0.5) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
+.lm.locked .nm { color: var(--faint); }
+.lm:not(.locked):hover img { transform: translateY(-3px); }
+.lm:not(.locked):hover .nm { color: var(--gold); }
 
 /* ═══════ 关卡线（照 battle.css .bt-track） ═══════ */
 .map-h { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 10px 0; }
@@ -202,6 +195,27 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .ev.big .tx { color: var(--ink); }
 .ev.fresh { animation: evin .7s var(--ease-quart) both; }
 @keyframes evin { from { opacity: 0; transform: translateY(-6px); } }
+/* B 摆法：操作页上编年收成窄边，点开从右侧浮出 */
+.dock .edge { display: none; }
+.shell.dock-min { --dock-col: 52px; }
+.shell.dock-min .dock > :not(.edge) { display: none; }
+.shell.dock-min .dock .edge { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; height: 100%; padding: 26px 0; border: 0; background: none; cursor: pointer; color: var(--faint); }
+.dock .edge .vt { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.4em; }
+.dock .edge:hover .vt { color: var(--ink); }
+.dock .edge .n { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; font-size: 12px; color: var(--bg); background: var(--gold); }
+.dock .edge .n.big { background: var(--cinnabar); }
+.dock .edge .n[hidden] { display: none; }
+.shell.dock-min.dock-open .dock { position: fixed; right: 0; top: 46px; width: var(--dock-w); z-index: var(--z-drawer); box-shadow: -24px 0 60px oklch(0.05 0.01 262 / 0.75); animation: drawin .35s var(--ease-quart) both; }
+.shell.dock-min.dock-open .dock .feed { display: block; }
+.shell.dock-min.dock-open .dock .tabs { display: flex; }
+.shell.dock-min.dock-open .dock .edge { display: none; }
+.dock .close { display: none; }
+.shell.dock-min.dock-open .dock .close { display: block; margin-left: auto; border: 0; background: none; color: var(--faint); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 0 10px; }
+@keyframes drawin { from { transform: translateX(24px); opacity: 0; } }
+/* 其余页签：只画出版面占位，示意宽度 */
+.ph-note { color: var(--faint); font-size: 12.5px; margin: 0 0 18px; }
+.ph { background: var(--wash); border-radius: 10px; }
+.ph-grid { display: grid; gap: 14px; }
 /* 往世：一世一行，点开看那一世的事 */
 .past { border-bottom: 1px solid var(--hair); }
 .past > button { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; width: 100%; border: 0; background: none; text-align: left; padding: 14px 0; cursor: pointer; color: var(--ink); }
@@ -238,7 +252,8 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .ceremony .since p .mine { color: var(--ink-gold); }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-in, .vlab, .pin, .fac, .map-in svg { transition: none !important; }
+  .map-in, .vlab, .lm, .lm img, .map-in .art { transition: none !important; }
+  .shell.dock-min.dock-open .dock { animation: none; }
   .ceremony > div > * { animation: fade .4s both; }
   .ev.fresh { animation: none; }
   @keyframes fade { from { opacity: 0; } }
@@ -248,6 +263,9 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 @media (max-width: 1280px) {
   .shell { grid-template-columns: var(--rail-w) minmax(0, 1fr); }
   .dock { position: static; height: auto; grid-column: 2; }
+  .shell.dock-min { --dock-col: 0; }
+  .shell.dock-min .dock .edge { flex-direction: row; justify-content: center; padding: 14px 0; }
+  .shell.dock-min .dock .edge .vt { writing-mode: horizontal-tb; }
   .dock .feed { max-height: 520px; }
 }
 @media (max-width: 860px) {
@@ -264,9 +282,9 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第二轮</span>
-  <span class="lbl">舆图样张</span>
-  <div class="seg" id="artSeg"><button aria-pressed="true" data-a="1">一</button><button aria-pressed="false" data-a="2">二</button></div>
+  <span class="t">活江湖原型 · 第三轮</span>
+  <span class="lbl">编年摆法</span>
+  <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
   <span class="lbl">跳到</span>
   <button class="go" data-go="map">江湖舆图</button>
   <button class="go" data-go="vol">放大到江南</button>
@@ -289,7 +307,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
       <div><span>声望</span><b>1,284</b></div>
     </div>
     <div class="brush"></div>
-    <nav><span>修炼</span><span class="on">战斗</span><span>行囊</span><span>武功</span><span>门派</span><span>市集</span><span>前尘</span></nav>
+    <nav id="nav"></nav>
   </aside>
 
   <main class="stage" id="stage">
@@ -305,11 +323,11 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
       <div class="map" id="map">
         <div class="map-in" id="mapIn">
           <div class="art"></div>
-          <svg class="route" id="route" viewBox="0 0 100 56.25" preserveAspectRatio="none"></svg>
-          <svg class="links" id="links" viewBox="0 0 100 56.25" preserveAspectRatio="none"></svg>
         </div>
       </div>
     </section>
+
+    <section class="view" id="v-page" hidden></section>
 
     <section class="view" id="v-fight" hidden>
       <button class="back" id="fightBack">← 江南</button>
@@ -340,9 +358,11 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
   </main>
 
   <aside class="dock" aria-label="江湖编年">
+    <button class="edge" id="edge" aria-label="展开江湖编年"><span class="vt">江湖编年</span><span class="n" id="unread" hidden></span></button>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-t="now">江湖</button>
       <button role="tab" aria-selected="false" data-t="past">往世</button>
+      <button class="close" id="dockClose" aria-label="收起">×</button>
     </div>
     <div class="feed" id="feed"></div>
   </aside>
@@ -366,42 +386,42 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 <div class="tip" id="tip"></div>
 
 <script>
-/* ═══════ 十卷落在舆图上的位置（% 坐标，按样张一调过） ═══════ */
+/* ═══════ 十卷落在舆图上的位置（% 坐标，按样张二调过） ═══════ */
 const VOLS = [
-  ['齐鲁', '岱宗初晓', 70, 18], ['两淮', '烟花三月', 74, 37], ['江南', '杏花春雨', 72, 62], ['闽浙', '东海潮生', 86, 82], ['中州', '中原逐鹿', 52, 32],
-  ['荆襄', '楚天千里', 50, 54], ['关中', '西风残照', 28, 27], ['巴蜀', '剑门细雨', 18, 52], ['滇黔', '月照南疆', 22, 80], ['河西', '千里黄云', 16, 11],
+  ['齐鲁', '岱宗初晓', 69, 16], ['两淮', '烟花三月', 67, 34], ['江南', '杏花春雨', 74, 64], ['闽浙', '东海潮生', 88, 86], ['中州', '中原逐鹿', 48, 26],
+  ['荆襄', '楚天千里', 42, 47], ['关中', '西风残照', 22, 29], ['巴蜀', '剑门细雨', 16, 52], ['滇黔', '月照南疆', 26, 82], ['河西', '千里黄云', 14, 9],
 ];
 const CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const OPEN_UPTO = 4, HERE = 2;
-const ZOOM = { k: 3, cx: 71, cy: 62 };
+const ZOOM = { k: 3, cx: 74, cy: 66 };
 
 /* 卷三江南：赶路图 + 三章并排；坐标是放大前整张舆图上的 % */
-const ROAD = { id: 'r', name: '姑苏驿道', total: 20, done: 20, foe: '剪径毛贼', x: 64.5, y: 55 };
+const ROAD = { id: 'r', name: '姑苏驿道', total: 20, done: 20, foe: '剪径毛贼', x: 62.5, y: 59.5, img: 'road' };
 const CHAPTERS = [
-  { fac: '千岩寺', al: 'z', tier: '二宗 · 佛门', skill: '棍、腿', sig: '罗汉伏魔棍', join: true, fx: 66.5, fy: 57.6,
+  { fac: '千岩寺', al: 'z', tier: '二宗 · 佛门', skill: '棍、腿', sig: '罗汉伏魔棍', join: true, 
     maps: [
-      { id: 'a1', name: '云栈香市', layer: '资源点', total: 20, done: 20, foe: '香市武僧', x: 67.5, y: 61,
+      { id: 'a1', name: '云栈香市', layer: '资源点', total: 20, done: 20, foe: '香市武僧', x: 64, y: 69, img: 'a1',
         aide: { name: '「铁臂」法空', post: '香市监院', gen: 3 },
         warden: { name: '慧远', post: '知客僧', gen: 6, got: true, past: '前任知客澄心，败于「快剑」陆青之手，让位闭关' } },
-      { id: 'a2', name: '千岩山门', layer: '门户', total: 20, done: 7, foe: '千岩寺武僧', x: 66, y: 66.5,
+      { id: 'a2', name: '千岩山门', layer: '门户', total: 20, done: 7, foe: '千岩寺武僧', x: 64.5, y: 77.5, img: 'a2',
         aide: { name: '「伏虎」觉明', post: '山门护法', gen: 2 },
         boss: { name: '澄观', post: '罗汉堂首座', gen: 4 } },
     ] },
-  { fac: '会稽顾氏', al: 'z', tier: '四阀', skill: '剑', sig: '燕穿垂柳剑', fx: 75.5, fy: 55.4,
+  { fac: '会稽顾氏', al: 'z', tier: '四阀', skill: '剑', sig: '燕穿垂柳剑', 
     maps: [
-      { id: 'b1', name: '顾家绸庄', layer: '资源点', total: 20, done: 3, foe: '顾家护院', x: 74, y: 59,
+      { id: 'b1', name: '顾家绸庄', layer: '资源点', total: 20, done: 3, foe: '顾家护院', x: 72, y: 58, img: 'b1',
         aide: { name: '「算珠」顾三', post: '绸庄管事', gen: 5 },
         warden: { name: '顾长明', post: '账房先生', gen: 2 } },
-      { id: 'b2', name: '镜湖别业', layer: '门户', total: 20, done: 0, foe: '顾氏家将', x: 78, y: 62,
+      { id: 'b2', name: '镜湖别业', layer: '门户', total: 20, done: 0, foe: '顾氏家将', x: 82, y: 60, img: 'b2',
         aide: { name: '「青衫」顾临', post: '别业教头', gen: 1 },
         boss: { name: '顾长风', post: '顾氏家主', gen: 9, past: '父顾承业病故，去岁继立' } },
     ] },
-  { fac: '花影坊', al: 'x', tier: '五秀', skill: '暗器、掌', sig: '落英缤纷针', join: true, fx: 73, fy: 64.6,
+  { fac: '花影坊', al: 'x', tier: '五秀', skill: '暗器、掌', sig: '落英缤纷针', join: true, 
     maps: [
-      { id: 'c1', name: '秦淮画舫', layer: '资源点', total: 20, done: 0, foe: '画舫打手', x: 71.5, y: 67.8,
+      { id: 'c1', name: '秦淮画舫', layer: '资源点', total: 20, done: 0, foe: '画舫打手', x: 74, y: 71, img: 'c1',
         aide: { name: '「红绡」柳娘', post: '画舫鸨母', gen: 7 },
         warden: { name: '苏绮', post: '画舫主事', gen: 3 } },
-      { id: 'c2', name: '十里花阵', layer: '门户', total: 20, done: 0, foe: '花影坊女弟子', x: 75.5, y: 70,
+      { id: 'c2', name: '十里花阵', layer: '门户', total: 20, done: 0, foe: '花影坊女弟子', x: 84.5, y: 76, img: 'c2',
         aide: { name: '「折枝」宁儿', post: '阵眼', gen: 2 },
         boss: { name: '温如月', post: '花影坊坊主', gen: 5 } },
     ] },
@@ -413,51 +433,36 @@ let selMap = 'a2', selStage = null, peek = false;
 
 /* ═══════ 舆图 ═══════ */
 function buildMap() {
-  // 驿路走成平滑曲线（Catmull-Rom → 三次贝塞尔），不硬折
-  const P2 = VOLS.map((v) => [v[2], Y(v[3])]);
-  const curve = (ps) => ps.map((p, i) => {
-    if (!i) return `M${p[0]} ${p[1]}`;
-    const a = ps[i - 2] || ps[i - 1], b = ps[i - 1], c = p, d = ps[i + 1] || p;
-    return `C ${b[0] + (c[0] - a[0]) / 6} ${b[1] + (c[1] - a[1]) / 6}, ${c[0] - (d[0] - b[0]) / 6} ${c[1] - (d[1] - b[1]) / 6}, ${c[0]} ${c[1]}`;
-  }).join(' ');
-  route.innerHTML = `<path class="todo" d="${curve(P2)}"/><path class="walk" d="${curve(P2.slice(0, OPEN_UPTO + 1))}"/>`;
   VOLS.forEach(([n, t, x, y], i) => {
     const b = document.createElement('button');
     b.className = 'vlab' + (i <= OPEN_UPTO ? ' open' : '') + (i === HERE ? ' here' : '');
     b.style.left = x + '%'; b.style.top = y + '%';
     if (i > OPEN_UPTO) { b.setAttribute('aria-disabled', 'true'); b.dataset.tip = `打穿卷${CN[i - 1]}任一家的门户后开启`; }
-    else if (i !== HERE) b.dataset.tip = `卷${CN[i]} · ${t}`;
     b.innerHTML = `<span class="dot"></span><span class="nm">${n}</span><span class="tt">卷${CN[i]} · ${t}</span>`;
     if (i === HERE) b.onclick = () => setZoom(true);
     mapIn.appendChild(b);
   });
-  const P = (m) => `${m.x} ${Y(m.y)}`;
-  links.innerHTML = CHAPTERS.map((c) => {
-    const [m1, m2] = c.maps;
-    return `<path class="${m1.done ? 'walk' : 'todo'}" d="M${P(ROAD)} Q ${(ROAD.x + m1.x) / 2} ${Y(m1.y)} ${P(m1)}"/>
-            <path class="${m1.done >= m1.total ? 'walk' : 'todo'}" d="M${P(m1)} L${P(m2)}"/>`;
-  }).join('');
   renderPins();
 }
 function renderPins() {
-  mapIn.querySelectorAll('.pin, .fac').forEach((n) => n.remove());
-  const add = (m, cls, locked) => {
+  mapIn.querySelectorAll('.lm').forEach((n) => n.remove());
+  const add = (m, c, door, lockedBy) => {
     const b = document.createElement('button'), done = m.done >= m.total;
-    b.className = `pin ${cls}${done ? ' done' : ''}${m.done && !done ? ' cur' : ''}${locked ? ' locked' : ''}`;
+    b.className = `lm${door ? ' door' : ''}${done ? ' done' : ''}${m.done && !done ? ' cur' : ''}${lockedBy ? ' locked' : ''}`;
     b.style.left = m.x + '%'; b.style.top = m.y + '%';
-    b.innerHTML = `<span class="mk"></span><span class="nm">${m.name}</span><span class="ct">${done ? '已破' : m.done ? `${m.done} / ${m.total}` : m.total + ' 关'}</span>`;
-    if (locked) b.dataset.tip = '先破外围的据点';
+    const prog = done ? '已破' : m.done ? `${m.done} / ${m.total}` : `${m.total} 关`;
+    const sm = c ? `<span class="al ${c.al}">${c.al === 'z' ? '正' : '邪'}</span>${c.fac} · ${prog}` : `赶路 · ${prog}`;
+    b.innerHTML = `<img src="../../code/public/art/lm/${m.img}.png" alt=""><span class="nm">${m.name}</span><span class="sm">${sm}</span>`;
+    if (c) b.querySelector('.al').dataset.tip = `<b>${c.fac}</b> · ${c.tier}<br>擅长${c.skill} · 镇宗 <span class=gold>${c.sig}</span>${c.join ? '<br>可拜入' : ''}`;
+    if (lockedBy) b.dataset.tip = `先破${lockedBy}`;
     else b.onclick = () => openFight(m.id);
     mapIn.appendChild(b);
   };
-  add(ROAD, 'road', false);
+  add(ROAD, null, false);
   CHAPTERS.forEach((c) => {
-    add(c.maps[0], '', false);
-    add(c.maps[1], 'door', c.maps[0].done < c.maps[0].total);
-    const f = document.createElement('div');
-    f.className = 'fac'; f.style.left = c.fx + '%'; f.style.top = c.fy + '%';
-    f.innerHTML = `<span class="al ${c.al}">${c.al === 'z' ? '正' : '邪'}</span><span class="fn" data-tip="<b>${c.fac}</b> · ${c.tier}<br>擅长${c.skill} · 镇宗 <span class=gold>${c.sig}</span>${c.join ? '<br>可拜入' : ''}">${c.fac}</span>`;
-    mapIn.appendChild(f);
+    const [m1, m2] = c.maps;
+    add(m1, c, false);
+    add(m2, c, true, m1.done < m1.total ? m1.name : null);
   });
 }
 function setZoom(on) {
@@ -585,7 +590,7 @@ const PAST = [
     ['me', '江湖历 100 年 春', '泰安少年周伯安，年十八，始入江湖。']]],
 ];
 const evHtml = ([c, y, t], who, fresh) => `<div class="ev ${c}${fresh ? ' fresh' : ''}"><div class="h"><span class="cat">${c === 'me' ? who : CAT[c]}</span><span class="yr">${y}</span></div><div class="tx">${t}</div></div>`;
-let dockTab = 'now';
+let dockTab = 'now', newsN = 0;
 function renderFeed(freshFirst) {
   if (dockTab === 'now') {
     feed.innerHTML = `<div class="now"><b>第四世 · 沈砚</b>　江湖历 215 年至今</div>` + NOW.map((e, i) => evHtml(e, '沈砚', freshFirst && i === 0)).join('');
@@ -605,18 +610,66 @@ document.querySelectorAll('.dock .tabs button').forEach((b) => b.onclick = () =>
 });
 
 /* ═══════ 控制条 ═══════ */
-artSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
-  artSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-  map.style.setProperty('--map-art', `url('../../code/public/art/jianghu-map-${b.dataset.a}.jpg')`);
+map.style.setProperty('--map-art', "url('../../code/public/art/jianghu-map-2.jpg')");
+
+/* ═══════ 页签与编年摆法 ═══════
+   B：修炼、战斗是「看着挂机」的页，编年常驻；其余是「动手操作」的页，编年收成窄边，有新事记数 */
+const TABS = ['修炼', '战斗', '行囊', '武功', '门派', '市集', '前尘'];
+const WATCH = ['修炼', '战斗'];
+let tab = '战斗', dockMode = 'B', unread = 0, unreadBig = false;
+const shell = document.querySelector('.shell');
+const PH = {
+  修炼: `<div class="ph-grid" style="grid-template-columns: 1.4fr 1fr"><div class="ph" style="height:420px"></div><div class="ph-grid"><div class="ph" style="height:130px"></div><div class="ph" style="height:130px"></div><div class="ph" style="height:130px"></div></div></div>`,
+  行囊: `<div class="ph-grid" style="grid-template-columns: 220px 1fr"><div class="ph-grid">${'<div class="ph" style="height:96px"></div>'.repeat(4)}</div><div class="ph-grid" style="grid-template-columns: repeat(auto-fill, minmax(64px, 1fr))">${'<div class="ph" style="aspect-ratio:1"></div>'.repeat(30)}</div></div>`,
+  武功: `<div class="ph-grid" style="grid-template-columns: 1fr 1.3fr"><div class="ph-grid" style="grid-template-columns: repeat(3, 1fr)">${'<div class="ph" style="aspect-ratio:3/4"></div>'.repeat(9)}</div><div class="ph" style="min-height:460px"></div></div>`,
+  门派: `<div class="ph-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))">${'<div class="ph" style="height:150px"></div>'.repeat(6)}</div>`,
+  市集: `<div class="ph-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr))">${'<div class="ph" style="height:170px"></div>'.repeat(8)}</div>`,
+  前尘: `<div class="ph-grid" style="grid-template-columns: 1fr 1fr"><div class="ph" style="height:300px"></div><div class="ph" style="height:300px"></div><div class="ph" style="height:200px;grid-column:1/3"></div></div>`,
+};
+function renderNav() {
+  nav.innerHTML = TABS.map((t) => `<button${t === tab ? ' aria-current="page"' : ''}>${t}</button>`).join('');
+  nav.querySelectorAll('button').forEach((b) => b.onclick = () => setTab(b.textContent));
+}
+function setTab(t) {
+  tab = t;
+  const battle = t === '战斗';
+  document.getElementById('v-map').hidden = !battle;
+  document.getElementById('v-fight').hidden = true;
+  stage.classList.remove('arted');
+  const pg = document.getElementById('v-page');
+  pg.hidden = battle;
+  if (!battle) pg.innerHTML = `<header class="jh-head"><h1>${t}</h1></header><p class="ph-note">原型占位：此页内容不在本轮范围，只示意版面宽度。</p>${PH[t]}`;
+  renderNav(); applyDock();
+}
+function applyDock() {
+  const min = dockMode === 'B' && !WATCH.includes(tab);
+  shell.classList.toggle('dock-min', min);
+  if (!min) { shell.classList.remove('dock-open'); unread = 0; unreadBig = false; }
+  renderUnread();
+}
+function renderUnread() {
+  unreadEl.hidden = !unread; unreadEl.textContent = unread; unreadEl.classList.toggle('big', unreadBig);
+}
+const unreadEl = document.getElementById('unread');
+edge.onclick = () => { shell.classList.add('dock-open'); unread = 0; unreadBig = false; renderUnread(); };
+dockClose.onclick = () => shell.classList.remove('dock-open');
+document.addEventListener('click', (e) => {
+  if (shell.classList.contains('dock-open') && !e.target.closest('.dock') && !e.target.closest('.proto-bar')) shell.classList.remove('dock-open');
 });
-map.style.setProperty('--map-art', "url('../../code/public/art/jianghu-map-1.jpg')");
+dockSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
+  dockSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  dockMode = b.dataset.d; applyDock();
+});
 document.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => {
   const g = b.dataset.go;
   if (g === 'news') {
-    NOW.unshift(['big', '江湖历 220 年 夏', '鸣沙教东出玉门，河西三镇闭城自守。']);
+    const POOL = [['big', '江湖历 220 年 夏', '鸣沙教东出玉门，河西三镇闭城自守。'], ['zheng', '江湖历 220 年 夏', '苍梧派掌门寿终，首徒韩铮继任。'], ['jh', '江湖历 220 年 夏', '鸣镝镖局总镖头遇伏于淮北，镖银尽失。']];
+    NOW.unshift(POOL[newsN++ % POOL.length]);
+    if (shell.classList.contains('dock-min') && !shell.classList.contains('dock-open')) { unread++; unreadBig ||= NOW[0][0] === 'big'; renderUnread(); }
     dockTab = 'now'; document.querySelectorAll('.dock .tabs button').forEach((x) => x.setAttribute('aria-selected', x.dataset.t === 'now'));
     renderFeed(true); feed.scrollTop = 0; return;
   }
+  if (tab !== '战斗') setTab('战斗');
   if (!document.getElementById('v-fight').hidden) fightBack.onclick();
   if (g === 'map') setZoom(false);
   if (g === 'vol') setZoom(true);
@@ -642,6 +695,7 @@ document.addEventListener('mouseover', (e) => {
 buildMap();
 setZoom(false);
 renderFeed();
+setTab('战斗');
 </script>
 </body>
 </html>

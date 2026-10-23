@@ -269,25 +269,25 @@ div.bust.round { width: 112px; height: 112px; align-self: end; margin-bottom: 18
 div.bust.round.me { box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 /* 长卷对阵：整条水墨底带，两端人物以水墨画收尾、向中间化开；中间大字「对」，按钮落在带内 */
-.duel.band { grid-template-columns: minmax(96px, 22%) minmax(180px, 1fr) 76px minmax(180px, 1fr) minmax(96px, 22%); gap: 0 18px; align-items: end; min-height: 330px; margin: -150px -40px 0; padding: 0;
+.duel.band { grid-template-columns: minmax(96px, 22%) minmax(180px, 1fr) 76px minmax(180px, 1fr) minmax(96px, 22%); gap: 0 18px; align-items: end; min-height: 270px; margin: -64px -40px 0; padding: 0;
   background: url('../../code/public/art/scene/duel-band.jpg') center / cover no-repeat;
   box-shadow: inset 0 1px 0 oklch(0.45 0.03 76 / 0.55), inset 0 -1px 0 oklch(0.45 0.03 76 / 0.35); }
-.duel.band div.bust, .duel.band div.bust.round { align-self: stretch; width: auto; height: auto; margin: 0; border-radius: 0; box-shadow: none; background: var(--cap) center / cover no-repeat; }
+.duel.band div.bust, .duel.band div.bust.round { align-self: stretch; margin-top: 8px; width: auto; height: auto; margin: 0; border-radius: 0; box-shadow: none; background: var(--cap) center / cover no-repeat; }
 .duel.band div.bust.me { background-position: left center; }
 .duel.band div.bust.foe:not(.pt) { background-position: right center; }
 .duel.band div.bust.me { -webkit-mask-image: linear-gradient(to right, #000 55%, transparent); mask-image: linear-gradient(to right, #000 55%, transparent); }
 .duel.band div.bust.foe { -webkit-mask-image: linear-gradient(to left, #000 55%, transparent); mask-image: linear-gradient(to left, #000 55%, transparent); }
 /* 守关人没有长卷像时，用其头像去色压暗，同样向中间化开 */
 .duel.band div.bust.foe.pt { background-position: center 30%; filter: grayscale(0.7) contrast(1.1) brightness(0.85); }
-.duel.band .side { padding: 0 0 78px; }
+.duel.band .side { padding: 0 0 80px; }
 .duel.band .side .name { font-size: 28px; white-space: nowrap; }
 .duel.band .side .desc { white-space: nowrap; }
-.duel.band .vs { padding: 0 0 110px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); opacity: 1; }
-.duel.band + .act { position: relative; margin-top: -70px; margin-bottom: 40px; }
-.duel.band + .act .btn { min-width: 320px; padding: 22px 56px; border-radius: 0; font-size: 22px; letter-spacing: 0.4em; color: oklch(0.86 0.08 80); text-shadow: 0 1px 0 #000;
+.duel.band .vs { padding: 0 0 112px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); opacity: 1; }
+.duel.band ~ .act { position: relative; margin-top: -70px; margin-bottom: 40px; }
+.duel.band ~ .act .btn { min-width: 320px; padding: 22px 56px; border-radius: 0; font-size: 22px; letter-spacing: 0.4em; color: oklch(0.86 0.08 80); text-shadow: 0 1px 0 #000;
   background: url('../../code/public/art/scene/duel-btn2.png') center / 100% 100% no-repeat; box-shadow: none; color: oklch(0.17 0.012 262); text-shadow: none; font-weight: 700; }
-.duel.band + .act .btn:hover { filter: brightness(1.15); box-shadow: none; }
-.duel.band + .act .btn::before, .duel.band + .act .btn::after { display: none; }
+.duel.band ~ .act .btn:hover { filter: brightness(1.15); box-shadow: none; }
+.duel.band ~ .act .btn::before, .duel.band ~ .act .btn::after { display: none; }
 /* 气血 / 真气：上一行「名目 · 现值 / 上限」，下一笔干笔刷痕；敌方镜像。
    受击时着色部分立刻缩短，浅色残影随后跟上 */
 .mt { margin-top: 12px; }
@@ -316,8 +316,13 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 .side .name.ko { color: var(--faint); text-decoration: line-through; text-decoration-thickness: 2px; }
 .log .p.fresh { animation: evin .45s var(--ease-quart) both; }
 .btn:disabled { cursor: default; filter: saturate(0.4) brightness(0.8); }
-/* 底带上沿：不画线，用带噪点扰动的渐隐把场景雾一样吞进对阵区 */
-.duel.band { -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20300%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270.02%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%270%27/%3E%3Cstop%20offset%3D%270.4%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%271%27/%3E%3C/linearGradient%3E%3Cfilter%20id%3D%27f%27%20x%3D%27-0.1%27%20y%3D%27-0.3%27%20width%3D%271.2%27%20height%3D%271.6%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.009%200.045%27%20numOctaves%3D%273%27%20seed%3D%275%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2780%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3CfeGaussianBlur%20stdDeviation%3D%274%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20x%3D%27-60%27%20y%3D%270%27%20width%3D%271120%27%20height%3D%27340%27%20fill%3D%27url%28%23g%29%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20300%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270.02%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%270%27/%3E%3Cstop%20offset%3D%270.4%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%271%27/%3E%3C/linearGradient%3E%3Cfilter%20id%3D%27f%27%20x%3D%27-0.1%27%20y%3D%27-0.3%27%20width%3D%271.2%27%20height%3D%271.6%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.009%200.045%27%20numOctaves%3D%273%27%20seed%3D%275%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2780%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3CfeGaussianBlur%20stdDeviation%3D%274%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20x%3D%27-60%27%20y%3D%270%27%20width%3D%271120%27%20height%3D%27340%27%20fill%3D%27url%28%23g%29%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+/* 底带与场景分开：顶边一道细毛边墨痕，下压一层暗影作唇口，不画亮线 */
+.duel.band { -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20300%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3Cfilter%20id%3D%27f%27%20x%3D%27-0.05%27%20y%3D%27-0.1%27%20width%3D%271.1%27%20height%3D%271.2%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.035%200.2%27%20numOctaves%3D%272%27%20seed%3D%279%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%279%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20x%3D%27-20%27%20y%3D%276%27%20width%3D%271040%27%20height%3D%27320%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20300%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3Cfilter%20id%3D%27f%27%20x%3D%27-0.05%27%20y%3D%27-0.1%27%20width%3D%271.1%27%20height%3D%271.2%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.035%200.2%27%20numOctaves%3D%272%27%20seed%3D%279%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%279%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20x%3D%27-20%27%20y%3D%276%27%20width%3D%271040%27%20height%3D%27320%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.duel.band::before { content: ''; position: absolute; inset: 0 0 auto; height: 30px; pointer-events: none; z-index: 1;
+  background: linear-gradient(to bottom, oklch(0.05 0.01 262 / 0.95), oklch(0.05 0.01 262 / 0.5) 40%, transparent); }
+/* 飘字层：盖在最上面，不受底带遮罩裁切 */
+#v-fight { position: relative; }
+.fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: visible; }
 /* 挑战按钮：两侧各一道墨线收于菱形 */
 .btn.orn { position: relative; }
 .btn.orn::before, .btn.orn::after { content: ''; position: absolute; top: 50%; width: 70px; height: 1px; background: linear-gradient(to var(--d, left), transparent, oklch(0.78 0.13 78 / 0.6)); }
@@ -510,7 +515,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第十一轮</span>
+  <span class="t">活江湖原型 · 第十二轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
   <span class="lbl">对阵</span>
@@ -588,6 +593,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
         </div>
         <div class="bust foe" id="foeBust"></div>
       </div>
+      <div class="fx" id="fx"></div>
       <div class="act"><button class="btn orn" id="fightBtn">挑战</button></div>
       <section class="log-wrap">
         <h3 class="jh-sec">战报</h3>
@@ -873,11 +879,11 @@ function resetDuel([hp, qi]) {
 }
 function pop(side, text, cls) {
   const d = document.createElement('span'), bust = side === 'p' ? duel.querySelector('.bust.me') : foeBust;
-  const r = bust.getBoundingClientRect(), R = duel.getBoundingClientRect();
+  const r = bust.getBoundingClientRect(), R = fx.getBoundingClientRect();
   d.className = 'dmg ' + (cls || ''); d.textContent = text;
   d.style.left = (r.left - R.left + r.width * (side === 'p' ? 0.55 : 0.45) + (Math.random() * 40 - 20)) + 'px';
-  d.style.top = (r.top - R.top + r.height * 0.3) + 'px';
-  duel.appendChild(d); setTimeout(() => d.remove(), 1200);
+  d.style.top = (r.top - R.top + r.height * 0.42) + 'px';
+  fx.appendChild(d); setTimeout(() => d.remove(), 1200);
   if (cls !== 'skill' && cls !== 'qi') { bust.classList.remove('hit'); void bust.offsetWidth; bust.classList.add('hit'); }
 }
 const say = (html, cls = '') => { log.insertAdjacentHTML('beforeend', `<div class="p fresh ${cls}">${html}</div>`); log.scrollTop = log.scrollHeight; };

@@ -27,12 +27,15 @@ BANDS = {
     2: dict(vols=[3, 3, 3], per_map=20),          # 卷 2–4
     3: dict(vols=[3, 3], per_map=15),             # 卷 5–6
     4: dict(vols=[3, 3], per_map=15),             # 卷 7–8
-    5: dict(vols=[3, 3], per_map=int(os.environ.get("BAND5_PER_MAP", 15))),  # 卷 9–10
+    5: dict(vols=[3, 3], per_map=int(os.environ.get("BAND5_PER_MAP", 12))),  # 卷 9–10
 }
 VOL1 = dict(road=11, ju=15, x0=2.0)               # 卷 1：入门关 + 传功（赶路）后接一章两图，铺到境界 2 段起点
 
 # 现行关卡表（export_stage_table）体量，用于对照
 OLD = dict(stages=318, elites=35, bosses=9)
+# 标准玩家 100 天的成就层构成（economy.md §1.3：约 26 精英、9 Boss、10 条经脉，合计约占累计声望 5%）
+STD = dict(elites=26, bosses=9, meridians=10, share=5.0)
+PRICE = dict(elite=6.4, boss=24, meridian=80)
 
 
 def pct(dx: float) -> float:
@@ -110,13 +113,14 @@ def main() -> None:
         (len(cfg["vols"]) + 2 * sum(cfg["vols"])) * cfg["per_map"] for cfg in BANDS.values())
     elites = ju_maps * 2 - chapters                   # 每张据点图副手 + 镇守，门户图末关换成 Boss
     bosses = chapters
-    old_w = OLD["elites"] * 6.4 + OLD["bosses"] * 24
-    new_w = elites * 6.4 + bosses * 24
+    def weight(e: float, bo: float, k: float = 1.0) -> float:
+        return (e * PRICE["elite"] + bo * PRICE["boss"]) * k + STD["meridians"] * PRICE["meridian"]
+    base = weight(STD["elites"], STD["bosses"])
     print(f"  图 {road_maps + ju_maps}（赶路 {road_maps} · 据点 {ju_maps}）  关 {stages}（现行 {OLD['stages']}）")
-    print(f"  精英 {elites}（现行 {OLD['elites']}）  Boss {bosses}（现行 {OLD['bosses']}）")
-    print(f"  首杀声望体量 ×{new_w / old_w:.2f}：现行约占累计声望 5%（economy.md §1.3），"
-          f"按体量折算约 {5 * new_w / old_w:.1f}%，上限 10%")
-
+    print(f"  精英 {elites}（现行 {OLD['elites']}，标准玩家 100 天打 {STD['elites']}）  Boss {bosses}（现行 {OLD['bosses']}）")
+    print("  成就层占累计声望（全部打完、单价按倍数缩放；经脉 10 条不变；不含侠名录加成）：")
+    for k in (1.0, 1 / 1.5, 1 / 3.17):
+        print(f"    精英 / Boss 单价 ×{k:.2f}：约 {STD['share'] * weight(elites, bosses, k) / base:.1f}%（上限 10%）")
 
 if __name__ == "__main__":
     main()

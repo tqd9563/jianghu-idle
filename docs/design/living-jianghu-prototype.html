@@ -18,7 +18,7 @@
   --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262); --hair: oklch(0.30 0.016 262 / 0.7);
   --gold: oklch(0.78 0.13 78); --ink-gold: oklch(0.75 0.075 76); --done-line: oklch(0.50 0.045 70); --todo-line: oklch(0.40 0.014 262 / 0.7);
   --cinnabar: oklch(0.66 0.14 32); --hp: oklch(0.62 0.17 25); --qi: oklch(0.74 0.10 215); --foe: oklch(0.72 0.12 30);
-  --zheng: oklch(0.76 0.09 245); --xie: oklch(0.72 0.11 320); --court: oklch(0.76 0.10 135); --jh: oklch(0.74 0.05 70);
+  --zheng: oklch(0.76 0.09 245); --xie: oklch(0.72 0.11 320); --court: oklch(0.76 0.10 135); --jh: oklch(0.78 0.012 262);
   --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
   --font-body: "LXGW WenKai", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
   --ease-sharp: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -43,7 +43,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .proto-bar .go { border: 0; background: none; color: var(--ink-gold); cursor: pointer; font-size: 13px; padding: 4px 6px; }
 
 /* ═══════ 外壳：人物卷侧栏 + 舞台 + 编年栏 ═══════ */
-.shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--dock-col, var(--dock-w)); min-height: calc(100vh - 46px); }
+.shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--dock-col, var(--dock-w)); min-height: calc(100vh - var(--bar-h, 46px)); }
 .rail { background: var(--bg-deep); padding: 26px 22px; display: flex; flex-direction: column; gap: 4px; }
 .rail .brand { font-family: var(--font-display); letter-spacing: 0.25em; color: var(--faint); font-size: 12.5px; }
 .rail .realm { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: 0.12em; margin-top: 18px; line-height: 1.3; }
@@ -115,6 +115,10 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .lm.locked img { filter: grayscale(1) brightness(0.5) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
 .lm.locked .nm { color: var(--faint); }
 .lm:not(.locked):hover img { transform: translateY(-3px); }
+/* 白描：线稿偏亮，压一档免得抢过舆图 */
+.map[data-lm="s3/"] .lm:not(.locked):not(.cur) img { opacity: 0.78; }
+/* 融地：画本身就暗，未开的只去色不再压暗，否则沉进底图看不见 */
+.map[data-lm="s2/"] .lm.locked img { filter: grayscale(1) brightness(0.95) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
 .lm:not(.locked):hover .nm { color: var(--gold); }
 
 /* ═══════ 关卡线（照 battle.css .bt-track） ═══════ */
@@ -174,7 +178,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 
 /* ═══════ 江湖编年：常驻右栏 ═══════
    一条时间流，新的在上；类别靠标签字与字色区分（不靠侧条），玩家自己的事用墨金 */
-.dock { background: var(--bg-deep); position: sticky; top: 46px; height: calc(100vh - 46px); display: flex; flex-direction: column; min-width: 0; }
+.dock { background: var(--bg-deep); position: sticky; top: var(--bar-h, 46px); height: calc(100vh - var(--bar-h, 46px)); display: flex; flex-direction: column; min-width: 0; }
 .dock .tabs { display: flex; gap: 22px; padding: 26px 22px 0; border-bottom: 1px solid var(--hair); }
 .dock .tabs button { border: 0; background: none; padding: 0 0 10px; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.25em; color: var(--faint); cursor: pointer; position: relative; }
 .dock .tabs button[aria-selected="true"] { color: var(--ink); }
@@ -195,6 +199,44 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .ev.big .tx { color: var(--ink); }
 .ev.fresh { animation: evin .7s var(--ease-quart) both; }
 @keyframes evin { from { opacity: 0; transform: translateY(-6px); } }
+/* 乙 年表：按年分组，年份一列，一条细轴串起各事，点色表类别 */
+.yb { display: grid; grid-template-columns: 92px minmax(0, 1fr); padding-top: 14px; }
+.yb .y { font-family: var(--font-display); color: var(--muted); font-size: 12.5px; letter-spacing: 0.04em; white-space: nowrap; line-height: 1.5; padding-top: 2px; }
+.yb ol { list-style: none; margin: 0; padding: 0 0 4px 16px; box-shadow: inset 1px 0 0 var(--hair); }
+.yb li { position: relative; padding: 0 0 12px; color: var(--muted); font-size: 13.5px; line-height: 1.75; text-wrap: pretty; }
+.yb li::before { content: ''; position: absolute; left: -20px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--faint)); box-shadow: 0 0 0 3px var(--bg-deep); }
+.yb li .s { color: var(--faint); font-size: 12px; margin-right: 6px; }
+.yb li.me { --c: var(--ink-gold); color: var(--ink); }
+.yb li.zheng { --c: var(--zheng); } .yb li.xie { --c: var(--xie); } .yb li.court { --c: var(--court); } .yb li.jh { --c: var(--jh); }
+.yb li.big { --c: var(--cinnabar); color: var(--ink); }
+.yb li.big::before { width: 9px; height: 9px; left: -21px; top: 7px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 12px 0 4px; font-size: 12px; color: var(--faint); }
+.legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+/* 丙 竖排史册：右起竖行，一事一段，年份作段首；横向滚动往左是更早 */
+.feed.vert { writing-mode: vertical-rl; overflow-x: auto; overflow-y: hidden; padding: 22px 22px 18px; }
+.vv { margin: 0 0 0 26px; font-size: 14.5px; line-height: 2; letter-spacing: 0.1em; color: var(--muted); text-indent: 0; }
+.vv .y { font-family: var(--font-display); font-weight: 700; color: var(--ink); letter-spacing: 0.2em; }
+.vv .ss { font-family: var(--font-display); color: var(--faint); }
+.vv .me { color: var(--ink-gold); } .vv .big { color: var(--cinnabar); }
+.vv .zheng, .vv .xie, .vv .court, .vv .jh { color: var(--muted); }
+.vv .ev-v[data-tip] { cursor: help; }
+.vv-now { font-family: var(--font-display); color: var(--ink); letter-spacing: 0.3em; margin-left: 26px; font-size: 15px; }
+/* 丁 头条简讯：最近一桩大事作头条，其下按类别筛的一行一事 */
+.hd { padding: 18px 0 16px; border-bottom: 1px solid var(--hair); }
+.hd .k { font-family: var(--font-display); color: var(--cinnabar); font-size: 13px; letter-spacing: 0.25em; }
+.hd .k span { color: var(--faint); letter-spacing: 0.05em; margin-left: 8px; font-family: var(--font-body); font-size: 12px; }
+.hd .t { font-family: var(--font-display); font-size: 19px; line-height: 1.6; margin-top: 8px; letter-spacing: 0.06em; text-wrap: balance; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 12px 0 6px; }
+.chips button { border: 0; background: none; padding: 3px 7px; border-radius: 6px; font-size: 12.5px; color: var(--faint); cursor: pointer; }
+.chips button:hover { color: var(--ink); }
+.chips button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+.brief { margin: 0; padding: 7px 0; font-size: 13.5px; line-height: 1.7; color: var(--muted); text-wrap: pretty; }
+.brief b { font-family: var(--font-display); font-weight: 600; font-size: 12.5px; margin-right: 8px; letter-spacing: 0.1em; }
+.brief .yr { color: var(--faint); font-size: 11.5px; margin-left: 6px; white-space: nowrap; }
+.brief.me { color: var(--ink); } .brief.me b { color: var(--ink-gold); }
+.brief.zheng b { color: var(--zheng); } .brief.xie b { color: var(--xie); } .brief.court b { color: var(--court); } .brief.jh b { color: var(--jh); } .brief.big b { color: var(--cinnabar); }
+.brief.fresh, .yb li.fresh, .vv.fresh { animation: evin .7s var(--ease-quart) both; }
+
 /* B 摆法：操作页上编年收成窄边，点开从右侧浮出 */
 .dock .edge { display: none; }
 .shell.dock-min { --dock-col: 52px; }
@@ -205,7 +247,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .dock .edge .n { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; font-size: 12px; color: var(--bg); background: var(--gold); }
 .dock .edge .n.big { background: var(--cinnabar); }
 .dock .edge .n[hidden] { display: none; }
-.shell.dock-min.dock-open .dock { position: fixed; right: 0; top: 46px; width: var(--dock-w); z-index: var(--z-drawer); box-shadow: -24px 0 60px oklch(0.05 0.01 262 / 0.75); animation: drawin .35s var(--ease-quart) both; }
+.shell.dock-min.dock-open .dock { position: fixed; right: 0; top: var(--bar-h, 46px); width: var(--dock-w); z-index: var(--z-drawer); box-shadow: -24px 0 60px oklch(0.05 0.01 262 / 0.75); animation: drawin .35s var(--ease-quart) both; }
 .shell.dock-min.dock-open .dock .feed { display: block; }
 .shell.dock-min.dock-open .dock .tabs { display: flex; }
 .shell.dock-min.dock-open .dock .edge { display: none; }
@@ -255,7 +297,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
   .map-in, .vlab, .lm, .lm img, .map-in .art { transition: none !important; }
   .shell.dock-min.dock-open .dock { animation: none; }
   .ceremony > div > * { animation: fade .4s both; }
-  .ev.fresh { animation: none; }
+  .ev.fresh, .brief.fresh, .yb li.fresh, .vv.fresh { animation: none; }
   @keyframes fade { from { opacity: 0; } }
 }
 
@@ -282,9 +324,13 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第三轮</span>
+  <span class="t">活江湖原型 · 第四轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
+  <span class="lbl">编年样式</span>
+  <div class="seg" id="feedSeg"><button aria-pressed="true" data-f="list">甲 条目</button><button aria-pressed="false" data-f="year">乙 年表</button><button aria-pressed="false" data-f="vert">丙 竖排史册</button><button aria-pressed="false" data-f="head">丁 头条简讯</button></div>
+  <span class="lbl">地标</span>
+  <div class="seg" id="lmSeg"><button aria-pressed="false" data-l="">原</button><button aria-pressed="true" data-l="s2/">融地</button><button aria-pressed="false" data-l="s3/">白描</button></div>
   <span class="lbl">跳到</span>
   <button class="go" data-go="map">江湖舆图</button>
   <button class="go" data-go="vol">放大到江南</button>
@@ -452,7 +498,7 @@ function renderPins() {
     b.style.left = m.x + '%'; b.style.top = m.y + '%';
     const prog = done ? '已破' : m.done ? `${m.done} / ${m.total}` : `${m.total} 关`;
     const sm = c ? `<span class="al ${c.al}">${c.al === 'z' ? '正' : '邪'}</span>${c.fac} · ${prog}` : `赶路 · ${prog}`;
-    b.innerHTML = `<img src="../../code/public/art/lm/${m.img}.png" alt=""><span class="nm">${m.name}</span><span class="sm">${sm}</span>`;
+    b.innerHTML = `<img src="../../code/public/art/lm/${lmDir}${m.img}.png" alt=""><span class="nm">${m.name}</span><span class="sm">${sm}</span>`;
     if (c) b.querySelector('.al').dataset.tip = `<b>${c.fac}</b> · ${c.tier}<br>擅长${c.skill} · 镇宗 <span class=gold>${c.sig}</span>${c.join ? '<br>可拜入' : ''}`;
     if (lockedBy) b.dataset.tip = `先破${lockedBy}`;
     else b.onclick = () => openFight(m.id);
@@ -590,10 +636,49 @@ const PAST = [
     ['me', '江湖历 100 年 春', '泰安少年周伯安，年十八，始入江湖。']]],
 ];
 const evHtml = ([c, y, t], who, fresh) => `<div class="ev ${c}${fresh ? ' fresh' : ''}"><div class="h"><span class="cat">${c === 'me' ? who : CAT[c]}</span><span class="yr">${y}</span></div><div class="tx">${t}</div></div>`;
-let dockTab = 'now', newsN = 0;
+let dockTab = 'now', newsN = 0, feedStyle = 'list', chip = 'all';
+const D = '〇一二三四五六七八九';
+const cnNum = (n) => { const h = Math.floor(n / 100), t = Math.floor(n % 100 / 10), o = n % 10;
+  return (h ? D[h] + '百' : '') + (t ? (t === 1 && !h ? '' : D[t]) + '十' : (h && o ? '零' : '')) + (o ? D[o] : ''); };
+const yrOf = (y) => +y.match(/(\d+)/)[1], seasonOf = (y) => (y.match(/年 (.)$/) || [])[1] || '';
+const catName = (c, who) => c === 'me' ? who : CAT[c];
+const COLORS = { me: 'var(--ink-gold)', zheng: 'var(--zheng)', xie: 'var(--xie)', court: 'var(--court)', jh: 'var(--jh)', big: 'var(--cinnabar)' };
+function nowHtml(evs, who, fresh) {
+  if (feedStyle === 'year') {
+    const groups = [];
+    evs.forEach((e, i) => { const y = yrOf(e[1]); let g = groups[groups.length - 1]; if (!g || g.y !== y) groups.push(g = { y, list: [] }); g.list.push([e, i]); });
+    return `<div class="legend">${Object.keys(COLORS).map((c) => `<span><i style="background:${COLORS[c]}"></i>${catName(c, who)}</span>`).join('')}</div>` +
+      groups.map((g) => `<div class="yb"><div class="y">${cnNum(g.y)}年</div><ol>${g.list.map(([[c, y, t], i]) =>
+        `<li class="${c}${fresh && !i ? ' fresh' : ''}" data-tip="${catName(c, who)}">${seasonOf(y) ? `<span class="s">${seasonOf(y)}</span>` : ''}${t}</li>`).join('')}</ol></div>`).join('');
+  }
+  if (feedStyle === 'vert') {
+    // 编年体：一年一段，年号起头，同季的事不重复写季，事与事连写
+    const groups = [];
+    evs.forEach((e, i) => { const y = yrOf(e[1]); let g = groups[groups.length - 1]; if (!g || g.y !== y) groups.push(g = { y, list: [] }); g.list.push([e, i]); });
+    return `<div class="vv-now">第四世　${who}</div>` + groups.map((g) => {
+      let last = null;
+      const body = g.list.slice().reverse().map(([[c, y, t]]) => {
+        const ss = seasonOf(y), lead = ss && ss !== last ? `<span class="ss">${ss}，</span>` : ''; last = ss || last;
+        return `${lead}<span class="ev-v ${c}" data-tip="${catName(c, who)}">${t}</span>`;
+      }).join('');
+      return `<p class="vv${fresh && g === groups[0] ? ' fresh' : ''}"><span class="y">${cnNum(g.y)}年</span>　${body}</p>`;
+    }).join('');
+  }
+  if (feedStyle === 'head') {
+    const top = evs.find((e) => e[0] === 'big');
+    const rest = evs.filter((e) => e !== top && (chip === 'all' || e[0] === chip));
+    const chips = [['all', '全部'], ['me', who], ['zheng', '正道'], ['xie', '邪道'], ['court', '朝廷'], ['jh', '江湖']];
+    return (top ? `<div class="hd${fresh && evs[0] === top ? ' fresh' : ''}"><div class="k">江湖大事<span>${top[1]}</span></div><div class="t">${top[2]}</div></div>` : '') +
+      `<div class="chips">${chips.map(([k, n]) => `<button data-chip="${k}" aria-pressed="${chip === k}">${n}</button>`).join('')}</div>` +
+      rest.map(([c, y, t], i) => `<p class="brief ${c}${fresh && !i && evs[0] !== top ? ' fresh' : ''}"><b>${catName(c, who)}</b>${t}<span class="yr">${y.replace('江湖历 ', '')}</span></p>`).join('');
+  }
+  return `<div class="now"><b>第四世 · ${who}</b>　江湖历 215 年至今</div>` + evs.map((e, i) => evHtml(e, who, fresh && i === 0)).join('');
+}
 function renderFeed(freshFirst) {
+  feed.classList.toggle('vert', dockTab === 'now' && feedStyle === 'vert');
   if (dockTab === 'now') {
-    feed.innerHTML = `<div class="now"><b>第四世 · 沈砚</b>　江湖历 215 年至今</div>` + NOW.map((e, i) => evHtml(e, '沈砚', freshFirst && i === 0)).join('');
+    feed.innerHTML = nowHtml(NOW, '沈砚', freshFirst);
+    feed.querySelectorAll('[data-chip]').forEach((b) => b.onclick = () => { chip = b.dataset.chip; renderFeed(); });
   } else {
     feed.innerHTML = PAST.map(([n, name, hao, end, evs]) => `<div class="past">
       <button aria-expanded="false"><span class="n">${n}</span><span class="nm">${hao ? `<span class="hao">${hao}</span>` : ''}${name}</span><span class="chev">▶</span><span class="end">${end}</span></button>
@@ -603,6 +688,16 @@ function renderFeed(freshFirst) {
     });
   }
 }
+feedSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
+  feedSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  feedStyle = b.dataset.f; renderFeed();
+});
+let lmDir = 's2/';
+map.dataset.lm = lmDir;
+lmSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
+  lmSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  lmDir = b.dataset.l; map.dataset.lm = lmDir; renderPins();
+});
 document.querySelectorAll('.dock .tabs button').forEach((b) => b.onclick = () => {
   dockTab = b.dataset.t;
   document.querySelectorAll('.dock .tabs button').forEach((x) => x.setAttribute('aria-selected', x === b));
@@ -667,7 +762,7 @@ document.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => {
     NOW.unshift(POOL[newsN++ % POOL.length]);
     if (shell.classList.contains('dock-min') && !shell.classList.contains('dock-open')) { unread++; unreadBig ||= NOW[0][0] === 'big'; renderUnread(); }
     dockTab = 'now'; document.querySelectorAll('.dock .tabs button').forEach((x) => x.setAttribute('aria-selected', x.dataset.t === 'now'));
-    renderFeed(true); feed.scrollTop = 0; return;
+    renderFeed(true); feed.scrollTop = 0; feed.scrollLeft = 0; return;
   }
   if (tab !== '战斗') setTab('战斗');
   if (!document.getElementById('v-fight').hidden) fightBack.onclick();
@@ -692,6 +787,8 @@ document.addEventListener('mouseover', (e) => {
   tip.style.top = (r.bottom + 8) + 'px';
 });
 
+const setBarH = () => document.documentElement.style.setProperty('--bar-h', document.querySelector('.proto-bar').offsetHeight + 'px');
+setBarH(); addEventListener('resize', setBarH);
 buildMap();
 setZoom(false);
 renderFeed();

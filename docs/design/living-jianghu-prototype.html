@@ -269,7 +269,7 @@ div.bust.round { width: 112px; height: 112px; align-self: end; margin-bottom: 18
 div.bust.round.me { box-shadow: 0 0 0 2px var(--ink-gold), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0.12 0.01 262 / 0.8); }
 /* 长卷对阵：整条水墨底带，两端人物以水墨画收尾、向中间化开；中间大字「对」，按钮落在带内 */
-.duel.band { grid-template-columns: minmax(96px, 22%) minmax(180px, 1fr) 76px minmax(180px, 1fr) minmax(96px, 22%); gap: 0 18px; align-items: center; min-height: 250px; margin: -60px -40px 0; padding: 0;
+.duel.band { grid-template-columns: minmax(96px, 22%) minmax(180px, 1fr) 76px minmax(180px, 1fr) minmax(96px, 22%); gap: 0 18px; align-items: end; min-height: 330px; margin: -150px -40px 0; padding: 0;
   background: url('../../code/public/art/scene/duel-band.jpg') center / cover no-repeat;
   box-shadow: inset 0 1px 0 oklch(0.45 0.03 76 / 0.55), inset 0 -1px 0 oklch(0.45 0.03 76 / 0.35); }
 .duel.band div.bust, .duel.band div.bust.round { align-self: stretch; width: auto; height: auto; margin: 0; border-radius: 0; box-shadow: none; background: var(--cap) center / cover no-repeat; }
@@ -279,34 +279,45 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 .duel.band div.bust.foe { -webkit-mask-image: linear-gradient(to left, #000 55%, transparent); mask-image: linear-gradient(to left, #000 55%, transparent); }
 /* 守关人没有长卷像时，用其头像去色压暗，同样向中间化开 */
 .duel.band div.bust.foe.pt { background-position: center 30%; filter: grayscale(0.7) contrast(1.1) brightness(0.85); }
-.duel.band .side { padding: 0 0 64px; }
+.duel.band .side { padding: 0 0 78px; }
 .duel.band .side .name { font-size: 28px; white-space: nowrap; }
 .duel.band .side .desc { white-space: nowrap; }
-.duel.band .vs { padding: 0 0 64px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); opacity: 1; }
-.duel.band + .act { position: relative; margin-top: -84px; margin-bottom: 40px; }
+.duel.band .vs { padding: 0 0 110px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); opacity: 1; }
+.duel.band + .act { position: relative; margin-top: -70px; margin-bottom: 40px; }
 .duel.band + .act .btn { min-width: 320px; padding: 22px 56px; border-radius: 0; font-size: 22px; letter-spacing: 0.4em; color: oklch(0.86 0.08 80); text-shadow: 0 1px 0 #000;
   background: url('../../code/public/art/scene/duel-btn2.png') center / 100% 100% no-repeat; box-shadow: none; color: oklch(0.17 0.012 262); text-shadow: none; font-weight: 700; }
 .duel.band + .act .btn:hover { filter: brightness(1.15); box-shadow: none; }
 .duel.band + .act .btn::before, .duel.band + .act .btn::after { display: none; }
-/* 气血 / 真气：一笔干笔刷痕，满的部分着色、空的部分留暗；敌方镜像 */
-.bars { display: grid; gap: 5px; margin-top: 14px; }
+/* 气血 / 真气：上一行「名目 · 现值 / 上限」，下一笔干笔刷痕；敌方镜像。
+   受击时着色部分立刻缩短，浅色残影随后跟上 */
+.mt { margin-top: 12px; }
+.mt.qi { margin-top: 8px; }
+.ml { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); margin-bottom: 4px; white-space: nowrap; }
+.ml b { color: var(--ink); font-weight: 500; font-size: 14px; }
+.ml span span { color: var(--faint); }
+.side.enemy .ml { flex-direction: row-reverse; }
 .bb { position: relative; height: 15px; background: oklch(0.1 0.01 262 / 0.75);
   -webkit-mask: url('../../code/public/art/scene/brush.png') center / 100% 100% no-repeat; mask: url('../../code/public/art/scene/brush.png') center / 100% 100% no-repeat; }
-.bb i { position: absolute; inset: 0 auto 0 0; width: var(--p, 100%); }
-.bb.hp i { background: linear-gradient(to right, oklch(0.55 0.15 27), oklch(0.66 0.15 30)); }
-.bb.qi { height: 9px; width: 82%; }
-.bb.qi i { background: linear-gradient(to right, oklch(0.55 0.08 225), var(--qi)); }
+.mt.qi .bb { height: 10px; }
+.bb i { position: absolute; inset: 0 auto 0 0; width: 100%; }
+.bb .v { transition: width .28s var(--ease-quart); }
+.bb .gh { background: oklch(0.92 0.04 70 / 0.55); transition: width .7s .45s var(--ease-quart); }
+.bb.hp .v { background: linear-gradient(to right, oklch(0.55 0.15 27), oklch(0.66 0.15 30)); }
+.bb.qi .v { background: linear-gradient(to right, oklch(0.55 0.08 225), var(--qi)); }
 .side.enemy .bb { transform: scaleX(-1); }
-.side.enemy .bb.qi { margin-left: auto; }
-.nums { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 8px; font-size: 12.5px; color: var(--faint); white-space: nowrap; }
-.nums b { color: var(--muted); font-weight: 500; }
-.side.enemy .nums { justify-content: flex-end; }
-/* 底带上沿：微有起伏、正中一处隆起，压一道淡墨金线 */
-.duel.band { -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20250%27%20preserveAspectRatio%3D%27none%27%3E%3Cpath%20d%3D%27M0%2012.4%20L0%2012.4%20L20%2012.6%20L40%2014.9%20L60%2013.6%20L80%2015.6%20L100%2015.4%20L120%2014.7%20L140%2016.2%20L160%2014.7%20L180%2015.7%20L200%2014.2%20L220%2013.7%20L240%2014.2%20L260%2014.8%20L280%2011.9%20L300%2011.5%20L320%2012.1%20L340%2012.5%20L360%2010.8%20L380%209.8%20L400%2011.4%20L420%208.4%20L440%2011.0%20L460%209.2%20L480%205.6%20L500%202.0%20L520%205.6%20L540%209.2%20L560%2011.8%20L580%2013.8%20L600%2014.6%20L620%2014.4%20L640%2015.5%20L660%2014.4%20L680%2014.6%20L700%2015.2%20L720%2016.7%20L740%2015.8%20L760%2015.1%20L780%2015.5%20L800%2014.5%20L820%2013.3%20L840%2014.2%20L860%2013.2%20L880%2011.1%20L900%2011.5%20L920%2010.8%20L940%2011.5%20L960%2010.7%20L980%209.1%20L1000%2011.4%20L1000%20250%20L0%20250Z%27%20fill%3D%27black%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20250%27%20preserveAspectRatio%3D%27none%27%3E%3Cpath%20d%3D%27M0%2012.4%20L0%2012.4%20L20%2012.6%20L40%2014.9%20L60%2013.6%20L80%2015.6%20L100%2015.4%20L120%2014.7%20L140%2016.2%20L160%2014.7%20L180%2015.7%20L200%2014.2%20L220%2013.7%20L240%2014.2%20L260%2014.8%20L280%2011.9%20L300%2011.5%20L320%2012.1%20L340%2012.5%20L360%2010.8%20L380%209.8%20L400%2011.4%20L420%208.4%20L440%2011.0%20L460%209.2%20L480%205.6%20L500%202.0%20L520%205.6%20L540%209.2%20L560%2011.8%20L580%2013.8%20L600%2014.6%20L620%2014.4%20L640%2015.5%20L660%2014.4%20L680%2014.6%20L700%2015.2%20L720%2016.7%20L740%2015.8%20L760%2015.1%20L780%2015.5%20L800%2014.5%20L820%2013.3%20L840%2014.2%20L860%2013.2%20L880%2011.1%20L900%2011.5%20L920%2010.8%20L940%2011.5%20L960%2010.7%20L980%209.1%20L1000%2011.4%20L1000%20250%20L0%20250Z%27%20fill%3D%27black%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
-.duel .rim { display: none; }
-.duel.band .rim { display: block; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.duel.band .rim path { fill: none; stroke: oklch(0.62 0.06 76 / 0.7); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-.duel.band .rim .gem { fill: oklch(0.12 0.01 262); stroke: var(--ink-gold); }
+/* 飘字与受击 */
+.dmg { position: absolute; z-index: 3; font-family: var(--font-display); font-weight: 700; font-size: 26px; color: oklch(0.72 0.17 30); text-shadow: 0 0 10px #000, 0 0 3px #000; pointer-events: none; animation: dmgup 1.1s var(--ease-quart) forwards; }
+.dmg.crit { font-size: 36px; color: var(--gold); }
+.dmg.qi { font-size: 18px; color: var(--qi); }
+.dmg.skill { font-size: 15px; color: var(--ink); letter-spacing: 0.15em; }
+@keyframes dmgup { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.8); } 15% { opacity: 1; transform: translate(-50%, -6px) scale(1.08); } 100% { opacity: 0; transform: translate(-50%, -54px) scale(1); } }
+.bust.hit { animation: hit .32s ease-out; }
+@keyframes hit { 0%, 100% { translate: 0; } 25% { translate: -7px 0; filter: brightness(1.5); } 60% { translate: 5px 0; } }
+.side .name.ko { color: var(--faint); text-decoration: line-through; text-decoration-thickness: 2px; }
+.log .p.fresh { animation: evin .45s var(--ease-quart) both; }
+.btn:disabled { cursor: default; filter: saturate(0.4) brightness(0.8); }
+/* 底带上沿：不画线，用带噪点扰动的渐隐把场景雾一样吞进对阵区 */
+.duel.band { -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20300%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270.02%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%270%27/%3E%3Cstop%20offset%3D%270.4%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%271%27/%3E%3C/linearGradient%3E%3Cfilter%20id%3D%27f%27%20x%3D%27-0.1%27%20y%3D%27-0.3%27%20width%3D%271.2%27%20height%3D%271.6%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.009%200.045%27%20numOctaves%3D%273%27%20seed%3D%275%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2780%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3CfeGaussianBlur%20stdDeviation%3D%274%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20x%3D%27-60%27%20y%3D%270%27%20width%3D%271120%27%20height%3D%27340%27%20fill%3D%27url%28%23g%29%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%201000%20300%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270.02%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%270%27/%3E%3Cstop%20offset%3D%270.4%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%271%27/%3E%3C/linearGradient%3E%3Cfilter%20id%3D%27f%27%20x%3D%27-0.1%27%20y%3D%27-0.3%27%20width%3D%271.2%27%20height%3D%271.6%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.009%200.045%27%20numOctaves%3D%273%27%20seed%3D%275%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2780%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3CfeGaussianBlur%20stdDeviation%3D%274%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20x%3D%27-60%27%20y%3D%270%27%20width%3D%271120%27%20height%3D%27340%27%20fill%3D%27url%28%23g%29%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
 /* 挑战按钮：两侧各一道墨线收于菱形 */
 .btn.orn { position: relative; }
 .btn.orn::before, .btn.orn::after { content: ''; position: absolute; top: 50%; width: 70px; height: 1px; background: linear-gradient(to var(--d, left), transparent, oklch(0.78 0.13 78 / 0.6)); }
@@ -499,7 +510,7 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第十轮</span>
+  <span class="t">活江湖原型 · 第十一轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
   <span class="lbl">对阵</span>
@@ -561,20 +572,19 @@ div.bust.round.boss { box-shadow: 0 0 0 2.5px var(--cinnabar), 0 0 0 5px oklch(0
         <div id="trk"></div>
       </div>
       <div class="duel band" id="duel">
-        <svg class="rim" viewBox="0 0 1000 250" preserveAspectRatio="none" aria-hidden="true"><path d="M0 13.9 L0 13.9 L20 14.1 L40 16.4 L60 15.1 L80 17.1 L100 16.9 L120 16.2 L140 17.7 L160 16.2 L180 17.2 L200 15.7 L220 15.2 L240 15.7 L260 16.3 L280 13.4 L300 13.0 L320 13.6 L340 14.0 L360 12.3 L380 11.3 L400 12.9 L420 9.9 L440 12.5 L460 10.7 L480 7.1 L500 3.5 L520 7.1 L540 10.7 L560 13.3 L580 15.3 L600 16.1 L620 15.9 L640 17.0 L660 15.9 L680 16.1 L700 16.7 L720 18.2 L740 17.3 L760 16.6 L780 17.0 L800 16.0 L820 14.8 L840 15.7 L860 14.7 L880 12.6 L900 13.0 L920 12.3 L940 13.0 L960 12.2 L980 10.6 L1000 12.9"/><path class="gem" d="M500 -3 L506 3.5 L500 10 L494 3.5Z"/></svg>
         <div class="bust round me" style="--bust:url('../../code/public/art/scene/p-hero.png'); --cap:url('../../code/public/art/scene/duel-hero.jpg')"></div>
         <div class="side">
           <div class="name">沈砚</div>
           <div class="desc">百川诀 · 第 9 重</div>
-          <div class="bars"><div class="bb hp"><i></i></div><div class="bb qi"><i></i></div></div>
-          <div class="nums"><span>气血 <b>6,420 / 6,420</b></span><span>真气 <b>1,860 / 1,860</b></span></div>
+          <div class="mt"><div class="ml"><span>气血</span><span><b id="pHpV">6,420</b> / <span id="pHpM">6,420</span></span></div><div class="bb hp" id="pHpB"><i class="gh"></i><i class="v"></i></div></div>
+          <div class="mt qi"><div class="ml"><span>真气</span><span><b id="pQiV">1,860</b> / <span id="pQiM">1,860</span></span></div><div class="bb qi" id="pQiB"><i class="gh"></i><i class="v"></i></div></div>
         </div>
         <div class="vs">VS</div>
         <div class="side enemy">
           <div class="name" id="foeName"></div>
           <div class="desc" id="foeDesc"></div>
-          <div class="bars"><div class="bb hp"><i></i></div><div class="bb qi"><i></i></div></div>
-          <div class="nums"><span>气血 <b id="foeHp"></b></span><span>真气 <b id="foeQi"></b></span></div>
+          <div class="mt"><div class="ml"><span>气血</span><span><b id="fHpV"></b> / <span id="fHpM"></span></span></div><div class="bb hp" id="fHpB"><i class="gh"></i><i class="v"></i></div></div>
+          <div class="mt qi"><div class="ml"><span>真气</span><span><b id="fQiV"></b> / <span id="fQiM"></span></span></div><div class="bb qi" id="fQiB"><i class="gh"></i><i class="v"></i></div></div>
         </div>
         <div class="bust foe" id="foeBust"></div>
       </div>
@@ -795,7 +805,9 @@ function renderTrail(m, next) {
     (next ? `<span class="lab" style="left:${pos(next) * 100}%;top:${(Yp(pos(next)) + 16) / 128 * 100}%">第${cnNum(next)}关</span>` : '');
   trk.querySelectorAll('[data-n]').forEach((b) => b.onclick = () => { selStage = +b.dataset.n; renderFight(); });
 }
+let foeStat = [6380, 1500];
 function renderFight() {
+  if (fighting) return;
   const m = allMaps().find((x) => x.id === selMap), fac = facOf(m.id);
   const next = m.done < m.total ? m.done + 1 : null;
   if (selStage === null) selStage = next ?? m.total;
@@ -812,18 +824,17 @@ function renderFight() {
     const h = s.who.name.match(/^(「.+」)(.+)$/);
     foeName.innerHTML = h ? `<span class="hao">${h[1]}</span>${h[2]}` : s.who.name;
     foeDesc.innerHTML = `<span data-tip="${whoTip(m, s.who)}">${fac.fac}${s.who.post}</span>`;
-    foeHp.textContent = s.kind === 'boss' ? '21,800 / 21,800' : '9,960 / 9,960';
-    foeQi.textContent = s.kind === 'boss' ? '4,200 / 4,200' : '2,400 / 2,400';
+    foeStat = s.kind === 'boss' ? [21800, 4200] : [9960, 2400];
   } else {
     foeName.textContent = m.foe;
     foeDesc.textContent = fac ? `${fac.fac} · ${m.name}` : m.name;
-    foeHp.textContent = '6,380 / 6,380';
-    foeQi.textContent = '1,500 / 1,500';
+    foeStat = [6380, 1500];
   }
   foeBust.className = 'bust round foe' + (role === 'boss' ? ' boss' : '');
   foeBust.style.setProperty('--bust', `url('${ART}${s.who?.pt ?? 'p-guard'}.png')`);
   foeBust.style.setProperty('--cap', s.who?.pt ? `url('${ART}${s.who.pt}.png')` : `url('${ART}duel-foe.jpg')`);
   foeBust.classList.toggle('pt', !!s.who?.pt);
+  resetDuel(foeStat);
   fightBtn.textContent = `挑战第${cnNum(selStage)}关`;
   renderLog(m, s);
 }
@@ -839,13 +850,78 @@ function renderLog(m, s) {
   log.innerHTML = `
     <div class="cause"><span class="at">${at}</span><span>${line}</span></div>
     ${m.id === 'a2' ? '<div class="rumor"><span class="at">江湖传闻</span><span>黑风盟主阎彪沉疴不起，盟中诸舵主暗自角力。</span></div>' : ''}
-    <div class="rh">【第一回合】</div>
-    <div class="p"><span class="me">你</span>一式松涛剑法递出，剑意未至，<span class="foe">${foe}</span>已觉寒气扑面，侧身稍迟，肩头着了一记，<span class="dm">1,284</span>。</div>
-    <div class="p"><span class="foe">${foe}</span>沉肩回撞，<span class="me">你</span>借势退开半步，只受了 <span class="dm">412</span>。</div>
-    <div class="rh">【第二回合】</div>
-    <div class="p"><span class="me">你</span>使出<span class="sk">一式「松风入壑」</span>，剑光过处，<span class="foe">${foe}</span>踉跄后退，<span class="dm">2,016</span>。</div>
-    ${s.kind === 'boss' && m.id === 'a2' ? `<div class="p win">${foe}收棍合十：「后生可畏，老衲让了。」</div>` : ''}`;
+`;
 }
+
+/* ═══════ 真打一场（原型用的简化数值，只为看掉血掉蓝的观感） ═══════ */
+const fmt = (n) => Math.max(0, Math.round(n)).toLocaleString('en-US');
+const P = { hp: 6420, qi: 1860, max: [6420, 1860] }, F = { hp: 0, qi: 0, max: [0, 0] };
+let fighting = false;
+function setBar(who, k) {
+  const o = who === 'p' ? P : F, i = k === 'hp' ? 0 : 1, cur = o[k], pct = cur / o.max[i] * 100;
+  const B = document.getElementById(`${who}${k === 'hp' ? 'Hp' : 'Qi'}B`);
+  B.querySelector('.v').style.width = pct + '%';
+  B.querySelector('.gh').style.width = pct + '%';
+  document.getElementById(`${who}${k === 'hp' ? 'Hp' : 'Qi'}V`).textContent = fmt(cur);
+  document.getElementById(`${who}${k === 'hp' ? 'Hp' : 'Qi'}M`).textContent = fmt(o.max[i]);
+}
+function resetDuel([hp, qi]) {
+  F.hp = hp; F.qi = qi; F.max = [hp, qi];
+  P.hp = P.max[0]; P.qi = P.max[1];
+  ['hp', 'qi'].forEach((k) => { setBar('p', k); setBar('f', k); });
+  document.querySelectorAll('.duel .name').forEach((n) => n.classList.remove('ko'));
+}
+function pop(side, text, cls) {
+  const d = document.createElement('span'), bust = side === 'p' ? duel.querySelector('.bust.me') : foeBust;
+  const r = bust.getBoundingClientRect(), R = duel.getBoundingClientRect();
+  d.className = 'dmg ' + (cls || ''); d.textContent = text;
+  d.style.left = (r.left - R.left + r.width * (side === 'p' ? 0.55 : 0.45) + (Math.random() * 40 - 20)) + 'px';
+  d.style.top = (r.top - R.top + r.height * 0.3) + 'px';
+  duel.appendChild(d); setTimeout(() => d.remove(), 1200);
+  if (cls !== 'skill' && cls !== 'qi') { bust.classList.remove('hit'); void bust.offsetWidth; bust.classList.add('hit'); }
+}
+const say = (html, cls = '') => { log.insertAdjacentHTML('beforeend', `<div class="p fresh ${cls}">${html}</div>`); log.scrollTop = log.scrollHeight; };
+const wait = (ms) => new Promise((r) => setTimeout(r, matchMedia('(prefers-reduced-motion: reduce)').matches ? ms * 0.4 : ms));
+const R = (a, b) => a + Math.random() * (b - a);
+async function fight() {
+  const m = allMaps().find((x) => x.id === selMap), s = stageInfo(m, selStage);
+  const foe = s.who ? s.who.name : m.foe, tough = s.kind === 'boss' ? 2.2 : s.kind === 'elite' ? 1.5 : 1;
+  fighting = true; fightBtn.disabled = true; fightBtn.textContent = '交手中';
+  log.querySelectorAll('.p, .rh').forEach((n) => n.remove());
+  for (let round = 1; round <= 30 && P.hp > 0 && F.hp > 0; round++) {
+    log.insertAdjacentHTML('beforeend', `<div class="rh">【第${cnNum(round)}回合】</div>`);
+    // 我方：每两回合用一次招式，耗真气
+    const skill = round % 2 === 0 && P.qi >= 260;
+    if (skill) { P.qi -= 260; setBar('p', 'qi'); pop('p', '一式「松风入壑」', 'skill'); pop('p', '-260', 'qi'); await wait(350); }
+    const crit = Math.random() < 0.2, dmg = R(900, 1350) * (skill ? 1.6 : 1) * (crit ? 1.8 : 1) / Math.sqrt(tough);
+    F.hp -= dmg; setBar('f', 'hp'); pop('f', fmt(dmg), crit ? 'crit' : '');
+    say(skill ? `<span class="me">你</span>使出<span class="sk">一式「松风入壑」</span>，剑光过处，<span class="foe">${foe}</span>踉跄后退，<span class="dm">${fmt(dmg)}</span>。`
+      : `<span class="me">你</span>一式松涛剑法递出，<span class="foe">${foe}</span>侧身稍迟，肩头着了一记，<span class="dm">${fmt(dmg)}</span>${crit ? '，剑势正中要害' : ''}。`);
+    await wait(700);
+    if (F.hp <= 0) break;
+    // 敌方：每三回合运一次劲
+    const fs = round % 3 === 0 && F.qi >= 300;
+    if (fs) { F.qi -= 300; setBar('f', 'qi'); pop('f', '-300', 'qi'); await wait(300); }
+    const back = R(320, 620) * tough * (fs ? 1.7 : 1);
+    P.hp -= back; setBar('p', 'hp'); pop('p', fmt(back));
+    say(fs ? `<span class="foe">${foe}</span>运劲一棍横扫，<span class="me">你</span>格挡不及，<span class="dm">${fmt(back)}</span>。`
+      : `<span class="foe">${foe}</span>沉肩回撞，<span class="me">你</span>借势退开半步，只受了 <span class="dm">${fmt(back)}</span>。`);
+    await wait(700);
+  }
+  const win = F.hp <= 0;
+  (win ? foeName : duel.querySelector('.side .name')).classList.add('ko');
+  say(win ? `<span class="foe">${foe}</span>拄棍单膝跪地，再无还手之力。第${cnNum(selStage)}关已过。` : `<span class="me">你</span>气血将竭，只得收剑退走。`, win ? 'win' : '');
+  if (win && selStage === m.done + 1) {
+    m.done++;
+    if (s.who) { NOW.unshift(['me', '江湖历 220 年 春', `沈砚败${m.name}${s.who.post}${s.who.name.replace(/「.+」/, '')}。`]); renderFeed(true); }
+    renderPins();
+  }
+  await wait(1400);
+  fighting = false; fightBtn.disabled = false;
+  if (win) selStage = m.done < m.total ? m.done + 1 : m.total;
+  const keep = log.innerHTML; renderFight(); log.innerHTML = keep; log.scrollTop = log.scrollHeight;
+}
+fightBtn.onclick = () => { if (!fighting) fight(); };
 
 /* ═══════ 江湖编年（常驻右栏） ═══════
    类别：此身（玩家名，墨金）· 正道 · 邪道 · 朝廷 · 江湖（世家、帮会等）· 大事（朱砂淡底） */

@@ -96,30 +96,34 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .vlab[aria-disabled="true"] { cursor: default; }
 .vlab.here:hover .nm { text-shadow: 0 0 12px oklch(0.78 0.13 78 / 0.6), 0 0 3px #000; }
 .map.zoomed .vlab { opacity: 0; pointer-events: none; }
-/* 据点地标：放大后浮出；一处据点一幅小画，画下是名字与归属。
-   状态全靠画本身：已破的褪成墨金、正在打的有烛光、没开的灰下去 */
-.lm { position: absolute; width: 132px; transform: translate(-50%, -60%) scale(calc(1 / var(--k))); display: grid; justify-items: center; border: 0; background: none; padding: 0; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .4s .5s; }
-.map.zoomed .lm { opacity: 1; pointer-events: auto; }
-.lm img { width: 112px; height: 104px; object-fit: contain; filter: drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); transition: filter .25s, transform .25s var(--ease-quart); }
-.lm.door img { width: 128px; height: 118px; }
-.lm .nm { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000; white-space: nowrap; margin-top: -4px; }
-.lm .sm { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); text-shadow: 0 0 6px #000; white-space: nowrap; }
-.lm .al { font-family: var(--font-display); font-size: 10.5px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.8); }
-.lm .al.z { color: var(--zheng); box-shadow: inset 0 0 0 1px oklch(0.76 0.09 245 / 0.7); }
-.lm .al.x { color: var(--xie); box-shadow: inset 0 0 0 1px oklch(0.72 0.11 320 / 0.7); }
-.lm.done img { filter: sepia(0.5) saturate(0.7) brightness(0.8) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
-.lm.done .nm { color: var(--ink-gold); }
-.lm.cur img { filter: drop-shadow(0 0 16px oklch(0.78 0.13 78 / 0.55)) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
-.lm.cur .nm { color: var(--gold); }
-.lm.locked { cursor: default; }
-.lm.locked img { filter: grayscale(1) brightness(0.5) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
-.lm.locked .nm { color: var(--faint); }
-.lm:not(.locked):hover img { transform: translateY(-3px); }
-/* 白描：线稿偏亮，压一档免得抢过舆图 */
-.map[data-lm="s3/"] .lm:not(.locked):not(.cur) img { opacity: 0.78; }
-/* 融地：画本身就暗，未开的只去色不再压暗，否则沉进底图看不见 */
-.map[data-lm="s2/"] .lm.locked img { filter: grayscale(1) brightness(0.95) drop-shadow(0 8px 10px oklch(0.05 0.01 262 / 0.9)); }
-.lm:not(.locked):hover .nm { color: var(--gold); }
+/* 江南分图：建筑直接画在图里。放大动画走完后淡入，盖住被拉糊的舆图；退回时先淡出 */
+.reg { position: absolute; inset: 0; background: url('../../code/public/art/jianghu-region-jiangnan.jpg') center / cover no-repeat; opacity: 0; pointer-events: none; transition: opacity .25s; filter: brightness(0.9) saturate(0.8); }
+.map.zoomed .reg { opacity: 1; pointer-events: auto; transition: opacity .7s .8s; }
+/* 据点：只是图上一块可点的区域，状态用游戏里的手法——未开被云雾遮住、在打的有烛光、已破的落墨金印 */
+.spot { position: absolute; width: 13%; height: 21%; transform: translate(-50%, -55%); border: 0; background: none; padding: 0; cursor: pointer; }
+.spot .glow { position: absolute; inset: -10%; border-radius: 50%; background: radial-gradient(closest-side, oklch(0.8 0.13 78 / 0.32), transparent); mix-blend-mode: screen; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.spot:not(.locked):hover .glow { opacity: 0.7; }
+.spot.cur .glow { opacity: 1; animation: candle 3.2s ease-in-out infinite alternate; }
+@keyframes candle { from { opacity: 0.65; } to { opacity: 1; } }
+.spot .mist { position: absolute; inset: -18% -22%; pointer-events: none; opacity: 0; transition: opacity .6s; }
+.spot .mist i { position: absolute; border-radius: 50%; filter: blur(14px); background: radial-gradient(closest-side, oklch(0.72 0.01 262 / 0.9), oklch(0.6 0.01 262 / 0.55) 60%, transparent); animation: drift 11s ease-in-out infinite alternate; }
+.spot .mist i:nth-child(1) { inset: 8% 18% 22% 4%; }
+.spot .mist i:nth-child(2) { inset: 20% 2% 6% 30%; animation-duration: 14s; animation-direction: alternate-reverse; }
+.spot .mist i:nth-child(3) { inset: 30% 25% 18% 20%; animation-duration: 9s; }
+@keyframes drift { from { transform: translateX(-4%); } to { transform: translateX(5%); } }
+.spot.locked { cursor: default; }
+.spot.locked .mist { opacity: 1; }
+.spot .lab { position: absolute; left: 50%; top: 96%; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; white-space: nowrap; pointer-events: none; }
+.spot .nm { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000, 0 0 14px #000; display: flex; align-items: center; gap: 6px; }
+.spot .sm { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); text-shadow: 0 0 6px #000, 0 0 3px #000; }
+.spot .al { font-family: var(--font-display); font-size: 10.5px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.8); pointer-events: auto; }
+.spot .al.z { color: var(--zheng); box-shadow: inset 0 0 0 1px oklch(0.76 0.09 245 / 0.7); }
+.spot .al.x { color: var(--xie); box-shadow: inset 0 0 0 1px oklch(0.72 0.11 320 / 0.7); }
+.spot .po { font-size: 11px; width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 3px; background: oklch(0.75 0.075 76 / 0.85); color: oklch(0.15 0.01 262); font-weight: 700; text-shadow: none; }
+.spot.done .nm { color: var(--ink-gold); }
+.spot.cur .nm { color: var(--gold); }
+.spot.locked .nm { color: var(--faint); }
+.spot:not(.locked):hover .nm { color: var(--gold); }
 
 /* ═══════ 关卡线（照 battle.css .bt-track） ═══════ */
 .map-h { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 10px 0; }
@@ -142,6 +146,67 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .track .near button.cur { background: oklch(0.78 0.13 78 / 0.12); color: var(--gold); font-weight: 600; }
 .track .near button.sel { box-shadow: inset 0 0 0 1px var(--muted); }
 .track .near button:disabled { cursor: default; color: oklch(0.42 0.012 262); }
+
+/* ═══════ 关卡线三案 ═══════
+   共同点：不再一排数字按钮；20 关只画一遍；守关的人（副手 / 镇守 / 门主）用印记标出，悬停见其人 */
+.map-h .prog { margin-left: auto; color: var(--muted); font-size: 13px; }
+.map-h .prog b { color: var(--ink); font-family: var(--font-display); font-weight: 600; }
+.seal { display: inline-grid; place-items: center; font-family: var(--font-display); font-weight: 700; border-radius: 3px; line-height: 1; }
+.seal.aide, .seal.warden { color: var(--ink-gold); box-shadow: inset 0 0 0 1.5px oklch(0.75 0.075 76 / 0.8); background: oklch(0.12 0.01 262 / 0.75); }
+.seal.boss { color: oklch(0.95 0.02 60); background: var(--cinnabar); }
+.seal.got { opacity: 0.6; }
+
+/* 甲 山路行旅：一条墨线小路蜿蜒过去，走过的实线、没走的虚线，人在路上提一盏灯 */
+.trail { position: relative; height: 128px; margin: 4px 0 6px; }
+.trail svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.trail path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.trail .todo { stroke: oklch(0.6 0.02 262 / 0.55); stroke-width: 1.5; stroke-dasharray: 3 6; }
+.trail .walk { stroke: var(--ink-gold); stroke-width: 2.5; opacity: 0.85; }
+.trail .st { position: absolute; transform: translate(-50%, -50%); border: 0; background: none; padding: 6px; cursor: pointer; display: grid; place-items: center; }
+.trail .st:disabled { cursor: default; }
+.trail .st i { width: 6px; height: 6px; border-radius: 50%; background: oklch(0.5 0.015 262); display: block; }
+.trail .st.done i { background: var(--ink-gold); }
+.trail .st .seal { width: 22px; height: 22px; font-size: 12px; }
+.trail .st .seal.boss { width: 30px; height: 30px; font-size: 16px; }
+.trail .st.cur i { width: 12px; height: 12px; background: var(--gold); box-shadow: 0 0 0 4px oklch(0.78 0.13 78 / 0.18), 0 0 18px var(--gold); }
+.trail .st.sel:not(.cur) i, .trail .st.sel:not(.cur) .seal { outline: 1.5px solid var(--muted); outline-offset: 3px; }
+.trail .st:not(:disabled):hover i { transform: scale(1.4); }
+.trail .lab { position: absolute; transform: translateX(-50%); font-family: var(--font-display); font-size: 14px; letter-spacing: 0.2em; color: var(--gold); white-space: nowrap; text-shadow: 0 0 8px #000; pointer-events: none; }
+
+/* 乙 章回墨点：当前一关作大标题，下面一串墨点，五点一组好数 */
+.hui { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 28px; align-items: end; margin: 6px 0 4px; }
+.hui .big { display: flex; align-items: center; gap: 10px; }
+.hui .big h3 { margin: 0; font-family: var(--font-display); font-size: 34px; font-weight: 700; letter-spacing: 0.25em; color: var(--ink); min-width: 4.6em; text-align: center; }
+.hui .big button { border: 0; background: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0 6px; font-family: var(--font-display); }
+.hui .big button:disabled { color: oklch(0.35 0.012 262); cursor: default; }
+.hui .ahead { color: var(--muted); font-size: 13px; padding-bottom: 8px; }
+.hui .ahead b { color: var(--ink-gold); font-family: var(--font-display); font-weight: 600; letter-spacing: 0.1em; }
+.dots { grid-column: 1 / -1; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.dots .gap { width: 14px; }
+.dots button { border: 0; background: none; padding: 5px 4px; cursor: pointer; display: grid; place-items: center; }
+.dots button:disabled { cursor: default; }
+.dots i { display: block; width: 11px; height: 11px; border-radius: 52% 46% 55% 44%; box-shadow: inset 0 0 0 1.5px oklch(0.5 0.015 262); }
+.dots .done i { background: var(--ink-gold); box-shadow: none; opacity: 0.85; }
+.dots .cur i { background: var(--gold); box-shadow: 0 0 14px var(--gold); }
+.dots .sel:not(.cur) i, .dots .sel:not(.cur) .seal { outline: 1.5px solid var(--muted); outline-offset: 3px; }
+.dots .seal { width: 20px; height: 20px; font-size: 11.5px; }
+
+/* 丙 竹简：一关一片竹简，两道编绳横穿；守关的人在简尾落印 */
+.slips { position: relative; display: inline-flex; max-width: 100%; gap: 5px; padding: 14px 0 8px; overflow-x: auto; scrollbar-width: thin; }
+.slips::before, .slips::after { content: ''; position: absolute; left: 0; right: 0; height: 1.5px; background: oklch(0.45 0.04 70 / 0.55); z-index: 0; }
+.slips::before { top: 36px; } .slips::after { top: 100px; }
+.slip { position: relative; z-index: 1; flex: 0 0 34px; height: 112px; border: 0; border-radius: 5px; cursor: pointer; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  background: linear-gradient(to right, oklch(0.27 0.025 85), oklch(0.31 0.03 85) 45%, oklch(0.25 0.022 85)); color: var(--muted); transition: transform .25s var(--ease-quart), box-shadow .25s; }
+.slip .n { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 14px; letter-spacing: 0.1em; }
+.slip .seal { width: 20px; height: 20px; font-size: 11.5px; }
+.slip.done { background: linear-gradient(to right, oklch(0.24 0.035 75), oklch(0.28 0.045 75) 45%, oklch(0.22 0.03 75)); }
+.slip.done .n { color: var(--ink-gold); }
+.slip.cur { transform: translateY(-8px); box-shadow: inset 0 0 0 1.5px var(--gold), 0 6px 22px oklch(0.78 0.13 78 / 0.3); }
+.slip.cur .n { color: var(--gold); font-weight: 700; }
+.slip.sel:not(.cur) { transform: translateY(-5px); box-shadow: inset 0 0 0 1px var(--muted); }
+.slip:disabled { cursor: default; background: linear-gradient(to right, oklch(0.21 0.015 85), oklch(0.235 0.018 85) 45%, oklch(0.2 0.014 85)); }
+.slip:disabled .n { color: oklch(0.5 0.015 85); }
+.slip:not(:disabled):not(.cur):hover { transform: translateY(-4px); }
 
 /* ═══════ 对阵（照 battle.css .duel） ═══════ */
 .duel { display: grid; grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr); gap: 12px; margin-top: 30px; }
@@ -294,10 +359,12 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 .ceremony .since p .mine { color: var(--ink-gold); }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-in, .vlab, .lm, .lm img, .map-in .art { transition: none !important; }
+  .map-in, .vlab, .reg, .map-in .art { transition: none !important; }
+  .spot .mist i, .spot.cur .glow { animation: none; }
   .shell.dock-min.dock-open .dock { animation: none; }
   .ceremony > div > * { animation: fade .4s both; }
   .ev.fresh, .brief.fresh, .yb li.fresh, .vv.fresh { animation: none; }
+  .slip { transition: none; }
   @keyframes fade { from { opacity: 0; } }
 }
 
@@ -324,13 +391,11 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 <body>
 
 <div class="proto-bar">
-  <span class="t">活江湖原型 · 第四轮</span>
+  <span class="t">活江湖原型 · 第五轮</span>
   <span class="lbl">编年摆法</span>
   <div class="seg" id="dockSeg"><button aria-pressed="false" data-d="A">A 每页常驻</button><button aria-pressed="true" data-d="B">B 操作页收边</button></div>
-  <span class="lbl">编年样式</span>
-  <div class="seg" id="feedSeg"><button aria-pressed="true" data-f="list">甲 条目</button><button aria-pressed="false" data-f="year">乙 年表</button><button aria-pressed="false" data-f="vert">丙 竖排史册</button><button aria-pressed="false" data-f="head">丁 头条简讯</button></div>
-  <span class="lbl">地标</span>
-  <div class="seg" id="lmSeg"><button aria-pressed="false" data-l="">原</button><button aria-pressed="true" data-l="s2/">融地</button><button aria-pressed="false" data-l="s3/">白描</button></div>
+  <span class="lbl">关卡线</span>
+  <div class="seg" id="trkSeg"><button aria-pressed="false" data-k="old">原</button><button aria-pressed="true" data-k="trail">甲 山路行旅</button><button aria-pressed="false" data-k="hui">乙 章回墨点</button><button aria-pressed="false" data-k="slip">丙 竹简</button></div>
   <span class="lbl">跳到</span>
   <button class="go" data-go="map">江湖舆图</button>
   <button class="go" data-go="vol">放大到江南</button>
@@ -370,6 +435,7 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
         <div class="map-in" id="mapIn">
           <div class="art"></div>
         </div>
+        <div class="reg" id="reg"></div>
       </div>
     </section>
 
@@ -377,8 +443,9 @@ button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 1px; }
 
     <section class="view" id="v-fight" hidden>
       <button class="back" id="fightBack">← 江南</button>
-      <div class="map-h"><h2 id="mapName"></h2><span class="of" id="mapOf"></span></div>
-      <div class="track">
+      <div class="map-h"><h2 id="mapName"></h2><span class="of" id="mapOf"></span><span class="prog" id="mapProg"></span></div>
+      <div id="trk"></div>
+      <div class="track" id="oldTrack">
         <div class="tbar" id="tbar"><div class="rail-line"></div><div class="fill" id="fill"></div></div>
         <div class="near" id="near"></div>
       </div>
@@ -442,32 +509,32 @@ const OPEN_UPTO = 4, HERE = 2;
 const ZOOM = { k: 3, cx: 74, cy: 66 };
 
 /* 卷三江南：赶路图 + 三章并排；坐标是放大前整张舆图上的 % */
-const ROAD = { id: 'r', name: '姑苏驿道', total: 20, done: 20, foe: '剪径毛贼', x: 62.5, y: 59.5, img: 'road' };
+const ROAD = { id: 'r', name: '姑苏驿道', total: 20, done: 20, foe: '剪径毛贼', x: 14.5, y: 15 };
 const CHAPTERS = [
   { fac: '千岩寺', al: 'z', tier: '二宗 · 佛门', skill: '棍、腿', sig: '罗汉伏魔棍', join: true, 
     maps: [
-      { id: 'a1', name: '云栈香市', layer: '资源点', total: 20, done: 20, foe: '香市武僧', x: 64, y: 69, img: 'a1',
+      { id: 'a1', name: '云栈香市', layer: '资源点', total: 20, done: 20, foe: '香市武僧', x: 12, y: 40,
         aide: { name: '「铁臂」法空', post: '香市监院', gen: 3 },
         warden: { name: '慧远', post: '知客僧', gen: 6, got: true, past: '前任知客澄心，败于「快剑」陆青之手，让位闭关' } },
-      { id: 'a2', name: '千岩山门', layer: '门户', total: 20, done: 7, foe: '千岩寺武僧', x: 64.5, y: 77.5, img: 'a2',
+      { id: 'a2', name: '千岩山门', layer: '门户', total: 20, done: 7, foe: '千岩寺武僧', x: 13.5, y: 77,
         aide: { name: '「伏虎」觉明', post: '山门护法', gen: 2 },
         boss: { name: '澄观', post: '罗汉堂首座', gen: 4 } },
     ] },
   { fac: '会稽顾氏', al: 'z', tier: '四阀', skill: '剑', sig: '燕穿垂柳剑', 
     maps: [
-      { id: 'b1', name: '顾家绸庄', layer: '资源点', total: 20, done: 3, foe: '顾家护院', x: 72, y: 58, img: 'b1',
+      { id: 'b1', name: '顾家绸庄', layer: '资源点', total: 20, done: 3, foe: '顾家护院', x: 50, y: 21,
         aide: { name: '「算珠」顾三', post: '绸庄管事', gen: 5 },
         warden: { name: '顾长明', post: '账房先生', gen: 2 } },
-      { id: 'b2', name: '镜湖别业', layer: '门户', total: 20, done: 0, foe: '顾氏家将', x: 82, y: 60, img: 'b2',
+      { id: 'b2', name: '镜湖别业', layer: '门户', total: 20, done: 0, foe: '顾氏家将', x: 79, y: 23,
         aide: { name: '「青衫」顾临', post: '别业教头', gen: 1 },
         boss: { name: '顾长风', post: '顾氏家主', gen: 9, past: '父顾承业病故，去岁继立' } },
     ] },
   { fac: '花影坊', al: 'x', tier: '五秀', skill: '暗器、掌', sig: '落英缤纷针', join: true, 
     maps: [
-      { id: 'c1', name: '秦淮画舫', layer: '资源点', total: 20, done: 0, foe: '画舫打手', x: 74, y: 71, img: 'c1',
+      { id: 'c1', name: '秦淮画舫', layer: '资源点', total: 20, done: 0, foe: '画舫打手', x: 47, y: 54,
         aide: { name: '「红绡」柳娘', post: '画舫鸨母', gen: 7 },
         warden: { name: '苏绮', post: '画舫主事', gen: 3 } },
-      { id: 'c2', name: '十里花阵', layer: '门户', total: 20, done: 0, foe: '花影坊女弟子', x: 84.5, y: 76, img: 'c2',
+      { id: 'c2', name: '十里花阵', layer: '门户', total: 20, done: 0, foe: '花影坊女弟子', x: 82, y: 74,
         aide: { name: '「折枝」宁儿', post: '阵眼', gen: 2 },
         boss: { name: '温如月', post: '花影坊坊主', gen: 5 } },
     ] },
@@ -491,24 +558,24 @@ function buildMap() {
   renderPins();
 }
 function renderPins() {
-  mapIn.querySelectorAll('.lm').forEach((n) => n.remove());
-  const add = (m, c, door, lockedBy) => {
+  reg.innerHTML = '';
+  const add = (m, c, lockedBy) => {
     const b = document.createElement('button'), done = m.done >= m.total;
-    b.className = `lm${door ? ' door' : ''}${done ? ' done' : ''}${m.done && !done ? ' cur' : ''}${lockedBy ? ' locked' : ''}`;
+    b.className = `spot${done ? ' done' : ''}${m.done && !done ? ' cur' : ''}${lockedBy ? ' locked' : ''}`;
     b.style.left = m.x + '%'; b.style.top = m.y + '%';
     const prog = done ? '已破' : m.done ? `${m.done} / ${m.total}` : `${m.total} 关`;
     const sm = c ? `<span class="al ${c.al}">${c.al === 'z' ? '正' : '邪'}</span>${c.fac} · ${prog}` : `赶路 · ${prog}`;
-    b.innerHTML = `<img src="../../code/public/art/lm/${lmDir}${m.img}.png" alt=""><span class="nm">${m.name}</span><span class="sm">${sm}</span>`;
+    b.innerHTML = `<span class="glow"></span><span class="mist"><i></i><i></i><i></i></span><span class="lab"><span class="nm">${m.name}${done ? '<span class="po">破</span>' : ''}</span><span class="sm">${sm}</span></span>`;
     if (c) b.querySelector('.al').dataset.tip = `<b>${c.fac}</b> · ${c.tier}<br>擅长${c.skill} · 镇宗 <span class=gold>${c.sig}</span>${c.join ? '<br>可拜入' : ''}`;
     if (lockedBy) b.dataset.tip = `先破${lockedBy}`;
     else b.onclick = () => openFight(m.id);
-    mapIn.appendChild(b);
+    reg.appendChild(b);
   };
-  add(ROAD, null, false);
+  add(ROAD, null);
   CHAPTERS.forEach((c) => {
     const [m1, m2] = c.maps;
-    add(m1, c, false);
-    add(m2, c, true, m1.done < m1.total ? m1.name : null);
+    add(m1, c);
+    add(m2, c, m1.done < m1.total ? m1.name : null);
   });
 }
 function setZoom(on) {
@@ -546,12 +613,67 @@ function stageInfo(m, n) {
   return { kind: 'normal' };
 }
 const whoTip = (m, w) => `<b>${w.name}</b> · ${facOf(m.id).fac}${w.post}<br>第 ${w.gen} 任${w.past ? '<br>' + w.past : ''}`;
+let trkStyle = 'trail';
+const SEAL_CH = { aide: '副', warden: '守', boss: '主' };
+function stageRole(m, n) {
+  const s = stageInfo(m, n);
+  if (s.kind === 'boss') return 'boss';
+  if (s.kind === 'elite') return s.who === m.aide ? 'aide' : 'warden';
+  return null;
+}
+function stageBtn(m, n, next, cls, inner) {
+  const s = stageInfo(m, n), done = n <= m.done, role = stageRole(m, n);
+  const can = done || n === next || (peek && n === selStage);
+  const tip = s.who ? whoTip(m, s.who) : `第 ${cnNum(n)} 关`;
+  return `<button class="${cls}${done ? ' done' : ''}${n === next ? ' cur' : ''}${n === selStage ? ' sel' : ''}" data-n="${n}" data-tip="${tip}"${can ? '' : ' disabled'}>${inner(role, done)}</button>`;
+}
+const sealHtml = (role, done) => `<span class="seal ${role}${done ? ' got' : ''}">${SEAL_CH[role]}</span>`;
+function renderTrack(m, next) {
+  trk.className = trkStyle;
+  oldTrack.hidden = trkStyle !== 'old';
+  if (trkStyle === 'old') { trk.innerHTML = ''; return; }
+  if (trkStyle === 'trail') {
+    // 小路：两段起伏的正弦，左低右高略往上走
+    const Yp = (x) => 64 + 26 * Math.sin(x * Math.PI * 2.2 + 0.6) - 10 * x;
+    const N = 120, pts = Array.from({ length: N + 1 }, (_, i) => [i / N, Yp(i / N)]);
+    const pos = (n) => (n - 0.5) / m.total * 0.94 + 0.03;
+    const d = (upto) => pts.filter(([x]) => x <= upto).map(([x, y], i) => `${i ? 'L' : 'M'}${x * 1000} ${y}`).join(' ');
+    const doneX = m.done ? pos(Math.min(next ?? m.total, m.total)) : 0;
+    trk.innerHTML = `<svg viewBox="0 0 1000 128" preserveAspectRatio="none"><path class="todo" d="${d(1)}"/><path class="walk" d="${d(doneX)}"/></svg>` +
+      Array.from({ length: m.total }, (_, i) => {
+        const n = i + 1, x = pos(n);
+        return stageBtn(m, n, next, 'st', (role, done) => role ? sealHtml(role, done) : '<i></i>').replace('<button', `<button style="left:${x * 100}%;top:${Yp(x) / 128 * 100}%"`);
+      }).join('') +
+      (next ? `<span class="lab" style="left:${pos(next) * 100}%;top:${(Yp(pos(next)) + 16) / 128 * 100}%">第${cnNum(next)}关</span>` : '');
+  } else if (trkStyle === 'hui') {
+    const ahead = Array.from({ length: m.total }, (_, i) => i + 1).find((n) => n >= (next ?? m.total) && stageRole(m, n));
+    const aw = ahead && stageInfo(m, ahead).who;
+    const canSel = (n) => n >= 1 && n <= m.total && (n <= m.done || n === next);
+    trk.innerHTML = `<div class="big"><button id="huiPrev"${canSel(selStage - 1) ? '' : ' disabled'} aria-label="上一关">‹</button><h3>第${cnNum(selStage)}关</h3><button id="huiNext"${canSel(selStage + 1) ? '' : ' disabled'} aria-label="下一关">›</button></div>` +
+      `<div class="ahead">${aw ? `第${cnNum(ahead)}关守关：<b>${aw.name}</b> · ${facOf(m.id).fac}${aw.post}` : ''}</div>` +
+      `<div class="dots">${Array.from({ length: m.total }, (_, i) => (i && i % 5 === 0 ? '<span class="gap"></span>' : '') + stageBtn(m, i + 1, next, '', (role, done) => role ? sealHtml(role, done) : '<i></i>')).join('')}</div>`;
+    huiPrev.onclick = () => { selStage--; renderFight(); };
+    huiNext.onclick = () => { selStage++; renderFight(); };
+  } else {
+    trk.innerHTML = Array.from({ length: m.total }, (_, i) => stageBtn(m, i + 1, next, 'slip', (role, done) => `<span class="n">${cnNum(i + 1)}</span>${role ? sealHtml(role, done) : ''}`)).join('');
+    trk.className = 'slips';
+  }
+  trk.querySelectorAll('[data-n]').forEach((b) => b.onclick = () => { selStage = +b.dataset.n; renderFight(); });
+}
+trkSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
+  trkSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  trkStyle = b.dataset.k; renderFight();
+});
 function renderFight() {
   const m = allMaps().find((x) => x.id === selMap), fac = facOf(m.id);
   mapName.textContent = m.name;
-  mapOf.textContent = fac ? `${fac.fac} · ${m.layer}` : '赶路';
   const next = m.done < m.total ? m.done + 1 : null;
   if (selStage === null) selStage = next ?? m.total;
+  const layer = m.layer === '门户' ? '门户' : '外围';
+  mapOf.innerHTML = trkStyle === 'old' ? (fac ? `${fac.fac} · ${m.layer}` : '赶路')
+    : `${fac ? `${fac.fac} · ${layer}` : '赶路'}`;
+  mapProg.innerHTML = trkStyle === 'old' ? '' : (m.done >= m.total ? '已破' : `已过 <b>${m.done}</b> / ${m.total} 关`);
+  renderTrack(m, next);
   fill.style.width = (m.done / m.total * 100) + '%';
   tbar.querySelectorAll('.mk, .here').forEach((x) => x.remove());
   for (let n = 1; n <= m.total; n++) {
@@ -583,7 +705,7 @@ function renderFight() {
     foeDesc.textContent = fac ? `${fac.fac} · ${m.name}` : m.name;
     foeHp.textContent = '6,380 / 6,380';
   }
-  fightBtn.textContent = `挑战第 ${selStage} 关`;
+  fightBtn.textContent = trkStyle === 'old' ? `挑战第 ${selStage} 关` : `挑战第${cnNum(selStage)}关`;
   renderLog(m, s);
 }
 const CAUSE = {
@@ -636,15 +758,23 @@ const PAST = [
     ['me', '江湖历 100 年 春', '泰安少年周伯安，年十八，始入江湖。']]],
 ];
 const evHtml = ([c, y, t], who, fresh) => `<div class="ev ${c}${fresh ? ' fresh' : ''}"><div class="h"><span class="cat">${c === 'me' ? who : CAT[c]}</span><span class="yr">${y}</span></div><div class="tx">${t}</div></div>`;
-let dockTab = 'now', newsN = 0, feedStyle = 'list', chip = 'all';
+let dockTab = 'now', newsN = 0, feedStyle = 'head', chip = 'all';
 const D = '〇一二三四五六七八九';
 const cnNum = (n) => { const h = Math.floor(n / 100), t = Math.floor(n % 100 / 10), o = n % 10;
   return (h ? D[h] + '百' : '') + (t ? (t === 1 && !h ? '' : D[t]) + '十' : (h && o ? '零' : '')) + (o ? D[o] : ''); };
 const yrOf = (y) => +y.match(/(\d+)/)[1], seasonOf = (y) => (y.match(/年 (.)$/) || [])[1] || '';
 const catName = (c, who) => c === 'me' ? who : CAT[c];
 const COLORS = { me: 'var(--ink-gold)', zheng: 'var(--zheng)', xie: 'var(--xie)', court: 'var(--court)', jh: 'var(--jh)', big: 'var(--cinnabar)' };
+function yearHtml(evs, who, fresh, legend) {
+  const groups = [];
+  evs.forEach((e, i) => { const y = yrOf(e[1]); let g = groups[groups.length - 1]; if (!g || g.y !== y) groups.push(g = { y, list: [] }); g.list.push([e, i]); });
+  return (legend ? `<div class="legend">${Object.keys(COLORS).map((c) => `<span><i style="background:${COLORS[c]}"></i>${catName(c, who)}</span>`).join('')}</div>` : '') +
+    groups.map((g) => `<div class="yb"><div class="y">${cnNum(g.y)}年</div><ol>${g.list.map(([[c, y, t], i]) =>
+      `<li class="${c}${fresh && !i ? ' fresh' : ''}" data-tip="${catName(c, who)}">${seasonOf(y) ? `<span class="s">${seasonOf(y)}</span>` : ''}${t}</li>`).join('')}</ol></div>`).join('');
+}
 function nowHtml(evs, who, fresh) {
-  if (feedStyle === 'year') {
+  if (feedStyle === 'year') return yearHtml(evs, who, fresh, true);
+  if (false) {
     const groups = [];
     evs.forEach((e, i) => { const y = yrOf(e[1]); let g = groups[groups.length - 1]; if (!g || g.y !== y) groups.push(g = { y, list: [] }); g.list.push([e, i]); });
     return `<div class="legend">${Object.keys(COLORS).map((c) => `<span><i style="background:${COLORS[c]}"></i>${catName(c, who)}</span>`).join('')}</div>` +
@@ -682,22 +812,13 @@ function renderFeed(freshFirst) {
   } else {
     feed.innerHTML = PAST.map(([n, name, hao, end, evs]) => `<div class="past">
       <button aria-expanded="false"><span class="n">${n}</span><span class="nm">${hao ? `<span class="hao">${hao}</span>` : ''}${name}</span><span class="chev">▶</span><span class="end">${end}</span></button>
-      <div class="bd"><div>${evs.map((e) => evHtml(e, name)).join('')}</div></div></div>`).join('');
+      <div class="bd"><div>${yearHtml(evs, name)}</div></div></div>`).join('');
     feed.querySelectorAll('.past > button').forEach((b) => b.onclick = () => {
       const p = b.parentElement, on = !p.hasAttribute('data-open'); p.toggleAttribute('data-open', on); b.setAttribute('aria-expanded', on);
     });
   }
 }
-feedSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
-  feedSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-  feedStyle = b.dataset.f; renderFeed();
-});
-let lmDir = 's2/';
-map.dataset.lm = lmDir;
-lmSeg.querySelectorAll('button').forEach((b) => b.onclick = () => {
-  lmSeg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-  lmDir = b.dataset.l; map.dataset.lm = lmDir; renderPins();
-});
+
 document.querySelectorAll('.dock .tabs button').forEach((b) => b.onclick = () => {
   dockTab = b.dataset.t;
   document.querySelectorAll('.dock .tabs button').forEach((x) => x.setAttribute('aria-selected', x === b));

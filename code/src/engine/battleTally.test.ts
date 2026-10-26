@@ -4,9 +4,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import { fight, makeBuild, type CombatSkill } from './combat';
-import { getStage, type EnemyDef } from './enemies';
+import { type EnemyDef } from './enemies';
 import { rate, tallyTurns } from './battleTally';
 import type { RouteId } from './content';
+import { legacyStage } from './legacyStage.testutil';
 
 const seeded = (seed: number) => {
   let x = seed;
@@ -25,7 +26,7 @@ describe('战况统计与引擎总账对拍', () => {
   for (const route of routes) {
     it(`${route}：次数逐项相等，伤害逐项近似`, () => {
       for (let seed = 1; seed <= 30; seed++) {
-        const r = fight(makeBuild(route, 4, 40, 3), nasty(getStage(2, 0, 12)), {
+        const r = fight(makeBuild(route, 4, 40, 3), nasty(legacyStage(2, 0, 12)), {
           mode: 'rng', rng: seeded(seed * 7 + 1), loadout, qiMax: 300,
         });
         const t = tallyTurns(r.turns);
@@ -61,7 +62,7 @@ describe('战况统计与引擎总账对拍', () => {
   }
 
   it('逐回合揭示时只增不减（交手中逐回合刷新）', () => {
-    const r = fight(makeBuild('tangmen', 4, 40, 3), nasty(getStage(2, 0, 12)), { mode: 'rng', rng: seeded(11), loadout, qiMax: 300 });
+    const r = fight(makeBuild('tangmen', 4, 40, 3), nasty(legacyStage(2, 0, 12)), { mode: 'rng', rng: seeded(11), loadout, qiMax: 300 });
     let prev = tallyTurns([]);
     for (let i = 1; i <= r.turns.length; i++) {
       const cur = tallyTurns(r.turns.slice(0, i));

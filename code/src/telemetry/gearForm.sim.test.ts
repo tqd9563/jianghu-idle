@@ -28,7 +28,7 @@ const lcg = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 
 
 function enemyAt(x: number): EnemyDef {
   const s = enemyStatsAt(x);
-  return { map: 1, tier: 0, stage: 1, name: 'x', ...s, tags: [], kind: 'normal', recommendedRealm: 1, reward: { neili: 0, silver: 0, xp: 0 }, x };
+  return { map: 1, stage: 1, name: 'x', ...s, tags: [], kind: 'normal', recommendedRealm: 1, reward: { neili: 0, silver: 0, xp: 0 }, x };
 }
 
 /** 指定型的一件：rollGear 的第三次掷骰定型（<0.5 第一型），再去掉词条 */

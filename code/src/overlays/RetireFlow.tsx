@@ -3,7 +3,7 @@
  * 「随魂而去 / 随身而散」两栏看清得失，「就此转世」直接确认；结算构成放进声望大字的悬停。
  * 全部玩家可见文案逐字取自 docs/rules/copy/retire.md v2.3 §2（单源）。
  */
-import { getStage, mapName, TIER_NAMES, trackLength, type MapId, type TierId } from '../engine/enemies';
+import { volName, VOLUMES } from '../engine/enemies';
 import { achvVal } from '../engine/achievements';
 import { SECTS } from '../engine/sect';
 import { deepestBoss, settleRetire, suhuiTotal } from '../engine/prestige';
@@ -12,11 +12,9 @@ import { RetireHint } from '../components/RetireHint';
 import { fmtBig } from '../fmt';
 import { INIT_AGE, lifespanCap, outlivesADay } from '../engine/reincarnation';
 
-/** 深浅（难度 × 10 + 图序）→「图 · 难度 的 Boss 名」 */
+/** 深浅（卷序）→「卷几 · 地域的门户」 */
 function bossName(depth: number): string {
-  const map = (depth % 10) as MapId;
-  const tier = Math.floor(depth / 10) as TierId;
-  return `${mapName(map)} · ${TIER_NAMES[tier]}的${getStage(map, tier, trackLength(map, tier)).name}`;
+  return `${volName(depth)} · ${VOLUMES[depth - 1]?.region ?? ''}的门户`;
 }
 
 /** 「就此转世」：演出即盘点，直接走完 store 的两步（preview → confirm → 结算） */

@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   ACHV, ACHV_MAP, achvCount, achvEffText, achvTier, achvVal, bumpAchv, catDmgBonus, equippedCats, winCounts,
 } from './achievements';
-import { allStages, stageKey, trackLength, type MapId, type TierId } from './enemies';
+import { allStages, stageKey, trackLength, VOLUMES } from './enemies';
 
-const boss = (map: MapId, tier: TierId) => `stage:${stageKey(map, tier, trackLength(map, tier))}`;
-const elites = allStages().filter((e) => e.kind === 'elite').map((e) => `stage:${stageKey(e.map, e.tier, e.stage)}`);
+/** 第 v 卷第 c 章的章末 Boss 名号键 */
+const boss = (v: number, c = 1) => { const g = VOLUMES[v - 1].maps[2 * c]; return `stage:${stageKey(g, trackLength(g))}`; };
+const elites = allStages().filter((e) => e.kind === 'elite').map((e) => `stage:${stageKey(e.map, e.stage)}`);
 
 describe('侠名录（prestige-shop/design.md §2c）', () => {
   it('二十二条线，三层门槛递增、三层值递增', () => {
@@ -20,7 +21,7 @@ describe('侠名录（prestige-shop/design.md §2c）', () => {
 
   it('推导计量：头目 / 精英 / 经脉读 fameClaimed，转世读 run，阅历读收得武学门数', () => {
     const s = {
-      fameClaimed: [boss(1, 0), boss(2, 0), elites[0], elites[1], 'meridian:shoutaiyin'],
+      fameClaimed: [boss(1), boss(2), elites[0], elites[1], 'meridian:shoutaiyin'],
       run: 7, ownedWuxue: ['liuyunjian', 'qingpingjian'] as never[],
     };
     expect(achvCount(s, 'boss')).toBe(2);
@@ -28,7 +29,8 @@ describe('侠名录（prestige-shop/design.md §2c）', () => {
     expect(achvCount(s, 'jingmai')).toBe(1);
     expect(achvCount(s, 'zhuanshi')).toBe(6);
     expect(achvCount(s, 'yueli')).toBe(2);
-    expect(achvTier(s, 'boss')).toBe(1);
+    expect(achvTier(s, 'boss')).toBe(0);   // 头目第一层要 8 个（卷章图关后重标）
+    expect(achvTier({ ...s, fameClaimed: [1, 2, 3, 4, 5, 6, 7, 8].map((v) => boss(v)) }, 'boss')).toBe(1);
     expect(achvTier(s, 'zhuanshi')).toBe(1);
   });
 

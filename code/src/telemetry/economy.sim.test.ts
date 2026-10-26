@@ -75,7 +75,7 @@ function play(route: RouteId, seed: number): Sample {
     const s = st();
     const front = frontierStageOf(s);
     const goods = marketGoodsOf(s);
-    const idleStage = s.idle ? getStage(s.idle.map, s.idle.tier, s.idle.stage) : null;
+    const idleStage = s.idle ? getStage(s.idle.map, s.idle.stage) : null;
     const fights = s.idle?.fights ?? 0;
     const idleFights = fights >= fights0 ? fights - fights0 : fights;
     fights0 = fights;
@@ -91,8 +91,8 @@ function play(route: RouteId, seed: number): Sample {
       ev.filter((e) => e.e === name && pred(e)).reduce((a, e) => a + num(e, k), 0);
     days.push({
       day, run: s.run, realm: s.realm,
-      frontier: `m${front.map}t${front.tier}s${front.stage}`, clearSilver: front.reward.silver,
-      idle: idleStage ? `m${idleStage.map}t${idleStage.tier}s${idleStage.stage}` : null, idleSilver: idleStage?.reward.silver ?? 0, idleFights,
+      frontier: `m${front.map}s${front.stage}`, clearSilver: front.reward.silver,
+      idle: idleStage ? `m${idleStage.map}s${idleStage.stage}` : null, idleSilver: idleStage?.reward.silver ?? 0, idleFights,
       silver: s.silver,
       income: income - income0,
       sellIncome: sum('gear_sold', 'silver') + sum('gear_dropped', 'sold'),

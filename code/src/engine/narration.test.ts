@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fight, makeBuild, type TurnEvent } from './combat';
-import { getStage } from './enemies';
 import { FORM_NAMES } from './formNames';
 import { FORM_LINES, allTemplates, fill, foeKind, narrateTurn, type NarrCtx, type Seg } from './narration';
 import { QUALITY_PARAMS, WUXUE, WUXUE_IDS, formKey } from './wuxue';
+import { legacyStage } from './legacyStage.testutil';
 
 const text = (segs: Seg[]) => segs.map((s) => s.v).join('');
 const DOC = resolve(process.cwd(), '../docs/rules/copy/battle-narration.md');
@@ -102,7 +102,7 @@ describe('确定性', () => {
 
   it('整场战斗重放文字一致', () => {
     const seed = () => { let x = 42; return () => ((x = (x * 16807) % 2147483647) / 2147483647); };
-    const e = getStage(1, 0, 5);
+    const e = legacyStage(1, 0, 5);
     const b = makeBuild('huashan', 2, 3, 0);
     const loadout = [{ id: 'liuyunjian', name: '流云剑法', p: 0.25, forms: [
       { key: 'liuyunjian:1', name: '第一式', mult: 1.3, effect: '必暴' as const, fx: 0, cost: 25, cd: 2 },

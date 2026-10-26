@@ -3,7 +3,7 @@
  * 玩家可见文案唯一冻结源：docs/rules/copy/retire.md。
  * 只搬运定稿数值与冻结文案，禁止在此调参/改写。
  */
-import { allStages, stageKey, trackDepth, trackLength, type EnemyTag } from './enemies';
+import { allStages, isChapterBoss, mapDef, stageKey, type EnemyTag } from './enemies';
 
 export type RepNodeId =
   | 'chongchu_jianghu' | 'qingzhuang_shanglu' | 'gaixian_yizhe' | 'baoluo_wanxiang' | 'huiyan_shizhu'
@@ -147,31 +147,32 @@ export function outputMult(peakRealm: number, ganwuLevel: number): number {
 
 /** 基础声望 = 10 × 本世乘区加权有效时长（小时）；在线全额、离线 × 60% */
 export const BASE_REP_PER_HOUR = 10;
-/** 行为乘数「打到自己的前沿」（economy.md §1.2） */
-export const FRONT_MULT = 1.2;
+/** 行为乘数「打到自己的前沿」（economy.md §1.2）：深浅改按卷后几乎每世都拿得到，由 1.2 降为 1.1，对齐旧结构约七成触发的期望 */
+export const FRONT_MULT = 1.1;
 /** 成就层（economy.md §1.3）：一次性，按当前乘区 × 系数给，即时入账 */
-export const FAME_ELITE = 6.4;
-export const FAME_BOSS = 24;
+/** 卷章图关后精英 84、Boss 28（原 35 / 9），单价 ×0.7 保成就层约占累计声望 7%（living-jianghu/design.md §2.7） */
+export const FAME_ELITE = 4.5;
+export const FAME_BOSS = 16.8;
 export const FAME_MERIDIAN = 80;
 
-/** 段末 Boss 关卡键 → 深浅（难度优先、同档比图序，economy.md §1.2）；图 1 初入中段的头目不计深浅 */
+/** 章末 Boss 关卡键 → 深浅 = 所在卷（economy.md §1.2）；同卷并排各章一样深 */
 const BOSS_DEPTH: ReadonlyMap<string, number> = new Map(
   allStages()
-    .filter((e) => e.kind === 'boss' && e.stage === trackLength(e.map, e.tier))
-    .map((e) => [stageKey(e.map, e.tier, e.stage), trackDepth(e.map, e.tier)]),
+    .filter((e) => e.kind === 'boss' && isChapterBoss(e.map, e.stage))
+    .map((e) => [stageKey(e.map, e.stage), mapDef(e.map).vol]),
 );
 /** 名号键：精英与所有 Boss（含头目）首次击败都给名号声望（economy.md §1.3） */
 const FAME_KIND: ReadonlyMap<string, 'elite' | 'boss'> = new Map(
   allStages()
     .filter((e) => e.kind !== 'normal')
-    .map((e) => [stageKey(e.map, e.tier, e.stage), e.kind as 'elite' | 'boss']),
+    .map((e) => [stageKey(e.map, e.stage), e.kind as 'elite' | 'boss']),
 );
 export const isBossKey = (key: string) => FAME_KIND.get(key) === 'boss';
 export const isEliteKey = (key: string) => FAME_KIND.get(key) === 'elite';
 /** 该键是否是计深浅的段末 Boss */
 export const bossDepthOf = (key: string) => BOSS_DEPTH.get(key) ?? 0;
 
-/** 本世击败过的最深段末 Boss（深浅 = 难度 × 10 + 图序）；一个都没打过为 0 */
+/** 本世击败过的最深章末 Boss（深浅 = 卷序）；一个都没打过为 0 */
 export function deepestBoss(clearedStages: readonly string[]): number {
   return clearedStages.reduce((d, k) => Math.max(d, BOSS_DEPTH.get(k) ?? 0), 0);
 }

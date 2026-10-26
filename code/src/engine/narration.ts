@@ -44,9 +44,11 @@ export interface NarrCtx {
 const BEAST_RE = /犬|狼|虎|豹|熊|蛇|猪|猿|鹰|狐|蛟|兽/;
 const MASTER_RE = /剑客|刀客|武者|镖师|僧|道人|游侠|都督|寨主|头目|头子/;
 
-/** 有绰号（「」）或精英 / Boss 一律算高手；名字带兽类字算野兽；带门派 / 行当字算高手；其余是草莽 */
-export function foeKind(enemy: Pick<EnemyDef, 'name' | 'kind'>): FoeKind {
+/** 关卡表写明口吻的从之；否则有绰号（「」）或精英 / Boss 一律算高手；名字带兽类字算野兽；带门派 / 行当字算高手；其余是草莽 */
+export function foeKind(enemy: Pick<EnemyDef, 'name' | 'kind'> & { foe?: EnemyDef['foe'] }): FoeKind {
   const n = enemy.name;
+  // 关卡表写明口吻的以关卡表为准（如「千蛇窟门人」带蛇字却是高手）
+  if (enemy.foe) return enemy.foe;
   if (n.startsWith('「') || enemy.kind !== 'normal') return 'master';
   if (BEAST_RE.test(n)) return 'beast';
   if (MASTER_RE.test(n)) return 'master';

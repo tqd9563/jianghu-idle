@@ -4,11 +4,11 @@
  * 数值出自 docs/systems/sect-neigong/spec.md §5（任务收益按 S12）与名录 §5；绝学只换残页（W2）。不称玩家为弟子：按钮写「拜入 华山」。
  */
 import { useState } from 'react';
-import { mapName } from '../engine/enemies';
+import { volName, VOLUMES } from '../engine/enemies';
 import { NEIGONG, TIERS, TIER_COUNT } from '../engine/neigong';
 import { EFFECT_TAG, WUXUE, effectText, formName } from '../engine/wuxue';
-import { SECTS, SECT_MAPS, SECT_TASKS, sectsOnMap, type SectId, type SectTaskKind } from '../engine/sect';
-import { mapUnlocked, sectShelfOf, useGameStore, type SectShelfRow } from '../store/gameStore';
+import { SECTS, SECT_VOLS, SECT_TASKS, sectsInVol, type SectId, type SectTaskKind } from '../engine/sect';
+import { volUnlocked, sectShelfOf, useGameStore, type SectShelfRow } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 
 const TASK_KINDS: SectTaskKind[] = ['short', 'long'];
@@ -25,11 +25,11 @@ export function SectPane() {
 }
 
 /** 各图的一句说明：开局那图直接可拜，后两图要先解锁 */
-const MAP_NOTE: Record<number, string> = { 1: '开局 · 境界 3 起可拜', 2: '打通村外小径 · 初入 Boss 后，三派弟子行走江湖', 3: '打通洛阳近郊 · 初入 Boss 后' };
+const VOL_NOTE: Record<number, string> = { 2: '境界 3 起可拜', 3: '打穿两淮任一家门户后，三派弟子行走江湖', 4: '打穿江南任一家门户后' };
 
 function SectJoin() {
   const s = useGameStore();
-  const unlocked = (m: number) => mapUnlocked(m as 1 | 2 | 3, s.tiersUnlocked ?? ['1-0']);
+  const unlocked = (v: number) => volUnlocked(v, s.mapsUnlocked ?? [1]);
   const [pick, setPick] = useState<SectId>('huashan');
   return (
     <>
@@ -39,17 +39,17 @@ function SectJoin() {
           <div className="sub">择一派拜入，本世有效，下一世重选</div>
         </div>
       </header>
-      {SECT_MAPS.map((m) => {
+      {SECT_VOLS.map((m) => {
         const far = !unlocked(m);
         return (
           <div key={m} className="jh-sect-map">
-            <div className="mh"><span className="serif">{mapName(m)}</span><small>{far ? '未到此地 · ' : ''}{MAP_NOTE[m]}</small></div>
-            <div className="jh-sect-pick" role="radiogroup" aria-label={`${mapName(m)}的门派`}>
-              {sectsOnMap(m).map((id) => {
+            <div className="mh"><span className="serif">{volName(m)} · {VOLUMES[m - 1].region}</span><small>{far ? '未到此地 · ' : ''}{VOL_NOTE[m]}</small></div>
+            <div className="jh-sect-pick" role="radiogroup" aria-label={`${VOLUMES[m - 1].region}的门派`}>
+              {sectsInVol(m).map((id) => {
                 const d = SECTS[id];
                 return (
                   <button key={id} type="button" className={`jh-sect-opt${far ? ' far' : ''}`} role="radio" aria-checked={pick === id}
-                    disabled={far} data-tip={far ? `到了${mapName(m)}才能遇上` : undefined} onClick={() => setPick(id)}>
+                    disabled={far} data-tip={far ? `到了${VOLUMES[m - 1].region}才能遇上` : undefined} onClick={() => setPick(id)}>
                     <span className="n">{d.name}</span>
                     <span className="o">{d.origin}</span>
                     <span className="cat">{d.cats.map((c) => <span key={c} className="wtag">{c}</span>)}</span>
@@ -67,7 +67,7 @@ function SectJoin() {
       })}
       <div className="jh-sect-foot">
         <span className="note">战力不因拜哪派而变，本门绝学练得快两成</span>
-        <button type="button" className="jh-btn" disabled={!unlocked(SECTS[pick].map)} onClick={() => s.joinSect(pick)}>拜入 {SECTS[pick].name}</button>
+        <button type="button" className="jh-btn" disabled={!unlocked(SECTS[pick].vol)} onClick={() => s.joinSect(pick)}>拜入 {SECTS[pick].name}</button>
       </div>
     </>
   );

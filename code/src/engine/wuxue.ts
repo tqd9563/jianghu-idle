@@ -296,14 +296,18 @@ export const QINGZHUANG_DISCOUNT = 0.8;
 
 export type BossDrop = { kind: 'wuxue'; wuxue: WuxueId } | { kind: 'neigong'; which: 'own' | 'other' };
 
-/** Boss 首次击杀（跨世只算第一次）必掉（spec §4.1 / §4.3）：键为前沿 `{图}-{难度}` */
+/**
+ * Boss 首次击杀（跨世只算第一次）必掉（spec §4.1 / §4.3）：键为卷 `v{卷}`，该卷任一章门户 Boss 首杀即得。
+ * 卷章图关改造时按原各前沿 Boss 所在的境界段改挂，内功两件对齐原来的境界门槛（节奏守卫实测：上乘内功早到 10 天会让境界 5 提前一周）：
+ * 原 1-0 → 卷四；2-0（上乘内功）→ 卷六（境界 3 段门槛），1-1 → 卷五；1-2（他路上乘内功）→ 卷八（境界 4 段门槛），3-0、2-1 → 卷七、卷九
+ */
 export const BOSS_DROPS: Record<string, BossDrop> = {
-  '1-0': { kind: 'wuxue', wuxue: 'jinghongjian' },
-  '1-1': { kind: 'wuxue', wuxue: 'fuhuquan' },
-  '2-0': { kind: 'neigong', which: 'own' },
-  '3-0': { kind: 'wuxue', wuxue: 'feihuangshi' },
-  '2-1': { kind: 'wuxue', wuxue: 'duanshuidao' },
-  '1-2': { kind: 'neigong', which: 'other' },
+  v4: { kind: 'wuxue', wuxue: 'jinghongjian' },
+  v5: { kind: 'wuxue', wuxue: 'fuhuquan' },
+  v6: { kind: 'neigong', which: 'own' },
+  v7: { kind: 'wuxue', wuxue: 'feihuangshi' },
+  v8: { kind: 'neigong', which: 'other' },
+  v9: { kind: 'wuxue', wuxue: 'duanshuidao' },
 };
 
 /** 掉落物已拥有时改给的银两（书肆价的一成；非书肆货按上乘武学 3,000、上乘内功 5,000 折算） */

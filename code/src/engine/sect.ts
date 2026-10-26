@@ -4,7 +4,6 @@
  * 原三派 id 沿用路数 id（华山 = huashan …）；新增六派不出绝学内功（W15）。
  * 贡献每世清零，换得的残页 / 内功永久保留。价格与任务收益标 [待 sim]，禁止在此之外调参。
  */
-import type { MapId } from './enemies';
 import { NEIGONG, neigongOf, type NeigongId } from './neigong';
 import { QUALITY_PARAMS, WUXUE, type WuxueCat, type WuxueId } from './wuxue';
 
@@ -15,7 +14,8 @@ export interface SectDef {
   id: SectId;
   name: SectName;
   /** 这一派在哪张图上行走江湖（解锁该图初入即可拜，W13） */
-  map: MapId;
+  /** 拜入所在卷：该卷赶路图解锁后可拜（卷章图关改造前为图 1–3，对应卷二–卷四） */
+  vol: number;
   /** 拜入卡片上的一句气质 */
   origin: string;
   /** 所长：功夫路子一句 */
@@ -32,56 +32,56 @@ export interface SectDef {
 
 export const SECTS: Record<SectId, SectDef> = {
   huashan: {
-    id: 'huashan', name: '华山', map: 1, origin: '剑气凌霄，君子风骨。', signature: '剑走轻灵，蓄势连斩，越打越快', cats: ['剑'],
+    id: 'huashan', name: '华山', vol: 2, origin: '剑气凌霄，君子风骨。', signature: '剑走轻灵，蓄势连斩，越打越快', cats: ['剑'],
     neigong: neigongOf('huashan', '绝学'), wuxue: ['cangyajianjue', 'luoxingjian'], errands: ['巡守玉女峰', '护送药材下山'],
   },
   shaolin: {
-    id: 'shaolin', name: '少林', map: 1, origin: '禅武合一，刚猛正大。', signature: '棍腿刚猛，护体反震，攻守一体', cats: ['棍', '腿'],
+    id: 'shaolin', name: '少林', vol: 2, origin: '禅武合一，刚猛正大。', signature: '棍腿刚猛，护体反震，攻守一体', cats: ['棍', '腿'],
     neigong: neigongOf('shaolin', '绝学'), wuxue: ['luohanfumogun', 'xiangmochufa'], errands: ['后山担水', '护送经卷出寺'],
   },
   tangmen: {
-    id: 'tangmen', name: '唐门', map: 1, origin: '蜀中暗器，淬毒无声。', signature: '暗器淬毒，叠毒引爆，远攻为先', cats: ['暗器'],
+    id: 'tangmen', name: '唐门', vol: 2, origin: '蜀中暗器，淬毒无声。', signature: '暗器淬毒，叠毒引爆，远攻为先', cats: ['暗器'],
     neigong: neigongOf('tangmen', '绝学'), wuxue: ['luoyingfeizhen', 'qianjibiao'], errands: ['采药试毒', '押送暗器出蜀'],
   },
   gaibang: {
-    id: 'gaibang', name: '丐帮', map: 2, origin: '草莽豪侠，醉里狂歌。', signature: '棍拳泼辣，招式质朴，耐打耐缠', cats: ['棍', '拳'],
+    id: 'gaibang', name: '丐帮', vol: 3, origin: '草莽豪侠，醉里狂歌。', signature: '棍拳泼辣，招式质朴，耐打耐缠', cats: ['棍', '拳'],
     neigong: null, wuxue: ['lianhualuodigun'], errands: ['城门口打探消息', '护送粮车过境'],
   },
   wudang: {
-    id: 'wudang', name: '武当', map: 2, origin: '道家功夫，以柔克刚。', signature: '拳腿绵柔，以静制动，借力卸力', cats: ['拳', '腿'],
+    id: 'wudang', name: '武当', vol: 3, origin: '道家功夫，以柔克刚。', signature: '拳腿绵柔，以静制动，借力卸力', cats: ['拳', '腿'],
     neigong: null, wuxue: ['zhenwudangmoquan'], errands: ['洒扫紫霄宫', '下山送符'],
   },
   emei: {
-    id: 'emei', name: '峨眉', map: 2, origin: '佛门清修，清冷点穴。', signature: '掌指清冷，点穴封脉，先手制敌', cats: ['掌', '指'],
+    id: 'emei', name: '峨眉', vol: 3, origin: '佛门清修，清冷点穴。', signature: '掌指清冷，点穴封脉，先手制敌', cats: ['掌', '指'],
     neigong: null, wuxue: ['hanchanqiqiezhang'], errands: ['金顶添灯油', '护送香客上山'],
   },
   kongtong: {
-    id: 'kongtong', name: '崆峒', map: 3, origin: '西陲刀客，大漠风沙。', signature: '刀法狂放，大开大合，势大力沉', cats: ['刀'],
+    id: 'kongtong', name: '崆峒', vol: 4, origin: '西陲刀客，大漠风沙。', signature: '刀法狂放，大开大合，势大力沉', cats: ['刀'],
     neigong: null, wuxue: ['tianhedaoxuandao'], errands: ['巡哨烽燧', '押镖穿沙碛'],
   },
   yanmen: {
-    id: 'yanmen', name: '雁门世家', map: 3, origin: '边关将门，枪马世家。', signature: '枪出如龙，长攻远刺，一往无前', cats: ['枪'],
+    id: 'yanmen', name: '雁门世家', vol: 4, origin: '边关将门，枪马世家。', signature: '枪出如龙，长攻远刺，一往无前', cats: ['枪'],
     neigong: null, wuxue: ['bawangxiejiaqiang'], errands: ['操演枪阵', '巡边三日'],
   },
   baigu: {
-    id: 'baigu', name: '百蛊门', map: 3, origin: '苗疆蛊毒。', signature: '掌指带蛊，毒入经脉，缠绵不绝', cats: ['掌', '指'],
+    id: 'baigu', name: '百蛊门', vol: 4, origin: '苗疆蛊毒。', signature: '掌指带蛊，毒入经脉，缠绵不绝', cats: ['掌', '指'],
     neigong: null, wuxue: ['qianshesixinzhang'], errands: ['采蛊入山', '送蛊出寨'],
   },
 };
 
 export const SECT_IDS: SectId[] = ['huashan', 'shaolin', 'tangmen', 'gaibang', 'wudang', 'emei', 'kongtong', 'yanmen', 'baigu'];
-/** 按地图分组（名录 §5.3） */
-export const SECT_MAPS: readonly MapId[] = [1, 2, 3];
-export const sectsOnMap = (map: MapId): SectId[] => SECT_IDS.filter((id) => SECTS[id].map === map);
+/** 按卷分组（名录 §5.3） */
+export const SECT_VOLS: readonly number[] = [2, 3, 4];
+export const sectsInVol = (vol: number): SectId[] => SECT_IDS.filter((id) => SECTS[id].vol === vol);
 
 /** 拜入所需境界 */
 export const SECT_REALM = 3;
 
-/** 拜山传闻（spec §5.1，名录 §5.3）：突破入境界 2 时说图 1 三派；解锁图 2 / 图 3 初入时各说一次新派 */
+/** 拜山传闻（spec §5.1，名录 §5.3）：突破入境界 2 时说卷二三派；解锁卷三 / 卷四时各说一次新派 */
 export const RUMORS: Record<1 | 2 | 3, string> = {
   1: '华山、少林、唐门广开山门，修为至小有所成者，可往拜山。',
-  2: '洛阳近郊近来热闹：丐帮、武当、峨眉的弟子都在此行走，有心拜师的，不妨去碰一碰。',
-  3: '华山古道上多了几路生面孔：崆峒的刀客、雁门世家的枪手，还有自苗疆来的百蛊门人。',
+  2: '姑苏驿道一带近来热闹：丐帮、武当、峨眉的弟子都在此行走，有心拜师的，不妨去碰一碰。',
+  3: '瓯江驿道上多了几路生面孔：崆峒的刀客、雁门世家的枪手，还有自苗疆来的百蛊门人。',
 };
 export const RUMOR = RUMORS[1];
 

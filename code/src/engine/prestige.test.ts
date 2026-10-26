@@ -6,9 +6,10 @@ import {
   FRONT_MULT, REP_NODES, deepestBoss, ganwuAffordable, ganwuPrice, isBossKey, isEliteKey,
   diyunBonus, diyunCum, diyunGainAt, diyunPrice, outputMult, settleRetire, suhuiTotal,
 } from './prestige';
-import { allStages, stageKey, trackLength, type MapId, type TierId } from './enemies';
+import { allStages, stageKey, trackLength, VOLUMES } from './enemies';
 
-const boss = (map: MapId, tier: TierId) => stageKey(map, tier, trackLength(map, tier));
+/** 第 v 卷第 c 章门户末关（章末 Boss） */
+const boss = (v: number, c = 1) => { const g = VOLUMES[v - 1].maps[2 * c]; return stageKey(g, trackLength(g)); };
 
 describe('宿慧（economy.md §2）', () => {
   it('首达 2/3/4/5 依次 +1.6 / +3.7 / +7.6 / +13.4，累计', () => {
@@ -44,13 +45,13 @@ describe('归隐声望（economy.md §1）', () => {
     expect(r.total).toBe(5984);
   });
 
-  it('打到自己的前沿 ×1.2：本世最深 Boss 不浅于历来最深', () => {
-    const cleared = [boss(1, 0), boss(2, 0)];
+  it('打到自己的前沿 ×1.1：本世最深 Boss 不浅于历来最深', () => {
+    const cleared = [boss(1), boss(2)];
     const hit = settleRetire({ ...base, weightedHours: 598.4, clearedStages: cleared, deepestBossEver: 2 });
     expect(hit.frontReached).toBe(true);
     expect(hit.frontMult).toBe(FRONT_MULT);
-    expect(hit.total).toBe(Math.floor(5984 * 1.2));
-    const miss = settleRetire({ ...base, weightedHours: 598.4, clearedStages: [boss(1, 0)], deepestBossEver: 2 });
+    expect(hit.total).toBe(Math.floor(5984 * 1.1));
+    const miss = settleRetire({ ...base, weightedHours: 598.4, clearedStages: [boss(1)], deepestBossEver: 2 });
     expect(miss.frontReached).toBe(false);
     expect(miss.total).toBe(5984);
   });
@@ -68,21 +69,21 @@ describe('归隐声望（economy.md §1）', () => {
   });
 });
 
-describe('Boss 深浅与精英键（难度优先、同档比图序，economy.md §1.2）', () => {
-  it('只有段末 Boss 计深浅；精英不计', () => {
-    expect(deepestBoss([boss(1, 0)])).toBe(1);
-    expect(deepestBoss([boss(1, 0), boss(3, 0)])).toBe(3);
-    expect(deepestBoss([boss(3, 0), boss(1, 1)])).toBe(11);   // 历练 · 图 1 深于 初入 · 图 3
-    const elite = allStages().find((e) => e.map === 1 && e.tier === 0 && e.kind === 'elite')!;
-    expect(deepestBoss([stageKey(1, 0, elite.stage)])).toBe(0);
-    expect(isBossKey(stageKey(1, 0, elite.stage))).toBe(false);
+describe('Boss 深浅与精英键（深浅 = 卷序，economy.md §1.2）', () => {
+  it('只有章末 Boss 计深浅、深浅即所在卷；同卷并排各章一样深；精英不计', () => {
+    expect(deepestBoss([boss(1)])).toBe(1);
+    expect(deepestBoss([boss(1), boss(3)])).toBe(3);
+    expect(deepestBoss([boss(5, 1)])).toBe(deepestBoss([boss(5, 3)]));
+    const elite = allStages().find((e) => e.map === 2 && e.kind === 'elite')!;
+    expect(deepestBoss([stageKey(2, elite.stage)])).toBe(0);
+    expect(isBossKey(stageKey(2, elite.stage))).toBe(false);
   });
   it('精英、Boss 键可辨认，普通关都不是', () => {
     const elite = allStages().find((e) => e.kind === 'elite')!;
-    expect(isEliteKey(stageKey(elite.map, elite.tier, elite.stage))).toBe(true);
-    expect(isBossKey(boss(2, 1))).toBe(true);
-    expect(isEliteKey(boss(2, 1))).toBe(false);
-    expect(isBossKey(stageKey(1, 0, 1))).toBe(false);
+    expect(isEliteKey(stageKey(elite.map, elite.stage))).toBe(true);
+    expect(isBossKey(boss(2, 2))).toBe(true);
+    expect(isEliteKey(boss(2, 2))).toBe(false);
+    expect(isBossKey(stageKey(1, 1))).toBe(false);
   });
 });
 

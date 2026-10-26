@@ -2,7 +2,7 @@
  * 战斗引擎 golden 对照（规格书 §12 实现路线图前置）：
  * fixture 由 docs/systems/sim/export_fixtures.py 从 mvp0_sim.py 导出，
  * EV 模式结果（胜负/回合数/剩余血量比）必须逐数一致。敌人直接取 fixture 里的属性——
- * 长线起关卡表改由 export_stage_table.py 生成（content.md §2.0），旧三图关卡已退役，本测试只守战斗结算。
+ * 长线起关卡表改由 export_stage_line.py 生成（content.md §2.0，卷章图关），旧三图关卡已退役，本测试只守战斗结算。
  * 若本测试失败：先查实现是否偏离 sim，需要改规则时先改 sim 再重导 fixture。
  * 气血 / 攻击 / 防御按 STAT_SCALE 换算（sim 保持原尺度，content.md §1 v2.3）。
  */
@@ -24,7 +24,7 @@ describe('golden 对照 · EV 战斗 vs mvp0_sim.py', () => {
     const label = `${c.route} 境界${c.realm} Lv${c.lv} 节点${c.nodes} vs ${c.map}-${c.stage}`;
     it(label, () => {
       const enemy: EnemyDef = {
-        map: 1, tier: 0, stage: c.stage, name: `${c.map}-${c.stage}`, kind: 'normal', recommendedRealm: 1,
+        map: 1, stage: c.stage, name: `${c.map}-${c.stage}`, kind: 'normal', recommendedRealm: 1,
         hp: c.enemy.hp * STAT_SCALE, atk: c.enemy.atk * STAT_SCALE, def: c.enemy.dfs * STAT_SCALE, hit: c.enemy.hit, dodge: c.enemy.dodge,
         tags: c.enemy.tags as EnemyTag[], reward: { neili: 0, silver: 0, xp: 0 },
       };

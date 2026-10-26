@@ -43,7 +43,7 @@ function stateOf(c: Checkpoint, mastered: boolean): State {
 }
 function enemyAt(x: number): EnemyDef {
   const s = enemyStatsAt(x);
-  return { map: 1, tier: 0, stage: 1, name: 'x', ...s, tags: [], kind: 'normal', recommendedRealm: 1, reward: { neili: 0, silver: 0, xp: 0 }, x } as EnemyDef;
+  return { map: 1, stage: 1, name: 'x', ...s, tags: [], kind: 'normal', recommendedRealm: 1, reward: { neili: 0, silver: 0, xp: 0 }, x } as EnemyDef;
 }
 function winrate(s: State, x: number, seed: number): number {
   const b = playerBuild(s), lo = buildLoadout(s), qiMax = qiMaxOf(s), rng = lcg(seed);

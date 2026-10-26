@@ -34,7 +34,7 @@ const REGIONS: Record<number, { art: string; spots: Record<string, [number, numb
   },
   3: {
     art: '/art/jianghu-region-jiangnan.jpg',
-    spots: { 姑苏驿道: [14.5, 15], 云栈香市: [12, 40], 千岩山门: [13.5, 77], 顾家绸庄: [50, 21], 镜湖别业: [79, 23], 秦淮画舫: [47, 54], 十里花阵: [82, 74] },
+    spots: { 姑苏驿道: [14.5, 15], 云栈香市: [15, 40], 千岩山门: [13.5, 77], 顾家绸庄: [50, 21], 镜湖别业: [79, 23], 秦淮画舫: [47, 54], 十里花阵: [84, 78] },
   },
 };
 
@@ -87,9 +87,11 @@ const SCENES: Record<string, { file: string; path: 'A' | 'B' | 'C' }> = {
   秦淮画舫: { file: 'qinhuai-huafang', path: 'A' }, 十里花阵: { file: 'shili-huazhen', path: 'C' },
 };
 
-/** 沿折线按弧长取 n 个点（模板 20 点，图里关数 11–20 不等） */
+/**
+ * 沿折线按画面上的弧长等分取 n 个点（图里关数 11–20 不等）。
+ * 模板点本身疏密不匀（远处台阶挤在一起），一律重取，各关在画面上间距相同。
+ */
 function resample(pts: readonly Pt[], n: number): Pt[] {
-  if (n === pts.length) return [...pts];
   const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], (p[1] - pts[i][1]) * 0.5625));
   const total = seg.reduce((a, b) => a + b, 0);
   return Array.from({ length: n }, (_, k) => {

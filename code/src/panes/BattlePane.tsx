@@ -233,7 +233,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
             ? <><span className={`seal ${camp === '正' ? 'aide' : 'boss'} camp`}>{camp}</span>{viewDef.faction} · {viewDef.layer === 'gate' ? '门户' : '外围'}</>
             : '赶路'}
         </div>
-        <div className="prog">{open ? (doneCount >= total ? '已破' : <>已过 <b>{doneCount}</b> / {total} 关</>) : null}</div>
+        <div className="prog">{open ? <>已过 <b>{doneCount}</b> / {total} 关</> : null}</div>
       </StageScene>
 
       {!open ? (
@@ -262,9 +262,8 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     >{tagLabel(t)}</span>
                   ))}
                   {foeHolder
-                    ? <span data-tip={`第 ${cnNum(foeHolder.term + 1)} 任`}>{foeHolder.post.faction}{foeHolder.post.title}</span>
-                    : <span>第 {enemy.stage} 关</span>}
-                  <span> · 推荐境界 {enemy.recommendedRealm}</span>
+                    ? <span data-tip={`第 ${cnNum(foeHolder.term + 1)} 任 · 推荐境界 ${enemy.recommendedRealm}`}>{foeHolder.post.faction}{foeHolder.post.title}</span>
+                    : <span>第 {enemy.stage} 关 · 推荐境界 {enemy.recommendedRealm}</span>}
                 </>
               ),
               hp: enemy.hp * ehpPct, hpMax: enemy.hp,

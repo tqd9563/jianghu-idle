@@ -13,9 +13,9 @@ function lockedBy(map: MapNo): string {
   const m = mapDef(map);
   const vol = VOLUMES[m.vol - 1];
   if (m.layer === 'road') return m.vol > 1 ? `打穿${VOLUMES[m.vol - 2].region}任一家门户后开启` : '';
-  if (m.layer === 'outer') return `先走完${mapName(vol.maps[0])}`;
+  if (m.layer === 'outer') return `先通关${mapName(vol.maps[0])}`;
   const outer = vol.maps.find((id) => { const o = mapDef(id); return o.layer === 'outer' && o.chapter === m.chapter; })!;
-  return `先破${mapName(outer)}`;
+  return `先通关${mapName(outer)}`;
 }
 
 export function JianghuMap({ unlocked, cleared, hereVol, zoomVol, onZoom, onOpen }: {
@@ -87,7 +87,7 @@ export function JianghuMap({ unlocked, cleared, hereVol, zoomVol, onZoom, onOpen
             const broken = n >= total;
             const [x, y] = region.spot(m);
             const camp = d.faction ? factionStyle(d.faction)?.camp ?? '正' : null;
-            const prog = broken ? '已破' : n ? `${n} / ${total}` : `${total} 关`;
+            const prog = broken ? null : n ? `${n} / ${total}` : `${total} 关`;
             const cur = open && !broken && cleared.includes(stageKey(m, 1));
             return (
               <button
@@ -100,10 +100,13 @@ export function JianghuMap({ unlocked, cleared, hereVol, zoomVol, onZoom, onOpen
                 <span className="glow" />
                 <span className="mist"><i /><i /><i /></span>
                 <span className="lab">
-                  <span className="nm">{mapName(m)}{broken && <span className="po">破</span>}</span>
-                  <span className="sm">
-                    {camp ? <><span className={`al ${camp === '正' ? 'z' : 'x'}`}>{camp}</span>{d.faction} · {prog}</> : <>赶路 · {prog}</>}
-                  </span>
+                  <span className="nm">{mapName(m)}</span>
+                  {(camp || prog) && (
+                    <span className="sm">
+                      {camp && <><span className={`al ${camp === '正' ? 'z' : 'x'}`}>{camp}</span>{d.faction}</>}
+                      {prog && <>{camp ? ' · ' : '赶路 · '}{prog}</>}
+                    </span>
+                  )}
                 </span>
               </button>
             );

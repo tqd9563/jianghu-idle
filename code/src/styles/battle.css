@@ -16,7 +16,7 @@ html.bt-own-art .jh-art { display: none; }
 .page-battle .bt-map .map-in { position: absolute; inset: 0; transform-origin: 0 0; transition: transform .9s var(--ease-quart); }
 .page-battle .bt-map .art { position: absolute; inset: 0; background-position: center; background-size: cover; background-repeat: no-repeat; filter: brightness(0.92) saturate(0.7); }
 .page-battle .bt-map.zoomed .art { filter: brightness(0.68) saturate(0.55); transition: filter .6s .3s; }
-.page-battle .vlab { position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--k))); display: grid; justify-items: center; gap: 4px; border: 0; background: none; padding: 6px 8px; cursor: pointer; transition: opacity .35s; }
+.page-battle .vlab { isolation: isolate; position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--k))); display: grid; justify-items: center; gap: 4px; border: 0; background: none; padding: 6px 8px; cursor: pointer; transition: opacity .35s; }
 .page-battle .vlab .dot { width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; background: oklch(0.12 0.01 262 / 0.75); box-shadow: inset 0 0 0 1px oklch(0.6 0.02 262 / 0.7); }
 .page-battle .vlab .dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.42 0.012 262); }
 .page-battle .vlab .nm { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.25em; color: var(--faint); text-shadow: 0 0 8px #000, 0 0 3px #000; white-space: nowrap; }
@@ -47,7 +47,9 @@ html.bt-own-art .jh-art { display: none; }
 @keyframes bt-drift { from { transform: translateX(-4%); } to { transform: translateX(5%); } }
 .page-battle .spot.locked { cursor: default; }
 .page-battle .spot.locked .mist { opacity: 1; }
-.page-battle .spot .lab { position: absolute; left: 50%; top: 96%; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; white-space: nowrap; pointer-events: none; }
+.page-battle .spot .lab { position: absolute; left: 50%; top: 96%; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; white-space: nowrap; pointer-events: none; isolation: isolate; }
+/* 字下一团墨晕：浅色地图上也认得清 */
+.page-battle .spot .lab::before, .page-battle .vlab::before { content: ''; position: absolute; inset: -6px -14px; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, oklch(0.12 0.012 262 / 0.78), oklch(0.12 0.012 262 / 0.45) 60%, transparent); filter: blur(4px); pointer-events: none; }
 .page-battle .spot .nm { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000, 0 0 14px #000; display: flex; align-items: center; gap: 6px; }
 .page-battle .spot .sm { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); text-shadow: 0 0 6px #000, 0 0 3px #000; }
 .page-battle .spot .al { font-family: var(--font-display); font-size: 10.5px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.8); }
@@ -136,17 +138,18 @@ html.bt-own-art .jh-art { display: none; }
 .page-battle .bt-band .bust.pt { background-position: center 30%; filter: grayscale(0.7) contrast(1.1) brightness(0.85); }
 .page-battle .bt-band .bust.hit { animation: bt-hit .32s ease-out; }
 @keyframes bt-hit { 0%, 100% { translate: 0; } 25% { translate: -7px 0; filter: brightness(1.5); } 60% { translate: 5px 0; } }
-.page-battle .bt-band .side { padding: 0 0 80px; min-width: 0; }
+/* 双方从同一条顶线排起：一边多出标签、石印或名号声望行时只往下长，姓名与气血条两边等高 */
+.page-battle .bt-band .side { align-self: start; padding: 58px 0 90px; min-width: 0; }
 .page-battle .bt-band .side.enemy { text-align: right; }
 .page-battle .bt-band .side .name { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .page-battle .bt-band .side .name .hao { font-size: 19px; color: var(--foe); letter-spacing: 0.06em; margin-right: 4px; }
 .page-battle .bt-band .side .name.ko { color: var(--faint); text-decoration: line-through; text-decoration-thickness: 2px; }
-.page-battle .bt-band .side .desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.page-battle .bt-band .side .desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; min-height: 22px; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
 .page-battle .bt-band .side.enemy .desc { justify-content: flex-end; }
 .page-battle .bt-band .side .desc [data-tip] { text-decoration: underline dotted oklch(0.6 0.02 262); text-underline-offset: 3px; cursor: help; }
 .page-battle .bt-band .seal-k { font-size: 12px; font-family: var(--font-display); letter-spacing: 0.1em; padding: 1px 6px; border-radius: 3px; color: var(--ink-gold); box-shadow: inset 0 0 0 1px var(--ink-gold); font-weight: 600; transform: rotate(-4deg); }
 .page-battle .bt-band .seal-k.boss { color: var(--cinnabar); box-shadow: inset 0 0 0 1px var(--cinnabar); }
-.page-battle .bt-band .vs { padding: 0 0 112px; text-align: center; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); }
+.page-battle .bt-band .vs { align-self: start; padding: 66px 0 0; text-align: center; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); }
 /* 气血 / 真气：一行「名目 · 现值 / 上限」，下一笔干笔刷痕；敌方镜像。受击时着色立刻缩短，浅色残影随后跟上 */
 .page-battle .bt-band .mt { margin-top: 12px; }
 .page-battle .bt-band .mt.qi { margin-top: 8px; }
@@ -305,9 +308,10 @@ html.bt-own-art .jh-art { display: none; }
   .page-battle .bt-duel { margin: 0; }
   .page-battle .bt-band { grid-template-columns: 1fr 40px 1fr; min-height: 0; padding: 24px 12px 10px; gap: 0 10px; }
   .page-battle .bt-band .bust { display: none; }
-  .page-battle .bt-band .side { padding-bottom: 70px; }
+  .page-battle .bt-band .side { padding: 0 0 70px; }
+  .page-battle .bt-band .side .desc { flex-wrap: wrap; white-space: normal; }
   .page-battle .bt-band .side .name { font-size: 19px; }
-  .page-battle .bt-band .vs { padding-bottom: 96px; font-size: 20px; }
+  .page-battle .bt-band .vs { padding: 20px 0 0; font-size: 20px; }
   .page-battle .bt-duel-btn { min-width: 0; width: min(320px, 90%); }
   /* 场景缩到一屏宽：关卡点缩小，只留当前一关的关名 */
   .page-battle .nd > .lb { display: none; }

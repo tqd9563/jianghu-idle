@@ -5,6 +5,7 @@
  * savedAt 时间戳即离线时长的权威来源，出关结算见 engine/offlineRewards.ts + store.init。
  */
 
+import { newWorldSeed } from '../engine/roster';
 import { STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
 import type { RouteId } from '../engine/content';
 import { WUXUE, type WuxueId } from '../engine/wuxue';
@@ -30,8 +31,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v16 = 熟练阈值重标（issue #79）：每式出招数按「新圆满 ÷ 旧圆满」放大，已解锁的式不收回。
  * v17 = 真气展示尺度 ×10（battle-loot/design.md 裁决 48）：装备「蕴气」词条数值 ×10。
  * v18 = 卷章图关（living-jianghu/design.md §2.2）：取消三档难度，关卡键改为「图 × 关」，按当量折算进度与首杀。
+ * v19 = 江湖名册（living-jianghu/design.md §2.1）：补世界种子，旧存档的江湖从这一世起推演，前世的击败不补记。
  */
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -120,6 +122,7 @@ export function migrate<T>(state: T, fromVer: number, toVer: number): T {
   if (fromVer < 16 && toVer >= 16) out = migrateShulianV15ToV16(out);
   if (fromVer < 17 && toVer >= 17) out = migrateQiScaleV16ToV17(out);
   if (fromVer < 18 && toVer >= 18) out = migrateStageLineV17ToV18(out);
+  if (fromVer < 19 && toVer >= 19) out = migrateRosterV18ToV19(out);
   return out;
 }
 
@@ -468,6 +471,17 @@ const TRUE_BOOK_ROUTE: Record<string, RouteId> = {
  * - 秘籍阁集齐的真传 → 拥有同路数上乘内功；其余残页、遗篇与换线计数丢弃；
  * - 阅历保留数值（冻结）；悟性从中位 1.0 起步，下一世再随机。
  */
+/** v18 → v19：补世界种子与空的名册干预（旧存档没有击败记录可折，江湖从这一世起推演） */
+export function migrateRosterV18ToV19<T>(state: T): T {
+  const s = state as Record<string, unknown>;
+  return {
+    ...s,
+    worldSeed: typeof s.worldSeed === 'number' && s.worldSeed > 0 ? s.worldSeed : newWorldSeed(),
+    rosterKills: Array.isArray(s.rosterKills) ? s.rosterKills : [],
+    lifeDefeats: Array.isArray(s.lifeDefeats) ? s.lifeDefeats : [],
+  } as T;
+}
+
 export function migrateNeigongV7ToV8<T>(state: T): T {
   const s = state as Record<string, unknown>;
   if (!s || typeof s !== 'object') return state;

@@ -8,6 +8,7 @@
  */
 import lineData from './data/stage-line.json';
 import { STAT_SCALE } from './content';
+import { postOfStage } from './roster';
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
@@ -97,6 +98,8 @@ export interface EnemyDef {
   final?: boolean;
   /** 战报口吻；空串按名字判断（narration.ts foeKind） */
   foe?: FoeTone;
+  /** 精英与 Boss 的岗位称谓（管事、长老、罗汉堂首座……，roster.ts）；普通关无 */
+  post?: string;
 }
 
 /** Python round()：banker's rounding（四舍六入五取偶），digits 位小数 */
@@ -171,12 +174,21 @@ export function trackLength(map: MapId): number {
   return ROW_OF.get(map)?.stages.length ?? 0;
 }
 
+/**
+ * 本世精英与 Boss 的在任者名（江湖名册，roster.ts）：由 store 在每世开局写入；
+ * 没写入时（测试、名册之外的关）用关卡表里的岗位称呼。
+ */
+let STAGE_NAMES: ReadonlyMap<string, string> = new Map();
+export function setStageNames(names: ReadonlyMap<string, string>): void {
+  STAGE_NAMES = names;
+}
+
 export function getStage(map: MapId, stage: number): EnemyDef {
   const row = ROW_OF.get(map)?.stages[stage - 1];
   if (!row) throw new Error(`no stage ${stageKey(map, stage)}`);
   return {
     map, stage,
-    name: row.name,
+    name: STAGE_NAMES.get(stageKey(map, stage)) ?? row.name,
     ...enemyStatsAt(row.x, row.tags as EnemyTag[]),
     tags: row.tags as EnemyTag[],
     kind: row.kind,
@@ -185,6 +197,7 @@ export function getStage(map: MapId, stage: number): EnemyDef {
     x: row.x,
     final: row.final ?? false,
     foe: row.foe as FoeTone,
+    post: postOfStage(stageKey(map, stage))?.title,
   };
 }
 

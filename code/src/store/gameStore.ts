@@ -19,7 +19,7 @@ import {
   type SectId, type SectItem, type SectTask, type SectTaskKind,
 } from '../engine/sect';
 import {
-  bandPos, enemyStatsAt, getStage, isChapterBoss, mapDef, MAP_IDS, TEACH_X, parseStageKey, refarmReward, stageKey, targetId, trackLength, unlocksAfterMap,
+  bandPos, enemyStatsAt, getStage, isChapterBoss, mapDef, MAP_IDS, TEACH_X, parseStageKey, refarmReward, setStageNames, stageKey, targetId, trackLength, unlocksAfterMap,
   type EnemyDef, type MapId,
 } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, currentSegmentNeili, currentSegmentQuota } from '../engine/formulas';
@@ -39,6 +39,7 @@ import {
   hasNode, isBossKey, isEliteKey, marketDiscount, outputMult, settleRetire, soulWeakYears, switchFeeMult,
   type DiyunId, type DiyunLevels, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
+import { newWorldSeed, postOfStage, stageNamesAt, type RosterKill } from '../engine/roster';
 import { achvVal, bumpAchv, catDmgBonus, winCounts, type AchvCounts, type AchvId } from '../engine/achievements';
 import {
   IDLE_SEC_OVERHEAD, IDLE_SEC_PER_ROUND, OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage,
@@ -60,7 +61,7 @@ import {
   type GearGrade, type GearItem, type GearSlot, type Worn,
 } from '../engine/gear';
 import {
-  INIT_AGE, ERA_START, ageAfter, isOldDeath, lifespanCap, minutesUntilAge, nextLife, soulMult, soulSettles,
+  INIT_AGE, ERA_START, ageAfter, currentEra, isOldDeath, lifespanCap, minutesUntilAge, nextLife, soulMult, soulSettles,
   type DeathCause,
 } from '../engine/reincarnation';
 
@@ -140,6 +141,12 @@ interface PersistedState {
   autoChain: boolean;
   /** 本世乘区加权有效时长（小时）：基础声望 = 10 × 它（economy.md §1.1）；在线全额、离线 × 60% */
   lifeWeightedHours: number;
+  /** 世界种子（江湖名册，living-jianghu/design.md §2.1 D3）：全江湖的人事由它与江湖历推演，跨世不变 */
+  worldSeed: number;
+  /** 玩家对名册的干预（跨世保留）：前几世击败过的岗位在任者，到下一世出生年离任（D7） */
+  rosterKills: RosterKill[];
+  /** 本世击败过的岗位（转世时并入 rosterKills）：at 为击败那年的江湖历，供编年 */
+  lifeDefeats: { post: string; at: number }[];
   /** 历来击败过的最深 Boss（跨世保留）：行为乘数「打到自己的前沿」的比较基准（economy.md §1.2） */
   deepestBossEver: number;
   /** 已领过的成就（跨世保留，一次性）：'stage:m1s8' / 'meridian:shoutaiyin' */
@@ -441,6 +448,7 @@ const FRESH: PersistedState = {
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
   peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), achv: {}, freeHurtUsed: 0, autoChain: false, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
+  worldSeed: 0, rosterKills: [], lifeDefeats: [],
   mapsUnlocked: [1],
   ownedWuxue: [], ownedScrolls: [], pages: [], equipped: [], formCasts: {}, dropsClaimed: [],
   sect: null, contrib: 0, sectTask: null, rumorPending: 0,
@@ -846,6 +854,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     lastTick = now;
     if (saved) {
       const merged = { ...FRESH, ...saved };
+      // 没有世界种子的存档（调试预设、手搓存档）：此刻开一个新江湖
+      if (!merged.worldSeed) merged.worldSeed = newWorldSeed();
       // 默认面向最深的一条可推前沿
       const fronts = openFronts(merged);
       const front = fronts[fronts.length - 1] ?? { map: 1 as MapNo };
@@ -990,7 +1000,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         persist(get());
       }
     } else {
-      set({ ...FRESH, wuxing: rollWuxing(Math.random()), started: true });
+      set({ ...FRESH, worldSeed: newWorldSeed(), wuxing: rollWuxing(Math.random()), started: true });
       track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], wuxing: get().wuxing });
       persist(get());
     }
@@ -1662,7 +1672,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     resetTelemetry();
     lastTick = Date.now();
     set({
-      ...FRESH, started: true, ceremony: null, battle: null, failure: null,
+      ...FRESH, worldSeed: newWorldSeed(), started: true, ceremony: null, battle: null, failure: null,
       selectedMap: 1, retireStep: null, retireCeremony: null,
       offlineSettlement: null, pendingTab: null,
     });
@@ -1784,6 +1794,11 @@ function rebirth(
     autoChain: s.autoChain ?? false,
     deepestBossEver: Math.max(s.deepestBossEver ?? 0, deepestBoss(s.clearedStages)),
     fameClaimed: s.fameClaimed ?? [],
+    // 名册（D7）：本世击败过的在任者，到下一世出生年离任；世界种子不变
+    worldSeed: s.worldSeed,
+    rosterKills: [...(s.rosterKills ?? []), ...(s.lifeDefeats ?? []).map((d) => ({
+      post: d.post, year: Math.floor(s.eraStart ?? ERA_START), at: d.at, end: Math.floor(next.eraStart),
+    }))],
     idle: null,
     // 窍穴图鉴归隐保留（spec §8）；窍穴进度、伤势、折寿由 ...FRESH 重置
     acupointLog: s.acupointLog ?? [],
@@ -2025,6 +2040,7 @@ function resolveBattle(
   let bag = s.bag ?? [];
   let wxPatch: Partial<PersistedState> = {};
   let marketPatch: Partial<PersistedState> = {};
+  let rosterPatch: Partial<PersistedState> = {};
   let fameState: Partial<PersistedState> = {};
   let fameGained = 0;
   let clearedStages = s.clearedStages;
@@ -2067,6 +2083,11 @@ function resolveBattle(
       track('wuxue_dropped', { run: s.run, realm: s.realm, route: s.route }, {
         stage: key, wuxue: wd.id, form: wd.k, kind: wd.kind, dup: got.dup, offline: false,
       });
+    }
+    // 名册（D7）：击败岗位上的在任者，转世时此人离任
+    const post = enemy.kind !== 'normal' ? postOfStage(key) : null;
+    if (post && !(s.lifeDefeats ?? []).some((d) => d.post === post.id)) {
+      rosterPatch = { lifeDefeats: [...(s.lifeDefeats ?? []), { post: post.id, at: Math.floor(currentEra(s.eraStart ?? ERA_START, s.age ?? INIT_AGE)) }] };
     }
     if (firstClear) {
       clearedStages = [...clearedStages, key];
@@ -2166,7 +2187,7 @@ function resolveBattle(
   // 推关输了、有关可退：弹窗等玩家选「再战一场 / 退回挂机」，RETREAT_WAIT_MS 不选默认退回（裁决 44）
   const waitChoice = b.mode === 'push' && !result.win && chainMode === 'idle' && failure !== null;
   set({
-    silver, bag, ...wxPatch, ...marketPatch, clearedStages, attempts, failure, lastProgressSec,
+    silver, bag, ...wxPatch, ...marketPatch, ...rosterPatch, clearedStages, attempts, failure, lastProgressSec,
     injuries, lifespanLost, ...fameState, idle, achv: btAch.achv,
     ...(freeHurt ? { freeHurtUsed: (s.freeHurtUsed ?? 0) + 1 } : {}),
     formCasts: wx.formCasts,
@@ -2234,3 +2255,17 @@ function resolveBattle(
   }
   persist(get());
 }
+
+/**
+ * 江湖名册 → 关卡名：世界种子、干预或本世出生年一变，就重取本世各岗位的在任者（roster.ts）。
+ * 世内不换人；没有世界种子（测试里的空状态）时用关卡表的岗位称呼。
+ */
+let rosterKey = '';
+function syncRoster(s: GameState): void {
+  const life = Math.floor(s.eraStart ?? ERA_START);
+  const key = `${s.worldSeed}|${(s.rosterKills ?? []).length}|${life}`;
+  if (key === rosterKey) return;
+  rosterKey = key;
+  setStageNames(s.worldSeed ? stageNamesAt(s.worldSeed, s.rosterKills ?? [], life) : new Map());
+}
+useGameStore.subscribe(syncRoster);

@@ -230,8 +230,8 @@ describe('v16 → v17（真气 ×10）', () => {
 });
 
 describe('v17 → v18：卷章图关，按当量折算进度与首杀', () => {
-  it('版本号升到 18', () => {
-    expect(SAVE_VERSION).toBe(18);
+  it('版本号不低于 18', () => {
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(18);
   });
 
   it('旧图 1 初入全通：新表卷一整卷与卷二之后当量不超过旧 Boss 的关依次记为已过，开放次序连贯', () => {
@@ -279,5 +279,22 @@ describe('v17 → v18：卷章图关，按当量折算进度与首杀', () => {
     const out = migrate({ clearedStages: [], tiersUnlocked: ['1-0'], fameClaimed: [] } as Record<string, unknown>, 17, 18) as Record<string, unknown>;
     expect(out.clearedStages).toEqual([]);
     expect(out.mapsUnlocked).toEqual([1]);
+  });
+});
+
+describe('v18 → v19：江湖名册补世界种子', () => {
+  it('版本号升到 19', () => {
+    expect(SAVE_VERSION).toBe(19);
+  });
+
+  it('补一个非零世界种子与空的干预，已有种子不动', () => {
+    const out = migrate({ run: 3 } as Record<string, unknown>, 18, 19) as Record<string, unknown>;
+    expect(typeof out.worldSeed).toBe('number');
+    expect(out.worldSeed).toBeGreaterThan(0);
+    expect(out.rosterKills).toEqual([]);
+    expect(out.lifeDefeats).toEqual([]);
+    const kept = migrate({ worldSeed: 42, rosterKills: [{ post: 'p', year: 100, end: 160 }] } as Record<string, unknown>, 18, 19) as Record<string, unknown>;
+    expect(kept.worldSeed).toBe(42);
+    expect(kept.rosterKills).toHaveLength(1);
   });
 });

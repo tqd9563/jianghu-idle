@@ -35,6 +35,7 @@ import { freshInjuries, isHurt } from '../engine/injury';
 import { allStages, enemyStatsAt, getStage, MAP_IDS, parseStageKey, REFARM_SILVER, stageKey, TEACH_X, trackLength, VOLUMES, type MapId } from '../engine/enemies';
 import { currentSegmentQuota, idleNeiliPerSec } from '../engine/formulas';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
+import { holderAt, postOfStage } from '../engine/roster';
 import { INIT_AGE, ERA_START, LIFESPAN, SOUL_WEAK_MULT, ageYearsPerDay } from '../engine/reincarnation';
 
 function names() {
@@ -170,6 +171,31 @@ describe('gameStore · 归隐与声望阁', () => {
     const ev = getEvents().filter((e) => e.e === 'retire_unlocked');
     expect(ev).toHaveLength(1);
     expect(ev[0].trigger).toBe('first_breakthrough');
+  });
+
+  it('江湖名册：新档的精英与 Boss 是真人名；本世击败的人转世后换掉，没打的不变', () => {
+    useGameStore.getState().hardReset();
+    const bossKey = stageKey(GATE1, M1BOSS);
+    const otherKey = allStages().find((e) => e.kind === 'boss' && stageKey(e.map, e.stage) !== bossKey)!;
+    const before = getStage(GATE1, M1BOSS).name;
+    const otherBefore = getStage(otherKey.map, otherKey.stage).name;
+    expect(before).not.toMatch(/门户守将$/);
+    expect(useGameStore.getState().worldSeed).toBeGreaterThan(0);
+    useGameStore.setState({
+      realm: 3, peakRealm: 3, clearedStages: [...m1all, ...m2all], lifeWeightedHours: 1, ownedRepNodes: [],
+      lifeDefeats: [{ post: postOfStage(bossKey)!.id, at: ERA_START + 20 }],
+    });
+    useGameStore.getState().openRetire();
+    useGameStore.getState().proceedRetire();
+    useGameStore.getState().confirmRetire();
+    const s = useGameStore.getState();
+    expect(s.lifeDefeats).toEqual([]);
+    expect(s.rosterKills).toHaveLength(1);
+    expect(s.rosterKills[0].end).toBe(Math.floor(s.eraStart ?? 0));
+    expect(getStage(GATE1, M1BOSS).name).not.toBe(before);
+    // 没被击败的：只有自然寿终、退隐才换（一世约五十年，多数照坐）
+    const naturallyKept = holderAt(s.worldSeed, [], postOfStage(stageKey(otherKey.map, otherKey.stage))!, Math.floor(s.eraStart ?? 0)).person.name === otherBefore;
+    expect(getStage(otherKey.map, otherKey.stage).name === otherBefore).toBe(naturallyKept);
   });
 
   it('归隐执行：声望 = 10 × 加权小时 × 前沿乘数；宿慧、修行感悟、最深 Boss、名号跨世保留', () => {

@@ -345,7 +345,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
                     ))}
                     {enemy.name}
                   </div>
-                  <div className="desc">第 {enemy.stage} 关 · 推荐境界 {enemy.recommendedRealm}</div>
+                  <div className="desc">第 {enemy.stage} 关{enemy.post ? ` · ${enemy.post}` : ''} · 推荐境界 {enemy.recommendedRealm}</div>
                   <div className="meter">
                     <div className="lbl"><span>气血</span><span><b>{f0(enemy.hp * ehpPct)}</b> / {f0(enemy.hp)}</span></div>
                     <div className="jh-ink-bar hp"><i style={{ width: `${ehpPct * 100}%` }} /></div>

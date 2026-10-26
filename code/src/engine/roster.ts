@@ -53,6 +53,7 @@ for (const m of lineData.maps as { id: number; layer: string; faction: string | 
 for (const [name, f] of Object.entries(FACTIONS)) POSTS.push({ id: `${name}#head`, faction: name, slot: 'head', title: f.head, stageKey: null });
 export const ALL_POSTS: readonly PostDef[] = POSTS;
 export const postOfStage = (key: string): PostDef | null => POST_OF_STAGE.get(key) ?? null;
+export const postById = (id: string): PostDef | null => POSTS.find((p) => p.id === id) ?? null;
 
 // ─────────────────────────────────────────────────────────────
 // 确定性随机：同一组键永远给同一串数
@@ -63,7 +64,7 @@ function hashStr(s: string): number {
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
   return h;
 }
-function rngOf(...keys: (string | number)[]): () => number {
+export function rngOf(...keys: (string | number)[]): () => number {
   let a = hashStr(keys.join('|'));
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -73,7 +74,7 @@ function rngOf(...keys: (string | number)[]): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const pickOf = (r: () => number) => <T,>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];
+export const pickOf = (r: () => number) => <T,>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];
 
 // ─────────────────────────────────────────────────────────────
 // 起名（词库见 data/roster-names.json；规则见 design.md §2.1 起名）
@@ -233,6 +234,30 @@ export function holderAt(seed: number, kills: readonly RosterKill[], post: PostD
     const hit = mine.find((k) => k.year >= start && k.year < end && k.end < end);
     if (hit) { end = hit.end; cause = 'defeated'; }
     if (end > year || term > 10_000) return { post, term, person: makePerson(seed, post, term), start, end, endCause: cause };
+    start = end;
+  }
+}
+
+/**
+ * 某岗位从江湖历起点到 year 年为止的历任（最后一任即 year 年的在任者）。
+ * 编年按它找出哪一年谁卒、谁退隐、谁被玩家击败后换人。
+ */
+export function termsUntil(seed: number, kills: readonly RosterKill[], post: PostDef, year: number): Term[] {
+  const mine = kills.filter((k) => k.post === post.id).sort((a, b) => a.year - b.year);
+  const out: Term[] = [];
+  // 开局在任者已上任若干年，各岗位错开
+  let start = ERA_START - Math.floor(rngOf(seed, post.id, 'origin')() * 20);
+  for (let term = 0; ; term++) {
+    const nat = naturalTerm(seed, post, term, start);
+    let end = nat.end;
+    let cause = nat.cause;
+    const hit = mine.find((k) => k.year >= start && k.year < end && k.end < end);
+    if (hit) { end = hit.end; cause = 'defeated'; }
+    // 起名按需：推演历任只为找在任者与离任年，名字用到才生成（节奏 sim 里每场都要推演）
+    let person: Person | undefined;
+    const t = term;
+    out.push({ post, term, get person() { return (person ??= makePerson(seed, post, t)); }, start, end, endCause: cause });
+    if (end > year || term > 10_000) return out;
     start = end;
   }
 }

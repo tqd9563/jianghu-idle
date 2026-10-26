@@ -173,6 +173,35 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(ev[0].trigger).toBe('first_breakthrough');
   });
 
+  it('江湖编年：新档第一世是泰安人；打穿门户记一条并起名号；转世落笔卒年、下一世换人入世、醒来待放', () => {
+    useGameStore.getState().hardReset();
+    const st = () => useGameStore.getState();
+    expect(st().lives).toHaveLength(1);
+    expect(st().lives[0]).toMatchObject({ run: 1, origin: '泰安', born: ERA_START, events: [] });
+    useGameStore.setState({
+      realm: 7, peakRealm: 7, route: 'huashan', neigong: 'jingleijue', zhong: 10, tiersPassed: 3, taught: true,
+      clearedStages: [...m1all.filter((k) => k !== stageKey(GATE1, M1BOSS))], mapsUnlocked: [1, 2, 3],
+    });
+    st().challengeStage(GATE1, M1BOSS);
+    const t0 = Date.now();
+    for (let i = 1; i <= 400 && !(st().battle?.resolved ?? false); i++) st().tick(t0 + i * 700);
+    expect(st().battle?.result.win).toBe(true);
+    const rec = st().lives[0];
+    expect(rec.hao).toBeTruthy();
+    expect(rec.events).toHaveLength(1);
+    expect(rec.events[0]).toMatchObject({ k: 'beat', post: postOfStage(stageKey(GATE1, M1BOSS))!.id, map: GATE1, hao: rec.hao });
+    useGameStore.setState({ retireStep: 'confirm', lifeWeightedHours: 1 });
+    st().confirmRetire();
+    const lives = st().lives;
+    expect(lives).toHaveLength(2);
+    expect(lives[0].end).toMatchObject({ cause: 'retire', place: '泰安' });
+    expect(lives[1]).toMatchObject({ run: 2, born: Math.floor(st().eraStart ?? 0), events: [] });
+    expect(st().lifeWins).toEqual({});
+    expect(st().wakePending).toBe(true);
+    st().dismissWake();
+    expect(st().wakePending).toBe(false);
+  });
+
   it('江湖名册：新档的精英与 Boss 是真人名；本世击败的人转世后换掉，没打的不变', () => {
     useGameStore.getState().hardReset();
     const bossKey = stageKey(GATE1, M1BOSS);

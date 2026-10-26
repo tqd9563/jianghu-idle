@@ -17,11 +17,12 @@ import {
   type EnemyDef, type EnemyTag,
 } from '../engine/enemies';
 import { factionStyle, holderOfStage } from '../engine/roster';
+import { predecessorNote } from '../engine/chronicle';
 import { ERA_START } from '../engine/reincarnation';
 import { JianghuMap } from './battle/JianghuMap';
 import { StageScene, type StageNode } from './battle/StageScene';
 import { DuelBand } from './battle/DuelBand';
-import { FOE_CAP, FOE_PT, HERO_CAP, HERO_PT, cnNum, portraitOf, sceneOf } from './battle/art';
+import { FOE_CAP, FOE_PT, HERO_CAP, HERO_PT, HEROINE_CAP, HEROINE_PT, cnNum, portraitOf, sceneOf } from './battle/art';
 import { narrateTurn, type Hand, type NarrCtx, type Seg } from '../engine/narration';
 import { armorBroken, rate, tallyTurns, type MechKey } from '../engine/battleTally';
 import { COUNTER_HINTS, FAME_BOSS, FAME_ELITE, hasNode } from '../engine/prestige';
@@ -172,8 +173,9 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
     const role = d.kind === 'boss' ? 'boss' : d.kind === 'elite' ? (d.stage === total ? 'warden' : 'aide') : null;
     const h = role ? holder(d.stage) : null;
     const done = isDone(d.stage);
+    const prev = h ? predecessorNote(s.worldSeed, s.rosterKills ?? [], s.lives ?? [], h.post, life) : null;
     const tip = h
-      ? `<b>${esc(d.name)}</b> · ${esc(h.post.faction)}${esc(h.post.title)}<br>第 ${cnNum(h.term + 1)} 任${done ? ' · 可回刷' : ''}`
+      ? `<b>${esc(d.name)}</b> · ${esc(h.post.faction)}${esc(h.post.title)}<br>第 ${cnNum(h.term + 1)} 任${done ? ' · 可回刷' : ''}${prev ? `<br>${esc(prev)}` : ''}`
       : `第${cnNum(d.stage)}关 · ${esc(d.name)}${done ? ' · 可回刷' : d.stage === next ? ' · 下一关' : ''}`;
     return { stage: d.stage, done, role, pt: role ? look(d.stage, d.name).pt : undefined, tip };
   });
@@ -246,7 +248,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
               name: '你', desc: `${REALMS[s.realm - 1].name}${s.neigong ? ` · ${NEIGONG[s.neigong].name}` : ''}`,
               hp: build.hp * phpPct, hpMax: build.hp, shield: shieldNow > 0 ? shieldNow : undefined,
               qi: qiCap > 0 ? qiNow : undefined, qiMax: qiCap > 0 ? qiCap : undefined,
-              pt: HERO_PT, cap: HERO_CAP, ko: lost,
+              ...(s.lives?.at(-1)?.female ? { pt: HEROINE_PT, cap: HEROINE_CAP } : { pt: HERO_PT, cap: HERO_CAP }), ko: lost,
               extra: fx && fx.mine.length > 0 ? <FxRow chips={fx.mine} /> : null,
             }}
             foe={{
@@ -337,8 +339,9 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
           <BattleTally turns={turns} abStacks={battleDone ? armorBroken(battle.result.stats) : 0} hand={narrCtx.hand} route={narrCtx.route} />
         ) : (
         <div className="bt-log" ref={logRef} role="tabpanel">
+          {!!battle?.cause && <div className="p cause"><span className="serif">进章因由</span>　{battle.cause}</div>}
           {!!battle?.rumor && <div className="p rumor"><span className="serif">江湖传闻</span>　{RUMORS[battle.rumor as 1 | 2 | 3]}</div>}
-          {turns.length === 0 && !battle?.rumor && <div className="empty">尚未交手</div>}
+          {turns.length === 0 && !battle?.rumor && !battle?.cause && <div className="empty">尚未交手</div>}
           {narrCtx && <Narration turns={turns} ctx={narrCtx} />}
           {victory && battle.reward && (
             <>

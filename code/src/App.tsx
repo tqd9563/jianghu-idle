@@ -30,6 +30,8 @@ import { ObserverPanel } from './overlays/ObserverPanel';
 import { OfflineSettlement } from './overlays/OfflineSettlement';
 import { RetireCeremony } from './overlays/RetireCeremony';
 import { RetireFlow } from './overlays/RetireFlow';
+import { WakeCeremony } from './overlays/WakeCeremony';
+import { ChronicleDock } from './components/ChronicleDock';
 import { DUSK_MARGIN, ERA_START, INIT_AGE, currentEra, isDusk, lifespanCap } from './engine/reincarnation';
 import { NEIGONG } from './engine/neigong';
 
@@ -61,6 +63,10 @@ export default function App() {
   const setTab = (t: TabId) => { setTabRaw(t); useGameStore.getState().seeTab(t); };
   const [observerOpen, setObserverOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // 江湖编年右栏：修炼、战斗页常驻（可收起，记在本机），其余页收成窄边、点开浮出
+  const [dockFold, setDockFold] = useState(() => { try { return localStorage.getItem('jh-dock-fold') === '1'; } catch { return false; } });
+  const [dockOpen, setDockOpen] = useState(false);
+  const foldDock = (v: boolean) => { setDockFold(v); setDockOpen(false); try { localStorage.setItem('jh-dock-fold', v ? '1' : '0'); } catch { /* 无痕模式 */ } };
 
   useEffect(() => {
     const { tab: debugTab, fight: autoFight, retire: debugRetire, observer, livetest } = applyDebugHash();
@@ -127,7 +133,7 @@ export default function App() {
   };
   const attrs = computeAttributes(s.realm, s.route, s.zhong, 0, acuPct(s.realm), huohouMultOf(s), gearBonusOf(s.worn), s.diyun);
   // 第一世在 1-7 遇见前辈后选内功，第二世起开局即选（battle-loot/design.md §5）
-  const neigongSelectOpen = s.neigong === null && (s.taught || s.run >= 2) && s.retireCeremony === null && s.failure === null;
+  const neigongSelectOpen = s.neigong === null && (s.taught || s.run >= 2) && s.retireCeremony === null && !s.wakePending && s.failure === null;
   const retire = retireKind(s);
   const repUnlocked = s.repTotal > 0 || s.run > 1;
 
@@ -156,8 +162,11 @@ export default function App() {
     : s.soulUnsettled ? '魂魄未稳' : '身无伤病';
   const rateDown = hurt || !!s.soulUnsettled;
 
+  const watch = tab === 'cultivate' || tab === 'battle';
+  const dockMin = !watch || dockFold;
+
   return (
-    <div className="jh-app">
+    <div className={`jh-app has-dock${dockMin ? ' dock-min' : ''}${dockMin && dockOpen ? ' dock-open' : ''}`}>
       <nav className="jh-rail" aria-label="人物卷">
         <div className="jh-brand">江湖无尽录</div>
         <div className="jh-who">
@@ -249,6 +258,13 @@ export default function App() {
         </div>
       </main>
 
+      <ChronicleDock
+        min={dockMin} open={dockMin && dockOpen}
+        onOpen={() => (watch ? foldDock(false) : setDockOpen(true))}
+        onClose={() => setDockOpen(false)}
+        onFold={() => foldDock(true)}
+      />
+
       <nav className="jh-tabbar" aria-label="页签">
         {shown.map((t) => (
           <button key={t.id} type="button" aria-current={tab === t.id ? 'page' : undefined} onClick={() => setTab(t.id)}>
@@ -260,7 +276,7 @@ export default function App() {
       <TipLayer />
 
       {neigongSelectOpen && <NeigongSelect />}
-      {!neigongSelectOpen && giftPending(s) && s.failure === null && s.retireCeremony === null && <GiftWuxueSelect />}
+      {!neigongSelectOpen && giftPending(s) && s.failure === null && s.retireCeremony === null && !s.wakePending && <GiftWuxueSelect />}
       {s.idleSummary && <IdleSummary sum={s.idleSummary} onClose={s.dismissIdleSummary} />}
       {s.blackIntro && <BlackIntro onDone={s.dismissBlackIntro} />}
       {s.dunwuNotice && <div className="dunwu-toast serif" role="status">{s.dunwuNotice.includes('·') ? `贯通 · ${s.dunwuNotice}` : `顿悟 · ${s.neigong ? NEIGONG_NAME(s.neigong) : ''} · ${s.dunwuNotice}`}</div>}
@@ -268,6 +284,7 @@ export default function App() {
       {s.retireCeremony && (
         <RetireCeremony onDone={() => { s.closeRetireCeremony(); setTab('rep'); }} />
       )}
+      {s.wakePending && !s.retireCeremony && <WakeCeremony onDone={s.dismissWake} />}
       {s.paused && <div className="paused-chip">测试暂停中 · 计时与产出已冻结</div>}
       {observerOpen && <ObserverPanel onClose={() => setObserverOpen(false)} />}
       {s.ceremony !== null && (

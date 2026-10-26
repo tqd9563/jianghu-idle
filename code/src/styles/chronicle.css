@@ -1,0 +1,105 @@
+/*
+ * 江湖编年右栏与转世醒来（活江湖第一期批四）。
+ * 基准：docs/design/living-jianghu-prototype.html「江湖编年」「转世醒来」+ DESIGN.md「江湖编年右栏」。
+ * 类别靠标签字与字色区分（不靠侧条）；玩家自己的事用墨金，江湖大事朱砂。
+ */
+
+/* ═══════ 外壳：第三栏 ═══════ */
+.jh-app.has-dock { grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--dock-col, var(--dock-w)); }
+.jh-app.has-dock .jh-art { right: var(--dock-col, var(--dock-w)); }
+.jh-app.dock-min { --dock-col: 52px; }
+
+.jh-dock { background: var(--bg-deep); position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; min-width: 0; z-index: 2; }
+.jh-dock .tabs { display: flex; gap: 22px; padding: 26px 22px 0; border-bottom: 1px solid var(--hair); }
+.jh-dock .tabs button { border: 0; background: none; padding: 0 0 10px; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.25em; color: var(--faint); cursor: pointer; position: relative; }
+.jh-dock .tabs button[aria-selected="true"] { color: var(--ink); }
+.jh-dock .tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 0; right: 0.25em; bottom: -1px; height: 1.5px; background: var(--ink-gold); }
+.jh-dock .tabs .fold, .jh-dock .tabs .close { margin-left: auto; padding: 0 2px 10px; font-size: 20px; line-height: 1; letter-spacing: 0; color: var(--faint); font-family: var(--font-body); }
+.jh-dock .tabs .close { font-size: 18px; }
+.jh-dock .tabs .fold:hover, .jh-dock .tabs .close:hover { color: var(--ink); }
+.jh-dock .feed { flex: 1; overflow-y: auto; padding: 6px 22px 30px; scrollbar-width: thin; scrollbar-color: oklch(0.3 0.016 262) transparent; }
+.jh-dock .empty { color: var(--faint); font-size: 13px; padding: 18px 0; margin: 0; }
+
+/* 头条简讯：最近一桩大事作头条，其下按类别筛的一行一事 */
+.jh-dock .hd { padding: 18px 0 16px; border-bottom: 1px solid var(--hair); }
+.jh-dock .hd .k { font-family: var(--font-display); color: var(--cinnabar); font-size: 13px; letter-spacing: 0.25em; }
+.jh-dock .hd .k span { color: var(--faint); letter-spacing: 0.05em; margin-left: 8px; font-family: var(--font-body); font-size: 12px; }
+.jh-dock .hd .t { font-family: var(--font-display); font-size: 19px; line-height: 1.6; margin-top: 8px; letter-spacing: 0.06em; text-wrap: balance; }
+.jh-dock .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 12px 0 6px; }
+.jh-dock .chips button { border: 0; background: none; padding: 3px 7px; border-radius: 6px; font-size: 12.5px; color: var(--faint); cursor: pointer; }
+.jh-dock .chips button:hover { color: var(--ink); }
+.jh-dock .chips button[aria-pressed="true"] { background: var(--wash-2); color: var(--ink); }
+.jh-dock .brief { margin: 0; padding: 7px 0; font-size: 13.5px; line-height: 1.7; color: var(--muted); text-wrap: pretty; animation: dock-in .7s var(--ease-quart) both; }
+.jh-dock .brief b { font-family: var(--font-display); font-weight: 600; font-size: 12.5px; margin-right: 8px; letter-spacing: 0.1em; }
+.jh-dock .brief .yr { color: var(--faint); font-size: 11.5px; margin-left: 6px; white-space: nowrap; }
+.jh-dock .brief.me { color: var(--ink); } .jh-dock .brief.me b { color: var(--ink-gold); }
+.jh-dock .brief.zheng b { color: var(--camp-zheng); } .jh-dock .brief.xie b { color: var(--camp-xie); }
+.jh-dock .brief.court b { color: var(--camp-court); } .jh-dock .brief.jh b { color: var(--camp-jh); } .jh-dock .brief.big b { color: var(--cinnabar); }
+@keyframes dock-in { from { opacity: 0; transform: translateY(-6px); } }
+
+/* 往世：一世一行，点开看那一世的年表 */
+.jh-dock .past { border-bottom: 1px solid var(--hair); }
+.jh-dock .past > button { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; width: 100%; border: 0; background: none; text-align: left; padding: 14px 0; cursor: pointer; color: var(--ink); }
+.jh-dock .past .n { font-family: var(--font-display); color: var(--faint); font-size: 12.5px; letter-spacing: 0.15em; align-self: baseline; }
+.jh-dock .past .nm { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.15em; font-weight: 600; }
+.jh-dock .past .nm .hao { color: var(--ink-gold); font-size: 14px; letter-spacing: 0.06em; margin-right: 4px; }
+.jh-dock .past .chev { color: var(--faint); font-size: 10px; align-self: center; transition: transform .25s var(--ease-sharp); }
+.jh-dock .past .end { grid-column: 2 / 4; color: var(--faint); font-size: 12px; }
+.jh-dock .past[data-open] .chev { transform: rotate(90deg); }
+.jh-dock .past .bd { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s var(--ease-sharp); }
+.jh-dock .past[data-open] .bd { grid-template-rows: 1fr; }
+.jh-dock .past .bd > div { overflow: hidden; }
+/* 年表：左列中文年份、一道细轴、类别色圆点 */
+.jh-dock .yb { display: grid; grid-template-columns: 92px minmax(0, 1fr); padding-top: 14px; }
+.jh-dock .yb .y { font-family: var(--font-display); color: var(--muted); font-size: 12.5px; letter-spacing: 0.04em; white-space: nowrap; line-height: 1.5; padding-top: 2px; }
+.jh-dock .yb ol { list-style: none; margin: 0; padding: 0 0 4px 16px; box-shadow: inset 1px 0 0 var(--hair); }
+.jh-dock .yb li { position: relative; padding: 0 0 12px; color: var(--muted); font-size: 13.5px; line-height: 1.75; text-wrap: pretty; }
+.jh-dock .yb li::before { content: ''; position: absolute; left: -20px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--faint)); box-shadow: 0 0 0 3px var(--bg-deep); }
+.jh-dock .yb li .s { color: var(--faint); font-size: 12px; margin-right: 6px; }
+.jh-dock .yb li.me { --c: var(--ink-gold); color: var(--ink); }
+.jh-dock .yb li.zheng { --c: var(--camp-zheng); } .jh-dock .yb li.xie { --c: var(--camp-xie); }
+.jh-dock .yb li.court { --c: var(--camp-court); } .jh-dock .yb li.jh { --c: var(--camp-jh); }
+.jh-dock .yb li.big { --c: var(--cinnabar); color: var(--ink); }
+.jh-dock .yb li.big::before { width: 9px; height: 9px; left: -21px; top: 7px; }
+
+/* 窄边：操作页上收成 52px，竖写「江湖编年」，有新事挂计数 */
+.jh-dock .edge { display: none; }
+.jh-app.dock-min:not(.dock-open) .jh-dock > :not(.edge) { display: none; }
+.jh-app.dock-min:not(.dock-open) .jh-dock .edge { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; height: 100%; padding: 26px 0; border: 0; background: none; cursor: pointer; color: var(--faint); }
+.jh-dock .edge .vt { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.4em; }
+.jh-dock .edge:hover .vt { color: var(--ink); }
+.jh-dock .edge .n { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; font-size: 12px; color: var(--bg); background: var(--gold); }
+.jh-dock .edge .n.big { background: var(--cinnabar); }
+.jh-app.dock-min.dock-open .jh-dock { position: fixed; right: 0; top: 0; width: var(--dock-w); z-index: var(--z-drawer); box-shadow: -24px 0 60px oklch(0.05 0.01 262 / 0.75); animation: dock-draw .35s var(--ease-quart) both; }
+@keyframes dock-draw { from { transform: translateX(24px); opacity: 0; } }
+
+/* 窄桌面：编年栏收进舞台下方 */
+@media (max-width: 1280px) {
+  .jh-app.has-dock { grid-template-columns: var(--rail-w) minmax(0, 1fr); }
+  .jh-app.has-dock .jh-art { right: 0; }
+  .jh-dock { position: static; height: auto; grid-column: 2; }
+  .jh-app.dock-min:not(.dock-open) .jh-dock .edge { flex-direction: row; justify-content: center; padding: 14px 0; }
+  .jh-app.dock-min .jh-dock .edge .vt { writing-mode: horizontal-tb; }
+  .jh-dock .feed { max-height: 520px; }
+}
+@media (max-width: 860px) {
+  .jh-app.has-dock { grid-template-columns: 1fr; }
+  .jh-dock { grid-column: 1; padding-bottom: 64px; }
+}
+
+/* ═══════ 转世醒来：冷青整屏 ═══════ */
+.jh-ceremony.wake { background: radial-gradient(ellipse at 50% 40%, oklch(0.25 0.03 200 / 0.95), oklch(0.09 0.012 262 / 0.98) 72%); }
+.jh-ceremony.wake .kick { letter-spacing: 0.6em; }
+.jh-ceremony.wake h2 { letter-spacing: 0.3em; margin: 16px 0 4px; }
+.jh-ceremony.wake .d { letter-spacing: 0.1em; }
+.jh-ceremony .since { margin: 34px auto; max-width: 30em; display: grid; gap: 10px; text-align: left; }
+.jh-ceremony .since p { margin: 0; color: var(--muted); line-height: 1.85; text-wrap: pretty; }
+.jh-ceremony .since p .mine { color: var(--ink-gold); }
+
+/* 战报开头的进章因由（与江湖传闻同位） */
+.bt-log .p.cause .serif { color: var(--ink-gold); }
+
+@media (prefers-reduced-motion: reduce) {
+  .jh-app.dock-min.dock-open .jh-dock, .jh-dock .brief { animation: none; }
+  .jh-dock .past .bd, .jh-dock .past .chev { transition: none; }
+}

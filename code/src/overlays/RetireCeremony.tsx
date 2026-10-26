@@ -3,6 +3,7 @@
  * 与转世演出同一套 jh-ceremony.dusk 语言。文案逐字取自 docs/rules/copy/retire.md v2.3 §4；
  * 寿终 / 战死分岔见 copy/reincarnation.md v1.2 §3（死因行放在题眼位置）。
  */
+import { VOLUMES } from '../engine/enemies';
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { fmtBig } from '../fmt';
@@ -40,11 +41,10 @@ export function RetireCeremony({ onDone }: { onDone: () => void }) {
       : `${Math.round(c.lifeMinutes / 1440)} 天`;
   const battle = c.cause === 'battle';
   // {最远足迹} 措辞映射（retire.md §4）
-  const footprint = c.boss3
-    ? '踏平黑风寨，走完了华山古道'
-    : c.maxMap === 3 ? '走到了华山古道'
-      : c.maxMap === 2 ? '一路走到了洛阳近郊'
-        : '足迹停在村外小径';
+  const region = VOLUMES[c.maxVol - 1]?.region ?? '齐鲁';
+  const footprint = c.deepVol > 0 && c.deepVol >= c.maxVol ? `走完了${region}`
+    : c.maxVol > 1 ? `一路走到了${region}`
+      : '足迹停在齐鲁';
 
   return (
     <div className="jh-ceremony dusk" role="dialog" aria-label="转世结算">

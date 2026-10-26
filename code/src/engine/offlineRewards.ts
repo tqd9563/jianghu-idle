@@ -3,7 +3,7 @@
  * 纯函数模块：不引入 UI/存储依赖；结算时点 = 回归上线一次性结算（store.init），离线期间无后台结算。
  * 机制内部称「离线收益」；玩家侧文案一律「闭关 / 出关结算」（术语纪律，表 A 推导锚点）。
  */
-import { MAP_IDS, parseStageKey, trackLength, type MapId } from './enemies';
+import { mapDef, parseStageKey, trackLength } from './enemies';
 
 /** 离线上限与效率（offline-rewards.md §1.4 v2.0）：闭关以一日为限，效率恒定 60% */
 export const OFFLINE_CAP_MIN = 1440;
@@ -55,34 +55,34 @@ export const OFFLINE_SETTLEMENT_RULE = {
   dailyCapEnabled: false,
 } as const;
 
-/** 表 A 的旧版关卡数（全局 1–48 序号的口径；v2.0 起只用于换算银两 / 阅历档位） */
-const LEGACY_STAGE_COUNT: Record<MapId, number> = { 1: 8, 2: 10, 3: 10, 4: 10, 5: 10 };
+/**
+ * 表 A 的全局 1–48 序号（offline-rewards.md §2；v2.0 起只用于换算银两 / 阅历档位）按卷切片：
+ * 原图 1 初入（境界 2 段）占 1–8 → 卷一至卷四各 2 档；图 2–4 各占 10 档 → 卷五起每卷 5 档。
+ */
+const VOL_SLOTS: readonly number[] = [2, 2, 2, 2, 5, 5, 5, 5, 5, 5];
 
 /**
  * 当前最大可挂机关卡（表 A 全局 1–48 序号，offline-rewards.md §2 驱动字段）。
- * 长线关卡结构改为「图 × 难度 × 关」后，按本世推到的最深「初入」地图及其进度比例折回旧序号：
+ * 按本世通过的最深一关折回旧序号：所在卷的起点 + 卷内进度（赶路 / 外围 / 门户各占三分之一）× 本卷档数。
  * 银两 / 阅历只是离线的附带收益，档位粗粒度即可。未通任何关时取 1。
  */
 export function maxIdleStage(clearedStages: readonly string[]): number {
   let best = 1;
   for (const key of clearedStages) {
     const p = parseStageKey(key);
-    if (!p || p.tier !== 0) continue;
-    const total = trackLength(p.map, 0);
-    if (total === 0) continue;
-    let offset = 0;
-    for (const id of MAP_IDS) {
-      if (id >= p.map) break;
-      offset += LEGACY_STAGE_COUNT[id];
-    }
-    const g = offset + Math.ceil((p.stage / total) * LEGACY_STAGE_COUNT[p.map]);
+    if (!p) continue;
+    const m = mapDef(p.map);
+    const layer = m.layer === 'road' ? 0 : m.layer === 'outer' ? 1 : 2;
+    const frac = (layer + p.stage / trackLength(p.map)) / 3;
+    const start = VOL_SLOTS.slice(0, m.vol - 1).reduce((a, n) => a + n, 0);
+    const g = start + Math.max(1, Math.ceil(frac * VOL_SLOTS[m.vol - 1]));
     if (g > best) best = g;
   }
   return best;
 }
 
-/** 全部地图关卡总数（表 A 的全局序号上界，首发 = 48） */
-export const TOTAL_GLOBAL_STAGES: number = MAP_IDS.reduce((n, id) => n + LEGACY_STAGE_COUNT[id], 0);
+/** 表 A 的全局序号上界（首发 = 48；卷章图关只用到前 38 档） */
+export const TOTAL_GLOBAL_STAGES = 48;
 
 /** 按最大可挂机关卡匹配表 A（越界 clamp 到首/末档） */
 export function findOfflineRewardStage(currentMaxIdleStage: number): OfflineRewardStage {

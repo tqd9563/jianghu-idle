@@ -23,11 +23,11 @@ import { INIT_AGE, outlivesADay } from '../engine/reincarnation';
 import { ACHV, setAchvOff, type AchvId } from '../engine/achievements';
 import { DIYUN_IDS, REP_NODES, diyunPrice, freshDiyun, ganwuPrice } from '../engine/prestige';
 import { saveGame } from '../save/storage';
+import { mapDef } from '../engine/enemies';
 import {
-  mapUnlocked, marketGoodsOf, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN,
+  volUnlocked, marketGoodsOf, nextStageOf, openFronts, retireKind, sectShelfOf, shopItemsOf, shopPriceOf, useGameStore, zhoutianN,
   giftPending, slotCountOf, type MapNo,
 } from '../store/gameStore';
-import type { TierId } from '../engine/enemies';
 
 export const st = () => useGameStore.getState();
 
@@ -77,26 +77,32 @@ export function playBattle(): void {
 }
 
 /** 挑战一关，返回胜负 */
-export function challenge(map: MapNo, tier: TierId, stage: number): boolean {
-  st().challengeStage(map, tier, stage);
+export function challenge(map: MapNo, stage: number): boolean {
+  st().challengeStage(map, stage);
   playBattle();
   return st().battle?.result.win ?? false;
 }
 
 const hurt = () => Object.values(st().injuries ?? {}).some((w) => w.severity >= 1);
 
-/** 推各条可推前沿，每条推到第一场败仗为止；带伤不打（伤势重度再败会战死） */
+/** 推各张可推的图，每张推到第一场败仗为止；打通一张图会开出新图，开了就接着推；带伤不打（伤势重度再败会战死） */
 export function pushFronts(opts: { stopAfterFirstLoss?: boolean } = {}): void {
-  for (const { map, tier } of openFronts(st())) {
+  const stuck = new Set<number>();
+  for (let pass = 0; pass < 100; pass++) {
+    // 排查开关：PACE_MAIN_ONLY=1 只推每卷主线（赶路图与第一章），并排的其余各章不打
+    const front = openFronts(st()).find((f) => !stuck.has(f.map) && !(process.env.PACE_MAIN_ONLY && mapDef(f.map).chapter > 1));
+    if (!front) return;
     let guard = 300;
     while (guard-- > 0 && !hurt()) {
-      const next = nextStageOf(map, tier, st().clearedStages);
+      const next = nextStageOf(front.map, st().clearedStages);
       if (next === null) break;
-      if (!challenge(map, tier, next)) {
+      if (!challenge(front.map, next)) {
         if (opts.stopAfterFirstLoss) return;
+        stuck.add(front.map);
         break;
       }
     }
+    if (hurt()) return;
   }
 }
 
@@ -159,7 +165,7 @@ function tendSect(route: RouteId): void {
   const s = st();
   if (s.realm < SECT_REALM) return;
   if (s.sect === null) {
-    const reachable = SECT_IDS.filter((id) => mapUnlocked(SECTS[id].map, s.tiersUnlocked ?? ['1-0']));
+    const reachable = SECT_IDS.filter((id) => volUnlocked(SECTS[id].vol, s.mapsUnlocked ?? [1]));
     const order = [route, ...reachable.filter((id) => id !== route)];
     st().joinSect(order.find((id) => sectShelfOf(s, id).some((it) => !it.owned)) ?? route);
   }
@@ -333,12 +339,16 @@ export function login(route: RouteId): void {
   }
 }
 
-/** 标准玩家的一天：上线 → 在线 4 小时 → 推前沿 → 离线 20 小时 */
+/**
+ * 标准玩家的一天（24 小时）：上线 → 在线 4 小时 → 推前沿 → 离线到满 24 小时。
+ * 推关回放占用游戏时间（卷章图关后每世要重推几百关），多出的部分从离线里扣，一天不因推关变长。
+ */
 export function playDay(route: RouteId): void {
   login(route);
   online(route);
+  const t0 = Date.now() / 3_600_000;
   pushFronts();
-  offline();
+  offline(Math.max(1, OFFLINE_H - (Date.now() / 3_600_000 - t0)));
 }
 
 /** 新开局时清空武学预算（hardReset 之后调用） */

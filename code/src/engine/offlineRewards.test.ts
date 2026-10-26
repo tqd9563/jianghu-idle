@@ -11,7 +11,7 @@ import {
   OFFLINE_CAP_MIN, calculateOfflineRewards, findOfflineRewardStage, getEffectiveOfflineMinutes,
   maxIdleStage, shouldShowOfflineSettlement,
 } from './offlineRewards';
-import { getStage, REFARM_SILVER, stageKey, trackLength } from './enemies';
+import { getStage, REFARM_SILVER, stageKey, trackLength, VOLUMES } from './enemies';
 
 const MIN = 60_000;
 
@@ -39,14 +39,14 @@ describe('offlineRewards · 档位匹配与驱动字段（表 A §2.2）', () =>
     expect(findOfflineRewardStage(99).id).toBe(1010);
   });
 
-  it('maxIdleStage：按最深「初入」地图及进度比例折回表 A 全局序号（旧图 1 八关、其余十关）', () => {
+  it('maxIdleStage：按本世最深一关折回表 A 全局序号（卷一至卷四各 2 档、卷五起每卷 5 档）', () => {
     expect(maxIdleStage([])).toBe(1);
-    const n1 = trackLength(1, 0);
-    expect(maxIdleStage([stageKey(1, 0, n1)])).toBe(8);
-    expect(maxIdleStage([stageKey(1, 0, n1), stageKey(2, 0, trackLength(2, 0))])).toBe(18);
-    expect(maxIdleStage([stageKey(4, 0, trackLength(4, 0))])).toBe(38);
-    // 只看初入：历练 / 绝境与非法键不计
-    expect(maxIdleStage([stageKey(1, 1, 5), 'm1s8', 'bogus'])).toBe(1);
+    const gateEnd = (v: number) => { const g = VOLUMES[v - 1].maps[2]; return stageKey(g, trackLength(g)); };
+    expect(maxIdleStage([gateEnd(4)])).toBe(8);
+    expect(maxIdleStage([gateEnd(4), gateEnd(6)])).toBe(18);
+    expect(maxIdleStage([gateEnd(10)])).toBe(38);
+    // 非法键不计；卷一赶路图首关仍是第 1 档
+    expect(maxIdleStage([stageKey(1, 1), 'm1t0s8', 'bogus'])).toBe(1);
   });
 });
 
@@ -170,30 +170,30 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
   });
 
   it('挂机中离线：按挂机关折算场次计入本世场次，银两按胜场给；出关结算带挂机行', () => {
-    const cleared = [1, 2, 3, 4, 5, 6, 7, 8].map((st) => stageKey(1, 0, st));
+    const cleared = [1, 2, 3, 4, 5, 6, 7, 8].map((st) => stageKey(1, st));
     useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: cleared, silver: 0 });
-    useGameStore.setState({ idle: { map: 1, tier: 0, stage: 8, fights: 3 } });
+    useGameStore.setState({ idle: { map: 1, stage: 8, fights: 3 } });
     useGameStore.getState().stopIdle();
-    useGameStore.setState({ idle: { map: 1, tier: 0, stage: 8, fights: 3 } });
-    useGameStore.getState().idleAt(1, 0, 8);   // 境界 5 打第 8 关必胜；persist
+    useGameStore.setState({ idle: { map: 1, stage: 8, fights: 3 } });
+    useGameStore.getState().idleAt(1, 8);   // 境界 5 打第 8 关必胜；persist
     useGameStore.setState({ battle: null });
     reopenAfter(100 * MIN);
     const s = useGameStore.getState();
     const r = s.offlineSettlement!;
     expect(r.idle).not.toBeNull();
-    expect(r.idle!.stageKey).toBe(stageKey(1, 0, 8));
+    expect(r.idle!.stageKey).toBe(stageKey(1, 8));
     expect(r.idle!.fights).toBeGreaterThan(0);
     expect(r.idle!.wins).toBe(r.idle!.fights);   // 必胜
     expect(s.silver).toBe(r.silver + (s.offlineLoot?.sold ?? 0));   // 卖装备与重复武学折银另记
-    expect(r.silver).toBe(r.idle!.wins * Math.round(getStage(1, 0, 8).reward.silver * REFARM_SILVER));
+    expect(r.silver).toBe(r.idle!.wins * Math.round(getStage(1, 8).reward.silver * REFARM_SILVER));
     expect(s.idle!.fights).toBe(3 + r.idle!.fights);
     const ev = getEvents().find((e) => e.e === 'offline_settled')!;
-    expect([ev.idle_stage, ev.idle_fights, ev.idle_wins]).toEqual([stageKey(1, 0, 8), r.idle!.fights, r.idle!.wins]);
+    expect([ev.idle_stage, ev.idle_fights, ev.idle_wins]).toEqual([stageKey(1, 8), r.idle!.fights, r.idle!.wins]);
   });
 
   it('A2 决策保留：不自动突破/不推进关卡/不动停滞计时；除资源外状态与离线前一致', () => {
     useGameStore.setState({ dantian: 2700, runPlaySec: 500, lastProgressSec: 100 });
-    useGameStore.setState({ idle: { map: 1, tier: 0, stage: 1, fights: 0 } });
+    useGameStore.setState({ idle: { map: 1, stage: 1, fights: 0 } });
     useGameStore.getState().stopIdle(); // 触发 persist，写入上述状态
     reopenAfter(20 * MIN);
     const s = useGameStore.getState();
@@ -205,9 +205,9 @@ describe('offlineRewards · store 集成（init 结算：A2 决策保留 + consu
   });
 
   it('挂机中离线：掉落接在胜场上，每胜一场掷一次；出关演出带拾得行', () => {
-    const cleared = [1, 2, 3, 4, 5, 6, 7, 8].map((st) => stageKey(1, 0, st));
+    const cleared = [1, 2, 3, 4, 5, 6, 7, 8].map((st) => stageKey(1, st));
     useGameStore.setState({ realm: 5, route: 'shaolin', neigong: 'zhenyuegong', zhong: 10, tiersPassed: 3, clearedStages: cleared, silver: 0 });
-    useGameStore.getState().idleAt(1, 0, 8);
+    useGameStore.getState().idleAt(1, 8);
     useGameStore.setState({ battle: null });
     vi.spyOn(Math, 'random').mockReturnValue(0);   // 每胜一场必掉一件凡品
     reopenAfter(30 * MIN);

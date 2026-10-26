@@ -8,6 +8,8 @@
 import { STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
 import type { RouteId } from '../engine/content';
 import { WUXUE, type WuxueId } from '../engine/wuxue';
+import { allStages, getStage, MAP_IDS, stageKey, trackLength, unlocksAfterMap } from '../engine/enemies';
+import legacyV17 from './legacy/v17-stages.json';
 
 export const SAVE_KEY = 'jianghu-idle:save:v1';
 const DEBUG_OFFLINE_CAP_KEY = 'jianghu-idle:debug:offline-cap-min';
@@ -27,8 +29,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v15 = 关卡精简（content.md v2.12）：图 1 初入 101 → 40 关，缓坡与主段按当量折算到新编号。
  * v16 = 熟练阈值重标（issue #79）：每式出招数按「新圆满 ÷ 旧圆满」放大，已解锁的式不收回。
  * v17 = 真气展示尺度 ×10（battle-loot/design.md 裁决 48）：装备「蕴气」词条数值 ×10。
+ * v18 = 卷章图关（living-jianghu/design.md §2.2）：取消三档难度，关卡键改为「图 × 关」，按当量折算进度与首杀。
  */
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -116,6 +119,7 @@ export function migrate<T>(state: T, fromVer: number, toVer: number): T {
   if (fromVer < 15 && toVer >= 15) out = migrateStageCompressV14ToV15(out);   // 旧用例只迁到 14 时不折算
   if (fromVer < 16 && toVer >= 16) out = migrateShulianV15ToV16(out);
   if (fromVer < 17 && toVer >= 17) out = migrateQiScaleV16ToV17(out);
+  if (fromVer < 18 && toVer >= 18) out = migrateStageLineV17ToV18(out);
   return out;
 }
 
@@ -488,4 +492,93 @@ export function migrateNeigongV7ToV8<T>(state: T): T {
   for (const k of ['skillLevel', 'ownedMechNodes', 'mechXpInvested', 'switchCount',
     'collectedPages', 'completedBooks', 'shopPurchasesThisRun']) delete out[k];
   return out as T;
+}
+
+// ---------------------------------------------------------------- v17 → v18：卷章图关
+
+/** v17 关卡表（图 × 难度 × 关）的类别与当量，冻结于迁移旁（新表已不含三档） */
+const V17_STAGES = legacyV17 as unknown as Record<string, [string, number][]>;
+const V17_KEY = /^(stage:)?m(\d)t(\d)s(\d+)$/;
+/** 原段末 Boss 深浅（难度 × 10 + 图序）→ 卷：按 Boss 所在境界段的末卷 */
+const V17_DEPTH_TO_VOL: Record<number, number> = { 1: 4, 2: 6, 11: 6, 3: 8, 12: 8, 21: 8, 4: 10, 13: 10, 22: 10 };
+/** 原 Boss 首杀必掉的前沿键 → 新卷键（与 wuxue.BOSS_DROPS 同一映射） */
+const V17_DROP_TO_VOL: Record<string, string> = { '1-0': 'v4', '1-1': 'v5', '2-0': 'v6', '3-0': 'v7', '1-2': 'v8', '2-1': 'v9' };
+
+function v17Stage(key: string): { kind: string; x: number } | null {
+  const m = V17_KEY.exec(key);
+  const row = m ? V17_STAGES[`${m[2]}-${m[3]}`]?.[Number(m[4]) - 1] : undefined;
+  return row ? { kind: row[0], x: row[1] } : null;
+}
+
+/**
+ * v17 → v18：三档难度取消、改为卷章图关单线（living-jianghu/design.md §2.2）。按当量折算：
+ * - 本世已过：取旧进度打到的最高当量 F，新表从卷一起按开放次序，当量不超过 F 的关依次记为已过（每张图从第 1 关连续）；
+ * - 已开放的图（跨世）：旧已解锁前沿中起点最深者的起点当量 U，新表按开放次序开到起点不超过 U 的图；
+ * - 首杀（跨世）：每个旧精英 / Boss 首杀换成新表里当量最接近、尚未占用的同类关卡，侠名录计数不变；
+ * - 历来最深 Boss 与 Boss 必掉记录：按境界段换成卷；挂机：换到不超过原挂机关当量的最高一关已过关卡；尝试次数清空。
+ */
+function migrateStageLineV17ToV18<T>(state: T): T {
+  const s = { ...(state as Record<string, unknown>) };
+  const EPS = 1e-9;
+  const xs = (keys: unknown) => (Array.isArray(keys) ? keys : []).map((k) => v17Stage(String(k))).filter((r) => r !== null);
+
+  // 本世已过
+  const F = Math.max(-Infinity, ...xs(s.clearedStages).map((r) => r.x));
+  const cleared: string[] = [];
+  if (F > -Infinity) {
+    const open = new Set<number>([1]);
+    for (const id of MAP_IDS) {
+      if (!open.has(id)) continue;
+      let all = true;
+      for (let st = 1; st <= trackLength(id); st++) {
+        if ((getStage(id, st).x ?? 0) > F + EPS) { all = false; break; }
+        cleared.push(stageKey(id, st));
+      }
+      if (all) unlocksAfterMap(id).forEach((n) => open.add(n));
+    }
+  }
+  s.clearedStages = cleared;
+
+  // 已开放的图
+  const tiers = Array.isArray(s.tiersUnlocked) ? (s.tiersUnlocked as string[]) : ['1-0'];
+  const U = Math.max(...tiers.map((t) => V17_STAGES[t]?.[0]?.[1] ?? -Infinity), getStage(1, 1).x ?? 1);
+  const opened = new Set<number>([1]);
+  for (const id of MAP_IDS) {
+    const full = cleared.includes(stageKey(id, trackLength(id)));
+    if (!opened.has(id) && !full) continue;
+    if (full || (getStage(id, 1).x ?? 0) <= U + EPS) unlocksAfterMap(id).filter((n) => full || (getStage(n, 1).x ?? 0) <= U + EPS).forEach((n) => opened.add(n));
+  }
+  s.mapsUnlocked = [...opened].sort((a, b) => a - b);
+  delete s.tiersUnlocked;
+
+  // 首杀
+  const fame = Array.isArray(s.fameClaimed) ? (s.fameClaimed as string[]) : [];
+  const pool = allStages().filter((e) => e.kind !== 'normal');
+  const used = new Set<string>();
+  const newFame: string[] = [];
+  const olds = fame.map((k) => ({ k, r: v17Stage(k) })).sort((a, b) => (a.r?.x ?? 0) - (b.r?.x ?? 0));
+  for (const { k, r } of olds) {
+    if (!r) { newFame.push(k); continue; }
+    const kind = r.kind === 'b' ? 'boss' : 'elite';
+    const best = pool
+      .filter((e) => e.kind === kind && !used.has(stageKey(e.map, e.stage)))
+      .sort((a, b) => Math.abs((a.x ?? 0) - r.x) - Math.abs((b.x ?? 0) - r.x))[0];
+    if (best) { used.add(stageKey(best.map, best.stage)); newFame.push(`stage:${stageKey(best.map, best.stage)}`); }
+  }
+  s.fameClaimed = newFame;
+
+  if (typeof s.deepestBossEver === 'number') s.deepestBossEver = V17_DEPTH_TO_VOL[s.deepestBossEver] ?? 0;
+  if (Array.isArray(s.dropsClaimed)) s.dropsClaimed = (s.dropsClaimed as string[]).map((k) => V17_DROP_TO_VOL[k] ?? k);
+
+  // 挂机
+  const idle = s.idle as { map?: number; tier?: number; stage?: number } | null | undefined;
+  if (idle && typeof idle.map === 'number') {
+    const ix = v17Stage(`m${idle.map}t${idle.tier ?? 0}s${idle.stage}`)?.x ?? -Infinity;
+    const best = cleared.map((k) => { const [m, st] = k.slice(1).split('s').map(Number); return { m, st, x: getStage(m, st).x ?? 0 }; })
+      .filter((c) => c.x <= ix + EPS).sort((a, b) => b.x - a.x)[0];
+    const { tier: _tier, ...rest } = idle;
+    s.idle = best ? { ...rest, map: best.m, stage: best.st } : null;
+  }
+  s.attempts = {};
+  return s as T;
 }

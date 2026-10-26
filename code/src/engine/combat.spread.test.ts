@@ -3,12 +3,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import { DMG_SPREAD, fight, makeBuild } from './combat';
-import { getStage } from './enemies';
 import { mitigationMultiplier } from './formulas';
+import { legacyStage } from './legacyStage.testutil';
 
 describe('伤害浮动', () => {
   const build = makeBuild('shaolin', 2, 0, 0);
-  const enemy = getStage(1, 0, 7);
+  const enemy = legacyStage(1, 0, 7);
 
   it('RNG 模式：普攻伤害有高有低，且都落在基准 ±10% 内', () => {
     const base = build.atk * mitigationMultiplier(enemy.def, enemy.defK);

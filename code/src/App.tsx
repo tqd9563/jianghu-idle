@@ -74,8 +74,8 @@ export default function App() {
     useGameStore.getState().applyLiveTestSwitch(livetest);
     if (autoFight) {
       const st = useGameStore.getState();
-      const next = nextStageOf(st.selectedMap, st.selectedTier, st.clearedStages);
-      if (next !== null) st.challengeStage(st.selectedMap, st.selectedTier, next);
+      const next = nextStageOf(st.selectedMap, st.clearedStages);
+      if (next !== null) st.challengeStage(st.selectedMap, next);
     }
     if (debugRetire) {
       const st = useGameStore.getState();

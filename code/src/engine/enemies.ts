@@ -1,29 +1,82 @@
 /**
- * 长线关卡表 —— 权威来源：docs/rules/content.md §2.0（v2.3）。
+ * 单线关卡表 —— 活江湖第一期（docs/systems/living-jianghu/design.md §2.2 卷 · 章 · 图 · 关）。
  *
- * 结构：图 × 难度（初入 / 历练 / 绝境）× 关。每一关只记「关卡当量」，敌人属性由 enemyStatsAt
- * 换算；关卡清单由 docs/systems/sim/export_stage_table.py 从 longline_sim 生成（data/longline-stages.json），
+ * 结构：卷（地域）→ 一张赶路图 + 2–3 章并排（一章一家势力：外围 → 门户两张据点图）→ 关。
+ * 每一关只记「关卡当量」，敌人属性由 enemyStatsAt 换算；关卡清单由
+ * docs/systems/sim/export_stage_line.py 从 longline_sim 生成（data/stage-line.json），
  * 禁止在此手改关卡——改规则先改 sim 再重导出。
  */
-import stageData from './data/longline-stages.json';
+import lineData from './data/stage-line.json';
 import { STAT_SCALE } from './content';
 
 export type EnemyTag = '高血' | '高闪' | '破甲' | '反伤' | '毒' | '净化' | '高防' | '高攻' | '狂暴';
 
-/**
- * 地图 ID 单一数据源 —— MapId 与 store 的 MapNo 由此派生（内容扩充防御，见 exhaustive.ts）。
- */
-export const MAP_IDS = [1, 2, 3, 4, 5] as const;
-export type MapId = (typeof MAP_IDS)[number];
+/** 图在一卷里的层：赶路图 / 势力外围 / 势力门户 */
+export type MapLayer = 'road' | 'outer' | 'gate';
+/** 战报口吻（narration.ts foeKind）：空串表示按名字判断 */
+export type FoeTone = '' | 'beast' | 'bandit' | 'master';
 
-/** 三档难度（pacing/design.md §3.3；名称 2026-09-28 用户选定） */
-export const TIERS = [0, 1, 2] as const;
-export type TierId = (typeof TIERS)[number];
-export const TIER_NAMES: Record<TierId, string> = { 0: '初入', 1: '历练', 2: '绝境' };
+export interface MapDef {
+  id: number;
+  /** 第几卷 */
+  vol: number;
+  /** 卷内第几章；赶路图为 0 */
+  chapter: number;
+  layer: MapLayer;
+  name: string;
+  /** 所属势力；赶路图为 null */
+  faction: string | null;
+}
+export interface VolumeDef {
+  no: number;
+  region: string;
+  title: string;
+  /** 所在境界段 */
+  band: number;
+  maps: number[];
+  factions: { name: string; camp: '正' | '邪' }[];
+}
+
+interface StageRow {
+  stage: number; kind: EnemyDef['kind']; name: string; x: number; tags: string[];
+  recommendedRealm: number; silver: number; xp: number; foe: string; final?: boolean;
+}
+interface MapRow extends MapDef { stages: StageRow[] }
+
+const MAP_ROWS = lineData.maps as MapRow[];
+const ROW_OF: ReadonlyMap<number, MapRow> = new Map(MAP_ROWS.map((m) => [m.id, m]));
+
+/** 地图 ID：按推图次序编号（卷一赶路图为 1）；地图序即深浅 */
+export const MAP_IDS: readonly number[] = MAP_ROWS.map((m) => m.id);
+export type MapId = number;
+export const VOLUMES: readonly VolumeDef[] = lineData.volumes as VolumeDef[];
+const CN_NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+export const volName = (vol: number) => `卷${CN_NUM[vol] ?? vol}`;
+
+export function mapDef(map: MapId): MapDef {
+  const r = ROW_OF.get(map);
+  if (!r) throw new Error(`no map ${map}`);
+  return { id: r.id, vol: r.vol, chapter: r.chapter, layer: r.layer, name: r.name, faction: r.faction };
+}
+export const mapName = (map: MapId): string => ROW_OF.get(map)?.name ?? '';
+export const volumeOf = (map: MapId): VolumeDef => VOLUMES[(ROW_OF.get(map)?.vol ?? 1) - 1];
+
+/**
+ * 打通一张图（末关）后开放的图：赶路图 → 本卷各章外围；外围 → 同章门户；门户 → 下一卷赶路图。
+ * 并排各章互不依赖，打穿任一章门户即进下一卷（design.md §2.2）。
+ */
+export function unlocksAfterMap(map: MapId): MapId[] {
+  const m = ROW_OF.get(map);
+  if (!m) return [];
+  const vol = VOLUMES[m.vol - 1];
+  if (m.layer === 'road') return vol.maps.filter((id) => ROW_OF.get(id)?.layer === 'outer');
+  if (m.layer === 'outer') return vol.maps.filter((id) => { const g = ROW_OF.get(id); return g?.layer === 'gate' && g.chapter === m.chapter; });
+  const next = VOLUMES[m.vol];
+  return next ? [next.maps[0]] : [];
+}
 
 export interface EnemyDef {
   map: MapId;
-  tier: TierId;
   stage: number;
   name: string;
   hp: number;
@@ -42,6 +95,8 @@ export interface EnemyDef {
   x?: number;
   /** 需境界 6 才打得过的收官 Boss（本版终点） */
   final?: boolean;
+  /** 战报口吻；空串按名字判断（narration.ts foeKind） */
+  foe?: FoeTone;
 }
 
 /** Python round()：banker's rounding（四舍六入五取偶），digits 位小数 */
@@ -56,11 +111,6 @@ export function pyRound(x: number, digits = 0): number {
   else if (diff < 0.5 - EPS) r = floor;
   else r = floor % 2 === 0 ? floor : floor + 1;
   return r / m;
-}
-
-const MAP_NAMES: Record<MapId, string> = { 1: '村外小径', 2: '洛阳近郊', 3: '华山古道', 4: '蜀道险关', 5: '铁壁绝谷' };
-export function mapName(map: MapId): string {
-  return MAP_NAMES[map];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -102,49 +152,30 @@ export function enemyStatsAt(x: number, tags: readonly EnemyTag[] = []): {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 前沿（图 × 难度）与关卡
+// 关卡
 // ─────────────────────────────────────────────────────────────
 
-interface StageRow {
-  stage: number; kind: EnemyDef['kind']; name: string; x: number; tags: string[];
-  recommendedRealm: number; silver: number; xp: number; final?: boolean;
-}
-interface TrackRow { map: number; tier: number; stages: StageRow[] }
+/** 第一世卷一第 7 关教学战的敌人强度（关卡当量）：按境界 2 段起点打，裸属性必败；传功后同一关回到缓坡起点（battle-loot/design.md §5.1） */
+export const TEACH_X: number = lineData.teachX;
 
-export const trackKey = (map: MapId, tier: TierId) => `${map}-${tier}`;
-/** 第一世 1-7 教学战的敌人强度（关卡当量）：按境界 2 段起点打，裸属性必败；传功后同一关回到缓坡起点（battle-loot/design.md §5.1） */
-export const TEACH_X: number = stageData.teachX;
-
-/** 关卡键：`m{图}t{难度}s{关}`（存档 clearedStages、成就 fameClaimed 共用） */
-export const stageKey = (map: MapId, tier: TierId, stage: number) => `m${map}t${tier}s${stage}`;
-const KEY_RE = /^m(\d)t(\d)s(\d+)$/;
-export function parseStageKey(key: string): { map: MapId; tier: TierId; stage: number } | null {
+/** 关卡键：`m{图}s{关}`（存档 clearedStages、成就 fameClaimed 共用） */
+export const stageKey = (map: MapId, stage: number) => `m${map}s${stage}`;
+const KEY_RE = /^m(\d+)s(\d+)$/;
+export function parseStageKey(key: string): { map: MapId; stage: number } | null {
   const m = KEY_RE.exec(key);
-  return m ? { map: Number(m[1]) as MapId, tier: Number(m[2]) as TierId, stage: Number(m[3]) } : null;
+  return m && ROW_OF.has(Number(m[1])) ? { map: Number(m[1]), stage: Number(m[2]) } : null;
 }
 
-const TRACKS: ReadonlyMap<string, readonly StageRow[]> = new Map(
-  (stageData.tracks as TrackRow[]).map((t) => [trackKey(t.map as MapId, t.tier as TierId), t.stages]),
-);
-
-/**
- * 封存（pacing/design.md §4）：显示为锁定、写「大周天未开」。
- * 图 3 绝境需境界 6 之后才开，本版一并封存（content.md §2.0 v2.3）。
- */
-export function isSealed(map: MapId, tier: TierId): boolean {
-  return !TRACKS.has(trackKey(map, tier));
+/** 该图的关数（含末关） */
+export function trackLength(map: MapId): number {
+  return ROW_OF.get(map)?.stages.length ?? 0;
 }
 
-/** 该前沿的关数（含 Boss）；封存为 0 */
-export function trackLength(map: MapId, tier: TierId): number {
-  return TRACKS.get(trackKey(map, tier))?.length ?? 0;
-}
-
-export function getStage(map: MapId, tier: TierId, stage: number): EnemyDef {
-  const row = TRACKS.get(trackKey(map, tier))?.[stage - 1];
-  if (!row) throw new Error(`no stage ${stageKey(map, tier, stage)}`);
+export function getStage(map: MapId, stage: number): EnemyDef {
+  const row = ROW_OF.get(map)?.stages[stage - 1];
+  if (!row) throw new Error(`no stage ${stageKey(map, stage)}`);
   return {
-    map, tier, stage,
+    map, stage,
     name: row.name,
     ...enemyStatsAt(row.x, row.tags as EnemyTag[]),
     tags: row.tags as EnemyTag[],
@@ -153,24 +184,46 @@ export function getStage(map: MapId, tier: TierId, stage: number): EnemyDef {
     reward: { neili: 0, silver: row.silver, xp: row.xp },
     x: row.x,
     final: row.final ?? false,
+    foe: row.foe as FoeTone,
   };
 }
 
-/** 全部关卡（按图、难度、关序），供声望判据与测试遍历 */
+/** 全部关卡（按图序、关序），供声望判据与测试遍历 */
 export function allStages(): EnemyDef[] {
-  const out: EnemyDef[] = [];
-  for (const t of stageData.tracks as TrackRow[]) {
-    for (const s of t.stages) out.push(getStage(t.map as MapId, t.tier as TierId, s.stage));
-  }
-  return out;
+  return MAP_ROWS.flatMap((m) => m.stages.map((s) => getStage(m.id, s.stage)));
 }
 
-/** 前沿深浅：难度优先、同档比图序（economy.md §1.2）；只有段末 Boss 计深浅 */
-export const trackDepth = (map: MapId, tier: TierId) => tier * 10 + map;
+/** 各境界段普通关的当量区间（卷一赶路图归境界 1 段，其余按卷所在段；卷一蒿里寨一章并入境界 2 段） */
+const BAND_RANGE: ReadonlyMap<number, [number, number]> = (() => {
+  const r = new Map<number, [number, number]>();
+  for (const m of MAP_ROWS) {
+    const band = m.vol === 1 ? (m.layer === 'road' ? 1 : 2) : VOLUMES[m.vol - 1].band;
+    for (const st of m.stages) {
+      if (st.kind !== 'normal') continue;
+      const cur = r.get(band) ?? [st.x, st.x];
+      r.set(band, [Math.min(cur[0], st.x), Math.max(cur[1], st.x)]);
+    }
+  }
+  return r;
+})();
+
+/** 这一关在所在境界段里的位置（0–1，按当量）：装备品阶按它取权重（battle-loot/spec.md §2.1） */
+export function bandPos(map: MapId, stage: number): number {
+  const m = ROW_OF.get(map);
+  const row = m?.stages[stage - 1];
+  if (!m || !row) return 0;
+  const band = m.vol === 1 ? (m.layer === 'road' ? 1 : 2) : VOLUMES[m.vol - 1].band;
+  const [lo, hi] = BAND_RANGE.get(band) ?? [row.x, row.x];
+  return hi > lo ? Math.min(1, Math.max(0, (row.x - lo) / (hi - lo))) : 0;
+}
+
+/** 是否是门户图的末关（一章的 Boss） */
+export const isChapterBoss = (map: MapId, stage: number) =>
+  ROW_OF.get(map)?.layer === 'gate' && stage === trackLength(map);
 
 /** 埋点 target ID：关卡键 */
 export function targetId(e: EnemyDef): string {
-  return stageKey(e.map, e.tier, e.stage);
+  return stageKey(e.map, e.stage);
 }
 
 /** 回刷收益（公式表 §6）：银两 50% / 阅历 0；关卡不掉内力 */

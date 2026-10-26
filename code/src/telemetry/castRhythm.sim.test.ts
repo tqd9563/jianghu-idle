@@ -102,7 +102,7 @@ describe.skipIf(!process.env.SIM_CAST)('出招节奏与熟练时长 sim', () => 
       const th = shulianThresholds(c.main)[2];
       const hours = rates.slice(0, -1).reduce((a, v) => a + th / v, 0);
       const row = {
-        label: c.label, realm: c.realm, zhong: c.zhong, stage: `${enemy.map}-${enemy.tier}-${enemy.stage}`, qiMax: qiMaxOf(sAll),
+        label: c.label, realm: c.realm, zhong: c.zhong, stage: `${enemy.map}-${enemy.stage}`, qiMax: qiMaxOf(sAll),
         sumP, winrateMastered: rAll.wr, fightSec: Math.round(fightSec(rAll.rounds)), lowQiShare: r3(rAll.lowQi / Math.max(1, rAll.casts)), share,
         unlockRatesPerHour: rates, threshold: th, hoursToLastForm: Math.round(hours * 10) / 10, hoursToSecondForm: Math.round((th / rates[0]) * 10) / 10,
       };

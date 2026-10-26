@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "sim"))
 import mvp0_sim as m                  # noqa: E402
 import longline_sim as L              # noqa: E402
 import pacing_sim as ps               # noqa: E402
-import export_stage_table as E        # noqa: E402
+import export_stage_line as E         # noqa: E402
 import importlib.util                 # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("sect_neigong_sim", os.path.join(HERE, "..", "sect-neigong", "sim.py"))
@@ -680,13 +680,21 @@ def battle_seconds(rounds: float) -> float:
 # 境界 1：从入门关到首次卡关（design.md §5）
 # ═══════════════════════════════════════════════════════════
 
-STAGES_JSON = os.path.join(HERE, "..", "..", "..", "code", "src", "engine", "data", "longline-stages.json")
+STAGES_JSON = os.path.join(HERE, "..", "..", "..", "code", "src", "engine", "data", "stage-line.json")
 R1_HOURS = 2.7 * (1 + ps.CHONGXUE_OVERHEAD[1])     # 境界 1 修炼 2.7h（pacing_sim 附表）+ 冲穴附加
 
 
 def track_stages(mp: int, tier: int) -> list[dict]:
+    """卷章图关后只有一条主线：卷一赶路图 → 野狐渡 → 乱石隘 → 卷二赶路图 → 苍崖剑坊 → 迎客峰 …，关号顺排。
+    （参数保留旧签名，只认 (1, 0) = 原图 1 初入那一条从入门关起的线）"""
+    assert (mp, tier) == (1, 0)
     d = json.load(open(STAGES_JSON, encoding="utf-8"))
-    return [t for t in d["tracks"] if t["map"] == mp and t["tier"] == tier][0]["stages"]
+    by_id = {m["id"]: m for m in d["maps"]}
+    out = []
+    for v in d["volumes"][:4]:                      # 原图 1 初入覆盖境界 2 段，即卷一至卷四主线
+        for mid in v["maps"][:3]:
+            out += by_id[mid]["stages"]
+    return [dict(s, stage=i + 1) for i, s in enumerate(out)]
 
 
 # 第一世 1-7 教学战按 teachX 打（裁决 43：传功后同一关回到缓坡起点，关卡表第 7 关是缓坡首关）

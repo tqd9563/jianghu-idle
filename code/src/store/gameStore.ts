@@ -19,8 +19,8 @@ import {
   type SectId, type SectItem, type SectTask, type SectTaskKind,
 } from '../engine/sect';
 import {
-  enemyStatsAt, getStage, isSealed, MAP_IDS, TEACH_X, parseStageKey, refarmReward, stageKey, targetId, TIERS, trackDepth, trackKey, trackLength,
-  type EnemyDef, type MapId, type TierId,
+  bandPos, enemyStatsAt, getStage, isChapterBoss, mapDef, MAP_IDS, TEACH_X, parseStageKey, refarmReward, stageKey, targetId, trackLength, unlocksAfterMap,
+  type EnemyDef, type MapId,
 } from '../engine/enemies';
 import { idleNeiliPerSec, zhoutianProgress, currentSegmentNeili, currentSegmentQuota } from '../engine/formulas';
 import {
@@ -147,7 +147,8 @@ interface PersistedState {
   /** 本世已入账的成就声望（只供归隐盘点展示） */
   fameThisLife: number;
   /** 已解锁的前沿（跨世保留）：`{图}-{难度}`；打通本图上一档 Boss 开下一档，打通初入 Boss 开下一图初入 */
-  tiersUnlocked: string[];
+  /** 已开放的图（跨世保留）：打通一张图的末关即开下一层（enemies.unlocksAfterMap） */
+  mapsUnlocked: number[];
   /** 已拥有的武学（跨世保留，sect-neigong/spec.md §6.1） */
   ownedWuxue: WuxueId[];
   /** 已拥有的秘籍（跨世保留）：现只存归真卷册 */
@@ -212,7 +213,6 @@ export type BattleMode = 'push' | 'idle' | 'single';
 
 export interface IdleState {
   map: MapNo;
-  tier: TierId;
   stage: number;
   /** 本世在此挂机已打的场次（在线 + 离线折算） */
   fights: number;
@@ -237,7 +237,6 @@ export interface IdleSession {
 /** 挂机小结（点停止时弹出，不持久化） */
 export interface IdleSummary extends IdleSession {
   map: MapNo;
-  tier: TierId;
   stage: number;
   enemyName: string;
   until: number;
@@ -247,7 +246,6 @@ const freshSess = (now: number): IdleSession => ({ since: now, fights: 0, wins: 
 
 export interface BattleState {
   map: MapNo;
-  tier: TierId;
   stage: number;
   enemy: EnemyDef;
   result: FightResult;
@@ -280,7 +278,6 @@ export interface BattleState {
 
 export interface FailureInfo {
   map: MapNo;
-  tier: TierId;
   stage: number;
   enemyName: string;
   diagCodes: number[];
@@ -311,7 +308,8 @@ export interface RetireCeremonyData {
   settle: RetireSettle;
   durationSec: number;
   clearedCount: number;
-  maxMap: MapNo;
+  /** 本世到过的最深一卷 */
+  maxVol: number;
   /** 谢幕方式：主动归隐为 null；'old' 寿终正寝（自动归隐，不罚）；'battle' 战死（来世魂魄未稳） */
   cause: DeathCause | null;
   /** 谢幕年岁（整岁取下），供卡顶行「{N} 岁 · 寿终正寝 / 重伤不治」 */
@@ -320,15 +318,14 @@ export interface RetireCeremonyData {
   lifeMinutes: number;
   /** 本世通关的精英与 Boss 数 */
   strongFoes: number;
-  /** 是否踏平黑风寨（华山古道 Boss） */
-  boss3: boolean;
+  /** 本世打穿过门户的最深一卷（0 = 一家都没打穿） */
+  deepVol: number;
 }
 
 interface GameState extends PersistedState {
   started: boolean;
   ceremony: number | null;
   selectedMap: MapNo;
-  selectedTier: TierId;
   battle: BattleState | null;
   pendingTab: string | null;
   failure: FailureInfo | null;
@@ -387,11 +384,10 @@ interface GameState extends PersistedState {
   /** 贡献商店兑换（spec §5.3） */
   buySectItem: (itemId: string) => void;
   selectMap: (m: MapNo) => void;
-  selectTier: (t: TierId) => void;
   /** 推关或重打一次：下一关 → 推关（赢了接着往前，输了退回挂机）；已通关卡 → 只打这一场 */
-  challengeStage: (map: MapNo, tier: TierId, stage: number) => void;
+  challengeStage: (map: MapNo, stage: number) => void;
   /** 在此挂机：守着这一关反复打，输了退一关继续，不停机 */
-  idleAt: (map: MapNo, tier: TierId, stage: number) => void;
+  idleAt: (map: MapNo, stage: number) => void;
   /** 收手：这一场打完就停，不再接着打 */
   stopIdle: () => void;
   /** 自动连战开关（战斗页挑战按钮下的勾选） */
@@ -445,7 +441,7 @@ const FRESH: PersistedState = {
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
   peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), achv: {}, freeHurtUsed: 0, autoChain: false, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
-  tiersUnlocked: ['1-0'],
+  mapsUnlocked: [1],
   ownedWuxue: [], ownedScrolls: [], pages: [], equipped: [], formCasts: {}, dropsClaimed: [],
   sect: null, contrib: 0, sectTask: null, rumorPending: 0,
   bag: [], worn: {},
@@ -466,45 +462,30 @@ const PERSIST_KEYS = Object.keys(FRESH) as (keyof PersistedState)[];
 const persist = (s: PersistedState) =>
   saveGame(Object.fromEntries(PERSIST_KEYS.map((k) => [k, s[k] ?? FRESH[k]])));
 
-/** 前沿是否已解锁（跨世保留，pacing/design.md §3.2）；封存的永远不开 */
-export function tierUnlocked(map: MapNo, tier: TierId, tiersUnlocked: readonly string[]): boolean {
-  return !isSealed(map, tier) && tiersUnlocked.includes(trackKey(map, tier));
+/** 图是否已开放（跨世保留，pacing/design.md §3.2） */
+export function mapUnlocked(map: MapNo, mapsUnlocked: readonly number[]): boolean {
+  return MAP_IDS.includes(map) && mapsUnlocked.includes(map);
 }
 
-/** 地图页签是否可进：初入已解锁 */
-export function mapUnlocked(map: MapNo, tiersUnlocked: readonly string[]): boolean {
-  return tierUnlocked(map, 0, tiersUnlocked);
+/** 该卷是否已到（赶路图开放即算） */
+export function volUnlocked(vol: number, mapsUnlocked: readonly number[]): boolean {
+  return mapsUnlocked.some((id) => MAP_IDS.includes(id) && mapDef(id).vol === vol && mapDef(id).layer === 'road');
 }
 
-/** 本前沿下一待通关关卡；全通返回 null */
-export function nextStageOf(map: MapNo, tier: TierId, cleared: readonly string[]): number | null {
-  const n = trackLength(map, tier);
+/** 本图下一待通关关卡；全通返回 null */
+export function nextStageOf(map: MapNo, cleared: readonly string[]): number | null {
+  const n = trackLength(map);
   for (let i = 1; i <= n; i++) {
-    if (!cleared.includes(stageKey(map, tier, i))) return i;
+    if (!cleared.includes(stageKey(map, i))) return i;
   }
   return null;
 }
 
-/** 打通段末 Boss 解锁的前沿：本图下一档；若是初入，另开下一图初入（封存的不开） */
-function unlocksAfterBoss(map: MapNo, tier: TierId): string[] {
-  const out: string[] = [];
-  if (tier < 2 && !isSealed(map, (tier + 1) as TierId)) out.push(trackKey(map, (tier + 1) as TierId));
-  const nextMap = (map + 1) as MapNo;
-  if (tier === 0 && MAP_IDS.includes(nextMap) && !isSealed(nextMap, 0)) out.push(trackKey(nextMap, 0));
-  return out;
-}
-
-/** 今天还有关可推的前沿（已解锁且未全通），供战斗页金点与默认选关 */
-export function openFronts(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): { map: MapNo; tier: TierId }[] {
-  const out: { map: MapNo; tier: TierId }[] = [];
-  for (const map of MAP_IDS) {
-    for (const tier of TIERS) {
-      if (tierUnlocked(map, tier, s.tiersUnlocked ?? []) && nextStageOf(map, tier, s.clearedStages) !== null) {
-        out.push({ map, tier });
-      }
-    }
-  }
-  return out;
+/** 今天还有关可推的图（已开放且未全通），按图序；供战斗页金点与默认选图 */
+export function openFronts(s: Pick<PersistedState, 'mapsUnlocked' | 'clearedStages'>): { map: MapNo }[] {
+  return MAP_IDS
+    .filter((map) => mapUnlocked(map, s.mapsUnlocked ?? []) && nextStageOf(map, s.clearedStages) !== null)
+    .map((map) => ({ map }));
 }
 
 export function playerBuild(
@@ -798,7 +779,7 @@ function maxClearedStage(clearedStages: readonly string[]): string | null {
   for (const key of clearedStages) {
     const p = parseStageKey(key);
     if (!p) continue;
-    const order = p.tier * 1_000_000 + p.map * 1000 + p.stage;
+    const order = p.map * 1000 + p.stage;
     if (!best || order > best.order) best = { key, order };
   }
   return best?.key ?? null;
@@ -867,9 +848,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const merged = { ...FRESH, ...saved };
       // 默认面向最深的一条可推前沿
       const fronts = openFronts(merged);
-      const front = fronts[fronts.length - 1] ?? { map: 1 as MapNo, tier: 0 as TierId };
+      const front = fronts[fronts.length - 1] ?? { map: 1 as MapNo };
       const selectedMap = front.map;
-      const selectedTier = front.tier;
 
       // 出关结算（MVP-1 §5：回归上线一次性结算；A5：存档恢复之后、玩家可操作之前）。
       // 观察员暂停中的存档不结算（暂停冻结一切结算，与 tick 口径一致），时间戳照常消费。
@@ -913,7 +893,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             }
             const sess0 = merged.idle.sess;
             if (merged.neigong) {
-              const enemy = getStage(merged.idle.map, merged.idle.tier, merged.idle.stage);
+              const enemy = getStage(merged.idle.map, merged.idle.stage);
               let bag = merged.bag ?? [];
               let count = 0, sold = 0, books = 0, pages = 0, dupSilver = 0;
               let best: GearItem | null = null;
@@ -1000,7 +980,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         Object.assign(merged, sectDone.patch, { achv: sectAch.achv });
         trackUps({ run: merged.run, realm: merged.realm, route: merged.route }, sectAch.ups);
       }
-      set({ ...merged, started: true, selectedMap, selectedTier, offlineSettlement, offlineSectDone, offlineLoot, dunwuNotice });
+      set({ ...merged, started: true, selectedMap, offlineSettlement, offlineSectDone, offlineLoot, dunwuNotice });
       if (isOldDeath(merged.age ?? INIT_AGE, merged.realm, merged.lifespanLost ?? 0)) {
         // 闭关期间寿终正寝：自动归隐，出关结算屏不再有意义，直接进归隐演出
         set({ offlineSettlement: null });
@@ -1152,7 +1132,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       } else if (b.resolved && b.chainAt !== null && now >= b.chainAt) {
         const target = b.chainStage;
         set({ battle: null });
-        if (target !== null) startBattle(set, get, b.map, b.tier, target, b.chainMode ?? 'push');
+        if (target !== null) startBattle(set, get, b.map, target, b.chainMode ?? 'push');
       }
     }
 
@@ -1400,7 +1380,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   joinSect: (id) => {
     const s = get();
     if (!s.started || s.sect !== null || s.realm < SECT_REALM || !SECTS[id]) return;
-    if (!mapUnlocked(SECTS[id].map, s.tiersUnlocked ?? ['1-0'])) return;   // 这一派要到了它行走的那张图才遇得上（W13）
+    if (!volUnlocked(SECTS[id].vol, s.mapsUnlocked ?? [1])) return;   // 这一派要到了它行走的那一卷才遇得上（W13）
     set({ sect: id, lastProgressSec: s.runPlaySec });
     track('sect_joined', { run: s.run, realm: s.realm, route: s.route }, { sect: id, neigong: s.neigong });
     persist(get());
@@ -1433,26 +1413,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
-  // 未解锁 / 封存的图与难度也可点开查看（显示解锁条件或「大周天未开」），只是打不了（长线原型 §1）
+  // 切图：已结算的旧图战斗残留一并清掉（含未触发的自动连战）
   selectMap: (m) => {
     const s = get();
-    // 切图默认面向该图最深的可推难度；已结算的旧图战斗残留一并清掉（含未触发的自动连战）
-    const fronts = openFronts(s).filter((f) => f.map === m);
-    const tier = fronts[fronts.length - 1]?.tier ?? 0;
     const battle = s.battle && s.battle.resolved && s.battle.map !== m ? null : s.battle;
-    set({ selectedMap: m, selectedTier: tier, battle });
+    set({ selectedMap: m, battle });
   },
 
-  selectTier: (t) => {
+  challengeStage: (map, stage) => {
     const s = get();
-    const battle = s.battle && s.battle.resolved && s.battle.tier !== t ? null : s.battle;
-    set({ selectedTier: t, battle });
-  },
-
-  challengeStage: (map, tier, stage) => {
-    const s = get();
-    const isRefarm = s.clearedStages.includes(stageKey(map, tier, stage));
-    startBattle(set, get, map, tier, stage, isRefarm ? 'single' : 'push');
+    const isRefarm = s.clearedStages.includes(stageKey(map, stage));
+    startBattle(set, get, map, stage, isRefarm ? 'single' : 'push');
   },
 
   setAutoChain: (on) => {
@@ -1460,26 +1431,26 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
-  idleAt: (map, tier, stage) => {
+  idleAt: (map, stage) => {
     const s = get();
-    if (!s.clearedStages.includes(stageKey(map, tier, stage))) return; // 只能在已通关的关挂
-    const same = s.idle && s.idle.map === map && s.idle.tier === tier && s.idle.stage === stage;
-    set({ idle: same ? s.idle : { map, tier, stage, fights: 0, sess: freshSess(Date.now()) } });
-    track('idle_start', { run: s.run, realm: s.realm, route: s.route }, { map, tier, stage });
-    if (!s.battle || s.battle.resolved) startBattle(set, get, map, tier, stage, 'idle');
+    if (!s.clearedStages.includes(stageKey(map, stage))) return; // 只能在已通关的关挂
+    const same = s.idle && s.idle.map === map && s.idle.stage === stage;
+    set({ idle: same ? s.idle : { map, stage, fights: 0, sess: freshSess(Date.now()) } });
+    track('idle_start', { run: s.run, realm: s.realm, route: s.route }, { map, stage });
+    if (!s.battle || s.battle.resolved) startBattle(set, get, map, stage, 'idle');
     persist(get());
   },
 
   stopIdle: () => {
     const s = get();
     if (!s.idle) return;
-    const { map: im, tier: it, stage: is, fights: ifs } = s.idle;
-    track('idle_stop', { run: s.run, realm: s.realm, route: s.route }, { map: im, tier: it, stage: is, fights: ifs });
+    const { map: im, stage: is, fights: ifs } = s.idle;
+    track('idle_stop', { run: s.run, realm: s.realm, route: s.route }, { map: im, stage: is, fights: ifs });
     const b = s.battle;
     // 挂机小结（裁决 44）：一场都没打完就停，不弹
     const { sess } = s.idle;
     const idleSummary: IdleSummary | null = sess && sess.fights > 0
-      ? { ...sess, map: s.idle.map, tier: s.idle.tier, stage: s.idle.stage, enemyName: getStage(s.idle.map, s.idle.tier, s.idle.stage).name, until: Date.now() }
+      ? { ...sess, map: s.idle.map, stage: s.idle.stage, enemyName: getStage(s.idle.map, s.idle.stage).name, until: Date.now() }
       : null;
     set({ idle: null, idleSummary, battle: b && b.resolved ? { ...b, chainAt: null, chainStage: null, chainMode: null } : b });
     persist(get());
@@ -1499,7 +1470,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { failure: f, battle: b } = get();
     if (!f || !b || !b.resolved) return;
     set({ failure: null, battle: { ...b, chainAt: null, chainStage: null, chainMode: null } });
-    get().challengeStage(f.map, f.tier, f.stage);
+    get().challengeStage(f.map, f.stage);
   },
 
   retreatNow: () => {
@@ -1692,7 +1663,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     lastTick = Date.now();
     set({
       ...FRESH, started: true, ceremony: null, battle: null, failure: null,
-      selectedMap: 1, selectedTier: 0, retireStep: null, retireCeremony: null,
+      selectedMap: 1, retireStep: null, retireCeremony: null,
       offlineSettlement: null, pendingTab: null,
     });
     track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], wuxing: get().wuxing });
@@ -1754,18 +1725,18 @@ function rebirth(
     });
   }
 
-  // 最远足迹：本世到过的最深初入地图
-  const maxMap: MapNo = s.clearedStages.reduce<MapNo>((m, k) => {
+  // 最远足迹：本世到过的最深一卷
+  const maxVol: number = s.clearedStages.reduce((v, k) => {
     const p = parseStageKey(k);
-    return p && p.tier === 0 && p.map > m ? p.map : m;
+    return p ? Math.max(v, mapDef(p.map).vol) : v;
   }, 1);
   const ceremonyData: RetireCeremonyData = {
     runEnded: s.run, settle, durationSec: s.runPlaySec,
-    clearedCount: s.clearedStages.length, maxMap,
+    clearedCount: s.clearedStages.length, maxVol,
     cause, deathAge: Math.floor(age),
     lifeMinutes: s.lifeMinutes ?? 0,
     strongFoes: s.clearedStages.filter((k) => isEliteKey(k) || isBossKey(k)).length,
-    boss3: deepestBoss(s.clearedStages) >= 3,
+    deepVol: deepestBoss(s.clearedStages),
   };
 
   // 重置与保留（§8.3 + sect-neigong/spec.md §6.1）：资源全清空；已拥有的内功、宿慧（peakRealm）、
@@ -1822,8 +1793,8 @@ function rebirth(
     soulUnsettled: cause === 'battle',
     retireStep: null,
     retireCeremony: ceremonyData,
-    tiersUnlocked: s.tiersUnlocked ?? ['1-0'],
-    battle: null, failure: null, ceremony: null, selectedMap: 1, selectedTier: 0, pendingTab: null,
+    mapsUnlocked: s.mapsUnlocked ?? [1],
+    battle: null, failure: null, ceremony: null, selectedMap: 1, pendingTab: null,
   });
   track('run_start', { run: newRun, realm: 1, route: null }, {
     owned_nodes: s.ownedRepNodes, wuxing,
@@ -1835,10 +1806,10 @@ function rebirth(
 const IDLE_TRIALS = 20;
 export function idleBasisOf(s: PersistedState): IdleBasis | null {
   const idle = s.idle;
-  if (!idle || !tierUnlocked(idle.map, idle.tier, s.tiersUnlocked ?? [])) return null;
-  const key = stageKey(idle.map, idle.tier, idle.stage);
+  if (!idle || !mapUnlocked(idle.map, s.mapsUnlocked ?? [])) return null;
+  const key = stageKey(idle.map, idle.stage);
   if (!s.clearedStages.includes(key)) return null;
-  const enemy = getStage(idle.map, idle.tier, idle.stage);
+  const enemy = getStage(idle.map, idle.stage);
   const build = playerBuild(s);
   let x = 20261013;
   const rng = () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; };
@@ -1860,29 +1831,29 @@ export function idleBasisOf(s: PersistedState): IdleBasis | null {
 }
 
 /** 本段里比 stage 低的最后一个已通关（退一关挂机用）；没有返回 null */
-export function lastClearedBelow(map: MapNo, tier: TierId, stage: number, cleared: readonly string[]): number | null {
-  for (let st = stage - 1; st >= 1; st--) if (cleared.includes(stageKey(map, tier, st))) return st;
+export function lastClearedBelow(map: MapNo, stage: number, cleared: readonly string[]): number | null {
+  for (let st = stage - 1; st >= 1; st--) if (cleared.includes(stageKey(map, st))) return st;
   return null;
 }
 
 /** 一场打完接着打哪关（纯函数，便于测试）：返回新的挂机状态与连战目标 */
 export function nextAfterBattle(
-  idle: IdleState | null, b: Pick<BattleState, 'map' | 'tier' | 'stage' | 'mode'>, win: boolean, cleared: readonly string[],
+  idle: IdleState | null, b: Pick<BattleState, 'map' | 'stage' | 'mode'>, win: boolean, cleared: readonly string[],
   autoChain = true,
 ): { idle: IdleState | null; chainStage: number | null; chainMode: BattleMode | null } {
-  const sameTrack = idle !== null && idle.map === b.map && idle.tier === b.tier;
-  const idleHere = (stage: number, fights: number): IdleState => ({ map: b.map, tier: b.tier, stage, fights });
+  const sameTrack = idle !== null && idle.map === b.map;
+  const idleHere = (stage: number, fights: number): IdleState => ({ map: b.map, stage, fights });
   if (b.mode === 'idle') {
     if (!idle) return { idle: null, chainStage: null, chainMode: null };   // 挂机中收手：这一场打完就停
     if (win) return { idle: { ...idle, fights: idle.fights + 1 }, chainStage: idle.stage, chainMode: 'idle' };
-    const back = lastClearedBelow(b.map, b.tier, b.stage, cleared);
+    const back = lastClearedBelow(b.map, b.stage, cleared);
     return back === null
       ? { idle: null, chainStage: null, chainMode: null }
       : { idle: idleHere(back, idle.fights), chainStage: back, chainMode: 'idle' };
   }
   if (b.mode === 'push') {
     if (win) {
-      const next = nextStageOf(b.map, b.tier, cleared);
+      const next = nextStageOf(b.map, cleared);
       if (next !== null && autoChain) return { idle, chainStage: next, chainMode: 'push' };
       // 没勾自动连战：打赢就停；挑战前在本段挂机的，回到原挂机关接着挂（issue #77）
       if (next !== null) return sameTrack ? { idle, chainStage: idle!.stage, chainMode: 'idle' } : { idle, chainStage: null, chainMode: null };
@@ -1890,7 +1861,7 @@ export function nextAfterBattle(
       const here = idleHere(b.stage, sameTrack ? idle!.fights : 0);
       return { idle: here, chainStage: here.stage, chainMode: 'idle' };
     }
-    const back = sameTrack ? idle!.stage : lastClearedBelow(b.map, b.tier, b.stage, cleared);
+    const back = sameTrack ? idle!.stage : lastClearedBelow(b.map, b.stage, cleared);
     if (back === null) return { idle, chainStage: null, chainMode: null };
     return { idle: idleHere(back, sameTrack ? idle!.fights : 0), chainStage: back, chainMode: 'idle' };
   }
@@ -1900,18 +1871,18 @@ export function nextAfterBattle(
 function startBattle(
   set: (partial: Partial<GameState>) => void,
   get: () => GameState,
-  map: MapNo, tier: TierId, stage: number, mode: BattleMode,
+  map: MapNo, stage: number, mode: BattleMode,
 ) {
   const s = get();
   if (s.battle && !s.battle.resolved) return;
-  if (!tierUnlocked(map, tier, s.tiersUnlocked ?? [])) return;
-  const next = nextStageOf(map, tier, s.clearedStages);
-  const isRefarm = s.clearedStages.includes(stageKey(map, tier, stage));
+  if (!mapUnlocked(map, s.mapsUnlocked ?? [])) return;
+  const next = nextStageOf(map, s.clearedStages);
+  const isRefarm = s.clearedStages.includes(stageKey(map, stage));
   if (!isRefarm && stage !== next) return; // 只能打下一关或已通关卡
 
-  const base = getStage(map, tier, stage);
+  const base = getStage(map, stage);
   // 第一世 1-7 教学战：碰上真正的江湖人，按境界 2 段起点的强度打，裸属性必败（battle-loot/design.md §5.1）
-  const teach = map === 1 && tier === 0 && stage === INTRO_STAGES + 1 && s.run === 1 && s.neigong === null && !s.taught;
+  const teach = map === 1 && stage === INTRO_STAGES + 1 && s.run === 1 && s.neigong === null && !s.taught;
   const enemy = teach ? { ...base, ...enemyStatsAt(TEACH_X) } : base;
   const build = playerBuild(s);
   const result = fight(build, enemy, {
@@ -1928,9 +1899,8 @@ function startBattle(
   set({
     failure: null,
     selectedMap: map,
-    selectedTier: tier,
     battle: {
-      map, tier, stage, enemy, result, mode,
+      map, stage, enemy, result, mode,
       revealed: 0, nextRevealAt: Date.now() + REVEAL_FIRST_MS * revealScale, intervalMs, revealScale,
       resolved: false, chainAt: null, chainStage: null, chainMode: null, reward: null,
       seed: Math.floor(Math.random() * 2 ** 31),
@@ -1952,35 +1922,35 @@ export const RETREAT_WAIT_MS = 5000;
 /** 第一世 1-7 的那场战败：隐世前辈出场（battle-loot/design.md §5.1） */
 export function isTeachFailure(s: Pick<GameState, 'failure' | 'run' | 'neigong' | 'taught'>): boolean {
   const f = s.failure;
-  return !!f && f.map === 1 && f.tier === 0 && f.stage === INTRO_STAGES + 1 && s.run === 1 && s.neigong === null && !s.taught;
+  return !!f && f.map === 1 && f.stage === INTRO_STAGES + 1 && s.run === 1 && s.neigong === null && !s.taught;
 }
 
-/** 市集与黑市按「推关处」定货：最深一条可推前沿的下一关；全推完就取最深已解锁前沿的末关 */
-export function frontierStageOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): EnemyDef {
-  // 几条前沿并开时取推得最深的那条（当量最高的下一关）：新图刚开时它的第 1 关比旧图历练段浅得多，不能当定价基数
-  const nexts = openFronts(s).map((f) => getStage(f.map, f.tier, nextStageOf(f.map, f.tier, s.clearedStages)!));
+/** 市集与黑市按「推关处」定货：推得最深的一条可推图的下一关；全推完就取最深已开放图的末关 */
+export function frontierStageOf(s: Pick<PersistedState, 'mapsUnlocked' | 'clearedStages'>): EnemyDef {
+  // 几张图并开时取推得最深的（当量最高的下一关）：新卷刚开时赶路图首关比上一卷门户浅，不能当定价基数
+  const nexts = openFronts(s).map((f) => getStage(f.map, nextStageOf(f.map, s.clearedStages)!));
   const f = nexts.sort((a, b) => (b.x ?? 0) - (a.x ?? 0))[0];
   if (f) return f;
-  const unlocked = (s.tiersUnlocked ?? ['1-0']).map((k) => k.split('-').map(Number) as [MapNo, TierId]).sort((a, b) => trackDepth(a[0], a[1]) - trackDepth(b[0], b[1]));
-  const [map, tier] = unlocked[unlocked.length - 1] ?? [1, 0];
-  return getStage(map, tier, trackLength(map, tier));
+  const opened = (s.mapsUnlocked ?? [1]).filter((id) => MAP_IDS.includes(id));
+  const map = opened.length ? Math.max(...opened) : 1;
+  return getStage(map, trackLength(map));
 }
 
 /**
  * 市集与黑市的定价基数：已通关卡里最高的首通银两（spec §7）。
  * 不用推关处的首通银两：各条前沿的头几关银两都很低，而玩家挂机的进账按已通关里最肥的那关算；也不随并开的新图回落。
  */
-export function priceBasisOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): number {
+export function priceBasisOf(s: Pick<PersistedState, 'mapsUnlocked' | 'clearedStages'>): number {
   let best = 0;
   for (const key of s.clearedStages) {
     const p = parseStageKey(key);
-    if (p) best = Math.max(best, getStage(p.map, p.tier, p.stage).reward.silver);
+    if (p) best = Math.max(best, getStage(p.map, p.stage).reward.silver);
   }
   return best > 0 ? best : frontierStageOf(s).reward.silver;
 }
 
 /** 兵器铺与衣饰铺的货：当量按推关处，价格按定价基数 */
-export function marketGoodsOf(s: Pick<PersistedState, 'tiersUnlocked' | 'clearedStages'>): { stage: EnemyDef; arms: MarketGood[]; wear: MarketGood[] } {
+export function marketGoodsOf(s: Pick<PersistedState, 'mapsUnlocked' | 'clearedStages'>): { stage: EnemyDef; arms: MarketGood[]; wear: MarketGood[] } {
   const stage = frontierStageOf(s);
   return { stage, ...stallGoods(stage.x ?? 1, priceBasisOf(s)) };
 }
@@ -1998,9 +1968,9 @@ function spend(s: Pick<PersistedState, 'silver' | 'marketSpent' | 'blackOpen'>, 
  */
 export function rollDropFor(enemy: EnemyDef, rng: () => number, repeat = false): GearItem | null {
   if (rng() >= DROP_RATE[repeat ? 'normal' : enemy.kind]) return null;
-  const n = trackLength(enemy.map, enemy.tier);
-  const pos = n > 1 ? (enemy.stage - 1) / (n - 1) : 0;
-  const grade = rollGrade(pos, enemy.kind, rng, isIntroStage(enemy.map, enemy.tier, enemy.stage));
+  // 品阶按这一关在所在境界段里的位置取权重：一张图只占一段的几分之一，不能按图内关序算
+  const pos = bandPos(enemy.map, enemy.stage);
+  const grade = rollGrade(pos, enemy.kind, rng, isIntroStage(enemy.map, enemy.stage));
   return rollGear({ grade, level: enemy.x ?? 1, clearSilver: enemy.reward.silver }, rng);
 }
 
@@ -2044,7 +2014,7 @@ function resolveBattle(
   const b = s.battle!;
   if (b.resolved) return;
   const { enemy, result } = b;
-  const key = stageKey(b.map, b.tier, b.stage);
+  const key = stageKey(b.map, b.stage);
   const firstClear = !s.clearedStages.includes(key);
   const tid = targetId(enemy);
   const attempt = (s.attempts[tid] ?? 0) + 1;
@@ -2102,7 +2072,7 @@ function resolveBattle(
       clearedStages = [...clearedStages, key];
       lastProgressSec = s.runPlaySec;
       track('stage_first_clear', { run: s.run, realm: s.realm, route: s.route }, {
-        map: b.map, tier: b.tier, stage: b.stage, kind: enemy.kind,
+        map: b.map, stage: b.stage, kind: enemy.kind,
       });
     }
   } else {
@@ -2114,7 +2084,7 @@ function resolveBattle(
     const build = playerBuild(s);
     const diagCodes = diagnose(build, enemy, result, s.realm);
     failure = {
-      map: b.map, tier: b.tier, stage: b.stage, enemyName: enemy.name,
+      map: b.map, stage: b.stage, enemyName: enemy.name,
       diagCodes, rounds: result.rounds,
       playerHpPct: result.playerHpPct, enemyHpPct: result.enemyHpPct,
       hitRate: result.stats.pHitRate,
@@ -2208,22 +2178,23 @@ function resolveBattle(
       source: enemy.kind, key, reputation: fameGained,
     });
   }
-  // 打通段末 Boss：解锁本图下一档与下一图初入，跨世保留
-  if (result.win && enemy.kind === 'boss' && b.stage === trackLength(b.map, b.tier)) {
-    const have = s.tiersUnlocked ?? ['1-0'];
-    const opened = unlocksAfterBoss(b.map, b.tier).filter((k) => !have.includes(k));
+  // 打通一张图的末关：开放下一层（赶路 → 本卷各家外围；外围 → 门户；门户 → 下一卷），跨世保留
+  if (result.win && b.stage === trackLength(b.map)) {
+    const have = s.mapsUnlocked ?? [1];
+    const opened = unlocksAfterMap(b.map).filter((id) => !have.includes(id));
     if (opened.length > 0) {
-      // 解锁图 2 / 图 3 初入：这张图上的三派行走江湖，下一场战斗说一句拜山传闻（名录 §5.3）
-      const rumor = opened.includes('3-0') ? 3 : opened.includes('2-0') ? 2 : 0;
-      set({ tiersUnlocked: [...have, ...opened], ...(rumor ? { rumorPending: rumor } : {}) });
-      track('tier_unlocked', { run: s.run, realm: s.realm, route: s.route }, {
+      // 初到卷三 / 卷四：这一卷的三派行走江湖，下一场战斗说一句拜山传闻（名录 §5.3）
+      const vol = mapDef(opened[0]).vol;
+      const rumor = mapDef(opened[0]).layer === 'road' && (vol === 3 || vol === 4) ? vol - 1 : 0;
+      set({ mapsUnlocked: [...have, ...opened], ...(rumor ? { rumorPending: rumor } : {}) });
+      track('map_unlocked', { run: s.run, realm: s.realm, route: s.route }, {
         by: key, opened,
       });
     }
   }
   // Boss 首次击杀（跨世只算第一次）必掉秘籍（spec §4.3）；已拥有改给银两
-  if (result.win && enemy.kind === 'boss' && b.stage === trackLength(b.map, b.tier)) {
-    const tk = trackKey(b.map, b.tier);
+  if (result.win && isChapterBoss(b.map, b.stage)) {
+    const tk = `v${mapDef(b.map).vol}`;
     const drop = BOSS_DROPS[tk];
     const cur = get();
     if (drop && !(cur.dropsClaimed ?? []).includes(tk)) {

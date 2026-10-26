@@ -56,8 +56,8 @@
 | 事件名 | 触发时机 | 关键字段 |
 |---|---|---|
 | `offline_settled` | 出关结算完成 | `idle_sec`, `neili`, `silver`, `cap_hit`, `cap_min`, `debug_cap`, `idle_stage`, `idle_fights`, `idle_wins` |
-| `idle_start` | 在此挂机 | `map`, `tier`, `stage` |
-| `idle_stop` | 收手 | `map`, `tier`, `stage`, `fights` |
+| `idle_start` | 在此挂机 | `map`, `stage` |
+| `idle_stop` | 收手 | `map`, `stage`, `fights` |
 | `gear_dropped` | 装备掉落（在线每件一条；离线一次挂机结算一条） | 在线：`stage`, `slot`, `grade`, `level`, `sold`（行囊满了卖得的银两）, `offline: false`；离线：`stage`, `count`, `best_grade`, `sold`, `offline: true` |
 | `gear_equipped` | 穿戴一件装备 | `slot`, `grade`, `level`, `afx`（词条数） |
 | `elder_met` | 第一世 1-7 战败后起身行礼（此后可选内功） | — |
@@ -98,9 +98,9 @@
 | `ganwu_bought` | 购买修行感悟（一级或尽数） | `level_from`, `level_to`, `price`, `balance_after` |
 | `achv_tier` | 侠名录某条线跨入新一层（计数类线；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世为推导计量，不发） | `line`, `tier`（1 铜 / 2 银 / 3 金） |
 | `diyun_bought` | 购买底蕴一级（`../systems/prestige-shop/design.md` §2） | `line`（八条之一）, `level_to`, `price`, `balance_after` |
-| `tier_unlocked` | 打通段末 Boss 开出新前沿（跨世保留） | `by`（关卡键）, `opened`（`{图}-{难度}` 列表） |
+| `map_unlocked` | 打通一张图的末关开出新图（跨世保留；v3.5 前为 `tier_unlocked`） | `by`（关卡键）, `opened`（图 ID 列表） |
 
-- 关卡键 v2.3 起为 `m{图}t{难度}s{关}`：`stage_first_clear` 增加 `tier` 字段，`key_battle_end.target` / `injury_inflicted.target` 改为关卡键（原 `boss1` / `elite_m2s4` 形态退役）。
+- 关卡键 v3.5 起为 `m{图}s{关}`（卷章图关，图 ID 1–66 按推图次序）；v2.3–v3.4 为 `m{图}t{难度}s{关}`，`stage_first_clear` 带 `tier` 字段。`key_battle_end.target` / `injury_inflicted.target` 自 v2.3 起为关卡键（原 `boss1` / `elite_m2s4` 形态退役）。
 - 长线起保底归隐废止（`economy.md` §1.4）：`retire_unlocked` 不再有 `fallback` 形态；`retire_confirmed` 的 `perf_bonus_pct` / `time_penalty` / `fallback_discount` 三个字段随 v1.3 公式退役，改报三层公式的构成（`weighted_hours` × 10 → `prestige_base`，× `front_mult` → `prestige_total`）。
 
 ---
@@ -118,6 +118,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v3.5 | 2026-10-23 | 卷章图关（活江湖第一期）：关卡键改 `m{图}s{关}`；`idle_start` / `idle_stop` / `stage_first_clear` 去掉 `tier`；`tier_unlocked` 改名 `map_unlocked`，`opened` 改为图 ID 列表。 |
 | v3.4 | 2026-10-19 | 传功缓坡（battle-loot 裁决 43）：新增 `gift_wuxue_picked`。 |
 | v3.3 | 2026-10-19 | 武学一式一页（battle-loot 裁决 42）：`form_learned` 改为前式圆满接上；`sect_shop_bought` 去掉 `have` / `need`；`wuxue_dropped` 的 `book` 改指整门、离线计数不含重复。 |
 | v3.2 | 2026-10-14 | 实装五：`sect_shop_bought` 残页加 `have` / `need`；`sect` 取值扩到九派 id。 |

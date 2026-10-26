@@ -37,7 +37,7 @@ describe('golden 对照 · 长线战斗 vs longline_sim.py', () => {
       expect(st.defK).toBeCloseTo(c.defK * STAT_SCALE, 6);
 
       const enemy: EnemyDef = {
-        map: 1, tier: 0, stage: 1, name: 'golden', kind: 'normal', recommendedRealm: 1,
+        map: 1, stage: 1, name: 'golden', kind: 'normal', recommendedRealm: 1,
         reward: { neili: 0, silver: 0, xp: 0 }, tags: [...c.tags], ...st,
       };
       const r = fight(b, enemy, { mode: 'ev' });

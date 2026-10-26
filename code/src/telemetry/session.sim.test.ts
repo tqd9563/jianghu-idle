@@ -76,11 +76,11 @@ describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
     login(R);
     expect(st().run).toBe(2);
 
-    // 第二世：在线 4 小时，推到图 1 初入的 Boss（首次挑战即算抵达，胜负不论）
+    // 第二世：在线 4 小时，推到卷一门户乱石隘的 Boss（首次挑战即算抵达，胜负不论）
     online(R);
     pushFronts();
-    const boss = trackLength(1, 0);
-    if (nextStageOf(1, 0, st().clearedStages) === boss) challenge(1, 0, boss);
+    const boss = trackLength(3);
+    if (nextStageOf(3, st().clearedStages) === boss) challenge(3, boss);
     st().endSession('completed');
 
     const names = getEvents().map((e) => e.e);
@@ -103,9 +103,9 @@ describe('会话模拟器 · 产出 analyze_telemetry.py 自验样例', () => {
     pushFronts({ stopAfterFirstLoss: true });
     // 纯重试三次（不做任何调整）→ §10.2「无脑连点」信号
     for (let i = 0; i < 3; i++) {
-      const next = nextStageOf(1, 0, st().clearedStages);
+      const next = nextStageOf(1, st().clearedStages);
       if (next === null) break;
-      challenge(1, 0, next);
+      challenge(1, next);
       advance(6);
     }
     st().endSession('design_dropout');

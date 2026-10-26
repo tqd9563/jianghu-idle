@@ -3,12 +3,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import { fight, makeBuild, type CombatSkill } from './combat';
-import { getStage, trackLength } from './enemies';
 import { FORM_NAMES } from './formNames';
 import {
   BIG_OF, EFFECT_TAG, QUALITY_PARAMS, TRIGGER_CAP, WUXUE, WUXUE_IDS, effectText, effectValue, COST_GROWTH, MULT_GROWTH, formBaseCost, formCd, formCost, formMult,
   usableWith,
 } from './wuxue';
+import { legacyLength, legacyStage } from './legacyStage.testutil';
 
 const seeded = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; }; };
 
@@ -108,7 +108,7 @@ describe('名录读表', () => {
 });
 
 describe('战斗：触发求和与新特效', () => {
-  const enemy = getStage(3, 0, 20);
+  const enemy = legacyStage(3, 0, 20);
   const build = makeBuild('shaolin', 4, 40, 3);
   const sk = (id: string, effect: CombatSkill['forms'][number]['effect'], fx: number, p = 0.25, cost = 25, cd = 2): CombatSkill => ({
     id, name: id, p, forms: [{ key: `${id}:1`, name: '第一式', mult: 1.3, effect, fx, cost, cd }],
@@ -116,7 +116,7 @@ describe('战斗：触发求和与新特效', () => {
 
   it('总触发率 = Σ 各门几率，封顶 75%；p 为 0 永不出招', () => {
     // 打不死也不还手的靶子：跑满 50 回合，出招率才有统计意义
-    const dummy = { ...getStage(3, 0, trackLength(3, 0)), hp: 1e12, atk: 0, tags: [] as never[] };
+    const dummy = { ...legacyStage(3, 0, legacyLength(3, 0)), hp: 1e12, atk: 0, tags: [] as never[] };
     const castRate = (loadout: CombatSkill[], seed: number) => {
       const r = fight(build, dummy, { mode: 'rng', rng: seeded(seed), loadout, qiMax: 10000 });
       expect(r.rounds).toBe(50);

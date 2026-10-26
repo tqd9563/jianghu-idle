@@ -4,11 +4,12 @@
 import { describe, expect, it } from 'vitest';
 import { computeAttributes } from './attributes';
 import { fight, makeBuild } from './combat';
-import { getStage, allStages } from './enemies';
+import { allStages } from './enemies';
 import {
   AFFIX_POOL, BAG_CELLS, GRADE_NAMES, SELL_MULT, applyGearToBuild, bagFits, bagUsed, gearBonusOf, gearFullName,
   gearNameOf, gradeWeights, rollGear, rollGrade, type GearItem,
 } from './gear';
+import { legacyStage } from './legacyStage.testutil';
 
 /** 固定序列的伪随机：依次吐出给定值，用尽后循环 */
 const seq = (vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]; };
@@ -164,6 +165,6 @@ describe('gear · 叠进构筑（spec §6）', () => {
     const dmg = (e: typeof normal, bonus: number) => fight(build, e, { mode: 'ev', hardDmgBonus: bonus }).stats.dmgDealt;
     expect(dmg(normal, 0.5)).toBe(dmg(normal, 0));
     expect(dmg(elite, 0.5)).toBeGreaterThan(dmg(elite, 0));
-    expect(getStage(1, 0, 1).kind).toBe('normal');
+    expect(legacyStage(1, 0, 1).kind).toBe('normal');
   });
 });

@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { fight, makeBuild, type CombatSkill } from './combat';
-import { getStage } from './enemies';
+import { legacyStage } from './legacyStage.testutil';
 
 const seeded = (seed: number) => {
   let x = seed;
@@ -14,7 +14,7 @@ const skill = (id: string, effect: CombatSkill['forms'][number]['effect'], cost 
 });
 
 describe('武学出招', () => {
-  const enemy = getStage(2, 0, 10);
+  const enemy = legacyStage(2, 0, 10);
   const build = makeBuild('shaolin', 4, 40, 3);
 
   it('EV 模式忽略武学：结果与不装一致', () => {
@@ -30,7 +30,7 @@ describe('武学出招', () => {
   });
 
   it('装了会出招：出招事件、按武学与按招式计数；冷却期内同一门不连发', () => {
-    const r = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(5), loadout: [skill('a', null, 25, 2)], qiMax: 300 });
+    const r = fight(build, legacyStage(3, 0, 20), { mode: 'rng', rng: seeded(5), loadout: [skill('a', null, 25, 2)], qiMax: 300 });
     const casts = r.turns.filter((t) => t.kind === 'cast');
     expect(casts.length).toBeGreaterThan(0);
     expect(r.stats.casts).toBe(casts.length);
@@ -43,29 +43,29 @@ describe('武学出招', () => {
   it('真气不够就不出招；「回气」式按比例返还耗气（Ⅲ 档全返）', () => {
     const none = fight(build, enemy, { mode: 'rng', rng: seeded(9), loadout: [skill('a', null, 500)], qiMax: 100 });
     expect(none.stats.casts).toBe(0);
-    const free = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(9), loadout: [skill('b', '回气', 500)], qiMax: 500 });
+    const free = fight(build, legacyStage(3, 0, 20), { mode: 'rng', rng: seeded(9), loadout: [skill('b', '回气', 500)], qiMax: 500 });
     expect(free.stats.casts).toBeGreaterThan(1);
   });
 
   it('附毒让非蚀骨也能挂毒（不毒爆）；引爆清空毒层', () => {
     const hs = makeBuild('huashan', 4, 40, 3);
-    const r = fight(hs, getStage(3, 0, 20), { mode: 'rng', rng: seeded(11), loadout: [skill('p', '附毒')], qiMax: 300 });
+    const r = fight(hs, legacyStage(3, 0, 20), { mode: 'rng', rng: seeded(11), loadout: [skill('p', '附毒')], qiMax: 300 });
     expect(r.stats.poisonDmg).toBeGreaterThan(0);
     expect(r.stats.poisonBurstCount).toBe(0);
     const tm = makeBuild('tangmen', 4, 40, 3);
-    const d = fight(tm, getStage(3, 0, 20), { mode: 'rng', rng: seeded(11), loadout: [skill('x', '引爆', 25, 1)], qiMax: 300 });
+    const d = fight(tm, legacyStage(3, 0, 20), { mode: 'rng', rng: seeded(11), loadout: [skill('x', '引爆', 25, 1)], qiMax: 300 });
     expect(d.turns.some((t) => t.kind === 'cast' && t.text.includes('引爆毒层'))).toBe(true);
   });
 
   it('状态快照：持续特效挂上记 3 回合并逐回合递减；封穴在敌人落空前一直挂着', () => {
-    const r = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(7), loadout: [skill('m', '迷目', 25, 4, 1.3, 24, 0.75)], qiMax: 300 });
+    const r = fight(build, legacyStage(3, 0, 20), { mode: 'rng', rng: seeded(7), loadout: [skill('m', '迷目', 25, 4, 1.3, 24, 0.75)], qiMax: 300 });
     const castAt = r.turns.findIndex((t) => t.fx === '迷目');
     expect(castAt).toBeGreaterThanOrEqual(0);
     expect(r.turns[castAt].lasting).toContainEqual(['迷目', 3, 24]);
     const left = r.turns.slice(castAt).map((t) => t.lasting.find(([k]) => k === '迷目')?.[1] ?? 0);
     expect(left.indexOf(2)).toBeGreaterThan(0);
     expect(left.indexOf(1)).toBeGreaterThan(left.indexOf(2));
-    const s = fight(build, getStage(3, 0, 20), { mode: 'rng', rng: seeded(7), loadout: [skill('f', '封穴', 25, 2, 1.3, 1, 0.75)], qiMax: 300 });
+    const s = fight(build, legacyStage(3, 0, 20), { mode: 'rng', rng: seeded(7), loadout: [skill('f', '封穴', 25, 2, 1.3, 1, 0.75)], qiMax: 300 });
     const sealAt = s.turns.findIndex((t) => t.fx === '封穴');
     expect(s.turns[sealAt].eSealed).toBe(true);
     const skip = s.turns.findIndex((t, i) => i > sealAt && t.kind === 'sealed');

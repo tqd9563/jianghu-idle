@@ -4,7 +4,7 @@
 
 口径（design.md §2.2 / §2.6）：
 - 战力曲线取 longline_sim.solve() 的 x_min（三路线最慢者，与现行关卡表同一口径）；
-  段内装备余量按现行「段末上抬」0.5 当量线性摊入（export_stage_table.END_LIFT）。
+  段内装备余量按现行「段末上抬」0.5 当量线性摊入（export_stage_line.END_LIFT）。
 - 主线必走：每卷 1 张赶路图 + 一章 2 张据点图；同卷并排的其余章与主线同高，不占天数。
 - 普通关匀速；赶路图坡度减半；副手与台阶同高；镇守 +2.5 关、非末卷章末 Boss +5.5 关的量，
   不占台阶高度；每个境界最后一卷的 Boss 为境界门槛（下一境界首日）。
@@ -31,7 +31,7 @@ BANDS = {
 }
 VOL1 = dict(road=11, ju=15, x0=2.0)               # 卷 1：入门关 + 传功（赶路）后接一章两图，铺到境界 2 段起点
 
-# 现行关卡表（export_stage_table）体量，用于对照
+# 卷章图关改造前的关卡表（export_stage_table，已退役）体量，用于对照
 OLD = dict(stages=318, elites=35, bosses=9)
 # 标准玩家 100 天的成就层构成（economy.md §1.3：约 26 精英、9 Boss、10 条经脉，合计约占累计声望 5%）
 STD = dict(elites=26, bosses=9, meridians=10, share=5.0)

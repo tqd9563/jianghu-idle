@@ -190,7 +190,7 @@ export function rollGear(input: GearRollInput, rng: () => number): GearItem {
 export const DROP_RATE: Record<'normal' | 'elite' | 'boss', number> = { normal: 0.06, elite: 0.20, boss: 1 };
 /** 入门关（图 1 初入前 6 关，content.md §2.0 v2.6）：传功后只出凡品、精良（裁决 19） */
 export const INTRO_STAGES = 6;
-export const isIntroStage = (map: number, tier: number, stage: number) => map === 1 && tier === 0 && stage <= INTRO_STAGES;
+export const isIntroStage = (map: number, stage: number) => map === 1 && stage <= INTRO_STAGES;
 
 /** 品阶权重：pos = 关卡在本段里的位置（0 段首、1 段末） */
 export function gradeWeights(pos: number): number[] {

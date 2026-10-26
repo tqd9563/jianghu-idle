@@ -1,10 +1,11 @@
 /**
  * 战斗页 —— 基准：docs/design/ui-overhaul-prototype.html `#p-battle` / `#d-fail` + DESIGN.md（issue #26 视觉大改）。
- * 结构：页头（图名 + 卷 · 势力 · 进度 + 卷切换）→ 本卷各图（赶路图与各家外围、门户；未开的不显示）→ 关卡进度线与眼前一段 → 对阵（无底框）→ 推关 / 挂机按钮 → 叙事战报。
+ * 活江湖第一期批三（docs/design/living-jianghu-prototype.html + DESIGN.md「江湖舆图」「据点战斗页」「长卷对阵区」）：
+ * 江湖舆图 → 点卷放大到地域分图 → 点据点进场景战斗页（关卡点在画里的路上、长卷对阵、挑战 / 挂机、叙事战报）。
  * 挂机入口按 docs/design/battle-loot-prototype.html `.act2`（battle-loot/design.md §2.1）：已通关卡「在此挂机」+「重打一次」，下一关「挑战」；挂机中顶上一条状态栏。
  * 战报句子来自 engine/narration.ts（冻结文案 docs/rules/copy/battle-narration.md），收获行见其 §7。
  */
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RUMORS } from '../engine/sect';
 import { DIAG_TEXTS, type TurnEvent } from '../engine/combat';
@@ -12,15 +13,21 @@ import { WUXUE, formName, type FormEffect, type WuxueId } from '../engine/wuxue'
 import { NEIGONG } from '../engine/neigong';
 import { REALMS } from '../engine/content';
 import {
-  getStage, isChapterBoss, mapDef, mapName, stageKey, trackLength, volName, VOLUMES,
+  getStage, isChapterBoss, mapDef, mapName, stageKey, trackLength, VOLUMES,
   type EnemyDef, type EnemyTag,
 } from '../engine/enemies';
+import { factionStyle, holderOfStage } from '../engine/roster';
+import { ERA_START } from '../engine/reincarnation';
+import { JianghuMap } from './battle/JianghuMap';
+import { StageScene, type StageNode } from './battle/StageScene';
+import { DuelBand } from './battle/DuelBand';
+import { FOE_CAP, FOE_PT, HERO_CAP, HERO_PT, cnNum, portraitOf, sceneOf } from './battle/art';
 import { narrateTurn, type Hand, type NarrCtx, type Seg } from '../engine/narration';
 import { armorBroken, rate, tallyTurns, type MechKey } from '../engine/battleTally';
 import { COUNTER_HINTS, FAME_BOSS, FAME_ELITE, hasNode } from '../engine/prestige';
 import {
-  currentMult, effBreakCost, mapUnlocked, nextStageOf, playerBuild, volUnlocked,
-  qiMaxOf, useGameStore, type MapNo,
+  currentMult, effBreakCost, mapUnlocked, nextStageOf, playerBuild,
+  qiMaxOf, useGameStore,
 } from '../store/gameStore';
 import { fmtBig } from '../fmt';
 import { gearFullName } from '../engine/gear';
@@ -31,24 +38,6 @@ const f0 = (n: number) => fmtBig(Math.round(n));
 
 /** data-tip 走 innerHTML：拼进去的名字统一转义 */
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-
-/** 未开放的图的开启条件 */
-function unlockHint(map: MapNo): string {
-  const m = mapDef(map);
-  const vol = VOLUMES[m.vol - 1];
-  if (m.layer === 'road') return m.vol > 1 ? `打穿${VOLUMES[m.vol - 2].region}任一家门户后开启` : '';
-  if (m.layer === 'outer') return `走完${mapName(vol.maps[0])}后开启`;
-  const outer = vol.maps.find((id) => { const o = mapDef(id); return o.layer === 'outer' && o.chapter === m.chapter; })!;
-  return `打通${mapName(outer)}后开启`;
-}
-
-/** 页头副标题里的图归属：「卷三 · 江南 · 千岩寺外围」 */
-function mapWhere(map: MapNo): string {
-  const m = mapDef(map);
-  const vol = VOLUMES[m.vol - 1];
-  const tail = m.layer === 'road' ? '赶路' : `${m.faction}${m.layer === 'outer' ? '外围' : '门户'}`;
-  return `${volName(m.vol)} · ${vol.region} · ${tail}`;
-}
 
 /** 增减益标记（docs/design/battle-status-prototype.html）：石印图标一行。有时限的下挂三点亮几枚余几回合；
  *  叠层的（毒、叠浪，以后同类机制照此）右下角标层数，叠满会爆发的印面发亮；数值收进悬停 */
@@ -122,7 +111,11 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const cleared = s.clearedStages;
   const unlocked = s.mapsUnlocked ?? [1];
   const viewMap = s.selectedMap;
-  const viewVol = mapDef(viewMap).vol;
+  const viewDef = mapDef(viewMap);
+  // 三层：江湖舆图 → 地域分图（zoomVol）→ 据点战斗页；在打或挂机时直接进据点
+  const [view, setView] = useState<'map' | 'fight'>(() => (s.battle || s.idle ? 'fight' : 'map'));
+  const [zoomVol, setZoomVol] = useState<number | null>(null);
+  const hereVol = unlocked.reduce((v, m) => Math.max(v, mapDef(m).vol), 1);
   // 只展示当前所选图上的战斗
   const battle = s.battle && s.battle.map === viewMap ? s.battle : null;
   const open = mapUnlocked(viewMap, unlocked);
@@ -134,7 +127,6 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
 
   // 选关（已通关卡可回刷；默认跟随下一关，全通默认末关）
   const [viewStage, setViewStage] = useState<number | null>(null);
-  const [showAll, setShowAll] = useState(false);
   useEffect(() => setViewStage(null), [viewMap]);
   const idleStage = viewStage ?? next ?? total;
   const isRefarmTarget = isDone(idleStage);
@@ -149,7 +141,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const lost = battle !== null && battleDone && !battle.result.win;
   const phpPct = last ? last.phpPct : 1;
   const ehpPct = last ? last.ehpPct : 1;
-  // 少林护体：气血墨条上的浅蓝护盾段，自左端伸展、扣盾时右缘削减（2026-07-07 UI 裁决）
+  // 少林护体：气血条上的浅蓝护盾段（2026-07-07 UI 裁决）
   const shieldNow = build.shieldPct > 0 ? (last ? last.pShield : build.hp * build.shieldPct) : 0;
   const tide = build.sqNeed < 99 && battle
     ? { need: build.sqNeed, mult: build.burstMult, brim: battle.result.turns[battle.revealed]?.kind === 'burst' } : null;
@@ -164,15 +156,27 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
   const fameReward = enemy && enemy.kind !== 'normal'
     ? Math.floor((enemy.kind === 'boss' ? FAME_BOSS : FAME_ELITE) * currentMult(s)) : 0;
 
-  // 页头进度：已过关数、精英首杀
   const stages = Array.from({ length: total }, (_, i) => i + 1);
   const defs = open ? stages.map((st) => getStage(viewMap, st)) : [];
   const doneCount = stages.filter(isDone).length;
-  const elites = defs.filter((d) => d.kind === 'elite');
-  const eliteDone = elites.filter((d) => isDone(d.stage)).length;
-  // 本图末关是谁：门户是 Boss、外围是镇守、赶路图没有守关的人
-  const lastKind = defs[total - 1]?.kind;
-  const endWord = lastKind === 'boss' ? ' Boss ' : lastKind === 'elite' ? '镇守' : '走完';
+
+  // 守关人（江湖名册，roster.ts）：本世在任者，第几任、通用人像
+  const life = Math.floor(s.eraStart ?? ERA_START);
+  const holder = (st: number) => holderOfStage(s.worldSeed, s.rosterKills ?? [], life, stageKey(viewMap, st));
+  const look = (st: number, name: string) => {
+    const h = holder(st);
+    const fs = h ? factionStyle(h.post.faction) : null;
+    return h && fs ? portraitOf(fs.style, h.person.female, name) : { pt: FOE_PT, cap: FOE_CAP };
+  };
+  const nodes: StageNode[] = defs.map((d) => {
+    const role = d.kind === 'boss' ? 'boss' : d.kind === 'elite' ? (d.stage === total ? 'warden' : 'aide') : null;
+    const h = role ? holder(d.stage) : null;
+    const done = isDone(d.stage);
+    const tip = h
+      ? `<b>${esc(d.name)}</b> · ${esc(h.post.faction)}${esc(h.post.title)}<br>第 ${cnNum(h.term + 1)} 任${done ? ' · 可回刷' : ''}`
+      : `第${cnNum(d.stage)}关 · ${esc(d.name)}${done ? ' · 可回刷' : d.stage === next ? ' · 下一关' : ''}`;
+    return { stage: d.stage, done, role, pt: role ? look(d.stage, d.name).pt : undefined, tip };
+  });
 
   const narrCtx: NarrCtx | null = enemy ? {
     enemy, route: s.route ?? null, hand: s.worn?.兵器?.cat ?? (s.worn?.暗器 ? '暗器' : 'none'),
@@ -195,211 +199,124 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [battle?.revealed, victory, battle?.reward]);
 
-  const stageBtn = (st: number) => {
-    const d = defs[st - 1];
-    const done = isDone(st);
-    const cur = st === next;
-    const sel = st === (battle ? battle.stage : idleStage);
-    const cls = [done && 'done', d.kind !== 'normal' && d.kind, cur && 'cur', sel && !cur && 'sel'].filter(Boolean).join(' ');
+  // 舞台底图：舆图与有场景图的据点自带画面，收起页底图
+  const hasScene = view === 'fight' && open && !!sceneOf(viewMap, total);
+  useEffect(() => {
+    document.documentElement.classList.toggle('bt-own-art', view === 'map' || hasScene);
+    return () => document.documentElement.classList.remove('bt-own-art');
+  }, [view, hasScene]);
+
+  if (view === 'map') {
     return (
-      <button
-        key={st} type="button" className={cls} disabled={(!done && !cur) || fighting}
-        data-tip={`第 ${st} 关 · ${esc(d.name)}${done ? ' · 可回刷' : cur ? ' · 下一关' : ''}`}
-        onClick={() => setViewStage(st)}
-      >{st}</button>
+      <JianghuMap
+        unlocked={unlocked} cleared={cleared} hereVol={hereVol} zoomVol={zoomVol} onZoom={setZoomVol}
+        onOpen={(m) => { s.selectMap(m); setView('fight'); }}
+      />
     );
-  };
+  }
 
-  // 眼前一段：下一关前 3 关到后 6 关，首末关常驻
-  const anchor = next ?? total;
-  const from = Math.max(1, anchor - 3);
-  const to = Math.min(total, anchor + 6);
-
-  // 江湖路已走过的一段：从第一站圆点量到当前站圆点（站名宽度不一，只能量）
-  const roadRef = useRef<HTMLDivElement>(null);
-  const [walked, setWalked] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
-  useLayoutEffect(() => {
-    const measure = () => {
-      const dots = roadRef.current?.querySelectorAll<HTMLElement>('.station .dot');
-      if (!dots || dots.length === 0) return;
-      const base = roadRef.current!.getBoundingClientRect().left;
-      const mid = (el: HTMLElement) => { const r = el.getBoundingClientRect(); return r.left + r.width / 2 - base; };
-      const first = mid(dots[0]);
-      const here = roadRef.current!.querySelector<HTMLElement>('.station.here .dot');
-      setWalked({ left: first, width: here ? mid(here) - first : 0 });
-    };
-    measure();
-    addEventListener('resize', measure);
-    return () => removeEventListener('resize', measure);
-  }, [viewMap]);
+  const vol = VOLUMES[viewDef.vol - 1];
+  const camp = viewDef.faction ? factionStyle(viewDef.faction)?.camp ?? '正' : null;
+  const foeLook = enemy ? look(enemy.stage, enemy.name) : { pt: FOE_PT, cap: FOE_CAP };
+  const foeHolder = enemy && enemy.kind !== 'normal' ? holder(enemy.stage) : null;
 
   return (
-    <>
-      <header className="jh-head">
-        <div>
-          <h1>{mapName(viewMap)}</h1>
-          <div className="sub">
-            {mapWhere(viewMap)}
-            {open && <> · 已过 <b>{doneCount}</b> / {total} 关{elites.length > 0 && <> · 精英首杀 <b>{eliteDone}</b> / {elites.length}</>}</>}
-          </div>
+    <div className="bt-fight">
+      <StageScene
+        map={viewMap} nodes={nodes} next={next} selected={battle ? battle.stage : idleStage} fighting={fighting}
+        onSelect={setViewStage}
+      >
+        <button type="button" className="bt-back" onClick={() => { setZoomVol(viewDef.vol); setView('map'); }}>← {vol.region}</button>
+        <h2>{mapName(viewMap)}</h2>
+        <div className="of">
+          {camp
+            ? <><span className={`seal ${camp === '正' ? 'aide' : 'boss'} camp`}>{camp}</span>{viewDef.faction} · {viewDef.layer === 'gate' ? '门户' : '外围'}</>
+            : '赶路'}
         </div>
-        {/* 卷切换：只列已到的卷 */}
-        <div className="jh-seg bt-tiers" role="group" aria-label="卷">
-          {VOLUMES.filter((v) => volUnlocked(v.no, unlocked)).map((v) => (
-            <button
-              key={v.no} type="button" aria-pressed={v.no === viewVol} data-tip={`${volName(v.no)} · ${v.region} · ${v.title}`}
-              onClick={() => { if (v.no !== viewVol) s.selectMap(v.maps.filter((id) => mapUnlocked(id, unlocked)).pop() ?? v.maps[0]); }}
-            >{volName(v.no)}</button>
-          ))}
-        </div>
-      </header>
-
-      {/* 本卷各图：赶路图在前，各家外围 → 门户；未开的不显示 */}
-      <div className="bt-road" ref={roadRef}>
-        <div className="walked" style={{ left: walked.left, width: walked.width }} />
-        {VOLUMES[viewVol - 1].maps.filter((m) => mapUnlocked(m, unlocked)).map((m) => {
-          const d = mapDef(m);
-          return (
-            <button
-              key={m} type="button" className={`station open${m === viewMap ? ' here' : ''}`}
-              data-tip={d.faction ? `${d.faction} · ${d.layer === 'outer' ? '外围' : '门户'}` : '赶路'} onClick={() => s.selectMap(m)}
-            >
-              <span className="dot" /><span className="nm">{mapName(m)}</span>
-            </button>
-          );
-        })}
-      </div>
+        <div className="prog">{open ? (doneCount >= total ? '已破' : <>已过 <b>{doneCount}</b> / {total} 关</>) : null}</div>
+      </StageScene>
 
       {!open ? (
-        <p className="bt-note">{mapName(viewMap)}尚未开启 · {unlockHint(viewMap)}。</p>
-      ) : (
+        <p className="bt-note">{mapName(viewMap)}尚未开启。</p>
+      ) : enemy && (
         <>
-          <div className="bt-track">
-            <div className="tbar">
-              <div className="rail-line" />
-              <div className="fill" style={{ width: `${((next ?? total + 1) - 1) / total * 100}%` }} />
-              {defs.filter((d) => d.kind !== 'normal').map((d) => (
-                <span
-                  key={d.stage} className={`mk ${d.kind}${isDone(d.stage) ? ' got' : ''}`}
-                  style={{ left: `${(d.stage - 0.5) / total * 100}%` }}
-                  data-tip={`第 ${d.stage} 关 · ${esc(d.name)}${isDone(d.stage) ? '（已首杀）' : ''}`}
-                />
-              ))}
-              {next !== null && <span className="here" style={{ left: `${(next - 0.5) / total * 100}%` }} />}
-            </div>
-            <div className="meta">
-              <span>
-                {next !== null
-                  ? <>下一关 <b>第 {next} 关</b>{next < total ? ` · 距${endWord}还有 ${total - next} 关` : ` · ${endWord}`}</>
-                  : '本图已全部通关 · 任一关可回刷'}
-              </span>
-              <button type="button" onClick={() => setShowAll((v) => !v)}>{showAll ? '收起 ▴' : '全部关卡 ▾'}</button>
-            </div>
-            <div className="near">
-              {from > 1 && <>{stageBtn(1)}<span className="gap">…</span></>}
-              {stages.slice(from - 1, to).map(stageBtn)}
-              {to < total && <><span className="gap">…</span>{stageBtn(total)}</>}
-            </div>
-            {showAll && <div className="all">{stages.map(stageBtn)}</div>}
-          </div>
-
-          {enemy && (
-            <div className="bt-arena">
-              <div className="duel">
-                <div className="side">
-                  <div className="name">你</div>
-                  <div className="desc">{REALMS[s.realm - 1].name}{s.neigong ? ` · ${NEIGONG[s.neigong].name}` : ''}</div>
-                  <div className="meter">
-                    <div className="lbl">
-                      <span>气血</span>
-                      <span>{shieldNow > 0 && <em className="shield-n">护体 {f0(shieldNow)}　</em>}<b>{f0(build.hp * phpPct)}</b> / {f0(build.hp)}</span>
-                    </div>
-                    <div className="jh-ink-bar hp">
-                      <i style={{ width: `${phpPct * 100}%` }} />
-                      {shieldNow > 0 && <em className="shield" style={{ width: `${Math.min(shieldNow / build.hp, 1) * 100}%` }} />}
-                    </div>
-                  </div>
-                  {qiCap > 0 && (
-                    <div className="meter">
-                      <div className="lbl"><span>真气</span><span><b>{f0(qiNow)}</b> / {f0(qiCap)}</span></div>
-                      <div className="jh-ink-bar qi"><i style={{ width: `${Math.min(1, qiNow / qiCap) * 100}%` }} /></div>
-                    </div>
-                  )}
-                  {fx && fx.mine.length > 0 && <FxRow chips={fx.mine} />}
-                </div>
-
-                <div className="vs">
-                  <span className="big">{victory ? '胜' : lost ? '败' : fighting ? '交手' : '对决'}</span>
-                  <span className="rd">{fighting && last ? `第 ${Math.max(1, last.rd)} 回合` : battleDone ? `${battle!.result.rounds} 回合` : ''}</span>
-                </div>
-
-                <div className="side enemy">
-                  <div className="name">
-                    {enemy.kind === 'boss' && <span className="seal">{bossSeal(enemy)}</span>}
-                    {enemy.kind === 'elite' && <span className="seal elite">精英</span>}
-                    {enemy.tags.map((t) => (
-                      <span
-                        key={t} className="jh-tag"
-                        data-tip={hasNode(s.ownedRepNodes, 'chongchu_jianghu') ? `${tagLabel(t)} · ${COUNTER_HINTS[t]}` : undefined}
-                      >{tagLabel(t)}</span>
-                    ))}
-                    {enemy.name}
-                  </div>
-                  <div className="desc">第 {enemy.stage} 关{enemy.post ? ` · ${enemy.post}` : ''} · 推荐境界 {enemy.recommendedRealm}</div>
-                  <div className="meter">
-                    <div className="lbl"><span>气血</span><span><b>{f0(enemy.hp * ehpPct)}</b> / {f0(enemy.hp)}</span></div>
-                    <div className="jh-ink-bar hp"><i style={{ width: `${ehpPct * 100}%` }} /></div>
-                  </div>
+          <DuelBand
+            turns={turns}
+            me={{
+              name: '你', desc: `${REALMS[s.realm - 1].name}${s.neigong ? ` · ${NEIGONG[s.neigong].name}` : ''}`,
+              hp: build.hp * phpPct, hpMax: build.hp, shield: shieldNow > 0 ? shieldNow : undefined,
+              qi: qiCap > 0 ? qiNow : undefined, qiMax: qiCap > 0 ? qiCap : undefined,
+              pt: HERO_PT, cap: HERO_CAP, ko: lost,
+              extra: fx && fx.mine.length > 0 ? <FxRow chips={fx.mine} /> : null,
+            }}
+            foe={{
+              name: enemy.name,
+              desc: (
+                <>
+                  {enemy.kind === 'boss' && <span className="seal-k boss">{bossSeal(enemy)}</span>}
+                  {enemy.kind === 'elite' && <span className="seal-k">精英</span>}
+                  {enemy.tags.map((t) => (
+                    <span
+                      key={t} className="jh-tag"
+                      data-tip={hasNode(s.ownedRepNodes, 'chongchu_jianghu') ? `${tagLabel(t)} · ${COUNTER_HINTS[t]}` : undefined}
+                    >{tagLabel(t)}</span>
+                  ))}
+                  {foeHolder
+                    ? <span data-tip={`第 ${cnNum(foeHolder.term + 1)} 任`}>{foeHolder.post.faction}{foeHolder.post.title}</span>
+                    : <span>第 {enemy.stage} 关</span>}
+                  <span> · 推荐境界 {enemy.recommendedRealm}</span>
+                </>
+              ),
+              hp: enemy.hp * ehpPct, hpMax: enemy.hp,
+              pt: foeLook.pt, cap: foeLook.cap, boss: enemy.kind === 'boss', ko: victory,
+              extra: (
+                <>
                   {fx && fx.foe.length > 0 && <FxRow chips={fx.foe} />}
                   {enemy.kind !== 'normal' && (
                     <div className="fame">{fameClaimed ? '名号已传' : `首次击败 · 声望 +${fmtBig(fameReward)}`}</div>
                   )}
-                </div>
-              </div>
+                </>
+              ),
+            }}
+          />
 
-              <div className="act2">
-                {idling && (
-                  <div className="idle-bar">
-                    <span className="pulse" />
-                    <span>第 <b>{idling.stage}</b> 关</span>
-                    <span className="serif">挂机中</span>
-                    <button type="button" className="jh-btn2 quiet" onClick={() => s.stopIdle()}>停止</button>
-                  </div>
-                )}
-                <div className="btns">
-                  {fighting ? (
-                    <button type="button" className="jh-btn fight" disabled>交手中 · 第 {Math.max(1, last?.rd ?? 1)} 回合</button>
-                  ) : battle && battle.chainAt !== null && battle.chainMode === 'push' && battle.chainStage !== null && !s.failure ? (
-                    <button type="button" className="jh-btn fight" disabled>即将挑战 · 第 {battle.chainStage} 关</button>
-                  ) : idling ? (
-                    next !== null && (
-                      <button type="button" className="jh-btn fight" onClick={() => s.challengeStage(viewMap, next)}>
-                        挑战 · 第<span className="n">{next}</span>关
-                      </button>
-                    )
-                  ) : isRefarmTarget ? (
-                    <>
-                      <button type="button" className="jh-btn fight" onClick={() => s.idleAt(viewMap, idleStage)}>在此挂机</button>
-                      <button type="button" className="jh-btn fight quiet" onClick={() => s.challengeStage(viewMap, idleStage)}>重打一次</button>
-                    </>
-                  ) : (
-                    <button
-                      type="button" className="jh-btn fight"
-                      data-tip={idleEnemy && idleEnemy.kind !== 'normal' ? '精英与 Boss 之战有 15–30 秒演出，不可跳过' : undefined}
-                      onClick={() => s.challengeStage(viewMap, idleStage)}
-                    >
-                      挑战 · 第<span className="n">{idleStage}</span>关
-                    </button>
-                  )}
-                </div>
-                <label className="bt-chain">
-                  <input type="checkbox" checked={s.autoChain ?? false} onChange={(e) => s.setAutoChain(e.target.checked)} />
-                  <span className="box" aria-hidden="true" />
-                  <span className="t">自动连战</span>
-                </label>
-              </div>
+          <div className="bt-act">
+            {fighting ? (
+              <button type="button" className="bt-duel-btn" disabled>交手中</button>
+            ) : battle && battle.chainAt !== null && battle.chainMode === 'push' && battle.chainStage !== null && !s.failure ? (
+              <button type="button" className="bt-duel-btn" disabled>即将挑战第{cnNum(battle.chainStage)}关</button>
+            ) : idling ? (
+              next !== null && (
+                <button type="button" className="bt-duel-btn" onClick={() => s.challengeStage(viewMap, next)}>挑战第{cnNum(next)}关</button>
+              )
+            ) : isRefarmTarget ? (
+              <button type="button" className="bt-duel-btn" onClick={() => s.idleAt(viewMap, idleStage)}>在此挂机</button>
+            ) : (
+              <button
+                type="button" className="bt-duel-btn"
+                data-tip={idleEnemy && idleEnemy.kind !== 'normal' ? '精英与 Boss 之战有 15–30 秒演出，不可跳过' : undefined}
+                onClick={() => s.challengeStage(viewMap, idleStage)}
+              >挑战第{cnNum(idleStage)}关</button>
+            )}
+            <div className="bt-act-sub">
+              {idling && (
+                <span className="idle-bar">
+                  <span className="pulse" />
+                  <span>第 <b>{idling.stage}</b> 关</span>
+                  <span className="serif">挂机中</span>
+                  <button type="button" className="jh-btn2 quiet" onClick={() => s.stopIdle()}>停止</button>
+                </span>
+              )}
+              {!fighting && !idling && isRefarmTarget && (
+                <button type="button" className="jh-btn2 quiet" onClick={() => s.challengeStage(viewMap, idleStage)}>重打一次</button>
+              )}
+              <label className="bt-chain">
+                <input type="checkbox" checked={s.autoChain ?? false} onChange={(e) => s.setAutoChain(e.target.checked)} />
+                <span className="box" aria-hidden="true" />
+                <span className="t">自动连战</span>
+              </label>
             </div>
-          )}
+          </div>
         </>
       )}
 
@@ -452,7 +369,7 @@ export function BattlePane({ goCultivate }: { goCultivate: () => void }) {
       </section>
 
       {s.failure && <FailureCeremony goCultivate={goCultivate} />}
-    </>
+    </div>
   );
 }
 

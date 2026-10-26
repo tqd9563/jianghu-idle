@@ -247,5 +247,17 @@ export function stageNamesAt(seed: number, kills: readonly RosterKill[], lifeSta
   return out;
 }
 
+/** 某关的在任者（世内取本世出生年）；不是岗位关为 null */
+export function holderOfStage(seed: number, kills: readonly RosterKill[], lifeStartYear: number, key: string): Term | null {
+  const post = POST_OF_STAGE.get(key);
+  return post && seed ? holderAt(seed, kills, post, lifeStartYear) : null;
+}
+
+/** 势力的起名套路（战斗页按它取通用人像）与正邪 */
+export const factionStyle = (faction: string): { style: Style; camp: Camp } | null => {
+  const f = FACTIONS[faction];
+  return f ? { style: f.style, camp: f.camp } : null;
+};
+
 /** 新世界的种子 */
 export const newWorldSeed = (rng: () => number = Math.random) => Math.floor(rng() * 2 ** 31);

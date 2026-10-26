@@ -109,6 +109,13 @@
 
   /* 动效 */
   --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  /* 势力正邪与朝廷（DESIGN.md camp-*，活江湖） */
+  --camp-zheng: oklch(0.76 0.09 245);
+  --camp-xie: oklch(0.72 0.11 320);
+  --camp-court: oklch(0.76 0.10 135);
+  /* 敌方姓名里的绰号 */
+  --foe: oklch(0.72 0.12 30);
 
   /* z-index 语义层 */
   --z-nav: 40; --z-modal-backdrop: 60; --z-modal: 61; --z-ceremony: 70; --z-toast: 80;

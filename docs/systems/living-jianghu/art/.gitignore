@@ -1,0 +1,5 @@
+out/
+assets.txt
+tasks.txt
+jobs-*.json
+*.log

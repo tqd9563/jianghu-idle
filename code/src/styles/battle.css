@@ -7,12 +7,23 @@ html.bt-own-art .jh-art { display: none; }
 .page-battle .bt-note { color: var(--muted); font-size: 13.5px; margin: 8px 0 0; }
 .page-battle .bt-back { border: 0; background: none; color: var(--ink-gold); cursor: pointer; font-family: var(--font-display); letter-spacing: 0.2em; font-size: 14px; padding: 4px 0; }
 .page-battle .bt-back:hover { color: var(--gold); }
-.page-battle .bt-map-head { margin-bottom: 14px; }
+/* 舆图页去掉版心：画铺满侧栏右侧整个舞台，标题浮在画上 */
+.jh-page:has(.bt-mapwrap) { max-width: none; }
+.page-battle .bt-mapwrap { position: relative; margin: 0 calc(-1 * clamp(18px, 3.2vw, 48px)); }
+.page-battle .bt-map-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 0 clamp(18px, 3.2vw, 48px) 10px; }
+.page-battle .bt-map-head h1 { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: 0.18em; }
+.page-battle .bt-map-head .sub { color: var(--muted); font-size: 13.5px; }
+.page-battle .bt-map-head .sub b { color: var(--ink); font-weight: 600; }
+.page-battle .bt-map-head .bt-back { margin-top: 6px; }
 .page-battle .bt-map-head .vol { font-family: var(--font-display); color: var(--ink-gold); letter-spacing: 0.3em; font-size: 14px; margin-bottom: 2px; min-height: 1.6em; }
 
 /* 第一层：江湖舆图。底图即画，四周羽化融进夜底；放大到一卷时整张图平移缩放，卷名隐去、据点浮出 */
-.page-battle .bt-map { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; margin-top: 6px;
-  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 62%, transparent 100%); }
+.page-battle .bt-map { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: calc(100vh - 120px); overflow: hidden; container-type: size;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 90%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 90%, transparent);
+  -webkit-mask-composite: source-in; mask-composite: intersect; }
+/* 画框：16:9 按宽铺满；极宽屏受视口高度所限时居中，两侧随羽化淡出 */
+.page-battle .bt-map .map-box { position: absolute; left: 50%; top: 50%; width: min(100cqw, 177.78cqh); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); }
 .page-battle .bt-map .map-in { position: absolute; inset: 0; transform-origin: 0 0; transition: transform .9s var(--ease-quart); }
 .page-battle .bt-map .art { position: absolute; inset: 0; background-position: center; background-size: cover; background-repeat: no-repeat; filter: brightness(0.92) saturate(0.7); }
 .page-battle .bt-map.zoomed .art { filter: brightness(0.68) saturate(0.55); transition: filter .6s .3s; }
@@ -303,6 +314,8 @@ html.bt-own-art .jh-art { display: none; }
 /* ═══════ 手机宽度 ═══════ */
 @media (max-width: 860px) {
   .page-battle .vlab .nm { font-size: 13px; letter-spacing: 0.1em; } .page-battle .vlab .tt { display: none; }
+  .page-battle .bt-mapwrap { margin: 0 -16px; }
+  .page-battle .bt-map-head { margin: 0 16px 8px; flex-direction: column; align-items: flex-start; gap: 2px; }
   .page-battle .bt-scene { margin: -20px -16px 0; }
   .page-battle .sc-head { left: 16px; } .page-battle .sc-head h2 { font-size: 26px; }
   .page-battle .bt-duel { margin: 0; }

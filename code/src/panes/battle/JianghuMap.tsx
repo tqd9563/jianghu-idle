@@ -45,11 +45,13 @@ export function JianghuMap({ unlocked, cleared, hereVol, zoomVol, onZoom, onOpen
   }, [vol, onZoom]);
 
   return (
-    <>
-      <header className="jh-head bt-map-head">
+    <div className="bt-mapwrap">
+      {/* 标题与返回浮在画上 */}
+      <header className="bt-map-head">
         <div>
           <div className="vol">{vol ? `${volName(vol.no)} · ${vol.title}` : ''}</div>
           <h1>{vol ? vol.region : '江湖'}</h1>
+          {vol && <button type="button" className="bt-back" onClick={() => onZoom(null)}>← 江湖舆图</button>}
         </div>
         <div className="sub">
           {vol
@@ -57,8 +59,9 @@ export function JianghuMap({ unlocked, cleared, hereVol, zoomVol, onZoom, onOpen
             : <>此世行至 <b>{volName(hereVol)} · {VOLUMES[hereVol - 1].region}</b></>}
         </div>
       </header>
-      {vol && <button type="button" className="bt-back" onClick={() => onZoom(null)}>← 江湖舆图</button>}
+      {/* 舆图铺满舞台：画框按 16:9 盖满、多出的裁掉，卷名与据点坐标跟着画框走 */}
       <div className={`bt-map${vol ? ' zoomed' : ''}${vol && !region?.art ? ' no-region' : ''}`}>
+        <div className="map-box">
         <div className="map-in" style={{ transform: tf, ['--k' as string]: k }}>
           <div className="art" style={{ backgroundImage: `url('${WORLD_MAP}')` }} />
           {VOLUMES.map((v, i) => {
@@ -112,7 +115,8 @@ export function JianghuMap({ unlocked, cleared, hereVol, zoomVol, onZoom, onOpen
             );
           })}
         </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

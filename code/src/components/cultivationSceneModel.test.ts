@@ -2,7 +2,7 @@
  * 修炼面板纯视图模型测试 —— 权威：docs/systems/zhoutian/spec.md §4、design.md §3–§4
  */
 import { describe, expect, it } from 'vitest';
-import { buildSceneModel, type SceneInput } from './cultivationSceneModel';
+import { buildSceneModel, cultLayout, defaultSelection, moonArc, moonLitPath, type SceneInput } from './cultivationSceneModel';
 import { REALM_ACUPOINTS } from '../engine/acupoints';
 
 const at = (o: Partial<SceneInput> = {}): SceneInput => ({
@@ -10,7 +10,7 @@ const at = (o: Partial<SceneInput> = {}): SceneInput => ({
   realm: 2, dantian: 0, breakCost: 7000, chargeHighWater: 0, acupointProgress: {}, ...o,
 });
 
-describe('修炼面板模型 · 周天与液面', () => {
+describe('修炼面板模型 · 周天与月相', () => {
   it('境界圆满（无突破消耗）返回 null，不渲染面板', () => {
     expect(buildSceneModel(at({ breakCost: null }))).toBeNull();
   });
@@ -19,27 +19,25 @@ describe('修炼面板模型 · 周天与液面', () => {
     // 6 段、总额 63,000：各段 1,000 × 2^(i−1)；缴满两段（3,000）+ 第三段一半（2,000）
     const m = buildSceneModel(at({ realm: 4, breakCost: 63000, dantian: 5000 }))!;
     expect(m.zhoutianCount).toBe(6);
-    expect(m.moons).toHaveLength(6);
-    expect(m.moons.map(x => x.phase)).toEqual(
+    const arc = moonArc(m.zhoutianCount, m.segmentsFull, m.currentSegmentPct, 128);
+    expect(arc).toHaveLength(6);
+    expect(arc.map(x => (x.lit >= 1 ? 'full' : x.lit > 0 ? 'waxing' : 'new'))).toEqual(
       ['full', 'full', 'waxing', 'new', 'new', 'new']
     );
   });
 
-  it('液面留空随段进度单调下降，且留出上下呼吸空间', () => {
-    const empty = (pct: number) =>
-      buildSceneModel(at({ dantian: 1000 * pct }))!.emptyPct;
-    expect(empty(0)).toBeCloseTo(92, 5);          // 空池不贴顶
-    // 注意 pct=1 会进位到下一段、段内归零，故取逼近值
-    expect(empty(0.99)).toBeGreaterThan(6);       // 满池不贴底
-    expect(empty(0.99)).toBeLessThan(8);
-    expect(empty(0.5)).toBeLessThan(empty(0.2));  // 单调
+  it('月相受光区：新月无路径、满月为整圆、上下弦两侧对称', () => {
+    expect(moonLitPath(0)).toBe('');
+    expect(moonLitPath(1)).toContain('A 100 100 0 1 1');
+    expect(moonLitPath(0.25)).toContain('A 50 100 0 0 0');
+    expect(moonLitPath(0.75)).toContain('A 50 100 0 0 1');
   });
 
-  it('挂满一段后液面归零、月相进位', () => {
+  it('挂满一段后月相进位、本段归零', () => {
     const m = buildSceneModel(at({ dantian: 1000 }))!;
     expect(m.segmentsFull).toBe(1);
     expect(m.currentSegmentPct).toBeCloseTo(0, 5);
-    expect(m.moons[0].phase).toBe('full');
+    expect(moonArc(3, m.segmentsFull, m.currentSegmentPct, 128)[0].lit).toBe(1);
   });
 });
 
@@ -98,11 +96,31 @@ describe('修炼面板模型 · 星曜三态与经脉', () => {
     expect(full.meridians[0].through).toBe(true);
   });
 
-  it('境界 5 的三条经脉各有独立星官扇区，星曜不重叠', () => {
-    const m = buildSceneModel(at({ realm: 5, breakCost: 21000 }))!;
-    expect(m.meridians).toHaveLength(3);
-    const pts = m.meridians.flatMap(x => x.stars).map(s => `${s.x.toFixed(0)},${s.y.toFixed(0)}`);
-    expect(new Set(pts).size).toBe(8);
+  it('每个境界的窍穴都落在身上、彼此不挤在一起，路线依次穿过本脉各穴', () => {
+    for (const realm of [1, 2, 3, 4, 5]) {
+      const m = buildSceneModel(at({ realm, breakCost: 21000 }))!;
+      const stars = m.meridians.flatMap(x => x.stars);
+      expect(stars).toHaveLength(REALM_ACUPOINTS[realm].acupoints.length);
+      for (const a of stars) for (const b of stars) {
+        if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(28);
+      }
+      for (const mer of m.meridians) {
+        const idx = mer.stars.map(st => mer.route.findIndex(([x, y]) => x === st.x && y === st.y));
+        expect(idx.every(i => i >= 0)).toBe(true);
+        expect([...idx].sort((p, q) => p - q)).toEqual(idx);
+      }
+    }
+  });
+
+  it('经脉亮段：通到哪穴亮到哪，贯通则整条亮', () => {
+    const [m1] = REALM_ACUPOINTS[3].meridians;
+    const op = (ids: string[]) => Object.fromEntries(ids.map(id => [id, { failCount: 0, opened: true }]));
+    const none = buildSceneModel(at({ realm: 3, breakCost: 5000 }))!.meridians[0];
+    expect(none.litRoute).toHaveLength(0);
+    const one = buildSceneModel(at({ realm: 3, breakCost: 5000, acupointProgress: op(m1.acupointIds.slice(0, 1)) }))!.meridians[0];
+    expect(one.litRoute.at(-1)).toEqual([one.stars[0].x, one.stars[0].y]);
+    const all = buildSceneModel(at({ realm: 3, breakCost: 5000, acupointProgress: op(m1.acupointIds) }))!.meridians[0];
+    expect(all.litRoute).toEqual(all.route);
   });
 
   it('openedThisRealm 按境界计，不把别的境界的穴算进来', () => {
@@ -129,24 +147,32 @@ describe('修炼面板模型 · 星曜三态与经脉', () => {
   });
 });
 
-describe('修炼面板模型 · 氛围绑定', () => {
-  it('罡气仅炉火纯青（境界 4）起显影', () => {
-    expect(buildSceneModel(at({ realm: 3, breakCost: 5000 }))!.auraOpacity).toBe(0);
-    expect(buildSceneModel(at({ realm: 4, breakCost: 10000 }))!.auraOpacity).toBeGreaterThan(0);
-  });
-
+describe('修炼面板模型 · 进度与默认选中', () => {
   it('丹田满时 segmentsFull 抵满额、段进度归零——渲染层据此走「圆满」而非「第 N 转 0%」', () => {
     const full = buildSceneModel(at({ dantian: 7000, chargeHighWater: 3 }))!;
-    expect(full.segmentsFull).toBe(full.zhoutianCount);   // 三周天全满
-    expect(full.currentSegmentPct).toBe(0);               // 段进度为 0，但含义是「已满」不是「刚起步」
-    // 未满时才是真正的「第 N 转 x%」
+    expect(full.segmentsFull).toBe(full.zhoutianCount);
+    expect(full.currentSegmentPct).toBe(0);
+    expect(full.totalPct).toBe(1);
     const midway = buildSceneModel(at({ dantian: 3500 }))!;
     expect(midway.segmentsFull).toBeLessThan(midway.zhoutianCount);
   });
 
-  it('气流随境界与段进度加快（周期变短）', () => {
-    const slow = buildSceneModel(at({ realm: 2 }))!.qiSpeedSec;
-    const fast = buildSceneModel(at({ realm: 5, breakCost: 21000 }))!.qiSpeedSec;
-    expect(fast).toBeLessThan(slow);
+  it('默认选中破境那条脉上可冲的穴；都不可冲时落在破境脉上第一个未通', () => {
+    const idle = buildSceneModel(at())!;
+    expect(defaultSelection(idle)).toBe(REALM_ACUPOINTS[2].meridians[0].acupointIds[0]);
+    const ready = buildSceneModel(at({ chargeHighWater: 2, dantian: 3500 }))!;
+    expect(defaultSelection(ready)).toBe('quchi');
+  });
+});
+
+describe('修炼页版面', () => {
+  it('宽舞台：人物整身在画里，月在人与题跋之间且不压字', () => {
+    const L = cultLayout(1032, 900);
+    expect(L.artLeft + 0.15 * L.artW).toBeGreaterThan(0);
+    expect(L.moon.x + L.moon.d / 2).toBeLessThan(1032 - 40 - L.text.w);
+  });
+  it('窄舞台：月挪到题跋上方，题跋在月下', () => {
+    const L = cultLayout(750, 865);
+    expect(L.text.top).toBeGreaterThan(L.moon.y + L.moon.d / 2);
   });
 });

@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>修炼页改版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
+<style>
+/* 原型定稿：修炼页改版（题跋式身手 + 月相周天 + 内经图式内视，左图右意）。token 取自 DESIGN.md frontmatter */
+:root {
+  --bg: oklch(0.155 0.013 262);
+  --bg-deep: oklch(0.125 0.012 262);
+  --ink: oklch(0.91 0.012 85);
+  --muted: oklch(0.76 0.015 85);
+  --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7);
+  --gold: oklch(0.78 0.13 78);
+  --ink-gold: oklch(0.75 0.075 76);
+  --cinnabar: oklch(0.66 0.14 32);
+  --seal-red: oklch(0.5 0.17 28 / 0.92);
+  --hp: oklch(0.62 0.17 25);
+  --font-body: "LXGW WenKai", "PingFang SC", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --font-title: var(--font-display);
+  --rail-w: 248px;
+  --dock-w: 320px;
+  --ease: cubic-bezier(.25, 1, .5, 1);
+  --ART: url('../../code/public/art/cultivate-scene.jpg');
+  --INNER: url('../../code/public/zhoutian/inner-jing.jpg');
+  --BRUSH: url('../../code/public/art/scene/brush.png');
+  --SCROLL: url('../../code/public/art/scene/duel-btn2.png');
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); }
+body { display: grid; grid-template-columns: var(--rail-w) 1fr var(--dock-w); height: 100vh; overflow: hidden; transition: grid-template-columns .4s var(--ease); }
+body.dock-closed { grid-template-columns: var(--rail-w) 1fr 44px; }
+button { font: inherit; color: inherit; }
+
+/* ─── 左栏：照现行 App.tsx 侧边栏 ─── */
+.rail { background: var(--bg-deep); padding: 28px 22px; display: flex; flex-direction: column; min-width: 0; }
+.rail .brand { font-size: 13px; letter-spacing: .3em; color: var(--muted); }
+.rail .realm { margin-top: 26px; font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: .06em; }
+.rail .realm small { font-size: 13px; color: var(--gold); font-weight: 400; margin-left: 8px; letter-spacing: .1em; }
+.rail .life { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .08em; }
+.rail .hurt { margin-top: 26px; font-size: 12px; color: var(--muted); }
+.rail .hurt i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.72 0.12 145); margin-right: 8px; }
+.rail .hurt.bad i { background: var(--hp); }
+.rail .res { margin-top: 26px; font-size: 11px; color: var(--muted); }
+.rail .res b { display: block; font-size: 22px; color: var(--ink); font-weight: 500; }
+.rail .res .rate { color: var(--gold); font-size: 12px; margin-left: 4px; }
+.rail .res .two { display: flex; gap: 22px; margin-top: 12px; }
+.rail .res .two b { font-size: 17px; }
+.rail hr { border: 0; height: 3px; background: var(--hair); margin: 22px 0 18px; -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.rail nav a { display: block; padding: 12px; font-family: var(--font-display); font-size: 18px; letter-spacing: .3em; color: var(--muted); border-radius: 6px; margin-bottom: 4px; }
+.rail nav a.on { background: oklch(0.24 0.03 70 / .55); color: var(--gold); }
+.rail .foot { margin-top: auto; display: flex; gap: 8px; }
+.rail .foot span { border: 1px solid var(--hair); border-radius: 6px; padding: 9px 12px; font-size: 13px; color: var(--muted); }
+.rail .foot span:first-child { flex: 1; text-align: center; border-color: oklch(0.78 0.13 78 / .6); color: var(--gold); letter-spacing: .4em; }
+
+/* ─── 右栏：江湖编年（可收起，同现行） ─── */
+.dock { background: var(--bg-deep); padding: 26px 22px; font-size: 13px; color: var(--muted); overflow: hidden; position: relative; min-width: 0; }
+.dock .tabs { display: flex; gap: 26px; font-size: 15px; letter-spacing: .1em; border-bottom: 1px solid var(--hair); padding-bottom: 12px; white-space: nowrap; }
+.dock .tabs b { color: var(--ink); font-weight: 500; }
+.dock .fold { position: absolute; right: 16px; top: 24px; border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 16px; }
+.dock .chips { display: flex; gap: 14px; margin: 16px 0; font-size: 12px; white-space: nowrap; }
+.dock .chips b { background: oklch(0.24 0.016 262); color: var(--ink); padding: 3px 8px; border-radius: 4px; font-weight: 400; }
+.dock p { margin: 0 0 14px; line-height: 1.75; }
+.dock p .z { color: oklch(0.76 0.09 245); } .dock p .x { color: oklch(0.72 0.11 320); } .dock p .me { color: var(--gold); }
+.dock p small { color: var(--faint); margin-left: 6px; }
+.dock .vert { display: none; writing-mode: vertical-rl; letter-spacing: .3em; font-size: 14px; color: var(--muted); cursor: pointer; }
+body.dock-closed .dock { padding: 26px 12px; }
+body.dock-closed .dock > :not(.vert) { display: none; }
+body.dock-closed .dock .vert { display: block; }
+
+/* ─── 舞台：一整幅画 ─── */
+.stage { position: relative; overflow: hidden; background: #0b0d12; min-width: 0; }
+.art { position: absolute; top: 0; height: 100%; aspect-ratio: 16 / 9; background: var(--ART) center / cover no-repeat;
+  transform-origin: var(--ox, 27%) var(--oy, 61%); transition: transform 1.1s var(--ease), opacity .9s var(--ease), filter .9s; }
+.stage .fog { position: absolute; inset: auto 0 0 0; height: 30%; pointer-events: none;
+  background: linear-gradient(to top, oklch(0.12 0.012 262 / .9), oklch(0.12 0.012 262 / .3) 55%, transparent); }
+.stage .feather { position: absolute; inset: 0 0 0 auto; width: var(--fw, 46%); pointer-events: none;
+  background: linear-gradient(to left, oklch(0.11 0.012 262 / .8), oklch(0.11 0.012 262 / .45) 60%, transparent); transition: opacity .8s; }
+.stage .rim { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 80px 30px #0b0d12; }
+.stage h1 { position: absolute; left: 44px; top: 26px; margin: 0; z-index: 4; display: flex; align-items: flex-start; gap: 10px;
+  font-family: var(--font-title); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
+.stage h1 .seal { font-family: var(--font-display); font-size: 10px; line-height: 1.15; letter-spacing: 0; writing-mode: vertical-rl; color: oklch(0.92 0.03 85);
+  background: var(--seal-red); padding: 3px 2px; border-radius: 2px; margin-top: 8px; text-shadow: none; transform: rotate(-3deg); }
+
+/* 丹田真气（外视入口）：几点微光在腹前浮游，随进度变多变亮 */
+.qi { position: absolute; left: 26.6%; top: 60.8%; width: 7%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border: 0; padding: 0; border-radius: 50%; background: none; cursor: pointer; z-index: 2; }
+.qi .tint { position: absolute; inset: -30%; border-radius: 50%; mix-blend-mode: soft-light; transition: opacity .4s;
+  background: radial-gradient(circle, oklch(0.85 0.12 70 / .9), transparent 65%); opacity: calc(var(--glow) * .45); }
+.qi i { position: absolute; left: 50%; top: 55%; width: 3px; height: 3px; border-radius: 50%; background: oklch(0.9 0.1 80);
+  box-shadow: 0 0 6px 1px oklch(0.85 0.13 75 / .8); opacity: 0; animation: mote var(--d) linear infinite; animation-delay: var(--dl); }
+@keyframes mote {
+  0% { opacity: 0; transform: translate(var(--x0), 0) scale(.6); }
+  20% { opacity: var(--op); }
+  100% { opacity: 0; transform: translate(var(--x1), -46px) scale(1); }
+}
+.qi .ring { position: absolute; inset: -18%; border-radius: 50%; border: 1px solid oklch(0.75 0.075 76 / .55); opacity: 0; transform: scale(.85); transition: opacity .35s, transform .5s var(--ease); }
+.qi .lbl { position: absolute; left: 118%; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 14px; letter-spacing: .3em; color: var(--ink-gold); opacity: 0; transition: opacity .3s; text-shadow: 0 1px 6px #000; }
+.qi:hover .tint, .qi:focus-visible .tint { opacity: .7; }
+.qi:hover .ring, .qi:focus-visible .ring { opacity: 1; transform: scale(1); }
+.qi:hover .lbl, .qi:focus-visible .lbl { opacity: 1; }
+.qi:focus-visible { outline: none; }
+
+/* 月轮：本段周天亏盈；头顶一串小月是几段 */
+.orb { position: absolute; width: var(--d); height: var(--d); left: var(--x); top: var(--y); transform: translate(-50%, -50%); z-index: 2; transition: opacity .6s; }
+.orb svg { position: absolute; inset: -40%; width: 180%; height: 180%; overflow: visible; pointer-events: none; }
+.orb .halo { position: absolute; inset: -30%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, oklch(0.92 0.03 85 / calc(var(--lit) * .22)) 30%, transparent 70%); }
+.orb .hit { position: absolute; inset: 0; border-radius: 50%; }
+.moon-dark { opacity: .16; filter: brightness(.55) saturate(.4); }
+.moon-lit { filter: drop-shadow(0 0 18px oklch(0.92 0.03 85 / .35)); }
+.mini .m-ring { fill: none; stroke: oklch(0.70 0.02 85 / .45); stroke-width: .6; }
+.mini .m-done { filter: drop-shadow(0 0 3px oklch(0.92 0.05 85 / .7)); }
+.cap { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 12px; white-space: nowrap; font-size: 15px; letter-spacing: .2em; color: var(--muted); text-shadow: 0 1px 8px #000; }
+.cap b { color: var(--gold); font-weight: 700; margin-left: 6px; }
+
+/* ─── 题跋：直接写在画上，顶部对齐，内容增减不挪位 ─── */
+.inscr { position: absolute; right: 40px; top: var(--ty, 22%); width: var(--tw, 330px); z-index: 3; transition: opacity .5s var(--ease), transform .5s var(--ease);
+  text-shadow: 0 1px 8px oklch(0.08 0.01 262); }
+.hd { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.hd h2 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 500; letter-spacing: .4em; }
+.hd small { margin-left: auto; font-size: 14px; color: var(--muted); letter-spacing: .1em; }
+.hd small em { font-style: normal; color: var(--faint); margin: 0 6px; }
+/* 身手：两列，每格「名目 数值」左对齐；列间一道竖向干笔，行下一道横向干笔 */
+.attrs { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; position: relative; margin: 0; }
+.attrs::before { content: ''; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 2px; transform: translateX(-50%);
+  background: linear-gradient(to bottom, transparent, oklch(0.6 0.02 85 / .4) 12%, oklch(0.6 0.02 85 / .4) 80%, transparent); }
+.attrs .r { display: flex; align-items: baseline; gap: 6px; padding: 9px 2px 8px; position: relative; }
+.attrs .r::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .3);
+  -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.attrs dt { font-size: 16px; color: var(--muted); letter-spacing: .04em; width: 4.4em; flex: none; white-space: nowrap; }
+.attrs dd { margin: 0; font-size: 20px; font-weight: 600; cursor: help; }
+.attrs dd.hit { color: oklch(0.72 0.12 30); }
+.attrs dd:hover { color: var(--gold); }
+.ng { margin-top: 10px; font-size: 13px; color: var(--faint); letter-spacing: .08em; }
+.ng a { color: var(--ink-gold); cursor: pointer; }
+.stroke { height: 7px; margin: 22px -6px 18px; background: oklch(0.55 0.02 85 / .5); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.cond { display: grid; gap: 10px; }
+.cond .c { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--muted); letter-spacing: .06em; }
+.cond .c b { margin-left: auto; font-weight: 700; color: var(--ink); }
+.cond .sq { width: 18px; height: 18px; flex: none; border-radius: 3px; border: 1px solid oklch(0.6 0.015 262 / .5); display: grid; place-items: center; font-family: var(--font-display); font-size: 11px; color: transparent; }
+.cond .c.ok { color: var(--ink); }
+.cond .sq svg { width: 13px; height: 13px; fill: none; stroke: var(--ink-gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.cond .c.ok .sq { border-color: oklch(0.75 0.075 76 / .55); }
+.cond .c.ok .sq svg { opacity: 1; }
+.scroll-btn { display: block; margin: 22px auto 0; width: 290px; max-width: 100%; height: 78px; border: 0; cursor: pointer; background: var(--SCROLL) center / 100% 100% no-repeat;
+  font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: .5em; color: oklch(0.17 0.012 262); transition: filter .2s; padding-left: .5em; }
+.scroll-btn:hover:not(:disabled) { filter: brightness(1.15); }
+.scroll-btn.ready { animation: ready 2.6s ease-in-out infinite; }
+@keyframes ready { 50% { filter: brightness(1.18) drop-shadow(0 0 14px oklch(0.78 0.13 78 / .5)); } }
+.scroll-btn:disabled { cursor: default; filter: saturate(.25) brightness(.62); font-family: var(--font-body); font-size: 16px; font-weight: 700; letter-spacing: .2em; padding-left: 0; }
+.still { font-size: 15px; color: var(--muted); line-height: 1.9; letter-spacing: .08em; margin: 0; }
+
+
+/* ─── 内视：内经图 ─── */
+.inner { position: absolute; top: 0; height: 100%; aspect-ratio: 3 / 4; opacity: 0; pointer-events: none; z-index: 2;
+  transform: scale(1.08); transition: opacity .9s .25s var(--ease), transform 1.2s .2s var(--ease); }
+.inner .img { position: absolute; inset: 0; background: var(--INNER) center / cover;
+  -webkit-mask: radial-gradient(ellipse 50% 52% at 50% 50%, #000 62%, transparent 100%); mask: radial-gradient(ellipse 50% 52% at 50% 50%, #000 62%, transparent 100%); }
+.inner .pool { position: absolute; left: 50.8%; top: 59.1%; width: 16%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, oklch(0.95 0.06 80 / calc(.15 + var(--f) * .6)), oklch(0.85 0.1 75 / calc(var(--f) * .25)) 40%, transparent 70%); mix-blend-mode: screen;
+  animation: breathe 4.5s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: translate(-50%, -50%) scale(1.12); } }
+.inner svg.ch { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+@keyframes flow { to { stroke-dashoffset: -24; } }
+.acu { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; border: 0; padding: 0; background: none; cursor: pointer; }
+.acu::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: oklch(0.6 0.01 262); box-shadow: 0 0 0 1px oklch(0.75 0.01 262 / .4); transition: transform .2s; }
+.acu:hover::before { transform: scale(1.4); }
+.acu.act::before { background: var(--cinnabar); box-shadow: 0 0 0 3px oklch(0.66 0.14 32 / .3), 0 0 12px 2px oklch(0.66 0.14 32 / .7); animation: pulse 2.2s ease-in-out infinite; }
+.acu.open::before { inset: 6px; background: oklch(0.88 0.1 82); box-shadow: 0 0 10px 3px oklch(0.8 0.13 75 / .85), 0 0 24px 6px oklch(0.78 0.13 78 / .35); }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px oklch(0.66 0.14 32 / .1), 0 0 18px 4px oklch(0.66 0.14 32 / .5); } }
+.acu span { position: absolute; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 14px; letter-spacing: .1em; color: var(--muted); text-shadow: 0 0 6px #000, 0 0 3px #000; pointer-events: none; }
+.acu.l span { right: 26px; } .acu.r span { left: 26px; }
+.acu.act span { color: oklch(0.8 0.1 40); } .acu.open span { color: var(--gold); }
+.inner .mname { position: absolute; transform: translate(-50%, -50%); font-family: var(--font-display); font-size: 13px; letter-spacing: .3em; color: var(--faint); text-shadow: 0 0 8px #000; white-space: nowrap; pointer-events: none; }
+.inner .mname.thr { color: var(--ink-gold); }
+.inner .crown { position: absolute; left: 50%; top: 24%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
+.inner .crown svg { width: 100%; height: 100%; overflow: visible; }
+.inner .zread { position: absolute; left: 50%; top: 2%; transform: translateX(-50%); white-space: nowrap; font-size: 16px; letter-spacing: .2em; color: var(--muted); text-shadow: 0 0 8px #000; }
+.inner .zread b { color: var(--gold); margin-left: 6px; }
+
+/* 选中经脉高亮，其余经脉（含已贯通）压暗 */
+.inner .mg { transition: opacity .35s; } .inner .mg.far { opacity: .22; } .inner .mg.far .qmote { display: none; }
+.acu, .inner .mname { transition: opacity .35s; } .acu.far { opacity: .42; } .inner .mname.far { opacity: .35; }
+.acu.far:hover { opacity: .85; }
+/* 内视账目（右）：总览 · 经脉清单 · 凝神详情 */
+.sum { white-space: nowrap; font-size: 13.5px; color: var(--muted); letter-spacing: .08em; padding-bottom: 14px; }
+.sum b { color: var(--ink); font-weight: 600; } .sum b.g { color: var(--gold); cursor: help; } .sum i { font-style: normal; color: var(--faint); margin: 0 5px; }
+.mlist { display: grid; }
+.mrow { display: flex; align-items: baseline; gap: 10px; border: 0; background: none; cursor: pointer; padding: 10px 2px 9px; position: relative; text-align: left; color: var(--muted); }
+.mrow::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .26); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.mrow .mn { font-family: var(--font-display); font-size: 17px; letter-spacing: .3em; }
+.mrow .mp { margin-left: auto; font-size: 15px; }
+.mrow .tag { font-size: 12px; letter-spacing: .2em; color: var(--ink-gold); }
+.mrow.thr .mn { color: var(--gold); }
+.mrow.on { color: var(--ink); }
+.mrow.on .mn::before { content: ''; display: inline-block; width: 5px; height: 5px; margin: 0 10px 3px -2px; transform: rotate(45deg); background: var(--ink-gold); }
+.mrow:hover { color: var(--ink); }
+.insp { margin-top: 26px; }
+.insp .ih { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.insp h2 { margin: 0; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: .2em; }
+.insp small { font-size: 13px; color: var(--faint); letter-spacing: .1em; }
+.kv { margin: 0; display: grid; gap: 7px; }
+.kv div { display: flex; gap: 14px; font-size: 15px; }
+.kv dt { width: 4.6em; color: var(--faint); letter-spacing: .1em; } .kv dd { margin: 0; color: var(--ink); }
+.insp .scroll-btn { margin: 20px 0 0; width: 250px; height: 68px; }
+.insp .scroll-btn:disabled { font-size: 14px; letter-spacing: .12em; }
+.btn-gap { height: 88px; }
+.insp .kv { min-height: 76px; align-content: start; }
+.btn-ghost { display: block; margin-top: 18px; width: 250px; height: 46px; cursor: pointer; background: oklch(0.14 0.012 262 / .55);
+  border: 1px solid oklch(0.75 0.03 80 / .38); border-radius: 3px; box-shadow: inset 0 0 0 3px oklch(0.14 0.012 262 / .6), inset 0 0 0 4px oklch(0.75 0.03 80 / .14);
+  font-family: var(--font-display); font-size: 16px; letter-spacing: .6em; padding-left: .6em; color: var(--muted); transition: color .2s, border-color .2s, background .2s; }
+.btn-ghost:hover { color: var(--ink); border-color: oklch(0.8 0.05 80 / .65); background: oklch(0.18 0.014 262 / .7); }
+.btn-ghost:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
+.acu.sel::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px dashed oklch(0.82 0.1 80 / .85); animation: spin 14s linear infinite; }
+.float { position: absolute; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; font-family: var(--font-display); font-size: 16px; letter-spacing: .3em;
+  text-shadow: 0 0 8px #000, 0 0 3px #000; animation: rise 1.7s var(--ease) forwards; }
+.float.ok { color: var(--gold); } .float.no { color: oklch(0.7 0.02 262); }
+@keyframes rise { 0% { opacity: 0; margin-top: 0; } 15% { opacity: 1; } 100% { opacity: 0; margin-top: -42px; } }
+
+.mer2 { padding: 12px 0 6px; position: relative; }
+.mer2::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .28); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.mer2 .mt { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 18px; letter-spacing: .3em; color: var(--muted); }
+.mer2.thr .mt { color: var(--gold); }
+.mer2 .need { font-size: 11px; letter-spacing: .1em; color: oklch(0.95 0.02 85); background: var(--seal-red); padding: 1px 4px; border-radius: 2px; transform: rotate(-4deg); }
+.mline { width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.mline .base { stroke: oklch(0.8 0.09 78 / .25); stroke-width: 1.4; }
+.mline .lit { stroke: oklch(0.92 0.07 86 / .85); stroke-width: 1.6; filter: drop-shadow(0 0 3px oklch(0.88 0.1 82)); }
+.mline text { font-family: var(--font-ui, var(--font-body)); font-size: 10.5px; fill: var(--muted); letter-spacing: .5px; }
+.mline .node.open text { fill: var(--gold); } .mline .node.act text { fill: oklch(0.8 0.1 40); }
+.node .tj .core, .node .tj .rip, .node .tj .yy { display: none; }
+.node.act .tj .ring { stroke: var(--cinnabar); } .node.act .tj .core { display: block; fill: var(--cinnabar); } .node.act .tj .rip { display: block; }
+.node.open .tj .ring { display: none; } .node.open .tj .yy { display: block; transform-box: fill-box; transform-origin: center; animation: spin 9s linear infinite; filter: drop-shadow(0 0 3px oklch(0.8 0.13 75 / .9)); }
+.back2 { margin-top: 18px; width: 220px; height: 60px; font-size: 19px; }
+
+.ledger { position: absolute; right: 40px; top: 22%; width: 270px; z-index: 3; opacity: 0; transform: translateX(16px); pointer-events: none;
+  transition: opacity .5s var(--ease), transform .5s var(--ease); text-shadow: 0 1px 8px oklch(0.08 0.01 262); }
+.mer { padding: 12px 2px 11px; position: relative; display: flex; align-items: center; gap: 8px; font-size: 17px; letter-spacing: .2em; color: var(--muted); }
+.mer::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .3); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.mer.thr { color: var(--gold); }
+.mer .need { font-family: var(--font-display); font-size: 11px; letter-spacing: .1em; color: oklch(0.95 0.02 85); background: var(--seal-red); padding: 1px 4px; border-radius: 2px; transform: rotate(-4deg); }
+.mer .dots { margin-left: auto; display: flex; gap: 6px; }
+.mer .dots i { width: 8px; height: 8px; transform: rotate(45deg); border: 1px solid oklch(0.6 0.015 262 / .6); }
+.mer .dots i.on { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 6px oklch(0.78 0.13 78 / .6); }
+.bonus { display: flex; justify-content: space-between; margin-top: 16px; font-size: 16px; color: var(--muted); letter-spacing: .1em; }
+.bonus b { color: var(--gold); font-weight: 700; cursor: help; }
+.fb { min-height: 26px; margin-top: 22px; font-size: 15px; color: var(--ink-gold); letter-spacing: .12em; }
+.back { margin-top: 14px; border: 0; background: none; cursor: pointer; font-family: var(--font-display); font-size: 18px; letter-spacing: .6em; color: var(--muted); padding: 8px 0 10px; position: relative; }
+.back::after { content: ''; position: absolute; left: -4px; right: 4px; bottom: 0; height: 4px; background: oklch(0.6 0.02 85 / .5); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.back:hover { color: var(--ink); }
+
+/* 内视切换：镜头推向丹田，外景隐去，内景浮起 */
+.stage.in .art { transform: scale(1.5); opacity: .85; filter: blur(6px) brightness(.55) saturate(.5); }
+.stage.in .qi, .stage.in #blots { opacity: 0; pointer-events: none; }
+.stage.in .orb, .stage.in .inscr, .stage.in .feather { opacity: 0; pointer-events: none; }
+.stage.in .inscr { transform: translateX(16px); }
+.stage.in .inner { opacity: 1; transform: none; pointer-events: auto; }
+.stage.in .ledger { opacity: 1; transform: none; pointer-events: auto; transition-delay: .35s; }
+
+/* 悬停浮层（仿 TipLayer） */
+.tip { position: fixed; z-index: 50; pointer-events: none; background: oklch(0.13 0.011 262 / .94); border: 1px solid var(--hair); padding: 9px 12px; border-radius: 4px;
+  font-size: 13px; line-height: 1.8; color: var(--ink); max-width: 280px; opacity: 0; transition: opacity .15s; }
+.tip.on { opacity: 1; } .tip .l { color: var(--faint); }
+
+/* 原型状态切换（只在原型里） */
+.proto { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 60; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; align-items: center; max-width: 94vw;
+  background: oklch(0.2 0.02 262 / .94); border: 1px dashed oklch(0.6 0.1 215 / .6); border-radius: 16px; padding: 4px 8px; font-family: system-ui, sans-serif; font-size: 12px; }
+.proto span { color: oklch(0.74 0.10 215); padding: 0 6px; }
+.proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
+.proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
+.proto i { width: 1px; height: 14px; background: oklch(0.5 0.05 215 / .5); margin: 0 4px; }
+
+.inscr, .ledger, .cap, .inner .zread, .acu span { font-family: var(--font-ui, var(--font-body)); }
+
+/* ── 伤势新版：画中血墨 + 数值旁朱批 ── */
+.blot { position: absolute; transform: translate(-50%, -50%); aspect-ratio: 1; border-radius: 50%; cursor: help; z-index: 1;
+  mix-blend-mode: multiply; filter: url(#bleed);
+  background: radial-gradient(circle, oklch(0.42 0.17 25 / var(--a)) 0%, oklch(0.45 0.16 26 / calc(var(--a) * .55)) 38%, transparent 70%); }
+.blot.wai { border-radius: 40% 60% 30% 70%; transform: translate(-50%, -50%) rotate(-30deg) scaleY(.5); }
+
+/* ── 内景：压暗人影，经脉由代码沿身体描出 ── */
+.inner .img { filter: brightness(.55) contrast(1.2) saturate(.7); }
+.inner .chan { fill: none; stroke: oklch(0.8 0.09 78 / .32); stroke-width: 2.2; stroke-linecap: round; filter: drop-shadow(0 0 3px oklch(0.75 0.1 75 / .45)); }
+.inner .qglow { fill: none; stroke: oklch(0.86 0.07 82 / .28); stroke-width: 9; stroke-linecap: round; filter: blur(3px); }
+.inner .qcore { fill: none; stroke: oklch(0.93 0.06 88 / .9); stroke-width: 1.5; stroke-linecap: round; filter: drop-shadow(0 0 2px oklch(0.9 0.08 85 / .9)); }
+.inner .qmote { fill: none; stroke: oklch(0.97 0.05 90); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 0.1 22; animation: mflow 2.2s linear infinite; filter: drop-shadow(0 0 4px oklch(0.92 0.1 85)); }
+@keyframes mflow { to { stroke-dashoffset: -22.1; } }
+
+/* ── 穴位：未开为墨圈、可冲为朱砂聚气、已通化为太极 ── */
+.acu::before { display: none; }
+.acu .tj { display: block !important; }
+.acu .tj { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); overflow: visible; display: none; }
+.tj .ring { fill: oklch(0.1 0.01 262 / .7); stroke: oklch(0.72 0.02 262 / .75); stroke-width: 1.1; }
+.tj .core, .tj .rip, .tj .yy { display: none; }
+.tj .rip { fill: none; stroke: var(--cinnabar); stroke-width: .8; transform-box: fill-box; transform-origin: center; animation: rip 2.4s ease-out infinite; }
+.tj .rip.r2 { animation-delay: 1.2s; }
+@keyframes rip { from { transform: scale(1); opacity: .9; } to { transform: scale(2.3); opacity: 0; } }
+.acu.act .tj .ring { stroke: var(--cinnabar); }
+.acu.act .tj .core { display: block; fill: var(--cinnabar); filter: drop-shadow(0 0 3px oklch(0.66 0.14 32)); }
+.acu.act .tj .rip { display: block; }
+.acu.open .tj .ring { display: none; }
+.acu.open .tj .yy { display: block; transform-box: fill-box; transform-origin: center; animation: spin 9s linear infinite; filter: drop-shadow(0 0 4px oklch(0.8 0.13 75 / .9)); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.acu:hover .tj { transform: scale(1.25); }
+.proto .row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; width: 100%; }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+
+<aside class="rail">
+  <div class="brand">江湖无尽录</div>
+  <div class="realm" id="railRealm">小有所成<small>第三境</small></div>
+  <div class="life">第 4 世 · 23 岁 · 江湖历 220 年</div>
+  <div class="hurt" id="railHurt"><i></i><span>身无伤病</span></div>
+  <div class="res">内力<b>50,468<span class="rate">+383.9/秒</span></b>
+    <div class="two"><div>银两<b>530</b></div><div>声望<b>900</b></div></div></div>
+  <hr>
+  <nav><a class="on">修炼</a><a>战斗</a><a>行囊</a><a>武功</a><a>门派</a><a>前尘</a></nav>
+  <div class="foot"><span>转世</span><span>⚙</span><span>报</span></div>
+</aside>
+
+<main class="stage" id="stage">
+  <div class="art" id="art">
+    <button class="qi" id="qi" aria-label="内视丹田"><span class="tint"></span><span class="ring"></span><span id="motes"></span><span class="lbl">内视</span></button>
+    <div id="blots"></div>
+  </div>
+  <div class="fog"></div>
+  <div class="feather"></div>
+  <div class="rim"></div>
+  <h1>运转周天<span class="seal">周天</span></h1>
+
+  <div class="orb" id="orb">
+    <div class="halo"></div>
+    <svg viewBox="-180 -180 360 360" id="orbSvg"></svg>
+    <div class="hit" id="moonHit"></div>
+    <div class="cap" id="cap"></div>
+  </div>
+
+  <section class="inscr" id="inscr"></section>
+
+  <div class="inner" id="inner">
+    <div class="img"></div>
+    <div class="pool"></div>
+    <svg class="ch" id="ch" viewBox="0 0 768 1024" preserveAspectRatio="none"></svg>
+    <div class="crown"><svg viewBox="-180 -180 360 360" id="crownSvg"></svg></div>
+    <div class="zread" id="zread"></div>
+    <div id="acus"></div>
+    <div id="floats"></div>
+  </div>
+  <section class="ledger" id="ledger"></section>
+</main>
+
+<aside class="dock">
+  <div class="tabs"><b>江湖</b><span>往世</span></div>
+  <button class="fold" id="fold" aria-label="收起编年">›</button>
+  <div class="chips"><b>全部</b><span>萧景之</span><span>正道</span><span>邪道</span><span>朝廷</span><span>江湖</span></div>
+  <p><span class="me">萧景之</span> 沙州少年萧景之，年十八，始入江湖。<small>215 年 春</small></p>
+  <p><span class="x">邪道</span> 蒿里寨三当家「赤发」庞仁败后远走，「疤脸」柯老五接任。<small>215 年</small></p>
+  <p><span class="z">正道</span> 苍崖派管事「飞剑」甘晚烟败后归隐，「金剑金刚」赵铮接任。<small>215 年</small></p>
+  <p><span class="z">正道</span> 千岩寺知客了明败后归隐，澄寂接任。<small>215 年</small></p>
+  <div class="vert" id="unfold">江湖编年</div>
+</aside>
+
+<svg width="0" height="0" style="position:absolute"><filter id="bleed" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
+<div class="tip" id="tip"></div>
+<div class="proto" id="proto"><span>原型状态</span></div>
+
+<script>
+/* ───────── mock 数据：上限按引擎真值（content.ts 周天 ≤ 8 段；acupoints.ts 窍穴 ≤ 8、经脉 ≤ 3） ─────────
+   穴位坐标为内景图（768×1024 坐标系）上的身体位置；第四项 = 名字落在左 / 右 */
+const CN = ['零','一','二','三','四','五','六','七','八'];
+const S3 = { realm: 3, name: '小有所成', next: '炉火纯青', ng: '百川诀 · 第 5 重',
+  attrs: [['气血',3311],['真气',900],['攻击',431],['防御',171],['命中',127],['闪避',17],['会心率','27.5%'],['会心伤害','210%']],
+  mers: [
+    { name: '足阳明', need: true, lab: [150, 800], stars: [['伏兔', 255, 668, 'l'], ['足三里', 178, 708, 'l'], ['丰隆', 275, 758, 'l']],
+      route: [[330, 640], '伏兔', [205, 682], '足三里', [215, 738], '丰隆', [335, 772]] },
+    { name: '足太阴', lab: [612, 800], stars: [['血海', 515, 668, 'r'], ['三阴交', 480, 758, 'r']],
+      route: [[440, 640], '血海', [565, 684], [590, 708], [545, 740], '三阴交', [425, 772]] } ] };
+const S5 = { realm: 5, name: '一流高手', next: '一代宗师', ng: '沧海功 · 第 14 重',
+  attrs: [['气血',14206],['真气',1450],['攻击',1532],['防御',760],['命中',168],['闪避',29],['会心率','34.5%'],['会心伤害','245%']],
+  mers: [
+    { name: '督脉', need: true, lab: [500, 285], stars: [['命门', 395, 528, 'r'], ['大椎', 392, 355, 'r'], ['百会', 386, 203, 'l']],
+      route: [[388, 598], '命门', [398, 450], '大椎', [432, 325], [440, 262], [416, 214], '百会'] },
+    { name: '冲脉', lab: [285, 420], stars: [['横骨', 352, 668, 'l'], ['大赫', 330, 598, 'l'], ['幽门', 348, 470, 'l']],
+      route: [[372, 700], '横骨', '大赫', [332, 530], '幽门', [366, 418]] },
+    { name: '带脉', lab: [384, 820], stars: [['五枢', 236, 642, 'l'], ['维道', 530, 642, 'r']],
+      route: [[205, 652], '五枢', [300, 630], [385, 624], [470, 630], '维道', [560, 652]] } ] };
+const PRESETS = {
+  early: { quota: 18000, label: '第三境 · 初', base: S3, n: 4, full: 0, f: 0.06, opened: [], eta: '约 9 小时', segEta: '约 34 分钟' },
+  late:  { quota: 18000, label: '将满', base: S3, n: 4, full: 3, f: 0.88, opened: ['伏兔','足三里','血海'], eta: '约 1 小时', segEta: '约 26 分钟' },
+  ready: { quota: 18000, label: '可突破', base: S3, n: 4, full: 4, f: 0, opened: ['伏兔','足三里','丰隆','血海'] },
+  r5:    { quota: 1200000, label: '第五境 · 八段', base: S5, n: 8, full: 5, f: 0.42, opened: ['命门','大椎','横骨','大赫','五枢'], eta: '约 2 天', segEta: '约 7 小时' },
+  hurt:  { quota: 18000, label: '有伤', base: S3, n: 4, full: 1, f: 0.35, opened: ['伏兔'], eta: '约 7 小时', segEta: '约 18 分钟',
+           wounds: [{ k: '内', cls: 'nei', name: '内伤', sev: 2, eff: '攻击 −12%', t: '4分30秒后转为轻伤', hits: [['攻击', '−12%']], at: [26.4, 48.5] },
+                    { k: '外', cls: 'wai', name: '外伤', sev: 1, eff: '防御 −6% · 气血上限 −4%', t: '1分20秒后痊愈', hits: [['防御', '−6%'], ['气血', '−4%']], at: [20.6, 56.5] }] },
+  still: { quota: 0, label: '境界圆满', base: { ...S5, realm: 6, name: '一代宗师', ng: '沧海功 · 第 20 重', mers: [] }, n: 0, full: 0, f: 1, opened: [], still: true },
+};
+const SEV = ['', '轻', '中', '重'];
+let st, opened, inner = false, sel = null, fails = {};
+
+const $ = id => document.getElementById(id);
+const art = $('art'), stage = $('stage'), orb = $('orb'), inscr = $('inscr'), innerEl = $('inner');
+
+/* ───────── 版面：按舞台宽度排，人物完整、月不压字 ───────── */
+const FIG = [0.15, 0.37];           // 人物在画幅里的横向范围
+const QI = { x: 0.266, y: 0.608 };  // 丹田
+function place() {
+  const W = stage.clientWidth, H = stage.clientHeight, aw = H * 16 / 9;
+  const tw = Math.max(270, Math.min(330, W * 0.32)), textLeft = W - 40 - tw;
+  // 默认左移一成；窄屏再左移，但保住人物整身
+  const left = Math.max(-FIG[0] * aw + 12, Math.min(-0.10 * aw, textLeft - 30 - FIG[1] * aw - 0.16 * aw));
+  art.style.left = `${left}px`;
+  const figR = left + FIG[1] * aw;
+  let d = Math.min(240, Math.max(150, aw * 0.14)), mx, my, ty;
+  if (textLeft - figR >= d + 50) {           // 宽：月在人与字之间
+    mx = (figR + textLeft) / 2; my = H * 0.27; ty = H * 0.22;
+  } else {                                   // 窄：月挪到题跋上方，题跋下移
+    d = Math.min(d, H * 0.19); mx = textLeft + tw / 2; my = 30 + d * 0.62 + 34; ty = my + d / 2 + 54;
+  }
+  orb.style.setProperty('--x', `${mx}px`); orb.style.setProperty('--y', `${my}px`); orb.style.setProperty('--d', `${d}px`);
+  inscr.style.setProperty('--tw', `${tw}px`); inscr.style.setProperty('--ty', `${ty}px`);
+  stage.style.setProperty('--fw', `${Math.min(70, (tw + 120) / W * 100)}%`);
+  art.style.setProperty('--ox', `${QI.x * 100}%`); art.style.setProperty('--oy', `${QI.y * 100}%`);
+  // 内景：在账目左侧的空处居中，宽度不超过可用宽
+  const avail = W - 40 - 270 - 20, ih = Math.min(H, avail / 0.75 * 1.05);
+  innerEl.style.height = `${ih}px`; innerEl.style.top = `${(H - ih) / 2}px`;
+  innerEl.style.left = `${Math.max(0, avail / 2 - ih * 0.375)}px`;
+}
+new ResizeObserver(place).observe(stage);
+
+/* 月相受光区：右半圆 + 晨昏线（半椭圆），f 为本段进度 0–1 */
+function litPath(f, r = 100) {
+  if (f <= 0.001) return '';
+  if (f >= 0.999) return `M 0 ${-r} A ${r} ${r} 0 1 1 0 ${r} A ${r} ${r} 0 1 1 0 ${-r} Z`;
+  const rx = Math.abs(1 - 2 * f) * r, sweep = f < 0.5 ? 0 : 1;
+  return `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r} A ${rx} ${r} 0 0 ${sweep} 0 ${-r} Z`;
+}
+const MOON = '../../code/public/zhoutian/moon-ink.png';
+function moonImg(r, ph, id, cls = '') {
+  return `<image href="${MOON}" x="${-r}" y="${-r}" width="${2 * r}" height="${2 * r}" opacity=".18"/>`
+    + (ph > 0 ? `<clipPath id="${id}"><path d="${litPath(ph, r)}"/></clipPath><image class="${cls}" href="${MOON}" x="${-r}" y="${-r}" width="${2 * r}" height="${2 * r}" clip-path="url(#${id})"/>` : '');
+}
+/* 一串小月：N 段，已满 / 当前 / 未行，排在半径 R 的上弧 */
+function miniMoons(R, r, pfx) {
+  const { n, full, f } = st; if (!n) return '';
+  const span = n <= 4 ? 84 : 130;
+  let out = '<g class="mini">';
+  for (let i = 0; i < n; i++) {
+    const a = (-span / 2 + span * (n === 1 ? .5 : i / (n - 1)) - 90) * Math.PI / 180;
+    const ph = i < full ? 1 : i === full ? f : 0;
+    out += `<g transform="translate(${(R * Math.cos(a)).toFixed(1)} ${(R * Math.sin(a)).toFixed(1)})"><circle class="m-ring" r="${r}"/>${moonImg(r, ph, `${pfx}${i}`, ph >= 1 ? 'm-done' : '')}</g>`;
+  }
+  return out + '</g>';
+}
+
+const done = () => st.full >= st.n;
+function drawOrb() {
+  const lit = st.still || done() ? 1 : st.f;
+  orb.style.setProperty('--lit', 0.35 + lit * 0.65);
+  $('orbSvg').innerHTML = `<image class="moon-dark" href="${MOON}" x="-100" y="-100" width="200" height="200"/>`
+    + `<clipPath id="lit"><path d="${litPath(lit)}"/></clipPath><image class="moon-lit" href="${MOON}" x="-100" y="-100" width="200" height="200" clip-path="url(#lit)"/>`
+    + miniMoons(128, 8, 'mc');
+  $('cap').innerHTML = st.still ? '' : done() ? '周天圆满' : `第${CN[st.full + 1]}周天<b>${Math.round(st.f * 100)}%</b>`;
+  // 丹田真气：微光数量与亮度随整体进度
+  const total = st.n ? (st.full + st.f) / st.n : 1, cnt = st.still ? 0 : 2 + Math.round(total * 6);
+  $('qi').style.setProperty('--glow', (0.25 + total * 0.6).toFixed(2));
+  $('qi').style.display = st.still ? 'none' : '';
+  $('motes').innerHTML = Array.from({ length: cnt }, (_, i) => {
+    const x0 = ((i * 37) % 30) - 15, x1 = x0 + ((i * 53) % 20) - 10;
+    return `<i style="--x0:${x0}px;--x1:${x1}px;--d:${3.2 + (i % 4) * 0.7}s;--dl:${-(i * 0.9)}s;--op:${(0.45 + total * 0.5).toFixed(2)}"></i>`;
+  }).join('');
+}
+
+/* ───────── 题跋 ───────── */
+function drawInscr() {
+  const b = st.base, hits = new Map();
+  (st.wounds || []).forEach(w => w.hits.forEach(([h, v]) => hits.set(h, { tip: `${w.name} · ${SEV[w.sev]} <span style='color:oklch(0.72 0.12 30)'>${h} ${v}</span>`, v })));
+  const tips = { '气血': '境界基础 2900<br>百川诀 第 5 重 +12.4%', '攻击': '境界基础 290<br>百川诀 第 5 重 +48.6%', '防御': '境界基础 150<br>窍穴经脉 +4%<br>底蕴 +10%',
+    '真气': '(700 + 150 × 1 + 10 × 5) × 气海 1.0', '会心率': '基础 5%<br>狂澜 +22.5%', '会心伤害': '基础 150%<br>狂澜 +60%', '命中': '境界基础 124<br>装备 +3', '闪避': '境界基础 16<br>装备 +1' };
+  let h = `<div class="hd"><h2>身手</h2></div><dl class="attrs">`
+    + b.attrs.map(([k, v]) => `<div class="r"><dt>${k}</dt><dd class="${hits.has(k) ? 'hit' : ''}" data-tip="${hits.has(k) ? hits.get(k).tip + '<br>' : ''}${tips[k] || ''}">${v}</dd></div>`).join('')
+    + `</dl><div class="ng">${b.ng} · <a>详情</a></div><div class="stroke"></div>`;
+  if (st.still) {
+    h += `<div class="hd"><h2>破境</h2><small>小周天圆满</small></div><p class="still">任督俱通，大周天未开。</p><button class="scroll-btn">就此转世</button>`;
+  } else {
+    const req = b.mers.find(m => m.need), reqN = req.stars.filter(s => opened.has(s[0])).length, merOk = reqN >= req.stars.length;
+    h += `<div class="hd"><h2>破境</h2><small>${b.name}<em>→</em>${b.next}</small></div><div class="cond">`
+      + `<div class="c ${done() ? 'ok' : ''}"><span class="sq"><svg viewBox="0 0 16 16"><path d="M3.5 8.6l3 3 6-7.2"/></svg></span>${CN[st.n]}段周天圆满<b>${Math.min(st.full, st.n)}/${st.n}</b></div>`
+      + `<div class="c ${merOk ? 'ok' : ''}"><span class="sq"><svg viewBox="0 0 16 16"><path d="M3.5 8.6l3 3 6-7.2"/></svg></span>${req.name}贯通<b>${reqN}/${req.stars.length}</b></div></div>`
+      + (done() && merOk ? `<button class="scroll-btn ready">突破</button>`
+        : done() ? `<button class="scroll-btn" disabled>${req.name}未贯通</button>`
+        : `<button class="scroll-btn" disabled>${st.eta}后可突破</button>`);
+  }
+  inscr.innerHTML = h;
+  bindTips(inscr);
+  // 画中血墨：内伤洇在胸口，外伤一道在臂上；大小随轻中重
+  $('blots').innerHTML = (st.wounds || []).map(w => `<span class="blot ${w.cls}" style="left:${w.at[0]}%;top:${w.at[1]}%;width:${3.2 + w.sev * 1.3}%;--a:${0.45 + w.sev * 0.15}" data-tip="${w.name} · ${SEV[w.sev]}<br>${w.eff}<br><span class='l'>${w.t}</span>"></span>`).join('');
+  bindTips($('blots'));
+}
+
+/* ───────── 内视：内经图上的经脉与窍穴 ───────── */
+const rateOf = (i, name) => Math.min(1, Math.max(0.5, 0.9 - 0.1 * i) + 0.1 * (fails[name] || 0));
+const costOf = i => Math.round(st.quota * (0.11 + 0.05 * i) * 1.2 ** (st.base.realm - 2));
+const perAcu = () => (st.base.realm === 5 ? 0.015 : 0.02);
+const stateOf = (m, i) => opened.has(m.stars[i][0]) ? 'open' : (i === 0 || opened.has(m.stars[i - 1][0])) ? 'act' : 'dim';
+function pickSel() {                    // 默认凝神：破境那条脉上第一个可冲的穴，没有就任一可冲，再没有就第一穴
+  const mers = st.base.mers, all = mers.flatMap(m => m.stars.map((_, i) => ({ m: m.name, i })));
+  const ok = x => stateOf(mers.find(m => m.name === x.m), x.i) === 'act';
+  sel = all.find(x => ok(x) && mers.find(m => m.name === x.m).need) || all.find(ok) || all[0];
+}
+const TJ = '<svg class="tj" viewBox="-13 -13 26 26"><circle class="rip" r="6"/><circle class="rip r2" r="6"/><circle class="ring" r="6"/><circle class="core" r="2.2"/>'
+  + '<g class="yy"><circle r="8" fill="oklch(0.18 0.02 70)"/><path d="M0,-8 A8,8 0 0,1 0,8 A4,4 0 0,1 0,0 A4,4 0 0,0 0,-8Z" fill="oklch(0.86 0.12 80)"/>'
+  + '<circle cy="-4" r="1.3" fill="oklch(0.86 0.12 80)"/><circle cy="4" r="1.3" fill="oklch(0.18 0.02 70)"/><circle r="8" fill="none" stroke="oklch(0.86 0.12 80)" stroke-width=".8"/></g></svg>';
+function smooth(pts) {               // 过点的柔和曲线（Catmull-Rom → 贝塞尔）
+  if (pts.length < 2) return '';
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+function drawInner() {
+  const mers = st.base.mers;
+  innerEl.style.setProperty('--f', done() ? 1 : st.f);
+  $('crownSvg').innerHTML = miniMoons(150, 13, 'cc');
+  $('zread').innerHTML = st.still ? '' : done() ? '周天圆满' : `第${CN[st.full + 1]}周天<b>${Math.round(st.f * 100)}%</b>`;
+  let svg = '', acus = '';
+  mers.forEach(m => {
+    const pts = m.stars.map(s => [s[1], s[2]]);
+    const k = m.stars.findIndex(s => !opened.has(s[0])), litN = k < 0 ? pts.length : k;
+    // 新版：沿身体的整条路线，已通到哪颗穴就亮到哪，贯通则整条亮
+    const route = m.route.map(p => typeof p === 'string' ? (s => [s[1], s[2]])(m.stars.find(x => x[0] === p)) : p);
+    const at = m.route.map((p, i) => typeof p === 'string' ? i : -1).filter(i => i >= 0);
+    const far = sel && sel.m !== m.name ? ' far' : '';
+    svg += `<g class="mg${far}"><path class="chan" d="${smooth(route)}"/>`;
+    if (litN > 0) { const d = smooth(route.slice(0, (litN === pts.length ? route.length - 1 : at[litN - 1]) + 1));
+      svg += `<path class="qglow" d="${d}"/><path class="qcore" d="${d}"/><path class="qmote" d="${d}"/>`; }
+    svg += '</g>';
+    acus += `<div class="mname${far} ${litN === pts.length ? 'thr' : ''}" style="left:${m.lab[0] / 7.68}%;top:${m.lab[1] / 10.24}%">${m.name}</div>`;
+    m.stars.forEach(([name, x, y, side], i) => {
+      const s = opened.has(name) ? 'open' : (i === 0 || opened.has(m.stars[i - 1][0])) ? 'act' : 'dim';
+      acus += `<button class="acu${far} ${s} ${side}${sel && sel.m === m.name && sel.i === i ? ' sel' : ''}" data-m="${m.name}" data-i="${i}" style="left:${x / 7.68}%;top:${y / 10.24}%" aria-label="${name}">${TJ}<span>${name}</span></button>`;
+    });
+  });
+  $('ch').innerHTML = svg; $('acus').innerHTML = acus;
+  document.querySelectorAll('.acu').forEach(el => {
+    el.onclick = () => { sel = { m: el.dataset.m, i: +el.dataset.i }; drawInner(); drawLedger(); };
+  });
+}
+/* 冲穴结果在穴位上浮起一下再散（代替右侧反馈行） */
+function floatAt(m, i, text, cls) {
+  const [, x, y] = st.base.mers.find(x => x.name === m).stars[i];
+  const f = document.createElement('div'); f.className = `float ${cls}`; f.textContent = text;
+  f.style.left = `${x / 7.68}%`; f.style.top = `${y / 10.24}%`; $('floats').appendChild(f);
+  setTimeout(() => f.remove(), 1700);
+}
+function drawLedger() {
+  const mers = st.base.mers, nOpen = opened.size, total = mers.reduce((a, m) => a + m.stars.length, 0);
+  const thrN = mers.filter(m => m.stars.every(s => opened.has(s[0]))).length, pa = perAcu();
+  const pct = v => `${+(v * 100).toFixed(2)}%`;
+  if (!sel) pickSel();
+  const m = mers.find(x => x.name === sel.m), i = sel.i, [name] = m.stars[i], state = stateOf(m, i);
+  const last = m.stars.every((s, j) => j === i || opened.has(s[0]));
+  const btn = state === 'open' ? '<div class="btn-gap"></div>'
+    : state === 'dim' ? `<button class="scroll-btn" disabled>${m.stars[i - 1][0]} 未通 · 循序而行</button>`
+    : `<button class="scroll-btn ready" id="chong" data-tip="成功率 ${Math.round(rateOf(i, name) * 100)}%${fails[name] ? `<br><span class='l'>已失手 ${fails[name]} 次，每次 +10%</span>` : ''}">冲穴</button>`;
+  $('ledger').innerHTML =
+    `<div class="sum">窍穴 <b>${nOpen}/${total}</b><i>·</i>经脉 <b>${thrN}/${mers.length}</b><i>·</i>修炼加成 <b class="g" data-tip="已通窍穴 ${nOpen} 处 × ${pct(pa)}<br>贯通经脉 ${thrN} 条 × ${pct(pa * 1.5)}<br><span class='l'>加在气血、攻击、防御上</span>">+${pct(nOpen * pa + thrN * pa * 1.5)}</b></div>`
+    + `<div class="mlist">${mers.map(x => {
+        const on = x.stars.filter(s => opened.has(s[0])).length, thr = on === x.stars.length;
+        return `<button class="mrow${x.name === sel.m ? ' on' : ''}${thr ? ' thr' : ''}" data-m="${x.name}"><span class="mn">${x.name}</span>${thr ? '<span class="tag">贯通</span>' : ''}<span class="mp">${on}/${x.stars.length}</span></button>`;
+      }).join('')}</div>`
+    + `<div class="insp"><div class="ih"><h2>${name}</h2><small>${m.name} · 第${CN[i + 1]}穴</small></div>`
+    + `<dl class="kv"><div><dt>效果</dt><dd>气血 攻击 防御 +${pct(pa)}</dd></div>`
+    + (state !== 'open' && last ? `<div><dt>贯通后</dt><dd>${m.name}再 +${pct(pa * 1.5)}</dd></div>` : '')
+    + (state !== 'open' ? `<div><dt>消耗内力</dt><dd>${costOf(i).toLocaleString('en-US')}</dd></div>` : '')
+    + `</dl>${btn}</div>`
+    + `<button class="btn-ghost" id="back">收功</button>`;
+  $('back').onclick = () => setInner(false);
+  document.querySelectorAll('.mrow').forEach(b => b.onclick = () => {
+    const x = mers.find(y => y.name === b.dataset.m), k = x.stars.findIndex(s => !opened.has(s[0]));
+    sel = { m: x.name, i: k < 0 ? x.stars.length - 1 : k }; drawInner(); drawLedger();
+  });
+  const c = $('chong');
+  if (c) c.onclick = () => {                 // 成败同扣内力；失败下次 +10%（design.md §3.3）
+    hideTip();
+    if (Math.random() < rateOf(i, name)) {
+      opened.add(name); floatAt(m.name, i, m.stars.every(s => opened.has(s[0])) ? '经脉贯通' : '已通', 'ok');
+      const k = m.stars.findIndex(s => !opened.has(s[0])); if (k >= 0) sel = { m: m.name, i: k }; else pickSel();
+      drawInner(); drawInscr();
+    } else { fails[name] = (fails[name] || 0) + 1; floatAt(m.name, i, '未通', 'no'); }
+    drawLedger();
+  };
+  bindTips($('ledger'));
+}
+
+/* ───────── 悬停 ───────── */
+const tip = $('tip');
+function showTip(e, html) { if (!html) return; tip.innerHTML = html; tip.classList.add('on'); const r = e.currentTarget.getBoundingClientRect(); tip.style.left = `${Math.min(innerWidth - 300, r.left)}px`; tip.style.top = `${r.bottom + 8}px`; }
+function hideTip() { tip.classList.remove('on'); }
+function bindTips(root) { root.querySelectorAll('[data-tip]').forEach(el => { el.onmouseenter = e => showTip(e, el.dataset.tip); el.onmouseleave = hideTip; }); }
+$('moonHit').onmouseenter = e => {
+  if (st.still) return;
+  showTip(e, done() ? '周天圆满' : `第${CN[st.full + 1]}周天 ${Math.round(st.f * 100)}%<br><span class='l'>${st.segEta}后本周天圆满 · ${CN[st.n]}段周天逐段翻倍</span>`);
+};
+$('moonHit').onmouseleave = hideTip;
+
+/* ───────── 内视切换 ───────── */
+function setInner(v) { if (st.still) v = false; inner = v; stage.classList.toggle('in', v); hideTip(); if (v) { pickSel(); drawInner(); drawLedger(); } }
+$('qi').onclick = () => setInner(true);
+addEventListener('keydown', e => { if (e.key === 'Escape' && inner) setInner(false); });
+$('fold').onclick = () => document.body.classList.add('dock-closed');
+$('unfold').onclick = () => document.body.classList.remove('dock-closed');
+
+/* ───────── 原型状态切换 ───────── */
+function load(key) {
+  st = PRESETS[key]; opened = new Set(st.opened); sel = null; fails = {};
+  $('railRealm').innerHTML = `${st.base.name}<small>第${CN[st.base.realm]}境</small>`;
+  $('railHurt').className = 'hurt' + (st.wounds ? ' bad' : '');
+  $('railHurt').querySelector('span').textContent = st.wounds ? '内伤 · 外伤' : '身无伤病';
+  if (inner) setInner(false);
+  drawOrb(); drawInscr(); place();
+  document.querySelectorAll('.proto button[data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === key));
+}
+const proto = $('proto');
+const addBtn = (txt, fn, k) => { const b = document.createElement('button'); b.textContent = txt; if (k) b.dataset.k = k; b.onclick = fn; proto.appendChild(b); return b; };
+Object.entries(PRESETS).forEach(([k, p]) => addBtn(p.label, () => load(k), k));
+addBtn('内视 ⇄', () => setInner(!inner));
+load('early');
+</script>
+</body>
+</html>

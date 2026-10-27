@@ -15,7 +15,7 @@
 | `rules/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
-| `rules/copy/battle.md` + `rules/copy/battle-narration.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` + `rules/copy/chronicle.md` | 冻结文案（battle-narration 为叙事战报句式与式名；chronicle 为江湖编年、名号、进章因由与转世醒来） | BattlePane.tsx, narration.ts, formNames.ts, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, App.tsx, chronicle.ts（`data/chronicle.json`）, ChronicleDock.tsx, WakeCeremony.tsx |
+| `rules/copy/battle.md` + `rules/copy/battle-narration.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` + `rules/copy/chronicle.md` | 冻结文案（battle-narration 为叙事战报句式与式名；chronicle 为江湖编年、名号、进章因由与转世醒来） | BattlePane.tsx, narration.ts, formNames.ts, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivatePane.tsx, App.tsx, chronicle.ts（`data/chronicle.json`）, ChronicleDock.tsx, WakeCeremony.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 | `systems/sim/export_longline_fixtures.py` | 长线 golden 导出（招式 + 火候、关卡当量敌人、随当量放大的防御常数） | combat.longline.golden.test.ts |
 | `systems/sim/export_stage_line.py` | 单线关卡表导出（十卷 · 赶路图与各章外围 / 门户 · 关的当量、精英 / Boss 摆放、图名与势力、奖励；取代原 `export_stage_table.py`） | enemies.ts（`data/stage-line.json`） |
@@ -31,8 +31,8 @@
 
 | 文档 | 角色 | 代码引用 |
 |---|---|---|
-| `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx, zhoutianMandalaModel.ts |
-| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定 / 修炼面板呈现方案） | ZhoutianMandala.tsx, zhoutianMandalaModel.ts |
+| `systems/zhoutian/design.md` | 周天系统（设定 + 数值表） | acupoints.ts, CultivatePane.tsx, cultivationSceneModel.ts |
+| `systems/zhoutian/spec.md` | 周天规格补充（呈现一致性 / 敌人曲线锚定；§4 修炼面板呈现方案已被修炼页改版取代，见 `design/cultivate-redesign-prototype.html`） | CultivatePane.tsx, cultivationSceneModel.ts |
 | `systems/zhoutian/sim.py` | 周天 sim（v4 冲穴耗内力制，判据 W1–W4） | acupoints.test.ts |
 | `systems/sim/pacing_sim.py` | 长线节奏求解器（里程碑 + 转世节奏 → 寿元与年岁速率/境界成本/宿慧；按现行规则逐世推演，唯一数值源） | design.md §3、economy.md v2 由其生成 |
 | `systems/pacing/design.md` | 长线节奏落地设计（23 条裁决总账：多天一世、寿元与年岁、归隐门槛、离线、战斗长线化、战力预算、版本天花板；issue #22） | — |
@@ -62,7 +62,7 @@
 | `systems/sim/pace_measured.json` | 真实代码的里程碑实测（三路线首达境界 2–6 的天数，`code/src/telemetry/pace.sim.test.ts` 以 WRITE_PACE=1 生成；守卫判据 ±20%） | pace.sim.test.ts |
 | `systems/sim/economy_measured.json` | 真实代码的经济实测（标准玩家各天银两进出、铺子 / 黑市定价基数、黑市解锁日与每世件数、掉落件数；`code/src/telemetry/economy.sim.test.ts` 以 SIM_ECON=1 生成；判据见 `systems/battle-loot/spec.md` §7） | economy.sim.test.ts |
 | `systems/sim/gear_form_measured.json` | 装备两型的余量差实测（真实战斗期望前沿；`code/src/telemetry/gearForm.sim.test.ts` 以 SIM_FORM=1 生成；判据见 `systems/battle-loot/spec.md` §7） | gearForm.sim.test.ts |
-| `rules/copy/zhoutian.md` | 周天冻结文案 | ZhoutianMandala.tsx |
+| `rules/copy/zhoutian.md` | 周天冻结文案 | CultivatePane.tsx |
 
 ### 历史收口与复现（已收口，不再作为开发权威；按需复现验证）
 

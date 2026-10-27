@@ -246,7 +246,7 @@ function SwitchDialog({ to, onClose }: { to: NeigongId; onClose: () => void }) {
         <div className="sub">
           {same
             ? `同为${ROUTES[from.route].name}一路，功力可带过去大半。`
-            : `跨路数须散功：${ROUTES[from.route].name}之法散去，改修${ROUTES[target.route].name}，重数从头练起。`}
+            : `跨源流须散功：${ROUTES[from.route].name}之法散去，改修${ROUTES[target.route].name}，重数从头练起。`}
         </div>
         <div className="gf-kv"><span className="k">起始重数</span><span className={`v${same ? '' : ' loss'}`}>第 {s.zhong} 重 → 第 {zhongTo} 重</span></div>
         <div className="gf-kv"><span className="k">已过的关</span><span className="v loss">需重新顿悟</span></div>

@@ -97,7 +97,7 @@ export function WugongPane({ focus }: { focus?: Kind }) {
           {kind === 'neigong' ? (
             <>
               <div className="wg-segrow">
-                <div className="jh-seg" role="group" aria-label="按路数筛选">
+                <div className="jh-seg" role="group" aria-label="按源流筛选">
                   <button aria-pressed={route === 'all'} onClick={() => setRoute('all')}>全部<small>{ngShelf.length}</small></button>
                   {routes.map((r) => (
                     <button key={r} aria-pressed={route === r} onClick={() => setRoute(r)}>

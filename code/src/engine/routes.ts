@@ -1,12 +1,12 @@
 /**
- * 三路数定义（原「三路线 / 武学门径」，现为内功的路数）—— 权威来源：docs/rules/content.md §3.1
+ * 武道源流定义（原「三路线 / 武学门径」「路数」，现为内功的源流）—— 权威来源：docs/rules/content.md §3.1
  * 与 docs/systems/sect-neigong/spec.md §1。路数决定战斗核心机制；台阶质变在 neigong.ts。禁止在此调参。
  */
 import type { RouteId } from './content';
 
 export interface RouteDef {
   id: RouteId;
-  /** 路数名（归海 / 镇岳 / 蚀骨）：华山、少林、唐门只作门派名（worldview.md §7-1） */
+  /** 武道源流名（狂澜 / 镇岳 / 蚀骨；原称「路数」）：华山、少林、唐门只作门派名（worldview.md §7-1） */
   name: string;
   motif: string;
   /** 修习即得（路数赠予，不占重数） */
@@ -39,7 +39,7 @@ export interface RouteDef {
 export const ROUTES: Record<RouteId, RouteDef> = {
   huashan: {
     id: 'huashan',
-    name: '归海',
+    name: '狂澜',
     motif: '快剑爆发 · 短战最强，看脸不稳',
     grant: { critRatePP: 0.10, critDmgPP: 0.20, firstStrikeCrit: true },
     perLevel: { atkPct: 0.06, critRatePP: 0.025, critDmgPP: 0.08 },

@@ -142,7 +142,7 @@ function AttrCard({ s, acupointPct }: { s: State; acupointPct: number }) {
   const statTip = (baseV: number, tempPct: number, grantPct: number, diyunPct = 0, extra: string[] = []): string => {
     const parts = [`境界基础 ${baseV}`];
     const ngPart = tempPct - acupointPct - grantPct;
-    if (grantPct > 0) parts.push(`路数赠予 +${pct1(grantPct)}`);
+    if (grantPct > 0) parts.push(`源流赠予 +${pct1(grantPct)}`);
     if (ngPart > 1e-9 && ng) parts.push(`${ng.name} 第 ${s.zhong} 重 +${pct1(ngPart)}`);
     if (acupointPct > 0) parts.push(`窍穴经脉 +${pct1(acupointPct)}`);
     if (hhStat > 1.0001) parts.push(`十重以上火候 ×${hhStat.toFixed(2)}`);
@@ -205,7 +205,7 @@ function critTip(
 ): string {
   const baseV = key === 'critRate' ? BASE_CRIT_RATE : BASE_CRIT_DMG;
   const parts = [`基础 ${pct(baseV)}`];
-  if (routePP > 1e-9) parts.push(`${routeName ?? '路数'} +${pct1(routePP)}`);
+  if (routePP > 1e-9) parts.push(`${routeName ?? '源流'} +${pct1(routePP)}`);
   if (diyunPP > 1e-9) parts.push(`底蕴 +${pct1(diyunPP)}`);
   if (gearPP > 1e-9) parts.push(`装备 +${pct1(gearPP)}`);
   return a[key] - baseV < 1e-9 ? '' : parts.join('<br>');

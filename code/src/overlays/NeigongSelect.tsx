@@ -12,7 +12,7 @@ import { useGameStore } from '../store/gameStore';
 const ROUTE_ORDER: RouteId[] = ['huashan', 'shaolin', 'tangmen'];
 const CARD: Record<RouteId, { cls: string; lu: string; items: React.ReactNode[] }> = {
   huashan: {
-    cls: 'hs', lu: '归海 · 爆发',
+    cls: 'hs', lu: '狂澜 · 爆发',
     items: [<>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></>, <><b>开战首击必定会心</b>（并叠 1 重浪）</>, <>每次会心叠 <b>1 重浪</b>；叠满 5 重自动施展<b>排山倒海</b></>],
   },
   shaolin: {

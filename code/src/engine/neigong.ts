@@ -1,6 +1,6 @@
 /**
  * 内功 —— 权威来源：docs/systems/sect-neigong/spec.md §1（名录 / 重数 / 台阶 / 真气 / 转修）与 §3（悟性与顿悟）。
- * 路数（归海 / 镇岳 / 蚀骨）沿用路线 id：huashan / shaolin / tangmen，路数参数仍在 routes.ts。
+ * 武道源流（狂澜 / 镇岳 / 蚀骨，原称路数）沿用路线 id：huashan / shaolin / tangmen，路数参数仍在 routes.ts。
  * 寻常内功 = 原「招式十成 + 火候」构筑（spec §7 判据零），所以关卡与敌人不用重调。禁止在此调参。
  */
 import { QI_SCALE, huohouRealms, type RouteId } from './content';

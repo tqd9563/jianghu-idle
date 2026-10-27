@@ -544,7 +544,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const route = ctx.route;
   // 普攻句子跟手里的家伙走：赤手时少林路数写拳掌、其余写拳脚
   const plain: PlainKey = ctx.hand === 'none' && route === 'shaolin' ? 'shaolin' : ctx.hand;
-  const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '归海' };
+  const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '狂澜' };
   const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
 
   switch (t.kind) {

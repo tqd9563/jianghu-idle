@@ -15,7 +15,7 @@
 | `rules/economy.md` | 声望经济表（节点定义/归隐结算） | prestige.ts, enemies.ts |
 | `rules/telemetry.md` | 埋点规格（三份合一） | telemetry.ts |
 | `rules/offline-rewards.md` | 离线数值表（含决策保留/验收判据） | offlineRewards.ts, storage.ts |
-| `rules/copy/battle.md` + `rules/copy/battle-narration.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` | 冻结文案（battle-narration 为叙事战报句式与式名） | BattlePane.tsx, narration.ts, formNames.ts, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, App.tsx |
+| `rules/copy/battle.md` + `rules/copy/battle-narration.md` + `rules/copy/retire.md` + `rules/copy/zhoutian.md` + `rules/copy/reincarnation.md` + `rules/copy/chronicle.md` | 冻结文案（battle-narration 为叙事战报句式与式名；chronicle 为江湖编年、名号、进章因由与转世醒来） | BattlePane.tsx, narration.ts, formNames.ts, RetireFlow.tsx, RetireCeremony.tsx, RepPane.tsx, CultivationScene.tsx, App.tsx, chronicle.ts（`data/chronicle.json`）, ChronicleDock.tsx, WakeCeremony.tsx |
 | `systems/sim/mvp0_sim.py` | golden 对照 sim | combat.golden.test.ts, formulas.test.ts |
 | `systems/sim/export_longline_fixtures.py` | 长线 golden 导出（招式 + 火候、关卡当量敌人、随当量放大的防御常数） | combat.longline.golden.test.ts |
 | `systems/sim/export_stage_line.py` | 单线关卡表导出（十卷 · 赶路图与各章外围 / 门户 · 关的当量、精英 / Boss 摆放、图名与势力、奖励；取代原 `export_stage_table.py`） | enemies.ts（`data/stage-line.json`） |
@@ -49,7 +49,7 @@
 | `systems/battle-loot/calib_cast.py` | 武学参数校准 v2（裁决 46：倍率按品质与类型给定、反解触发几率、按真实战斗逐门修正；写 `wuxue-params.json`，再由 `export_wuxue.py` 导出名录） | wuxue.ts（`data/wuxue-catalog.json`） |
 | `systems/sim/cast_doors_measured.json` / `cast_rhythm_measured.json` | 武学逐门余量与出招节奏实测（`code/src/telemetry/castDoors.sim.test.ts` SIM_DOORS=1、`castRhythm.sim.test.ts` SIM_CAST=1；改版前后战力对拍用 `castBalance.sim.test.ts` SIM_BAL=1） | — |
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
-| `systems/living-jianghu/design.md` | 活江湖：世内事件 / 江湖兴衰 / 正邪的落地顺序与前置裁决，取代转世设定 §4 / §5 / §7 的落地口径；§2.1 江湖名册实装口径（岗位、任期、起名） | roster.ts（`data/roster-names.json`） |
+| `systems/living-jianghu/design.md` | 活江湖：世内事件 / 江湖兴衰 / 正邪的落地顺序与前置裁决，取代转世设定 §4 / §5 / §7 的落地口径；§2.1 江湖名册实装口径（岗位、任期、起名）；§2.4 江湖编年实装口径 | roster.ts（`data/roster-names.json`）, chronicle.ts |
 | `systems/living-jianghu/sim.py` | 活江湖结构 sim（卷 · 章 · 图 · 关单线的台阶高度、停留天数、首杀体量；读 longline_sim） | — |
 | `systems/prestige-shop/design.md` | 前尘（声望阁改版）设定：底蕴八条可反复购买且逐级递减、感悟价补偿、页面分段切换；sim 判据已过，原型待审 | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |

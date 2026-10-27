@@ -6,7 +6,9 @@
  */
 import { backdateSavedAt, saveGame, setDebugOfflineCap } from './save/storage';
 
-import { stageKey, trackLength, unlocksAfterMap, VOLUMES, type MapId } from './engine/enemies';
+import { parseStageKey, stageKey, trackLength, unlocksAfterMap, VOLUMES, type MapId } from './engine/enemies';
+import { makeHao, newLife, placeOfVol, type LifeRec } from './engine/chronicle';
+import { holderAt, postById, type RosterKill } from './engine/roster';
 
 /** 某张图的前 n 关（关卡键 m{图}s{关}）；n 缺省为全通 */
 const upto = (map: MapId, n = trackLength(map)) =>
@@ -21,6 +23,50 @@ const road = (v: number) => VOLUMES[v - 1].maps[0];
 /** 第 v 卷第一章的门户 */
 const gate1 = (v: number) => VOLUMES[v - 1].maps[2];
 const upTo4 = mainThrough(4);
+
+/**
+ * 江湖编年验收（活江湖批四）：第四世开局后几年，前三世各打过几家、有寿终有战死，名册已按前世换人。
+ * 前世的事按「这一世打了哪些岗位」现推：对手取那一世出生年的在任者，与真实游玩同一口径。
+ */
+function chroniclePreset(): object {
+  const seed = 20261026;
+  const kills: RosterKill[] = [];
+  const lives: LifeRec[] = [];
+  const plan: { years: number; age: number; cause: 'old' | 'battle' | 'retire'; posts: string[]; sect?: string; realm5?: boolean }[] = [
+    { years: 46, age: 64, cause: 'old', posts: ['蒿里寨#0', '蒿里寨#1', '蒿里寨#3'] },
+    { years: 24, age: 42, cause: 'battle', posts: ['苍崖派#0', '千蛇窟#0', '千蛇窟#1'] },
+    { years: 45, age: 63, cause: 'old', posts: ['蒿里寨#1', '苍崖派#1', '千岩寺#0', '千岩寺#1', '千岩寺#3'], sect: '华山', realm5: true },
+  ];
+  let born = 100;
+  plan.forEach((p, i) => {
+    const rec = newLife(seed, i + 1, born);
+    let vol = 1;
+    p.posts.forEach((id, j) => {
+      const post = postById(id)!;
+      const map = parseStageKey(post.stageKey!)!.map;
+      vol = Math.max(vol, VOLUMES.findIndex((v) => v.maps.includes(map)) + 1);
+      const y = born + ((j + 1) * p.years) / (p.posts.length + 2) + 0.3;
+      const hao = post.slot === 3 && !rec.hao ? makeHao(seed, i + 1, '剑', rec.female, 'gate') : undefined;
+      if (hao) rec.hao = hao;
+      rec.events.push({ k: 'beat', y, post: id, map, who: holderAt(seed, kills, post, born).person.name, ...(hao ? { hao } : {}) });
+      kills.push({ post: id, year: born, at: Math.floor(y), end: born + p.years });
+    });
+    if (p.sect) rec.events.splice(2, 0, { k: 'sect', y: born + 8.6, sect: p.sect });
+    if (p.realm5) rec.events.push({ k: 'realm', y: born + p.years - 6.4, realm: 5 });
+    rec.vols = Array.from({ length: vol + 1 }, (_, k) => k + 1).filter((v) => v <= 3);
+    rec.end = { year: born + p.years, age: p.age, cause: p.cause, place: placeOfVol(vol) };
+    lives.push(rec);
+    born += p.years;
+  });
+  const cur = { ...newLife(seed, 4, born), vols: [1, 2] };
+  return {
+    run: 4, realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 5, peakRealm: 5, taught: true,
+    dantian: 6900, silver: 530, reputation: 900, repTotal: 2400,
+    worldSeed: seed, rosterKills: kills, lifeDefeats: [], lives: [...lives, cur],
+    clearedStages: cleared(mainThrough(1)), mapsUnlocked: opened(mainThrough(2)), attempts: {}, idle: null,
+    age: 23.4, eraStart: born,
+  };
+}
 
 const PRESETS: Record<string, object> = {
   // 原型场景 3 对应态：境界 3 · 蚀骨心法第 5 重 · 丹田 6,900 · 图2 推进到第 7 关（精英铁臂僧）
@@ -119,6 +165,7 @@ const PRESETS: Record<string, object> = {
     mapsUnlocked: opened(upTo4), age: 89.99, eraStart: 206, peakRealm: 3,
   },
   // 魂魄未稳态：被迫转世后的新一世开局
+  jianghu: chroniclePreset(),
   soul: {
     run: 4, realm: 1, route: null, neigong: null, zhong: 0,
     dantian: 0, silver: 0, xp: 0, reputation: 390, repTotal: 390,

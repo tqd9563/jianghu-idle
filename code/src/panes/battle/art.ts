@@ -143,3 +143,6 @@ export const FOE_PT = '/art/scene/p-guard.png';
 export const FOE_CAP = '/art/scene/duel-foe.jpg';
 export const HERO_PT = '/art/scene/p-hero.png';
 export const HERO_CAP = '/art/scene/duel-hero.jpg';
+/** 女子的一世（江湖编年批四）：同一构图的女子头像与长卷像 */
+export const HEROINE_PT = '/art/scene/p-heroine.png';
+export const HEROINE_CAP = '/art/scene/duel-heroine.jpg';

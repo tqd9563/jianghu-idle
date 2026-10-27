@@ -39,7 +39,8 @@ import {
   hasNode, isBossKey, isEliteKey, marketDiscount, outputMult, settleRetire, soulWeakYears, switchFeeMult,
   type DiyunId, type DiyunLevels, type RepNodeId, type RetireSettle,
 } from '../engine/prestige';
-import { newWorldSeed, postOfStage, stageNamesAt, type RosterKill } from '../engine/roster';
+import { holderAt, newWorldSeed, postOfStage, stageNamesAt, type RosterKill } from '../engine/roster';
+import { causeLine, makeHao, newLife, placeOfVol, type ChronEv, type LifeRec } from '../engine/chronicle';
 import { achvVal, bumpAchv, catDmgBonus, winCounts, type AchvCounts, type AchvId } from '../engine/achievements';
 import {
   IDLE_SEC_OVERHEAD, IDLE_SEC_PER_ROUND, OFFLINE_EFFICIENCY, calculateOfflineRewards, maxIdleStage,
@@ -147,6 +148,10 @@ interface PersistedState {
   rosterKills: RosterKill[];
   /** 本世击败过的岗位（转世时并入 rosterKills）：at 为击败那年的江湖历，供编年 */
   lifeDefeats: { post: string; at: number }[];
+  /** 江湖编年（living-jianghu/design.md §2.4）：每世一条记录（姓名、籍贯、名号、这一世做下的事），末一条是当世 */
+  lives: LifeRec[];
+  /** 本世各类兵器的胜场（名号按胜场最多的那类起） */
+  lifeWins: Record<string, number>;
   /** 历来击败过的最深 Boss（跨世保留）：行为乘数「打到自己的前沿」的比较基准（economy.md §1.2） */
   deepestBossEver: number;
   /** 已领过的成就（跨世保留，一次性）：'stage:m1s8' / 'meridian:shoutaiyin' */
@@ -279,6 +284,8 @@ export interface BattleState {
   } | null;
   /** 本场战斗记录开头说一句拜山传闻（RUMORS 的键） */
   rumor?: number;
+  /** 进章因由（chronicle.ts causeLine）：本世头一回进这张赶路图或某家外围时，战报开头说一句 */
+  cause?: string;
   /** 战报变体种子（narration.ts pick），开战时掷定 */
   seed?: number;
 }
@@ -338,6 +345,8 @@ interface GameState extends PersistedState {
   failure: FailureInfo | null;
   retireStep: 'preview' | 'confirm' | null;
   retireCeremony: RetireCeremonyData | null;
+  /** 转世醒来演出待放（归隐演出收起后接着放；非持久化） */
+  wakePending: boolean;
   /** 出关结算待呈现数据（MVP-1 §6；资源已在 init 入账，此处只驱动结算屏；非持久化） */
   offlineSettlement: OfflineSettleResult | null;
   /** 出关时顺带结算的门派任务（只供出关演出展示，不持久化） */
@@ -421,6 +430,7 @@ interface GameState extends PersistedState {
   proceedRetire: () => void;
   cancelRetire: () => void;
   confirmRetire: () => void;
+  dismissWake: () => void;
   closeRetireCeremony: () => void;
   buyRepNode: (id: RepNodeId) => void;
   /** 修行感悟：'one' 买一级，'all' 买到买不起为止（economy.md §3） */
@@ -448,7 +458,7 @@ const FRESH: PersistedState = {
   age: INIT_AGE, eraStart: ERA_START, soulUnsettled: false, lifeMinutes: 0,
   peakRealm: 1, ganwuLevel: 0, diyun: freshDiyun(), achv: {}, freeHurtUsed: 0, autoChain: false, lifeWeightedHours: 0,
   deepestBossEver: 0, fameClaimed: [], fameThisLife: 0,
-  worldSeed: 0, rosterKills: [], lifeDefeats: [],
+  worldSeed: 0, rosterKills: [], lifeDefeats: [], lives: [], lifeWins: {},
   mapsUnlocked: [1],
   ownedWuxue: [], ownedScrolls: [], pages: [], equipped: [], formCasts: {}, dropsClaimed: [],
   sect: null, contrib: 0, sectTask: null, rumorPending: 0,
@@ -833,6 +843,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   failure: null,
   retireStep: null,
   retireCeremony: null,
+  wakePending: false,
   offlineSettlement: null,
   offlineLoot: null,
   idleSummary: null,
@@ -856,6 +867,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const merged = { ...FRESH, ...saved };
       // 没有世界种子的存档（调试预设、手搓存档）：此刻开一个新江湖
       if (!merged.worldSeed) merged.worldSeed = newWorldSeed();
+      // 编年之前的存档：从当世起记（前几世的姓名无从查考）
+      if (!(merged.lives ?? []).length) merged.lives = [newLife(merged.worldSeed, merged.run, merged.eraStart ?? ERA_START)];
       // 默认面向最深的一条可推前沿
       const fronts = openFronts(merged);
       const front = fronts[fronts.length - 1] ?? { map: 1 as MapNo };
@@ -1000,7 +1013,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         persist(get());
       }
     } else {
-      set({ ...FRESH, worldSeed: newWorldSeed(), wuxing: rollWuxing(Math.random()), started: true });
+      const seed = newWorldSeed();
+      set({ ...FRESH, worldSeed: seed, lives: [newLife(seed, 1, ERA_START)], wuxing: rollWuxing(Math.random()), started: true });
       track('run_start', { run: 1, realm: 1, route: null }, { owned_nodes: [], wuxing: get().wuxing });
       persist(get());
     }
@@ -1177,6 +1191,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       peakRealm: Math.max(s.peakRealm ?? 1, realmTo),
       // 拜山传闻（spec §5.1）：入境界 2 时突破仪式说一次，下一场战斗记录再说一次
       ...(realmTo === 2 ? { rumorPending: 1 } : {}),
+      // 编年只记高境界（design.md §2.4）：江湖记的是高手出世
+      ...(realmTo >= 5 ? { lives: logLife(s, { k: 'realm', y: yearNow(s), realm: realmTo }) } : {}),
     });
     track('realm_breakthrough', { run: s.run, realm: realmTo, route: s.route }, {
       realm_to: realmTo, first_reach: firstReach,
@@ -1391,7 +1407,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     if (!s.started || s.sect !== null || s.realm < SECT_REALM || !SECTS[id]) return;
     if (!volUnlocked(SECTS[id].vol, s.mapsUnlocked ?? [1])) return;   // 这一派要到了它行走的那一卷才遇得上（W13）
-    set({ sect: id, lastProgressSec: s.runPlaySec });
+    set({ sect: id, lastProgressSec: s.runPlaySec, lives: logLife(s, { k: 'sect', y: yearNow(s), sect: SECTS[id].name }) });
     track('sect_joined', { run: s.run, realm: s.realm, route: s.route }, { sect: id, neigong: s.neigong });
     persist(get());
   },
@@ -1577,6 +1593,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   closeRetireCeremony: () => set({ retireCeremony: null }),
+  dismissWake: () => set({ wakePending: false }),
 
   buyRepNode: (id) => {
     const s = get();
@@ -1671,8 +1688,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     resetGame();
     resetTelemetry();
     lastTick = Date.now();
+    const seed = newWorldSeed();
     set({
-      ...FRESH, worldSeed: newWorldSeed(), started: true, ceremony: null, battle: null, failure: null,
+      ...FRESH, worldSeed: seed, lives: [newLife(seed, 1, ERA_START)], started: true, ceremony: null, battle: null, failure: null,
       selectedMap: 1, retireStep: null, retireCeremony: null,
       offlineSettlement: null, pendingTab: null,
     });
@@ -1799,6 +1817,16 @@ function rebirth(
     rosterKills: [...(s.rosterKills ?? []), ...(s.lifeDefeats ?? []).map((d) => ({
       post: d.post, year: Math.floor(s.eraStart ?? ERA_START), at: d.at, end: Math.floor(next.eraStart),
     }))],
+    // 编年（§2.4）：当世落笔卒年与死所（本世到过的最深一卷），下一世换一个人入世
+    lives: [
+      ...(s.lives?.length ? s.lives : [newLife(s.worldSeed, s.run, s.eraStart ?? ERA_START)]).slice(0, -1),
+      {
+        ...(curLife(s) ?? newLife(s.worldSeed, s.run, s.eraStart ?? ERA_START)),
+        end: { year: Math.floor(next.eraStart), age: Math.floor(age), cause: cause ?? 'retire', place: placeOfVol(maxVol) },
+      },
+      newLife(s.worldSeed, newRun, next.eraStart),
+    ],
+    wakePending: true,
     idle: null,
     // 窍穴图鉴归隐保留（spec §8）；窍穴进度、伤势、折寿由 ...FRESH 重置
     acupointLog: s.acupointLog ?? [],
@@ -1815,6 +1843,23 @@ function rebirth(
     owned_nodes: s.ownedRepNodes, wuxing,
   });
   persist(get());
+}
+
+/** 当下江湖历（带小数，编年折季节） */
+const yearNow = (s: PersistedState) => Math.round(currentEra(s.eraStart ?? ERA_START, s.age ?? INIT_AGE) * 100) / 100;
+/** 当世的编年记录 */
+const curLife = (s: PersistedState): LifeRec | undefined => (s.lives ?? []).at(-1);
+/** 往当世的编年里记一件事（或只记到过的卷、得的名号），返回新的 lives */
+function logLife(s: PersistedState, ev: ChronEv | null, opts: { hao?: string; vol?: number } = {}): LifeRec[] {
+  const lives = s.lives?.length ? s.lives : [newLife(s.worldSeed, s.run, s.eraStart ?? ERA_START)];
+  const cur = lives[lives.length - 1];
+  const vols = opts.vol && !cur.vols.includes(opts.vol) ? [...cur.vols, opts.vol] : cur.vols;
+  return [...lives.slice(0, -1), { ...cur, vols, events: ev ? [...cur.events, ev] : cur.events, ...(opts.hao ? { hao: opts.hao } : {}) }];
+}
+/** 这一场用的是哪类兵器：主修武学的类目，其次手中兵器，空手算拳 */
+function handCat(s: PersistedState): string {
+  const id = (s.equipped ?? [])[0];
+  return (id && WUXUE[id]?.cat) || s.worn?.兵器?.cat || (s.worn?.暗器 ? '暗器' : '拳');
 }
 
 /** 离线挂机折算的依据（battle-loot/design.md §2.3）：按当下战力试打 20 场定胜率与平均耗时 */
@@ -1906,6 +1951,8 @@ function startBattle(
   });
   const key = enemy.kind !== 'normal';
   const turnCount = result.turns.length;
+  const cause = s.clearedStages.some((k) => parseStageKey(k)?.map === map)
+    ? null : causeLine(s.worldSeed, s.rosterKills ?? [], map, Math.floor(s.eraStart ?? ERA_START));
   // 普通关按原型节拍逐条揭示；Boss/精英演出 15–30 秒不可跳过（§7.1），节拍整体缩放进这个区间
   let totalMs = REVEAL_FIRST_MS;
   for (let i = 0; i < turnCount - 1; i++) totalMs += revealDelay(result.turns, i);
@@ -1920,6 +1967,7 @@ function startBattle(
       resolved: false, chainAt: null, chainStage: null, chainMode: null, reward: null,
       seed: Math.floor(Math.random() * 2 ** 31),
       ...(s.rumorPending ? { rumor: s.rumorPending } : {}),
+      ...(cause ? { cause } : {}),
     },
     ...(s.rumorPending ? { rumorPending: 0 } : {}),
   });
@@ -2086,9 +2134,20 @@ function resolveBattle(
     }
     // 名册（D7）：击败岗位上的在任者，转世时此人离任
     const post = enemy.kind !== 'normal' ? postOfStage(key) : null;
+    const cat = handCat(s);
+    const lifeWins = { ...(s.lifeWins ?? {}), [cat]: ((s.lifeWins ?? {})[cat] ?? 0) + 1 };
+    rosterPatch = { lifeWins };
     if (post && !(s.lifeDefeats ?? []).some((d) => d.post === post.id)) {
-      rosterPatch = { lifeDefeats: [...(s.lifeDefeats ?? []), { post: post.id, at: Math.floor(currentEra(s.eraStart ?? ERA_START, s.age ?? INIT_AGE)) }] };
+      rosterPatch.lifeDefeats = [...(s.lifeDefeats ?? []), { post: post.id, at: Math.floor(currentEra(s.eraStart ?? ERA_START, s.age ?? INIT_AGE)) }];
+      // 编年（§2.4）：记下击败了谁；本世头一回打穿门户或以弱胜强，江湖起名号
+      const rec = curLife(s);
+      const how = post.slot === 3 ? 'gate' : enemy.recommendedRealm > s.realm ? 'upset' : null;
+      const top = Object.entries(lifeWins).sort((a, b) => b[1] - a[1])[0][0] as Parameters<typeof makeHao>[2];
+      const hao = rec && !rec.hao && how ? makeHao(s.worldSeed, s.run, top, rec.female, how) : undefined;
+      const who = holderAt(s.worldSeed, s.rosterKills ?? [], post, Math.floor(s.eraStart ?? ERA_START)).person.name;
+      rosterPatch.lives = logLife(s, { k: 'beat', y: yearNow(s), post: post.id, map: b.map, who, ...(hao ? { hao } : {}) }, { hao, vol: mapDef(b.map).vol });
     }
+    if (firstClear && rosterPatch.lives === undefined && !(curLife(s)?.vols ?? []).includes(mapDef(b.map).vol)) rosterPatch.lives = logLife(s, null, { vol: mapDef(b.map).vol });
     if (firstClear) {
       clearedStages = [...clearedStages, key];
       lastProgressSec = s.runPlaySec;

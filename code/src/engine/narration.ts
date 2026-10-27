@@ -340,6 +340,14 @@ export const FOLLOWUP: Record<'hit' | 'miss', Lines> = {
   miss: ['一招方落，{我}回腕再递一记，却为{敌}侧身让过。'],
 };
 export const SEALED: Lines = ['{敌}穴道受制，僵立当场，手足皆不听使唤。'];
+/** 新四路的机制句（wudao-yuanliu/design.md §2；草稿，待并入 battle-narration.md 冻结件） */
+export const NEW_ROUTE: Record<'counter' | 'comboHit' | 'comboMiss' | 'seal' | 'undying', Lines> = {
+  counter: ['{敌}一击落空，{我}借势旋身，反手一掌，{敌}受了{伤}点伤害。'],
+  comboHit: ['{我}身形未定，又是一击，{敌}受了{伤}点伤害。'],
+  comboMiss: ['{我}身形未定，又递一击，却为{敌}侧身让过。'],
+  seal: ['寂印已满，{我}骈指点中{敌}要穴，{敌}受了{伤}点伤害。'],
+  undying: ['{我}血气翻涌，硬生生撑住了一口气。'],
+};
 
 /** §5.1 每门武学每一式的专属句子（顺序与 FORM_NAMES 一致）：现有 14 门在此，第一批新增 52 门随名录表并入 */
 export const FORM_LINES: Record<WuxueId, Lines> = { ...FORM_LINES_BASE(), ...CATALOG_LINES };
@@ -600,6 +608,14 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       return t.missed ? line(FOLLOWUP.miss, 0) : line(FOLLOWUP.hit, 0, { crit: t.crit });
     case 'sealed':
       return line(SEALED, 0);
+    case 'counter':
+      return line(NEW_ROUTE.counter, 0);
+    case 'combo':
+      return t.missed ? line(NEW_ROUTE.comboMiss, 0) : line(NEW_ROUTE.comboHit, 0, { crit: t.crit });
+    case 'seal':
+      return line(NEW_ROUTE.seal, 0);
+    case 'undying':
+      return line(NEW_ROUTE.undying, 0);
     case 'enrage':
       return line(FOE_ENRAGE[fk], 0);
     case 'victory':
@@ -618,7 +634,7 @@ export function allTemplates(): string[] {
     ...Object.values(PLAYER_MISS), ...Object.values(FOE_HIT), ...Object.values(FOE_MISS),
     ...Object.values(FOE_ENRAGE), ...Object.values(VICTORY), ...Object.values(DEFEAT),
     ...Object.values(MECH), ...Object.values(CAST_EXTRA), Object.values(EFFECT_LINES),
-    ...Object.values(FOLLOWUP), SEALED,
+    ...Object.values(FOLLOWUP), SEALED, ...Object.values(NEW_ROUTE),
     ...Object.values(FORM_LINES),
   ];
   return groups.flat();

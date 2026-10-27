@@ -1,0 +1,195 @@
+{
+  "date": "2026-10-27",
+  "trials": 300,
+  "bare": [
+    {
+      "label": "境界1 传功",
+      "frontier": {
+        "huashan": 2.166,
+        "shaolin": 2.56,
+        "tangmen": 2.548,
+        "taixu": 2.31,
+        "xuanji": 2.391,
+        "jinghong": 2.248,
+        "fenxue": 2.295
+      },
+      "oldMin": 2.166,
+      "oldMax": 2.56,
+      "oldAvg": 2.425
+    },
+    {
+      "label": "境界2 末 寻常",
+      "frontier": {
+        "huashan": 6.223,
+        "shaolin": 6.807,
+        "tangmen": 6.175,
+        "taixu": 6.108,
+        "xuanji": 6.293,
+        "jinghong": 6.131,
+        "fenxue": 6.234
+      },
+      "oldMin": 6.175,
+      "oldMax": 6.807,
+      "oldAvg": 6.402
+    },
+    {
+      "label": "境界3 末 上乘",
+      "frontier": {
+        "huashan": 8.372,
+        "shaolin": 8.995,
+        "tangmen": 8.351,
+        "taixu": 8.319,
+        "xuanji": 8.475,
+        "jinghong": 8.283,
+        "fenxue": 8.431
+      },
+      "oldMin": 8.351,
+      "oldMax": 8.995,
+      "oldAvg": 8.573
+    },
+    {
+      "label": "境界4 末 绝学",
+      "frontier": {
+        "huashan": 10.657,
+        "shaolin": 11.329,
+        "tangmen": 10.663,
+        "taixu": 10.711,
+        "xuanji": 10.808,
+        "jinghong": 10.603,
+        "fenxue": 10.709
+      },
+      "oldMin": 10.657,
+      "oldMax": 11.329,
+      "oldAvg": 10.883
+    },
+    {
+      "label": "境界5 末 绝学",
+      "frontier": {
+        "huashan": 12.651,
+        "shaolin": 13.331,
+        "tangmen": 12.657,
+        "taixu": 12.735,
+        "xuanji": 12.804,
+        "jinghong": 12.593,
+        "fenxue": 12.705
+      },
+      "oldMin": 12.651,
+      "oldMax": 13.331,
+      "oldAvg": 12.88
+    },
+    {
+      "label": "境界3 末 上乘 + 武学",
+      "frontier": {
+        "huashan": 8.77,
+        "shaolin": 9.302,
+        "tangmen": 8.588,
+        "taixu": 8.798,
+        "xuanji": 8.785,
+        "jinghong": 8.587,
+        "fenxue": 8.985
+      },
+      "oldMin": 8.588,
+      "oldMax": 9.302,
+      "oldAvg": 8.887
+    },
+    {
+      "label": "境界4 末 绝学 + 武学",
+      "frontier": {
+        "huashan": 11.132,
+        "shaolin": 11.66,
+        "tangmen": 10.908,
+        "taixu": 11.221,
+        "xuanji": 11.137,
+        "jinghong": 10.93,
+        "fenxue": 11.338
+      },
+      "oldMin": 10.908,
+      "oldMax": 11.66,
+      "oldAvg": 11.233
+    }
+  ],
+  "tagDelta": {
+    "checkpoint": "境界3 末 上乘",
+    "高闪": {
+      "huashan": -0.338,
+      "shaolin": -0.126,
+      "tangmen": -0.148,
+      "taixu": -0.242,
+      "xuanji": -0.368,
+      "jinghong": -0.317,
+      "fenxue": -0.29
+    },
+    "高血": {
+      "huashan": -0.644,
+      "shaolin": -0.925,
+      "tangmen": -0.397,
+      "taixu": -0.615,
+      "xuanji": -0.535,
+      "jinghong": -0.64,
+      "fenxue": -0.591
+    },
+    "高防": {
+      "huashan": -0.055,
+      "shaolin": -0.021,
+      "tangmen": 0.002,
+      "taixu": -0.045,
+      "xuanji": -0.006,
+      "jinghong": -0.032,
+      "fenxue": -0.045
+    },
+    "高攻": {
+      "huashan": -0.323,
+      "shaolin": -0.121,
+      "tangmen": -0.35,
+      "taixu": -0.291,
+      "xuanji": -0.327,
+      "jinghong": -0.278,
+      "fenxue": -0.341
+    },
+    "反伤": {
+      "huashan": -0.395,
+      "shaolin": -0.142,
+      "tangmen": -0.106,
+      "taixu": -0.393,
+      "xuanji": -0.526,
+      "jinghong": -0.417,
+      "fenxue": -0.293
+    },
+    "破甲": {
+      "huashan": -0.011,
+      "shaolin": 0,
+      "tangmen": -0.026,
+      "taixu": -0.009,
+      "xuanji": -0.015,
+      "jinghong": -0.008,
+      "fenxue": -0.02
+    },
+    "净化": {
+      "huashan": 0,
+      "shaolin": 0,
+      "tangmen": -0.626,
+      "taixu": 0,
+      "xuanji": -0.403,
+      "jinghong": 0,
+      "fenxue": 0
+    },
+    "狂暴": {
+      "huashan": 0,
+      "shaolin": 0.007,
+      "tangmen": 0,
+      "taixu": -0.001,
+      "xuanji": 0,
+      "jinghong": 0,
+      "fenxue": -0.002
+    },
+    "毒": {
+      "huashan": -0.238,
+      "shaolin": -0.44,
+      "tangmen": -0.249,
+      "taixu": -0.345,
+      "xuanji": -0.289,
+      "jinghong": -0.193,
+      "fenxue": -0.382
+    }
+  }
+}

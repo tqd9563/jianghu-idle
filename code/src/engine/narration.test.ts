@@ -16,7 +16,7 @@ const ctx: NarrCtx = {
 };
 const turn = (over: Partial<TurnEvent>): TurnEvent => ({
   rd: 3, side: 'player', kind: 'attack', text: '', dmg: 12,
-  phpPct: 1, ehpPct: 1, pSq: 2, pShield: 0, ePoison: 3, pQi: 50, lasting: [], eSealed: false, ...over,
+  phpPct: 1, ehpPct: 1, pSq: 2, pShield: 0, ePoison: 3, pQi: 50, lasting: [], eSealed: false, eMark: 0, ...over,
 });
 
 describe('招式名与每式句子', () => {

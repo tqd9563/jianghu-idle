@@ -10,7 +10,10 @@ export type Quality = '寻常' | '上乘' | '绝学';
 export type NeigongId =
   | 'jingleijue' | 'zhenyuegong' | 'shiguxinfa'
   | 'leimingjianjing' | 'panshigong' | 'xuanyinjue'
-  | 'yuntaixinfa' | 'putixingong' | 'qianguxinjue';
+  | 'yuntaixinfa' | 'putixingong' | 'qianguxinjue'
+  // 新四路（wudao-yuanliu/design.md）：名字待起，门派改造前无来路，只供 sim
+  | 'taixu1' | 'taixu2' | 'taixu3' | 'xuanji1' | 'xuanji2' | 'xuanji3'
+  | 'jinghong1' | 'jinghong2' | 'jinghong3' | 'fenxue1' | 'fenxue2' | 'fenxue3';
 
 export interface NeigongDef {
   id: NeigongId;
@@ -29,6 +32,18 @@ export const NEIGONG: Record<NeigongId, NeigongDef> = {
   yuntaixinfa:     { id: 'yuntaixinfa',     name: '沧溟真经', quality: '绝学', route: 'huashan' },
   putixingong:     { id: 'putixingong',     name: '菩提心功', quality: '绝学', route: 'shaolin' },
   qianguxinjue:    { id: 'qianguxinjue',    name: '千蛊心诀', quality: '绝学', route: 'tangmen' },
+  taixu1: { id: 'taixu1', name: '太虚寻常（待名）', quality: '寻常', route: 'taixu' },
+  taixu2: { id: 'taixu2', name: '太虚上乘（待名）', quality: '上乘', route: 'taixu' },
+  taixu3: { id: 'taixu3', name: '太虚绝学（待名）', quality: '绝学', route: 'taixu' },
+  xuanji1: { id: 'xuanji1', name: '玄寂寻常（待名）', quality: '寻常', route: 'xuanji' },
+  xuanji2: { id: 'xuanji2', name: '玄寂上乘（待名）', quality: '上乘', route: 'xuanji' },
+  xuanji3: { id: 'xuanji3', name: '玄寂绝学（待名）', quality: '绝学', route: 'xuanji' },
+  jinghong1: { id: 'jinghong1', name: '惊鸿寻常（待名）', quality: '寻常', route: 'jinghong' },
+  jinghong2: { id: 'jinghong2', name: '惊鸿上乘（待名）', quality: '上乘', route: 'jinghong' },
+  jinghong3: { id: 'jinghong3', name: '惊鸿绝学（待名）', quality: '绝学', route: 'jinghong' },
+  fenxue1: { id: 'fenxue1', name: '焚血寻常（待名）', quality: '寻常', route: 'fenxue' },
+  fenxue2: { id: 'fenxue2', name: '焚血上乘（待名）', quality: '上乘', route: 'fenxue' },
+  fenxue3: { id: 'fenxue3', name: '焚血绝学（待名）', quality: '绝学', route: 'fenxue' },
 };
 
 export const NEIGONG_IDS = Object.keys(NEIGONG) as NeigongId[];
@@ -74,11 +89,11 @@ export interface TierDef {
 }
 
 export const TIERS: TierDef[] = [
-  { name: '登堂', at: 2, p: 0.5, effect: { huashan: '叠满 5 重 → 4 重', shaolin: '开场护盾 +15pp', tangmen: '初始毒层 +2' } },
-  { name: '入室', at: 4, p: 0.5, effect: { huashan: '排山倒海 400% → 550%', shaolin: '反伤 +15pp', tangmen: '毒层上限 8 → 10' } },
-  { name: '大成', at: 6, p: 0.5, effect: { huashan: '叠满 → 3 重', shaolin: '气血 < 30% 受伤 −30%', tangmen: '毒爆 50% → 80%' } },
-  { name: '化境', at: 20, p: 0.02, effect: { huashan: '排山倒海 +50pp', shaolin: '反伤 +5pp', tangmen: '毒伤系数 +3pp' } },
-  { name: '归真', at: 40, p: 0.01, scroll: true, effect: { huashan: '暴伤 +20pp', shaolin: '开场护盾 +8pp', tangmen: '毒伤系数 +2pp' } },
+  { name: '登堂', at: 2, p: 0.5, effect: { huashan: '叠满 5 重 → 4 重', shaolin: '开场护盾 +15pp', tangmen: '初始毒层 +2', taixu: '借力 +30pp', xuanji: '寂印 4 → 3', jinghong: '追加几率 +15pp', fenxue: '每损一成攻击 +5% → +8%' } },
+  { name: '入室', at: 4, p: 0.5, effect: { huashan: '排山倒海 400% → 550%', shaolin: '反伤 +15pp', tangmen: '毒层上限 8 → 10', taixu: '闪过即反手一击', xuanji: '点穴 100% → 180%', jinghong: '追加可连三击', fenxue: '濒死保住两成半气血（每战一次）' } },
+  { name: '大成', at: 6, p: 0.5, effect: { huashan: '叠满 → 3 重', shaolin: '气血 < 30% 受伤 −30%', tangmen: '毒爆 50% → 80%', taixu: '卸力 10% → 20%', xuanji: '封穴后留一枚寂印', jinghong: '追加倍率 60% → 90%', fenxue: '吸血 +6pp' } },
+  { name: '化境', at: 20, p: 0.02, effect: { huashan: '排山倒海 +50pp', shaolin: '反伤 +5pp', tangmen: '毒伤系数 +3pp', taixu: '借力 +20pp', xuanji: '点穴 +50pp', jinghong: '追加倍率 +10pp', fenxue: '每损一成攻击 +2pp' } },
+  { name: '归真', at: 40, p: 0.01, scroll: true, effect: { huashan: '暴伤 +20pp', shaolin: '开场护盾 +8pp', tangmen: '毒伤系数 +2pp', taixu: '闪避 ×1.2', xuanji: '攻击 ×1.08', jinghong: '追加几率 +5pp', fenxue: '吸血 +3pp' } },
 ];
 
 /** 该品质有几级台阶：寻常 3、上乘 4、绝学 5 */
@@ -121,14 +136,26 @@ export function neigongBuild(id: NeigongId, realm: number, zhong: number, passed
     b.hit += 12 * extra; b.dodge += 3 * extra;
   }
   if (passed >= 4) {
-    if (ng.route === 'huashan') b.burstMult += 0.5;
-    else if (ng.route === 'shaolin') b.thorns += 0.05;
-    else b.poison = { ...b.poison, coef: b.poison.coef + 0.03 };
+    switch (ng.route) {
+      case 'huashan': b.burstMult += 0.5; break;
+      case 'shaolin': b.thorns += 0.05; break;
+      case 'tangmen': b.poison = { ...b.poison, coef: b.poison.coef + 0.03 }; break;
+      case 'taixu': b.jieli += 0.2; break;
+      case 'xuanji': b.markDmg += 0.5; break;
+      case 'jinghong': b.comboMult += 0.1; break;
+      case 'fenxue': b.rage += 0.02; break;
+    }
   }
   if (passed >= 5) {
-    if (ng.route === 'huashan') b.cd += 0.2;
-    else if (ng.route === 'shaolin') b.shieldPct += 0.08;
-    else b.poison = { ...b.poison, coef: b.poison.coef + 0.02 };
+    switch (ng.route) {
+      case 'huashan': b.cd += 0.2; break;
+      case 'shaolin': b.shieldPct += 0.08; break;
+      case 'tangmen': b.poison = { ...b.poison, coef: b.poison.coef + 0.02 }; break;
+      case 'taixu': b.dodge *= 1.2; break;
+      case 'xuanji': b.atk *= 1.08; break;
+      case 'jinghong': b.comboRate += 0.05; break;
+      case 'fenxue': b.leech += 0.03; break;
+    }
   }
   return b;
 }

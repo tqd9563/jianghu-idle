@@ -16,7 +16,7 @@ import {
   switchFee, zhongAfterSwitch, zhongCost, type NeigongId, type Quality,
 } from '../../engine/neigong';
 import { ROUTES } from '../../engine/routes';
-import { SECTS } from '../../engine/sect';
+import { SECTS, type SectId } from '../../engine/sect';
 import { effIdleRate, playerBuild, useGameStore, zhongGate } from '../../store/gameStore';
 import { fmtBig } from '../../fmt';
 import { Q_NO, ROUTE_TAG } from './shared';
@@ -88,7 +88,7 @@ export function NeigongBook({ id }: { id: NeigongId }) {
       const expect = hours < 1 ? `${Math.round(hours * 60)} 分钟` : `${hours.toFixed(1)} 小时`;
       act = gate.needScroll ? (
         <>
-          <div className="wg-need">临「{gate.tier.name}」之关 · 须得《归真卷册》（{SECTS[d.route].name}贡献商店）</div>
+          <div className="wg-need">临「{gate.tier.name}」之关 · 须得《归真卷册》（{(d.route in SECTS ? SECTS[d.route as SectId].name : '本门')}贡献商店）</div>
           <button className="wg-btn" disabled>静候顿悟</button>
         </>
       ) : (
@@ -189,6 +189,35 @@ function rowsOf(route: RouteId, q: Quality, zhong: number, passed: number, build
         { lb: '反伤', v: <>受击反伤 <b>{pct(build.thorns)}</b></>, tiers: [1, 3] },
         { lb: '防御', v: <>防御 <b>+{pct((g.defPct ?? 0) + (p.defPct ?? 0) * L)}</b></>, tiers: [] },
         { lb: '濒危', v: <>气血低于 30% 时受伤 <b>−30%</b></>, tiers: [2], lock: build.lowhpDr <= 0 },
+        qi,
+      ];
+    // 新四路（wudao-yuanliu/design.md §2）：门派改造前无来路，要诀先按构筑如实列出
+    case 'taixu':
+      return [
+        { lb: '身法', v: <>闪避 <b>+{pct((g.dodgePct ?? 0) + (p.dodgePct ?? 0) * L)}</b></>, tiers: [4] },
+        { lb: '借力', v: <>闪过一击后，下一次出手 <b>+{pct(build.jieli)}</b></>, tiers: [0, 3] },
+        { lb: '反手', v: <>闪过即反手一击 <b>{pct(build.counter)}</b></>, tiers: [1], lock: build.counter <= 0 },
+        { lb: '卸力', v: <>敌方攻击 <b>−{pct(build.xieli)}</b></>, tiers: [2] },
+        qi,
+      ];
+    case 'xuanji':
+      return [
+        { lb: '寂印', v: <>每次命中积一印，积满 <b>{build.markNeed}</b> 印封穴</>, tiers: [0, 2] },
+        { lb: '点穴', v: <>封穴时一击 <b>{pct(build.markDmg)}</b> 攻击，<b>无视防御</b></>, tiers: [1, 3] },
+        qi,
+      ];
+    case 'jinghong':
+      return [
+        { lb: '追加', v: <>每次出手后 <b>{pct(build.comboRate)}</b> 几率追加一击，至多 <b>{build.comboChain}</b> 击</>, tiers: [0, 1, 4] },
+        { lb: '倍率', v: <>追加一击 <b>{pct(build.comboMult)}</b></>, tiers: [2, 3] },
+        { lb: '先手', v: <>开战首回合<b>必定追加</b></>, tiers: [] },
+        qi,
+      ];
+    case 'fenxue':
+      return [
+        { lb: '焚血', v: <>每损一成气血，攻击 <b>+{pct(build.rage)}</b></>, tiers: [0, 3] },
+        { lb: '饮血', v: <>伤害的 <b>{pct(build.leech)}</b> 回补气血</>, tiers: [2, 4] },
+        { lb: '不灭', v: <>濒死保住 <b>{pct(build.undying)}</b> 气血，每战一次</>, tiers: [1], lock: build.undying <= 0 },
         qi,
       ];
     default:

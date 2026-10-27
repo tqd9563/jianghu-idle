@@ -74,7 +74,7 @@ function playLongline(route: RouteId, seed: number): Sample {
     const peak = st().peakRealm ?? 1;
     for (let r = 2; r <= peak; r++) firstDay[r] ??= day;
     if (st().ownedWuxue.some((w) => WUXUE[w].quality === '绝学')) sect.firstJuexue ??= day;
-    if (shelfDone(route)) sect.ownShelf ??= day;
+    if ((SECT_IDS as readonly string[]).includes(route) && shelfDone(route as SectId)) sect.ownShelf ??= day;
     if (SECT_IDS.every(shelfDone)) sect.allShelves ??= day;
     if (peak >= 6) break;
   }
@@ -118,5 +118,5 @@ describe('节奏守卫：真实代码的里程碑天数（多天一世）', () =
           .toBeLessThanOrEqual(target + slack);
       }
     }
-  }, 3_600_000);
+  }, 5_400_000);   // 单跑约 2900–3350 秒（2026-10-27），留足余量免得机器负载把它顶出超时
 });

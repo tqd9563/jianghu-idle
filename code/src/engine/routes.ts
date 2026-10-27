@@ -23,6 +23,15 @@ export interface RouteDef {
     poisonCap?: number;       // 唐门：层数上限 8
     poisonBurstPct?: number;  // 唐门：满层毒爆 50%
     basicAtkMult?: number;    // 唐门：普攻伤害 ×0.60（轻手暗器）
+    dodgePct?: number;        // 太虚：闪避 +%
+    jieli?: number;           // 太虚：闪过一击后，下一次出手伤害 +%（借力）
+    xieli?: number;           // 太虚：敌方攻击常驻 −%（卸力）
+    markNeed?: number;        // 玄寂：积满几枚寂印封穴
+    markDmg?: number;         // 玄寂：封穴时点穴一击（× 攻击，无视防御）
+    comboRate?: number;       // 惊鸿：每次出手后追加一击的几率
+    comboMult?: number;       // 惊鸿：追加一击的倍率
+    rage?: number;            // 焚血：每损一成气血，攻击 +%
+    leech?: number;           // 焚血：伤害的 % 回补气血
   };
   /** 第 1–10 重的逐重效果（逐重累加，内容表 §3.1） */
   perLevel: {
@@ -33,6 +42,9 @@ export interface RouteDef {
     critDmgPP?: number;
     thornsPP?: number;
     poisonCoefPP?: number;
+    dodgePct?: number;
+    comboRatePP?: number;
+    leechPP?: number;
   };
 }
 
@@ -64,5 +76,34 @@ export const ROUTES: Record<RouteId, RouteDef> = {
       basicAtkMult: 0.6,
     },
     perLevel: { atkPct: 0.01, poisonCoefPP: 0.018 },
+  },
+  // 新四路（wudao-yuanliu/design.md §2）：参数为 sim 校准中的草案值，见 docs/systems/sim/route_balance_measured.json
+  taixu: {
+    id: 'taixu',
+    name: '太虚',
+    motif: '以柔克刚 · 闪身借力，后发制人',
+    grant: { dodgePct: 1.5, jieli: 0.5, xieli: 0.1 },
+    perLevel: { atkPct: 0.05, dodgePct: 0.1 },
+  },
+  xuanji: {
+    id: 'xuanji',
+    name: '玄寂',
+    motif: '点穴封脉 · 积印封穴，令敌落空',
+    grant: { markNeed: 4, markDmg: 1.0 },
+    perLevel: { atkPct: 0.05 },
+  },
+  jinghong: {
+    id: 'jinghong',
+    name: '惊鸿',
+    motif: '身法奇快 · 一招多击，连绵不绝',
+    grant: { comboRate: 0.3, comboMult: 0.65 },
+    perLevel: { atkPct: 0.05, comboRatePP: 0.02 },
+  },
+  fenxue: {
+    id: 'fenxue',
+    name: '焚血',
+    motif: '越伤越狠 · 以伤换伤，饮血续命',
+    grant: { rage: 0.05, leech: 0.06 },
+    perLevel: { atkPct: 0.03, hpPct: 0.03, leechPP: 0.005 },
   },
 };

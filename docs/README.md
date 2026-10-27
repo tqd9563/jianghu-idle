@@ -51,6 +51,7 @@
 | `systems/reincarnation/design.md` | 转世系统设定（声望重构：时间线/寿元/死亡/正邪/世内事件） | — |
 | `systems/living-jianghu/design.md` | 活江湖：世内事件 / 江湖兴衰 / 正邪的落地顺序与前置裁决，取代转世设定 §4 / §5 / §7 的落地口径；§2.1 江湖名册实装口径（岗位、任期、起名）；§2.4 江湖编年实装口径 | roster.ts（`data/roster-names.json`）, chronicle.ts |
 | `systems/living-jianghu/sim.py` | 活江湖结构 sim（卷 · 章 · 图 · 关单线的台阶高度、停留天数、首杀体量；读 longline_sim） | — |
+| `systems/wudao-yuanliu/spec.md` | 武道源流新四路规格：太虚、玄寂、惊鸿、焚血的赠予、逐重、五阶与克制，首轮对拍（`code/src/telemetry/routeBalance.sim.test.ts` SIM_ROUTE=1 → `systems/sim/route_balance_measured.json`） | combat.ts, routes.ts, neigong.ts |
 | `systems/wudao-yuanliu/design.md` | 武道源流（原「路数」）：三路扩七路、七大源流门派与机缘拜入；草案，机制与数值待 sim | — |
 | `systems/prestige-shop/design.md` | 前尘（声望阁改版）设定：底蕴八条可反复购买且逐级递减、感悟价补偿、页面分段切换；sim 判据已过，原型待审 | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |

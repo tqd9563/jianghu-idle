@@ -71,7 +71,8 @@ export function huohouEffect(level: number): { statMult: number; hit: number; do
   return { statMult: Math.pow(1.7, dx), hit: 12 * dx, dodge: 3 * dx };
 }
 
-export type RouteId = 'huashan' | 'shaolin' | 'tangmen';
+/** 武道源流 id：旧三路沿用路线 id（狂澜 huashan / 镇岳 shaolin / 蚀骨 tangmen），新四路见 wudao-yuanliu/design.md §2 */
+export type RouteId = 'huashan' | 'shaolin' | 'tangmen' | 'taixu' | 'xuanji' | 'jinghong' | 'fenxue';
 
 // TODO(内容表 §2)：三地图 28 关敌人表 —— 实现战斗模块时搬运
 // TODO(声望经济表)：8 节点定稿与里程碑声望

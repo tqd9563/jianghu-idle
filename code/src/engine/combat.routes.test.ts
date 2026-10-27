@@ -61,6 +61,22 @@ describe('武道源流新四路', () => {
     expect(kinds('fenxue', 1, 8).has('undying')).toBe(false);
   });
 
+  it('追加句标记：太虚借力、玄寂一轮头一枚寂印、焚血残血饮血（至多三回合一次）', () => {
+    const flags = (route: RouteId, nodes: number, x: number) => {
+      const b = makeBuild(route, 3, 40, nodes);
+      const rng = lcg(5);
+      const ts: TurnEvent[] = [];
+      for (let i = 0; i < 40; i++) ts.push(...fight(b, enemy(x), { mode: 'rng', rng }).turns);
+      return ts;
+    };
+    expect(flags('taixu', 1, 7.5).some((t) => t.jieli)).toBe(true);
+    expect(flags('xuanji', 0, 7.5).some((t) => t.mark)).toBe(true);
+    const fx = flags('fenxue', 2, 8);
+    expect(fx.some((t) => t.leech)).toBe(true);
+    // 旧三路不带这些标记
+    expect(flags('huashan', 3, 7.5).some((t) => t.jieli || t.mark || t.leech)).toBe(false);
+  });
+
   it('EV 模式（失败诊断）对新四路也能算完', () => {
     for (const r of ['taixu', 'xuanji', 'jinghong', 'fenxue'] as RouteId[]) {
       const res = fight(makeBuild(r, 3, 40, 3), enemy(3), { mode: 'ev' });

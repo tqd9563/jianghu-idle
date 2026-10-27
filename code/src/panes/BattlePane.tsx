@@ -403,8 +403,8 @@ function Segs({ segs }: { segs: Seg[] }) {
 /** 普攻一行的称呼跟手里的家伙走（同战报普攻句）：赤手写拳脚（少林拳掌），持兵器写「剑击」之类 */
 const PLAIN_LABEL: Record<Hand, string> = { none: '拳脚', 剑: '剑击', 刀: '刀击', 枪: '枪击', 棍: '棍击', 暗器: '暗器' };
 /** 路数行配色：毒发毒绿、排山倒海会心橙、反震墨金（金钟），都避开武学青 */
-const MECH_ORDER: MechKey[] = ['排山倒海', '毒发', '反震'];
-const MECH_CLS: Record<MechKey, string> = { 排山倒海: 'm-burst', 毒发: 'm-poison', 反震: 'm-thorns' };
+const MECH_ORDER: MechKey[] = ['排山倒海', '毒发', '反震', '反手', '追加', '点穴'];
+const MECH_CLS: Record<MechKey, string> = { 排山倒海: 'm-burst', 毒发: 'm-poison', 反震: 'm-thorns', 反手: 'm-thorns', 追加: 'm-burst', 点穴: 'm-poison' };
 const TALLY_SKILLS_SHOWN = 6;
 
 /**

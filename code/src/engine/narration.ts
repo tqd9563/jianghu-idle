@@ -340,13 +340,51 @@ export const FOLLOWUP: Record<'hit' | 'miss', Lines> = {
   miss: ['一招方落，{我}回腕再递一记，却为{敌}侧身让过。'],
 };
 export const SEALED: Lines = ['{敌}穴道受制，僵立当场，手足皆不听使唤。'];
-/** 新四路的机制句（wudao-yuanliu/design.md §2；草稿，待并入 battle-narration.md 冻结件） */
-export const NEW_ROUTE: Record<'counter' | 'comboHit' | 'comboMiss' | 'seal' | 'undying', Lines> = {
-  counter: ['{敌}一击落空，{我}借势旋身，反手一掌，{敌}受了{伤}点伤害。'],
-  comboHit: ['{我}身形未定，又是一击，{敌}受了{伤}点伤害。'],
-  comboMiss: ['{我}身形未定，又递一击，却为{敌}侧身让过。'],
-  seal: ['寂印已满，{我}骈指点中{敌}要穴，{敌}受了{伤}点伤害。'],
-  undying: ['{我}血气翻涌，硬生生撑住了一口气。'],
+/** 新四路的机制句与追加句（battle-narration.md §4「新四路」；武道源流 wudao-yuanliu/spec.md） */
+export const NEW_ROUTE: Record<'counter' | 'comboHit' | 'comboMiss' | 'seal' | 'undying' | 'jieli' | 'mark' | 'leech', Lines> = {
+  counter: [
+    '{敌}一招落空，去势未收，{我}身随步转，已欺至其侧，反手一击正中肋下，{敌}受了{伤}点伤害。',
+    '衣角堪堪擦过{敌}的兵锋，{我}借这一让之势回身递招，{敌}旧力已尽、新力未生，受了{伤}点伤害。',
+    '{敌}扑了个空，脚下一个踉跄，{我}已贴身而上，一击印在其后心，{敌}受了{伤}点伤害。',
+    '以柔克刚，后发先至，{我}让过来招，回手一击，{敌}门户正自大开，受了{伤}点伤害。',
+  ],
+  comboHit: [
+    '前招余势未歇，{我}身形如惊鸿掠水，又一击已到{敌}身前，{敌}受了{伤}点伤害。',
+    '{敌}方架开一招，眼前人影一花，第二击已自侧面而至，{敌}受了{伤}点伤害。',
+    '招未用老，{我}腕底一翻，后着已如电而至，{敌}应接不暇，受了{伤}点伤害。',
+    '衣袂翻飞之间，{我}已绕至{敌}身后，回手一击，{敌}后背一震，受了{伤}点伤害。',
+  ],
+  comboMiss: [
+    '{我}乘势再进，{敌}已拧身疾退，一击擦衣而过，连环之势戛然而止。',
+    '后招方递，{敌}斜身一让，{我}这一记落在空处，攻势遂绝。',
+    '失之毫厘，{我}这一击堪堪掠过{敌}鬓边，余招遂难为继。',
+  ],
+  seal: [
+    '{我}骈指如戟，倏然点中{敌}胸前要穴，{敌}半边身子一麻，受了{伤}点伤害。',
+    '指风嗤的一声破空，正中{敌}肩井，{敌}手中兵刃一沉，再也提不起来，受了{伤}点伤害。',
+    '先前几下轻触此刻连成一线，{我}最后一指落定，{敌}周身经脉一滞，受了{伤}点伤害。',
+    '一缕阴寒劲力透穴而入，{敌}四肢百骸霎时僵冷，受了{伤}点伤害。',
+  ],
+  undying: [
+    '眼前一黑，{我}却咬牙不倒，胸中一股血气翻涌而上，硬生生撑住了一口气。',
+    '这一击本该致命，{我}踉跄数步，一手撑地，竟又站直了身子。',
+    '血自{我}口角溢出，{我}以袖拭去，眸中凶光陡盛，身形竟又挺直。',
+  ],
+  jieli: [
+    '这一击借的是{敌}方才落空的力道，劲上加劲。',
+    '{敌}一扑之势尚未消尽，{我}顺势牵引，反将这股力道送了回去。',
+    '四两拨千斤，{敌}自家的力道，倒有一半落回了自己身上。',
+  ],
+  mark: [
+    '{我}指尖拂过{敌}衣襟，点到即收，一缕阴劲已潜入其穴道。',
+    '{敌}只觉被点中处微微一麻，并未在意。',
+    '此一指轻若拂尘，{敌}浑然不觉，经脉之中却已暗生阻滞。',
+  ],
+  leech: [
+    '{敌}血溅衣襟，{我}伤处痛楚竟为之一轻。',
+    '一击见血，{我}只觉热流回涌四肢，气血复振。',
+    '{我}伤势愈重，出手愈狠，招招皆是以命相搏。',
+  ],
 };
 
 /** §5.1 每门武学每一式的专属句子（顺序与 FORM_NAMES 一致）：现有 14 门在此，第一批新增 52 门随名录表并入 */
@@ -554,6 +592,12 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const plain: PlainKey = ctx.hand === 'none' && route === 'shaolin' ? 'shaolin' : ctx.hand;
   const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '狂澜' };
   const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
+  // 新四路追加句：借力、积印、饮血（引擎标在主出手事件上）
+  const routeAppends = () => [
+    ...(t.jieli ? line(NEW_ROUTE.jieli, 3) : []),
+    ...(t.mark ? line(NEW_ROUTE.mark, 3) : []),
+    ...(t.leech ? line(NEW_ROUTE.leech, 3) : []),
+  ];
 
   switch (t.kind) {
     case 'attack': {
@@ -566,12 +610,14 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       }
       const segs = line(PLAIN_HIT[plain], 0);
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
+      segs.push(...routeAppends());
       return segs;
     }
     case 'crit': {
       const segs = line(PLAIN_CRIT[plain], 0, { crit: true });
       if (ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
+      segs.push(...routeAppends());
       return segs;
     }
     case 'miss':
@@ -586,6 +632,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       // 特效追加句：只在本招特效确实生效时追加（引擎标在 fx 上）；必暴由暴击句体现，连击另有补刀事件
       if (t.fx && t.fx !== '必暴' && t.fx !== '连击') segs.push(...fill(EFFECT_LINES[t.fx], { ...base, det: t.detonate }));
       if (t.crit && ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
+      segs.push(...routeAppends());
       return segs;
     }
     case 'burst':

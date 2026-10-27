@@ -166,6 +166,10 @@ export interface TurnEvent {
   detonate?: number;
   /** 本招特效确实生效（持续类挂上、连击 / 封穴掷中、回气 / 回元 / 护体 / 附毒 / 透劲结算了），战报据此追加特效句 */
   fx?: FormEffect;
+  /** 新四路的追加句标记（只读展示）：太虚这一招借了力、玄寂这一招种下一轮的头一枚寂印、焚血残血时饮血 */
+  jieli?: boolean;
+  mark?: boolean;
+  leech?: boolean;
 }
 
 /** 战斗统计 —— 纯累加器，不参与结算；失败战报（战斗文案冻结件）与诊断规则消费 */
@@ -274,6 +278,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   let borrow = 0;
   let marks = 0;
   let undyingUsed = false;
+  let leechRd = -99;   // 饮血追加句至多三回合一次
   // 非蚀骨被「附毒」挂上的毒：系数 12%、上限 8 层、不毒爆（spec §2.6）
   const pCap = build.poison.cap || 8;
   const pCoef = build.poison.coef || 0.12;
@@ -359,6 +364,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     const edefNow = enemy.def * (1 - lv('破绽')) * (eff === '透劲' ? 1 - fv : 1);
     let dealt = baseAtk * mult * critEv * mitigationMultiplier(edefNow, defK) * hitRoll * dmgMult
       * (form ? 1 : build.plainMult) * spread() * (1 + build.jieli * borrow);
+    const borrowed = !ev && borrow > 0 && hitRoll > 0;
     borrow = 0;
     if (form) fightCasts += 1;   // 普攻不回真气（battle-loot 裁决 47）：真气只靠开场满池与回气 / 回元
     if (form && eff) {
@@ -408,6 +414,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (eff === '引爆' && detonate > 0) fx = eff;
     ehp -= dealt;
     stats.dmgDealt += dealt;
+    const mainAt = turns.length;   // 本回合「你」的主出手事件下标，新四路的追加句标在它上面
     if (skill && form) {
       stats.casts += 1;
       stats.skillCasts[skill.id] = (stats.skillCasts[skill.id] ?? 0) + 1;
@@ -441,9 +448,12 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         f1(shownDealt));
     }
     pushBurst();
+    const main = turns[mainAt]?.side === 'player' ? turns[mainAt] : undefined;
+    if (main && borrowed) main.jieli = true;
     // 玄寂：命中积寂印，满印封穴并点穴一击（无视防御）
     let extra = 0;
     if (build.markNeed < 99) {
+      if (main && !ev && hitRoll > 0 && marks < 1 && build.markNeed > 1) main.mark = true;
       marks += ev ? pHit : hitRoll;
       if (marks >= build.markNeed) {
         marks = marks - build.markNeed + build.markKeep;
@@ -479,7 +489,10 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (extra > 0) { ehp -= extra; stats.dmgDealt += extra; dealt += extra; }
     // 焚血：伤害回补气血
     // 中毒时毒入血脉，吸血减半
-    if (build.leech > 0 && dealt > 0) php = Math.min(build.hp, php + dealt * build.leech * (playerPoison > 0 ? 0.5 : 1));
+    if (build.leech > 0 && dealt > 0) {
+      if (main && !ev && php < 0.5 * build.hp && rd - leechRd >= 3) { main.leech = true; leechRd = rd; }
+      php = Math.min(build.hp, php + dealt * build.leech * (playerPoison > 0 ? 0.5 : 1));
+    }
     if (tags.includes('反伤') && dealt > 0) {
       const refl = dealt * THORNS_ENEMY;
       const absorb = Math.min(pshield, refl);

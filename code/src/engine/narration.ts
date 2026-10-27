@@ -340,6 +340,52 @@ export const FOLLOWUP: Record<'hit' | 'miss', Lines> = {
   miss: ['一招方落，{我}回腕再递一记，却为{敌}侧身让过。'],
 };
 export const SEALED: Lines = ['{敌}穴道受制，僵立当场，手足皆不听使唤。'];
+/** 新四路的机制句与追加句（battle-narration.md §4「新四路」；武道源流 wudao-yuanliu/spec.md） */
+export const NEW_ROUTE: Record<'counter' | 'comboHit' | 'comboMiss' | 'seal' | 'undying' | 'jieli' | 'mark' | 'leech', Lines> = {
+  counter: [
+    '{敌}这一招走空，中宫门户大开，{我}足下一错，已欺身抢入，反手一招正中其左胁，{敌}闷哼一声，受了{伤}点伤害。',
+    '{我}侧身让过来势，借着这一让回手便是一招，{敌}旧力已尽、新力未生，封挡不及，受了{伤}点伤害。',
+    '{敌}一扑落空，下盘虚浮，{我}贴身而进，一招拍在其后心，{敌}踉跄三步，受了{伤}点伤害。',
+    '来招堪堪擦着衣襟掠过，{我}不退反进，后发先至，一招点向{敌}膻中，{敌}胸口一闷，受了{伤}点伤害。',
+  ],
+  comboHit: [
+    '前招未老，{我}手腕一翻，后招如影随形，{敌}措手不及，又中一招，受了{伤}点伤害。',
+    '{敌}方拆开一招，眼前人影一晃，{我}已绕至其左侧递出第二招，{敌}招架不及，受了{伤}点伤害。',
+    '{我}身法快如惊鸿，一招方落，第二招已抢入{敌}中宫，{敌}封挡不及，受了{伤}点伤害。',
+    '衣袂翻飞之间，{我}已转到{敌}身后，回身又是一招，{敌}后心一震，受了{伤}点伤害。',
+  ],
+  comboMiss: [
+    '{我}得势不饶人，正欲再进，{敌}已拧身急退，这一招贴着衣角掠过，{我}只得撤招回守。',
+    '{我}后招递出半途，{敌}已斜跨一步避开锋芒，{我}一招落空，劲力无处着力，脚下微微一晃。',
+    '劲风堪堪擦过{敌}鬓角，差之毫厘，{我}招式已然用老，空门微露，只得回身自保。',
+  ],
+  seal: [
+    '{我}骈指如戟，疾点{敌}膻中，{敌}胸口一窒，半边身子登时酸麻，受了{伤}点伤害。',
+    '指风嗤的一声破空，正中{敌}肩井，{敌}右臂一软，兵刃险些脱手，受了{伤}点伤害。',
+    '先前几处暗劲此刻一齐发作，{我}最后一指点落，{敌}真气一滞，周身经脉如坠冰窖，受了{伤}点伤害。',
+    '{敌}抢攻之际，{我}变招点向其曲池，{敌}手臂一僵，攻势顿止，受了{伤}点伤害。',
+  ],
+  undying: [
+    '{我}眼前一黑，却咬牙不倒，胸中一口血气翻涌而上，竟硬生生稳住了下盘。',
+    '这一招原足以致命，{我}连退三步，以手撑地，竟又挺身而起，死战不退。',
+    '{我}嘴角溢血，袍袖一抹，非但不退，双目凶光大盛，竟又欺身而上。',
+  ],
+  jieli: [
+    '这一招里裹着{敌}方才扑空的劲力，以彼之道，还施彼身。',
+    '{我}引着{敌}未尽的余劲顺势一带，{敌}收势不住，身形向前一倾。',
+    '四两拨千斤，{敌}这股蛮力，倒有大半落回了自己身上。',
+  ],
+  mark: [
+    '{我}指尖似有若无地拂过{敌}衣襟，沾衣即走，一缕阴寒暗劲已悄然透入其大穴之中。',
+    '{敌}只觉肩井上微微一麻，只道是被衣角扫过，并不在意。',
+    '{我}这一指轻描淡写，{敌}浑然不觉，殊不知奇经八脉之中已埋下一缕阴劲，内息渐生滞涩。',
+  ],
+  leech: [
+    '{敌}鲜血飞溅，{我}胸中凶性大发，周身伤痛浑然不觉，出手愈见狠辣。',
+    '{我}血气上涌，内息流转愈急，伤处痛楚竟被生生压了下去。',
+    '{我}伤势愈重，招式愈狠，每一招都是两败俱伤的打法。',
+  ],
+};
 
 /** §5.1 每门武学每一式的专属句子（顺序与 FORM_NAMES 一致）：现有 14 门在此，第一批新增 52 门随名录表并入 */
 export const FORM_LINES: Record<WuxueId, Lines> = { ...FORM_LINES_BASE(), ...CATALOG_LINES };
@@ -546,6 +592,12 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
   const plain: PlainKey = ctx.hand === 'none' && route === 'shaolin' ? 'shaolin' : ctx.hand;
   const base: Vars = { foe, dmg: t.dmg, gong: ctx.neigongName ?? '狂澜' };
   const line = (lines: Lines, salt: number, v: Partial<Vars> = {}) => fill(pick(lines, rd, salt, ctx.seed ?? 0), { ...base, ...v });
+  // 新四路追加句：借力、积印、饮血（引擎标在主出手事件上）
+  const routeAppends = () => [
+    ...(t.jieli ? line(NEW_ROUTE.jieli, 3) : []),
+    ...(t.mark ? line(NEW_ROUTE.mark, 3) : []),
+    ...(t.leech ? line(NEW_ROUTE.leech, 3) : []),
+  ];
 
   switch (t.kind) {
     case 'attack': {
@@ -558,12 +610,14 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       }
       const segs = line(PLAIN_HIT[plain], 0);
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
+      segs.push(...routeAppends());
       return segs;
     }
     case 'crit': {
       const segs = line(PLAIN_CRIT[plain], 0, { crit: true });
       if (ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
       if (ctx.poisonCap > 0 && route === 'tangmen') segs.push(...line(MECH.poisonAdd, 0, { n: t.ePoison, cap: ctx.poisonCap }));
+      segs.push(...routeAppends());
       return segs;
     }
     case 'miss':
@@ -578,6 +632,7 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       // 特效追加句：只在本招特效确实生效时追加（引擎标在 fx 上）；必暴由暴击句体现，连击另有补刀事件
       if (t.fx && t.fx !== '必暴' && t.fx !== '连击') segs.push(...fill(EFFECT_LINES[t.fx], { ...base, det: t.detonate }));
       if (t.crit && ctx.sqNeed < 99 && t.pSq > 0) segs.push(...line(MECH.gather, 2));
+      segs.push(...routeAppends());
       return segs;
     }
     case 'burst':
@@ -600,6 +655,14 @@ export function narrateTurn(t: TurnEvent, ctx: NarrCtx): Seg[] {
       return t.missed ? line(FOLLOWUP.miss, 0) : line(FOLLOWUP.hit, 0, { crit: t.crit });
     case 'sealed':
       return line(SEALED, 0);
+    case 'counter':
+      return line(NEW_ROUTE.counter, 0);
+    case 'combo':
+      return t.missed ? line(NEW_ROUTE.comboMiss, 0) : line(NEW_ROUTE.comboHit, 0, { crit: t.crit });
+    case 'seal':
+      return line(NEW_ROUTE.seal, 0);
+    case 'undying':
+      return line(NEW_ROUTE.undying, 0);
     case 'enrage':
       return line(FOE_ENRAGE[fk], 0);
     case 'victory':
@@ -618,7 +681,7 @@ export function allTemplates(): string[] {
     ...Object.values(PLAYER_MISS), ...Object.values(FOE_HIT), ...Object.values(FOE_MISS),
     ...Object.values(FOE_ENRAGE), ...Object.values(VICTORY), ...Object.values(DEFEAT),
     ...Object.values(MECH), ...Object.values(CAST_EXTRA), Object.values(EFFECT_LINES),
-    ...Object.values(FOLLOWUP), SEALED,
+    ...Object.values(FOLLOWUP), SEALED, ...Object.values(NEW_ROUTE),
     ...Object.values(FORM_LINES),
   ];
   return groups.flat();

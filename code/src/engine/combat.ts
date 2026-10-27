@@ -29,7 +29,21 @@ export interface Build {
   poison: { init: number; perHit: number; coef: number; cap: number; burst: number };
   sqNeed: number; burstMult: number; lowhpDr: number;
   route: RouteId;
+  /** 太虚：借力（闪过一击后下一次出手 +%）、反手（闪过后当即还一击的倍率，0 = 无）、卸力（敌攻常驻 −%） */
+  jieli: number; counter: number; xieli: number;
+  /** 玄寂：几枚寂印封穴（99 = 无）、封穴时点穴一击（× 攻击，无视防御）、封穴后留几枚印 */
+  markNeed: number; markDmg: number; markKeep: number;
+  /** 惊鸿：追加一击的几率、倍率、至多连几击、开战首回合必追加 */
+  comboRate: number; comboMult: number; comboChain: number; firstCombo: boolean;
+  /** 焚血：每损一成气血攻击 +%、吸血 %、濒死保住几成气血（每战一次，0 = 无） */
+  rage: number; leech: number; undying: number;
 }
+
+/** 新四路字段的零值：旧三路一律为零，结算与 golden 不变 */
+export const NO_NEW = {
+  jieli: 0, counter: 0, xieli: 0, markNeed: 99, markDmg: 0, markKeep: 0,
+  comboRate: 0, comboMult: 0, comboChain: 1, firstCombo: false, rage: 0, leech: 0, undying: 0,
+};
 
 /**
  * 与 sim 对齐：招式部分 = mvp0_sim.make_build(lv ≤ 10)，火候部分 = longline_sim.build 的叠加
@@ -45,6 +59,8 @@ export function makeBuild(route: RouteId, realm: number, level: number, nodes: n
   let atkPct = 0, hpPct = 0, defPct = 0, shieldPct = 0, thorns = 0;
   let poison = { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 };
   let sqNeed = 99, burstMult = 0, lowhpDr = 0, firstCrit = false;
+  let dodgePct = 0;
+  const nw = { ...NO_NEW };
 
   if (route === 'huashan') {
     firstCrit = true;
@@ -74,6 +90,33 @@ export function makeBuild(route: RouteId, realm: number, level: number, nodes: n
     if (nodes >= 1) poison.init += 2;
     if (nodes >= 2) poison.cap = 10;
     if (nodes >= 3) poison.burst = 0.8;
+  } else if (route === 'taixu') {
+    dodgePct = r.grant.dodgePct! + r.perLevel.dodgePct! * lv;
+    atkPct += r.perLevel.atkPct! * lv;
+    nw.jieli = r.grant.jieli!; nw.xieli = r.grant.xieli!;
+    if (nodes >= 1) nw.jieli = 0.8;
+    if (nodes >= 2) nw.counter = 0.6;
+    if (nodes >= 3) nw.xieli = 0.2;
+  } else if (route === 'xuanji') {
+    atkPct += r.perLevel.atkPct! * lv;
+    nw.markNeed = r.grant.markNeed!; nw.markDmg = r.grant.markDmg!;
+    if (nodes >= 1) nw.markNeed = 3;
+    if (nodes >= 2) nw.markDmg = 1.8;
+    if (nodes >= 3) nw.markKeep = 1;
+  } else if (route === 'jinghong') {
+    atkPct += r.perLevel.atkPct! * lv;
+    nw.comboRate = r.grant.comboRate! + r.perLevel.comboRatePP! * lv;
+    nw.comboMult = r.grant.comboMult!; nw.firstCombo = true;
+    if (nodes >= 1) nw.comboRate += 0.15;
+    if (nodes >= 2) nw.comboChain = 3;
+    if (nodes >= 3) nw.comboMult = 0.9;
+  } else if (route === 'fenxue') {
+    atkPct += r.perLevel.atkPct! * lv;
+    hpPct += r.perLevel.hpPct! * lv;
+    nw.rage = r.grant.rage!; nw.leech = r.grant.leech! + r.perLevel.leechPP! * lv;
+    if (nodes >= 1) nw.rage = 0.08;
+    if (nodes >= 2) nw.undying = 0.25;
+    if (nodes >= 3) nw.leech += 0.06;
   } else {
     // 新增路线必须在此补分支，否则编译期报错（不再静默套用毒流参数）
     assertNever(route, 'makeBuild 未处理的路线');
@@ -82,9 +125,9 @@ export function makeBuild(route: RouteId, realm: number, level: number, nodes: n
   return {
     hp: b.hp * (1 + hpPct) * hh.statMult, atk: b.atk * (1 + atkPct) * hh.statMult,
     plainMult: route === 'tangmen' ? 0.6 : 1.0,
-    def: b.def * (1 + defPct) * hh.statMult, hit: b.accuracy + hh.hit, dodge: b.evasion + hh.dodge,
+    def: b.def * (1 + defPct) * hh.statMult, hit: b.accuracy + hh.hit, dodge: (b.evasion + hh.dodge) * (1 + dodgePct),
     crit: Math.min(crit, CRIT_CAP), cd, firstCrit, shieldPct, thorns,
-    poison, sqNeed, burstMult, lowhpDr, route,
+    poison, sqNeed, burstMult, lowhpDr, route, ...nw,
   };
 }
 
@@ -97,7 +140,7 @@ export interface TurnEvent {
   side: 'player' | 'enemy' | 'end';
   kind: 'attack' | 'cast' | 'miss' | 'crit' | 'burst' | 'poison_apply' | 'poison_tick' | 'poison_burst'
       | 'thorns_to_player' | 'thorns_to_enemy' | 'enemy_poison_tick' | 'purify' | 'enrage' | 'defeat' | 'victory'
-      | 'followup' | 'sealed';
+      | 'followup' | 'sealed' | 'counter' | 'combo' | 'seal' | 'undying';
   dmg?: number;
   text: string;
   phpPct: number;
@@ -110,6 +153,8 @@ export interface TurnEvent {
   lasting: [FormEffect, number, number][];
   /** 敌人被封穴、下一次行动会落空 */
   eSealed: boolean;
+  /** 玄寂：敌人身上的寂印 */
+  eMark: number;
   /** 当前真气（装了武学才有，spec §1.4） */
   pQi: number;
   /** 叙事战报用的补充信息（只读展示，不参与结算）：出招的招式键 `武学 id:式序`、本招是否暴击 / 被闪、
@@ -121,6 +166,10 @@ export interface TurnEvent {
   detonate?: number;
   /** 本招特效确实生效（持续类挂上、连击 / 封穴掷中、回气 / 回元 / 护体 / 附毒 / 透劲结算了），战报据此追加特效句 */
   fx?: FormEffect;
+  /** 新四路的追加句标记（只读展示）：太虚这一招借了力、玄寂这一招种下一轮的头一枚寂印、焚血残血时饮血 */
+  jieli?: boolean;
+  mark?: boolean;
+  leech?: boolean;
 }
 
 /** 战斗统计 —— 纯累加器，不参与结算；失败战报（战斗文案冻结件）与诊断规则消费 */
@@ -225,6 +274,11 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
   const lv = (e: FormEffect) => lasting[e]?.[1] ?? 0;
   const eHitNow = () => hitChance(enemy.hit - lv('迷目'), build.dodge + lv('轻身'));
   let sealed = false;   // 封穴：敌人跳过下一次行动
+  // 新四路的战中状态：借力（EV 下为期望份额）、寂印、焚血不灭是否已用
+  let borrow = 0;
+  let marks = 0;
+  let undyingUsed = false;
+  let leechRd = -99;   // 饮血追加句至多三回合一次
   // 非蚀骨被「附毒」挂上的毒：系数 12%、上限 8 层、不毒爆（spec §2.6）
   const pCap = build.poison.cap || 8;
   const pCoef = build.poison.coef || 0.12;
@@ -241,7 +295,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     phpPct: Math.max(php, 0) / build.hp, ehpPct: Math.max(ehp, 0) / enemy.hp,
     pSq: sq, pShield: Math.max(pshield, 0), ePoison: elayers, pQi: qi,
     lasting: (Object.keys(lasting) as FormEffect[]).map((k): [FormEffect, number, number] => [k, lasting[k]![0], lasting[k]![1]]),
-    eSealed: sealed,
+    eSealed: sealed, eMark: marks,
   });
   type TurnExtra = Pick<TurnEvent, 'form' | 'crit' | 'missed' | 'absorb' | 'detonate'>;
   const push = (rd: number, side: TurnEvent['side'], kind: TurnEvent['kind'], text: string, dmg?: number, extra?: TurnExtra) =>
@@ -301,13 +355,17 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       ? (forced ? build.cd : 1 - build.crit + build.crit * build.cd)
       : (critRoll ? cdNow : 1);
     // 招式：倍率 × 蓄势；反震按「攻击 + 防御」计；蚀骨「普攻 ×0.60」只作用于普攻（spec S3）
-    const atkNow = build.atk * (1 + lv('运劲'));
+    // 焚血：每损一成气血攻击 +rage（按已损比例连续计）
+    const rageMul = 1 + build.rage * 10 * (1 - Math.max(php, 0) / build.hp);
+    const atkNow = build.atk * (1 + lv('运劲')) * rageMul;
     const baseAtk = atkNow + (eff === '反震' ? build.def : 0);
     const mult = form ? form.mult * (eff === '蓄势' ? 1 + 0.1 * fightCasts : 1) : 1;
     // 敌方防御：破绽（持续）与透劲（本式）都打折
     const edefNow = enemy.def * (1 - lv('破绽')) * (eff === '透劲' ? 1 - fv : 1);
     let dealt = baseAtk * mult * critEv * mitigationMultiplier(edefNow, defK) * hitRoll * dmgMult
-      * (form ? 1 : build.plainMult) * spread();
+      * (form ? 1 : build.plainMult) * spread() * (1 + build.jieli * borrow);
+    const borrowed = !ev && borrow > 0 && hitRoll > 0;
+    borrow = 0;
     if (form) fightCasts += 1;   // 普攻不回真气（battle-loot 裁决 47）：真气只靠开场满池与回气 / 回元
     if (form && eff) {
       switch (eff) {
@@ -356,6 +414,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (eff === '引爆' && detonate > 0) fx = eff;
     ehp -= dealt;
     stats.dmgDealt += dealt;
+    const mainAt = turns.length;   // 本回合「你」的主出手事件下标，新四路的追加句标在它上面
     if (skill && form) {
       stats.casts += 1;
       stats.skillCasts[skill.id] = (stats.skillCasts[skill.id] ?? 0) + 1;
@@ -389,6 +448,51 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
         f1(shownDealt));
     }
     pushBurst();
+    const main = turns[mainAt]?.side === 'player' ? turns[mainAt] : undefined;
+    if (main && borrowed) main.jieli = true;
+    // 玄寂：命中积寂印，满印封穴并点穴一击（无视防御）
+    let extra = 0;
+    if (build.markNeed < 99) {
+      if (main && !ev && hitRoll > 0 && marks < 1 && build.markNeed > 1) main.mark = true;
+      marks += ev ? pHit : hitRoll;
+      if (marks >= build.markNeed) {
+        marks = marks - build.markNeed + build.markKeep;
+        sealed = true;
+        const sd = atkNow * build.markDmg * dmgMult * spread();
+        extra += sd;
+        push(rd, 'player', 'seal', `寂印已满，点中${enemy.name}穴道，造成 ${f1(sd)} 伤害`, f1(sd));
+      }
+    }
+    // 惊鸿：出手之后几率追加一击，可再连（开战首回合必追加一击）
+    if (build.comboRate > 0) {
+      const one = () => atkNow * build.comboMult * (ev ? 1 - build.crit + build.crit * build.cd : 1) * mitigationMultiplier(edefNow, defK) * dmgMult;
+      if (ev) {
+        let e = 0, p = 1;
+        // 连击落空即断：下一击要前一击命中
+        for (let k = 0; k < build.comboChain; k++) { p *= (k === 0 && rd === 1 && build.firstCombo ? 1 : build.comboRate) * (k > 0 ? pHit : 1); e += p; }
+        const cd2 = one() * pHit * e;
+        extra += cd2;
+        if (cd2 > 0) push(rd, 'player', 'combo', `身形一晃，连出 ${f1(e)} 击，造成 ${f1(cd2)} 伤害`, f1(cd2));
+      } else {
+        for (let k = 0; k < build.comboChain; k++) {
+          if (!(k === 0 && rd === 1 && build.firstCombo) && rng() >= build.comboRate) break;
+          const h2 = roll(pHit);
+          const c2 = roll(Math.min(CRIT_CAP, build.crit + lv('凝眸')));
+          const d2 = atkNow * build.comboMult * (c2 ? build.cd : 1) * mitigationMultiplier(edefNow, defK) * h2 * dmgMult * spread();
+          extra += d2;
+          if (c2 && h2) stats.critCount += 1;
+          push(rd, 'player', 'combo', h2 ? `身形一晃，又是一击，造成 ${f1(d2)} 伤害` : '身形一晃，又是一击，被闪避', f1(d2), { crit: c2 === 1, missed: h2 === 0 });
+          if (!h2) break;   // 连击落空即断
+        }
+      }
+    }
+    if (extra > 0) { ehp -= extra; stats.dmgDealt += extra; dealt += extra; }
+    // 焚血：伤害回补气血
+    // 中毒时毒入血脉，吸血减半
+    if (build.leech > 0 && dealt > 0) {
+      if (main && !ev && php < 0.5 * build.hp && rd - leechRd >= 3) { main.leech = true; leechRd = rd; }
+      php = Math.min(build.hp, php + dealt * build.leech * (playerPoison > 0 ? 0.5 : 1));
+    }
     if (tags.includes('反伤') && dealt > 0) {
       const refl = dealt * THORNS_ENEMY;
       const absorb = Math.min(pshield, refl);
@@ -402,7 +506,7 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (ehp <= 0) return finish(true, rd);
 
     // ---- 敌人行动 ----
-    let eatk = enemy.atk * (1 - lv('卸力'));
+    let eatk = enemy.atk * (1 - lv('卸力')) * (1 - build.xieli);
     if (tags.includes('狂暴') && rd >= ENRAGE_START) {
       eatk *= 1 + ENRAGE_STEP * (rd - ENRAGE_START + 1);
       if (rd === ENRAGE_START) push(rd, 'enemy', 'enrage', `${enemy.name}狂性大发，攻击开始逐回合提升！`);
@@ -414,6 +518,16 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
       eatk = 0;
     }
     const eHitRoll = eatk > 0 ? roll(eHitNow()) : 0;
+    // 太虚：闪过这一击 → 下一次出手借力；有反手则当即还一击
+    const dodged = eatk > 0 ? (ev ? 1 - eHitNow() : 1 - eHitRoll) : 0;
+    if (build.jieli > 0) borrow = dodged;
+    if (build.counter > 0 && dodged > 0) {
+      const ch = roll(pHit);
+      const cdmg = build.atk * build.counter * mitigationMultiplier(enemy.def * (1 - lv('破绽')), defK) * dmgMult * dodged * ch * spread();
+      ehp -= cdmg;
+      stats.dmgDealt += cdmg;
+      if (cdmg > 0) push(rd, 'player', 'counter', `闪身而过，反手一击，${enemy.name}受到 ${f1(cdmg)} 伤害`, f1(cdmg));
+    }
     let edmg = eatk * eHitRoll * mitigationMultiplier(pdfs, defK) * spread();
     if (build.lowhpDr && php < 0.3 * build.hp) edmg *= 1 - build.lowhpDr;
     const absorb = Math.min(pshield, edmg);
@@ -476,7 +590,14 @@ export function fight(build: Build, enemy: EnemyDef, opts: FightOptions): FightR
     if (tags.includes('净化') && rd % PURIFY_EVERY === 0) {
       if (elayers > 0) stats.purgeCount += 1;
       elayers = 0;
+      marks = 0;
       push(rd, 'enemy', 'purify', `${enemy.name}运功清毒，毒层被净化`);
+    }
+    // 焚血：濒死保住一口气（每战一次）
+    if (php <= 0 && build.undying > 0 && !undyingUsed) {
+      undyingUsed = true;
+      php = build.hp * build.undying;
+      push(rd, 'player', 'undying', '血气翻涌，硬是撑住了一口气');
     }
     if (php <= 0) return finish(false, rd);
   }

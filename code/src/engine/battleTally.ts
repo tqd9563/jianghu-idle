@@ -5,7 +5,7 @@
 import type { FightStats, TurnEvent } from './combat';
 
 /** 路数机制一行：排山倒海（叠浪爆发）、毒发（毒伤 + 毒爆）、反震（金钟反伤） */
-export type MechKey = '排山倒海' | '毒发' | '反震';
+export type MechKey = '排山倒海' | '毒发' | '反震' | '反手' | '追加' | '点穴';
 
 export interface BattleTally {
   /** 我方出手：每回合一次行动，连击追加另算一次 */
@@ -89,6 +89,10 @@ export function tallyTurns(turns: readonly TurnEvent[]): BattleTally {
         case 'burst': mech('排山倒海', d, true); break;
         case 'poison_tick': case 'poison_burst': mech('毒发', d, false); break;
         case 'thorns_to_enemy': mech('反震', d, false); break;
+        // 新四路：太虚反手、惊鸿追加、玄寂点穴
+        case 'counter': mech('反手', d, true); break;
+        case 'combo': t.acts += 1; if (!e.missed) t.hits += 1; if (e.crit && !e.missed) t.crits += 1; mech('追加', d, true); break;
+        case 'seal': mech('点穴', d, true); break;
         default: break;
       }
     } else if (e.side === 'enemy') {

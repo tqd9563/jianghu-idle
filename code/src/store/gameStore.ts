@@ -5,7 +5,7 @@
  * 归隐：本世至少突破过一次即可（economy.md §1.4）；声望 = 基础 × 行为乘数 + 成就（§1）。
  */
 import { create } from 'zustand';
-import { diagnose, fight, type Build, type CombatSkill, type FightResult, type FightStats } from '../engine/combat';
+import { NO_NEW, diagnose, fight, type Build, type CombatSkill, type FightResult, type FightStats } from '../engine/combat';
 import { QI_SCALE, REALMS, type RouteId } from '../engine/content';
 import {
   DUNWU_INTERVAL_SEC, HUOHOU_MULT, NEIGONG, STARTER_NEIGONG, dunwuChance, neigongBuild,
@@ -518,7 +518,7 @@ export function playerBuild(
         dodge: REALMS[s.realm - 1].evasion,
         crit: 0.05, cd: 1.5, firstCrit: false, shieldPct: 0, thorns: 0,
         poison: { init: 0, perHit: 0, coef: 0, cap: 0, burst: 0 },
-        sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan' as RouteId,
+        sqNeed: 99, burstMult: 0, lowhpDr: 0, route: 'huashan' as RouteId, ...NO_NEW,
       };
   // 底蕴（prestige-shop/design.md §2）：在火候之后、装备之前乘入；会心 / 会心伤害为加点
   const d = s.diyun;

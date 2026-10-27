@@ -15,7 +15,7 @@ import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
 import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
 import { GIFT_WUXUE_OPTIONS, WUXUE } from '../engine/wuxue';
-import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS } from '../engine/sect';
+import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS, type SectId } from '../engine/sect';
 import { betterThanWorn } from '../engine/gear';
 import { BLACK_PER_LIFE } from '../engine/market';
 import type { SectShelfRow } from '../store/gameStore';
@@ -166,8 +166,11 @@ function tendSect(route: RouteId): void {
   if (s.realm < SECT_REALM) return;
   if (s.sect === null) {
     const reachable = SECT_IDS.filter((id) => volUnlocked(SECTS[id].vol, s.mapsUnlocked ?? [1]));
-    const order = [route, ...reachable.filter((id) => id !== route)];
-    st().joinSect(order.find((id) => sectShelfOf(s, id).some((it) => !it.owned)) ?? route);
+    // 新四路还没有本派（门派改造前）：直接从能到的门派里挑
+    const own = (SECT_IDS as readonly string[]).includes(route) ? [route as SectId] : [];
+    const order = [...own, ...reachable.filter((id) => id !== route)];
+    const pick = order.find((id) => sectShelfOf(s, id).some((it) => !it.owned)) ?? order[0];
+    if (pick) st().joinSect(pick);
   }
   // 剩下的在线时间跑得完一件短差才派，否则留给下线前的长差
   if (st().sectTask === null && onlineLeftSec >= SECT_TASKS.short.hours * 3600) st().startSectTask('short');

@@ -14,4 +14,6 @@ export const catIcon = (cat: WuxueCat): CSSProperties => ({ backgroundImage: `ur
 export const ngIcon = (id: NeigongId): CSSProperties => ({ backgroundImage: `url('/art/neigong/${id}.png')` });
 
 /** 内功三路借用武学路数色：归海刚猛朱、镇岳守御石青、蚀骨阴毒黛绿（石印换色、路数章同色） */
-export const ROUTE_TAG: Record<RouteId, '刚猛' | '守御' | '阴毒'> = { huashan: '刚猛', shaolin: '守御', tangmen: '阴毒' };
+export const ROUTE_TAG: Record<RouteId, '刚猛' | '守御' | '阴毒' | '绵长' | '诡谲'> = {
+  huashan: '刚猛', shaolin: '守御', tangmen: '阴毒', taixu: '绵长', xuanji: '诡谲', jinghong: '刚猛', fenxue: '刚猛',
+};

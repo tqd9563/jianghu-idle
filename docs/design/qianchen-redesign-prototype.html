@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>前尘页改版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
+<style>
+/* 原型：前尘页改版（B 灵台魂灯 + A 纸质吊牌与水墨图案）。token 取自 DESIGN.md frontmatter */
+:root {
+  --bg: oklch(0.155 0.013 262); --bg-deep: oklch(0.125 0.012 262);
+  --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7); --gold: oklch(0.78 0.13 78); --ink-gold: oklch(0.75 0.075 76);
+  --cinnabar: oklch(0.66 0.14 32); --seal-red: oklch(0.5 0.17 28 / 0.92);
+  --paper-ink: oklch(0.22 0.02 60); --paper-mute: oklch(0.42 0.025 60);
+  --font-body: "LXGW WenKai", "PingFang SC", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --ease: cubic-bezier(.25, 1, .5, 1);
+  --A: '../../code/public/art/qianchen/';
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); }
+body { display: grid; grid-template-columns: 248px 1fr 52px; height: 100vh; overflow: hidden; }
+button { font: inherit; color: inherit; }
+
+/* ─── 左栏 / 编年窄边（照现行 App.tsx） ─── */
+.rail { background: var(--bg-deep); padding: 28px 22px; display: flex; flex-direction: column; min-width: 0; }
+.rail .brand { font-size: 13px; letter-spacing: .3em; color: var(--muted); }
+.rail .realm { margin-top: 26px; font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: .06em; }
+.rail .realm small { font-size: 13px; color: var(--gold); font-weight: 400; margin-left: 8px; }
+.rail .life { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.rail .hurt { margin-top: 26px; font-size: 12px; color: var(--muted); }
+.rail .hurt i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.72 0.12 145); margin-right: 8px; }
+.rail .res { margin-top: 26px; font-size: 11px; color: var(--muted); }
+.rail .res b { display: block; font-size: 22px; color: var(--ink); font-weight: 500; }
+.rail .res .rate { color: var(--gold); font-size: 12px; margin-left: 4px; }
+.rail .res .two { display: flex; gap: 22px; margin-top: 12px; } .rail .res .two b { font-size: 17px; }
+.rail hr { border: 0; height: 1px; background: var(--hair); margin: 22px 0 18px; }
+.rail nav a { display: block; padding: 12px; font-family: var(--font-display); font-size: 18px; letter-spacing: .3em; color: var(--muted); border-radius: 6px; margin-bottom: 4px; }
+.rail nav a.on { background: oklch(0.24 0.03 70 / .55); color: var(--gold); }
+.rail .foot { margin-top: auto; display: flex; gap: 8px; }
+.rail .foot span { border: 1px solid var(--hair); border-radius: 6px; padding: 9px 12px; font-size: 13px; color: var(--muted); }
+.rail .foot span:first-child { flex: 1; text-align: center; border-color: oklch(0.78 0.13 78 / .6); color: var(--gold); letter-spacing: .4em; }
+.dock { background: var(--bg-deep); writing-mode: vertical-rl; letter-spacing: .3em; font-size: 14px; color: var(--muted); padding: 26px 14px; }
+
+/* ─── 舞台：灵台 ─── */
+.stage { position: relative; overflow: hidden; background: #0b0d12; min-width: 0; }
+.art { position: absolute; left: 0; width: 100%; top: var(--at); height: var(--ah); background: url('../../code/public/art/qianchen/altar.jpg') center / 100% 100% no-repeat; transition: filter .6s; }
+.stage::before { content: ''; position: absolute; inset: 0 0 auto 0; height: calc(var(--at) + 60px); z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, #0b0d12 0, #0b0d12 calc(100% - 140px), transparent); }
+.stage .vig { position: absolute; inset: 0; pointer-events: none; z-index: 1; box-shadow: inset 0 0 90px 30px #0b0d12;
+  background: linear-gradient(to top, oklch(0.1 0.01 262 / .85), transparent 22%); }
+.layer { position: absolute; left: 0; width: 100%; top: var(--at); height: var(--ah); z-index: 2; transition: opacity .5s var(--ease); }
+.layer.off { opacity: 0; pointer-events: none; }
+.layer.free { top: 168px; height: auto; bottom: 64px; }
+
+/* 页头：标题、声望、分段、产出倍率 */
+.head { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; gap: 36px; }
+.head h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
+.head .rep { font-size: 14px; color: var(--muted); letter-spacing: .1em; margin-top: 2px; }
+.head .rep b { color: var(--ink); font-weight: 600; font-size: 16px; }
+.seg { display: flex; gap: 28px; margin-top: 12px; }
+.seg button { border: 0; background: none; cursor: pointer; padding: 6px 2px 9px; font-family: var(--font-display); font-size: 17px; letter-spacing: .3em; color: var(--muted); position: relative; }
+.seg button[aria-selected="true"] { color: var(--gold); }
+.seg button[aria-selected="true"]::after { content: ''; position: absolute; left: -2px; right: .3em; bottom: 0; height: 3px; background: var(--ink-gold);
+  -webkit-mask: url('../../code/public/art/scene/brush.png') center / 100% 100%; mask: url('../../code/public/art/scene/brush.png') center / 100% 100%; }
+.seg button:hover { color: var(--ink); }
+.mult { margin-left: auto; text-align: right; cursor: help; }
+.mult b { display: block; font-size: 30px; font-weight: 600; color: var(--gold); text-shadow: 0 0 14px oklch(0.78 0.13 78 / .35); }
+.mult span { font-size: 12.5px; color: var(--muted); letter-spacing: .2em; }
+
+/* ═══ 底蕴：八盏魂灯 + 纸吊牌；修行感悟写在悬幅上 ═══ */
+.lamp { position: absolute; transform: translateX(-50%); width: calc(var(--aw) * .052); bottom: calc(var(--ah) * .295); }
+.lamp img.base { width: 100%; display: block; filter: brightness(.9) drop-shadow(0 6px 8px #000); }
+.lamp .fl { position: absolute; left: 50%; bottom: 64%; width: 36%; transform: translateX(-50%) scale(var(--fs)); transform-origin: 50% 100%; transition: transform .6s var(--ease), opacity .4s; }
+.lamp .fl img { width: 100%; display: block; mix-blend-mode: screen; animation: flick 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
+.lamp .glow { position: absolute; left: 50%; bottom: 70%; width: calc(var(--aw) * .16); aspect-ratio: 1; transform: translate(-50%, 50%); border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle, oklch(0.8 0.12 70 / calc(var(--gl) * .55)), oklch(0.7 0.12 60 / calc(var(--gl) * .18)) 35%, transparent 65%); transition: opacity .6s; }
+.lamp.unlit .fl, .lamp.unlit .glow { opacity: 0; }
+.lamp .wisp { position: absolute; left: 50%; bottom: 70%; width: 2px; height: 22px; transform: translateX(-50%); background: linear-gradient(to top, oklch(0.8 0.01 262 / .45), transparent); filter: blur(1px); opacity: 0; animation: wisp 3.4s ease-in-out infinite; }
+.lamp.unlit .wisp { opacity: .55; }
+@keyframes flick { 0%, 100% { transform: scale(1, 1) skewX(0); } 30% { transform: scale(.96, 1.04) skewX(-2deg); } 60% { transform: scale(1.03, .97) skewX(2deg); } }
+@keyframes wisp { 50% { transform: translateX(-30%) skewX(-10deg); } }
+.lamp.flare .fl { transform: translateX(-50%) scale(calc(var(--fs) * 1.6)); }
+.lamp.flare .glow { opacity: 1; filter: brightness(1.8); }
+
+.tag { position: absolute; transform: translateX(-50%); top: calc(var(--ah) * .705); width: calc(var(--aw) * .08); max-width: 112px; min-width: 80px;
+  background: url('../../code/public/art/qianchen/tag.png') center top / 100% 100% no-repeat; color: var(--paper-ink);
+  padding: 34px 8px 12px; display: flex; flex-direction: column; align-items: center; text-shadow: none; filter: drop-shadow(0 6px 10px #000);
+  transform-origin: 50% 0; animation: sway 7s ease-in-out infinite; animation-delay: var(--dl); }
+@keyframes sway { 0%, 100% { transform: translateX(-50%) rotate(-.6deg); } 50% { transform: translateX(-50%) rotate(.6deg); } }
+.tag .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: .04em; line-height: 1; height: 84px; display: flex; align-items: center; justify-content: center; cursor: help; }
+.tag .ic { width: 70%; aspect-ratio: 1; object-fit: contain; margin: 2px 0 2px; opacity: .88; }
+.tag .lv { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.1; margin-top: 2px; }
+.tag .lv small { font-size: 12px; margin-left: 1px; font-weight: 500; }
+.tag .cur { font-size: 12.5px; margin-top: 4px; white-space: nowrap; }
+.tag .nm.long { font-size: 16px; }
+.tag .nx { font-size: 12px; color: var(--paper-mute); line-height: 1.35; text-align: center; margin-top: 2px; }
+.tag .nx b { display: block; color: oklch(0.5 0.13 50); font-weight: 600; font-size: 13px; }
+.seal-btn { margin-top: 8px; border: 0; cursor: pointer; padding: 5px 0 4px; width: 66%; min-width: 50px; border-radius: 3px; line-height: 1.15;
+  background: var(--seal-red); color: oklch(0.95 0.02 85); font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: .04em;
+  box-shadow: inset 0 0 0 1.5px oklch(0.95 0.02 85 / .35), 0 1px 0 oklch(0.3 0.05 30); transition: transform .15s, filter .2s; }
+.seal-btn small { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; }
+.seal-btn:hover:not(:disabled) { filter: brightness(1.15); transform: rotate(-2deg) scale(1.04); }
+.seal-btn:active:not(:disabled) { transform: scale(.94); }
+.seal-btn:disabled { background: oklch(0.55 0.02 60 / .55); color: oklch(0.88 0.01 60); cursor: default; box-shadow: inset 0 0 0 1px oklch(0.95 0.02 85 / .25); }
+.seal-btn:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+
+/* 修行感悟：悬幅上墨书；香炉烟随级数变浓 */
+.banner { position: absolute; left: calc(var(--aw) * .405); width: calc(var(--aw) * .12); top: calc(var(--ah) * .135); height: calc(var(--ah) * .33);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--paper-ink); }
+.banner .t { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: .2em; padding-left: .2em; cursor: help; }
+.banner .lv { font-family: var(--font-display); font-weight: 700; font-size: 30px; margin-top: 4px; line-height: 1.1; }
+.banner .lv small { font-size: 13px; }
+.banner .e { font-size: 13px; margin-top: 4px; line-height: 1.5; }
+.banner .e b { font-weight: 600; } .banner .e .n { color: var(--paper-mute); } .banner .e .n b { color: oklch(0.5 0.13 50); }
+.smoke { position: absolute; left: calc(var(--aw) * .465); top: calc(var(--ah) * .3); width: calc(var(--aw) * .1); height: calc(var(--ah) * .3); transform: translateX(-50%); pointer-events: none; opacity: var(--sm); mix-blend-mode: screen; }
+.smoke i { position: absolute; bottom: 0; left: 50%; width: 40%; height: 100%; border-radius: 50%; filter: blur(10px);
+  background: linear-gradient(to top, oklch(0.85 0.01 262 / .5), transparent); animation: rise 6s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes rise { 0% { transform: translate(-50%, 20%) scaleX(.4); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(calc(-50% + var(--x)), -30%) scaleX(1.2); opacity: 0; } }
+
+/* ═══ 机缘：签架上两排竹签 ═══ */
+.beam { position: absolute; left: calc(var(--aw) * .085); right: calc(var(--aw) * .085); height: 10px; border-radius: 3px;
+  background: linear-gradient(to bottom, oklch(0.36 0.04 55), oklch(0.22 0.03 50)); box-shadow: 0 4px 10px #000, inset 0 1px 0 oklch(0.5 0.05 60 / .6); }
+.slips { position: absolute; left: calc(var(--aw) * .085); right: calc(var(--aw) * .085); display: flex; justify-content: space-between; }
+.slip { position: relative; width: calc(var(--aw) * .085); max-width: 118px; min-width: 96px; height: var(--sh);
+  background: url('../../code/public/art/qianchen/slip.png') center top / 100% 100% no-repeat; color: var(--paper-ink);
+  display: flex; flex-direction: column; align-items: center; padding: 48px 9px 12px; filter: drop-shadow(0 6px 10px #000);
+  transform-origin: 50% 0; animation: sway 8s ease-in-out infinite; animation-delay: var(--dl); transition: filter .3s; }
+.slip .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: .12em; height: 92px; display: flex; align-items: center; }
+.slip .ty { font-size: 11px; color: var(--paper-mute); letter-spacing: .2em; margin-top: 4px; }
+.slip .d { font-size: 12px; line-height: 1.45; text-align: center; margin-top: 6px; flex: 1; }
+.slip .seal-btn { width: 100%; }
+.slip.own { filter: drop-shadow(0 0 12px oklch(0.78 0.13 78 / .35)) drop-shadow(0 6px 10px #000); }
+.slip .got { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) rotate(-8deg); width: 40px; height: 40px; border-radius: 4px; display: grid; place-items: center;
+  background: var(--seal-red); color: oklch(0.95 0.02 85); font-family: var(--font-display); font-weight: 700; font-size: 20px; box-shadow: inset 0 0 0 2px oklch(0.95 0.02 85 / .4); opacity: .92; }
+.slip.stamp .got { animation: stamp .45s var(--ease); }
+@keyframes stamp { 0% { transform: translateX(-50%) rotate(-8deg) scale(2.2); opacity: 0; } 100% { transform: translateX(-50%) rotate(-8deg) scale(1); opacity: .92; } }
+
+/* ═══ 侠名录：龛格徽记 ═══ */
+.niches { position: absolute; left: calc(var(--aw) * .16); right: calc(var(--aw) * .16); top: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px 10px; }
+.niche { display: flex; flex-direction: column; align-items: center; cursor: help; }
+.niche .hole { width: min(88px, calc(var(--ah) * .13)); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle, oklch(0.08 0.01 262 / .95) 55%, oklch(0.2 0.02 60 / .6) 72%, transparent 74%); box-shadow: inset 0 4px 10px #000; }
+.niche img { width: 84%; filter: drop-shadow(0 3px 5px #000); }
+.niche.t0 img { filter: grayscale(1) brightness(.45); }
+.niche .n { margin-top: 6px; font-family: var(--font-display); font-size: 14px; letter-spacing: .12em; color: var(--muted); text-shadow: 0 1px 6px #000; }
+.niche.t2 .n { color: oklch(0.86 0.01 240); } .niche.t3 .n { color: var(--gold); } .niche.t1 .n { color: oklch(0.8 0.07 55); }
+.niche:hover img { transform: scale(1.06); transition: transform .2s; }
+.lit-count { font-size: 14px; color: var(--muted); letter-spacing: .1em; margin-top: 2px; } .lit-count b { color: var(--ink); }
+
+/* 悬停浮层 */
+.tip { position: fixed; z-index: 50; pointer-events: none; background: oklch(0.13 0.011 262 / .94); border: 1px solid var(--hair); padding: 9px 12px; border-radius: 4px; font-size: 13px; line-height: 1.8; color: var(--ink); max-width: 300px; opacity: 0; transition: opacity .15s; }
+.tip.on { opacity: 1; } .tip .l { color: var(--faint); }
+
+.proto { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 60; display: flex; gap: 2px; align-items: center; background: oklch(0.2 0.02 262 / .94); border: 1px dashed oklch(0.6 0.1 215 / .6); border-radius: 999px; padding: 4px 8px; font-family: system-ui, sans-serif; font-size: 12px; }
+.proto span { color: oklch(0.74 0.10 215); padding: 0 6px; }
+.proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
+.proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+<aside class="rail">
+  <div class="brand">江湖无尽录</div>
+  <div class="realm">小有所成<small>第三境</small></div>
+  <div class="life">第 4 世 · 23 岁 · 江湖历 220 年</div>
+  <div class="hurt"><i></i>身无伤病</div>
+  <div class="res">内力<b>15,705<span class="rate">+383.9/秒</span></b><div class="two"><div>银两<b>530</b></div><div>声望<b id="railRep">900</b></div></div></div>
+  <hr>
+  <nav><a>修炼</a><a>战斗</a><a>行囊</a><a>武功</a><a>门派</a><a class="on">前尘</a></nav>
+  <div class="foot"><span>转世</span><span>⚙</span><span>报</span></div>
+</aside>
+
+<main class="stage" id="stage">
+  <div class="art" id="art"></div>
+  <div class="head">
+    <div>
+      <h1>前尘</h1>
+      <div class="rep" id="rep"></div>
+      <div class="seg" role="tablist" id="seg">
+        <button role="tab" data-v="diyun">底蕴</button><button role="tab" data-v="jiyuan">机缘</button><button role="tab" data-v="xiaming">侠名录</button>
+      </div>
+    </div>
+    <div class="mult" id="mult"><b id="multV"></b><span>挂机产出</span></div>
+  </div>
+
+  <div class="layer" id="L-diyun">
+    <div class="smoke" id="smoke"><i style="--d:0s;--x:-12px"></i><i style="--d:-2s;--x:14px"></i><i style="--d:-4s;--x:-4px"></i></div>
+    <div class="banner" id="banner"></div>
+    <div id="lamps"></div>
+  </div>
+  <div class="layer off free" id="L-jiyuan"></div>
+  <div class="layer off free" id="L-xiaming"></div>
+  <div class="vig"></div>
+</main>
+<aside class="dock">江湖编年</aside>
+
+<div class="tip" id="tip"></div>
+<div class="proto" id="proto"><span>原型状态</span></div>
+
+<script>
+/* ───────── 引擎口径（engine/prestige.ts、achievements.ts）───────── */
+const DIYUN = [
+  ['qixue','气血',0.05,'pct'],['gongji','攻击',0.05,'pct'],['fangyu','防御',0.05,'pct'],['mingzhong','命中',0.03,'pct'],
+  ['shanbi','闪避',0.03,'pct'],['huixin','会心',0.005,'pts'],['huixin_shanghai','会心伤害',0.05,'pts'],['zhenqi','真气',0.05,'pct']];
+const price = n => Math.round(10 * 1.35 ** (n - 1));
+const gainAt = (f, n) => f * 0.96 ** (n - 1);
+const cum = (f, n) => f * (1 - 0.96 ** n) / (1 - 0.96);
+const gwPrice = n => Math.ceil(8.5 * n);
+const fmtV = (v, k) => k === 'pts' ? `${+(v * 100).toFixed(1)} 点` : `${+(v * 100).toFixed(1)}%`;
+const NODES = [
+  ['重出江湖',60,'信息','开战前显示敌人机制的克制提示'],['轻装上路',70,'策略','书肆秘籍八折'],['改弦易辙',80,'资源','转修手续费减半'],
+  ['包罗万象',90,'资源','行囊空间 +2'],['慧眼识珠',100,'信息','市集售卖的商品显示词条'],['药到病除',110,'战斗','疗伤所需银两减半'],
+  ['安魂定魄',120,'策略','魂魄未稳缩短为五年'],['海纳百川',170,'资源','武学装配槽 +1'],['驾轻就熟',230,'策略','转世后内功首段台阶免顿悟'],
+  ['认祖归宗',270,'策略','转世后自动拜入前世门派'],['讨价还价',340,'资源','市集商品八折'],['双管齐下',600,'策略','可同时承接两项门派任务'],
+  ['敝帚自珍',900,'策略','转世时保留一件装备'],['刻骨铭心',900,'策略','转世时保留一门武学的招式与熟练']];
+const CAT = (id, n, t) => [id, t, `${n}胜场`, [1000, 8000, 50000], `${n}伤害`, [0.10, 0.20, 0.30]];
+const ACHV = [
+  CAT('jian','剑法',['初窥剑意','剑气纵横','人剑合一']), CAT('dao','刀法',['快刀斩麻','大刀阔斧','刀罡无影']), CAT('qiang','枪法',['横枪跃马','单枪匹马','枪出如龙']),
+  CAT('gun','棍法',['棍起生风','横扫千军','棍压群雄']), CAT('quan','拳法',['拳不离手','拳拳到肉','拳开山岳']), CAT('zhang','掌法',['掌风初成','排山倒海','掌震乾坤']),
+  CAT('zhi','指法',['指上功夫','指点江山','弹指惊雷']), CAT('tui','腿法',['身轻如燕','飞檐走壁','踏雪无痕']), CAT('anqi','暗器',['例无虚发','百步穿杨','百发百中']),
+  ['boss',['破关斩将','势如破竹','摧枯拉朽'],'首杀头目',[8,14,18],'头目伤害',[0.05, 0.1, 0.15]],
+  ['elite',['小有名气','声名远播','名动江湖'],'首杀精英',[27,44,58],'名号声望',[0.15, 0.3, 0.5]],['jingmai',['气走周天','脱胎换骨','返璞归真'],'贯通经脉',[2,3,4],'经脉声望',[0.15, 0.3, 0.5]],
+  ['chongxue',['运气如常','举重若轻','游刃有余'],'冲穴次数',[35,120,220],'冲穴耗内力 −',[0.02, 0.04, 0.06]],['zhaoshi',['勤学苦练','触类旁通','融会贯通'],'招式圆满',[5,20,60],'熟练增速',[0.2, 0.35, 0.5]],
+  ['canye',['零敲碎打','拾遗补阙','集腋成裘'],'拼齐口诀',[1,20,90],'残页掉率',[0.2, 0.35, 0.5]],['menpai',['初入师门','论功行赏','栋梁之材'],'门派任务',[2,18,90],'门派贡献',[0.1, 0.2, 0.3]],
+  ['heishi',['探头探脑','暗度陈仓','轻车熟路'],'黑市购买',[5,30,100],'蒙面货每世 +N 件',[2, 4, 6]],['yinliang',['积少成多','日进斗金','富甲一方'],'累计银两',[60000,500000,5000000],'银两掉落',[0.1, 0.2, 0.3]],
+  ['yueli',['略知一二','见多识广','博古通今'],'收得武学',[25,40,55],'武学整式掉率',[0.1, 0.2, 0.3]],['yangshang',['养精蓄锐','妙手回春','金刚不坏'],'养好的伤',[5,15,50],'伤势恢复',[0.2, 0.35, 0.5]],
+  ['zhanbai',['屡败屡战','全身而退','百折不挠'],'战败次数',[6,30,100],'每世免伤 N 次',[1, 2, 3]],['zhuanshi',['初露锋芒','名扬四海','威震武林'],'转世次数',[6,18,26],'基础声望',[0.02, 0.04, 0.06]]];
+const SFX = ['', '', '-silver', '-gold'];
+const A = '../../code/public/art/';
+
+/* ───────── 预设 ───────── */
+const PRESETS = {
+  first: { label: '第一次转世', rep: 340, gw: 0, lv: [0,0,0,0,0,0,0,0], own: [], tiers: [1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,1,0], cnt: 0.3 },
+  mid:   { label: '中期', rep: 900, gw: 9, lv: [12,10,7,3,2,5,1,8], own: [0,1,3,4,7], tiers: [2,1,0,0,1,0,0,0,0,2,1,2,2,1,1,1,0,2,1,1,2,1], cnt: 0.6 },
+  late:  { label: '后期 · 顶到两位数', rep: 3200, gw: 24, lv: [23,21,18,11,9,14,12,19], own: [0,1,2,3,4,5,6,7,8,9,10,12], tiers: [3,3,2,1,2,2,1,1,2,3,3,3,3,2,2,2,1,3,2,2,3,3], cnt: 0.9 },
+  poor:  { label: '声望见底', rep: 4, gw: 9, lv: [12,10,7,3,2,5,1,8], own: [0,1,3,4,7], tiers: [2,1,0,0,1,0,0,0,0,2,1,2,2,1,1,1,0,2,1,1,2,1], cnt: 0.6 },
+};
+let st, sub = 'diyun';
+const $ = id => document.getElementById(id);
+
+/* ───────── 版面：画按宽铺满，台面落在舞台约一半处 ───────── */
+function place() {
+  const s = $('stage'), W = s.clientWidth, H = s.clientHeight, ah = W * 9 / 16;
+  const at = Math.max(H * 0.5 - 0.70 * ah, Math.min(0, H - ah * 1.02));
+  s.style.setProperty('--aw', `${W}px`); s.style.setProperty('--ah', `${ah}px`); s.style.setProperty('--at', `${at}px`);
+}
+new ResizeObserver(place).observe($('stage'));
+
+/* ───────── 底蕴 ───────── */
+const LAMP_X = [0.12, 0.205, 0.29, 0.375, 0.555, 0.64, 0.725, 0.81];
+function drawDiyun() {
+  $('lamps').innerHTML = DIYUN.map(([id, name, f, k], i) => {
+    const n = st.lv[i], p = price(n + 1), can = st.rep >= p;
+    const fs = n === 0 ? 0 : Math.min(1.9, 0.5 + Math.sqrt(n) * 0.3), gl = n === 0 ? 0 : Math.min(1, 0.25 + Math.sqrt(n) * 0.17);
+    return `<div class="lamp${n ? '' : ' unlit'}" id="lamp${i}" style="left:${LAMP_X[i] * 100}%;--fs:${fs};--gl:${gl}">`
+      + `<div class="glow"></div><div class="fl"><img src="${A}qianchen/flame.png" alt=""></div><i class="wisp"></i><img class="base" src="${A}qianchen/lamp.png" alt=""></div>`
+      + `<div class="tag" style="left:${LAMP_X[i] * 100}%;--dl:${-i * 0.9}s">`
+      + `<div class="nm${name.length > 2 ? ' long' : ''}" data-tip="散功重修，根骨不失，随神魂带到来世">${name}</div>`
+      + `<img class="ic" src="${A}qianchen/ic-${id}.png" alt="">`
+      + `<div class="lv">${n}<small>级</small></div>`
+      + `<div class="cur">现 +${fmtV(cum(f, n), k)}</div>`
+      + `<div class="nx">下一级<b>+${fmtV(gainAt(f, n + 1), k)}</b></div>`
+      + `<button class="seal-btn" data-i="${i}" ${can ? '' : 'disabled'} ${can ? '' : `data-tip="还差 ${p - st.rep} 声望"`}>${p}<small>声望</small></button></div>`;
+  }).join('');
+  const gp = gwPrice(st.gw + 1), gcan = st.rep >= gp;
+  $('banner').innerHTML = `<div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
+    + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div>`
+    + `<button class="seal-btn" id="gwBtn" style="width:62%" ${gcan ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button>`;
+  $('smoke').style.setProperty('--sm', Math.min(1, 0.25 + st.gw * 0.04));
+  document.querySelectorAll('#lamps .seal-btn').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return;
+    st.rep -= p; st.lv[i]++; drawAll();
+    const l = $('lamp' + i); l.classList.add('flare'); setTimeout(() => l.classList.remove('flare'), 650);
+  });
+  $('gwBtn').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; drawAll(); };
+}
+
+/* ───────── 机缘 ───────── */
+function drawJiyuan() {
+  const row = (from, to, top) => `<div class="beam" style="top:${top}px"></div><div class="slips" style="top:${top + 4}px">`
+    + NODES.slice(from, to).map(([name, p, ty, d], j) => {
+      const i = from + j, own = st.own.includes(i), can = st.rep >= p;
+      return `<div class="slip${own ? ' own' : ''}" id="slip${i}" style="--dl:${-i * 0.7}s"><div class="nm">${name}</div><div class="ty">${ty}</div><div class="d">${d}</div>`
+        + (own ? `<div class="got">得</div>` : `<button class="seal-btn" data-i="${i}" ${can ? '' : `disabled data-tip="还差 ${p - st.rep} 声望"`}>${p}<small>声望</small></button>`) + `</div>`;
+    }).join('') + `</div>`;
+  const L = $('L-jiyuan'), sh = Math.min(300, (L.clientHeight || 640) / 2 - 22); L.style.setProperty('--sh', `${sh}px`);
+  $('L-jiyuan').innerHTML = row(0, 7, 0) + row(7, 14, sh + 30);
+  document.querySelectorAll('#L-jiyuan .seal-btn').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, p = NODES[i][1]; if (st.rep < p) return;
+    st.rep -= p; st.own.push(i); drawAll(); $('slip' + i).classList.add('stamp');
+  });
+}
+
+/* ───────── 侠名录 ───────── */
+function drawXiaming() {
+  $('L-xiaming').innerHTML = `<div class="niches">` + ACHV.map(([id, tiers, what, th, eff, val], i) => {
+    const t = st.tiers[i], c = Math.round(th[Math.min(t, 2)] * st.cnt);
+    const effTxt = v => eff.includes('N') ? eff.replace('N', v) : eff.endsWith('−') ? `${eff}${Math.round(v * 100)}%` : `${eff} +${Math.round(v * 100)}%`;
+    const tip = [t > 0 ? `当前效果：${effTxt(val[t - 1])}` : '', t < 3 ? `下一级：${tiers[t]} · ${what} ${Math.min(c, th[t]).toLocaleString('en-US')}/${th[t].toLocaleString('en-US')}` : ''].filter(Boolean).join('<br>');
+    return `<div class="niche t${t}" data-tip="${tip}"><div class="hole"><img src="${A}achv/${id}${SFX[t]}.png" alt=""></div><div class="n">${tiers[Math.max(0, t - 1)]}</div></div>`;
+  }).join('') + `</div>`;
+}
+
+/* ───────── 页头与切换 ───────── */
+function drawHead() {
+  $('rep').innerHTML = sub === 'xiaming'
+    ? `已点亮 <b>${st.tiers.reduce((a, b) => a + b, 0)}</b> / ${ACHV.length * 3}`
+    : `持有 <b>${st.rep.toLocaleString('en-US')}</b> 声望`;
+  $('railRep').textContent = st.rep.toLocaleString('en-US');
+  const m = 1 + 3.7 + 1.6 + st.gw * 0.2;
+  $('multV').textContent = `${m.toFixed(1)}×`;
+  $('mult').dataset.tip = `基础 1<br>+ 宿慧 · 首达初窥门径 1.6×<br>+ 宿慧 · 首达小有所成 3.7×<br><span class='l'>宿慧 · 首达炉火纯青 7.6× · 未至</span><br>+ 修行感悟 ${(st.gw * 0.2).toFixed(1)}×`;
+  document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === sub));
+  ['diyun', 'jiyuan', 'xiaming'].forEach(k => $('L-' + k).classList.toggle('off', k !== sub));
+  $('art').style.filter = sub === 'diyun' ? '' : 'brightness(.55) blur(1.5px)';
+}
+function drawAll() { drawDiyun(); drawJiyuan(); drawXiaming(); drawHead(); bindTips(); }
+document.querySelectorAll('#seg button').forEach(b => b.onclick = () => { sub = b.dataset.v; drawHead(); });
+
+/* 悬停 */
+const tip = $('tip');
+function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el.onmouseenter = () => { tip.innerHTML = el.dataset.tip; tip.classList.add('on'); const r = el.getBoundingClientRect(); tip.style.left = `${Math.min(innerWidth - 310, r.left)}px`; tip.style.top = `${r.bottom + 8}px`; }; el.onmouseleave = () => tip.classList.remove('on'); }); }
+
+/* 原型状态 */
+function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); drawAll(); document.querySelectorAll('.proto button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
+Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
+load('mid'); place();
+</script>
+</body>
+</html>

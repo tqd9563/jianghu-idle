@@ -153,21 +153,16 @@ body.cur-chip .tag .cur { background-image: url('../../code/public/art/qianchen/
 #L-xiaming { left: var(--xl); top: var(--xt); width: var(--xw); height: var(--xh); }
 .stage.xm-on .head::before { content: ''; position: absolute; left: -60px; top: -40px; width: 640px; height: 210px; z-index: -1; pointer-events: none;
   background: radial-gradient(ellipse at 25% 40%, oklch(0.09 0.01 262 / .92), oklch(0.09 0.01 262 / .6) 45%, transparent 72%); }
-.xm-bg { position: absolute; inset: 0; background: url('../../code/public/art/qianchen/xiaming.jpg') center / 100% 100% no-repeat; }
-.xm-plaque { position: absolute; left: 32%; width: 36%; top: 3.5%; height: 14.5%; display: grid; place-items: center;
-  font-family: "Ma Shan Zheng", var(--font-display); font-size: calc(var(--xh) * .065); color: oklch(0.8 0.1 78); letter-spacing: .3em; padding-left: .3em;
-  text-shadow: 0 0 10px oklch(0.78 0.13 78 / .35), 0 1px 0 #000; }
-.niches { position: absolute; left: 19.5%; width: 62%; top: 22%; height: 48%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center; justify-items: center; }
-.niche { display: flex; flex-direction: column; align-items: center; cursor: help; }
-.niche:nth-child(17) { grid-column: 2; }
-.niche .hole { position: relative; width: min(calc(var(--xh) * .105), calc(var(--xw) * .062)); aspect-ratio: 1; display: grid; place-items: center;
-  background: url('../../code/public/art/qianchen/niche.png') center / 100% 100% no-repeat; filter: drop-shadow(0 4px 6px #000); }
-.niche img { width: 62%; filter: drop-shadow(0 2px 4px #000); transition: transform .2s; }
-.niche.t0 img { filter: grayscale(1) brightness(.4); }
-.niche .n { margin-top: 4px; font-family: var(--font-display); font-size: 13px; letter-spacing: .1em; color: var(--muted); text-shadow: 0 1px 6px #000, 0 0 3px #000; white-space: nowrap; }
-.niche.t0 .n { color: var(--faint); }
-.niche.t1 .n { color: oklch(0.8 0.07 55); } .niche.t2 .n { color: oklch(0.88 0.01 240); } .niche.t3 .n { color: var(--gold); }
-.niche:hover img { transform: scale(1.08); }
+/* 侠名录：博古架——同一祠堂一面多层空架，徽记立在架板上，名字在板下沿；坐标为 hall.jpg 画幅百分比 */
+.xm-hall { position: absolute; inset: 0; background: url('../../code/public/art/qianchen/hall.jpg') center / 100% 100% no-repeat; }
+.medal { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; cursor: help; }
+.medal img { width: min(calc(var(--xh) * .105), calc(var(--xw) * .058)); display: block; filter: drop-shadow(0 5px 6px #000); transition: transform .25s var(--ease); transform-origin: 50% 100%; }
+.medal::after { content: ''; width: 76%; height: 7px; margin-top: -4px; border-radius: 50%; background: radial-gradient(ellipse, oklch(0.04 0.01 262 / .9), transparent 70%); }
+.medal.t0 img { filter: grayscale(1) brightness(.4) drop-shadow(0 5px 6px #000); }
+.medal:hover img { transform: translateY(-3px) scale(1.06); }
+.medal .n { position: absolute; top: calc(100% + 9px); white-space: nowrap; font-family: var(--font-display); font-size: 13px; letter-spacing: .12em; color: oklch(0.58 0.02 70); text-shadow: 0 1px 4px #000, 0 0 3px #000; }
+.medal.t1 .n { color: oklch(0.8 0.07 55); } .medal.t2 .n { color: oklch(0.88 0.01 240); } .medal.t3 .n { color: var(--gold); }
+.xm-hall-plaque { position: absolute; left: 50%; top: 11.2%; transform: translateX(-50%); font-family: "Ma Shan Zheng", var(--font-display); font-size: calc(var(--xh) * .042); color: oklch(0.78 0.1 78); letter-spacing: .3em; padding-left: .3em; text-shadow: 0 0 12px oklch(0.6 0.12 70 / .5), 0 2px 4px #000; }
 .lit-count { font-size: 14px; color: var(--muted); letter-spacing: .1em; margin-top: 2px; } .lit-count b { color: var(--ink); }
 
 /* 悬停浮层 */
@@ -308,7 +303,7 @@ function place() {
   s.style.setProperty('--xw', `${xw}px`); s.style.setProperty('--xh', `${xh}px`); s.style.setProperty('--xl', `${(W - xw) / 2}px`); s.style.setProperty('--xt', `${(H - xh) / 2}px`);
   s.style.setProperty('--aw', `${W}px`); s.style.setProperty('--ah', `${ah}px`); s.style.setProperty('--at', `${at}px`);
 }
-new ResizeObserver(() => { place(); if (st) drawBook(); }).observe($('stage'));
+new ResizeObserver(() => { place(); if (st) { drawBook(); drawXiaming(); bindTips(); } }).observe($('stage'));
 
 /* ───────── 底蕴 ───────── */
 const LAMP_X = [0.12, 0.205, 0.29, 0.375, 0.555, 0.64, 0.725, 0.81];
@@ -381,13 +376,22 @@ function drawJiyuan() {
 }
 
 /* ───────── 侠名录 ───────── */
+const achvTip = i => {
+  const [, tiers, what, th, eff, val] = ACHV[i], t = st.tiers[i], c = Math.round(th[Math.min(t, 2)] * st.cnt);
+  const effTxt = v => eff.includes('N') ? eff.replace('N', v) : eff.endsWith('−') ? `${eff}${Math.round(v * 100)}%` : `${eff} +${Math.round(v * 100)}%`;
+  return [t > 0 ? `当前效果：${effTxt(val[t - 1])}` : '', t < 3 ? `下一级：${tiers[t]} · ${what} ${Math.min(c, th[t]).toLocaleString('en-US')}/${th[t].toLocaleString('en-US')}` : ''].filter(Boolean).join('<br>');
+};
 function drawXiaming() {
-  $('L-xiaming').innerHTML = `<div class="xm-bg"></div><div class="xm-plaque">侠名录</div><div class="niches">` + ACHV.map(([id, tiers, what, th, eff, val], i) => {
-    const t = st.tiers[i], c = Math.round(th[Math.min(t, 2)] * st.cnt);
-    const effTxt = v => eff.includes('N') ? eff.replace('N', v) : eff.endsWith('−') ? `${eff}${Math.round(v * 100)}%` : `${eff} +${Math.round(v * 100)}%`;
-    const tip = [t > 0 ? `当前效果：${effTxt(val[t - 1])}` : '', t < 3 ? `下一级：${tiers[t]} · ${what} ${Math.min(c, th[t]).toLocaleString('en-US')}/${th[t].toLocaleString('en-US')}` : ''].filter(Boolean).join('<br>');
-    return `<div class="niche t${t}" data-tip="${tip}"><div class="hole"><img src="${A}achv/${id}${SFX[t]}.png" alt=""></div><div class="n">${tiers[Math.max(0, t - 1)]}</div></div>`;
-  }).join('') + `</div>`;
+    // 博古架三层板面（hall.jpg 高度 %；第四层是底柜台面不放），8/7/7 枚，徽记底边落在板面
+    const SHELF = [32.4, 48.7, 65.1], PER = [8, 7, 7];
+    // 窄屏底图两侧被裁：间距按可见宽度收，两端留出架柱
+    const vis = $('stage').clientWidth / parseFloat(getComputedStyle($('stage')).getPropertyValue('--xw')) * 100, STEP = Math.min(8.2, (vis - 14) / 8);
+    let k = 0, html = `<div class="xm-hall"></div><div class="xm-hall-plaque">侠名录</div>`;
+    SHELF.forEach((y, r) => { for (let c = 0; c < PER[r]; c++, k++) {
+      const [id, tiers] = ACHV[k], t = st.tiers[k], x = 50 + (c - (PER[r] - 1) / 2) * STEP;
+      html += `<div class="medal t${t}" style="left:${x}%;top:${y}%" data-tip="${achvTip(k)}"><img src="${A}achv/${id}${SFX[t]}.png" alt=""><div class="n">${tiers[Math.max(0, t - 1)]}</div></div>`;
+    } });
+    $('L-xiaming').innerHTML = html;
 }
 
 /* ───────── 页头与切换 ───────── */

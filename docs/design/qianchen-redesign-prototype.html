@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>前尘页改版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
 <style>
@@ -161,39 +161,38 @@ button { font: inherit; color: inherit; }
 .proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
 .proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
 
-/* ═══ 对比：前尘账册（A）——一本摊开的线装册，左页八栏、右页修行感悟 ═══ */
-.book { position: absolute; left: 50%; top: 168px; bottom: 70px; transform: translateX(-50%); width: min(94%, 1180px); display: none; z-index: 3;
-  padding: 18px; border-radius: 6px; background: linear-gradient(135deg, oklch(0.3 0.06 255), oklch(0.2 0.05 258)); box-shadow: 0 20px 40px #000, inset 0 0 0 2px oklch(0.45 0.05 250 / .5), inset 0 0 40px oklch(0.1 0.03 258 / .8); }
-.book::before, .book::after { content: ''; position: absolute; top: 10px; bottom: 10px; width: 4px; background: repeating-linear-gradient(to bottom, oklch(0.75 0.03 80) 0 6px, transparent 6px 42px); }
-.book::before { left: 8px; } .book::after { right: 8px; }
-.book .pages { display: grid; grid-template-columns: 1fr 26%; gap: 18px; height: 100%; }
-.book .page { position: relative; border-radius: 2px; padding: 16px 14px; background: oklch(0.86 0.025 80); box-shadow: inset 0 0 50px oklch(0.6 0.04 70 / .55); color: var(--paper-ink); }
-.book .page::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 30% 20%, oklch(0.7 0.04 70 / .18), transparent 60%), radial-gradient(ellipse at 80% 85%, oklch(0.65 0.05 65 / .2), transparent 55%); }
-.book .left { display: grid; grid-template-columns: 54px repeat(8, 1fr); }
-.book .title { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: .3em; display: flex; align-items: center; justify-content: center;
-  border-right: 1px solid oklch(0.45 0.03 60 / .45); position: relative; }
-.book .title i { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%) rotate(-6deg); writing-mode: horizontal-tb; font-style: normal; width: 26px; height: 26px; display: grid; place-items: center;
-  background: var(--seal-red); color: oklch(0.95 0.02 85); font-size: 11px; letter-spacing: 0; line-height: 1.05; border-radius: 2px; }
-.book .col { position: relative; display: flex; flex-direction: column; align-items: center; padding: 4px 4px 0; border-right: 1px solid oklch(0.45 0.03 60 / .3); }
-.book .col:last-child { border-right: 0; }
-.book .col .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: 24px; height: 104px; display: flex; align-items: center; letter-spacing: .06em; cursor: help; }
-.book .col .nm.long { font-size: 19px; }
-.book .col .ic { width: 70%; max-width: 72px; aspect-ratio: 1; object-fit: contain; margin: 4px 0 8px; opacity: .9; }
-.book .col .lv { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; } .book .col .lv small { font-size: 13px; }
-.book .col .cur { font-size: 14px; margin-top: 10px; white-space: nowrap; }
-.book .col .nx { font-size: 13px; color: var(--paper-mute); margin-top: 6px; text-align: center; } .book .col .nx b { display: block; color: oklch(0.5 0.13 50); font-size: 15px; }
-.book .col .seal-btn { margin-top: auto; margin-bottom: 4px; width: 62%; min-width: 46px; padding: 6px 0 5px; font-size: 14px; }
-.book .right { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.book .right .t { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: .25em; margin-top: 6px; cursor: help; }
-.book .right .lv { font-family: var(--font-display); font-weight: 700; font-size: 40px; margin-top: 8px; } .book .right .lv small { font-size: 15px; }
-.book .right .e { font-size: 15px; margin-top: 6px; line-height: 1.7; } .book .right .e .n { color: var(--paper-mute); } .book .right .e .n b { color: oklch(0.5 0.13 50); }
-.book .right .burner { width: 46%; margin: auto 0 10px; position: relative; }
-.book .right .burner img { width: 100%; filter: sepia(.3) contrast(1.1); }
-.book .right .seal-btn { width: 56%; padding: 7px 0 6px; font-size: 15px; margin-bottom: 4px; }
-body.ledger .book { display: block; }
+/* ═══ 对比：前尘账册（A）——AI 画的空白线装册，字与印叠在纸条上；坐标为 ledger.jpg 画幅百分比 ═══ */
+.book { position: absolute; left: var(--bl); top: var(--bt); width: var(--bw); aspect-ratio: 16 / 9; display: none; z-index: 2;
+  background: url('../../code/public/art/qianchen/ledger.jpg') center / 100% 100% no-repeat; }
+.book .strip { position: absolute; top: 31%; height: 50%; container-type: inline-size; color: var(--paper-ink);
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 0 14px; }
+.book .strip .nm { height: calc(var(--c) * 1.14em); flex: none; writing-mode: vertical-rl; font-family: "Ma Shan Zheng", var(--font-display); font-size: max(22px, 50cqw); line-height: 1; letter-spacing: .02em; cursor: help; }
+.book .strip .nm.long { font-size: max(16px, 34cqw); }
+.book .strip .ic { width: 104%; flex: none; aspect-ratio: 1; object-fit: contain; opacity: .9; mix-blend-mode: multiply; }
+.book .strip .lv { font-family: var(--font-display); font-weight: 700; font-size: max(24px, 52cqw); line-height: 1; } .book .strip .lv small { font-size: .45em; }
+.book .strip .v { text-align: center; font-size: max(11px, 18.5cqw); line-height: 1.45; white-space: nowrap; }
+.book .strip .v .n { color: var(--paper-mute); }
+@container (max-width: 60px) { .book .strip .v .xian { display: none; } .book .strip .v { font-size: 11px; } } .book .strip .v b { display: block; color: oklch(0.48 0.13 45); font-weight: 600; font-size: 1.12em; }
+.book .strip .seal-btn { width: 82%; min-width: 0; padding: 6cqw 0 5cqw; font-size: max(12px, 24cqw); box-shadow: inset 0 0 0 2px oklch(0.95 0.02 85 / .4), 0 0 0 1px oklch(0.35 0.1 28); }
+.book .strip .seal-btn small { font-size: .72em; }
+.book .label { position: absolute; left: 14.2%; width: 6.4%; top: 30%; height: 40%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6%; container-type: inline-size; }
+.book .label .t { writing-mode: vertical-rl; font-family: "Ma Shan Zheng", var(--font-display); font-size: max(24px, 50cqw); color: var(--paper-ink); letter-spacing: .08em; }
+.book .label i { font-style: normal; writing-mode: horizontal-tb; width: 38cqw; aspect-ratio: 1; display: grid; place-items: center; background: var(--seal-red); color: oklch(0.95 0.02 85);
+  font-family: var(--font-display); font-size: max(9px, 13cqw); line-height: 1.05; border-radius: 2px; transform: rotate(-5deg); box-shadow: inset 0 0 0 1.5px oklch(0.95 0.02 85 / .35); }
+.book .gw { position: absolute; left: 70.5%; width: 18.5%; top: 29%; height: 26%; container-type: inline-size; color: var(--paper-ink); }
+.book .gw .t { font-family: "Ma Shan Zheng", var(--font-display); font-size: max(22px, 14cqw); letter-spacing: .08em; cursor: help; }
+.book .gw .lv { font-family: var(--font-display); font-weight: 700; font-size: max(24px, 15cqw); margin-top: 4%; line-height: 1; } .book .gw .lv small { font-size: .45em; }
+.book .gw .e { font-size: max(12px, 7cqw); margin-top: 5%; line-height: 1.6; } .book .gw .e .n { color: var(--paper-mute); } .book .gw .e .n b { color: oklch(0.48 0.13 45); }
+.book .gw .poem { position: absolute; right: 0; top: 0; writing-mode: vertical-rl; font-family: "Ma Shan Zheng", var(--font-display); font-size: max(13px, 7.5cqw); color: var(--paper-mute); letter-spacing: .15em; }
+.book .gw-btn { position: absolute; left: 70.5%; width: 9.5%; top: 75%; container-type: inline-size; }
+.book .gw-btn .seal-btn { width: 100%; padding: 6px 0 5px; font-size: max(13px, 11cqw); }
+.book-bg { position: absolute; inset: 0; display: none; z-index: 1; background: url('../../code/public/art/qianchen/ledger.jpg') center 70% / cover; filter: blur(10px) brightness(.45); transform: scale(1.1); }
+body.ledger.sub-diyun .book-bg { display: block; }
+.stage.ledger-on::after { content: ''; position: absolute; inset: 0 0 auto 0; height: 170px; z-index: 3; pointer-events: none; background: linear-gradient(to bottom, #0b0d12 30%, transparent); }
+body.ledger.sub-diyun .book { display: block; }
 body.ledger #L-diyun { display: none; }
 body.ledger:not(.sub-diyun) .book { display: none; }
-body.ledger .art { filter: brightness(.45) blur(3px) !important; }
+body.ledger.sub-diyun .art { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
 </style>
 </head>
@@ -227,6 +226,7 @@ body.ledger .art { filter: brightness(.45) blur(3px) !important; }
     <div class="banner" id="banner"></div>
     <div id="lamps"></div>
   </div>
+  <div class="book-bg"></div>
   <div class="book" id="book"></div>
   <div class="layer off free" id="L-jiyuan"></div>
   <div class="layer off free" id="L-xiaming"></div>
@@ -282,6 +282,9 @@ const $ = id => document.getElementById(id);
 function place() {
   const s = $('stage'), W = s.clientWidth, H = s.clientHeight, ah = W * 9 / 16;
   const at = Math.max(H * 0.5 - 0.70 * ah, Math.min(0, H - ah * 1.02));
+  // 账册：书（画幅 13.5%–93.5%）铺满舞台宽，书顶落在页头下
+  let bw = (W - 48) / 0.80; const bh0 = H - 168 - 56; if (bw * 9 / 16 * 0.6 > bh0) bw = bh0 / 0.6 * 16 / 9;
+  const bhh = bw * 9 / 16; s.style.setProperty('--bw', `${bw}px`); s.style.setProperty('--bl', `${(W - 0.80 * bw) / 2 - 0.135 * bw}px`); s.style.setProperty('--bt', `${168 + Math.max(0, (H - 168 - 56 - 0.6 * bhh) / 2) - 0.27 * bhh}px`);
   s.style.setProperty('--aw', `${W}px`); s.style.setProperty('--ah', `${ah}px`); s.style.setProperty('--at', `${at}px`);
 }
 new ResizeObserver(place).observe($('stage'));
@@ -317,19 +320,19 @@ function drawDiyun() {
 }
 /* 对比：前尘账册 */
 function drawBook() {
+  const SX = [[23.1,27.8],[28.7,33.1],[34.1,38.7],[39.45,44.1],[44.8,49.5],[50.2,55.0],[55.76,60.6],[61.2,66.1]];
   const gp = gwPrice(st.gw + 1), gcan = st.rep >= gp;
-  $('book').innerHTML = `<div class="pages"><div class="page left"><div class="title">前尘账册<i>前<br>尘</i></div>`
+  $('book').innerHTML = `<div class="label"><div class="t">前尘账册</div><i>前<br>尘</i></div>`
     + DIYUN.map(([id, name, f, k], i) => {
-      const n = st.lv[i], p = price(n + 1), can = st.rep >= p;
-      return `<div class="col"><div class="nm${name.length > 2 ? ' long' : ''}" data-tip="散功重修，根骨不失，随神魂带到来世">${name}</div>`
+      const n = st.lv[i], p = price(n + 1), can = st.rep >= p, [a, b] = SX[i];
+      return `<div class="strip" style="left:${a + 0.4}%;width:${b - a - 0.8}%"><div class="nm${name.length > 2 ? ' long' : ''}" style="--c:${name.length}" data-tip="散功重修，根骨不失，随神魂带到来世">${name}</div>`
         + `<img class="ic" src="${A}qianchen/ic-${id}.png" alt=""><div class="lv">${n}<small>级</small></div>`
-        + `<div class="cur">现 +${fmtV(cum(f, n), k)}</div><div class="nx">下一级<b>+${fmtV(gainAt(f, n + 1), k)}</b></div>`
+        + `<div class="v"><span class="xian">现 </span>+${fmtV(cum(f, n), k)}<br><span class="n">下一级</span><b>+${fmtV(gainAt(f, n + 1), k)}</b></div>`
         + `<button class="seal-btn bk" data-i="${i}" ${can ? '' : `disabled data-tip="还差 ${p - st.rep} 声望"`}>${p}<small>声望</small></button></div>`;
     }).join('')
-    + `</div><div class="page right"><div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
-    + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div>`
-    + `<div class="burner"><img src="${A}qianchen/lamp.png" alt=""></div>`
-    + `<button class="seal-btn" id="gwBtn2" ${gcan ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button></div></div>`;
+    + `<div class="gw"><div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
+    + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div><div class="poem">一柱清香 照见前尘</div></div>`
+    + `<div class="gw-btn"><button class="seal-btn" id="gwBtn2" ${gcan ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button></div>`;
   document.querySelectorAll('#book .seal-btn.bk').forEach(b => b.onclick = () => { const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return; st.rep -= p; st.lv[i]++; drawAll(); });
   $('gwBtn2').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; drawAll(); };
 }
@@ -372,6 +375,7 @@ function drawHead() {
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === sub));
   ['diyun', 'jiyuan', 'xiaming'].forEach(k => $('L-' + k).classList.toggle('off', k !== sub));
   document.body.classList.toggle('sub-diyun', sub === 'diyun');
+  $('stage').classList.toggle('ledger-on', document.body.classList.contains('ledger') && sub === 'diyun');
   $('art').style.filter = sub === 'diyun' ? '' : 'brightness(.55) blur(1.5px)';
 }
 function drawAll() { drawDiyun(); drawJiyuan(); drawXiaming(); drawHead(); bindTips(); }

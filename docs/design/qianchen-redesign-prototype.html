@@ -172,7 +172,7 @@ button { font: inherit; color: inherit; }
 .book .strip .lv { font-family: var(--font-display); font-weight: 700; font-size: max(24px, 52cqw); line-height: 1; } .book .strip .lv small { font-size: .45em; }
 .book .strip .v { text-align: center; font-size: max(11px, 18.5cqw); line-height: 1.45; white-space: nowrap; }
 .book .strip .v .n { color: var(--paper-mute); }
-@container (max-width: 60px) { .book .strip .v .xian { display: none; } .book .strip .v { font-size: 11px; } } .book .strip .v b { display: block; color: oklch(0.48 0.13 45); font-weight: 600; font-size: 1.12em; }
+.book.tight .strip .v .xian { display: none; } .book .strip .v b { display: block; color: oklch(0.48 0.13 45); font-weight: 600; font-size: 1.12em; }
 .book .strip .seal-btn { width: 82%; min-width: 0; padding: 6cqw 0 5cqw; font-size: max(12px, 24cqw); box-shadow: inset 0 0 0 2px oklch(0.95 0.02 85 / .4), 0 0 0 1px oklch(0.35 0.1 28); }
 .book .strip .seal-btn small { font-size: .72em; }
 .book .label { position: absolute; left: 14.2%; width: 6.4%; top: 30%; height: 40%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6%; container-type: inline-size; }
@@ -287,7 +287,7 @@ function place() {
   const bhh = bw * 9 / 16; s.style.setProperty('--bw', `${bw}px`); s.style.setProperty('--bl', `${(W - 0.80 * bw) / 2 - 0.135 * bw}px`); s.style.setProperty('--bt', `${168 + Math.max(0, (H - 168 - 56 - 0.6 * bhh) / 2) - 0.27 * bhh}px`);
   s.style.setProperty('--aw', `${W}px`); s.style.setProperty('--ah', `${ah}px`); s.style.setProperty('--at', `${at}px`);
 }
-new ResizeObserver(place).observe($('stage'));
+new ResizeObserver(() => { place(); if (st) drawBook(); }).observe($('stage'));
 
 /* ───────── 底蕴 ───────── */
 const LAMP_X = [0.12, 0.205, 0.29, 0.375, 0.555, 0.64, 0.725, 0.81];
@@ -334,6 +334,7 @@ function drawBook() {
     + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div><div class="poem">一柱清香 照见前尘</div></div>`
     + `<div class="gw-btn"><button class="seal-btn" id="gwBtn2" ${gcan ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button></div>`;
   document.querySelectorAll('#book .seal-btn.bk').forEach(b => b.onclick = () => { const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return; st.rep -= p; st.lv[i]++; drawAll(); });
+  const ws = [...document.querySelectorAll('#book .strip')].map(x => x.clientWidth); $('book').classList.toggle('tight', Math.min(...ws) < 66);
   $('gwBtn2').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; drawAll(); };
 }
 

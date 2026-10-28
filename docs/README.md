@@ -53,6 +53,7 @@
 | `systems/living-jianghu/sim.py` | 活江湖结构 sim（卷 · 章 · 图 · 关单线的台阶高度、停留天数、首杀体量；读 longline_sim） | — |
 | `systems/wudao-yuanliu/design.md` | 武道源流（原「路数」）：三路扩七路、七大源流门派与因缘拜入 | — |
 | `systems/sect-overhaul/design.md` | 门派改造：21 家可拜门派的体量、源流、六级地位与六档差事、内功 / 装备 / 差事定名、门派页原型（驻地图 + 百务殿 / 典籍院 / 天工库）、旧九派迁移；设计定稿，数值待 sim | `design/sect-overhaul-prototype.html` |
+| `systems/sect-overhaul/copy-draft.md` | 门派改造文案草稿：前置 21 门武学 141 式招式名、21 家 126 句差事交代；待审 | — |
 | `systems/wudao-yuanliu/spec.md` | 武道源流新四路规格：太虚、玄寂、惊鸿、焚血的赠予、逐重、五阶与克制，首轮对拍（`code/src/telemetry/routeBalance.sim.test.ts` SIM_ROUTE=1 → `systems/sim/route_balance_measured.json`） | combat.ts, routes.ts, neigong.ts |
 | `systems/prestige-shop/design.md` | 前尘（声望阁改版）设定：底蕴八条可反复购买且逐级递减、感悟价补偿、页面分段切换；sim 判据已过，原型待审 | — |
 | `systems/reincarnation/spec.md` | 转世系统规格（时间线/寿元/强制转世已实装；正邪未规格化） | reincarnation.ts, gameStore.ts |

@@ -211,23 +211,46 @@ button { font: inherit; color: inherit; }
 .sx-slot.sel .lit { opacity: .95; filter: brightness(1.15); } .sx-slot.sel .halo { opacity: 1; }
 .sx-slot.on:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
 /* 函套：书签是米色纸，墨字；光只铺在纸签上，柔光晕在整只函套 */
+.sx-slot.book.on .lit { opacity: .85; } .sx-slot.book.on:hover .lit { opacity: .95; } .sx-slot.book.sel .lit { opacity: 1; }
 .sx-slot.book .lit { background: radial-gradient(ellipse 85% 70% at 50% 45%, oklch(0.62 0.09 75 / .8), oklch(0.45 0.07 65 / .55)); }
 .sx-slot.book .halo { inset: -22% -70%; background: radial-gradient(ellipse 50% 50% at 50% 50%, oklch(0.72 0.12 72 / .3), transparent 70%); }
 .sx-slot.book .nm { inset: 4% 0; color: oklch(0.2 0.03 50); text-shadow: 0 0 5px oklch(0.88 0.06 80 / .5); }
-/* 兵器匣：漆木匣面，泥金字 */
-.sx-slot.box .lit { background: radial-gradient(ellipse 70% 55% at 50% 40%, oklch(0.55 0.12 50 / .7), oklch(0.35 0.08 35 / .35) 70%, transparent); }
-.sx-slot.box .halo { inset: -6% -40%; background: radial-gradient(ellipse 50% 50% at 50% 45%, oklch(0.7 0.13 65 / .28), transparent 70%); }
-.sx-slot.box .nm { left: 0; right: 0; top: var(--nt); height: var(--nh); color: oklch(0.86 0.1 82); text-shadow: 0 0 6px #000, 0 0 2px #000; }
-.sx-tagl { position: absolute; border-radius: 2px; pointer-events: none; opacity: 0; mix-blend-mode: screen; transition: opacity .3s;
-  background: radial-gradient(ellipse 70% 60% at 50% 45%, oklch(0.62 0.1 70 / .8), oklch(0.45 0.08 60 / .4)); }
-.sx-tagl.on { opacity: .55; } .sx-tagl.sel { opacity: .95; }
+/* 品质色（gongfa.css .qg1–.qg3）；书签上用同色相加深，保证在米色纸签上 ≥4.5:1 */
+.q1 { --qc: oklch(0.72 0.015 85); --qd: oklch(0.24 0.015 85); }
+.q2 { --qc: oklch(0.78 0.09 212); --qd: oklch(0.27 0.07 225); }
+.q3 { --qc: var(--gold); --qd: oklch(0.30 0.09 55); }
+.sx-slot.book .nm { font-family: var(--font-display); font-weight: 400; color: var(--qd); text-shadow: 0 0 4px oklch(0.9 0.04 85 / .55); }
+/* 函套着色：SVG 按函套透视轮廓挖掉纸签，color 混合让画里函套本身变色 */
+.sx-tint { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: color; opacity: .72; }
+.sx-trim { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; }
+/* 天工库：陈列台 + 丝绒垫上的装备道具图 */
+.sx-stand { position: absolute; border: 0; padding: 0; background: none; cursor: default; }
+.sx-stand.on { cursor: pointer; }
+.sx-stand.on:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
+.sx-stand.off { pointer-events: none; }
+.sx-padglow { position: absolute; transform: translate(-50%, -50%); pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity .3s; border-radius: 50%;
+  background: radial-gradient(ellipse 50% 50% at 50% 45%, oklch(0.72 0.13 60 / .45), transparent 70%); }
+.sx-padglow.on { opacity: .45; } .sx-padglow.hov { opacity: .75; } .sx-padglow.sel { opacity: 1; }
+.sx-standdim { position: absolute; pointer-events: none; background: radial-gradient(ellipse 60% 55% at 50% 45%, oklch(0.06 0.01 262 / .62), oklch(0.06 0.01 262 / .35) 75%, transparent); }
+/* 物件：外层在屏幕坐标里投影（接触阴影 + 顶上吊灯的暖色边光），内层顺着斜垫旋转压扁 */
+.sx-ware { position: absolute; transform: translate(-50%, -50%); pointer-events: none;
+  filter: drop-shadow(0 calc(var(--aw) * -.0012) calc(var(--aw) * .0006) oklch(0.85 0.12 70 / .55)) drop-shadow(0 calc(var(--aw) * .004) calc(var(--aw) * .003) oklch(0.05 0.02 30 / .8)); }
+.sx-ware img { display: block; width: 100%; height: 100%; object-fit: contain; transform: scaleY(var(--sy)) rotate(var(--rot)) skewY(-4deg);
+  filter: brightness(.95) sepia(.18) saturate(1.05) contrast(1.08); }
+.sx-ware .cs { position: absolute; left: 50%; top: 58%; width: 112%; height: 26%; transform: translate(-50%, -50%) rotate(-5deg); border-radius: 50%;
+  background: radial-gradient(ellipse, oklch(0.08 0.03 25 / .7), transparent 70%); z-index: -1; }
+.sx-plate { position: absolute; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; font-family: var(--font-display); font-weight: 700;
+  letter-spacing: .3em; padding-left: .3em; text-shadow: 0 0 6px #000, 0 0 2px #000; }
+.sx-stand-seal { position: absolute; transform: translate(-50%, -50%) rotate(-6deg); pointer-events: none; writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700;
+  line-height: 1.05; padding: .18em .1em; border-radius: 2px; color: oklch(0.95 0.02 85); background: oklch(0.5 0.17 28 / .9); }
+.sx-stand-seal.pop { animation: sx-stamp2 .55s var(--ease); }
+@keyframes sx-stamp2 { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-6deg) scale(2.2); } }
 /* 已得：画中落一枚小朱印 */
 .sx-seal { position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%) rotate(-6deg); writing-mode: vertical-rl; pointer-events: none;
   font-family: var(--font-display); font-weight: 700; line-height: 1.05; letter-spacing: 0; padding: .18em .1em; border-radius: 2px;
   color: oklch(0.95 0.02 85); background: oklch(0.5 0.17 28 / .9); box-shadow: 0 0 0 1px oklch(0.5 0.17 28 / .5); }
-.sx-slot.box .sx-seal { bottom: auto; top: calc(var(--nt) + var(--nh) + 2%); }
 .sx-slot.own .nm { opacity: .78; }
-.sx-slot.book.own .nm { bottom: 26%; }
+.sx-slot.book.own .nm { bottom: 26%; opacity: 1; }
 .sx-seal.pop { animation: sx-stamp .55s var(--ease); }
 @keyframes sx-stamp { 0% { opacity: 0; transform: translateX(-50%) rotate(-6deg) scale(2.2); } 100% { opacity: 1; transform: translateX(-50%) rotate(-6deg) scale(1); } }
 /* 右侧卷宗：细暗金线分节 */
@@ -374,36 +397,40 @@ const ROUTE_TIP = { 狂澜: '快剑爆发 · 短战最强', 惊鸿: '身法奇�
    天工库：s = 匣面 [左, 上, 宽, 高]（点选范围），n = 名字区 [上, 高]（匣面中上部、门环之上），t = 匣下小木牌 [左, 上, 宽, 高] */
 const SHOPS = {
   dianji: { title: '典籍院', img: 'hall-dianji.jpg', kind: 'book', slots: [
-    { s: [6.65, 15.7, 3.45, 15.7] }, { s: [15.25, 17.8, 3.05, 15.25] }, { s: [23.05, 19.6, 2.9, 15.1] }, { s: [30.55, 21.6, 2.7, 14.4] },
-    { s: [6.25, 49.1, 3.6, 16.0] }, { s: [14.95, 50.4, 3.2, 15.8] }, { s: [22.95, 51.6, 2.95, 16.0] }, { s: [30.55, 53.0, 2.8, 15.5] } ],
+    // s = 书签纸面 [左, 上, 宽, 高]（%）；f = 函套正面含书脊的四角（原图像素，左上→右上→右下→左下）
+    { s: [6.65, 15.7, 3.45, 15.7], f: [[62, 182], [225, 198], [222, 560], [60, 553]] },
+    { s: [15.25, 17.8, 3.05, 15.25], f: [[240, 210], [385, 225], [385, 575], [240, 566]] },
+    { s: [23.05, 19.6, 2.9, 15.1], f: [[402, 242], [540, 255], [540, 590], [402, 585]] },
+    { s: [30.55, 21.6, 2.7, 14.4], f: [[558, 268], [685, 282], [685, 618], [558, 610]] },
+    { s: [6.25, 49.1, 3.6, 16.0], f: [[55, 650], [218, 662], [215, 1025], [55, 1015]] },
+    { s: [14.95, 50.4, 3.2, 15.8], f: [[235, 665], [383, 675], [383, 1035], [235, 1025]] },
+    { s: [22.95, 51.6, 2.95, 16.0], f: [[400, 685], [540, 695], [540, 1045], [400, 1040]] },
+    { s: [30.55, 53.0, 2.8, 15.5], f: [[558, 705], [685, 715], [685, 1055], [558, 1050]] } ],
     items: [
-    { n: '疾雨剑法', g: '寻常 · 剑法', p: 300, lv: 1, desc: '檐声急雨，剑影疏灯。',
+    { q: 1, n: '疾雨剑法', g: '寻常 · 剑法', p: 300, lv: 1, desc: '檐声急雨，剑影疏灯。',
       at: [['伤害倍率', '×148%'], ['触发几率', '12%'], ['真气消耗', '190'], ['附加特效', '连击', '第一式 44% 追加一次普攻']] },
-    { n: '百川诀', g: '入门 · 内功', p: 0, lv: 1, desc: '纳百川入丹田，涓滴汇海，久久自成气象。', route: '狂澜',
+    { q: 1, n: '百川诀', g: '入门 · 内功', ng: true, p: 0, lv: 1, desc: '纳百川入丹田，涓滴汇海，久久自成气象。', route: '狂澜',
       at: [['气海', '×1.0', NG_TIP.qi], ['火候', '×1.00', NG_TIP.hh]] },
-    { n: '惊鸿照影剑', sub: '残页', g: '上乘 · 剑法残页', p: 600, lv: 2, desc: '惊鸿曾照影，剑过不留痕。',
+    { q: 2, n: '惊鸿照影剑', sub: '残页', g: '上乘 · 剑法残页', p: 600, lv: 2, desc: '惊鸿曾照影，剑过不留痕。',
       at: [['伤害倍率', '×190%'], ['触发几率', '9%'], ['真气消耗', '400'], ['附加特效', '回气', '第一式返还耗气 50%']] },
-    { n: '沧海功', g: '进阶 · 内功', p: 1800, lv: 3, desc: '气如沧海潮生，一呼一吸之间，有吞吐浪涛之势。', route: '狂澜',
+    { q: 2, n: '沧海功', g: '进阶 · 内功', p: 1800, lv: 3, ng: true, desc: '气如沧海潮生，一呼一吸之间，有吞吐浪涛之势。', route: '狂澜',
       at: [['气海', '×1.1', NG_TIP.qi], ['火候', '×1.02', NG_TIP.hh]] },
-    { n: '飞泉诀', g: '进阶 · 内功', p: 1800, lv: 3, desc: '借山间飞泉之意，气走如瀑，一落未尽，一落又起。', route: '惊鸿',
+    { q: 2, n: '飞泉诀', g: '进阶 · 内功', p: 1800, lv: 3, ng: true, desc: '借山间飞泉之意，气走如瀑，一落未尽，一落又起。', route: '惊鸿',
       at: [['气海', '×1.1', NG_TIP.qi], ['火候', '×1.02', NG_TIP.hh]] },
-    { n: '苍崖九叠剑', sub: '残页', g: '绝学 · 剑法残页', p: 2400, lv: 4, desc: '苍崖云九叠，孤剑雪千秋。',
+    { q: 3, n: '苍崖九叠剑', sub: '残页', g: '绝学 · 剑法残页', p: 2400, lv: 4, desc: '苍崖云九叠，孤剑雪千秋。',
       at: [['伤害倍率', '×236%'], ['触发几率', '3%'], ['真气消耗', '550'], ['附加特效', '必暴', '第一式必定会心 · 会心伤害 +5%']] },
-    { n: '落星沉海剑', sub: '残页', g: '绝学 · 剑法残页', p: 2400, lv: 4, desc: '星垂沧海夜，剑落暮潮寒。',
+    { q: 3, n: '落星沉海剑', sub: '残页', g: '绝学 · 剑法残页', p: 2400, lv: 4, desc: '星垂沧海夜，剑落暮潮寒。',
       at: [['伤害倍率', '×236%'], ['触发几率', '5%'], ['真气消耗', '550'], ['附加特效', '蓄势', '本场每出过一招，本式倍率 +10%']] },
-    { n: '沧溟真经', g: '镇派 · 内功', p: 6000, lv: 5, desc: '苍崖历代掌门心血所凝，修到深处，内息如沧溟无底。', route: '狂澜',
+    { q: 3, n: '沧溟真经', g: '镇派 · 内功', p: 6000, lv: 5, ng: true, desc: '苍崖历代掌门心血所凝，修到深处，内息如沧溟无底。', route: '狂澜',
       at: [['气海', '×1.2', NG_TIP.qi], ['火候', '×1.04', NG_TIP.hh]] } ] },
-  tiangong: { title: '天工库', img: 'hall-tiangong.jpg', kind: 'box', slots: [
-    { s: [4.75, 14.4, 4.75, 54.7], n: [5, 40], t: [4.35, 74.8, 2.3, 7.8] },
-    { s: [11.5, 20.9, 4.5, 49.6], n: [5, 40], t: [11.75, 76.3, 2.0, 6.8] },
-    { s: [17.75, 25.9, 3.65, 46], n: [5, 40], t: [18.0, 76.8, 1.75, 6.6] },
-    { s: [23, 30.9, 3, 42.1], n: [5, 40], t: [23.25, 77.6, 1.5, 6.3] },
-    { s: [27.4, 35.3, 2.5, 38.5], n: [5, 40], t: [27.75, 78.1, 1.35, 6.0] },
-    { s: [31.25, 38.5, 2, 36], n: [5, 40], t: [31.5, 78.6, 1.25, 5.6] } ],
+  tiangong: { title: '天工库', img: 'hall-tiangong.jpg', kind: 'stand', slots: [
+    // pad = 丝绒垫中心 [x, y]（%）、len = 物件长（占画幅宽）；st = 整座陈列台（点选范围）；nm = 台前名牌；sl = 已得朱印
+    { pad: [15.4, 52.4], len: 14, st: [5.5, 48.2, 19.5, 38.2], nm: [15.9, 62.0], sl: [16.5, 71.2] },
+    { pad: [36.6, 52.8], len: 14, st: [27.75, 48.5, 18, 37.3], nm: [37.0, 62.0], sl: [38.5, 70.9] } ],
     items: [
-    { n: '松纹剑', g: '兵器 · 剑', grade: '上乘', p: 900, lv: 2, desc: '采苍崖后山寒铁所铸，剑身隐有古松纹理。',
+    { n: '松纹剑', g: '兵器 · 剑', grade: '上乘', img: 'jian-qingfeng.png', p: 900, lv: 2, desc: '采苍崖后山寒铁所铸，剑身隐有古松纹理。',
       at: [['攻击', '17'], ['品阶', '上乘'], ['词条', '攻击 +2% · 会心率 +1%', null, true]] },
-    { n: '听涛剑', g: '兵器 · 剑', grade: '极品', p: 4800, lv: 5, desc: '剑成之日置于崖顶七夜，挥动时隐有松涛之声。',
+    { n: '听涛剑', g: '兵器 · 剑', grade: '极品', img: 'jian-longquan.png', p: 4800, lv: 5, desc: '剑成之日置于崖顶七夜，挥动时隐有松涛之声。',
       at: [['攻击', '76'], ['品阶', '极品'], ['词条', '攻击 +2% · 会心伤害 +2%', null, true]] } ] },
 };
 const LORE = {
@@ -526,6 +553,46 @@ function floatTab(lv, text, cls = '') {
 }
 
 /* ───────── 典籍院 / 天工库 ───────── */
+/* 典籍院：函套着色（武学麻布灰褐 / 绛紫 / 朱红描金，内功蓝 / 青 / 金，取自 gongfa.css 书封与 book-q1–q3.png 实测色）+ 书签竖写书名 */
+const BOOK_TINT = { wx1: 'rgb(118 96 70)', wx2: 'rgb(112 62 128)', wx3: 'rgb(196 70 38)', ng1: 'rgb(52 82 128)', ng2: 'rgb(70 136 128)', ng3: 'rgb(176 128 48)' };
+function drawBooks(sh, pick, owned) {
+  let tint = '', trim = '', html = '';
+  sh.slots.forEach((sl, i) => {
+    const it = sh.items[i], on = it && it.lv <= S.rank, [l, t, w, h] = sl.s;
+    if (on) {
+      const pts = sl.f.map(([x, y]) => `${x},${y}`).join(' L');
+      const sx = l * 20, sy = t * 13.9, sw = w * 20, shh = h * 13.9;
+      // 外框四角 + 反向的纸签矩形，evenodd 挖空纸签，题签保持米黄
+      tint += `<path fill-rule="evenodd" fill="${BOOK_TINT[(it.ng ? 'ng' : 'wx') + it.q]}" d="M${pts} Z M${sx},${sy} L${sx},${sy + shh} L${sx + sw},${sy + shh} L${sx + sw},${sy} Z"/>`;
+      if (!it.ng && it.q === 3) trim += `<path fill="none" stroke="rgb(150 110 40)" stroke-width="3" d="M${pts} Z"/><rect x="${sx - 4}" y="${sy - 4}" width="${sw + 8}" height="${shh + 8}" fill="none" stroke="rgb(170 125 45)" stroke-width="2"/>`;
+    }
+    const sel = on && it.n === pick, own = on && owned(it);
+    const chars = on ? it.n.length : 3;
+    const fs = `min(calc(var(--aw) * ${(w / 100 / (it && it.sub ? 1.75 : 1.6)).toFixed(4)}), calc(var(--ah) * ${(h / 100 / (chars + (it && it.sub ? 0.6 : 0.8))).toFixed(4)}))`;
+    const nm = on ? `<span class="nm" style="font-size:${fs}">${it.n}${it.sub ? `<small>${it.sub}</small>` : ''}</span>` : '';
+    const seal = own ? `<span class="sx-seal${S.fresh.has(it.n) ? ' pop' : ''}" style="font-size:calc(var(--aw) * ${(w / 100 * .36).toFixed(4)})">已得</span>` : '';
+    html += `<button class="sx-slot book${on ? ` on q${it.q}` : ''}${sel ? ' sel' : ''}${own ? ' own' : ''}" ${on ? `data-n="${it.n}"` : 'tabindex="-1" aria-hidden="true"'}
+      style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"><span class="halo"></span><span class="lit"></span>${nm}${seal}</button>`;
+  });
+  return `<svg class="sx-tint" viewBox="0 0 2000 1390" preserveAspectRatio="none">${tint}</svg>`
+    + `<svg class="sx-trim" viewBox="0 0 2000 1390" preserveAspectRatio="none" style="opacity:.55">${trim}</svg>` + html;
+}
+/* 天工库：两座陈列台，装备道具图（code/public/art/gear）顺着斜垫摆放 */
+const GEAR_ART = '../../code/public/art/gear/';
+function drawStands(sh, pick, owned) {
+  return sh.slots.map((sl, i) => {
+    const it = sh.items[i], on = it && it.lv <= S.rank, sel = on && it.n === pick, own = on && owned(it);
+    const [l, t, w, h] = sl.st, [px, py] = sl.pad;
+    const glow = `<span class="sx-padglow${on ? ' on' : ''}${sel ? ' sel' : ''}" ${on ? `data-for="${it.n}"` : ''} style="left:${px}%;top:${py}%;width:${sl.len * 1.6}%;height:${sl.len * 1.1 * R}%"></span>`;
+    if (!on) return `<span class="sx-standdim" style="left:${l}%;top:${t - 3}%;width:${w}%;height:${h + 3}%"></span>`;
+    // 道具图 199×320 竖放，剑尖朝上；旋转 72° 横躺、纵向压扁 0.55 贴合斜垫透视
+    const ware = `<span class="sx-ware" style="left:${px}%;top:${py}%;width:${(sl.len * 199 / 320).toFixed(2)}%;height:${(sl.len * R).toFixed(2)}%;--rot:74deg;--sy:.62"><i class="cs"></i><img src="${GEAR_ART}${it.img}" alt=""></span>`;
+    const plate = `<span class="sx-plate" style="left:${sl.nm[0]}%;top:${sl.nm[1]}%;font-size:calc(var(--aw) * .0135);color:${GRADE_COLOR[it.grade]}">${it.n}</span>`;
+    const seal = own ? `<span class="sx-stand-seal${S.fresh.has(it.n) ? ' pop' : ''}" style="left:${sl.sl[0]}%;top:${sl.sl[1]}%;font-size:calc(var(--aw) * .011)">已得</span>` : '';
+    return glow + ware + plate + seal + `<button class="sx-stand on${sel ? ' sel' : ''}" data-n="${it.n}" aria-label="${it.n}" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"></button>`;
+  }).join('');
+}
+
 function drawShop() {
   const sh = SHOPS[S.shop], k = sh.kind;
   const owned = it => S.owned.has(it.n);
@@ -534,28 +601,19 @@ function drawShop() {
   if (!open.find(it => it.n === pick)) pick = (open.find(it => !owned(it)) || open[0]).n;
   S.pick[S.shop] = pick;
   // 画中货位：按货架顺序装条目，未解锁 / 空位留白不亮
-  $('slots').innerHTML = sh.slots.map((sl, i) => {
-    const it = sh.items[i], on = it && it.lv <= S.rank, [l, t, w, h] = sl.s;
-    const sel = on && it.n === pick, own = on && owned(it);
-    const chars = on ? it.n.length : 3;
-    // 字号随货位透视缩放：受宽（残页多一列小字）与高（字数）双重约束
-    const fs = k === 'book'
-      ? `min(calc(var(--aw) * ${(w / 100 / (it && it.sub ? 1.75 : 1.6)).toFixed(4)}), calc(var(--ah) * ${(h / 100 / (chars + (it && it.sub ? 0.6 : 0.8))).toFixed(4)}))`
-      : `min(calc(var(--aw) * ${(w / 100 / 1.9).toFixed(4)}), calc(var(--ah) * ${(h / 100 * sl.n[1] / 100 / (chars + 0.6)).toFixed(4)}))`;
-    const nm = on ? `<span class="nm" style="font-size:${fs}${k === 'box' ? `;--nt:${sl.n[0]}%;--nh:${sl.n[1]}%` : ''}">${it.n}${it.sub ? `<small>${it.sub}</small>` : ''}</span>` : '';
-    const seal = own ? `<span class="sx-seal${S.fresh.has(it.n) ? ' pop' : ''}" style="font-size:calc(var(--aw) * ${(w / 100 * (k === 'book' ? .36 : .34)).toFixed(4)})">已得</span>` : '';
-    const tag = sl.t ? `<span class="sx-tagl${on ? ' on' : ''}${sel ? ' sel' : ''}" style="left:${sl.t[0]}%;top:${sl.t[1]}%;width:${sl.t[2]}%;height:${sl.t[3]}%"></span>` : '';
-    return `<button class="sx-slot ${k}${on ? ' on' : ''}${sel ? ' sel' : ''}${own ? ' own' : ''}" ${on ? `data-n="${it.n}"` : 'tabindex="-1" aria-hidden="true"'}
-      style="left:${l}%;top:${t}%;width:${w}%;height:${h}%${k === 'box' ? `;--nt:${sl.n[0]}%;--nh:${sl.n[1]}%` : ''}"><span class="halo"></span><span class="lit"></span>${nm}${seal}</button>${tag}`;
-  }).join('');
-  $('slots').querySelectorAll('.sx-slot.on').forEach(b => b.onclick = () => { S.pick[S.shop] = b.dataset.n; drawShop(); });
+  $('slots').innerHTML = k === 'book' ? drawBooks(sh, pick, owned) : drawStands(sh, pick, owned);
+  $('slots').querySelectorAll('[data-n]').forEach(b => {
+    b.onclick = () => { S.pick[S.shop] = b.dataset.n; drawShop(); };
+    const g = $('slots').querySelector(`.sx-padglow[data-for="${b.dataset.n}"]`);
+    if (g) { b.onmouseenter = () => g.classList.add('hov'); b.onmouseleave = () => g.classList.remove('hov'); }
+  });
   // 右侧卷宗：只写选中物
   const it = open.find(x => x.n === pick), own = owned(it), short = !own && S.bal < it.p;
   const title = it.n;
   const attrs = it.at.map(([a, v, tip, wide]) => `<div class="a${wide ? ' wide' : ''}"><dt>${a}</dt><dd${tip ? ` data-tip="${tip}"` : ''}>${v}</dd></div>`).join('')
     + (it.route ? `<div class="a"><dt>源流</dt><dd data-tip="${ROUTE_TIP[it.route]}"><span class="sx-chop">${it.route}</span></dd></div>` : '');
   $('shopInsc').innerHTML = `<div class="sx-card">
-      <h2 class="sx-big" style="font-size:${title.length > 4 ? 34 : 40}px${it.grade ? `;color:${GRADE_COLOR[it.grade]}` : ''}">${title}${it.sub ? `<small style="font-size:.55em;letter-spacing:.2em;margin-left:.4em;color:var(--muted)">${it.sub}</small>` : ''}</h2>
+      <h2 class="sx-big${it.q ? ` q${it.q}` : ''}" style="white-space:nowrap;font-size:${title.length > 4 ? 30 : 40}px;color:${it.grade ? GRADE_COLOR[it.grade] : 'var(--qc)'}">${title}${it.sub ? `<small style="font-size:.55em;letter-spacing:.2em;margin-left:.4em;color:var(--muted)">${it.sub}</small>` : ''}</h2>
       <div class="sx-tag">〔${it.g}〕</div>
       <p class="sx-desc">${it.desc}</p>
       <div class="sx-rule"></div>

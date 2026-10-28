@@ -1,0 +1,136 @@
+/* 前尘页（基准 docs/design/qianchen-xiang-prototype.html + DESIGN.md「前尘页」）
+ * 三段各一幅 AI 水墨画：底蕴「往世八相」、机缘江边挂签、侠名录「江湖百景」；代码只叠字与按钮。全部挂在 .qc 下，
+ * 画上坐标一律为画幅百分比（--pw 为画宽）。 */
+
+/* 页自带画：收起页底图，舞台去掉版心铺满 */
+html.qc-own-art .jh-art { display: none; }
+.jh-page:has(> .qc) { max-width: none; }
+.qc { position: relative; overflow: hidden; background: #0b0d12; height: 100vh; min-height: 560px;
+  margin: -30px calc(-1 * clamp(18px, 3.2vw, 48px)) -60px;
+  --paper-ink: oklch(0.22 0.02 60); --paper-mute: oklch(0.42 0.025 60); --paper-red: oklch(0.48 0.13 45);
+  --dim-gold: oklch(0.62 0.07 72); --lit-gold: oklch(0.84 0.12 82); }
+.qc.unready > * { visibility: hidden; }
+.qc-pic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; animation: qc-in .5s var(--ease-quart); }
+@keyframes qc-in { from { opacity: 0; } }
+.qc-pic > .bg { position: absolute; inset: 0; background: center / 100% 100% no-repeat; }
+/* 舞台偏高、画铺不满时：画的上下边羽化融进夜底，同战斗页舆图 */
+.qc.short .qc-pic > .bg, .qc.short .qc-ghosts { -webkit-mask: linear-gradient(to bottom, transparent, #000 9%, #000 86%, transparent); mask: linear-gradient(to bottom, transparent, #000 9%, #000 86%, transparent); }
+.qc-vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 30px #0b0d12;
+  background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .85), transparent 24%), linear-gradient(to top, oklch(0.1 0.01 262 / .55), transparent 18%); }
+
+/* ─── 页头：叠在画上 ─── */
+.qc-head { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
+.qc-head > * { pointer-events: auto; }
+.qc-head h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
+.qc-head .rep { font-size: 14px; color: var(--muted); letter-spacing: .1em; text-shadow: 0 1px 6px #000; }
+.qc-head .rep b { color: var(--ink); font-weight: 600; font-size: 16px; }
+.qc-seg { display: flex; gap: 28px; margin-top: 12px; }
+.qc-seg button { border: 0; background: none; cursor: pointer; padding: 6px 2px 9px; font-family: var(--font-display); font-size: 17px; letter-spacing: .3em; color: var(--muted); border-bottom: 2px solid transparent; text-shadow: 0 1px 6px #000; }
+.qc-seg button[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--ink-gold); }
+.qc-seg button:hover { color: var(--ink); }
+.qc-seg button:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+.qc-mult { margin-left: auto; text-align: right; }
+.qc-mult b { display: block; font-size: 30px; font-weight: 600; color: var(--gold); cursor: help; text-shadow: 0 2px 10px #000; }
+.qc-mult span { font-size: 12.5px; color: var(--muted); letter-spacing: .2em; }
+
+/* ─── 朱印按钮（AI 朱印上写价）：钱不够时去色半透，悬停由外层说还差多少 ─── */
+.qc-buy { display: block; width: 78%; margin-top: 8px; }
+.qc-seal { display: block; width: 100%; border: 0; cursor: pointer; padding: 0; aspect-ratio: 4 / 3; line-height: 1.1;
+  background: url('/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80);
+  font-family: var(--font-display); font-size: max(11px, 17cqw); font-weight: 700; transition: transform .15s, filter .2s, opacity .2s; }
+.qc-seal small { display: block; font-size: .72em; font-weight: 500; letter-spacing: .15em; }
+.qc-seal:hover:not(:disabled) { filter: brightness(1.12); transform: rotate(-3deg) scale(1.05); }
+.qc-seal:disabled { cursor: default; filter: grayscale(1) brightness(1.25); opacity: .5; pointer-events: none; }
+.qc-seal:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+
+/* ═══════ 底蕴 · 往世八相：实笔按级数显影在空景上 ═══════ */
+.qc-ghosts { position: absolute; inset: 0; pointer-events: none; }
+.qc-ghost { position: absolute; inset: 0; background: url('/art/qianchen/xiang-solid.jpg') center / 100% 100% no-repeat;
+  -webkit-mask: radial-gradient(ellipse var(--rx) var(--ry) at var(--cx) var(--cy), #000 55%, transparent 100%); mask: radial-gradient(ellipse var(--rx) var(--ry) at var(--cx) var(--cy), #000 55%, transparent 100%);
+  opacity: var(--op); filter: blur(var(--bl)) contrast(var(--ct)); transition: opacity .9s var(--ease-quart), filter .9s var(--ease-quart); }
+.qc-ghost.flare { animation: qc-flare 1.2s var(--ease-quart); }
+@keyframes qc-flare { 30% { filter: brightness(1.6) contrast(1.2); } }
+
+.qc-slip { position: absolute; transform: translate(-50%, 0); width: clamp(62px, calc(var(--pw) * .046), 80px);
+  background: url('/art/qianchen/xiang-slip.png') center / 100% 100% no-repeat; color: var(--paper-ink);
+  display: flex; flex-direction: column; align-items: center; padding: 40px 0 10px; filter: drop-shadow(0 6px 8px #000); container-type: inline-size; transition: transform .3s var(--ease-quart); }
+.qc-slip:hover { transform: translate(-50%, -3px); }
+.qc-slip .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: max(15px, 25cqw); letter-spacing: .05em; line-height: 1; cursor: help; }
+.qc-slip .lv { font-family: var(--font-display); font-weight: 700; font-size: max(17px, 30cqw); line-height: 1; margin-top: 9%; }
+.qc-slip .lv small { font-size: .5em; }
+.qc-slip .cur { margin-top: 8%; width: 108%; text-align: center; font-size: max(10.5px, 15cqw); font-weight: 600; white-space: nowrap; height: 2.1em; line-height: 2.1em;
+  background: url('/art/qianchen/band.png') center / 100% 100% no-repeat; color: oklch(0.93 0.02 80); }
+.qc-slip .nx { font-size: max(10px, 13.5cqw); color: var(--paper-mute); margin-top: 6%; text-align: center; line-height: 1.35; }
+.qc-slip .nx b { display: block; color: var(--paper-red); font-weight: 600; }
+
+/* 修行感悟：画中悬幅（AI 画的空白幅）上墨书 */
+.qc-banner { position: absolute; left: 89.3%; top: 15%; width: 7.4%; height: 30%; container-type: inline-size;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--paper-ink); }
+.qc-banner .t { font-family: var(--font-display); font-weight: 700; font-size: max(14px, 15cqw); letter-spacing: .15em; cursor: help; }
+.qc-banner .lv { font-family: var(--font-display); font-weight: 700; font-size: max(20px, 22cqw); margin-top: 6%; }
+.qc-banner .lv small { font-size: .5em; }
+.qc-banner .e { font-size: max(11px, 9.5cqw); margin-top: 4%; line-height: 1.6; }
+.qc-banner .e .n { color: var(--paper-mute); } .qc-banner .e .n b { color: var(--paper-red); }
+.qc-banner .qc-buy { width: 58%; margin-top: 8%; }
+.qc-banner .qc-seal { font-size: max(11px, 12cqw); }
+
+/* ═══════ 机缘 · 江边挂签：签顶落在 AI 画的两根绳上 ═══════ */
+.qc-jslip { position: absolute; transform: translate(-50%, 0); transform-origin: 50% 0; width: clamp(52px, calc(var(--pw) * .045), 76px);
+  background: url('/art/qianchen/xiang-slip.png') center / 100% 100% no-repeat; color: var(--paper-ink); container-type: inline-size;
+  display: flex; flex-direction: column; align-items: center; padding: 46px 0 10px; filter: drop-shadow(0 6px 8px #000); cursor: help;
+  animation: qc-sway 7s ease-in-out infinite; animation-delay: var(--dl); }
+@keyframes qc-sway { 0%, 100% { rotate: -1deg; } 50% { rotate: 1deg; } }
+.qc-jslip .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: max(14px, 23cqw); letter-spacing: .08em; line-height: 1; }
+.qc-jslip .ty { font-size: max(10px, 13cqw); color: var(--paper-mute); letter-spacing: .2em; margin-top: 7%; }
+.qc-jslip .qc-buy { width: 80%; }
+.qc-jslip .got { margin-top: 8px; width: 62%; aspect-ratio: 1; display: grid; place-items: center; transform: rotate(-8deg);
+  background: url('/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80); font-family: var(--font-display); font-weight: 700; font-size: max(14px, 26cqw); }
+.qc-jslip.stamp .got { animation: qc-stamp .45s var(--ease-quart); }
+@keyframes qc-stamp { 0% { transform: rotate(-8deg) scale(2.2); opacity: 0; } 100% { transform: rotate(-8deg) scale(1); opacity: 1; } }
+
+/* ═══════ 侠名录 · 江湖百景：二十二枚散在四处地界，同类暗金细线串连；一套金色分层 ═══════ */
+.qc-pic > .bg.map { filter: saturate(.7); }
+.qc-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 55% at 50% 50%, oklch(0.1 0.01 262 / .35), transparent 70%); }
+.qc-links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.qc-links path { fill: none; stroke: oklch(0.72 0.07 78 / .22); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.qc-links path.lit { stroke: oklch(0.8 0.11 80 / .55); stroke-dasharray: none; }
+.qc-node { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .036); display: flex; flex-direction: column; align-items: center;
+  border: 0; padding: 0; background: none; font: inherit; cursor: pointer; }
+.qc-node .em { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, oklch(0.1 0.01 262 / .5) 30%, oklch(0.1 0.01 262 / 0) 70%); }
+/* 徽记纹线先压成纯黑，再按档位调成阴刻暗印 / 暗金 / 亮金 */
+.qc-node .em img { position: absolute; inset: 12%; width: 76%; transition: transform .25s var(--ease-quart); }
+.qc-node.t0 .em img { filter: brightness(0) drop-shadow(0 1px 0 oklch(0.7 0.01 262 / .55)); opacity: .62; }
+.qc-node.t1 .em img { filter: brightness(0) invert(.55) sepia(1) saturate(1.6) hue-rotate(-6deg); }
+.qc-node.t2 .em img, .qc-node.t3 .em img { filter: brightness(0) invert(.86) sepia(1) saturate(2.6) hue-rotate(-8deg) drop-shadow(0 0 5px oklch(0.8 0.13 80 / .6)); }
+.qc-node .seal { position: absolute; right: -14%; bottom: -6%; width: 46%; aspect-ratio: 240 / 178; display: grid; place-items: center; transform: rotate(-10deg);
+  background: url('/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80); font-family: var(--font-display); font-weight: 700; font-size: max(9px, calc(var(--pw) * .0062)); }
+.qc-node .n { position: relative; isolation: isolate; margin-top: 3px; white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0078), 13px); letter-spacing: .08em; color: oklch(0.6 0.01 262); text-shadow: 0 0 6px #000, 0 0 3px #000; }
+.qc-node.t1 .n { color: oklch(0.72 0.06 75); } .qc-node.t2 .n, .qc-node.t3 .n { color: oklch(0.86 0.09 82); }
+.qc-node:hover .em img, .qc-node.sel .em img { transform: scale(1.12); }
+.qc-node.sel .em { box-shadow: 0 0 0 1px oklch(0.8 0.11 80 / .5); }
+.qc-node:focus-visible { outline: none; } .qc-node:focus-visible .em { box-shadow: 0 0 0 1.5px var(--gold); }
+.qc-zone { position: absolute; transform: translate(-50%, -50%); isolation: isolate; writing-mode: vertical-rl; font-family: var(--font-display); font-size: clamp(13px, calc(var(--pw) * .0105), 17px); letter-spacing: .4em;
+  color: oklch(0.8 0.07 78); text-shadow: 0 0 10px #000, 0 0 4px #000, 0 0 2px #000; pointer-events: none; }
+.qc-zone small { display: block; margin-top: .5em; font-family: var(--font-body); font-size: .72em; letter-spacing: .1em; color: var(--muted); }
+/* 字下垫一团晕开的墨，淡雾上也读得清（同战斗舆图的地名） */
+.qc-node .n::before, .qc-zone::before { content: ''; position: absolute; inset: -5px -12px; z-index: -1; border-radius: 50%;
+  background: radial-gradient(closest-side, oklch(0.12 0.012 262 / .8), oklch(0.12 0.012 262 / .45) 60%, transparent); filter: blur(4px); }
+.qc-zone::before { inset: -12px -8px; }
+
+/* 点选手卷（AI 水墨手卷）：左徽记，右「当前 / 下一重 / 解锁条件」 */
+.qc-card { position: absolute; z-index: 6; width: clamp(500px, calc(var(--pw) * .37), 620px); aspect-ratio: 1100 / 420; display: flex; align-items: center; gap: 4%; padding: 0 8% 0 7%;
+  background: url('/art/qianchen/xiaming-card.png') center / 100% 100% no-repeat; filter: drop-shadow(0 10px 24px #000);
+  animation: qc-card-in .2s var(--ease-quart); }
+@keyframes qc-card-in { from { opacity: 0; transform: translateY(6px); } }
+.qc-card img { flex: none; width: 17%; filter: brightness(0) invert(.86) sepia(1) saturate(2.6) hue-rotate(-8deg) drop-shadow(0 0 6px oklch(0.8 0.13 80 / .5)); }
+.qc-card.t0 img { filter: brightness(0) invert(.45); opacity: .7; }
+.qc-card.t1 img { filter: brightness(0) invert(.55) sepia(1) saturate(1.6) hue-rotate(-6deg); }
+.qc-card .tx { font-size: 15px; line-height: 1.9; color: var(--muted); letter-spacing: .03em; white-space: nowrap; text-shadow: 0 0 6px oklch(0.16 0.01 262), 0 0 2px oklch(0.16 0.01 262); }
+.qc-card .tx .nm { font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--gold); letter-spacing: .08em; margin-right: .5em; }
+.qc-card .tx em { font-style: normal; color: var(--ink); } .qc-card .tx .q { color: var(--ink-gold); }
+.qc-card .tx .full { color: var(--faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  .qc-pic, .qc-ghost.flare, .qc-jslip, .qc-jslip.stamp .got, .qc-card { animation: none; }
+  .qc-ghost, .qc-slip, .qc-seal, .qc-node .em img { transition-duration: .01s; }
+}

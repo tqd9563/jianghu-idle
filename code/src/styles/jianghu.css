@@ -23,48 +23,6 @@
 .jh-sect-foot { display: flex; justify-content: flex-end; align-items: center; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
 .jh-sect-foot .note { color: var(--faint); font-size: 12.5px; }
 
-/* ═══════ 声望阁 ═══════ */
-.jh-mult { text-align: right; }
-.jh-mult .v { font-size: 30px; font-weight: 600; color: var(--gold); line-height: 1.1; }
-.jh-mult .k { font-size: 12px; color: var(--faint); }
-.jh-guide { color: var(--ink-gold); font-size: 13.5px; margin: -8px 0 16px; }
-/* ═══════ 前尘：分段切换 / 修行感悟宽卡 / 底蕴八格（prestige-shop/design.md §5） ═══════ */
-.rep-seg { margin-bottom: 16px; }
-.rep-seg button { border: 0; background: none; border-radius: 8px; padding: 6px 18px; font-family: var(--font-display); font-size: 14.5px; letter-spacing: 0.2em; color: var(--muted); cursor: pointer; }
-.rep-seg button[aria-selected="true"] { background: var(--wash-2); color: var(--ink); }
-.jh-gw { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 20px; align-items: center; }
-.jh-gw .n { font-size: 16px; letter-spacing: 0.12em; cursor: help; }
-.jh-gw .big { font-family: var(--font-display); font-size: 36px; font-weight: 700; line-height: 1; }
-.jh-gw .big small { font-family: var(--font-body); font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
-.jh-gw .e { color: var(--muted); font-size: 13px; }
-.jh-gw .e b { color: var(--ink); font-weight: 600; }
-.jh-gw .e .nx { margin-left: 14px; }
-.jh-diyun { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
-.jh-diyun .tile { border-radius: 10px; padding: 14px 14px 12px; background: oklch(0.18 0.012 262 / 0.45); display: grid; gap: 5px; align-content: start; }
-.jh-diyun .n { font-size: 15px; letter-spacing: 0.1em; cursor: help; }
-.jh-diyun .big { font-family: var(--font-display); font-size: 32px; font-weight: 700; line-height: 1; margin-top: 2px; }
-.jh-diyun .big small { font-family: var(--font-body); font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
-.jh-diyun .e { color: var(--muted); font-size: 12.5px; display: grid; gap: 1px; }
-.jh-diyun .e b { color: var(--ink); font-weight: 600; }
-.jh-diyun .e .nx { color: var(--faint); }
-.jh-diyun .e .nx b { color: var(--ink-gold); }
-.jh-diyun .btns { display: grid; gap: 4px; margin-top: 8px; }
-.jh-diyun .btns .jh-btn2 { width: 100%; }
-.jh-diyun .btns small { font-size: 11.5px; color: var(--faint); text-align: center; }
-/* 侠名录：徽记网格（prestige-shop/design.md §5 4b；品质在材质上，不加框、不写字） */
-.jh-achv { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
-.jh-achv .ach { border-radius: 10px; padding: 14px 10px 12px; background: oklch(0.18 0.012 262 / 0.45); display: grid; justify-items: center; gap: 8px; text-align: center; cursor: help; }
-.jh-achv .ic { width: 64px; height: 64px; object-fit: contain; filter: grayscale(1) brightness(0.45); transition: filter .3s var(--ease-sharp, ease-out); }
-.jh-achv .ach.t1 .ic, .jh-achv .ach.t2 .ic { filter: none; }
-.jh-achv .ach.t3 .ic { filter: drop-shadow(0 0 10px oklch(0.8 0.14 85 / 0.5)); }
-.jh-achv .n { font-size: 13.5px; letter-spacing: 0.06em; color: var(--faint); line-height: 1.3; }
-.jh-achv .t1 .n { color: oklch(0.80 0.07 55); }
-.jh-achv .t2 .n { color: oklch(0.88 0.01 240); }
-.jh-achv .t3 .n { color: var(--gold); }
-@media (max-width: 860px) { .jh-achv { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: reduce) { .jh-achv .ic { transition: none; } }
-@media (max-width: 860px) { .jh-diyun { grid-template-columns: repeat(2, minmax(0, 1fr)); } .jh-gw { grid-template-columns: minmax(0, 1fr); } }
-.jh-card.jh-card-gap { margin-top: 14px; }
 
 /* ═══════ 整屏演出：出关 / 转世（jh-ceremony 共享，这里只补页专属块） ═══════ */
 .jh-ceremony > div { max-width: 640px; width: 100%; }

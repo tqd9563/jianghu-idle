@@ -141,6 +141,8 @@ button { font: inherit; color: inherit; }
 /* 侠名录（新）· 江湖百景：二十二枚按性质散落在四处地界，同簇以暗金细线串连；
    色系只用暗金 → 亮金 → 亮金加朱印，未得为石上阴刻暗印；悬停在底部详情栏说明 */
 .pic > .bg.map { filter: brightness(.7) contrast(.84) saturate(.6); }
+/* 浓墨版：底图已按底蕴 / 机缘的墨色调过（gamma 1.3、去饱和），不再叠滤镜 */
+.pic > .bg.map.ink { filter: none; background-image: url('../../code/public/art/qianchen/xiaming-map-ink.jpg') !important; }
 .zone-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 55% at 50% 50%, oklch(0.1 0.01 262 / .35), transparent 70%); }
 .links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .links path { fill: none; stroke: oklch(0.72 0.07 78 / .22); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
@@ -188,7 +190,7 @@ button { font: inherit; color: inherit; }
 <main class="stage" id="stage">
   <div class="scene" id="sc-diyun"><div class="pic"><div class="empty"></div><div id="ghosts" class="ghost-wrap" style="position:absolute;inset:0"></div><div class="banner" id="banner"></div><div id="slips"></div></div></div>
   <div class="scene off" id="sc-jiyuan"><div class="pic"><div class="bg" style="background-image:url('../../code/public/art/qianchen/jiyuan.jpg')"></div><div id="jslips"></div></div></div>
-  <div class="scene off" id="sc-xiaming2"><div class="pic"><div class="bg map" style="background-image:url('../../code/public/art/qianchen/xiaming-map.jpg')"></div><div class="zone-veil"></div><svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div id="nodes"></div></div><div class="xcard" id="xcard"></div></div>
+  <div class="scene off" id="sc-xiaming2"><div class="pic"><div class="bg map ink" id="xmBg" style="background-image:url('../../code/public/art/qianchen/xiaming-map.jpg')"></div><div class="zone-veil"></div><svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div id="nodes"></div></div><div class="xcard" id="xcard"></div></div>
   <div class="scene off" id="sc-xiaming"><div class="pic"><div class="bg" style="background-image:url('../../code/public/art/qianchen/xiaming-cliff.jpg')"></div><div class="cliff-title">侠名录</div><div id="carves"></div></div></div>
   <div class="vig"></div>
   <div class="head">
@@ -375,8 +377,9 @@ function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el
 function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); draw(); document.querySelectorAll('.proto > button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
 Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
 const xv = document.createElement('span'); xv.id = 'xmv'; xv.style.display = 'none';
-xv.innerHTML = '｜侠名录 <button data-x="new" class="on">新 · 江湖百景</button><button data-x="old">旧 · 摩崖</button>'; $('proto').appendChild(xv);
-xv.querySelectorAll('button').forEach(b => b.onclick = () => { xmVer = b.dataset.x; xv.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); showScene(); });
+xv.innerHTML = '｜侠名录 <button data-x="new" class="on">新 · 江湖百景</button><button data-x="old">旧 · 摩崖</button>｜墨色 <button data-ink="1" class="on">浓墨</button><button data-ink="0">原调</button>'; $('proto').appendChild(xv);
+xv.querySelectorAll('button[data-ink]').forEach(b => b.onclick = () => { $('xmBg').classList.toggle('ink', b.dataset.ink === '1'); xv.querySelectorAll('button[data-ink]').forEach(x => x.classList.toggle('on', x === b)); });
+xv.querySelectorAll('button[data-x]').forEach(b => b.onclick = () => { xmVer = b.dataset.x; xv.querySelectorAll('button[data-x]').forEach(x => x.classList.toggle('on', x === b)); showScene(); });
 document.addEventListener('click', e => { if (!e.target.closest('#xcard')) openCard(null); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') openCard(null); });
 place(); load('mid');

@@ -96,17 +96,20 @@ button { font: inherit; color: inherit; }
 .tag .ic { width: 70%; aspect-ratio: 1; object-fit: contain; margin: 2px 0 2px; opacity: .88; }
 .tag .lv { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.1; margin-top: 2px; }
 .tag .lv small { font-size: 12px; margin-left: 1px; font-weight: 500; }
-.tag .cur { font-size: 12.5px; margin-top: 4px; white-space: nowrap; }
+.tag .cur { margin-top: 5px; white-space: nowrap; font-size: 12.5px; font-weight: 600; padding: 0 10px; height: 26px; line-height: 26px; min-width: 88%; text-align: center;
+  background: url('../../code/public/art/qianchen/band.png') center / 100% 100% no-repeat; color: oklch(0.93 0.02 80); }
+.tag .cur i { font-style: normal; font-size: .82em; font-weight: 400; opacity: .75; margin-right: 2px; }
+body.cur-chip .tag .cur { background-image: url('../../code/public/art/qianchen/chip.png'); color: var(--paper-ink); padding: 0 13px; }
 .tag .nm.long { font-size: 16px; }
 .tag .nx { font-size: 12px; color: var(--paper-mute); line-height: 1.35; text-align: center; margin-top: 2px; }
 .tag .nx b { display: block; color: oklch(0.5 0.13 50); font-weight: 600; font-size: 13px; }
-.seal-btn { margin-top: 8px; border: 0; cursor: pointer; padding: 5px 0 4px; width: 66%; min-width: 50px; border-radius: 3px; line-height: 1.15;
-  background: var(--seal-red); color: oklch(0.95 0.02 85); font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: .04em;
-  box-shadow: inset 0 0 0 1.5px oklch(0.95 0.02 85 / .35), 0 1px 0 oklch(0.3 0.05 30); transition: transform .15s, filter .2s; }
+.seal-btn { margin-top: 8px; border: 0; cursor: pointer; padding: 0; width: 64px; height: 48px; line-height: 1.12;
+  background: url('../../code/public/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80); font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: .04em;
+  text-shadow: 0 0 2px oklch(0.35 0.08 28 / .6); transition: transform .15s, filter .2s, opacity .2s; }
 .seal-btn small { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; }
-.seal-btn:hover:not(:disabled) { filter: brightness(1.15); transform: rotate(-2deg) scale(1.04); }
+.seal-btn:hover:not(:disabled) { filter: brightness(1.1) saturate(1.1); transform: rotate(-2deg) scale(1.04); }
 .seal-btn:active:not(:disabled) { transform: scale(.94); }
-.seal-btn:disabled { background: oklch(0.55 0.02 60 / .55); color: oklch(0.88 0.01 60); cursor: default; box-shadow: inset 0 0 0 1px oklch(0.95 0.02 85 / .25); }
+.seal-btn:disabled { cursor: default; filter: grayscale(1) contrast(.8) brightness(1.25); opacity: .55; color: oklch(0.96 0.005 80); }
 .seal-btn:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 
 /* 修行感悟：悬幅上墨书；香炉烟随级数变浓 */
@@ -117,10 +120,16 @@ button { font: inherit; color: inherit; }
 .banner .lv small { font-size: 13px; }
 .banner .e { font-size: 13px; margin-top: 4px; line-height: 1.5; }
 .banner .e b { font-weight: 600; } .banner .e .n { color: var(--paper-mute); } .banner .e .n b { color: oklch(0.5 0.13 50); }
-.smoke { position: absolute; left: calc(var(--aw) * .465); top: calc(var(--ah) * .3); width: calc(var(--aw) * .1); height: calc(var(--ah) * .3); transform: translateX(-50%); pointer-events: none; opacity: var(--sm); mix-blend-mode: screen; }
-.smoke i { position: absolute; bottom: 0; left: 50%; width: 40%; height: 100%; border-radius: 50%; filter: blur(10px);
-  background: linear-gradient(to top, oklch(0.85 0.01 262 / .5), transparent); animation: rise 6s ease-in-out infinite; animation-delay: var(--d); }
-@keyframes rise { 0% { transform: translate(-50%, 20%) scaleX(.4); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(calc(-50% + var(--x)), -30%) scaleX(1.2); opacity: 0; } }
+.smoke { position: absolute; left: calc(var(--aw) * .465); top: calc(var(--ah) * .555); width: 0; height: 0; pointer-events: none; z-index: 1; }
+/* 一缕：从香头升起，边升边向一侧飘散、放大、淡去；几缕错开循环 */
+.smoke img { position: absolute; left: 0; bottom: 0; width: calc(var(--aw) * .085); transform-origin: 50% 100%; opacity: 0;
+  margin-left: calc(var(--aw) * -.0425 + var(--x0)); animation: drift var(--t) linear infinite; animation-delay: var(--d); }
+@keyframes drift {
+  0%   { transform: translate(0, 0) scale(.55, .45) rotate(0); opacity: 0; filter: blur(0); }
+  15%  { opacity: var(--o); }
+  55%  { transform: translate(calc(var(--dx) * .35), calc(var(--aw) * -.05)) scale(.95, 1) rotate(calc(var(--r) * .35)); opacity: calc(var(--o) * .8); }
+  100% { transform: translate(var(--dx), calc(var(--aw) * var(--dy))) scale(1.9, 1.5) rotate(var(--r)); opacity: 0; filter: blur(3px); }
+}
 
 /* ═══ 机缘：签架上两排竹签 ═══ */
 .beam { position: absolute; left: calc(var(--aw) * .085); right: calc(var(--aw) * .085); height: 10px; border-radius: 3px;
@@ -222,7 +231,7 @@ body.ledger.sub-diyun .art { opacity: 0; }
   </div>
 
   <div class="layer" id="L-diyun">
-    <div class="smoke" id="smoke"><i style="--d:0s;--x:-12px"></i><i style="--d:-2s;--x:14px"></i><i style="--d:-4s;--x:-4px"></i></div>
+    <div class="smoke" id="smoke"></div>
     <div class="banner" id="banner"></div>
     <div id="lamps"></div>
   </div>
@@ -301,7 +310,7 @@ function drawDiyun() {
       + `<div class="nm${name.length > 2 ? ' long' : ''}" data-tip="散功重修，根骨不失，随神魂带到来世">${name}</div>`
       + `<img class="ic" src="${A}qianchen/ic-${id}.png" alt="">`
       + `<div class="lv">${n}<small>级</small></div>`
-      + `<div class="cur">现 +${fmtV(cum(f, n), k)}</div>`
+      + `<div class="cur"><i>现</i>+${fmtV(cum(f, n), k)}</div>`
       + `<div class="nx">下一级<b>+${fmtV(gainAt(f, n + 1), k)}</b></div>`
       + `<button class="seal-btn" data-i="${i}" ${can ? '' : 'disabled'} ${can ? '' : `data-tip="还差 ${p - st.rep} 声望"`}>${p}<small>声望</small></button></div>`;
   }).join('');
@@ -309,7 +318,12 @@ function drawDiyun() {
   $('banner').innerHTML = `<div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
     + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div>`
     + `<button class="seal-btn" id="gwBtn" style="width:62%" ${gcan ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button>`;
-  $('smoke').style.setProperty('--sm', Math.min(1, 0.25 + st.gw * 0.04));
+  // 香烟：缕数与浓度随修行感悟级数；三支香头各起一缕，往上升起后向两侧飘散
+  const nW = st.gw === 0 ? 2 : Math.min(9, 3 + Math.round(st.gw / 3)), op = Math.min(1, .7 + st.gw * .02);
+  $('smoke').innerHTML = Array.from({ length: nW }, (_, i) => {
+    const side = i % 2 ? 1 : -1, x0 = [-8, 0, 8][i % 3], spread = 90 + ((i * 41) % 110);
+    return `<img src="${A}qianchen/smoke-${i % 2 ? 'b' : 'a'}.png" alt="" style="--x0:${x0}px;--t:${8 + (i % 3) * 1.5}s;--d:${-(i * 9 / nW).toFixed(2)}s;--dx:${side * spread}px;--dy:${-(0.16 + (i % 3) * 0.04).toFixed(2)};--r:${side * (14 + (i * 7) % 18)}deg;--o:${op.toFixed(2)}">`;
+  }).join('');
   document.querySelectorAll('#lamps .seal-btn').forEach(b => b.onclick = () => {
     const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return;
     st.rep -= p; st.lv[i]++; drawAll();
@@ -390,6 +404,9 @@ function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el
 function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); drawAll(); document.querySelectorAll('.proto button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
 Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
 $('proto').appendChild(Object.assign(document.createElement('span'), { textContent: '｜对比' }));
+const cb = document.createElement('button'); cb.textContent = '现值签：墨痕';
+cb.onclick = () => { const on = document.body.classList.toggle('cur-chip'); cb.textContent = on ? '现值签：纸签' : '现值签：墨痕'; cb.classList.toggle('on', on); };
+$('proto').appendChild(cb);
 const cmp = document.createElement('button'); cmp.textContent = '底蕴：灵台魂灯';
 cmp.onclick = () => { const on = document.body.classList.toggle('ledger'); cmp.textContent = on ? '底蕴：前尘账册' : '底蕴：灵台魂灯'; cmp.classList.toggle('on', on); sub = 'diyun'; drawHead(); };
 $('proto').appendChild(cmp);

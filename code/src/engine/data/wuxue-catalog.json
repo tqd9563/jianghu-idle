@@ -358,7 +358,7 @@
   },
   {
    "id": "cangyajianjue",
-   "source": "华山",
+   "source": "苍崖派",
    "name": "苍崖九叠剑",
    "quality": "绝学",
    "cat": "剑",
@@ -383,7 +383,7 @@
   },
   {
    "id": "luoxingjian",
-   "source": "华山",
+   "source": "苍崖派",
    "name": "落星沉海剑",
    "quality": "绝学",
    "cat": "剑",
@@ -593,7 +593,7 @@
   },
   {
    "id": "tianhedaoxuandao",
-   "source": "崆峒",
+   "source": "鸣沙教",
    "forms": [
     "星河初转",
     "银汉无声",
@@ -834,7 +834,7 @@
   },
   {
    "id": "bawangxiejiaqiang",
-   "source": "雁门世家",
+   "source": "苍梧派",
    "forms": [
     "楚歌四起",
     "力拔山兮",
@@ -1065,7 +1065,7 @@
   },
   {
    "id": "luohanfumogun",
-   "source": "少林",
+   "source": "千岩寺",
    "name": "罗汉伏魔棍",
    "quality": "绝学",
    "cat": "棍",
@@ -1090,7 +1090,7 @@
   },
   {
    "id": "xiangmochufa",
-   "source": "少林",
+   "source": "擎天门",
    "name": "金刚降魔杵",
    "quality": "绝学",
    "cat": "棍",
@@ -1116,7 +1116,7 @@
   },
   {
    "id": "lianhualuodigun",
-   "source": "丐帮",
+   "source": "擎天门",
    "forms": [
     "檀板初鸣",
     "踏歌而行",
@@ -1343,7 +1343,7 @@
   },
   {
    "id": "zhenwudangmoquan",
-   "source": "武当",
+   "source": "乾元观",
    "forms": [
     "真武披发",
     "玄武负山",
@@ -1574,7 +1574,7 @@
   },
   {
    "id": "qianshesixinzhang",
-   "source": "百蛊门",
+   "source": "千蛇窟",
    "forms": [
     "蛇蜕新衣",
     "群蛇出窟",
@@ -1617,7 +1617,7 @@
   },
   {
    "id": "hanchanqiqiezhang",
-   "source": "峨眉",
+   "source": "千蛇窟",
    "forms": [
     "对长亭晚",
     "骤雨初歇",
@@ -2230,7 +2230,7 @@
   },
   {
    "id": "luoyingfeizhen",
-   "source": "唐门",
+   "source": "花影坊",
    "name": "落英缤纷针",
    "quality": "绝学",
    "cat": "暗器",
@@ -2255,7 +2255,7 @@
   },
   {
    "id": "qianjibiao",
-   "source": "唐门",
+   "source": "花影坊",
    "name": "牵机引魂镖",
    "quality": "绝学",
    "cat": "暗器",

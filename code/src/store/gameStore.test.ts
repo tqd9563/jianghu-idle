@@ -304,7 +304,7 @@ describe('gameStore · 归隐与声望阁', () => {
       realm: 3, route: 'huashan', neigong: 'jingleijue', zhong: 4, tiersPassed: 1, peakRealm: 3,
       clearedStages: [...m1all], lifeWeightedHours: 2, reputation: 0,
       ownedRepNodes: ['bizhou_zizhen', 'kegu_mingxin', 'renzu_guizong', 'jiaqing_jiushu'],
-      worn: { 暗器: worse, 兵器: best }, sect: 'huashan',
+      worn: { 暗器: worse, 兵器: best }, sect: 'cangya', contrib: 900, contribTotal: 1500, sectRank: 4,
       ownedWuxue: ['liuyunjian', 'qingpingjian'], equipped: ['liuyunjian', 'qingpingjian'],
       formCasts: { 'liuyunjian:1': 250, 'qingpingjian:1': 250 },
       diyun: { ...freshDiyun(), qixue: 2 },
@@ -319,7 +319,12 @@ describe('gameStore · 归隐与声望阁', () => {
     expect(s.equipped).toEqual(['liuyunjian']);
     expect(s.formCasts).toEqual({ 'liuyunjian:1': 250 });   // 主修原样带走，其它武学熟练清零
     expect(learnedFormsOfStore(s, 'liuyunjian')).toEqual([1, 2]);
-    expect(s.sect).toBe('huashan');
+    // 认祖归宗：拜回苍崖派、保留二级地位，新一世开篇记一笔拜入
+    expect(s.sect).toBe('cangya');
+    expect(s.sectRank).toBe(2);
+    expect(s.contribTotal).toBe(250);
+    expect(s.contrib).toBe(0);
+    expect(s.lives[s.lives.length - 1].events).toEqual([{ k: 'sect', y: expect.any(Number), sect: '苍崖派' }]);
     expect(s.diyun.qixue).toBe(2);
     // 驾轻就熟：转世后再选内功，首段台阶视为已过
     useGameStore.getState().selectNeigong('jingleijue');
@@ -1237,7 +1242,7 @@ describe('武学（sect-neigong/spec.md §2 / §4）', () => {
   });
 });
 
-describe('门派（sect-neigong/spec.md §5）', () => {
+describe('门派（sect-overhaul/design.md §4 §5，spec.md §2–§5）', () => {
   const st = () => useGameStore.getState();
   beforeEach(() => {
     vi.useRealTimers();
@@ -1245,58 +1250,69 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     resetTelemetry();
   });
 
-  it('境界 3 起拜入，一世只拜一派；转世清空门派与贡献、换得的秘籍保留', () => {
+  it('境界 3 起拜入，一世只拜一派；转世清空门派、贡献、地位与本门装备记录，换得的秘籍保留', () => {
     useGameStore.setState({ realm: 2 });
-    st().joinSect('shaolin');
+    st().joinSect('qianshe');
     expect(st().sect).toBeNull();
     useGameStore.setState({ realm: 3, neigong: 'jingleijue', route: 'huashan', mapsUnlocked: [1, OUT1, GATE1, VOLUMES[1].maps[0]] });
-    st().joinSect('shaolin');                 // 不受路数限制；少林在卷二，到了两淮才拜得上
-    st().joinSect('tangmen');                 // 不设叛出
-    expect(st().sect).toBe('shaolin');
-    useGameStore.setState({ contrib: 1000 });
-    st().buySectItem('sect:luohanfumogun:1');   // 第一式那一页 420 → 得这门武学
-    st().buySectItem('sect:luohanfumogun:1');   // 已有不再卖
-    expect(st().ownedWuxue).toContain('luohanfumogun');
-    expect(st().contrib).toBe(1000 - 420);
-    st().startSectTask('short');
+    st().joinSect('qianshe');                 // 不受源流限制；千蛇窟在卷二，到了两淮才拜得上
+    st().joinSect('cangya');                  // 不设叛出
+    expect(st().sect).toBe('qianshe');
+    useGameStore.setState({ contrib: 1000, contribTotal: 1300, sectRank: 4, sectGearBought: ['qianshe-low'] });
+    st().buySectItem('sect:qianshesixinzhang:1');   // 绝学第一式那一页 800 → 得这门武学
+    st().buySectItem('sect:qianshesixinzhang:1');   // 已有不再卖
+    expect(st().ownedWuxue).toContain('qianshesixinzhang');
+    expect(st().contrib).toBe(1000 - 800);
+    st().startSectTask(1, 2);
     st().openRetire(); st().proceedRetire(); st().confirmRetire();
     expect(st().run).toBe(2);
     expect(st().sect).toBeNull();
     expect(st().contrib).toBe(0);
+    expect(st().contribTotal).toBe(0);
+    expect(st().sectRank).toBe(1);
+    expect(st().sectGearBought).toEqual([]);
     expect(st().sectTask).toBeNull();
-    expect(st().ownedWuxue).toContain('luohanfumogun');
-    expect(st().pages).toEqual(['luohanfumogun:1']);
+    expect(st().ownedWuxue).toContain('qianshesixinzhang');
+    expect(st().pages).toEqual(['qianshesixinzhang:1']);
     expect(getEvents().filter((e) => e.e === 'sect_joined')).toHaveLength(1);
   });
 
-  it('任务同时只跑一件；到点在线自动结算，离线照常计时', () => {
+  it('差事：档位不超过地位，同时只跑一件；到点在线自动结算、累计贡献够了升地位，离线照常计时', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
     st().hardReset();
-    useGameStore.setState({ realm: 3, sect: 'huashan' });
-    st().startSectTask('short');
-    st().startSectTask('long');
-    expect(st().sectTask?.kind).toBe('short');
+    useGameStore.setState({ realm: 3, sect: 'cangya' });
+    st().startSectTask(2, 2);                 // 一级地位派不了二档
+    expect(st().sectTask).toBeNull();
+    st().startSectTask(1, 2);
+    st().startSectTask(1, 8);
+    expect(st().sectTask).toMatchObject({ tier: 1, hours: 2 });
     vi.setSystemTime(1_000_000_000 + 2 * 3600 * 1000);
     st().tick(Date.now());
     expect(st().sectTask).toBeNull();
     expect(st().contrib).toBe(40);
-    // 下线前派长差，9 小时后上线
-    st().startSectTask('long');
+    expect(st().contribTotal).toBe(40);
+    expect(st().sectRank).toBe(1);
+    // 下线前派 8 小时差事（一档 120），9 小时后上线：累计 360 跨过二级门槛 250
+    useGameStore.setState({ contribTotal: 240 });
+    st().startSectTask(1, 8);
     saveGame(st());
     vi.setSystemTime(Date.now() + 9 * 3600 * 1000);
     useGameStore.setState({ started: false });
     st().init();
     expect(st().sectTask).toBeNull();
     expect(st().contrib).toBe(160);
+    expect(st().contribTotal).toBe(360);
+    expect(st().sectRank).toBe(2);
+    expect(st().offlineSectDone).toEqual({ tier: 1, hours: 8, contrib: 120 });
     vi.useRealTimers();
   });
 
-  it('贡献商店（W2 只换残页）：一式一页，第 2–7 式要先得这门武学；归真卷册要先有本派绝学内功', () => {
-    useGameStore.setState({ realm: 3, sect: 'huashan', contrib: 5000 });
+  it('货架（W2 只换残页）：一式一页，第 2–7 式要先得这门武学；归真卷册要先有镇派内功', () => {
+    useGameStore.setState({ realm: 3, sect: 'cangya', contrib: 6000, sectRank: 5 });
     st().buySectItem('sect:cangyajianjue:5');     // 未得苍崖九叠剑
     st().buySectItem('sect:juance:yuntaixinfa');  // 未得沧溟真经
-    expect(st().contrib).toBe(5000);
+    expect(st().contrib).toBe(6000);
     st().buySectItem('sect:cangyajianjue:1');
     expect(st().ownedWuxue).toEqual(['cangyajianjue']);
     st().buySectItem('sect:cangyajianjue:5');     // 不必按顺序换
@@ -1307,10 +1323,47 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(st().pages).toEqual(['cangyajianjue:1', 'cangyajianjue:5', 'cangyajianjue:2']);
     expect(st().ownedScrolls).toEqual(['juance:yuntaixinfa']);
     expect(st().ownedNeigong).toContain('yuntaixinfa');
-    expect(st().contrib).toBe(5000 - 420 - 360 - 200 - 600 - 500);
+    expect(st().contrib).toBe(6000 - 800 - 600 - 400 - 1950 - 1300);
     // 有一、二、五式：第一式圆满后只接得上第二式，第五式被缺的三、四式隔开
     useGameStore.setState({ formCasts: { 'cangyajianjue:1': 999, 'cangyajianjue:2': 999 } });
     expect(learnedFormsOfStore(st(), 'cangyajianjue')).toEqual([1, 2]);
+  });
+
+  it('地位不够的货换不了；寻常整门 100 直接入账；兼修内功按其档位解锁', () => {
+    useGameStore.setState({ realm: 3, sect: 'cangya', contrib: 5000, sectRank: 1 });
+    st().buySectItem('sect:leimingjianjing');     // 进阶内功要三级
+    st().buySectItem('sect:feiquanjue');          // 兼修进阶也要三级
+    st().buySectItem('sect:feipuduanyajian:1');   // 上乘残页要二级
+    expect(st().contrib).toBe(5000);
+    st().buySectItem('sect:qingpingjian:book');
+    expect(st().ownedWuxue).toEqual(['qingpingjian']);
+    expect(st().contrib).toBe(4900);
+    useGameStore.setState({ sectRank: 3 });
+    st().buySectItem('sect:feiquanjue');
+    expect(st().ownedNeigong).toContain('feiquanjue');
+    expect(st().contrib).toBe(3900);
+  });
+
+  it('本门装备：极品、等级跟前沿走（高档 +0.5）、固定一条本门词条；一世每件只换一次，行囊放不下不卖', () => {
+    useGameStore.setState({ realm: 3, sect: 'cangya', contrib: 5000, sectRank: 5, clearedStages: [...m1all], bag: [] });
+    const level = frontierStageOf(st()).x ?? 1;
+    st().buySectItem('sect:gear:cangya-low');
+    expect(st().bag).toHaveLength(1);
+    expect(st().bag[0]).toMatchObject({ name: '松纹剑', img: 'jian-qingfeng', slot: '兵器', cat: '剑', grade: 5, level });
+    expect(st().bag[0].afx.map(([k]) => k)).toContain('crit');
+    expect(st().bag[0].afx).toHaveLength(4);
+    expect(st().contrib).toBe(5000 - 480);
+    expect(st().sectGearBought).toEqual(['cangya-low']);
+    st().buySectItem('sect:gear:cangya-low');     // 一世一件
+    expect(st().bag).toHaveLength(1);
+    st().buySectItem('sect:gear:cangya-high');
+    expect(st().bag[1]).toMatchObject({ name: '听涛剑', grade: 5, level: level + 0.5 });
+    expect(st().contrib).toBe(5000 - 480 - 1300);
+    // 行囊塞满：不卖、不扣贡献
+    useGameStore.setState({ sect: 'qianyan', sectGearBought: [], contrib: 5000, bag: Array.from({ length: 40 }, () => rollGear({ grade: 1, level: 1, clearSilver: 10, slot: '衣甲' }, () => 0.3)) });
+    st().buySectItem('sect:gear:qianyan-low');
+    expect(st().bag).toHaveLength(40);
+    expect(st().contrib).toBe(5000);
   });
 
   it('归真：有卷册才判顿悟', () => {
@@ -1319,44 +1372,47 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     expect(zhongGate({ ...s, ownedScrolls: ['juance:yuntaixinfa'] })?.needScroll).toBe(false);
   });
 
-  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 48 次，拜华山即到「熟练」档（耗气 ×0.92；触发与倍率不变）', () => {
+  it('本门绝学熟练阈值 ×0.8：苍崖九叠剑第一式出 48 次，拜苍崖派即到「熟练」档（耗气 ×0.92；触发与倍率不变）', () => {
     const base = {
       realm: 4, neigong: 'shiguxinfa' as const, zhong: 10, ownedWuxue: ['cangyajianjue' as const], ownedScrolls: [],
       equipped: ['cangyajianjue' as const], formCasts: { 'cangyajianjue:1': 48 }, pages: ['cangyajianjue:1'],
     };
-    const lo = (sect: 'huashan' | 'shaolin' | null) => buildLoadout({ ...base, sect })[0];
+    const lo = (sect: 'cangya' | 'qianyan' | null) => buildLoadout({ ...base, sect })[0];
     const cost = WUXUE.cangyajianjue.cost;
-    expect(lo('huashan').forms[0].cost).toBe(Math.round(cost / 10 * 0.92) * 10);   // 按 sim 尺度取整再 × QI_SCALE
+    expect(lo('cangya').forms[0].cost).toBe(Math.round(cost / 10 * 0.92) * 10);   // 按 sim 尺度取整再 × QI_SCALE
     expect(lo(null).forms[0].cost).toBe(cost);
-    expect(lo('shaolin').forms[0].cost).toBe(cost);
-    expect(lo('huashan').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);
-    expect(lo('huashan').p).toBeCloseTo(WUXUE.cangyajianjue.p, 9);   // 触发几率不随熟练变（裁决 45）
+    expect(lo('qianyan').forms[0].cost).toBe(cost);
+    expect(lo('cangya').forms[0].mult).toBeCloseTo(lo(null).forms[0].mult, 9);
+    expect(lo('cangya').p).toBeCloseTo(WUXUE.cangyajianjue.p, 9);   // 触发几率不随熟练变（裁决 45）
   });
 
-  it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次；初到卷三 / 卷四各说一次新派', () => {
-    useGameStore.setState({ rumorPending: 1 });
+  it('拜山传闻：突破入境界 2 后的下一场战斗记录说一次卷二三家', () => {
+    useGameStore.setState({ rumorPending: 2 });
     st().challengeStage(1, 1);
-    expect(st().battle?.rumor).toBe(1);
+    expect(st().battle?.rumor).toBe(2);
     expect(st().rumorPending).toBe(0);
   });
 
-  it('九派按卷出现：卷三的三派要到了江南才拜得上；新派货架没有绝学内功与卷册', () => {
+  it('二十一家按卷出现：卷三的要到了江南才拜得上；小门小户货架没有绝学残页、镇派内功与卷册', () => {
     useGameStore.setState({ realm: 3, mapsUnlocked: [1] });
-    st().joinSect('wudang');
+    st().joinSect('qianyan');
     expect(st().sect).toBeNull();
     useGameStore.setState({ mapsUnlocked: [1, VOLUMES[2].maps[0]] });
-    st().joinSect('wudang');
-    expect(st().sect).toBe('wudang');
-    const shelf = sectShelfOf(st(), 'wudang');
-    expect(shelf.map((it) => it.kind)).toEqual(Array(7).fill('pages'));
-    expect(shelf.map((it) => it.price)).toEqual([420, 200, 200, 200, 360, 360, 360]);
-    expect(shelf[0]).toMatchObject({ wuxue: 'zhenwudangmoquan', form: 1 });
-    expect(sectShelfOf(st(), 'huashan').map((it) => it.kind)).toEqual(['neigong', ...Array(14).fill('pages'), 'juance']);
-    expect(isBenmen('wudang', 'zhenwudangmoquan')).toBe(true);
-    expect(isBenmen('wudang', 'cangyajianjue')).toBe(false);
+    st().joinSect('qianyan');
+    expect(st().sect).toBe('qianyan');
+    const small = sectShelfOf(st(), 'qianfan');
+    expect(small.map((it) => it.kind)).toEqual(['wuxue', 'wuxue', 'neigong', ...Array(10).fill('pages'), 'gear', 'neigong', 'gear']);
+    expect(small.map((it) => it.rank)).toEqual([1, 1, 1, ...Array(10).fill(2), 2, 3, 5]);
+    expect(small.filter((it) => it.kind === 'pages').map((it) => it.price)).toEqual([160, 80, 80, 80, 80, 160, 80, 80, 80, 80]);
+    const big = sectShelfOf(st(), 'qianyan');
+    expect(big.filter((it) => it.kind === 'neigong').map((it) => it.neigong)).toEqual(['zhenyuegong', 'wuzhuxinfa', 'panshigong', 'putixingong']);
+    expect(big.filter((it) => it.rank === 4).map((it) => it.price)).toEqual([800, 400, 400, 400, 600, 600, 600]);
+    expect(big.filter((it) => it.rank === 5).map((it) => it.kind)).toEqual(['neigong', 'gear', 'juance']);
+    expect(isBenmen('qianyan', 'luohanfumogun')).toBe(true);
+    expect(isBenmen('qianyan', 'cangyajianjue')).toBe(false);
   });
 
-  it('打穿卷二任一家门户开卷三：下一场战斗说江南三派的传闻', () => {
+  it('打穿卷二任一家门户开卷三：下一场战斗说江南两家的传闻', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000_000);
     const gate = VOLUMES[1].maps[2];
@@ -1369,7 +1425,7 @@ describe('门派（sect-neigong/spec.md §5）', () => {
     for (let i = 0; i < 600 && !(st().battle?.resolved ?? false); i++) { vi.setSystemTime(Date.now() + 700); st().tick(Date.now()); }
     expect(st().battle!.result.win).toBe(true);
     expect(st().mapsUnlocked).toContain(VOLUMES[2].maps[0]);
-    expect(st().rumorPending).toBe(2);
+    expect(st().rumorPending).toBe(3);
     vi.useRealTimers();
   });
 });

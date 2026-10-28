@@ -150,7 +150,8 @@ export function lifeLines(rec: LifeRec): ChronLine[] {
       if (e.hao) { hao = e.hao; text += `江湖始称「${e.hao}${rec.name}」。`; }
       out.push({ y: e.y, cat: 'me', text });
     } else if (e.k === 'sect') {
-      out.push({ y: e.y, cat: 'me', text: e.sect.endsWith('帮') ? `${n}入${e.sect}。` : `${n}投${e.sect}门下。` });
+      // 帮、会写「入」，其余「投……门下」
+      out.push({ y: e.y, cat: 'me', text: /[帮会]$/.test(e.sect) ? `${n}入${e.sect}。` : `${n}投${e.sect}门下。` });
     } else if (REALM_LINE[e.realm]) {
       out.push({ y: e.y, cat: 'me', text: `${n}${REALM_LINE[e.realm]}。` });
     }

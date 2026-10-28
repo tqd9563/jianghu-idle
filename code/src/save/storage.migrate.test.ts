@@ -283,8 +283,8 @@ describe('v17 → v18：卷章图关，按当量折算进度与首杀', () => {
 });
 
 describe('v18 → v19：江湖名册补世界种子', () => {
-  it('版本号升到 19', () => {
-    expect(SAVE_VERSION).toBe(19);
+  it('版本号不低于 19', () => {
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(19);
   });
 
   it('补一个非零世界种子与空的干预，已有种子不动', () => {
@@ -296,5 +296,34 @@ describe('v18 → v19：江湖名册补世界种子', () => {
     const kept = migrate({ worldSeed: 42, rosterKills: [{ post: 'p', year: 100, end: 160 }] } as Record<string, unknown>, 18, 19) as Record<string, unknown>;
     expect(kept.worldSeed).toBe(42);
     expect(kept.rosterKills).toHaveLength(1);
+  });
+});
+
+describe('v19 → v20：门派改造', () => {
+  it('版本号升到 20', () => {
+    expect(SAVE_VERSION).toBe(20);
+  });
+
+  it('旧九派换成新门派、差事换成一档 2 / 8 小时、补累计贡献与地位、传闻键改卷号、占位内功剔除', () => {
+    const out = migrate({
+      sect: 'huashan', contrib: 700, sectTask: { kind: 'long', endsAt: 123 }, rumorPending: 2,
+      ownedNeigong: ['jingleijue', 'taixu1', 'leimingjianjing'], lives: [{ events: [{ k: 'sect', sect: '华山' }] }],
+    } as Record<string, unknown>, 19, 20) as Record<string, unknown>;
+    expect(out.sect).toBe('cangya');
+    expect(out.sectTask).toEqual({ tier: 1, hours: 8, endsAt: 123 });
+    expect(out.contrib).toBe(700);
+    expect(out.contribTotal).toBe(700);
+    expect(out.sectRank).toBe(3);
+    expect(out.sectGearBought).toEqual([]);
+    expect(out.rumorPending).toBe(3);
+    expect(out.ownedNeigong).toEqual(['jingleijue', 'leimingjianjing']);
+    expect(out.lives).toEqual([{ events: [{ k: 'sect', sect: '华山' }] }]);   // 编年里的旧派名不改
+    expect(migrate({ sect: 'yanmen', sectTask: { kind: 'short', endsAt: 1 } } as Record<string, unknown>, 19, 20)).toMatchObject({ sect: 'cangwu', sectTask: { tier: 1, hours: 2 } });
+    expect(migrate({ sect: 'nosuch' } as Record<string, unknown>, 19, 20)).toMatchObject({ sect: null });
+  });
+
+  it('没拜过门派、没贡献的档只剔占位内功，不补门派字段', () => {
+    const out = migrate({ run: 2, rumorPending: 0, ownedNeigong: ['zhenyuegong'] } as Record<string, unknown>, 19, 20) as Record<string, unknown>;
+    expect(out).toEqual({ run: 2, rumorPending: 0, ownedNeigong: ['zhenyuegong'] });
   });
 });

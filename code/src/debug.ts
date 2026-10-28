@@ -35,7 +35,7 @@ function chroniclePreset(): object {
   const plan: { years: number; age: number; cause: 'old' | 'battle' | 'retire'; posts: string[]; sect?: string; realm5?: boolean }[] = [
     { years: 46, age: 64, cause: 'old', posts: ['蒿里寨#0', '蒿里寨#1', '蒿里寨#3'] },
     { years: 24, age: 42, cause: 'battle', posts: ['苍崖派#0', '千蛇窟#0', '千蛇窟#1'] },
-    { years: 45, age: 63, cause: 'old', posts: ['蒿里寨#1', '苍崖派#1', '千岩寺#0', '千岩寺#1', '千岩寺#3'], sect: '华山', realm5: true },
+    { years: 45, age: 63, cause: 'old', posts: ['蒿里寨#1', '苍崖派#1', '千岩寺#0', '千岩寺#1', '千岩寺#3'], sect: '苍崖派', realm5: true },
   ];
   let born = 100;
   plan.forEach((p, i) => {

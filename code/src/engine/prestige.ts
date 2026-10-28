@@ -33,7 +33,7 @@ export const REP_NODES: RepNodeDef[] = [
   { id: 'anhun_dingpo',       name: '安魂定魄', price: 120, type: '策略', desc: '魂魄未稳缩短为五年' },
   { id: 'haina_baichuan',     name: '海纳百川', price: 170, type: '资源', desc: '武学装配槽 +1' },
   { id: 'jiaqing_jiushu',     name: '驾轻就熟', price: 230, type: '策略', desc: '转世后内功首段台阶免顿悟' },
-  { id: 'renzu_guizong',      name: '认祖归宗', price: 270, type: '策略', desc: '转世后自动拜入前世门派' },
+  { id: 'renzu_guizong',      name: '认祖归宗', price: 270, type: '策略', desc: '转世后自动拜入前世门派，保留二级地位' },
   { id: 'taojia_huanjia',     name: '讨价还价', price: 340, type: '资源', desc: '市集商品八折' },
   { id: 'shuangguan_qixia',   name: '双管齐下', price: 600, type: '策略', desc: '可同时承接两项门派任务' },
   { id: 'bizhou_zizhen',      name: '敝帚自珍', price: 900, type: '策略', desc: '转世时保留一件装备' },

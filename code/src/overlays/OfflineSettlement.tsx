@@ -6,7 +6,7 @@
 import { useEffect, useRef } from 'react';
 import type { OfflineSettleResult } from '../engine/offlineRewards';
 import { gearFullName, type GearItem } from '../engine/gear';
-import { SECTS, SECT_TASKS, type SectTaskKind } from '../engine/sect';
+import { SECTS, type SectTask } from '../engine/sect';
 import { useGameStore } from '../store/gameStore';
 import { fmtBig as fmt, fmtRate, minText, shichenText } from '../fmt';
 
@@ -28,7 +28,7 @@ export function OfflineSettlement(props: {
   result: OfflineSettleResult;
   observer: boolean;
   /** 闭关期间到点结算的门派任务（store 目前未透出，接上后显示「已归」一行） */
-  sectDone?: { kind: SectTaskKind; contrib: number } | null;
+  sectDone?: { tier: SectTask['tier']; hours: SectTask['hours']; contrib: number } | null;
   /** 闭关期间挂机拾得的装备 */
   loot?: { count: number; best: GearItem | null; sold: number; books?: number; pages?: number } | null;
   onClose: () => void;
@@ -36,7 +36,7 @@ export function OfflineSettlement(props: {
   const { result: r, sectDone, loot } = props;
   const sect = useGameStore((s) => s.sect);
   const sectTask = useGameStore((s) => s.sectTask);
-  const errand = (k: SectTaskKind) => (sect ? SECTS[sect].errands[k === 'short' ? 0 : 1] : SECT_TASKS[k].name);
+  const errand = (tier: SectTask['tier']) => (sect ? SECTS[sect].errands[tier - 1].name : '差事');
 
   // count-up：直接写 textContent（等宽数字列不晃，不走 60fps 的 React 重渲染）
   const neiliRef = useRef<HTMLElement>(null);
@@ -93,9 +93,9 @@ export function OfflineSettlement(props: {
             <><span>书匣</span><span>{(loot.books ?? 0) > 0 && <>全本 <b>{loot.books}</b> 门</>}{(loot.books ?? 0) > 0 && (loot.pages ?? 0) > 0 && ' · '}{(loot.pages ?? 0) > 0 && <>残页 <b>{loot.pages}</b> 张</>}</span></>
           )}
           {sectDone ? (
-            <><span>门派任务</span><span>{errand(sectDone.kind)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>
+            <><span>门派任务</span><span>{errand(sectDone.tier)}已归 · <b>+{sectDone.contrib}</b> 贡献</span></>
           ) : sectTask && (
-            <><span>门派任务</span><span>{errand(sectTask.kind)} · 还剩 {fmtLeft(sectTask.endsAt - Date.now())}</span></>
+            <><span>门派任务</span><span>{errand(sectTask.tier)} · 还剩 {fmtLeft(sectTask.endsAt - Date.now())}</span></>
           )}
         </div>
         {props.observer && (

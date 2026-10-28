@@ -15,8 +15,8 @@ import {
   BOSS_DROPS, DUPLICATE_SILVER, GIFT_WUXUE_OPTIONS, DUP_DROP_SILVER, QINGZHUANG_DISCOUNT, SHOP_ITEMS, WUXUE, effectValue, formBaseCost, formCd, formCost, formKey, formMult, formName, rollWuxueDrop, shulianTier, slotCount, usableForms, type Hands, type ShopItem, type WuxueDrop, type WuxueId, usableWith,
 } from '../engine/wuxue';
 import {
-  SECTS, SECT_REALM, SECT_TASKS, isBenmen, juanceKey, sectShelf,
-  type SectId, type SectItem, type SectTask, type SectTaskKind,
+  RANK_THRESHOLDS, SECTS, SECT_REALM, isBenmen, juanceKey, rankOf, sectShelf, sectTaskGain, sectsInVol,
+  type SectHours, type SectId, type SectItem, type SectTask, type SectTier,
 } from '../engine/sect';
 import {
   bandPos, enemyStatsAt, getStage, isChapterBoss, mapDef, MAP_IDS, TEACH_X, parseStageKey, refarmReward, setStageNames, stageKey, targetId, trackLength, unlocksAfterMap,
@@ -58,7 +58,7 @@ import {
   type MarketGood, type MaskedGood,
 } from '../engine/market';
 import {
-  BAG_CELLS, DROP_RATE, INTRO_STAGES, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade,
+  BAG_CELLS, DROP_RATE, INTRO_STAGES, applyGearToBuild, bagFits, gearBonusOf, isIntroStage, rollGear, rollGrade, withFixedAffix,
   type GearGrade, type GearItem, type GearSlot, type Worn,
 } from '../engine/gear';
 import {
@@ -175,11 +175,17 @@ interface PersistedState {
   dropsClaimed: string[];
   /** 本世所拜门派（spec §5.1）：境界 3 起可拜，一世只拜一派，转世清空 */
   sect: SectId | null;
-  /** 本世门派贡献（转世清零） */
+  /** 本世门派贡献余额（转世清零） */
   contrib: number;
-  /** 正在跑的门派任务（同时只一件，到时自动结算） */
+  /** 本世累计贡献（兑换不扣；地位按它升，sect-overhaul/spec.md §3）；转世清零，认祖归宗开局置二级门槛 */
+  contribTotal: number;
+  /** 本世门派地位 1–6（rankOf(contribTotal)，结算时更新） */
+  sectRank: number;
+  /** 本世已换过的本门装备 id（一世每件只换一次） */
+  sectGearBought: string[];
+  /** 正在跑的门派差事（同时只一件，到时自动结算） */
   sectTask: SectTask | null;
-  /** 拜山传闻待说（sect.ts RUMORS 的键）：突破入境界 2 置 1，解锁图 2 / 图 3 初入置 2 / 3；下一场战斗的战斗记录说一次，0 = 无 */
+  /** 拜山传闻待说（卷号，sect.ts rumorOf）：突破入境界 2 置 2，首次解锁某卷赶路图置该卷号；下一场战斗的战斗记录说一次，0 = 无 */
   rumorPending: number;
   /** 行囊（battle-loot/design.md §3.5）：背包里的装备；每世清零（裁决 8） */
   bag: GearItem[];
@@ -350,7 +356,7 @@ interface GameState extends PersistedState {
   /** 出关结算待呈现数据（MVP-1 §6；资源已在 init 入账，此处只驱动结算屏；非持久化） */
   offlineSettlement: OfflineSettleResult | null;
   /** 出关时顺带结算的门派任务（只供出关演出展示，不持久化） */
-  offlineSectDone: { kind: SectTaskKind; contrib: number } | null;
+  offlineSectDone: { tier: SectTier; hours: SectHours; contrib: number } | null;
   /** 闭关期间挂机拾得（只供出关演出展示，不持久化）：装备件数、最好的一件、放不下卖掉的银两、武学全本与残页数 */
   offlineLoot: { count: number; best: GearItem | null; sold: number; books: number; pages: number } | null;
   /** 挂机小结待呈现（点停止时生成，非持久化） */
@@ -395,9 +401,9 @@ interface GameState extends PersistedState {
   buyMasked: (goodId: string) => void;
   /** 拜入门派（spec §5.1）：境界 3 起，免费，不受路数限制，一世一派 */
   joinSect: (id: SectId) => void;
-  /** 派门派任务（spec §5.2）：同时只一件 */
-  startSectTask: (kind: SectTaskKind) => void;
-  /** 贡献商店兑换（spec §5.3） */
+  /** 派差事（sect-overhaul/design.md §5）：档位不超过地位，2 / 8 小时自选，同时只一件 */
+  startSectTask: (tier: SectTier, hours: SectHours) => void;
+  /** 贡献商店兑换（spec §5.3；货架见 sect-overhaul/spec.md §4） */
   buySectItem: (itemId: string) => void;
   selectMap: (m: MapNo) => void;
   /** 推关或重打一次：下一关 → 推关（赢了接着往前，输了退回挂机）；已通关卡 → 只打这一场 */
@@ -461,7 +467,7 @@ const FRESH: PersistedState = {
   worldSeed: 0, rosterKills: [], lifeDefeats: [], lives: [], lifeWins: {},
   mapsUnlocked: [1],
   ownedWuxue: [], ownedScrolls: [], pages: [], equipped: [], formCasts: {}, dropsClaimed: [],
-  sect: null, contrib: 0, sectTask: null, rumorPending: 0,
+  sect: null, contrib: 0, contribTotal: 0, sectRank: 1, sectGearBought: [], sectTask: null, rumorPending: 0,
   bag: [], worn: {},
   taught: false, marketOpen: false, marketSpent: 0, blackOpen: false, blackBuys: 0, blackLowStreak: 0, blackDay: '', blackGoods: [],
 };
@@ -671,34 +677,38 @@ export type SectShelfRow = SectItem & {
   lock: string | null;
 };
 
-/** 本派货架逐件的状态：绝学一式一页，第一式即这门武学；后面各式要先得这门武学；归真卷册要先有本派绝学内功 */
+/**
+ * 本派货架逐件的状态（全表，地位不够的行由界面隐藏）：残页一式一页，第一式即这门武学，后面各式要先得这门武学；
+ * 归真卷册要先有镇派内功；本门装备一世每件只换一次。
+ */
 export function sectShelfOf(
-  s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue' | 'ownedScrolls'> & Partial<Pick<PersistedState, 'pages'>>, id: SectId,
+  s: Pick<PersistedState, 'ownedNeigong' | 'ownedWuxue' | 'ownedScrolls'> & Partial<Pick<PersistedState, 'pages' | 'sectGearBought'>>, id: SectId,
 ): SectShelfRow[] {
-  const ng = SECTS[id].neigong;
+  const ngs = s.ownedNeigong ?? [];
   return sectShelf(id).map((it) => {
-    const scrolls = s.ownedScrolls ?? [];
-    if (it.kind === 'neigong') return { ...it, owned: (s.ownedNeigong ?? []).includes(ng!), lock: null };
+    if (it.kind === 'neigong') return { ...it, owned: ngs.includes(it.neigong!), lock: null };
     if (it.kind === 'juance') {
-      return { ...it, owned: scrolls.includes(juanceKey(ng!)),
-        lock: (s.ownedNeigong ?? []).includes(ng!) ? null : `先得${NEIGONG[ng!].name}` };
+      return { ...it, owned: (s.ownedScrolls ?? []).includes(juanceKey(it.neigong!)), lock: ngs.includes(it.neigong!) ? null : `先得${NEIGONG[it.neigong!].name}` };
     }
+    if (it.kind === 'gear') return { ...it, owned: (s.sectGearBought ?? []).includes(it.gear!.id), lock: null };
     const w = it.wuxue!;
+    if (it.kind === 'wuxue') return { ...it, owned: (s.ownedWuxue ?? []).includes(w), lock: null };
     const owned = (s.pages ?? []).includes(formKey(w, it.form!));
     const lock = it.form === 1 || (s.ownedWuxue ?? []).includes(w) ? null : `先得${WUXUE[w].name}`;
     return { ...it, owned, lock };
   });
 }
 
-/** 到点的门派任务结算入账；没到点或没任务返回 null */
+/** 到点的门派差事结算入账，累计贡献够了就升地位；没到点或没差事返回 null */
 function settleSectTask(
-  s: Pick<PersistedState, 'sectTask' | 'contrib'> & Partial<Pick<PersistedState, 'achv' | 'retiredNodes'>>, now: number,
+  s: Pick<PersistedState, 'sectTask' | 'contrib'> & Partial<Pick<PersistedState, 'contribTotal' | 'achv' | 'retiredNodes'>>, now: number,
 ): { patch: Partial<PersistedState>; gain: number } | null {
   const t = s.sectTask;
   if (!t || now < t.endsAt) return null;
   // 侠名录·门派线：贡献 +10 / 20 / 30%
-  const gain = Math.round(SECT_TASKS[t.kind].contrib * (1 + achvVal(s, 'menpai')));
-  return { patch: { sectTask: null, contrib: (s.contrib ?? 0) + gain }, gain };
+  const gain = Math.round(sectTaskGain(t.tier, t.hours) * (1 + achvVal(s, 'menpai')));
+  const contribTotal = (s.contribTotal ?? 0) + gain;
+  return { patch: { sectTask: null, contrib: (s.contrib ?? 0) + gain, contribTotal, sectRank: rankOf(contribTotal) }, gain };
 }
 
 /** 全身伤势档位之和：自愈前后相减即「养好的伤」 */
@@ -867,6 +877,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const merged = { ...FRESH, ...saved };
       // 没有世界种子的存档（调试预设、手搓存档）：此刻开一个新江湖
       if (!merged.worldSeed) merged.worldSeed = newWorldSeed();
+      // 不认识的门派 id（手搓存档）置空，免得页面读 SECTS 崩掉
+      if (merged.sect !== null && !SECTS[merged.sect]) merged.sect = null;
       // 编年之前的存档：从当世起记（前几世的姓名无从查考）
       if (!(merged.lives ?? []).length) merged.lives = [newLife(merged.worldSeed, merged.run, merged.eraStart ?? ERA_START)];
       // 默认面向最深的一条可推前沿
@@ -994,10 +1006,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 门派任务离线照常计时（spec §5.2）：到点的在载入时入账
       const sectDone = savedAt !== null && !merged.paused ? settleSectTask(merged, now) : null;
       // sectDone.contrib 是入账后的总额；演出要的是这趟任务挣了多少
-      const offlineSectDone = sectDone ? { kind: merged.sectTask!.kind, contrib: sectDone.gain } : null;
+      const offlineSectDone = sectDone ? { tier: merged.sectTask!.tier, hours: merged.sectTask!.hours, contrib: sectDone.gain } : null;
       if (sectDone) {
         track('sect_task_done', { run: merged.run, realm: merged.realm, route: merged.route }, {
-          sect: merged.sect, task: merged.sectTask!.kind, contrib: sectDone.patch.contrib, offline: true,
+          sect: merged.sect, tier: merged.sectTask!.tier, hours: merged.sectTask!.hours, contrib: sectDone.patch.contrib, offline: true,
         });
         const sectAch = bumpAchv(merged, { menpai: 1 });
         Object.assign(merged, sectDone.patch, { achv: sectAch.achv });
@@ -1123,7 +1135,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (tickAch) trackUps({ run: s.run, realm: s.realm, route: s.route }, tickAch.ups);
       if (sectDone) {
         track('sect_task_done', { run: s.run, realm: s.realm, route: s.route }, {
-          sect: s.sect, task: s.sectTask!.kind, contrib: sectDone.patch.contrib, offline: false,
+          sect: s.sect, tier: s.sectTask!.tier, hours: s.sectTask!.hours, contrib: sectDone.patch.contrib, offline: false,
         });
       }
       if (dw.tier) {
@@ -1189,8 +1201,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       acupointLog: newAcupointLog,
       // 首达新境界即得宿慧（economy.md §2），当场生效
       peakRealm: Math.max(s.peakRealm ?? 1, realmTo),
-      // 拜山传闻（spec §5.1）：入境界 2 时突破仪式说一次，下一场战斗记录再说一次
-      ...(realmTo === 2 ? { rumorPending: 1 } : {}),
+      // 拜山传闻（spec §5.1）：入境界 2 时突破仪式说一次卷二三家，下一场战斗记录再说一次
+      ...(realmTo === 2 ? { rumorPending: 2 } : {}),
       // 编年只记高境界（design.md §2.4）：江湖记的是高手出世
       ...(realmTo >= 5 ? { lives: logLife(s, { k: 'realm', y: yearNow(s), realm: realmTo }) } : {}),
     });
@@ -1412,10 +1424,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     persist(get());
   },
 
-  startSectTask: (kind) => {
+  startSectTask: (tier, hours) => {
     const s = get();
-    if (!s.started || s.sect === null || s.sectTask !== null || !SECT_TASKS[kind]) return;
-    set({ sectTask: { kind, endsAt: Date.now() + SECT_TASKS[kind].hours * 3600 * 1000 } });
+    if (!s.started || s.sect === null || s.sectTask !== null || tier > (s.sectRank ?? 1) || (hours !== 2 && hours !== 8)) return;
+    set({ sectTask: { tier, hours, endsAt: Date.now() + hours * 3600 * 1000 } });
     persist(get());
   },
 
@@ -1423,13 +1435,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     if (s.sect === null) return;
     const it = sectShelfOf(s, s.sect).find((x) => x.id === itemId);
-    if (!it || it.owned || it.lock !== null || (s.contrib ?? 0) < it.price) return;
+    if (!it || it.owned || it.lock !== null || it.rank > (s.sectRank ?? 1) || (s.contrib ?? 0) < it.price) return;
     let patch: Partial<PersistedState>;
-    if (it.kind === 'neigong') patch = { ownedNeigong: [...(s.ownedNeigong ?? []), SECTS[s.sect].neigong!] };
-    else if (it.kind === 'juance') patch = { ownedScrolls: [...(s.ownedScrolls ?? []), juanceKey(SECTS[s.sect].neigong!)] };
-    else {
-      // 一式一页（W2）：与挂机掉落同一本账，第一式即得这门武学
-      const got = applyWuxueDrop(s, { id: it.wuxue!, k: it.form!, kind: 'page' });
+    if (it.kind === 'neigong') patch = { ownedNeigong: [...(s.ownedNeigong ?? []), it.neigong!] };
+    else if (it.kind === 'juance') patch = { ownedScrolls: [...(s.ownedScrolls ?? []), juanceKey(it.neigong!)] };
+    else if (it.kind === 'gear') {
+      // 本门装备（sect-overhaul/spec.md §5）：极品、等级跟兑换时的前沿走（高档 +0.5），一条本门特色词条固定；行囊放不下不卖
+      const g = it.gear!;
+      const level = (frontierStageOf(s).x ?? 1) + (g.tier === 'high' ? 0.5 : 0);
+      const rolled = rollGear({ slot: g.slot, cat: g.cat, grade: 5, level, clearSilver: priceBasisOf(s) }, Math.random);
+      const item = withFixedAffix({ ...rolled, name: g.name, img: g.img }, g.affix, Math.random);
+      if (!bagFits(s.bag ?? [], item, bagCellsOf(s))) return;
+      patch = { bag: [...(s.bag ?? []), item], sectGearBought: [...(s.sectGearBought ?? []), g.id] };
+    } else {
+      // 寻常整门 / 一式一页（W2）：与挂机掉落同一本账，第一式即得这门武学
+      const got = applyWuxueDrop(s, it.kind === 'wuxue' ? { id: it.wuxue!, k: 1, kind: 'book' } : { id: it.wuxue!, k: it.form!, kind: 'page' });
       patch = { pages: got.pages, ownedWuxue: got.ownedWuxue };
     }
     set({ ...patch, contrib: s.contrib - it.price, lastProgressSec: s.runPlaySec });
@@ -1778,6 +1798,8 @@ function rebirth(
   // 刻骨铭心：主修（装配首位）那门武学的招式与熟练原样带走
   const keepWuxue = hasNode(owned, 'kegu_mingxin') ? (s.equipped ?? [])[0] : undefined;
   const keepPrefix = keepWuxue ? `${keepWuxue}:` : null;
+  const keepSect = hasNode(owned, 'renzu_guizong') ? s.sect : null;
+  const nextLifeRec = newLife(s.worldSeed, newRun, next.eraStart);
   set({
     ...FRESH,
     run: newRun,
@@ -1795,8 +1817,9 @@ function rebirth(
     equipped: keepWuxue ? [keepWuxue] : [],
     formCasts: keepPrefix ? Object.fromEntries(Object.entries(s.formCasts ?? {}).filter(([k]) => k.startsWith(keepPrefix))) : {},
     worn: keepGear ? { [keepGear.slot]: keepGear } : {},
-    // 认祖归宗：开局即拜回上一世的门派；驾轻就熟：首段台阶不必顿悟
-    sect: hasNode(owned, 'renzu_guizong') ? s.sect : null,
+    // 认祖归宗：开局即拜回上一世的门派、保留二级地位（sect-overhaul/design.md §4）；驾轻就熟：首段台阶不必顿悟
+    sect: keepSect,
+    ...(keepSect ? { sectRank: 2, contribTotal: RANK_THRESHOLDS[1] } : {}),
     tiersPassed: hasNode(owned, 'jiaqing_jiushu') ? 1 : 0,
     ownedNeigong: s.ownedNeigong ?? [...STARTER_NEIGONG],
     wuxing,
@@ -1824,7 +1847,8 @@ function rebirth(
         ...(curLife(s) ?? newLife(s.worldSeed, s.run, s.eraStart ?? ERA_START)),
         end: { year: Math.floor(next.eraStart), age: Math.floor(age), cause: cause ?? 'retire', place: placeOfVol(maxVol) },
       },
-      newLife(s.worldSeed, newRun, next.eraStart),
+      // 认祖归宗的，新一世开篇就记一笔拜入
+      keepSect ? { ...nextLifeRec, events: [{ k: 'sect', y: next.eraStart + 0.1, sect: SECTS[keepSect].name }] } : nextLifeRec,
     ],
     wakePending: true,
     idle: null,
@@ -2263,9 +2287,9 @@ function resolveBattle(
     const have = s.mapsUnlocked ?? [1];
     const opened = unlocksAfterMap(b.map).filter((id) => !have.includes(id));
     if (opened.length > 0) {
-      // 初到卷三 / 卷四：这一卷的三派行走江湖，下一场战斗说一句拜山传闻（名录 §5.3）
+      // 初到一卷（卷三起）：这一卷的门派行走江湖，下一场战斗说一句拜山传闻（sect.ts rumorOf）
       const vol = mapDef(opened[0]).vol;
-      const rumor = mapDef(opened[0]).layer === 'road' && (vol === 3 || vol === 4) ? vol - 1 : 0;
+      const rumor = mapDef(opened[0]).layer === 'road' && vol >= 3 && sectsInVol(vol).length > 0 ? vol : 0;
       set({ mapsUnlocked: [...have, ...opened], ...(rumor ? { rumorPending: rumor } : {}) });
       track('map_unlocked', { run: s.run, realm: s.realm, route: s.route }, {
         by: key, opened,

@@ -1,57 +1,147 @@
 /**
- * 内功 —— 权威来源：docs/systems/sect-neigong/spec.md §1（名录 / 重数 / 台阶 / 真气 / 转修）与 §3（悟性与顿悟）。
+ * 内功 —— 权威来源：docs/systems/sect-neigong/spec.md §1（名录 / 重数 / 台阶 / 真气 / 转修）与 §3（悟性与顿悟）、
+ * docs/systems/sect-overhaul/design.md §3.2（二十一家的内功名与档位、兼修）、§2（同源流同品质数值相同）。
  * 武道源流（狂澜 / 镇岳 / 蚀骨，原称路数）沿用路线 id：huashan / shaolin / tangmen，路数参数仍在 routes.ts。
  * 寻常内功 = 原「招式十成 + 火候」构筑（spec §7 判据零），所以关卡与敌人不用重调。禁止在此调参。
  */
 import { QI_SCALE, huohouRealms, type RouteId } from './content';
 import { makeBuild, type Build } from './combat';
+import type { SectId } from './sect';
 
 export type Quality = '寻常' | '上乘' | '绝学';
 export type NeigongId =
+  // 原九部（苍崖派 / 千岩寺 / 瘴月教），id 不变
   | 'jingleijue' | 'zhenyuegong' | 'shiguxinfa'
   | 'leimingjianjing' | 'panshigong' | 'xuanyinjue'
   | 'yuntaixinfa' | 'putixingong' | 'qianguxinjue'
-  // 新四路（wudao-yuanliu/design.md）：名字待起，门派改造前无来路，只供 sim
-  | 'taixu1' | 'taixu2' | 'taixu3' | 'xuanji1' | 'xuanji2' | 'xuanji3'
-  | 'jinghong1' | 'jinghong2' | 'jinghong3' | 'fenxue1' | 'fenxue2' | 'fenxue3';
+  // 二十一家新内功（sect-overhaul/design.md §3.2），按卷
+  | 'feiquanjue'
+  | 'chidangong' | 'nujiaojue'
+  | 'zheshegong' | 'xuanyinhuagujue' | 'tengshezhendian'
+  | 'wuzhuxinfa'
+  | 'jinghuajue' | 'hanxianggong'
+  | 'lingxugong' | 'fuyaojue'
+  | 'tingchaojue' | 'shenqihuaxugong' | 'guixudafa'
+  | 'yuezhigong' | 'budongmingwangjue' | 'jiudingzhenjing'
+  | 'fenghuxinfa' | 'hupogong' | 'baihuxiaofengjing'
+  | 'dishagong' | 'zhenmingxinjing'
+  | 'shouyigong' | 'qingjingzuowangjue' | 'qianyuanyiqijing' | 'zifuxinfa'
+  | 'chilangjue' | 'xueshagong'
+  | 'zhishuixinfa' | 'shuiyueguanxinjing'
+  | 'linglongxinfa' | 'tianshujue'
+  | 'konghuanggong' | 'wanhuangguixujue'
+  | 'xueguranyuangong'
+  | 'qiwujue' | 'fengmingxinjing' | 'fengzhuqingminggong'
+  | 'guilinjue' | 'jiuyouhuadujing'
+  | 'yinleijue' | 'bentinggong' | 'leigangzhenjing'
+  | 'shuanghuajue' | 'hanposuomaigong' | 'guijizhenjing'
+  | 'xueshajue' | 'yanyanggong' | 'darixiuluoxuedian';
 
 export interface NeigongDef {
   id: NeigongId;
   name: string;
   quality: Quality;
   route: RouteId;
+  /** 所属门派（在其货架上换） */
+  sect: SectId;
+  /** 石印图键（public/art/neigong/<icon>.png）；缺省用 id。新内功暂借同源流旧石印，等美术补 */
+  icon?: string;
 }
 
-export const NEIGONG: Record<NeigongId, NeigongDef> = {
-  jingleijue:      { id: 'jingleijue',      name: '百川诀',   quality: '寻常', route: 'huashan' },
-  zhenyuegong:     { id: 'zhenyuegong',     name: '镇岳功',   quality: '寻常', route: 'shaolin' },
-  shiguxinfa:      { id: 'shiguxinfa',      name: '蚀骨心法', quality: '寻常', route: 'tangmen' },
-  leimingjianjing: { id: 'leimingjianjing', name: '沧海功',   quality: '上乘', route: 'huashan' },
-  panshigong:      { id: 'panshigong',      name: '磐石功',   quality: '上乘', route: 'shaolin' },
-  xuanyinjue:      { id: 'xuanyinjue',      name: '玄阴诀',   quality: '上乘', route: 'tangmen' },
-  yuntaixinfa:     { id: 'yuntaixinfa',     name: '沧溟真经', quality: '绝学', route: 'huashan' },
-  putixingong:     { id: 'putixingong',     name: '菩提心功', quality: '绝学', route: 'shaolin' },
-  qianguxinjue:    { id: 'qianguxinjue',    name: '千蛊心诀', quality: '绝学', route: 'tangmen' },
-  taixu1: { id: 'taixu1', name: '太虚寻常（待名）', quality: '寻常', route: 'taixu' },
-  taixu2: { id: 'taixu2', name: '太虚上乘（待名）', quality: '上乘', route: 'taixu' },
-  taixu3: { id: 'taixu3', name: '太虚绝学（待名）', quality: '绝学', route: 'taixu' },
-  xuanji1: { id: 'xuanji1', name: '玄寂寻常（待名）', quality: '寻常', route: 'xuanji' },
-  xuanji2: { id: 'xuanji2', name: '玄寂上乘（待名）', quality: '上乘', route: 'xuanji' },
-  xuanji3: { id: 'xuanji3', name: '玄寂绝学（待名）', quality: '绝学', route: 'xuanji' },
-  jinghong1: { id: 'jinghong1', name: '惊鸿寻常（待名）', quality: '寻常', route: 'jinghong' },
-  jinghong2: { id: 'jinghong2', name: '惊鸿上乘（待名）', quality: '上乘', route: 'jinghong' },
-  jinghong3: { id: 'jinghong3', name: '惊鸿绝学（待名）', quality: '绝学', route: 'jinghong' },
-  fenxue1: { id: 'fenxue1', name: '焚血寻常（待名）', quality: '寻常', route: 'fenxue' },
-  fenxue2: { id: 'fenxue2', name: '焚血上乘（待名）', quality: '上乘', route: 'fenxue' },
-  fenxue3: { id: 'fenxue3', name: '焚血绝学（待名）', quality: '绝学', route: 'fenxue' },
+/** 原九部：三路 × 三品质，新内功借它们的石印 */
+const OLD_NINE: Record<'huashan' | 'shaolin' | 'tangmen', Record<Quality, NeigongId>> = {
+  huashan: { 寻常: 'jingleijue', 上乘: 'leimingjianjing', 绝学: 'yuntaixinfa' },
+  shaolin: { 寻常: 'zhenyuegong', 上乘: 'panshigong', 绝学: 'putixingong' },
+  tangmen: { 寻常: 'shiguxinfa', 上乘: 'xuanyinjue', 绝学: 'qianguxinjue' },
 };
+const ICON_SET: Record<RouteId, keyof typeof OLD_NINE> = {
+  huashan: 'huashan', shaolin: 'shaolin', tangmen: 'tangmen', taixu: 'shaolin', xuanji: 'tangmen', jinghong: 'huashan', fenxue: 'huashan',
+};
+
+const ROWS: [NeigongId, string, Quality, RouteId, SectId][] = [
+  ['jingleijue', '百川诀', '寻常', 'huashan', 'cangya'],
+  ['leimingjianjing', '沧海功', '上乘', 'huashan', 'cangya'],
+  ['yuntaixinfa', '沧溟真经', '绝学', 'huashan', 'cangya'],
+  ['feiquanjue', '飞泉诀', '上乘', 'jinghong', 'cangya'],
+  ['chidangong', '赤胆功', '寻常', 'fenxue', 'qianfan'],
+  ['nujiaojue', '怒蛟诀', '上乘', 'fenxue', 'qianfan'],
+  ['zheshegong', '蛰蛇功', '寻常', 'tangmen', 'qianshe'],
+  ['xuanyinhuagujue', '玄阴化骨诀', '上乘', 'tangmen', 'qianshe'],
+  ['tengshezhendian', '腾蛇真典', '绝学', 'tangmen', 'qianshe'],
+  ['zhenyuegong', '定慧功', '寻常', 'shaolin', 'qianyan'],
+  ['panshigong', '伽蓝诀', '上乘', 'shaolin', 'qianyan'],
+  ['putixingong', '菩提心经', '绝学', 'shaolin', 'qianyan'],
+  ['wuzhuxinfa', '无住心法', '寻常', 'taixu', 'qianyan'],
+  ['jinghuajue', '镜花诀', '寻常', 'xuanji', 'huaying'],
+  ['hanxianggong', '寒香功', '上乘', 'xuanji', 'huaying'],
+  ['lingxugong', '凌虚功', '寻常', 'jinghong', 'lingfeng'],
+  ['fuyaojue', '扶摇诀', '上乘', 'jinghong', 'lingfeng'],
+  ['tingchaojue', '听潮诀', '寻常', 'taixu', 'shenhai'],
+  ['shenqihuaxugong', '蜃气化虚功', '上乘', 'taixu', 'shenhai'],
+  ['guixudafa', '归墟大法', '绝学', 'taixu', 'shenhai'],
+  ['yuezhigong', '岳峙功', '寻常', 'shaolin', 'qingtian'],
+  ['budongmingwangjue', '不动明王诀', '上乘', 'shaolin', 'qingtian'],
+  ['jiudingzhenjing', '九鼎真经', '绝学', 'shaolin', 'qingtian'],
+  ['fenghuxinfa', '风虎心法', '寻常', 'huashan', 'huxiao'],
+  ['hupogong', '虎魄功', '上乘', 'huashan', 'huxiao'],
+  ['baihuxiaofengjing', '白虎啸风经', '绝学', 'huashan', 'huxiao'],
+  ['dishagong', '地煞功', '寻常', 'shaolin', 'beimang'],
+  ['zhenmingxinjing', '镇冥心经', '上乘', 'shaolin', 'beimang'],
+  ['shouyigong', '守一功', '寻常', 'taixu', 'qianyuan'],
+  ['qingjingzuowangjue', '清静坐忘诀', '上乘', 'taixu', 'qianyuan'],
+  ['qianyuanyiqijing', '乾元一炁经', '绝学', 'taixu', 'qianyuan'],
+  ['zifuxinfa', '紫府心法', '上乘', 'xuanji', 'qianyuan'],
+  ['chilangjue', '赤浪诀', '寻常', 'fenxue', 'hengjiang'],
+  ['xueshagong', '血煞功', '上乘', 'fenxue', 'hengjiang'],
+  ['zhishuixinfa', '止水心法', '寻常', 'xuanji', 'shuiyue'],
+  ['shuiyueguanxinjing', '水月观心经', '上乘', 'xuanji', 'shuiyue'],
+  ['linglongxinfa', '玲珑心法', '寻常', 'jinghong', 'tiangong'],
+  ['tianshujue', '天枢诀', '上乘', 'jinghong', 'tiangong'],
+  ['konghuanggong', '空篁功', '寻常', 'taixu', 'youhuang'],
+  ['wanhuangguixujue', '万篁归虚诀', '上乘', 'taixu', 'youhuang'],
+  ['shiguxinfa', '蚀骨心法', '寻常', 'tangmen', 'zhangyue'],
+  ['xuanyinjue', '玄阴诀', '上乘', 'tangmen', 'zhangyue'],
+  ['qianguxinjue', '万蛊归元经', '绝学', 'tangmen', 'zhangyue'],
+  ['xueguranyuangong', '血蛊燃元功', '上乘', 'fenxue', 'zhangyue'],
+  ['qiwujue', '栖梧诀', '寻常', 'jinghong', 'cangwu'],
+  ['fengmingxinjing', '凤鸣心经', '上乘', 'jinghong', 'cangwu'],
+  ['fengzhuqingminggong', '凤翥青冥功', '绝学', 'jinghong', 'cangwu'],
+  ['guilinjue', '鬼磷诀', '寻常', 'tangmen', 'bilin'],
+  ['jiuyouhuadujing', '九幽化毒经', '上乘', 'tangmen', 'bilin'],
+  ['yinleijue', '隐雷诀', '寻常', 'huashan', 'fenglei'],
+  ['bentinggong', '奔霆功', '上乘', 'huashan', 'fenglei'],
+  ['leigangzhenjing', '雷罡真经', '绝学', 'huashan', 'fenglei'],
+  ['shuanghuajue', '霜华诀', '寻常', 'xuanji', 'yinshan'],
+  ['hanposuomaigong', '寒魄锁脉功', '上乘', 'xuanji', 'yinshan'],
+  ['guijizhenjing', '归寂真经', '绝学', 'xuanji', 'yinshan'],
+  ['xueshajue', '血沙诀', '寻常', 'fenxue', 'mingsha'],
+  ['yanyanggong', '炎阳功', '上乘', 'fenxue', 'mingsha'],
+  ['darixiuluoxuedian', '大日修罗血典', '绝学', 'fenxue', 'mingsha'],
+];
+
+export const NEIGONG: Record<NeigongId, NeigongDef> = Object.fromEntries(ROWS.map(([id, name, quality, route, sect]) => {
+  const icon = OLD_NINE[ICON_SET[route]][quality];
+  return [id, { id, name, quality, route, sect, ...(icon === id ? {} : { icon }) }];
+})) as Record<NeigongId, NeigongDef>;
 
 export const NEIGONG_IDS = Object.keys(NEIGONG) as NeigongId[];
 export const QUALITY_ORDER: Quality[] = ['寻常', '上乘', '绝学'];
 
-/** 某路数某品质的内功 */
+/**
+ * 各路的正典三部（neigongOf 的查表）：旧三路沿用原九部；新四路取源流门派那三档
+ * （蜃海教 / 阴山派 / 苍梧派 / 鸣沙教）。书肆内功、Boss 掉落、v7→v8 迁移与 sim 都从这里取，门派再多也不变。
+ */
+const ROUTE_CANON: Record<RouteId, Record<Quality, NeigongId>> = {
+  ...OLD_NINE,
+  taixu: { 寻常: 'tingchaojue', 上乘: 'shenqihuaxugong', 绝学: 'guixudafa' },
+  xuanji: { 寻常: 'shuanghuajue', 上乘: 'hanposuomaigong', 绝学: 'guijizhenjing' },
+  jinghong: { 寻常: 'qiwujue', 上乘: 'fengmingxinjing', 绝学: 'fengzhuqingminggong' },
+  fenxue: { 寻常: 'xueshajue', 上乘: 'yanyanggong', 绝学: 'darixiuluoxuedian' },
+};
+
+/** 某路数某品质的正典内功 */
 export function neigongOf(route: RouteId, quality: Quality): NeigongId {
-  return NEIGONG_IDS.find((id) => NEIGONG[id].route === route && NEIGONG[id].quality === quality)!;
+  return ROUTE_CANON[route][quality];
 }
 
 /** 三部寻常内功：首世三选一 */

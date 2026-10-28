@@ -29,8 +29,8 @@ describe('名录读表', () => {
     }
     expect(q).toEqual({ 寻常: 36, 上乘: 18, 绝学: 12 });
     expect(WUXUE.liuyunjian.name).toBe('流云剑法');
-    expect(WUXUE.xiangmochufa).toMatchObject({ name: '金刚降魔杵', cat: '棍', signature: true, source: '少林' });
-    expect(WUXUE.tianhedaoxuandao.source).toBe('崆峒');
+    expect(WUXUE.xiangmochufa).toMatchObject({ name: '金刚降魔杵', cat: '棍', signature: true, source: '擎天门' });
+    expect(WUXUE.tianhedaoxuandao.source).toBe('鸣沙教');
   });
 
   it('批注：每门一联，寻常四字、上乘与绝学五字', () => {

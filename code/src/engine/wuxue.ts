@@ -35,7 +35,8 @@ export const EFFECT_TAG: Record<FormEffect, WuxueTag> = {
   附毒: '阴毒', 引爆: '阴毒',
 };
 
-export type WuxueSource = '书肆' | 'Boss' | '挂机' | '华山' | '少林' | '唐门' | '武当' | '峨眉' | '丐帮' | '崆峒' | '百蛊门' | '雁门世家';
+/** 来路：书肆 / Boss 首杀 / 挂机掉落 / 某家门派的货架（sect-overhaul/design.md §3 总表） */
+export type WuxueSource = '书肆' | 'Boss' | '挂机' | '苍崖派' | '千岩寺' | '擎天门' | '花影坊' | '乾元观' | '苍梧派' | '千蛇窟' | '鸣沙教';
 
 export interface WuxueDef {
   id: WuxueId;

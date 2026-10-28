@@ -137,6 +137,36 @@ button { font: inherit; color: inherit; }
 .carve .n { margin-top: 6px; white-space: nowrap; font-family: var(--font-display); font-size: clamp(11px, calc(var(--pw) * .0085), 14px); letter-spacing: .1em; color: oklch(0.62 0.01 262); text-shadow: 0 0 4px #000, 0 0 2px #000, 0 1px 2px #000; }
 .carve.t1 .n { color: oklch(0.8 0.07 55); } .carve.t2 .n { color: oklch(0.86 0.01 240); } .carve.t3 .n { color: oklch(0.78 0.09 80); }
 .carve:hover .em img:not(.rim) { transform: scale(1.06); }
+
+/* 侠名录（新）· 江湖百景：二十二枚按性质散落在四处地界，同簇以暗金细线串连；
+   色系只用暗金 → 亮金 → 亮金加朱印，未得为石上阴刻暗印；悬停在底部详情栏说明 */
+.pic > .bg.map { filter: brightness(.7) contrast(.84) saturate(.6); }
+.zone-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 55% at 50% 50%, oklch(0.1 0.01 262 / .35), transparent 70%); }
+.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.links path { fill: none; stroke: oklch(0.72 0.07 78 / .22); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.links path.lit { stroke: oklch(0.8 0.11 80 / .55); stroke-dasharray: none; }
+.node { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .036); display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.node .em { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, oklch(0.1 0.01 262 / .5) 30%, oklch(0.1 0.01 262 / 0) 70%); }
+/* 徽记剪影先压成纯黑，再按档位调成阴刻灰 / 暗金 / 亮金 */
+.node .em img { position: absolute; inset: 12%; width: 76%; transition: transform .25s var(--ease); }
+.node.t0 .em img { filter: brightness(0) drop-shadow(0 1px 0 oklch(0.7 0.01 262 / .55)); opacity: .62; }
+.node.t1 .em img { filter: brightness(0) invert(.55) sepia(1) saturate(1.6) hue-rotate(-6deg); }
+.node.t2 .em img, .node.t3 .em img { filter: brightness(0) invert(.86) sepia(1) saturate(2.6) hue-rotate(-8deg) drop-shadow(0 0 5px oklch(0.8 0.13 80 / .6)); }
+.node .seal { position: absolute; right: -14%; bottom: -6%; width: 46%; aspect-ratio: 240 / 178; display: grid; place-items: center; transform: rotate(-10deg);
+  background: url('../../code/public/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80); font-family: var(--font-display); font-weight: 700; font-size: max(9px, calc(var(--pw) * .0062)); }
+.node .n { margin-top: 3px; white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0078), 13px); letter-spacing: .08em; color: oklch(0.6 0.01 262); text-shadow: 0 0 6px #000, 0 0 3px #000; }
+.node.t1 .n { color: oklch(0.72 0.06 75); } .node.t2 .n, .node.t3 .n { color: oklch(0.86 0.09 82); }
+.node:hover .em img, .node.sel .em img { transform: scale(1.12); }
+.node.sel .em { box-shadow: 0 0 0 1px oklch(0.8 0.11 80 / .5); }
+.zone { position: absolute; transform: translate(-50%, -50%); writing-mode: vertical-rl; font-family: var(--font-display); font-size: clamp(13px, calc(var(--pw) * .0105), 17px); letter-spacing: .4em;
+  color: oklch(0.8 0.07 78); text-shadow: 0 0 10px #000, 0 0 4px #000, 0 0 2px #000; pointer-events: none; }
+.zone small { display: block; margin-top: .5em; font-family: var(--font-body); font-size: .72em; letter-spacing: .1em; color: var(--muted); }
+.inspect { position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 6; min-width: min(760px, 80%); padding: 12px 26px; text-align: center;
+  background: linear-gradient(90deg, transparent, oklch(0.1 0.01 262 / .86) 14%, oklch(0.1 0.01 262 / .86) 86%, transparent); border-top: 1px solid oklch(0.72 0.07 78 / .25); font-size: 14.5px; color: var(--muted); letter-spacing: .04em; }
+.inspect b { font-family: var(--font-display); color: var(--gold); font-weight: 600; letter-spacing: .1em; margin-right: .8em; }
+.inspect .sep { color: var(--faint); margin: 0 .7em; } .inspect em { font-style: normal; color: var(--ink); }
+.scene.off .inspect { display: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
 </style>
 </head>
@@ -153,6 +183,7 @@ button { font: inherit; color: inherit; }
 <main class="stage" id="stage">
   <div class="scene" id="sc-diyun"><div class="pic"><div class="empty"></div><div id="ghosts" class="ghost-wrap" style="position:absolute;inset:0"></div><div class="banner" id="banner"></div><div id="slips"></div></div></div>
   <div class="scene off" id="sc-jiyuan"><div class="pic"><div class="bg" style="background-image:url('../../code/public/art/qianchen/jiyuan.jpg')"></div><div id="jslips"></div></div></div>
+  <div class="scene off" id="sc-xiaming2"><div class="pic"><div class="bg map" style="background-image:url('../../code/public/art/qianchen/xiaming-map.jpg')"></div><div class="zone-veil"></div><svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div id="nodes"></div></div><div class="inspect" id="inspect"></div></div>
   <div class="scene off" id="sc-xiaming"><div class="pic"><div class="bg" style="background-image:url('../../code/public/art/qianchen/xiaming-cliff.jpg')"></div><div class="cliff-title">侠名录</div><div id="carves"></div></div></div>
   <div class="vig"></div>
   <div class="head">
@@ -188,6 +219,7 @@ const PRESETS = {
   late: { label: '后期', rep: 3200, gw: 24, lv: [23, 21, 18, 11, 9, 14, 12, 19], own: [0,1,2,3,4,5,6,7,8,9,10,12], tiers: [3,3,2,1,2,2,1,1,2,3,3,3,3,2,2,2,1,3,2,2,3,3], cnt: .9 },
   poor: { label: '声望见底', rep: 4, gw: 9, lv: [12, 10, 7, 3, 2, 5, 1, 8], own: [0,1,3,4,7], tiers: [2,1,0,0,1,0,0,0,0,2,1,2,2,1,1,1,0,2,1,1,2,1], cnt: .6 },
 };
+let sub = 'diyun';
 let st; const $ = id => document.getElementById(id);
 
 /* 画按 cover 铺满舞台 */
@@ -220,14 +252,14 @@ function draw() {
   $('banner').innerHTML = `<div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
     + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div>`
     + `<button class="seal-btn" id="gwBtn" ${st.rep >= gp ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button>`;
-  $('rep').innerHTML = `持有 <b>${st.rep.toLocaleString('en-US')}</b> 声望`; $('railRep').textContent = st.rep.toLocaleString('en-US');
+  $('rep').innerHTML = sub === 'xiaming' ? `已点亮 <b>${st.tiers.reduce((a, b) => a + b, 0)}</b> / 66` : `持有 <b>${st.rep.toLocaleString('en-US')}</b> 声望`; $('railRep').textContent = st.rep.toLocaleString('en-US');
   $('multV').textContent = `${(6.3 + st.gw * 0.2).toFixed(1)}×`;
   document.querySelectorAll('#slips .seal-btn').forEach(b => b.onclick = () => {
     const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return;
     st.rep -= p; st.lv[i]++; draw(); const g = $('g' + i); g.classList.add('flare'); setTimeout(() => g.classList.remove('flare'), 1200);
   });
   $('gwBtn').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; draw(); };
-  drawJiyuan(); drawXiaming();
+  drawJiyuan(); drawXiaming(); drawXiaming2();
   bindTips();
 }
 
@@ -276,16 +308,58 @@ function drawXiaming() {
   } });
   $('carves').innerHTML = html;
 }
-let sub = 'diyun';
+
+/* ───────── 侠名录（新）· 江湖百景：四处地界，坐标按 xiaming-map.jpg 中的地物取（画幅 %） ───────── */
+const ZONES = [
+  ['武道', [0,1,2,3,4,5,6,7,8], [[9,30],[19,25],[29,28],[35,40],[27,50],[17,47],[8,55],[16,67],[28,69]], [22,37]],
+  ['修行', [11,12,13,14,19], [[43,24],[49,36],[58,41],[65,32],[66,19]], [41,40]],
+  ['江湖', [9,10,21,15], [[79,18],[91,15],[93,39],[81,37]], [86,27]],
+  ['世情', [17,18,16,20], [[70,62],[80,55],[92,57],[86,77]], [65,77]],
+];
+const effTxt = (eff, v) => eff.includes('N') ? eff.replace('N', v) : eff.endsWith('−') ? `${eff}${Math.round(v * 100)}%` : `${eff} +${Math.round(v * 100)}%`;
+function inspectHTML(k) {
+  if (k == null) { const lit = st.tiers.filter(t => t > 0).length; return `<b>侠名录</b>得名 <em>${lit}</em> / 22<span class="sep">·</span>点亮 <em>${st.tiers.reduce((a, b) => a + b, 0)}</em> / 66 重`; }
+  const [, tiers, what, th, eff, val] = ACHV[k], t = st.tiers[k], cnt = Math.round(th[Math.min(t, 2)] * st.cnt);
+  const name = t ? tiers[t - 1] : '未得名';
+  const cur = t ? `<em>${effTxt(eff, val[t - 1])}</em>` : '尚无加成';
+  const nx = t < 3 ? `<span class="sep">·</span>下一重「${tiers[t]}」${what} <em>${Math.min(cnt, th[t]).toLocaleString('en-US')}</em> / ${th[t].toLocaleString('en-US')}，得 ${effTxt(eff, val[t])}` : '<span class="sep">·</span>三重已满';
+  return `<b>【${name}】</b>${cur}${nx}`;
+}
+function drawXiaming2() {
+  let nodes = '', links = '';
+  ZONES.forEach(([zn, ids, pos, lab]) => {
+    const got = ids.reduce((a, k) => a + st.tiers[k], 0);
+    nodes += `<div class="zone" style="left:${lab[0]}%;top:${lab[1]}%">${zn}<small>${got}/${ids.length * 3}</small></div>`;
+    for (let i = 1; i < ids.length; i++) {
+      const [a, b] = [pos[i - 1], pos[i]], lit = st.tiers[ids[i - 1]] > 0 && st.tiers[ids[i]] > 0;
+      links += `<path class="${lit ? 'lit' : ''}" d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}"/>`;
+    }
+    ids.forEach((k, i) => {
+      const [id, tiers] = ACHV[k], t = st.tiers[k];
+      nodes += `<div class="node t${t}" data-k="${k}" style="left:${pos[i][0]}%;top:${pos[i][1]}%"><div class="em"><img src="../../code/public/art/qianchen/em/line-${id}.png" alt="">`
+        + (t === 3 ? '<span class="seal">极</span>' : '') + `</div><div class="n">${t ? tiers[t - 1] : tiers[0]}</div></div>`;
+    });
+  });
+  $('nodes').innerHTML = nodes; $('links').innerHTML = links; $('inspect').innerHTML = inspectHTML(null);
+  document.querySelectorAll('#nodes .node').forEach(el => {
+    el.onmouseenter = () => { $('inspect').innerHTML = inspectHTML(+el.dataset.k); };
+    el.onmouseleave = () => { $('inspect').innerHTML = inspectHTML(null); };
+  });
+}
+let xmVer = 'new';
+function showScene() { ['diyun', 'jiyuan', 'xiaming', 'xiaming2'].forEach(v => $('sc-' + v).classList.toggle('off', v !== (sub === 'xiaming' && xmVer === 'new' ? 'xiaming2' : sub))); }
 document.querySelectorAll('#seg button').forEach(b => b.onclick = () => {
   sub = b.dataset.v; document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x === b));
-  ['diyun', 'jiyuan', 'xiaming'].forEach(v => $('sc-' + v).classList.toggle('off', v !== sub));
+  showScene(); $('xmv').style.display = sub === 'xiaming' ? '' : 'none';
   $('rep').innerHTML = sub === 'xiaming' ? `已点亮 <b>${st.tiers.reduce((a, b) => a + b, 0)}</b> / 66` : `持有 <b>${st.rep.toLocaleString('en-US')}</b> 声望`;
 });
 const tip = $('tip');
 function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el.onmouseenter = () => { tip.innerHTML = el.dataset.tip; tip.classList.add('on'); const r = el.getBoundingClientRect(); tip.style.left = `${Math.min(innerWidth - 310, r.left)}px`; tip.style.top = `${r.bottom + 8}px`; }; el.onmouseleave = () => tip.classList.remove('on'); }); }
-function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); draw(); document.querySelectorAll('.proto button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
+function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); draw(); document.querySelectorAll('.proto > button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
 Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
+const xv = document.createElement('span'); xv.id = 'xmv'; xv.style.display = 'none';
+xv.innerHTML = '｜侠名录 <button data-x="new" class="on">新 · 江湖百景</button><button data-x="old">旧 · 摩崖</button>'; $('proto').appendChild(xv);
+xv.querySelectorAll('button').forEach(b => b.onclick = () => { xmVer = b.dataset.x; xv.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); showScene(); });
 place(); load('mid');
 </script>
 </body>

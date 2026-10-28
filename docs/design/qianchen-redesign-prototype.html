@@ -173,6 +173,27 @@ button { font: inherit; color: inherit; }
 .proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
 .proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
 
+
+/* ═══ 调色（与修炼 / 战斗统一）：底图与器物去饱和、整体压向冷灰蓝，暖色只留灯焰与朱印 ═══ */
+.grade { position: absolute; inset: 0; z-index: 1; pointer-events: none; display: none;
+  background: oklch(0.42 0.035 255); mix-blend-mode: color; opacity: .55; }
+.grade2 { position: absolute; inset: 0; z-index: 1; pointer-events: none; display: none;
+  background: radial-gradient(ellipse 60% 55% at 50% 60%, transparent 40%, oklch(0.12 0.015 260 / .55)); }
+body.graded .grade, body.graded .grade2 { display: block; }
+body.graded .art { filter: saturate(.55) brightness(.92) contrast(1.04) !important; }
+body.graded .lamp img.base { filter: saturate(.45) brightness(.75) drop-shadow(0 6px 8px #000); }
+body.graded .lamp .glow { opacity: .55; }
+body.graded .tag { filter: saturate(.45) brightness(.9) drop-shadow(0 6px 10px #000); }
+body.graded .slip { filter: saturate(.35) brightness(.78) drop-shadow(0 6px 10px #000); }
+body.graded .slip.own { filter: saturate(.35) brightness(.85) drop-shadow(0 0 6px oklch(0.75 0.03 80 / .25)) drop-shadow(0 6px 10px #000); }
+body.graded .medal img { filter: saturate(.5) brightness(.88) drop-shadow(0 5px 6px #000); }
+body.graded .medal.t0 img { filter: grayscale(1) brightness(.4) drop-shadow(0 5px 6px #000); }
+body.graded .xm-hall { filter: saturate(.5) brightness(.9); }
+body.graded .xm-hall-plaque { color: oklch(0.74 0.06 80); text-shadow: 0 2px 4px #000; }
+body.graded .banner { filter: saturate(.6); }
+.banner { z-index: 2; } .smoke { z-index: 1; }
+body.graded .smoke img { filter: brightness(.85); }
+body.graded .beam { filter: saturate(.4) brightness(.8); }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
 </style>
 </head>
@@ -190,6 +211,7 @@ button { font: inherit; color: inherit; }
 
 <main class="stage" id="stage">
   <div class="art" id="art"></div>
+  <div class="grade"></div><div class="grade2"></div>
   <div class="head">
     <div>
       <h1>前尘</h1>
@@ -362,6 +384,11 @@ function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el
 function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); drawAll(); document.querySelectorAll('.proto button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
 Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
 
+
+document.body.classList.add('graded');
+const gb = document.createElement('button'); gb.textContent = '调色：开'; gb.classList.add('on');
+gb.onclick = () => { const on = document.body.classList.toggle('graded'); gb.textContent = on ? '调色：开' : '调色：关'; gb.classList.toggle('on', on); };
+$('proto').appendChild(Object.assign(document.createElement('span'), { textContent: '｜' })); $('proto').appendChild(gb);
 load('mid'); place();
 </script>
 </body>

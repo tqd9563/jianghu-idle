@@ -80,6 +80,8 @@ button { font: inherit; color: inherit; }
 .sx-head h1 { margin: 0; display: flex; align-items: flex-start; gap: 10px; font-family: var(--font-display); font-size: 40px; font-weight: 700; letter-spacing: .22em; line-height: 1.15; }
 .sx-head h1 .seal { font-size: 10px; line-height: 1.15; letter-spacing: 0; writing-mode: vertical-rl; color: oklch(0.92 0.03 85);
   background: var(--seal-red); padding: 3px 2px; border-radius: 2px; margin-top: 9px; text-shadow: none; transform: rotate(-3deg); }
+.sx-view:not(#vMap) .sx-head h1 { font-size: 30px; letter-spacing: .26em; }
+.sx-view:not(#vMap) .sx-head .stand { font-size: 15px; margin-top: 6px; }
 .sx-head .stand { margin-top: 8px; font-size: 16px; letter-spacing: .14em; color: var(--muted); }
 .sx-head .stand b { color: var(--gold); font-weight: 600; margin-left: 4px; letter-spacing: .04em; }
 .sx-back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0 0 10px; cursor: pointer;
@@ -115,7 +117,12 @@ button { font: inherit; color: inherit; }
 /* ═══ 内景通用：右侧暗区题跋 ═══ */
 .sx-insc { position: absolute; right: 40px; top: var(--ty, 18%); width: var(--tw, 320px); z-index: 5; text-shadow: 0 1px 8px oklch(0.08 0.01 262), 0 0 3px #000; }
 .sx-shade { position: absolute; inset: 0 0 0 auto; width: var(--sw, 40%); pointer-events: none; z-index: 4;
-  background: linear-gradient(to left, oklch(0.10 0.012 262 / .78), oklch(0.10 0.012 262 / .5) 55%, transparent); }
+  background: linear-gradient(to left, oklch(0.10 0.012 262 / .82), oklch(0.10 0.012 262 / .7) 30%, oklch(0.10 0.012 262 / .42) 58%, oklch(0.10 0.012 262 / .14) 82%, transparent); }
+/* 黑宣纸：极淡的竖排古籍暗纹与栏线，只在暗区里隐约可见 */
+.sx-paper { position: absolute; inset: 0; overflow: hidden; opacity: .022; writing-mode: vertical-rl; padding: 34px 26px 0 0;
+  font-family: var(--font-display); font-size: 20px; line-height: 44px; letter-spacing: .5em; color: oklch(0.92 0.03 85);
+  background: repeating-linear-gradient(to left, transparent 0 25px, oklch(0.85 0.06 80) 25px 26px, transparent 26px 44px);
+  -webkit-mask: linear-gradient(to right, transparent, #000 50%), linear-gradient(to bottom, transparent, #000 12%, #000 85%, transparent); -webkit-mask-composite: source-in; mask: linear-gradient(to right, transparent, #000 50%), linear-gradient(to bottom, transparent, #000 12%, #000 85%, transparent); mask-composite: intersect; }
 .sx-stroke { height: 7px; margin: 20px -6px 18px; background: oklch(0.6 0.04 80 / .45); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
 .sx-big { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; letter-spacing: .2em; line-height: 1.2; }
 .sx-sub { margin-top: 8px; font-size: 16px; letter-spacing: .2em; color: var(--muted); }
@@ -124,6 +131,7 @@ button { font: inherit; color: inherit; }
   font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: .5em; padding-left: .5em; color: oklch(0.17 0.012 262); text-shadow: none; transition: filter .2s, transform .15s; }
 .scroll-btn:hover:not([aria-disabled="true"]) { filter: brightness(1.15); }
 .scroll-btn:active:not([aria-disabled="true"]) { transform: scale(.97); }
+.scroll-btn.long { letter-spacing: .28em; padding-left: .28em; }
 .scroll-btn[aria-disabled="true"] { cursor: default; filter: saturate(.15) brightness(.55); }
 .scroll-btn:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
 /* 次按钮：暗底墨金双线框，与卷轴形态不同 */
@@ -135,8 +143,11 @@ button { font: inherit; color: inherit; }
 
 /* ═══ 百务殿 ═══ */
 .sx-bian { position: absolute; left: 43.1%; top: 13.9%; transform: translate(-50%, -50%) rotate(8.4deg) skewX(-6deg); pointer-events: none; white-space: nowrap;
-  font-family: var(--font-display); font-weight: 700; font-size: calc(var(--aw) * .052); letter-spacing: .5em; padding-left: .5em; color: oklch(0.17 0.015 60 / .9);
+  font-family: var(--font-display); font-weight: 700; font-size: calc(var(--aw) * .05); letter-spacing: .5em; padding-left: .5em; color: oklch(0.14 0.015 60 / .72);
   text-shadow: 0 1px 0 oklch(0.6 0.03 70 / .25); mix-blend-mode: multiply; }
+/* 匾额压暗一层，让左上标题为主、画里的匾为辅 */
+.sx-bian-dim { position: absolute; left: 27%; top: 0; width: 32%; height: 27%; pointer-events: none;
+  background: radial-gradient(ellipse 55% 55% at 50% 50%, oklch(0.07 0.01 262 / .5), oklch(0.07 0.01 262 / .25) 70%, transparent); }
 .sx-tab { position: absolute; border: 0; padding: 0; background: none; cursor: default; }
 .sx-tab .lit { position: absolute; inset: 0; opacity: 0; mix-blend-mode: screen; transition: opacity .35s, filter .35s;
   background: radial-gradient(ellipse 80% 62% at 50% 46%, oklch(0.66 0.11 72 / .95), oklch(0.48 0.10 62 / .8) 75%, oklch(0.38 0.08 58 / .7)); }
@@ -154,13 +165,16 @@ button { font: inherit; color: inherit; }
 .sx-hall.busy .sx-tab.on:not(.sel) { cursor: default; }
 .sx-hall.busy .sx-tab.on:not(.sel) .lit { opacity: .5; } .sx-hall.busy .sx-tab.on:not(.sel) .nm { opacity: .7; }
 /* 时长两档：菱形 + 名 + 贡献数，选中菱形填金 */
-.sx-durs { display: grid; }
+.sx-tag { margin-top: 10px; font-size: 14px; letter-spacing: .16em; color: var(--ink-gold); }
+.sx-desc { margin: 14px 0 0; font-size: 15px; line-height: 1.85; letter-spacing: .06em; color: #8A8F99; }
+.sx-durs { display: grid; margin-top: 22px; border-top: 1px solid oklch(0.75 0.075 76 / .32); border-bottom: 1px solid oklch(0.75 0.075 76 / .32); }
+.sx-durs .sx-dur:last-child::after { display: none; }
 .sx-dur { display: flex; align-items: center; gap: 12px; border: 0; background: none; cursor: pointer; padding: 14px 2px 13px; position: relative; text-align: left; color: var(--muted); text-shadow: inherit; }
 .sx-dur::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .26); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
 .sx-dur .dm { width: 9px; height: 9px; transform: rotate(45deg); border: 1.5px solid oklch(0.75 0.075 76 / .7); flex: none; }
 .sx-dur .dn { font-family: var(--font-display); font-size: 19px; letter-spacing: .2em; }
-.sx-dur .dv { margin-left: auto; font-size: 13px; letter-spacing: .2em; color: var(--faint); }
-.sx-dur .dv b { font-size: 26px; font-weight: 600; letter-spacing: 0; color: var(--ink-gold); margin-left: 8px; }
+.sx-dur .dv { margin-left: auto; font-size: 14px; letter-spacing: .14em; color: var(--faint); }
+.sx-dur .dv b { font-size: 24px; font-weight: 600; letter-spacing: 0; color: var(--ink-gold); margin: 0 6px 0 4px; }
 .sx-dur:hover { color: var(--ink); }
 .sx-dur.on { color: var(--ink); } .sx-dur.on .dm { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px oklch(0.78 0.13 78 / .6); }
 .sx-dur.on .dv b { color: var(--gold); }
@@ -185,17 +199,16 @@ button { font: inherit; color: inherit; }
 
 /* ═══ 典籍院 / 天工库：右侧一列可换之物 + 选中详情 ═══ */
 .sx-list { display: grid; }
-.sx-row { display: flex; align-items: center; gap: 14px; border: 0; background: none; cursor: pointer; padding: 9px 2px 9px; position: relative; text-align: left; color: var(--muted); text-shadow: inherit; }
+.sx-row { display: flex; align-items: center; gap: 14px; border: 0; background: none; cursor: pointer; padding: 8px 6px 8px 4px; position: relative; text-align: left; color: var(--ink); text-shadow: inherit; opacity: .6; transition: opacity .2s; }
 .sx-row::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .22); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
 .sx-row svg { width: 26px; height: 26px; flex: none; fill: none; stroke: var(--ink-gold); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
 .sx-row .rn { font-family: var(--font-display); font-size: 17px; letter-spacing: .14em; white-space: nowrap; }
 .sx-row .rp { margin-left: auto; font-size: 12px; letter-spacing: .14em; color: var(--faint); white-space: nowrap; }
 .sx-row .rp b { font-size: 17px; font-weight: 600; letter-spacing: 0; color: var(--ink-gold); margin-right: 4px; }
 .sx-row .rp.own { font-size: 14px; letter-spacing: .3em; color: var(--faint); }
-.sx-row:hover { color: var(--ink); }
-.sx-row.on { color: var(--ink); }
+.sx-row:hover { opacity: .85; }
+.sx-row.on { opacity: 1; background: linear-gradient(to right, oklch(0.78 0.13 78 / .16), oklch(0.78 0.13 78 / .05) 55%, transparent 90%); }
 .sx-row.on svg { opacity: 1; stroke: var(--gold); filter: drop-shadow(0 0 4px oklch(0.78 0.13 78 / .5)); }
-.sx-row.on .rn::before { content: ''; display: inline-block; width: 5px; height: 5px; margin: 0 9px 3px -2px; transform: rotate(45deg); background: var(--gold); }
 .sx-row.fresh { animation: sx-fresh 1.4s var(--ease); }
 @keyframes sx-fresh { 0% { background: oklch(0.78 0.13 78 / .18); } 100% { background: transparent; } }
 .sx-row:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
@@ -204,15 +217,42 @@ button { font: inherit; color: inherit; }
 .sx-price span { font-size: 15px; letter-spacing: .2em; color: var(--muted); }
 .sx-price.short b { color: var(--short); }
 .sx-price.own b { font-size: 20px; letter-spacing: .4em; color: var(--muted); font-weight: 600; }
-.sx-detail { position: relative; }
-.sx-detail .scroll-btn { margin-left: 0; }
-.sx-gap { height: 98px; }
+/* 列表与详情之间：── ◆ ── */
+.sx-orn { display: flex; align-items: center; gap: 10px; margin: 18px 0 18px; }
+.sx-orn::before, .sx-orn::after { content: ''; flex: 1; height: 1px; }
+.sx-orn::before { background: linear-gradient(to right, transparent, oklch(0.75 0.075 76 / .5)); }
+.sx-orn::after { background: linear-gradient(to left, transparent, oklch(0.75 0.075 76 / .5)); }
+.sx-orn i { width: 7px; height: 7px; transform: rotate(45deg); border: 1px solid oklch(0.75 0.075 76 / .75); position: relative; }
+.sx-orn i::after { content: ''; position: absolute; inset: 1.5px; background: oklch(0.75 0.075 76 / .7); }
+.sx-orn b { width: 3px; height: 3px; transform: rotate(45deg); background: oklch(0.75 0.075 76 / .5); }
+/* 详情卡 */
+.sx-card .nmrow { display: flex; align-items: baseline; gap: 12px; }
+.sx-card h2 { margin: 0; font-family: var(--font-display); font-size: 32px; font-weight: 700; letter-spacing: .16em; line-height: 1.2; white-space: nowrap; }
+.sx-card .gtag { margin-left: auto; flex: none; font-size: 13px; letter-spacing: .14em; color: var(--ink-gold); white-space: nowrap; }
+.sx-chop { display: inline-block; margin-left: 8px; font-family: var(--font-display); font-size: 11px; letter-spacing: .1em; color: oklch(0.95 0.02 85); background: var(--seal-red);
+  padding: 1px 4px; border-radius: 2px; transform: rotate(-4deg) translateY(-2px); text-shadow: none; cursor: help; }
+.sx-attrs { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; margin: 14px 0 0; }
+.sx-attrs .a { display: flex; align-items: baseline; gap: 10px; padding: 8px 2px 7px; position: relative; }
+.sx-attrs .a::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .26); -webkit-mask: var(--BRUSH) center / 100% 100%; mask: var(--BRUSH) center / 100% 100%; }
+.sx-attrs .a.wide { grid-column: 1 / -1; }
+.sx-attrs dt { font-size: 14px; letter-spacing: .08em; color: var(--faint); white-space: nowrap; }
+.sx-attrs dd { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.sx-attrs .a.wide dd { font-size: 16px; }
+.sx-attrs dd[data-tip] { cursor: help; }
+.sx-attrs dd[data-tip]:hover { color: var(--gold); }
+.sx-card .scroll-btn { margin-top: 20px; }
+.sx-own { display: block; width: max-content; margin: 22px auto 0; padding: 7px 16px 7px 22px; font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: .5em;
+  color: var(--cinnabar); border: 1.5px solid oklch(0.66 0.14 32 / .7); border-radius: 3px; transform: rotate(-4deg); text-shadow: none; opacity: .85; }
+.sx-own-gap { height: 74px; display: flex; align-items: center; }
 /* 货多（地位高）时收紧行距，按钮不压到底边 */
-.sx-insc.dense .sx-row { padding: 5px 2px; }
-.sx-insc.dense .sx-stroke { margin: 14px -6px 12px; }
-.sx-insc.dense .sx-price { margin-top: 10px; }
-.sx-insc.dense .scroll-btn { margin-top: 16px; }
-.sx-insc.dense .sx-gap { height: 82px; }
+.sx-insc.dense .sx-row { padding: 4px 6px 4px 4px; }
+.sx-insc.dense .sx-row svg { width: 22px; height: 22px; }
+.sx-insc.dense .sx-orn { margin: 12px 0 12px; }
+.sx-insc.dense .sx-card h2 { font-size: 28px; }
+.sx-insc.dense .sx-desc { margin-top: 8px; line-height: 1.7; }
+.sx-insc.dense .sx-attrs { margin-top: 8px; }
+.sx-insc.dense .sx-attrs .a { padding: 5px 2px 4px; }
+.sx-insc.dense .scroll-btn { margin-top: 14px; height: 62px; }
 
 /* 操作反馈：浮在对象旁 */
 .sx-float { position: absolute; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; z-index: 8; font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: .2em;
@@ -274,11 +314,12 @@ button { font: inherit; color: inherit; }
         <div class="sx-joss" id="joss"><span class="gone"></span><span class="ember"></span>
           <span class="puff" style="--d:0s;--dx:-6px"></span><span class="puff" style="--d:1.4s;--dx:5px"></span><span class="puff" style="--d:2.8s;--dx:-2px"></span></div>
         <div class="tone"></div><div class="vig"></div></div>
+      <div class="sx-bian-dim"></div>
       <div class="sx-bian">百务殿</div>
       <div id="tabs"></div>
       <div id="hallFloats"></div>
     </div>
-    <div class="sx-shade"></div>
+    <div class="sx-shade"><div class="sx-paper"></div></div>
     <header class="sx-head">
       <button class="sx-back" data-back><svg viewBox="0 0 14 14"><path d="M9 2 4 7l5 5"/></svg>苍崖派</button>
       <h1>百务殿</h1>
@@ -292,7 +333,7 @@ button { font: inherit; color: inherit; }
     <div class="sx-art">
       <div class="sx-pic"><div class="img"></div><div class="tone"></div><div class="vig"></div></div>
     </div>
-    <div class="sx-shade"></div>
+    <div class="sx-shade"><div class="sx-paper"></div></div>
     <header class="sx-head">
       <button class="sx-back" data-back><svg viewBox="0 0 14 14"><path d="M9 2 4 7l5 5"/></svg>苍崖派</button>
       <h1 id="shopTitle">典籍院</h1>
@@ -324,20 +365,45 @@ const GATES = [
   { key: 'dianji', name: '典籍院', lv: 1, at: [88.4, 27.5], hit: [63, 6, 23, 23] },
   { key: 'tiangong', name: '天工库', lv: 2, at: [79, 61], hit: [80, 46, 17, 21] },
 ];
+/* 兑换货架。属性肉块全取引擎真值：
+   武学 = engine/data/wuxue-catalog.json（mult0 / p / cost×QI_SCALE / effect）+ wuxue.ts effectText 第 1 式；描述 = epigraph
+   内功 = engine/neigong.ts（QI_COEF 气海、HUOHOU_MULT 火候）+ routes.ts 源流 grant（狂澜 critRatePP / critDmgPP，惊鸿 comboRate / comboMult）
+   装备 = engine/gear.ts rollBase：兵器重型 攻击 = 0.036 × 100 × 1.7^(当量−1) × GRADE_BASE × 1.08（浮动取中值 1.0）；词条取区间中值 × GRADE_AFFIX
+   价格是占位 */
+const GRADE_COLOR = { 上乘: 'oklch(0.78 0.09 215)', 极品: 'oklch(0.72 0.16 50)' };
 const SHOPS = {
   dianji: { title: '典籍院', img: 'hall-dianji.jpg', items: [
-    { n: '疾雨剑法', k: '武学 · 寻常', ic: 'sword', p: 300, lv: 1 },
-    { n: '百川诀', k: '内功 · 入门', ic: 'book', p: 0, lv: 1, own: true },
-    { n: '惊鸿照影剑 · 残页', k: '武学残页 · 上乘', ic: 'leaf', p: 600, lv: 2 },
-    { n: '沧海功', k: '内功 · 进阶', ic: 'book', p: 1800, lv: 3 },
-    { n: '飞泉诀', k: '兼修惊鸿 · 进阶', ic: 'book', p: 1800, lv: 3 },
-    { n: '苍崖九叠剑 · 残页', k: '武学残页 · 绝学', ic: 'leaf', p: 2400, lv: 4 },
-    { n: '落星沉海剑 · 残页', k: '武学残页 · 绝学', ic: 'leaf', p: 2400, lv: 4 },
-    { n: '沧溟真经', k: '内功 · 镇派', ic: 'book', p: 6000, lv: 5 } ] },
+    { n: '疾雨剑法', g: '寻常 · 剑法', ic: 'sword', p: 300, lv: 1, desc: '檐声急雨，剑影疏灯。',
+      at: [['伤害倍率', '×148%'], ['触发几率', '12%'], ['真气消耗', '190'], ['附加特效', '连击', '第一式 44% 追加一次普攻']] },
+    { n: '百川诀', g: '入门 · 内功', ic: 'book', p: 0, lv: 1, desc: '纳百川入丹田，涓滴汇海，久久自成气象。',
+      at: [['气海', '×1.0', '真气上限倍率'], ['火候', '×1.00', '每重折合境界的倍率'], ['会心率', '+10%', '狂澜一路'], ['会心伤害', '+20%', '狂澜一路']] },
+    { n: '惊鸿照影剑 · 残页', t: '惊鸿照影剑', g: '上乘 · 剑法残页', ic: 'leaf', p: 600, lv: 2, desc: '惊鸿曾照影，剑过不留痕。',
+      at: [['伤害倍率', '×190%'], ['触发几率', '9%'], ['真气消耗', '400'], ['附加特效', '回气', '第一式返还耗气 50%']] },
+    { n: '沧海功', g: '进阶 · 内功', ic: 'book', p: 1800, lv: 3, desc: '气如沧海潮生，一呼一吸之间，有吞吐浪涛之势。',
+      at: [['气海', '×1.1', '真气上限倍率'], ['火候', '×1.02', '每重折合境界的倍率'], ['会心率', '+10%', '狂澜一路'], ['会心伤害', '+20%', '狂澜一路']] },
+    { n: '飞泉诀', g: '进阶 · 内功', chop: '惊鸿', ic: 'book', p: 1800, lv: 3, desc: '借山间飞泉之意，气走如瀑，一落未尽，一落又起。',
+      at: [['气海', '×1.1', '真气上限倍率'], ['火候', '×1.02', '每重折合境界的倍率'], ['追加几率', '30%', '每次出手后追加一击'], ['追加倍率', '65%', '追加一击的伤害']] },
+    { n: '苍崖九叠剑 · 残页', t: '苍崖九叠剑', g: '绝学 · 剑法残页', ic: 'leaf', p: 2400, lv: 4, desc: '苍崖云九叠，孤剑雪千秋。',
+      at: [['伤害倍率', '×236%'], ['触发几率', '3%'], ['真气消耗', '550'], ['附加特效', '必暴', '第一式必定会心 · 会心伤害 +5%']] },
+    { n: '落星沉海剑 · 残页', t: '落星沉海剑', g: '绝学 · 剑法残页', ic: 'leaf', p: 2400, lv: 4, desc: '星垂沧海夜，剑落暮潮寒。',
+      at: [['伤害倍率', '×236%'], ['触发几率', '5%'], ['真气消耗', '550'], ['附加特效', '蓄势', '本场每出过一招，本式倍率 +10%']] },
+    { n: '沧溟真经', g: '镇派 · 内功', ic: 'book', p: 6000, lv: 5, desc: '苍崖历代掌门心血所凝，修到深处，内息如沧溟无底。',
+      at: [['气海', '×1.2', '真气上限倍率'], ['火候', '×1.04', '每重折合境界的倍率'], ['会心率', '+10%', '狂澜一路'], ['会心伤害', '+20%', '狂澜一路']] } ] },
   tiangong: { title: '天工库', img: 'hall-tiangong.jpg', items: [
-    { n: '松纹剑', k: '兵器 · 剑', ic: 'blade', p: 900, lv: 2 },
-    { n: '听涛剑', k: '兵器 · 剑', ic: 'blade', p: 4800, lv: 5 } ] },
+    { n: '松纹剑', g: '兵器 · 剑', grade: '上乘', ic: 'blade', p: 900, lv: 2, desc: '采苍崖后山寒铁所铸，剑身隐有古松纹理。',
+      at: [['攻击', '17'], ['品阶', '上乘'], ['词条', '攻击 +2% · 会心率 +1%', null, true]] },
+    { n: '听涛剑', g: '兵器 · 剑', grade: '极品', ic: 'blade', p: 4800, lv: 5, desc: '剑成之日置于崖顶七夜，挥动时隐有松涛之声。',
+      at: [['攻击', '76'], ['品阶', '极品'], ['词条', '攻击 +2% · 会心伤害 +2%', null, true]] } ] },
 };
+const LORE = {
+  洒扫剑冢: '剑冢埋着历代先辈的佩剑，落叶积苔，须日日拂拭，不可惊扰。',
+  夜守剑阁: '剑阁藏着本门名剑，入夜须持灯巡守，防宵小觊觎。',
+  递送剑帖: '掌门将开坛论剑，遣弟子携剑帖往江南诸派投递。',
+  护剑出山: '一口新铸长剑要送往山下世交，沿途多有觊觎之辈。',
+  把守栈道: '苍崖栈道是上山唯一要路，近来屡有生人窥探，须坐镇把守。',
+  赴论剑会: '江湖诸派齐聚论剑，代本门登台，胜负关乎苍崖声名。',
+};
+const PAPER = '剑者心之器也藏锋于鞘不露其芒苍崖之上云起九叠孤松立雪寒泉漱石门中弟子晨起洒扫暮而习剑寒暑不辍凡入门者先修其心后习其技心正则剑正心乱则剑乱古之剑客重诺轻生一言既出千金不易';
 const ICON = {
   sword: '<svg viewBox="0 0 26 26"><path d="M21.5 4.5 9 17"/><path d="M21.5 4.5 20 9.5 10.5 19 7 15.5 16.5 6Z"/><path d="M6 14.5 11.5 20M8 18l-3.5 3.5"/></svg>',
   blade: '<svg viewBox="0 0 26 26"><path d="M13 2.5v15"/><path d="M11 4.5 13 2.5l2 2v13h-4Z"/><path d="M8.5 17.5h9M13 17.5v5.5"/><circle cx="13" cy="23.5" r=".8"/></svg>',
@@ -408,7 +474,12 @@ function drawMap() {
 }
 
 /* ───────── 百务殿 ───────── */
-function fmtLeft(ms) { const m = Math.max(0, Math.ceil(ms / 60e3)), h = Math.floor(m / 60); return h ? `${h}<small>小时</small>${m % 60}<small>分</small>` : `${m}<small>分</small>`; }
+/* 一时辰 = 2 小时 = 八刻，剩余按刻向上取整 */
+function fmtLeft(ms) {
+  const m = Math.max(0, ms / 60e3); let h = Math.floor(m / 120), k = Math.ceil((m - h * 120) / 15);
+  if (k >= 8) { h++; k = 0; }
+  return (h ? `${h}<small>时辰</small>` : '') + (k || !h ? `${k}<small>刻</small>` : '');
+}
 function drawHall() {
   const busy = !!S.run, hall = $('vHall');
   hall.classList.toggle('busy', busy);
@@ -421,14 +492,15 @@ function drawHall() {
   }).join('');
   $('tabs').querySelectorAll('.sx-tab.on').forEach(b => b.onclick = () => { if (S.run) return; S.sel = +b.dataset.lv; drawHall(); });
   const name = ERRANDS[S.sel - 1];
+  const dossier = `<h2 class="sx-big">${name}</h2><div class="sx-tag">〔${TITLES[S.sel]} · 差事〕</div><p class="sx-desc">${LORE[name]}</p>`;
   if (!busy) {
-    $('hallInsc').innerHTML = `<h2 class="sx-big">${name}</h2><div class="sx-stroke"></div>
-      <div class="sx-durs">${[2, 8].map(h => `<button class="sx-dur${S.dur === h ? ' on' : ''}" data-h="${h}"><i class="dm"></i><span class="dn">${h === 2 ? '两个时辰' : '八个时辰'}</span><span class="dv">贡献<b>${gain(S.sel, h)}</b></span></button>`).join('')}</div>
-      <button class="scroll-btn" id="go">派出</button>`;
+    $('hallInsc').innerHTML = `${dossier}
+      <div class="sx-durs">${[2, 8].map(h => `<button class="sx-dur${S.dur === h ? ' on' : ''}" data-h="${h}"><i class="dm"></i><span class="dn">${h === 2 ? '一个时辰' : '四个时辰'}</span><span class="dv">赏<b>${gain(S.sel, h)}</b>贡献</span></button>`).join('')}</div>
+      <button class="scroll-btn long" id="go">领牌派出</button>`;
     $('hallInsc').querySelectorAll('.sx-dur').forEach(b => b.onclick = () => { S.dur = +b.dataset.h; drawHall(); });
     $('go').onclick = () => { S.run = { tier: S.sel, dur: S.dur, start: Date.now() }; floatTab(S.sel, '领差'); drawHall(); syncProto(); };
   } else {
-    $('hallInsc').innerHTML = `<h2 class="sx-big">${name}</h2><div class="sx-stroke"></div>
+    $('hallInsc').innerHTML = `${dossier}<div class="sx-stroke"></div>
       <dl class="sx-kv"><div><dt>还剩</dt><dd id="left"></dd></div><div><dt>将得</dt><dd class="g">${gain(S.run.tier, S.run.dur)}<small>贡献</small></dd></div></dl>
       <button class="btn-ghost" id="recall">召回</button>`;
     $('recall').onclick = () => { const t = S.run.tier; S.run = null; floatTab(t, '召回', 'dim'); drawHall(); syncProto(); };
@@ -456,27 +528,32 @@ function drawShop() {
   if (!items.find(it => it.n === pick)) pick = (items.find(it => !owned(it)) || items[0]).n;
   S.pick[S.shop] = pick;
   const it = items.find(x => x.n === pick), own = owned(it), short = !own && S.bal < it.p;
+  const gc = x => x.grade ? ` style="color:${GRADE_COLOR[x.grade]}"` : '';
+  const title = it.t || it.n;
   $('shopInsc').classList.toggle('dense', items.length > 6);
-  $('shopInsc').innerHTML = `<div class="sx-list">${items.map(x => `<button class="sx-row${x.n === pick ? ' on' : ''}${S.fresh.has(x.n) ? ' fresh' : ''}" data-n="${x.n}">${ICON[x.ic]}<span class="rn">${x.n}</span>${
+  $('shopInsc').innerHTML = `<div class="sx-list">${items.map(x => `<button class="sx-row${x.n === pick ? ' on' : ''}${S.fresh.has(x.n) ? ' fresh' : ''}" data-n="${x.n}">${ICON[x.ic]}<span class="rn"${gc(x)}>${x.n}</span>${
       owned(x) ? '<span class="rp own">已得</span>' : `<span class="rp"><b>${x.p}</b>贡献</span>`}</button>`).join('')}</div>
-    <div class="sx-stroke"></div>
-    <div class="sx-detail">
-      <h2 class="sx-big" style="font-size:${it.n.length > 6 ? 30 : 38}px">${it.n}</h2>
-      <div class="sx-sub">${it.k.split(' · ').join('<i>·</i>')}</div>
-      ${own ? '<div class="sx-price own"><b>已得</b></div><div class="sx-gap"></div>'
-        : `<div class="sx-price${short ? ' short' : ''}" id="price" ${short ? `data-tip="还差 ${it.p - S.bal} 贡献"` : ''}><b>${it.p}</b><span>贡献</span></div>
-           <button class="scroll-btn" id="buy" ${short ? `aria-disabled="true" data-tip="还差 ${it.p - S.bal} 贡献"` : ''}>兑换</button>`}
+    <div class="sx-orn"><b></b><i></i><b></b></div>
+    <div class="sx-card">
+      <div class="nmrow"><h2 style="font-size:${title.length > 4 ? 28 : 32}px${it.grade ? `;color:${GRADE_COLOR[it.grade]}` : ''}">${title}</h2>
+        <span class="gtag">${it.g}${it.chop ? `<span class="sx-chop" data-tip="兼修惊鸿一路">${it.chop}</span>` : ''}</span></div>
+      <p class="sx-desc">${it.desc}</p>
+      <dl class="sx-attrs">${it.at.map(([k, v, tip, wide]) => `<div class="a${wide ? ' wide' : ''}"><dt>${k}</dt><dd${tip ? ` data-tip="${tip}"` : ''}>${v}</dd></div>`).join('')}</dl>
+      ${own ? '<div class="sx-own-gap"><span class="sx-own">已得</span></div>'
+        : `<button class="scroll-btn" id="buy" ${short ? `aria-disabled="true" data-tip="还差 ${it.p - S.bal} 贡献"` : ''}>兑换</button>`}
     </div>`;
   S.fresh.clear();
   $('shopInsc').querySelectorAll('.sx-row').forEach(b => b.onclick = () => { S.pick[S.shop] = b.dataset.n; drawShop(); });
+  const rowPrice = $('shopInsc').querySelector('.sx-row.on .rp');
+  if (short && rowPrice) rowPrice.querySelector('b').style.color = 'var(--short)';
   const buy = $('buy');
   if (buy) buy.onclick = () => {
     if (short) return;
-    const pr = $('price').getBoundingClientRect(), box = $('vShop').getBoundingClientRect();
+    const pr = rowPrice.getBoundingClientRect(), box = $('vShop').getBoundingClientRect();
     S.bal -= it.p; S.owned.add(it.n); S.fresh.add(it.n);
     drawShop(); drawStand();
     const f = document.createElement('div'); f.className = 'sx-float num'; f.textContent = `−${it.p}`;
-    f.style.left = `${pr.left - box.left + pr.width + 40}px`; f.style.top = `${pr.top - box.top + pr.height / 2}px`;
+    f.style.left = `${pr.left - box.left + pr.width / 2}px`; f.style.top = `${pr.top - box.top - 4}px`;
     $('vShop').appendChild(f); setTimeout(() => f.remove(), 1800);
   };
   bindTips($('shopInsc'));
@@ -523,6 +600,7 @@ const hs = location.hash.slice(1).split(',');
 if (hs.includes('busy')) S.run = RUN_MOCK();
 if (hs.includes('rich')) { S.bal = 7200; S.rich = true; }
 const r = hs.find(x => /^r[1-6]$/.test(x)); if (r) S.rank = +r[1];
+document.querySelectorAll('.sx-paper').forEach(el => el.textContent = PAPER.repeat(6));
 place();
 const v0 = hs.find(x => ['hall', 'dianji', 'tiangong'].includes(x));
 if (v0) { $('vMap').classList.remove('on'); go(v0); } else { render(); syncProto(); }

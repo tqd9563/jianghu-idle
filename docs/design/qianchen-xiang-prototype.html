@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>前尘 · 往世八相</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
+<style>
+/* 原型：前尘 · 底蕴「往世八相」。画全部出自 AI：xiang-solid（八相实笔）与 xiang-empty（同构图无人）两张对齐的画，
+   每位往世的区域按级数在两张之间显影；签、朱印、墨痕亦为 AI 素材，代码只叠字与控制显影比例。 */
+:root {
+  --bg: oklch(0.155 0.013 262); --bg-deep: oklch(0.125 0.012 262);
+  --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7); --gold: oklch(0.78 0.13 78); --ink-gold: oklch(0.75 0.075 76);
+  --paper-ink: oklch(0.22 0.02 60); --paper-mute: oklch(0.42 0.025 60);
+  --font-body: "LXGW WenKai", "PingFang SC", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --ease: cubic-bezier(.25, 1, .5, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); }
+body { display: grid; grid-template-columns: 248px 1fr 52px; height: 100vh; overflow: hidden; }
+button { font: inherit; color: inherit; }
+.rail { background: var(--bg-deep); padding: 28px 22px; display: flex; flex-direction: column; min-width: 0; }
+.rail .brand { font-size: 13px; letter-spacing: .3em; color: var(--muted); }
+.rail .realm { margin-top: 26px; font-family: var(--font-display); font-size: 30px; font-weight: 700; }
+.rail .realm small { font-size: 13px; color: var(--gold); font-weight: 400; margin-left: 8px; }
+.rail .life { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.rail .res { margin-top: 26px; font-size: 11px; color: var(--muted); }
+.rail .res b { display: block; font-size: 22px; color: var(--ink); font-weight: 500; }
+.rail .res .two { display: flex; gap: 22px; margin-top: 12px; } .rail .res .two b { font-size: 17px; }
+.rail hr { border: 0; height: 1px; background: var(--hair); margin: 22px 0 18px; }
+.rail nav a { display: block; padding: 12px; font-family: var(--font-display); font-size: 18px; letter-spacing: .3em; color: var(--muted); border-radius: 6px; margin-bottom: 4px; }
+.rail nav a.on { background: oklch(0.24 0.03 70 / .55); color: var(--gold); }
+.rail .foot { margin-top: auto; display: flex; gap: 8px; }
+.rail .foot span { border: 1px solid var(--hair); border-radius: 6px; padding: 9px 12px; font-size: 13px; color: var(--muted); }
+.rail .foot span:first-child { flex: 1; text-align: center; border-color: oklch(0.78 0.13 78 / .6); color: var(--gold); letter-spacing: .4em; }
+.dock { background: var(--bg-deep); writing-mode: vertical-rl; letter-spacing: .3em; font-size: 14px; color: var(--muted); padding: 26px 14px; }
+
+/* ─── 舞台：画按 cover 铺满；坐标一律为画幅百分比 ─── */
+.stage { position: relative; overflow: hidden; background: #0b0d12; min-width: 0; }
+.pic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
+/* 舞台偏高、画铺不满时：画的上下边羽化融进夜底，同战斗页舆图 */
+.stage.short .pic > .empty, .stage.short .ghost-wrap { -webkit-mask: linear-gradient(to bottom, transparent, #000 9%, #000 86%, transparent); mask: linear-gradient(to bottom, transparent, #000 9%, #000 86%, transparent); }
+.pic > .empty, .pic > .solid { position: absolute; inset: 0; background: center / 100% 100% no-repeat; }
+.pic > .empty { background-image: url('../../code/public/art/qianchen/xiang-empty.jpg'); }
+/* 每位往世：实笔画裁到自己的区域，羽化遮罩；透明度 = 显影程度 */
+.ghost { position: absolute; inset: 0; background: url('../../code/public/art/qianchen/xiang-solid.jpg') center / 100% 100% no-repeat; pointer-events: none;
+  -webkit-mask: radial-gradient(ellipse var(--rx) var(--ry) at var(--cx) var(--cy), #000 55%, transparent 100%); mask: radial-gradient(ellipse var(--rx) var(--ry) at var(--cx) var(--cy), #000 55%, transparent 100%);
+  opacity: var(--op); filter: blur(var(--bl)) contrast(var(--ct)); transition: opacity .9s var(--ease), filter .9s var(--ease); }
+.ghost.flare { animation: flare 1.2s var(--ease); }
+@keyframes flare { 30% { filter: brightness(1.6) contrast(1.2); } }
+.vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 30px #0b0d12;
+  background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .85), transparent 24%), linear-gradient(to top, oklch(0.1 0.01 262 / .55), transparent 18%); }
+
+/* 签：AI 水墨小签，叠名、级数、现值墨痕、下一级、朱印 */
+.slip { position: absolute; transform: translate(-50%, 0); width: clamp(62px, calc(var(--pw) * .046), 80px);
+  background: url('../../code/public/art/qianchen/xiang-slip.png') center / 100% 100% no-repeat; color: var(--paper-ink);
+  display: flex; flex-direction: column; align-items: center; padding: 40px 0 10px; filter: drop-shadow(0 6px 8px #000); cursor: default; container-type: inline-size; transition: transform .3s var(--ease); }
+.slip:hover { transform: translate(-50%, -3px); }
+.slip .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: max(15px, 25cqw); letter-spacing: .05em; line-height: 1; cursor: help; }
+.slip .lv { font-family: var(--font-display); font-weight: 700; font-size: max(17px, 30cqw); line-height: 1; margin-top: 9%; }
+.slip .lv small { font-size: .5em; }
+.slip .cur { margin-top: 8%; width: 108%; text-align: center; font-size: max(10.5px, 15cqw); font-weight: 600; white-space: nowrap; height: 2.1em; line-height: 2.1em;
+  background: url('../../code/public/art/qianchen/band.png') center / 100% 100% no-repeat; color: oklch(0.93 0.02 80); }
+.slip .nx { font-size: max(10px, 13.5cqw); color: var(--paper-mute); margin-top: 6%; text-align: center; line-height: 1.35; }
+.slip .nx b { display: block; color: oklch(0.48 0.13 45); font-weight: 600; }
+.seal-btn { margin-top: 8px; border: 0; cursor: pointer; padding: 0; width: 78%; aspect-ratio: 4 / 3; line-height: 1.1;
+  background: url('../../code/public/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80);
+  font-family: var(--font-display); font-size: max(11px, 17cqw); font-weight: 700; transition: transform .15s, filter .2s, opacity .2s; }
+.seal-btn small { display: block; font-size: .72em; font-weight: 500; letter-spacing: .15em; }
+.seal-btn:hover:not(:disabled) { filter: brightness(1.12); transform: rotate(-3deg) scale(1.05); }
+.seal-btn:disabled { cursor: default; filter: grayscale(1) brightness(1.25); opacity: .5; }
+.seal-btn:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+
+/* 修行感悟：画中悬幅（AI 画的空白幅）上墨书 */
+.banner { position: absolute; left: 89.3%; top: 15%; width: 7.4%; height: 30%; container-type: inline-size;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--paper-ink); }
+.banner .t { font-family: var(--font-display); font-weight: 700; font-size: max(14px, 15cqw); letter-spacing: .15em; cursor: help; }
+.banner .lv { font-family: var(--font-display); font-weight: 700; font-size: max(20px, 22cqw); margin-top: 6%; }
+.banner .lv small { font-size: .5em; }
+.banner .e { font-size: max(11px, 9.5cqw); margin-top: 4%; line-height: 1.6; } .banner .e .n { color: var(--paper-mute); } .banner .e .n b { color: oklch(0.48 0.13 45); }
+.banner .seal-btn { margin-top: 8%; width: 58%; font-size: max(11px, 12cqw); }
+
+/* 页头 */
+.head { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; }
+.head h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
+.head .rep { font-size: 14px; color: var(--muted); letter-spacing: .1em; } .head .rep b { color: var(--ink); font-weight: 600; font-size: 16px; }
+.seg { display: flex; gap: 28px; margin-top: 12px; }
+.seg span { padding: 6px 2px 9px; font-family: var(--font-display); font-size: 17px; letter-spacing: .3em; color: var(--muted); }
+.seg span.on { color: var(--gold); border-bottom: 2px solid var(--ink-gold); }
+.mult { margin-left: auto; text-align: right; cursor: help; }
+.mult b { display: block; font-size: 30px; font-weight: 600; color: var(--gold); }
+.mult span { font-size: 12.5px; color: var(--muted); letter-spacing: .2em; }
+
+.tip { position: fixed; z-index: 50; pointer-events: none; background: oklch(0.13 0.011 262 / .94); border: 1px solid var(--hair); padding: 9px 12px; border-radius: 4px; font-size: 13px; line-height: 1.8; max-width: 300px; opacity: 0; transition: opacity .15s; }
+.tip.on { opacity: 1; } .tip .l { color: var(--faint); }
+.proto { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 60; display: flex; gap: 2px; align-items: center; background: oklch(0.2 0.02 262 / .94); border: 1px dashed oklch(0.6 0.1 215 / .6); border-radius: 999px; padding: 4px 8px; font-family: system-ui, sans-serif; font-size: 12px; }
+.proto span { color: oklch(0.74 0.10 215); padding: 0 6px; }
+.proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
+.proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+<aside class="rail">
+  <div class="brand">江湖无尽录</div>
+  <div class="realm">小有所成<small>第三境</small></div>
+  <div class="life">第 4 世 · 23 岁 · 江湖历 220 年</div>
+  <div class="res">内力<b>15,705</b><div class="two"><div>银两<b>530</b></div><div>声望<b id="railRep">900</b></div></div></div>
+  <hr>
+  <nav><a>修炼</a><a>战斗</a><a>行囊</a><a>武功</a><a>门派</a><a class="on">前尘</a></nav>
+  <div class="foot"><span>转世</span><span>⚙</span><span>报</span></div>
+</aside>
+<main class="stage" id="stage">
+  <div class="pic" id="pic"><div class="empty"></div><div id="ghosts" class="ghost-wrap" style="position:absolute;inset:0"></div><div class="banner" id="banner"></div><div id="slips"></div></div>
+  <div class="vig"></div>
+  <div class="head">
+    <div><h1>前尘</h1><div class="rep" id="rep"></div>
+      <div class="seg"><span class="on">底蕴</span><span>机缘</span><span>侠名录</span></div></div>
+    <div class="mult" data-tip="基础 1<br>+ 宿慧 5.3×<br>+ 修行感悟"><b id="multV"></b><span>挂机产出</span></div>
+  </div>
+</main>
+<aside class="dock">江湖编年</aside>
+<div class="tip" id="tip"></div>
+<div class="proto" id="proto"><span>原型状态</span></div>
+<script>
+/* 引擎口径（engine/prestige.ts） */
+const price = n => Math.round(10 * 1.35 ** (n - 1));
+const gainAt = (f, n) => f * 0.96 ** (n - 1);
+const cum = (f, n) => f * (1 - 0.96 ** n) / (1 - 0.96);
+const gwPrice = n => Math.ceil(8.5 * n);
+const fmtV = (v, k) => k === 'pts' ? `${+(v * 100).toFixed(1)}点` : `${+(v * 100).toFixed(1)}%`;
+/* 八相：属性 · 往世身份 · 在画中的身影中心与半径（画幅 %）· 签的位置（画幅 %，签顶） */
+const XIANG = [
+  ['气血', '力士', 0.05, 'pct', [17, 34, 9, 15], [26, 22]],
+  ['攻击', '刀客', 0.05, 'pct', [33, 23, 9, 15], [41, 10]],
+  ['防御', '持杖僧', 0.05, 'pct', [61, 25, 9, 16], [70, 9]],
+  ['命中', '弓手', 0.03, 'pct', [15, 55, 9, 12], [8, 50]],
+  ['闪避', '轻身女侠', 0.03, 'pct', [43, 49, 10, 12], [51, 37]],
+  ['会心', '刺客', 0.005, 'pts', [61, 58, 8, 11], [69, 46]],
+  ['会心伤害', '剑客', 0.05, 'pts', [26, 74, 12, 15], [37, 60]],
+  ['真气', '坐忘道人', 0.05, 'pct', [72, 81, 10, 13], [80, 60]],
+];
+const PRESETS = {
+  first: { label: '第一次转世', rep: 340, gw: 0, lv: [0, 0, 0, 0, 0, 0, 0, 0] },
+  mid: { label: '中期', rep: 900, gw: 9, lv: [12, 10, 7, 3, 2, 5, 1, 8] },
+  late: { label: '后期', rep: 3200, gw: 24, lv: [23, 21, 18, 11, 9, 14, 12, 19] },
+  poor: { label: '声望见底', rep: 4, gw: 9, lv: [12, 10, 7, 3, 2, 5, 1, 8] },
+};
+let st; const $ = id => document.getElementById(id);
+
+/* 画按 cover 铺满舞台 */
+function place() {
+  // 画按宽铺满（左右八相与悬幅都要在画内），高度不够时底部压暗衔接；画顶让出页头
+  const s = $('stage'), W = s.clientWidth, H = s.clientHeight;
+  // 舞台偏高时放大到铺满高度，但左右各最多裁 4%（保住最左的弓手与最右的悬幅）
+  const pw = Math.min(Math.max(W, H * 16 / 9), W / 0.985), ph = pw * 9 / 16;
+  s.style.setProperty('--pw', `${pw}px`); s.style.setProperty('--pl', `${(W - pw) / 2}px`); s.style.setProperty('--pt', `${ph >= H ? (H - ph) / 2 : Math.max(0, (H - ph) * 0.45)}px`);
+  s.classList.toggle('short', ph < H - 4);
+}
+new ResizeObserver(place).observe($('stage'));
+
+/* 显影：0 级只剩极淡残影；随级数渐实（开方曲线，前几级变化最明显） */
+const reveal = n => n === 0 ? 0.12 : Math.min(1, 0.32 + Math.sqrt(n) * 0.15);
+
+function draw() {
+  $('ghosts').innerHTML = XIANG.map(([, , , , [cx, cy, rx, ry]], i) => {
+    const r = reveal(st.lv[i]);
+    return `<div class="ghost" id="g${i}" style="--cx:${cx}%;--cy:${cy}%;--rx:${rx}%;--ry:${ry}%;--op:${r.toFixed(2)};--bl:${((1 - r) * 3).toFixed(1)}px;--ct:${(0.7 + r * 0.3).toFixed(2)}"></div>`;
+  }).join('');
+  $('slips').innerHTML = XIANG.map(([name, who, f, k, , [sx, sy]], i) => {
+    const n = st.lv[i], p = price(n + 1), can = st.rep >= p;
+    return `<div class="slip" style="left:${sx}%;top:${sy}%"><div class="nm" data-tip="前世为${who}，散功重修，根骨不失">${name}</div>`
+      + `<div class="lv">${n}<small>级</small></div><div class="cur">+${fmtV(cum(f, n), k)}</div>`
+      + `<div class="nx">下一级<b>+${fmtV(gainAt(f, n + 1), k)}</b></div>`
+      + `<button class="seal-btn" data-i="${i}" ${can ? '' : `disabled data-tip="还差 ${p - st.rep} 声望"`}>${p}<small>声望</small></button></div>`;
+  }).join('');
+  const gp = gwPrice(st.gw + 1);
+  $('banner').innerHTML = `<div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
+    + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div>`
+    + `<button class="seal-btn" id="gwBtn" ${st.rep >= gp ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button>`;
+  $('rep').innerHTML = `持有 <b>${st.rep.toLocaleString('en-US')}</b> 声望`; $('railRep').textContent = st.rep.toLocaleString('en-US');
+  $('multV').textContent = `${(6.3 + st.gw * 0.2).toFixed(1)}×`;
+  document.querySelectorAll('#slips .seal-btn').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return;
+    st.rep -= p; st.lv[i]++; draw(); const g = $('g' + i); g.classList.add('flare'); setTimeout(() => g.classList.remove('flare'), 1200);
+  });
+  $('gwBtn').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; draw(); };
+  bindTips();
+}
+const tip = $('tip');
+function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el.onmouseenter = () => { tip.innerHTML = el.dataset.tip; tip.classList.add('on'); const r = el.getBoundingClientRect(); tip.style.left = `${Math.min(innerWidth - 310, r.left)}px`; tip.style.top = `${r.bottom + 8}px`; }; el.onmouseleave = () => tip.classList.remove('on'); }); }
+function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); draw(); document.querySelectorAll('.proto button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
+Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
+place(); load('mid');
+</script>
+</body>
+</html>

@@ -47,10 +47,8 @@ const LEGACY_TAB: Record<string, 'neigong' | 'wuxue'> = { neigong: 'neigong', wu
 /** 每页一幅底图（code/public/art/，莉刻生成） */
 const PAGE_ART: Record<TabId, string> = {
   cultivate: 'cultivate.jpg', battle: 'battle-village.jpg', bag: 'wuxue.jpg', wugong: 'wuxue.jpg',
-  sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep-diyun.jpg',
+  sect: 'sect.jpg', shop: 'battle-village.jpg', rep: 'rep.jpg',
 };
-/** 前尘页三个栏目各一张底图（prestige-shop/design.md §5） */
-const REP_ART: Record<RepSub, string> = { diyun: 'rep-diyun.jpg', jiyuan: 'rep-jiyuan.jpg', xiaming: 'rep-xiaming.jpg' };
 const REALM_CN = ['', '第一境', '第二境', '第三境', '第四境', '第五境', '第六境', '第七境'];
 
 export default function App() {
@@ -245,7 +243,7 @@ export default function App() {
         </div>
         <div className="jh-stage">
           {/* 底图：每页同位，固定铺满舞台背后（DESIGN.md Do：底图固定同位、上浓下淡） */}
-          <div key={tab === 'rep' ? `rep-${repSub}` : tab} className={`jh-art art-${tab}`} style={{ '--art': `url('/art/${tab === 'rep' ? REP_ART[repSub] : PAGE_ART[tab]}')` } as CSSProperties} aria-hidden="true" />
+          <div key={tab} className={`jh-art art-${tab}`} style={{ '--art': `url('/art/${PAGE_ART[tab]}')` } as CSSProperties} aria-hidden="true" />
           <div key={`p-${tab}`} className={`jh-page page-${tab}`}>
             {tab === 'cultivate' && <CultivatePane />}
             {tab === 'battle' && <BattlePane goCultivate={() => setTab('cultivate')} />}

@@ -126,9 +126,8 @@ button { font: inherit; color: inherit; }
 @keyframes stamp { 0% { transform: rotate(-8deg) scale(2.2); opacity: 0; } 100% { transform: rotate(-8deg) scale(1); opacity: 1; } }
 
 /* 侠名录 · 江湖百景：二十二枚按性质散落在四处地界，同簇以暗金细线串连；
-   色系只用暗金 → 亮金 → 亮金加朱印，未得为石上阴刻暗印；悬停在底部详情栏说明 */
+   色系只用暗金 → 亮金 → 亮金加朱印，未得为石上阴刻暗印；点选弹出手卷说明 */
 .pic > .bg.map { filter: saturate(.7); }
-/* 浓墨版：底图已按底蕴 / 机缘的墨色调过（gamma 1.3、去饱和），不再叠滤镜 */
 .zone-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 55% at 50% 50%, oklch(0.1 0.01 262 / .35), transparent 70%); }
 .links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .links path { fill: none; stroke: oklch(0.72 0.07 78 / .22); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }

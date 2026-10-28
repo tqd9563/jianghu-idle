@@ -160,6 +160,40 @@ button { font: inherit; color: inherit; }
 .proto span { color: oklch(0.74 0.10 215); padding: 0 6px; }
 .proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
 .proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
+
+/* ═══ 对比：前尘账册（A）——一本摊开的线装册，左页八栏、右页修行感悟 ═══ */
+.book { position: absolute; left: 50%; top: 168px; bottom: 70px; transform: translateX(-50%); width: min(94%, 1180px); display: none; z-index: 3;
+  padding: 18px; border-radius: 6px; background: linear-gradient(135deg, oklch(0.3 0.06 255), oklch(0.2 0.05 258)); box-shadow: 0 20px 40px #000, inset 0 0 0 2px oklch(0.45 0.05 250 / .5), inset 0 0 40px oklch(0.1 0.03 258 / .8); }
+.book::before, .book::after { content: ''; position: absolute; top: 10px; bottom: 10px; width: 4px; background: repeating-linear-gradient(to bottom, oklch(0.75 0.03 80) 0 6px, transparent 6px 42px); }
+.book::before { left: 8px; } .book::after { right: 8px; }
+.book .pages { display: grid; grid-template-columns: 1fr 26%; gap: 18px; height: 100%; }
+.book .page { position: relative; border-radius: 2px; padding: 16px 14px; background: oklch(0.86 0.025 80); box-shadow: inset 0 0 50px oklch(0.6 0.04 70 / .55); color: var(--paper-ink); }
+.book .page::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 30% 20%, oklch(0.7 0.04 70 / .18), transparent 60%), radial-gradient(ellipse at 80% 85%, oklch(0.65 0.05 65 / .2), transparent 55%); }
+.book .left { display: grid; grid-template-columns: 54px repeat(8, 1fr); }
+.book .title { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: .3em; display: flex; align-items: center; justify-content: center;
+  border-right: 1px solid oklch(0.45 0.03 60 / .45); position: relative; }
+.book .title i { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%) rotate(-6deg); writing-mode: horizontal-tb; font-style: normal; width: 26px; height: 26px; display: grid; place-items: center;
+  background: var(--seal-red); color: oklch(0.95 0.02 85); font-size: 11px; letter-spacing: 0; line-height: 1.05; border-radius: 2px; }
+.book .col { position: relative; display: flex; flex-direction: column; align-items: center; padding: 4px 4px 0; border-right: 1px solid oklch(0.45 0.03 60 / .3); }
+.book .col:last-child { border-right: 0; }
+.book .col .nm { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: 24px; height: 104px; display: flex; align-items: center; letter-spacing: .06em; cursor: help; }
+.book .col .nm.long { font-size: 19px; }
+.book .col .ic { width: 70%; max-width: 72px; aspect-ratio: 1; object-fit: contain; margin: 4px 0 8px; opacity: .9; }
+.book .col .lv { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; } .book .col .lv small { font-size: 13px; }
+.book .col .cur { font-size: 14px; margin-top: 10px; white-space: nowrap; }
+.book .col .nx { font-size: 13px; color: var(--paper-mute); margin-top: 6px; text-align: center; } .book .col .nx b { display: block; color: oklch(0.5 0.13 50); font-size: 15px; }
+.book .col .seal-btn { margin-top: auto; margin-bottom: 4px; width: 62%; min-width: 46px; padding: 6px 0 5px; font-size: 14px; }
+.book .right { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.book .right .t { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: .25em; margin-top: 6px; cursor: help; }
+.book .right .lv { font-family: var(--font-display); font-weight: 700; font-size: 40px; margin-top: 8px; } .book .right .lv small { font-size: 15px; }
+.book .right .e { font-size: 15px; margin-top: 6px; line-height: 1.7; } .book .right .e .n { color: var(--paper-mute); } .book .right .e .n b { color: oklch(0.5 0.13 50); }
+.book .right .burner { width: 46%; margin: auto 0 10px; position: relative; }
+.book .right .burner img { width: 100%; filter: sepia(.3) contrast(1.1); }
+.book .right .seal-btn { width: 56%; padding: 7px 0 6px; font-size: 15px; margin-bottom: 4px; }
+body.ledger .book { display: block; }
+body.ledger #L-diyun { display: none; }
+body.ledger:not(.sub-diyun) .book { display: none; }
+body.ledger .art { filter: brightness(.45) blur(3px) !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
 </style>
 </head>
@@ -193,6 +227,7 @@ button { font: inherit; color: inherit; }
     <div class="banner" id="banner"></div>
     <div id="lamps"></div>
   </div>
+  <div class="book" id="book"></div>
   <div class="layer off free" id="L-jiyuan"></div>
   <div class="layer off free" id="L-xiaming"></div>
   <div class="vig"></div>
@@ -278,6 +313,25 @@ function drawDiyun() {
     const l = $('lamp' + i); l.classList.add('flare'); setTimeout(() => l.classList.remove('flare'), 650);
   });
   $('gwBtn').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; drawAll(); };
+  drawBook();
+}
+/* 对比：前尘账册 */
+function drawBook() {
+  const gp = gwPrice(st.gw + 1), gcan = st.rep >= gp;
+  $('book').innerHTML = `<div class="pages"><div class="page left"><div class="title">前尘账册<i>前<br>尘</i></div>`
+    + DIYUN.map(([id, name, f, k], i) => {
+      const n = st.lv[i], p = price(n + 1), can = st.rep >= p;
+      return `<div class="col"><div class="nm${name.length > 2 ? ' long' : ''}" data-tip="散功重修，根骨不失，随神魂带到来世">${name}</div>`
+        + `<img class="ic" src="${A}qianchen/ic-${id}.png" alt=""><div class="lv">${n}<small>级</small></div>`
+        + `<div class="cur">现 +${fmtV(cum(f, n), k)}</div><div class="nx">下一级<b>+${fmtV(gainAt(f, n + 1), k)}</b></div>`
+        + `<button class="seal-btn bk" data-i="${i}" ${can ? '' : `disabled data-tip="还差 ${p - st.rep} 声望"`}>${p}<small>声望</small></button></div>`;
+    }).join('')
+    + `</div><div class="page right"><div class="t" data-tip="侠名在外，江湖自有人奉上资粮">修行感悟</div><div class="lv">${st.gw}<small>级</small></div>`
+    + `<div class="e">挂机产出 <b>+${(st.gw * 0.2).toFixed(1)}×</b><br><span class="n">下一级 <b>+0.2×</b></span></div>`
+    + `<div class="burner"><img src="${A}qianchen/lamp.png" alt=""></div>`
+    + `<button class="seal-btn" id="gwBtn2" ${gcan ? '' : `disabled data-tip="还差 ${gp - st.rep} 声望"`}>${gp}<small>声望</small></button></div></div>`;
+  document.querySelectorAll('#book .seal-btn.bk').forEach(b => b.onclick = () => { const i = +b.dataset.i, p = price(st.lv[i] + 1); if (st.rep < p) return; st.rep -= p; st.lv[i]++; drawAll(); });
+  $('gwBtn2').onclick = () => { const p = gwPrice(st.gw + 1); if (st.rep < p) return; st.rep -= p; st.gw++; drawAll(); };
 }
 
 /* ───────── 机缘 ───────── */
@@ -317,6 +371,7 @@ function drawHead() {
   $('mult').dataset.tip = `基础 1<br>+ 宿慧 · 首达初窥门径 1.6×<br>+ 宿慧 · 首达小有所成 3.7×<br><span class='l'>宿慧 · 首达炉火纯青 7.6× · 未至</span><br>+ 修行感悟 ${(st.gw * 0.2).toFixed(1)}×`;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === sub));
   ['diyun', 'jiyuan', 'xiaming'].forEach(k => $('L-' + k).classList.toggle('off', k !== sub));
+  document.body.classList.toggle('sub-diyun', sub === 'diyun');
   $('art').style.filter = sub === 'diyun' ? '' : 'brightness(.55) blur(1.5px)';
 }
 function drawAll() { drawDiyun(); drawJiyuan(); drawXiaming(); drawHead(); bindTips(); }
@@ -329,6 +384,10 @@ function bindTips() { document.querySelectorAll('[data-tip]').forEach(el => { el
 /* 原型状态 */
 function load(k) { st = JSON.parse(JSON.stringify(PRESETS[k])); drawAll(); document.querySelectorAll('.proto button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); }
 Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
+$('proto').appendChild(Object.assign(document.createElement('span'), { textContent: '｜对比' }));
+const cmp = document.createElement('button'); cmp.textContent = '底蕴：灵台魂灯';
+cmp.onclick = () => { const on = document.body.classList.toggle('ledger'); cmp.textContent = on ? '底蕴：前尘账册' : '底蕴：灵台魂灯'; cmp.classList.toggle('on', on); sub = 'diyun'; drawHead(); };
+$('proto').appendChild(cmp);
 load('mid'); place();
 </script>
 </body>

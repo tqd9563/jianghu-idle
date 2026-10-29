@@ -5,9 +5,10 @@
 import { describe, expect, it } from 'vitest';
 import { makeBuild } from './combat';
 import {
-  NEIGONG, STARTER_NEIGONG, TIERS, dunwuChance, neigongBuild, neigongOf, qiMax, rollWuxing, switchFee,
+  NEIGONG, NEIGONG_IDS, STARTER_NEIGONG, TIERS, dunwuChance, neigongBuild, neigongOf, qiMax, rollWuxing, switchFee,
   tierGate, zhongAfterSwitch, zhongCost,
 } from './neigong';
+import { SECTS } from './sect';
 
 describe('内功构筑', () => {
   it('寻常内功 = makeBuild（前三阶即机制节点 1/2/3），逐项一致', () => {
@@ -72,9 +73,14 @@ describe('真气、价格、转修', () => {
     expect(switchFee(3)).toBe(300);
   });
 
-  it('名录：三路数 × 三品质各一部', () => {
-    for (const r of ['huashan', 'shaolin', 'tangmen'] as const) {
-      for (const q of ['寻常', '上乘', '绝学'] as const) expect(NEIGONG[neigongOf(r, q)].quality).toBe(q);
+  it('名录：七路各有正典三部（旧三路沿用原九部）；每部归一家门派，名字不重', () => {
+    for (const r of ['huashan', 'shaolin', 'tangmen', 'taixu', 'xuanji', 'jinghong', 'fenxue'] as const) {
+      for (const q of ['寻常', '上乘', '绝学'] as const) expect(NEIGONG[neigongOf(r, q)]).toMatchObject({ route: r, quality: q });
     }
+    expect([neigongOf('huashan', '寻常'), neigongOf('shaolin', '上乘'), neigongOf('tangmen', '绝学')]).toEqual(['jingleijue', 'panshigong', 'qianguxinjue']);
+    expect(NEIGONG.zhenyuegong.name).toBe('定慧功');
+    const names = NEIGONG_IDS.map((id) => NEIGONG[id].name);
+    expect(new Set(names).size).toBe(names.length);
+    for (const id of NEIGONG_IDS) expect(SECTS[NEIGONG[id].sect], id).toBeDefined();
   });
 });

@@ -21,7 +21,7 @@ import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { RouteId } from '../engine/content';
-import { SECT_IDS, type SectId } from '../engine/sect';
+import { SECTS, SECT_IDS, type SectId } from '../engine/sect';
 import { WUXUE } from '../engine/wuxue';
 import { sectShelfOf, useGameStore } from '../store/gameStore';
 import { playDay, resetBot, st } from './simBot';
@@ -74,7 +74,7 @@ function playLongline(route: RouteId, seed: number): Sample {
     const peak = st().peakRealm ?? 1;
     for (let r = 2; r <= peak; r++) firstDay[r] ??= day;
     if (st().ownedWuxue.some((w) => WUXUE[w].quality === '绝学')) sect.firstJuexue ??= day;
-    if ((SECT_IDS as readonly string[]).includes(route) && shelfDone(route as SectId)) sect.ownShelf ??= day;
+    if (SECT_IDS.filter((id) => SECTS[id].route === route).some(shelfDone)) sect.ownShelf ??= day;
     if (SECT_IDS.every(shelfDone)) sect.allShelves ??= day;
     if (peak >= 6) break;
   }

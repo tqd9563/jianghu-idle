@@ -46,11 +46,12 @@ NEW_IDS = {
 EXISTING_SOURCE = {
     'liuyunjian': '书肆', 'kaishanzhang': '书肆', 'xiulizhen': '书肆', 'xingzhegun': '书肆',
     'jinghongjian': 'Boss', 'fuhuquan': 'Boss', 'feihuangshi': 'Boss', 'duanshuidao': 'Boss',
-    'cangyajianjue': '华山', 'luoxingjian': '华山', 'luohanfumogun': '少林', 'xiangmochufa': '少林',
-    'luoyingfeizhen': '唐门', 'qianjibiao': '唐门',
+    'cangyajianjue': '苍崖派', 'luoxingjian': '苍崖派', 'luohanfumogun': '千岩寺', 'xiangmochufa': '擎天门',
+    'luoyingfeizhen': '花影坊', 'qianjibiao': '花影坊',
 }
-JUEXUE_SECT = {'天河倒悬刀': '崆峒', '霸王卸甲枪': '雁门世家', '莲花落地棍': '丐帮', '真武荡魔拳': '武当',
-               '千蛇噬心掌': '百蛊门', '寒蝉凄切掌': '峨眉'}
+# 绝学归属按 sect-overhaul/design.md §3 二十一家总表（金刚降魔杵 / 莲花落地棍 / 天河倒悬刀改名留后批）
+JUEXUE_SECT = {'天河倒悬刀': '鸣沙教', '霸王卸甲枪': '苍梧派', '莲花落地棍': '擎天门', '真武荡魔拳': '乾元观',
+               '千蛇噬心掌': '千蛇窟', '寒蝉凄切掌': '千蛇窟'}
 SIGNATURE = {'luoxingjian', 'xiangmochufa', 'qianjibiao'}
 
 

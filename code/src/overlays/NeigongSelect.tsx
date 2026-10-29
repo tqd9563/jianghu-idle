@@ -9,9 +9,9 @@ import { NEIGONG, QUALITY_ORDER, type NeigongId } from '../engine/neigong';
 import { EFFECT_TAG, GIFT_WUXUE_OPTIONS, WUXUE, effectText, type WuxueId } from '../engine/wuxue';
 import { useGameStore } from '../store/gameStore';
 
-/** 开局传功只授旧三路（wudao-yuanliu/design.md §4） */
-const ROUTE_ORDER = ['huashan', 'shaolin', 'tangmen'] as const satisfies readonly RouteId[];
-const CARD: Record<(typeof ROUTE_ORDER)[number], { cls: string; lu: string; items: React.ReactNode[] }> = {
+/** 七路按此序排卡；开局传功只授前三路（wudao-yuanliu/design.md §4），新四路要在门派换到内功后才出现 */
+const ROUTE_ORDER = ['huashan', 'shaolin', 'tangmen', 'taixu', 'xuanji', 'jinghong', 'fenxue'] as const satisfies readonly RouteId[];
+const CARD: Record<RouteId, { cls: string; lu: string; items: React.ReactNode[] }> = {
   huashan: {
     cls: 'hs', lu: '狂澜 · 爆发',
     items: [<>会心率 <b>+10pp</b>，会心伤害 <b>+20pp</b></>, <><b>开战首击必定会心</b>（并叠 1 重浪）</>, <>每次会心叠 <b>1 重浪</b>；叠满 5 重自动施展<b>排山倒海</b></>],
@@ -23,6 +23,22 @@ const CARD: Record<(typeof ROUTE_ORDER)[number], { cls: string; lu: string; item
   tangmen: {
     cls: 'tm', lu: '蚀骨 · 阴毒',
     items: [<>开战自动<b>施毒 1 层</b>，命中 <b>+1 层</b>（上限 8）</>, <>毒伤系数 <b>12%</b>，无视防御、绕过护盾</>, <>满层触发<b>毒爆 50%</b></>],
+  },
+  taixu: {
+    cls: 'tx', lu: '太虚 · 借力',
+    items: [<>闪避 <b>×1.5</b></>, <>闪过一击有 <b>五成</b>机会借力反击</>, <>受击卸力 <b>10%</b></>],
+  },
+  xuanji: {
+    cls: 'xj', lu: '玄寂 · 封穴',
+    items: [<>每次命中积 <b>1 枚寂印</b></>, <>积满 <b>4 枚</b>点穴封脉，加伤 <b>100%</b></>, <>封穴后对方落空</>],
+  },
+  jinghong: {
+    cls: 'jh', lu: '惊鸿 · 连击',
+    items: [<>出手有 <b>30%</b> 追加一击</>, <>追加倍率 <b>65%</b></>, <>身法奇快，连绵不绝</>],
+  },
+  fenxue: {
+    cls: 'fx', lu: '焚血 · 饮血',
+    items: [<>每损一成气血攻击 <b>+5%</b></>, <>造成伤害吸血 <b>6%</b></>, <>越伤越狠，以伤换伤</>],
   },
 };
 const Q_CLS = { 寻常: 'q1', 上乘: 'q2', 绝学: 'q3' } as const;
@@ -43,7 +59,7 @@ export function NeigongSelect() {
         <div className="kick">{firstTime ? '传 功' : '择 一 部 内 功'}</div>
         <h2 className="mid">{firstTime ? '择一门心法' : '隐世前辈 · 各传一脉'}</h2>
         <div className="ngs-cards" role="radiogroup" aria-label="内功">
-          {ROUTE_ORDER.map((r) => {
+          {ROUTE_ORDER.filter((r) => byRoute(r).length > 0).map((r) => {
             const list = byRoute(r);
             const c = CARD[r];
             const selected = NEIGONG[picked].route === r;

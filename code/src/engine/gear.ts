@@ -142,18 +142,29 @@ function rollBase(slot: GearSlot, form: 0 | 1, grade: GearGrade, level: number, 
   }
 }
 
+/** 掷一条词条的数值：按品阶取值区间，命中 / 闪避随等级放大 */
+function rollAffix(k: AffixKey, grade: GearGrade, level: number, rng: () => number): [AffixKey, number] {
+  let v = lerp(AFFIX_RANGE[k], rng()) * GRADE_AFFIX[grade];
+  if (LEVEL_SCALED.has(k)) v *= 1 + level / 5;
+  return [k, k === 'qi' ? iv(v) * QI_SCALE : iv(v)];
+}
+
 function rollAffixes(slot: GearSlot, grade: GearGrade, level: number, rng: () => number): [AffixKey, number][] {
   const [lo, hi] = AFFIX_COUNT[grade];
   const n = lo + Math.floor(rng() * (hi - lo + 1));
   const pool = [...AFFIX_POOL[slot]];
   const out: [AffixKey, number][] = [];
   for (let i = 0; i < n && pool.length > 0; i++) {
-    const k = pool.splice(Math.floor(rng() * pool.length), 1)[0];
-    let v = lerp(AFFIX_RANGE[k], rng()) * GRADE_AFFIX[grade];
-    if (LEVEL_SCALED.has(k)) v *= 1 + level / 5;
-    out.push([k, k === 'qi' ? iv(v) * QI_SCALE : iv(v)]);
+    out.push(rollAffix(pool.splice(Math.floor(rng() * pool.length), 1)[0], grade, level, rng));
   }
   return out;
+}
+
+/** 门派装备的固定词条（sect-overhaul/spec.md §5）：已含则不动，否则换掉最后一条，数值按该品阶正常掷 */
+export function withFixedAffix(it: GearItem, key: AffixKey, rng: () => number): GearItem {
+  if (it.afx.some(([k]) => k === key)) return it;
+  const afx = it.afx.slice(0, Math.max(0, it.afx.length - 1));
+  return { ...it, afx: [...afx, rollAffix(key, it.grade, it.level, rng)] };
 }
 
 export interface GearRollInput {

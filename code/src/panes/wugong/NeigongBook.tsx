@@ -16,7 +16,7 @@ import {
   switchFee, zhongAfterSwitch, zhongCost, type NeigongId, type Quality,
 } from '../../engine/neigong';
 import { ROUTES } from '../../engine/routes';
-import { SECTS, type SectId } from '../../engine/sect';
+import { SECTS } from '../../engine/sect';
 import { effIdleRate, playerBuild, useGameStore, zhongGate } from '../../store/gameStore';
 import { fmtBig } from '../../fmt';
 import { Q_NO, ROUTE_TAG } from './shared';
@@ -88,7 +88,7 @@ export function NeigongBook({ id }: { id: NeigongId }) {
       const expect = hours < 1 ? `${Math.round(hours * 60)} 分钟` : `${hours.toFixed(1)} 小时`;
       act = gate.needScroll ? (
         <>
-          <div className="wg-need">临「{gate.tier.name}」之关 · 须得《归真卷册》（{(d.route in SECTS ? SECTS[d.route as SectId].name : '本门')}贡献商店）</div>
+          <div className="wg-need">临「{gate.tier.name}」之关 · 须得《归真卷册》（{SECTS[d.sect].name}贡献商店）</div>
           <button className="wg-btn" disabled>静候顿悟</button>
         </>
       ) : (

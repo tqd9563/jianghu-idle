@@ -40,7 +40,7 @@
 | `shop_bought` | 书肆购买 | `item`, `price` |
 | `boss_drop` | Boss 首杀掉落 | `track`, `got` |
 | `sect_joined` | 拜入门派 | `sect`, `neigong` |
-| `sect_task_done` | 门派任务到点结算 | `sect`, `task`（`short` / `long`）, `contrib`（结算后贡献）, `offline`（载入时结算） |
+| `sect_task_done` | 门派差事到点结算 | `sect`, `tier`（1–6 档）, `hours`（2 / 8）, `contrib`（结算后贡献）, `offline`（载入时结算） |
 | `sect_shop_bought` | 贡献商店兑换 | `sect`, `item`, `price` |
 | `rep_node_bought` | 购买声望节点 | `node_id` |（实现事件名为 `prestige_node_bought`；取值域见 `copy/retire.md` §8）
 | `battle_end` | 战斗结束 | `target`, `win`, `turns`, `hp_left_pct` |
@@ -118,6 +118,7 @@
 
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
+| v3.6 | 2026-10-28 | 门派改造批一（sect-overhaul）：`sect` 取值改为二十一家 id；`sect_task_done` 的 `task` 改为 `tier` / `hours`。 |
 | v3.5 | 2026-10-23 | 卷章图关（活江湖第一期）：关卡键改 `m{图}s{关}`；`idle_start` / `idle_stop` / `stage_first_clear` 去掉 `tier`；`tier_unlocked` 改名 `map_unlocked`，`opened` 改为图 ID 列表。 |
 | v3.4 | 2026-10-19 | 传功缓坡（battle-loot 裁决 43）：新增 `gift_wuxue_picked`。 |
 | v3.3 | 2026-10-19 | 武学一式一页（battle-loot 裁决 42）：`form_learned` 改为前式圆满接上；`sect_shop_bought` 去掉 `have` / `need`；`wuxue_dropped` 的 `book` 改指整门、离线计数不含重复。 |

@@ -6,7 +6,8 @@
  */
 
 import { newWorldSeed } from '../engine/roster';
-import { STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
+import { NEIGONG, STARTER_NEIGONG, TIERS, neigongOf, type NeigongId } from '../engine/neigong';
+import { rankOf, type SectId } from '../engine/sect';
 import type { RouteId } from '../engine/content';
 import { WUXUE, type WuxueId } from '../engine/wuxue';
 import { allStages, getStage, MAP_IDS, stageKey, trackLength, unlocksAfterMap } from '../engine/enemies';
@@ -32,8 +33,9 @@ const LIVE_TEST_WINDOW_KEY = 'jianghu-idle:live-test-window:v1';
  * v17 = 真气展示尺度 ×10（battle-loot/design.md 裁决 48）：装备「蕴气」词条数值 ×10。
  * v18 = 卷章图关（living-jianghu/design.md §2.2）：取消三档难度，关卡键改为「图 × 关」，按当量折算进度与首杀。
  * v19 = 江湖名册（living-jianghu/design.md §2.1）：补世界种子，旧存档的江湖从这一世起推演，前世的击败不补记。
+ * v20 = 门派改造（sect-overhaul/design.md §6）：旧九派换成二十一家、差事改六档、补地位与累计贡献、剔除占位内功。
  */
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 /**
  * 低于此版本的存档强制重开，不迁移：长线数值与旧档量级不兼容
@@ -123,6 +125,7 @@ export function migrate<T>(state: T, fromVer: number, toVer: number): T {
   if (fromVer < 17 && toVer >= 17) out = migrateQiScaleV16ToV17(out);
   if (fromVer < 18 && toVer >= 18) out = migrateStageLineV17ToV18(out);
   if (fromVer < 19 && toVer >= 19) out = migrateRosterV18ToV19(out);
+  if (fromVer < 20 && toVer >= 20) out = migrateSectV19ToV20(out);
   return out;
 }
 
@@ -480,6 +483,38 @@ export function migrateRosterV18ToV19<T>(state: T): T {
     rosterKills: Array.isArray(s.rosterKills) ? s.rosterKills : [],
     lifeDefeats: Array.isArray(s.lifeDefeats) ? s.lifeDefeats : [],
   } as T;
+}
+
+/** 旧九派 → 新门派（sect-overhaul/design.md §6） */
+const SECT_V19_TO_V20: Readonly<Record<string, SectId>> = {
+  huashan: 'cangya', shaolin: 'qianyan', tangmen: 'huaying', gaibang: 'qianfan', wudang: 'qianyuan',
+  emei: 'shuiyue', kongtong: 'fenglei', yanmen: 'cangwu', baigu: 'zhangyue',
+};
+
+/**
+ * v19 → v20（门派改造）：所拜门派换成新 id（不认识的置空）；差事「短 / 长」换成一档 2 / 8 小时；
+ * 补本世累计贡献与地位；拜山传闻的键由图序改为卷号；新四路的占位内功剔除。编年里的旧派名不改。
+ */
+export function migrateSectV19ToV20<T>(state: T): T {
+  const s = state as Record<string, unknown>;
+  if (!s || typeof s !== 'object') return state;
+  const out = { ...s };
+  if ('sect' in s) {
+    out.sect = typeof s.sect === 'string' ? SECT_V19_TO_V20[s.sect] ?? null : null;
+    out.sectGearBought = [];
+  }
+  const task = s.sectTask as { kind?: string; endsAt: number } | null | undefined;
+  if (task && typeof task === 'object' && 'kind' in task) {
+    out.sectTask = { tier: 1, hours: task.kind === 'long' ? 8 : 2, endsAt: task.endsAt };
+  }
+  if ('contrib' in s) {
+    const total = typeof s.contrib === 'number' ? s.contrib : 0;
+    out.contribTotal = total;
+    out.sectRank = rankOf(total);
+  }
+  if (typeof s.rumorPending === 'number' && s.rumorPending > 0) out.rumorPending = s.rumorPending + 1;
+  if (Array.isArray(s.ownedNeigong)) out.ownedNeigong = (s.ownedNeigong as string[]).filter((id) => id in NEIGONG);
+  return out as T;
 }
 
 export function migrateNeigongV7ToV8<T>(state: T): T {

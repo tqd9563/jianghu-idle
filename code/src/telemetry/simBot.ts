@@ -15,7 +15,7 @@ import { requiredMeridian } from '../engine/acupoints';
 import type { RouteId } from '../engine/content';
 import { NEIGONG, neigongOf, QUALITY_ORDER, zhongCost, type NeigongId } from '../engine/neigong';
 import { GIFT_WUXUE_OPTIONS, WUXUE } from '../engine/wuxue';
-import { SECTS, SECT_IDS, SECT_REALM, SECT_TASKS, type SectId } from '../engine/sect';
+import { SECTS, SECT_IDS, SECT_REALM, type SectTier } from '../engine/sect';
 import { betterThanWorn } from '../engine/gear';
 import { BLACK_PER_LIFE } from '../engine/market';
 import type { SectShelfRow } from '../store/gameStore';
@@ -152,33 +152,35 @@ export function tend(route: RouteId): void {
 }
 
 /** 每世开头选本路数已拥有的最高品质内功 */
+/** 地位对应的最高档差事 */
+const topTier = () => Math.max(1, Math.min(6, st().sectRank ?? 1)) as SectTier;
+
 function bestNeigong(route: RouteId): NeigongId {
   const owned = st().ownedNeigong;
   return [...QUALITY_ORDER].reverse().map((q) => neigongOf(route, q)).find((id) => owned.includes(id))!;
 }
 
 /**
- * 门派（标准玩家）：先拜本路数的门派，本派货架买齐后改拜下一派；
- * 在线派短差，下线前改派长差（见 offline）；贡献按优先级依次换，换不起就攒着。
+ * 门派（标准玩家）：先拜核心源流是本路的、能到的门派（有货的优先），本派货架买齐后改拜下一派；
+ * 在线派地位最高档的 2 小时差事，下线前改派 8 小时（见 offline）；贡献按优先级依次换，换不起就攒着。
  */
 function tendSect(route: RouteId): void {
   const s = st();
   if (s.realm < SECT_REALM) return;
   if (s.sect === null) {
     const reachable = SECT_IDS.filter((id) => volUnlocked(SECTS[id].vol, s.mapsUnlocked ?? [1]));
-    // 新四路还没有本派（门派改造前）：直接从能到的门派里挑
-    const own = (SECT_IDS as readonly string[]).includes(route) ? [route as SectId] : [];
-    const order = [...own, ...reachable.filter((id) => id !== route)];
+    const order = [...reachable.filter((id) => SECTS[id].route === route), ...reachable.filter((id) => SECTS[id].route !== route)];
     const pick = order.find((id) => sectShelfOf(s, id).some((it) => !it.owned)) ?? order[0];
     if (pick) st().joinSect(pick);
   }
-  // 剩下的在线时间跑得完一件短差才派，否则留给下线前的长差
-  if (st().sectTask === null && onlineLeftSec >= SECT_TASKS.short.hours * 3600) st().startSectTask('short');
-  // 先凑绝学第一式残页（凑齐直接进装配），再内功、后续式残页、卷册
-  const rank = (x: SectShelfRow) => (x.kind === 'pages' ? (x.form === 1 ? 0 : 2) : x.kind === 'neigong' ? 1 : 3);
+  // 剩下的在线时间跑得完一件 2 小时差事才派，否则留给下线前的 8 小时
+  if (st().sectTask === null && onlineLeftSec >= 2 * 3600) st().startSectTask(topTier(), 2);
+  // 先凑绝学第一式残页（凑齐直接进装配），再内功（入门 → 进阶 → 镇派）、其余残页、寻常 / 上乘整门、装备、卷册
+  const rank = (x: SectShelfRow) => x.kind === 'pages' && x.form === 1 && WUXUE[x.wuxue!].quality === '绝学' ? 0
+    : x.kind === 'neigong' ? 1 : x.kind === 'pages' ? 2 : x.kind === 'wuxue' ? 3 : x.kind === 'gear' ? 4 : 5;
   for (let guard = 0; guard < 12; guard++) {
-    const it = sectShelfOf(st(), st().sect!).filter((x) => !x.owned && x.lock === null)
-      .sort((a, b) => rank(a) - rank(b))[0];
+    const it = sectShelfOf(st(), st().sect!).filter((x) => !x.owned && x.lock === null && x.rank <= st().sectRank)
+      .sort((a, b) => rank(a) - rank(b) || a.rank - b.rank)[0];
     if (!it || st().contrib < it.price) break;
     st().buySectItem(it.id);
   }
@@ -313,7 +315,7 @@ export function retireAndShop(): void {
 /** 离线 hours 小时：存档、拨快时钟、重新载入触发出关结算（闭关中寿终则直接进归隐演出） */
 export function offline(hours = OFFLINE_H): void {
   // 下线前派长差（spec §5.2）
-  if (!process.env.PACE_NO_SECT && st().sect !== null && st().sectTask === null) st().startSectTask('long');
+  if (!process.env.PACE_NO_SECT && st().sect !== null && st().sectTask === null) st().startSectTask(topTier(), 8);
   saveGame(st());
   vi.setSystemTime(Date.now() + hours * 3600 * 1000);
   useGameStore.setState({ started: false });

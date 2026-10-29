@@ -23,11 +23,10 @@ html.bt-own-art .jh-art { display: none; }
 
 /* 第一层：江湖舆图。底图即画，四周羽化融进夜底；放大到一卷时整张图平移缩放，卷名隐去、据点浮出 */
 .page-battle .bt-map { position: relative; width: 100%; height: 100vh; min-height: 560px; overflow: hidden; container-type: size;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent), linear-gradient(to bottom, transparent, #000 3%, #000 94%, transparent);
-          mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent), linear-gradient(to bottom, transparent, #000 3%, #000 94%, transparent);
-  -webkit-mask-composite: source-in; mask-composite: intersect; }
-/* 画框：16:9 按宽铺满、上下居中；舆图上下各有 AI 续画的一截山川云雾（jianghu-map-tall.jpg，原图原样嵌在中段），铺满舞台高；极宽屏受视口高度所限时居中，两侧随羽化淡出 */
-/* 舞台偏窄（高过宽）时画框放大到续画的方幅盖满舞台高，但左右最多裁 6% */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 3%, #000 94%, transparent);
+          mask-image: linear-gradient(to bottom, transparent, #000 3%, #000 94%, transparent); }
+/* 画框：16:9 按宽铺满、上下居中；舆图上下各有 AI 续画的一截山川云雾（jianghu-map-tall.jpg，原图原样嵌在中段），铺满舞台高；极宽屏受视口高度所限时居中 */
+/* 舞台偏窄（高过宽）时画框放大到续画的方幅盖满舞台高，但左右最多裁 6%；左右边不羽化，同修炼、前尘 */
 .page-battle .bt-map .map-box { position: absolute; left: 50%; top: 50%; width: min(177.78cqh, max(100cqw, min(100cqh, 113.6cqw))); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); }
 .page-battle .bt-map .map-in { position: absolute; inset: 0; transform-origin: 0 0; transition: transform .9s var(--ease-quart); }
 .page-battle .bt-map .art { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background-position: center; background-size: 100% 100%; background-repeat: no-repeat; filter: brightness(0.92) saturate(0.7); }

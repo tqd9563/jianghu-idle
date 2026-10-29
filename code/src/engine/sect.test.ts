@@ -4,9 +4,10 @@
 import { describe, expect, it } from 'vitest';
 import { AFFIX_POOL } from './gear';
 import { NEIGONG } from './neigong';
-import { WUXUE } from './wuxue';
+import { WUXUE, WUXUE_IDS } from './wuxue';
 import {
   RANK_THRESHOLDS, SECTS, SECT_IDS, SECT_VOLS, joinWord, rankOf, rumorOf, sectShelf, sectTaskGain, sectsInVol,
+  isBenmen,
 } from './sect';
 
 describe('二十一家总表', () => {
@@ -28,7 +29,9 @@ describe('二十一家总表', () => {
         expect(NEIGONG[d.neigong.extra.id].route, id).not.toBe(d.route);
         expect(NEIGONG[d.neigong.extra.id].quality, id).toBe(d.neigong.extra.rank === 1 ? '寻常' : '上乘');
       }
-      for (const w of d.juexue) expect(WUXUE[w].source, w).toBe(d.name);
+      for (const w of d.juexue) expect(WUXUE[w], w).toMatchObject({ quality: '绝学', source: d.name });
+      for (const w of d.zhenzong ?? []) expect(WUXUE[w], w).toMatchObject({ quality: '上乘', source: d.name });
+      if (d.size === '小' || d.size === '中') expect(d.juexue.length + (d.zhenzong?.length ?? 0), id).toBeLessThanOrEqual(3);
       for (const g of d.gear) {
         expect(AFFIX_POOL[g.slot], g.id).toContain(g.affix);
         expect(g.name.length, g.id).toBeGreaterThanOrEqual(3);
@@ -78,5 +81,14 @@ describe('货架（spec §4）', () => {
 
   it('千岩寺的兼修入门与本门入门同在一级', () => {
     expect(sectShelf('qianyan').filter((it) => it.rank === 1 && it.kind === 'neigong').map((it) => it.neigong)).toEqual(['zhenyuegong', 'wuzhuxinfa']);
+  });
+
+  it('镇宗上乘残页排在二级最前，挂机上乘补足两门；价格照上乘残页表', () => {
+    const pages = sectShelf('beimang').filter((it) => it.rank === 2 && it.kind === 'pages');
+    expect(pages.map((it) => it.wuxue)).toEqual([...Array(5).fill('wuducuanxinzhang'), ...Array(5).fill(WUXUE_IDS.find((w) => WUXUE[w].cat === '掌' && WUXUE[w].quality === '上乘' && WUXUE[w].source === '挂机'))]);
+    expect(pages.map((it) => it.price)).toEqual([160, 80, 80, 80, 80, 160, 80, 80, 80, 80]);
+    expect(isBenmen('beimang', 'wuducuanxinzhang')).toBe(true);
+    expect(isBenmen('tiangong', 'mantianxingdoubiao')).toBe(true);
+    expect(isBenmen('beimang', 'mantianxingdoubiao')).toBe(false);
   });
 });

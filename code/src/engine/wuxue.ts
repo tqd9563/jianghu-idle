@@ -36,7 +36,11 @@ export const EFFECT_TAG: Record<FormEffect, WuxueTag> = {
 };
 
 /** 来路：书肆 / Boss 首杀 / 挂机掉落 / 某家门派的货架（sect-overhaul/design.md §3 总表） */
-export type WuxueSource = '书肆' | 'Boss' | '挂机' | '苍崖派' | '千岩寺' | '擎天门' | '花影坊' | '乾元观' | '苍梧派' | '千蛇窟' | '鸣沙教';
+export type WuxueSource = '书肆' | 'Boss' | '挂机'
+  | '苍崖派' | '千帆帮' | '千蛇窟' | '千岩寺' | '花影坊' | '凌风山庄' | '蜃海教' | '擎天门' | '虎啸山庄' | '北邙门' | '乾元观'
+  | '横江会' | '水月庵' | '天工坊' | '幽篁宫' | '瘴月教' | '苍梧派' | '碧磷洞' | '风雷堡' | '阴山派' | '鸣沙教';
+/** 门派看家武学（绝学、镇宗上乘）只在本门货架换残页，不进挂机掉落池 */
+export const isSectOnly = (d: Pick<WuxueDef, 'source'>) => d.source !== '书肆' && d.source !== 'Boss' && d.source !== '挂机';
 
 export interface WuxueDef {
   id: WuxueId;
@@ -250,7 +254,7 @@ export function shangchengShare(realm: number): number {
 /** 寻常掉整门（k 恒为 1），上乘 / 绝学掉某一式的那一页 */
 export type WuxueDrop = { id: WuxueId; k: number; kind: 'book' | 'page' };
 
-/** 掷一次武学掉落：寻常掉整门，上乘掉某一式残页；绝学不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
+/** 掷一次武学掉落：寻常掉整门，上乘掉某一式残页；绝学与镇宗上乘不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
 export function rollWuxueDrop(
   realm: number, kind: 'normal' | 'elite' | 'boss', rng: () => number,
   /** 侠名录：阅历线管寻常整门、残页线管残页；都为 1 时随机序列与旧版一致 */
@@ -261,7 +265,7 @@ export function rollWuxueDrop(
   const share = shangchengShare(realm);
   const quality: Quality = share > 0 && rng() < share ? '上乘' : '寻常';
   if (roll >= WX_DROP_P[kind] * (quality === '寻常' ? mult.book : mult.page)) return null;
-  const pool = WUXUE_IDS.filter((id) => WUXUE[id].quality === quality);
+  const pool = WUXUE_IDS.filter((id) => WUXUE[id].quality === quality && !isSectOnly(WUXUE[id]));
   const id = pool[Math.floor(rng() * pool.length)];
   if (quality === '寻常') return { id, k: 1, kind: 'book' };
   return { id, k: 1 + Math.floor(rng() * QUALITY_PARAMS[quality].forms), kind: 'page' };

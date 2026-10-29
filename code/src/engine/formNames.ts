@@ -20,12 +20,11 @@ const FORM_NAMES_BASE: Record<WuxueId, readonly string[]> = {
   cangyajianjue: ['苍松迎客', '崖前观云', '白虹贯日', '苍龙出海', '危崖独立', '万壑松风', '苍崖一剑'],
   luoxingjian: ['星垂平野', '北斗横斜', '流星追月', '银河倒挂', '天璇落照', '七星连珠', '落星沉海'],
   luohanfumogun: ['罗汉礼佛', '金刚扫地', '横江断流', '伏魔问心', '撞钟醒世', '千斤压顶', '万佛朝宗'],
-  xiangmochufa: ['韦陀献杵', '金刚捣臼', '宝杵开山', '怒目金刚', '降魔镇狱', '力镇三界', '大日降魔'],
   luoyingfeizhen: ['落英缤纷', '桃花流水', '柳絮随风', '梨花带雨', '飞红万点', '残红点翠', '葬花无声'],
   qianjibiao: ['牵丝引线', '机关暗藏', '一线牵魂', '回旋夺命', '暗渡陈仓', '千机百变', '牵机断肠'],
 };
 
-/** 现有 14 门在上表；第一批新增 52 门的式名随名录表（data/wuxue-catalog.json）并入 */
+/** 现有 13 门在上表；其余（含改名为不周擎天棍的 xiangmochufa）的式名随名录表（data/wuxue-catalog.json）并入 */
 export const FORM_NAMES: Record<WuxueId, readonly string[]> = { ...FORM_NAMES_BASE, ...CATALOG_FORMS };
 
 /** 第 k 式（从 1 起）的式名；越界时退回「第 N 式」 */

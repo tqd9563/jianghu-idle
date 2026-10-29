@@ -20,8 +20,8 @@ const turn = (over: Partial<TurnEvent>): TurnEvent => ({
 });
 
 describe('招式名与每式句子', () => {
-  it('第一批 66 门武学每一式都有式名与专属句子，式数与品质一致', () => {
-    expect(WUXUE_IDS).toHaveLength(66);
+  it('名录 84 门武学每一式都有式名与专属句子，式数与品质一致', () => {
+    expect(WUXUE_IDS).toHaveLength(84);
     for (const id of WUXUE_IDS) {
       const n = QUALITY_PARAMS[WUXUE[id].quality].forms;
       expect(FORM_NAMES[id], id).toHaveLength(n);

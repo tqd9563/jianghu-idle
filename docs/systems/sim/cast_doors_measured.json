@@ -565,5 +565,167 @@
   "effect": "附毒",
   "p": 0.057,
   "margin": 0.363
+ },
+ {
+  "id": "wuducuanxinzhang",
+  "name": "五毒攒心掌",
+  "quality": "上乘",
+  "type": "重击",
+  "effect": "透劲",
+  "p": 0.074,
+  "margin": 0.345
+ },
+ {
+  "id": "lenglinzhaoguzhi",
+  "name": "冷磷照骨指",
+  "quality": "上乘",
+  "type": "双强",
+  "effect": "封穴",
+  "p": 0.047,
+  "margin": 0.328
+ },
+ {
+  "id": "mantianxingdoubiao",
+  "name": "满天星斗镖",
+  "quality": "上乘",
+  "type": "折中",
+  "effect": "回气",
+  "p": 0.096,
+  "margin": 0.335
+ },
+ {
+  "id": "fengleiduanyuedao",
+  "name": "风雷断岳刀",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "必暴",
+  "p": 0.025,
+  "margin": 0.367
+ },
+ {
+  "id": "tiemabinghedao",
+  "name": "铁马冰河刀",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "回气",
+  "p": 0.044,
+  "margin": 0.356
+ },
+ {
+  "id": "bainiaochaofengqiang",
+  "name": "百鸟朝凤枪",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "凝眸",
+  "p": 0.043,
+  "margin": 0.36
+ },
+ {
+  "id": "liuxingguanyueqiang",
+  "name": "流星贯月枪",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "透劲",
+  "p": 0.044,
+  "margin": 0.361
+ },
+ {
+  "id": "juaofushanquan",
+  "name": "巨鳌负山拳",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "护体",
+  "p": 0.046,
+  "margin": 0.365
+ },
+ {
+  "id": "changjingxihaiquan",
+  "name": "长鲸吸海拳",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "回元",
+  "p": 0.052,
+  "margin": 0.364
+ },
+ {
+  "id": "haichaotunyuezhang",
+  "name": "海潮吞月掌",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "运劲",
+  "p": 0.05,
+  "margin": 0.351
+ },
+ {
+  "id": "wanduguizongzhang",
+  "name": "万毒归宗掌",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "封穴",
+  "p": 0.038,
+  "margin": 0.359
+ },
+ {
+  "id": "qichongduanhunzhi",
+  "name": "七虫断魂指",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "回元",
+  "p": 0.08,
+  "margin": 0.374
+ },
+ {
+  "id": "jiuqufengmaizhi",
+  "name": "九曲封脉指",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "透劲",
+  "p": 0.064,
+  "margin": 0.355
+ },
+ {
+  "id": "yinyunbiyuezhi",
+  "name": "阴云蔽月指",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "迷目",
+  "p": 0.055,
+  "margin": 0.364
+ },
+ {
+  "id": "hexiangzixiaotui",
+  "name": "鹤翔紫霄腿",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "卸力",
+  "p": 0.036,
+  "margin": 0.371
+ },
+ {
+  "id": "luohanshibatui",
+  "name": "罗汉十八腿",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "破绽",
+  "p": 0.065,
+  "margin": 0.362
+ },
+ {
+  "id": "tagangbudoutui",
+  "name": "踏罡步斗腿",
+  "quality": "绝学",
+  "type": "折中",
+  "effect": "封穴",
+  "p": 0.051,
+  "margin": 0.366
+ },
+ {
+  "id": "qiansiwanlvzhen",
+  "name": "千丝万缕针",
+  "quality": "绝学",
+  "type": "双强",
+  "effect": "破绽",
+  "p": 0.059,
+  "margin": 0.353
  }
 ]

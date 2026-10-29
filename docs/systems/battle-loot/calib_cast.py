@@ -15,9 +15,11 @@ from __future__ import annotations
   触发几率 = 解析反解值 × 修正系数；系数存 p_correction.json，每轮按「同品质余量均值 ÷ 本门余量」累乘。
   第一批 66 门按各自实测修正；未上线的按同品质同特效的平均系数（没有则按同特效、再没有取 1）。
 
-用法：python3 docs/systems/battle-loot/calib_cast.py [--update-mc] [--write]
-  --update-mc：读 docs/systems/sim/cast_doors_measured.json 更新修正系数；
-  --write：改写 wuxue-params.json（再跑 export_wuxue.py 生成代码读的名录）。
+用法：python3 docs/systems/battle-loot/calib_cast.py [--batch N] [--update-mc] [--write]
+  --batch N：本轮校准哪一批（默认名录里最大的批次）。已实装的批次数值冻结：后批加门、改名会动品质锚与成长曲线的
+    名字哈希，整表重算会让上线的门漂移，所以 --update-mc 与 --write 都只动这一批，其它批保持 params 里的原值。
+  --update-mc：读 docs/systems/sim/cast_doors_measured.json 更新本批的修正系数（均值按同品质已冻结批的门算）；
+  --write：改写 wuxue-params.json 里本批的门（改名的门只换名字；再跑 export_wuxue.py 生成代码读的名录）。
 """
 import importlib.util
 import hashlib
@@ -36,11 +38,18 @@ _spec.loader.exec_module(S)
 sys.argv = _argv
 WRITE = "--write" in sys.argv
 UPDATE_MC = "--update-mc" in sys.argv
+BATCH = int(sys.argv[sys.argv.index("--batch") + 1]) if "--batch" in sys.argv else max(r["batch"] for r in S.CATALOG)
 CORR_PATH = os.path.join(HERE, "p_correction.json")
 MC_PATH = os.path.join(HERE, "..", "sim", "cast_doors_measured.json")
 
 QUAL = S.QUAL
 NFORMS = S.NFORMS
+# 改名（living-jianghu/design.md §2.6 改名表）：params / p_correction / 实测记录里的旧名换新名，数值不动
+RENAMED = {"金刚降魔杵": "不周擎天棍", "莲花落地棍": "万岳镇川棍", "天河倒悬刀": "烈日熔金刀", "金顶佛光指": "阴云蔽月指",
+           "风雷激荡刀": "风雷断岳刀", "大漠孤烟刀": "铁马冰河刀", "七进七出枪": "流星贯月枪", "横扫六合拳": "巨鳌负山拳",
+           "醉里挑灯拳": "长鲸吸海拳", "毒蝎回钩指": "冷磷照骨指"}
+renamed = lambda n: RENAMED.get(n, n)
+BATCH_OF = {r["name"]: r["batch"] for r in S.CATALOG}
 EFF = S.EFF
 SIGNATURE = S.SIGNATURE
 REF = S.REF
@@ -232,20 +241,7 @@ def solve_p(r: dict, tgt: float) -> float:
 
 
 def load_corr() -> dict:
-    return json.load(open(CORR_PATH, encoding="utf-8")) if os.path.exists(CORR_PATH) else {}
-
-
-def update_corr() -> dict:
-    """按实测余量累乘修正系数：同品质均值 ÷ 本门余量"""
-    corr = load_corr()
-    rows = json.load(open(MC_PATH, encoding="utf-8"))
-    for q in QUAL:
-        g = [r for r in rows if r["quality"] == q and r["name"] not in PRACTICAL]   # 特例不参与拉平
-        mean = st.mean(r["margin"] for r in g)
-        for r in g:
-            corr[r["name"]] = round(corr.get(r["name"], 1.0) * mean / r["margin"], 4)
-    json.dump(corr, open(CORR_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=True)
-    return corr
+    return {renamed(k): v for k, v in json.load(open(CORR_PATH, encoding="utf-8")).items()} if os.path.exists(CORR_PATH) else {}
 
 
 def corr_of(r: dict, corr: dict) -> float:
@@ -259,6 +255,24 @@ def corr_of(r: dict, corr: dict) -> float:
     return 1.0
 
 
+def update_corr() -> dict:
+    """按实测余量累乘修正系数：同品质均值 ÷ 本门余量。只改本批的门；均值按同品质已冻结批（上线的门）算，
+    让新批向上线的门看齐（第一批自校时没有冻结批，均值就是全体）"""
+    corr = load_corr()
+    cat = {r["name"]: r for r in S.CATALOG}
+    rows = [dict(r, name=renamed(r["name"])) for r in json.load(open(MC_PATH, encoding="utf-8"))]
+    base = {r["name"]: corr_of(cat[r["name"]], corr) for r in rows}   # 实测那一轮实际用的系数（没有本门记录时是同类均值）
+    for q in QUAL:
+        g = [r for r in rows if r["quality"] == q and r["name"] not in PRACTICAL]   # 特例不参与拉平
+        frozen = [r for r in g if BATCH_OF.get(r["name"]) != BATCH]
+        mean = st.mean(r["margin"] for r in (frozen or g))
+        for r in g:
+            if BATCH_OF.get(r["name"]) == BATCH:
+                corr[r["name"]] = round(base[r["name"]] * mean / r["margin"], 4)
+    json.dump(corr, open(CORR_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=True)
+    return corr
+
+
 def calibrate() -> dict:
     tg = {q: target(q) for q in QUAL}
     corr = update_corr() if UPDATE_MC else load_corr()
@@ -266,7 +280,8 @@ def calibrate() -> dict:
     for r in S.CATALOG:
         q = r["quality"]
         p = P_REF[q] if r["effect"] in SIGNATURE else round(min(P_REF[q] * P_CAP_K, solve_p(r, tg[q]) * corr_of(r, corr)) * PRACTICAL.get(r["name"], 1.0), 3)
-        out[r["name"]] = dict(mult0=mult0_of(r), mults=form_mults(r), cost=cost0_of(r), p=p, cd=cd_of(r), type=type_of(r), ek=ek_of(r))
+        out[r["name"]] = dict(quality=q, cat=r["cat"], route=r["route"], effect=r["effect"], batch=r["batch"],
+                              mult0=mult0_of(r), mults=form_mults(r), cost=cost0_of(r), p=p, cd=cd_of(r), type=type_of(r), ek=ek_of(r))
     return out, tg
 
 
@@ -283,14 +298,16 @@ def report(params: dict, tg: dict) -> bool:
     rows = lambda q, b=None: [r for r in S.CATALOG if r["quality"] == q and (b is None or r["batch"] == b)]
     print("\n【一】触发几率（反解结果）与类型分布")
     for q in QUAL:
-        for b in (1, None):
+        for b in (BATCH, None):
             g = [r for r in rows(q, b) if r["effect"] not in SIGNATURE]
             ps = [params[r["name"]]["p"] for r in g]
             ty = {t: sum(1 for r in g if type_of(r) == t) for t in ("重击", "折中", "双强")}
             pt = {t: (round(min(v), 3), round(st.median(v), 3), round(max(v), 3))
                   for t in ty if (v := [params[r["name"]]["p"] for r in g if type_of(r) == t])}
-            print(f"  {q} {'第一批' if b else '全 171'}：{len(g)} 门 · 触发 {min(ps):.3f}–{max(ps):.3f}（中位 {st.median(ps):.3f}）· 类型 {ty} · 各类型触发（最低 / 中位 / 最高）{pt}")
-            if b == 1:
+            if not g:
+                continue
+            print(f"  {q} {f'第{b}批' if b else '全 171'}：{len(g)} 门 · 触发 {min(ps):.3f}–{max(ps):.3f}（中位 {st.median(ps):.3f}）· 类型 {ty} · 各类型触发（最低 / 中位 / 最高）{pt}")
+            if b == 1:                                       # 只有第一批要求三种类型齐全
                 miss = [t for t, c in ty.items() if c == 0]
                 if miss:
                     ok = False
@@ -301,16 +318,20 @@ def report(params: dict, tg: dict) -> bool:
         s = sum(n * med[q] for n, q in zip(combo, QUAL))
         print(f"  寻常 {combo[0]} + 上乘 {combo[1]} + 绝学 {combo[2]}：{s:.2f}")
     print(f"  境界 2 装 6 门寻常：{6 * med['寻常']:.2f} · 境界 1 单门寻常：{med['寻常']:.3f}")
-    print("\n【三】要求 1：同门各式差距（第一批）")
+    print(f"\n【三】要求 1：同门各式差距（第{BATCH}批）")
     for q in QUAL:
-        g = rows(q, 1)
+        g = rows(q, BATCH)
+        if not g:
+            continue
         f = [forms_of(r, params[r["name"]]) for r in g]
         steps = [b[1] / a[1] - 1 for x in f for a, b in zip(x, x[1:])]
         print(f"  {q}：相邻式倍率差 {min(steps) * 100:.0f}%–{max(steps) * 100:.0f}%（中位 {st.median(steps) * 100:.0f}%）· 末 / 首 倍率 {st.median(x[-1][1] / x[0][1] for x in f):.2f} · 末 / 首 耗气 {st.median(x[-1][0] / x[0][0] for x in f):.2f}")
-    print("\n【四】要求 2：同序号的式，高品质 > 低品质 的比例（第一批两两比较；独门除外）")
+    print(f"\n【四】要求 2：同序号的式，高品质 > 低品质 的比例（第{BATCH}批两两比较；独门除外）")
     for a, b in (("寻常", "上乘"), ("上乘", "绝学"), ("寻常", "绝学")):
-        A = [r for r in rows(a, 1) if r["effect"] not in SIGNATURE]
-        B = [r for r in rows(b, 1) if r["effect"] not in SIGNATURE]
+        A = [r for r in rows(a, BATCH) if r["effect"] not in SIGNATURE]
+        B = [r for r in rows(b, BATCH) if r["effect"] not in SIGNATURE]
+        if not A or not B:
+            continue
         for key, idx in (("耗气", 0), ("倍率", 1)):
             tot = win = 0
             for k in range(NFORMS[a]):
@@ -326,9 +347,9 @@ def report(params: dict, tg: dict) -> bool:
     for q in QUAL:
         f = 1 / (S.CD_BASE[q] + 1 / P_REF[q])
         print(f"  {q}：锚 {tg[q]:.3f}（相对只普攻）· 参考门出招比例 {f:.3f}")
-    print("\n【六】各门（第一批）")
+    print(f"\n【六】各门（第{BATCH}批）")
     for q in QUAL:
-        for r in sorted(rows(q, 1), key=lambda r: (type_of(r), params[r["name"]]["p"])):
+        for r in sorted(rows(q, BATCH), key=lambda r: (type_of(r), params[r["name"]]["p"])):
             prm = params[r["name"]]
             fs = forms_of(r, prm)
             print(f"  {q} {type_of(r)} {r['name']:<8} {r['effect']} 特效×{prm['ek']:.2f} 倍率 {fs[0][1]:.2f}→{fs[-1][1]:.2f} "
@@ -342,14 +363,17 @@ def main():
     if WRITE:
         path = os.path.join(HERE, "wuxue-params.json")
         data = json.load(open(path, encoding="utf-8"))
+        for w in data["wuxue"]:
+            w["name"] = renamed(w["name"])
         by = {w["name"]: w for w in data["wuxue"]}
         for r in S.CATALOG:
-            by[r["name"]].update(params[r["name"]])
+            if r["batch"] == BATCH:
+                by[r["name"]].update(params[r["name"]])
         data["calib"] = dict(source="calib_cast.py", mult_growth=MULT_GROWTH, cost_growth=COST_GROWTH,
                              p_ref=P_REF, mult_base=MULT_BASE)
         json.dump(data, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         open(path, "a").write("\n")
-        print(f"\n已改写 {path}")
+        print(f"\n已改写 {path}（第{BATCH}批 {sum(r['batch'] == BATCH for r in S.CATALOG)} 门）")
     print("\n判据：第一批每个品质三种类型都有 →", "通过" if ok else "未通过")
 
 

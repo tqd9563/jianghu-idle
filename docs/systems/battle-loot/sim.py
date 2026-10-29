@@ -40,8 +40,8 @@ _spec.loader.exec_module(W)
 
 QUICK = "--quick" in sys.argv
 ROUTES = L.ROUTES
-ROUTE_NAME = {"huashan": "归海", "shaolin": "镇岳", "tangmen": "蚀骨"}
-ROUTE_OF = {"归海": "huashan", "惊雷": "huashan", "镇岳": "shaolin", "蚀骨": "tangmen", "—": None}
+ROUTE_NAME = {"huashan": "狂澜", "shaolin": "镇岳", "tangmen": "蚀骨"}
+ROUTE_OF = {"狂澜": "huashan", "归海": "huashan", "惊雷": "huashan", "镇岳": "shaolin", "蚀骨": "tangmen", "—": None}
 QUAL = ["寻常", "上乘", "绝学"]
 QI = {"寻常": 0, "上乘": 1, "绝学": 2}
 
@@ -57,7 +57,7 @@ def load_catalog() -> list[dict]:
         if mh:
             cat = mh.group(1)
             continue
-        mr = re.match(r"\| (\S+?)(（现有[^）]*）)? \| (寻常|上乘|绝学) \| (\S+) \| (高|中|低) \| (高|中|低) \| (高|中|低) \| (短|中|长) \| (\S+) \| ([^|]+) \| ([12]) \|",
+        mr = re.match(r"\| (\S+?)(（现有[^）]*）)? \| (寻常|上乘|绝学) \| (\S+) \| (高|中|低) \| (高|中|低) \| (高|中|低) \| (短|中|长) \| (\S+) \| ([^|]+) \| ([123]) \|",
                       line)
         if mr and cat:
             name, exist, q, route, mult, cost, trig, cd, eff, src, batch = mr.groups()

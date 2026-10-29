@@ -1406,7 +1406,7 @@ describe('门派（sect-overhaul/design.md §4 §5，spec.md §2–§5）', () =
     expect(small.filter((it) => it.kind === 'pages').map((it) => it.price)).toEqual([160, 80, 80, 80, 80, 160, 80, 80, 80, 80]);
     const big = sectShelfOf(st(), 'qianyan');
     expect(big.filter((it) => it.kind === 'neigong').map((it) => it.neigong)).toEqual(['zhenyuegong', 'wuzhuxinfa', 'panshigong', 'putixingong']);
-    expect(big.filter((it) => it.rank === 4).map((it) => it.price)).toEqual([800, 400, 400, 400, 600, 600, 600]);
+    expect(big.filter((it) => it.rank === 4).map((it) => it.price)).toEqual([800, 400, 400, 400, 600, 600, 600, 800, 400, 400, 400, 600, 600, 600]);
     expect(big.filter((it) => it.rank === 5).map((it) => it.kind)).toEqual(['neigong', 'gear', 'juance']);
     expect(isBenmen('qianyan', 'luohanfumogun')).toBe(true);
     expect(isBenmen('qianyan', 'cangyajianjue')).toBe(false);
@@ -1639,11 +1639,11 @@ describe('武学掉落、书匣与兵器搭配（battle-loot/design.md §3.7 / �
     expect(st().equipped).toEqual(['kaishanzhang', 'pofengdao']);
   });
 
-  it('转世：残页跨世保留；第一批 66 门里名录参数都在', () => {
+  it('转世：残页跨世保留；名录 84 门参数都在', () => {
     useGameStore.setState({ realm: 3, pages: ['feipuduanyajian:3'], retireStep: 'confirm' });
     st().confirmRetire();
     expect(st().pages).toEqual(['feipuduanyajian:3']);
-    expect(Object.keys(WUXUE)).toHaveLength(66);
+    expect(Object.keys(WUXUE)).toHaveLength(84);
     expect(QUALITY_PARAMS.寻常.forms).toBe(3);
   });
 });

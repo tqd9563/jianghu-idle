@@ -40,7 +40,7 @@
 | `systems/sect-neigong/design.md` | 门派 / 内功 / 武学设定（门径并入内功） | — |
 | `systems/sect-neigong/spec.md` | 门派 / 内功 / 武学规格（内功 / 真气 / 悟性 / 获取 / 门派 / 迁移数值表；§2.1 / §2.5 / §2.6 / §2.8 已被 battle-loot/spec.md §3 与武学名录取代） | neigong.ts, wuxue.ts（§2.2 / §2.3 / §2.4）, NeigongPane.tsx, NeigongSelect.tsx, storage.ts（v8 迁移） |
 | `systems/sect-neigong/sim.py` | 门派 / 内功 / 武学 sim（扩展战斗：真气、冷却、出招；判据 9 条） | — |
-| `systems/wuxue-catalog/design.md` | 武学名录扩版（九类目 171 门、五项参数与触发求和、特效池、九派绝学分配、起名规则；第一批 66 门已实装） | wuxue.ts（读 `data/wuxue-catalog.json`，由 `systems/battle-loot/export_wuxue.py` 生成） |
+| `systems/wuxue-catalog/design.md` | 武学名录扩版（九类目 171 门、五项参数与触发求和、特效池、九派绝学分配、起名规则；第一批 66 门与第三批门派前置 18 门已实装） | wuxue.ts（读 `data/wuxue-catalog.json`，由 `systems/battle-loot/export_wuxue.py` 生成） |
 | `rules/copy/gear-names.md` | 装备名表：四部位按型 × 品阶一格一名，共 70 个名 | gear.ts |
 | `rules/copy/wuxue-epigraphs.md` | 武学批注：每门武学一联诗句式题词（寻常四字、上乘与绝学五字）；第一批定稿、第二批待审，第一批已接入，显示在武功页书页左页标签下方 | — |
 | `systems/battle-loot/design.md` | 战斗挂机：掉落与装备设定（挂机入口、装备四部位五品阶与词条、武学寻常整门 / 高阶一式一页、前式圆满接下式、招式库、熟练减耗气、触发几率当阀门与三种类型（裁决 45 / 46）、境界 1 内功教学关；已定稿） | — |
@@ -53,7 +53,7 @@
 | `systems/living-jianghu/sim.py` | 活江湖结构 sim（卷 · 章 · 图 · 关单线的台阶高度、停留天数、首杀体量；读 longline_sim） | — |
 | `systems/wudao-yuanliu/design.md` | 武道源流（原「路数」）：三路扩七路、七大源流门派与因缘拜入 | — |
 | `systems/sect-overhaul/design.md` | 门派改造：21 家可拜门派的体量、源流、六级地位与六档差事、内功 / 装备 / 差事定名、门派页原型（驻地图 + 百务殿 / 典籍院 / 天工库）、旧九派迁移；设计定稿，数值待 sim | `design/sect-overhaul-prototype.html` |
-| `systems/sect-overhaul/copy-draft.md` | 门派改造文案草稿：前置 21 门武学 141 式招式名、21 家 126 句差事交代；已定稿，待实装 | — |
+| `systems/sect-overhaul/copy-draft.md` | 门派改造文案草稿：前置 21 门武学 141 式招式名与战报句、21 条批注、21 家 126 句差事交代；招式名、战报句、批注已由 `battle-loot/export_wuxue.py` 读入名录并同步进冻结文案 | sect.ts（§2）、`data/wuxue-catalog.json`（§1 / §3 / §4） |
 | `systems/sect-overhaul/spec.md` | 门派改造数值：200 天实测每世门派天数、六档差事收益、六级门槛（每级 1.25 天）、货架价格、门派装备品阶与等级；定稿待实装 | `sim/sect_rank_sim.py`、`sim/sect_life_measured.json` |
 | `systems/wudao-yuanliu/spec.md` | 武道源流新四路规格：太虚、玄寂、惊鸿、焚血的赠予、逐重、五阶与克制，首轮对拍（`code/src/telemetry/routeBalance.sim.test.ts` SIM_ROUTE=1 → `systems/sim/route_balance_measured.json`） | combat.ts, routes.ts, neigong.ts |
 | `systems/prestige-shop/design.md` | 前尘（声望阁改版）设定：底蕴八条可反复购买且逐级递减、感悟价补偿、页面分段切换；sim 判据已过，原型待审 | — |

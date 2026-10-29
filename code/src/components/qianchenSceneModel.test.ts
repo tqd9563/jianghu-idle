@@ -34,12 +34,12 @@ describe('前尘 · 江湖百景', () => {
 });
 
 describe('前尘 · 版面', () => {
-  it('宽舞台按宽铺满、上下羽化；高舞台放大但左右最多裁 1.5%', () => {
+  it('宽舞台按宽铺满、上下居中；高舞台放大但左右最多裁 1.5%', () => {
     const wide = picLayout(1300, 900);
     expect(wide.pw).toBeCloseTo(1300 / 0.985);
-    expect(wide.short).toBe(true);
+    expect(wide.pt).toBeCloseTo((900 - (1300 / 0.985) * 9 / 16) / 2);
     const exact = picLayout(1600, 900);
-    expect(exact.pw).toBe(1600); expect(exact.pt).toBe(0); expect(exact.short).toBe(false);
+    expect(exact.pw).toBe(1600); expect(exact.pt).toBe(0);
   });
   it('手卷下面放不下改到上方，左右夹在舞台内', () => {
     const stage = { w: 1000, h: 800 }, card = { w: 500, h: 190 };

@@ -3,8 +3,10 @@
  * 例：#seed=realm3&tab=battle&fight=1 —— 仅用于开发自检与陪同测试的观察员操作，
  * 正式测试会话请勿携带 seed（会覆盖存档；埋点 run_start 不触发，避免污染完成率分母）。
  * MVP-1 验收 A4：#offlinecap=10 压低离线上限（分钟，持久生效）；#offlinecap=0 清除。
+ * 门派验收：#sect=qianfan&rank=4 把存档改拜该门派并置地位（贡献按门槛补足，差事清空），可与 seed 组合。
  */
-import { backdateSavedAt, saveGame, setDebugOfflineCap } from './save/storage';
+import { backdateSavedAt, loadGame, saveGame, setDebugOfflineCap } from './save/storage';
+import { RANK_MAX, RANK_THRESHOLDS, SECTS, type SectId } from './engine/sect';
 
 import { parseStageKey, stageKey, trackLength, unlocksAfterMap, VOLUMES, type MapId } from './engine/enemies';
 import { makeHao, newLife, placeOfVol, type LifeRec } from './engine/chronicle';
@@ -183,6 +185,17 @@ export function applyDebugHash(): {
   const params = new URLSearchParams(window.location.hash.slice(1));
   const seed = params.get('seed');
   if (seed && PRESETS[seed]) saveGame(PRESETS[seed]);
+  // 门派验收：#sect=<id>&rank=<1–6> 改拜并置地位（存档层面改，载入即生效）
+  const sectId = params.get('sect') as SectId | null;
+  if (sectId && SECTS[sectId]) {
+    const saved = loadGame<Record<string, unknown>>();
+    if (saved) {
+      const rank = Math.min(RANK_MAX, Math.max(1, Number(params.get('rank') ?? 1)));
+      const need = RANK_THRESHOLDS[rank - 1];
+      saveGame({ ...saved, realm: Math.max(3, Number(saved.realm ?? 0)), sect: sectId, sectRank: rank, contribTotal: need,
+        contrib: Math.max(Number(saved.contrib ?? 0), need), sectTask: null, sectGearBought: [] });
+    }
+  }
   // MVP-1 验收 A4：#offlinecap=10 压低离线上限（分钟），持久生效；#offlinecap=0 清除
   const offlineCap = params.get('offlinecap');
   if (offlineCap !== null) setDebugOfflineCap(Number(offlineCap) > 0 ? Number(offlineCap) : null);

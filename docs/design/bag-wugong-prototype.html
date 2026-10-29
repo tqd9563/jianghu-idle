@@ -142,9 +142,10 @@ button { font: inherit; color: inherit; }
 .wcat.on img { filter: invert(.85) sepia(1) saturate(1.6) hue-rotate(-12deg); }
 #sc-wg:not([data-ic="o"]) .wcat { background: none; }
 #sc-wg:not([data-ic="o"]) .wcat img, #sc-wg:not([data-ic="o"]) .wcat.on img { inset: 4%; width: 92%; height: 92%; filter: drop-shadow(0 2px 3px oklch(0.1 0.01 262 / .5)); }
-#sc-wg[data-ic="f"] .eq:not(.empty), #sc-wg[data-ic="g"] .eq:not(.empty) { background: radial-gradient(circle, oklch(0.93 0.006 85 / .9) 55%, transparent 72%); }
-#sc-wg[data-ic="g"] .wcat { background: radial-gradient(circle, oklch(0.92 0.006 85 / .8) 45%, transparent 70%); }
-#sc-wg[data-ic="g"] .wcat img, #sc-wg[data-ic="g"] .wcat.on img { inset: 15%; width: 70%; height: 70%; }
+#sc-wg:not([data-ic="a"]) .eq:not(.empty) { background: radial-gradient(circle, oklch(0.93 0.006 85 / .9) 55%, transparent 72%); }
+#sc-wg:not([data-ic="a"]) .wcat { background: radial-gradient(circle, oklch(0.92 0.006 85 / .8) 45%, transparent 70%); }
+#sc-wg:not([data-ic="a"]) .wcat img, #sc-wg:not([data-ic="a"]) .wcat.on img { inset: 17%; width: 66%; height: 66%; filter: none; }
+#sc-wg:not([data-ic="a"]) .eq:not(.empty) img { inset: 18%; width: 64%; height: 64%; filter: none; }
 #sc-wg[data-ic="c"] .wcat { background: radial-gradient(circle, oklch(0.92 0.006 85 / .85) 50%, transparent 70%); }
 #sc-wg[data-ic="c"] .wcat img, #sc-wg[data-ic="c"] .wcat.on img { inset: 15%; width: 70%; height: 70%; }
 #sc-wg:not([data-ic="o"]) .wcat.on { background: none; box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .5); }
@@ -449,7 +450,7 @@ document.addEventListener('mouseover', (e) => { const t = e.target.closest('[dat
   const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
 document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
 const icv = document.createElement('span'); icv.id = 'icv'; icv.style.display = 'none';
-icv.innerHTML = '｜类别图标 ' + [['a', '甲 现版'], ['e', '戊 墨圆简'], ['f', '己 圆相'], ['g', '庚 枯笔'], ['h', '辛 淡墨晕']].map(([k, n]) => `<button data-ic="${k}" class="${k === 'a' ? 'on' : ''}">${n}</button>`).join('');
+icv.innerHTML = '｜类别图标 ' + [['a', '甲 现版 · 兵器'], ['p', '乙 人形招式'], ['q', '丙 篆字'], ['r', '丁 意象'], ['s', '戊 特写']].map(([k, n]) => `<button data-ic="${k}" class="${k === 'a' ? 'on' : ''}">${n}</button>`).join('');
 $('proto').appendChild(icv);
 icv.querySelectorAll('button').forEach((b) => b.onclick = () => { ICSET = b.dataset.ic; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawWg(); });
 document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });

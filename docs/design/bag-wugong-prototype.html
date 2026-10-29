@@ -51,8 +51,8 @@ button { font: inherit; color: inherit; }
 .scene.off { opacity: 0; pointer-events: none; visibility: hidden; }
 .pic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
 .pic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
-.vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 30px #0b0d12;
-  background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .8), transparent 22%); }
+.vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .7);
+  background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .45), transparent 16%); }
 .head { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
 .head > * { pointer-events: auto; }
 .head h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
@@ -91,14 +91,14 @@ button { font: inherit; color: inherit; }
 .wsum b { color: var(--ink); font-weight: 600; margin-left: 3px; }
 
 .cloth { position: absolute; display: grid; grid-auto-flow: dense; }
-.cloth .cell { border: 1px dashed oklch(0.88 0.02 240 / .22); border-radius: 2px; margin: 1px; }
+.cloth .cell { background: oklch(0.9 0.02 240 / .05); border-radius: 2px; margin: 1px; }
 .cloth .it { position: relative; margin: 1px; border: 0; padding: 0; cursor: pointer; border-radius: 3px;
-  background: linear-gradient(to top, color-mix(in oklch, var(--gc) 26%, transparent), transparent 60%), oklch(0.14 0.02 255 / .72);
-  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--gc) 80%, transparent); transition: transform .15s var(--ease), box-shadow .15s; }
+  background: linear-gradient(to top, color-mix(in oklch, var(--gc) 18%, transparent), transparent 55%), oklch(0.2 0.02 255 / .45);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--gc) 75%, transparent); transition: transform .15s var(--ease), box-shadow .15s; }
 .cloth .it img { position: absolute; inset: 6%; width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 2px 3px #000); }
-.cloth .it.g1 { box-shadow: inset 0 0 0 1px oklch(0.7 0.012 262 / .45); background: oklch(0.14 0.02 255 / .6); }
+.cloth .it.g1 { box-shadow: none; background: oklch(0.2 0.02 255 / .35); }
 .cloth .it.g1 img { opacity: .78; }
-.cloth .it.g5 { box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 10px color-mix(in oklch, var(--gc) 55%, transparent); }
+.cloth .it.g5 { box-shadow: inset 0 0 0 1.5px var(--gc); }
 .cloth .it:hover, .cloth .it.sel { transform: translateY(-2px); box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 0 1.5px var(--gold), 0 6px 14px #000; z-index: 2; }
 .cloth .it .fresh { position: absolute; left: 4px; top: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .cloth .it .up { position: absolute; right: 3px; top: 1px; font-size: 10px; color: oklch(0.8 0.14 145); text-shadow: 0 0 3px #000; }
@@ -131,11 +131,11 @@ button { font: inherit; color: inherit; }
 /* ═══════════ 武功：崖洞壁刻 · 拓片 · 石印 ═══════════ */
 /* 石柱分类：AI 墨笔图标落在 AI 画好的空白石盘上；没有藏书的类别置灰不可点 */
 .med { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .042); aspect-ratio: 1; border: 0; border-radius: 50%; background: none; cursor: pointer; padding: 0; display: grid; place-items: center; }
-.med img { width: 62%; height: 62%; object-fit: contain; filter: invert(1) brightness(.95) drop-shadow(0 1px 1px #000) drop-shadow(0 0 2px #000) drop-shadow(0 0 4px #000); opacity: 1; transition: transform .2s var(--ease); }
+.med img { width: 62%; height: 62%; object-fit: contain; filter: drop-shadow(0 1px 0 oklch(0.95 0.01 262 / .6)); opacity: .82; transition: transform .2s var(--ease); }
 .med:hover:not(:disabled) img { transform: scale(1.08); }
 .med.on { box-shadow: 0 0 0 1.5px oklch(0.75 0.075 76 / .75), 0 0 12px oklch(0.75 0.075 76 / .35); }
-.med.on img { filter: invert(.82) sepia(1) saturate(1.3) hue-rotate(-12deg) drop-shadow(0 1px 1px #000); opacity: 1; }
-.med:disabled { cursor: not-allowed; } .med:disabled img { filter: brightness(0) drop-shadow(0 1px 0 oklch(0.85 0.01 262 / .5)); opacity: .45; }
+.med.on img { filter: invert(.38) sepia(1) saturate(1.8) hue-rotate(-12deg); opacity: 1; }
+.med:disabled { cursor: not-allowed; } .med:disabled img { filter: none; opacity: .28; }
 .med:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 
 /* 壁刻：AI 画的空白石板上刻这一类的各门武学；招式像为 AI 墨线，滤镜调成阴刻 / 鎏金 / 风化 */
@@ -143,15 +143,15 @@ button { font: inherit; color: inherit; }
   display: flex; flex-direction: column; align-items: center; }
 .panel .nm { font-family: var(--font-display); font-weight: 700; font-size: clamp(12px, calc(var(--pw) * .0102), 15px); letter-spacing: .06em; white-space: nowrap; margin-top: 4%;
   color: oklch(0.22 0.01 262 / .9); text-shadow: 0 1px 0 oklch(0.82 0.01 262 / .45), 0 -1px 0 oklch(0.05 0.01 262 / .7); }
-.panel img { flex: 1; min-height: 0; max-width: 78%; object-fit: contain; margin: 3% 0 6%; opacity: .62;
+.panel img { flex: 1; min-height: 0; max-width: 78%; object-fit: contain; margin: 3% 0 6%; opacity: .55;
   filter: brightness(0) drop-shadow(0 1px 0 oklch(0.8 0.01 262 / .5)); transition: transform .25s var(--ease); }
 .panel { border-radius: 3px; }
 /* 品质靠颜色：上乘石青、绝学朱砂，名字与石板内缘一线同色；寻常不着色 */
 .panel.q2 { box-shadow: inset 0 0 0 1.5px oklch(0.62 0.09 230 / .75); } .panel.q2 .nm { color: oklch(0.36 0.1 235); }
 .panel.q3 { box-shadow: inset 0 0 0 1.5px oklch(0.55 0.15 32 / .8); } .panel.q3 .nm { color: oklch(0.42 0.15 30); }
 /* 已装配：墨金描出招式像，不发光 */
-.panel.on img { opacity: 1; filter: brightness(0) invert(.62) sepia(.9) saturate(1.1) hue-rotate(-10deg) drop-shadow(0 1px 0 #000); }
-.panel.on .nm::after { content: ''; display: block; width: 60%; height: 1.5px; margin: 2px auto 0; background: oklch(0.6 0.08 75); }
+.panel.on img { opacity: 1; filter: brightness(0) invert(.42) sepia(1) saturate(1.6) hue-rotate(-12deg); }
+.panel.on .nm { color: oklch(0.42 0.09 70); } .panel.on .nm::after { content: ''; display: block; width: 60%; height: 1.5px; margin: 2px auto 0; background: oklch(0.5 0.09 70); }
 .panel.ghost img { opacity: .25; filter: brightness(0) blur(1.2px); }
 .panel.ghost .nm { opacity: .55; }
 .panel.sel { outline: 2px solid oklch(0.75 0.075 76 / .8); outline-offset: 1px; }

@@ -137,27 +137,32 @@ button { font: inherit; color: inherit; }
 /* 左缘：类别圈 + 一道细竖线 */
 .wcat { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .04); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
   background: radial-gradient(circle, oklch(0.2 0.008 262 / .92) 58%, oklch(0.2 0.008 262 / 0) 72%); display: grid; place-items: center; }
-.wcat img { width: 58%; height: 58%; object-fit: contain; filter: invert(1); }
+.wcat img { position: absolute; inset: 21%; width: 58%; height: 58%; object-fit: contain; filter: invert(1); }
 .wcat.on { background: radial-gradient(circle, oklch(0.2 0.008 262 / .92) 56%, oklch(0.78 0.11 78 / .9) 60%, oklch(0.78 0.11 78 / 0) 74%); box-shadow: 0 0 14px oklch(0.8 0.12 80 / .45); border-radius: 50%; }
 .wcat.on img { filter: invert(.85) sepia(1) saturate(1.6) hue-rotate(-12deg); }
+#sc-wg:not([data-ic="o"]) .wcat { background: none; }
+#sc-wg:not([data-ic="o"]) .wcat img, #sc-wg:not([data-ic="o"]) .wcat.on img { inset: 4%; width: 92%; height: 92%; filter: drop-shadow(0 2px 3px oklch(0.1 0.01 262 / .5)); }
+#sc-wg[data-ic="c"] .wcat { background: radial-gradient(circle, oklch(0.92 0.006 85 / .85) 50%, transparent 70%); }
+#sc-wg[data-ic="c"] .wcat img, #sc-wg[data-ic="c"] .wcat.on img { inset: 15%; width: 70%; height: 70%; }
+#sc-wg:not([data-ic="o"]) .wcat.on { background: none; box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .5); }
+#sc-wg[data-ic="b"] .wcat, #sc-wg[data-ic="b"] .wcat.on { border-radius: 6px; }
+#sc-wg:not([data-ic="o"]) .wcat:disabled img { opacity: .4; filter: grayscale(1) brightness(1.4); }
 .wcat:disabled { cursor: not-allowed; } .wcat:disabled img { opacity: .3; }
 .wcat:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 .wrule { position: absolute; left: 6.4%; top: 10%; height: 78%; width: 1px; background: linear-gradient(to bottom, transparent, oklch(0.85 0.01 85 / .55) 8%, oklch(0.85 0.01 85 / .55) 92%, transparent); }
 /* 目录：淡色宣纸晕底上竖写这一类各门，选中金字带点、未得淡灰 */
-.toc { position: absolute; left: 7.4%; top: 12.6%; width: 29.6%; height: 25%; display: flex;
-  background: oklch(0.9 0.006 85 / .72); -webkit-mask: linear-gradient(to right, #000 80%, transparent), linear-gradient(to bottom, #000 82%, transparent); -webkit-mask-composite: source-in; mask: linear-gradient(to right, #000 80%, transparent), linear-gradient(to bottom, #000 82%, transparent); mask-composite: intersect; }
-.toc button { flex: 0 0 12.5%; border: 0; background: none; padding: 9% 0 0; cursor: pointer; position: relative; display: flex; justify-content: center;
-  border-left: 1px solid oklch(0.4 0.01 262 / .14); }
-.toc button:first-child { border-left: 0; }
-.toc button span { writing-mode: vertical-rl; font-family: var(--font-body); font-weight: 700; font-size: clamp(14px, calc(var(--pw) * .0145), 22px); letter-spacing: .12em; color: oklch(0.24 0.01 262); }
-.toc button.on span { color: oklch(0.42 0.1 70); }
-.toc button.on::before { content: ''; position: absolute; top: 3%; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: oklch(0.6 0.12 75); box-shadow: 0 0 6px oklch(0.75 0.13 78); }
-.toc button.on { background: linear-gradient(to bottom, oklch(0.95 0.04 85 / .7), transparent); }
-.toc button.q2 span { color: oklch(0.36 0.1 235); } .toc button.q3 span { color: oklch(0.44 0.15 30); }
-.toc button.ghost span { color: oklch(0.55 0.01 262 / .7); }
-.toc button.eq span::after { content: '·'; display: block; color: oklch(0.5 0.1 70); }
-.toc button:hover span { text-decoration: underline; text-decoration-color: oklch(0.5 0.08 75 / .5); text-underline-offset: 3px; }
-.tocpg { position: absolute; left: 22%; top: 38.2%; z-index: 1; padding: 2px 10px; border-radius: 10px; background: oklch(0.9 0.006 85 / .6); transform: translateX(-50%); display: flex; gap: 12px; align-items: center; font-size: 13px; color: oklch(0.3 0.01 262); }
+/* 目录：AI 画的宣纸板（toc.png，板上已有七道竖线分八列），名字落在列中；选中金字、顶上一点 */
+.toc { position: absolute; left: 6.6%; top: 9.5%; width: 32%; aspect-ratio: 1400 / 684; background: url('../../code/public/art/wugong/toc.png') center / 100% 100% no-repeat; }
+.toc button { position: absolute; top: 17%; height: 64%; width: 10.3%; border: 0; background: none; padding: 0; cursor: pointer; display: flex; justify-content: center; }
+.toc button span { writing-mode: vertical-rl; font-family: var(--font-body); font-weight: 500; font-size: clamp(14px, calc(var(--pw) * .0142), 22px); letter-spacing: .14em; color: oklch(0.26 0.01 262); }
+.toc button.on span { color: oklch(0.5 0.11 72); font-weight: 700; text-shadow: 0 0 10px oklch(0.92 0.06 85); }
+.toc button.on::before { content: ''; position: absolute; top: -7%; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: oklch(0.62 0.12 75); box-shadow: 0 0 6px oklch(0.8 0.13 78); }
+.toc button.q2 span { color: oklch(0.38 0.1 235); } .toc button.q3 span { color: oklch(0.46 0.15 30); }
+.toc button.on.q2 span, .toc button.on.q3 span { text-decoration: underline 1.5px oklch(0.6 0.12 75); text-underline-offset: 4px; }
+.toc button.ghost span { color: oklch(0.6 0.01 262 / .75); }
+.toc button.eq::after { content: ''; position: absolute; bottom: -6%; left: 50%; width: 14px; height: 1.5px; margin-left: -7px; background: oklch(0.6 0.1 72); }
+.toc button:hover span { color: oklch(0.42 0.09 72); }
+.tocpg { position: absolute; left: 22.6%; top: 37.5%; z-index: 1; padding: 2px 10px; border-radius: 10px; background: oklch(0.9 0.006 85 / .6); transform: translateX(-50%); display: flex; gap: 12px; align-items: center; font-size: 13px; color: oklch(0.3 0.01 262); }
 .tocpg button { border: 0; background: none; cursor: pointer; font-size: 16px; color: oklch(0.3 0.01 262); } .tocpg button:disabled { opacity: .3; cursor: default; }
 /* 右侧题跋：大字竖写名 + 两列批注 + 朱印 */
 .ttl { position: absolute; left: 82.5%; top: 6%; transform: translateX(-50%); writing-mode: vertical-rl; font-family: 'Ma Shan Zheng', var(--font-display); line-height: 1;
@@ -178,8 +183,7 @@ button { font: inherit; color: inherit; }
 .fmd svg circle { fill: none; stroke-width: 3; }
 .fmd .bgc { stroke: oklch(0.85 0.01 85 / .2); } .fmd .fg { stroke: oklch(0.78 0.11 78); }
 .fmd.lock { opacity: .35; filter: grayscale(1); }
-.fmd.t3::after { content: '圆'; position: absolute; right: -6%; bottom: -4%; width: 34%; aspect-ratio: 1; display: grid; place-items: center; font-size: calc(var(--pw) * .0062);
-  background: oklch(0.5 0.17 28 / .92); color: oklch(0.95 0.02 80); border-radius: 2px; font-family: var(--font-display); }
+
 /* 属性：标签 + 墨刷条 + 数值 */
 .attrs5 { position: absolute; left: 74.5%; top: 64.5%; width: 23.5%; display: grid; gap: calc(var(--pw) * .0068); }
 .attrs5 .r { display: grid; grid-template-columns: 4.6em 1fr 4.2em; align-items: center; gap: 10px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
@@ -198,8 +202,8 @@ button { font: inherit; color: inherit; }
 .wact button.quiet:hover { box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .9); }
 .wact button:disabled { filter: grayscale(1); opacity: .45; cursor: default; }
 /* 下沿装配：一排圆，圈内方框里是类别图标；第一枚是主修内功（金圈） */
-.eqrow { position: absolute; left: 50%; top: 89.3%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .0135); }
-.eq { position: relative; width: calc(var(--pw) * .05); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+.eqrow { position: absolute; left: 41%; top: 92%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .011); }
+.eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
   background: radial-gradient(circle, oklch(0.18 0.008 262 / .95) 60%, oklch(0.18 0.008 262 / 0) 72%); display: grid; place-items: center; }
 .eq::after { content: ''; position: absolute; left: 15%; right: 15%; bottom: -14%; height: 8%; border-radius: 50%; background: oklch(0.1 0.01 262 / .5); filter: blur(2px); }
 .eq i { width: 50%; height: 50%; border-radius: 6px; background: oklch(0.86 0.008 85); display: grid; place-items: center; }
@@ -365,21 +369,23 @@ const NG = [
   { id: 'dingjing', name: '定慧功', quality: '寻常', route: '镇岳', zhong: 61, cap: '大成 · 6 重', attrs: [['气血', 24310], ['攻击', 2210], ['防御', 1390], ['命中', 38], ['闪避', 10]],
     yj: [['护盾', '开战得 <b>18%</b> 气血护盾'], ['反伤', '受击反伤 <b>12%</b>'], ['防御', '防御 <b>+15%</b>'], ['气海', '×<b>1.0</b> · 真气上限 <b>1640</b>']] },
 ];
-let cat = '剑', wpage = 0, open = null;
+let cat = '剑', wpage = 0, open = null, ICSET = 'a';
 const PER = 8;
 const itemsOf = (c) => c === '内功' ? NG.map((n) => ({ ...n, cat: '内功', ng: true })) : st.wx.filter((w) => w.cat === c);
 /* 属性条按名录里的最大值归一 */
 const MAXV = () => ({ mult: Math.max(...MOCK.wx.map((w) => w.mult0)), p: Math.max(...MOCK.wx.map((w) => w.p)), cost: Math.max(...MOCK.wx.map((w) => w.cost)), cd: 6 });
 
 function drawWg() {
+  const ic = (c) => ICSET === 'o' ? `${ART}/wugong/ic-${CAT_FILE[c]}.png` : `${ART}/wugong/icset/${ICSET}-${CAT_FILE[c]}.png`;
+  $('sc-wg').dataset.ic = ICSET;
   $('wcats').innerHTML = CATS.map((c, i) => { const n = itemsOf(c).length;
-    return `<button class="wcat${cat === c ? ' on' : ''}" style="left:3.6%;top:${CAT_Y[i]}%" ${n ? '' : 'disabled'} data-c="${c}" aria-label="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ART}/wugong/ic-${CAT_FILE[c]}.png" alt=""></button>`; }).join('');
+    return `<button class="wcat${cat === c ? ' on' : ''}" style="left:3.6%;top:${CAT_Y[i]}%" ${n ? '' : 'disabled'} data-c="${c}" aria-label="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ic(c)}" alt=""></button>`; }).join('');
   $('wcats').querySelectorAll('.wcat').forEach((b) => b.onclick = () => { cat = b.dataset.c; wpage = 0; const it = itemsOf(cat); open = it.length ? `${it[0].ng ? 'ng' : 'wx'}:${it[0].id}` : open; drawWg(); });
   const items = itemsOf(cat), pages = Math.max(1, Math.ceil(items.length / PER)); wpage = Math.min(wpage, pages - 1);
   if (!open || !items.some((w) => open.endsWith(':' + w.id))) open = items.length ? `${items[0].ng ? 'ng' : 'wx'}:${items[0].id}` : `ng:${st.main}`;
-  $('toc').innerHTML = items.slice(wpage * PER, wpage * PER + PER).map((w) => { const k = `${w.ng ? 'ng' : 'wx'}:${w.id}`;
+  $('toc').innerHTML = items.slice(wpage * PER, wpage * PER + PER).map((w, ci) => { const k = `${w.ng ? 'ng' : 'wx'}:${w.id}`;
     const eq = w.ng ? w.id === st.main : st.eq.includes(w.id), ghost = !w.ng && st.ghost.includes(w.id);
-    return `<button class="q${QN[w.quality]}${open === k ? ' on' : ''}${ghost ? ' ghost' : ''}${eq ? ' eq' : ''}" data-k="${k}" data-tip="${w.quality}${eq ? (w.ng ? ' · 主修' : ' · 已装配') : ghost ? ' · 未得整本' : ''}"><span>${w.name}</span></button>`; }).join('');
+    return `<button class="q${QN[w.quality]}${open === k ? ' on' : ''}${ghost ? ' ghost' : ''}${eq ? ' eq' : ''}" data-k="${k}" style="left:${8.5 + ci * 10.3}%" data-tip="${w.quality}${eq ? (w.ng ? ' · 主修' : ' · 已装配') : ghost ? ' · 未得整本' : ''}"><span>${w.name}</span></button>`; }).join('');
   $('toc').querySelectorAll('button').forEach((b) => b.onclick = () => { open = b.dataset.k; drawWg(); });
   $('tocpg').innerHTML = pages > 1 ? `<button ${wpage ? '' : 'disabled'} data-d="-1">‹</button><span>${wpage + 1} / ${pages}</span><button ${wpage < pages - 1 ? '' : 'disabled'} data-d="1">›</button>` : '';
   $('tocpg').querySelectorAll('button').forEach((b) => b.onclick = () => { wpage += +b.dataset.d; drawWg(); });
@@ -431,9 +437,14 @@ const tip = $('tip');
 document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) return; tip.innerHTML = t.dataset.tip; tip.classList.add('on');
   const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
 document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
+const icv = document.createElement('span'); icv.id = 'icv'; icv.style.display = 'none';
+icv.innerHTML = '｜类别图标 ' + [['a', '甲 墨圆'], ['b', '乙 朱印'], ['c', '丙 墨笔'], ['d', '丁 圆画'], ['o', '原']].map(([k, n]) => `<button data-ic="${k}" class="${k === 'a' ? 'on' : ''}">${n}</button>`).join('');
+$('proto').appendChild(icv);
+icv.querySelectorAll('button').forEach((b) => b.onclick = () => { ICSET = b.dataset.ic; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawWg(); });
 document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sel) { sel = null; drawBag(); } });
 function show(p) { page = p; document.querySelectorAll('#nav button[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
+  $('icv').style.display = p === 'wg' ? '' : 'none';
   $('sc-bag').classList.toggle('off', p !== 'bag'); $('sc-wg').classList.toggle('off', p !== 'wg'); p === 'bag' ? drawBag() : drawWg(); }
 document.querySelectorAll('#nav button[data-p]').forEach((b) => b.onclick = () => show(b.dataset.p));
 
@@ -448,7 +459,7 @@ const PRESETS = {
     wx: clone(MOCK.wx.filter((w) => w.quality === '寻常').slice(0, 3)), eq: [MOCK.wx[0].id], slots: 5, main: 'shigu', ghost: [] }) },
 };
 function load(k) { st = PRESETS[k].make(); sel = null; open = null; cat = '剑'; wpage = 0; $('silver').textContent = fmt(st.silver);
-  document.querySelectorAll('.proto button').forEach((b) => b.classList.toggle('on', b.dataset.k === k)); show(page); }
+  document.querySelectorAll('.proto > button').forEach((b) => b.classList.toggle('on', b.dataset.k === k)); show(page); }
 Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
 place(); load('mid');
 </script>

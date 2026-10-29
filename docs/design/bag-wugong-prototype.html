@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>行囊与武功</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
 <style>
@@ -154,7 +154,7 @@ button { font: inherit; color: inherit; }
 /* 目录：AI 画的宣纸板（toc.png，板上已有七道竖线分八列），名字落在列中；选中金字、顶上一点 */
 .toc { position: absolute; left: 6.6%; top: 9.5%; width: 32%; aspect-ratio: 1400 / 684; background: url('../../code/public/art/wugong/toc.png') center / 100% 100% no-repeat; }
 .toc button { position: absolute; top: 17%; height: 64%; width: 10.3%; border: 0; background: none; padding: 0; cursor: pointer; display: flex; justify-content: center; }
-.toc button span { writing-mode: vertical-rl; font-family: var(--font-body); font-weight: 500; font-size: clamp(14px, calc(var(--pw) * .0142), 22px); letter-spacing: .14em; color: oklch(0.26 0.01 262); }
+.toc button span { writing-mode: vertical-rl; font-family: var(--wgf); font-weight: 500; font-size: clamp(14px, calc(var(--pw) * .0142), 22px); letter-spacing: .14em; color: oklch(0.26 0.01 262); }
 .toc button.on span { color: oklch(0.5 0.11 72); font-weight: 700; text-shadow: 0 0 10px oklch(0.92 0.06 85); }
 .toc button.on::before { content: ''; position: absolute; top: -7%; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: oklch(0.62 0.12 75); box-shadow: 0 0 6px oklch(0.8 0.13 78); }
 .toc button.q2 span { color: oklch(0.38 0.1 235); } .toc button.q3 span { color: oklch(0.46 0.15 30); }
@@ -171,11 +171,11 @@ button { font: inherit; color: inherit; }
 .tseal { position: absolute; width: calc(var(--pw) * .014); aspect-ratio: 3 / 4; background: oklch(0.5 0.17 28 / .9); color: oklch(0.93 0.03 80); font-size: calc(var(--pw) * .0055);
   writing-mode: vertical-rl; display: grid; place-items: center; border-radius: 1px; font-family: var(--font-display); }
 .verse { position: absolute; top: 7%; display: flex; flex-direction: row-reverse; gap: calc(var(--pw) * .012); right: 3.5%; }
-.verse span { writing-mode: vertical-rl; font-family: var(--font-body); font-size: clamp(13px, calc(var(--pw) * .0118), 18px); letter-spacing: .3em; color: oklch(0.9 0.01 85); }
+.verse span { writing-mode: vertical-rl; font-family: var(--wgf); font-size: clamp(13px, calc(var(--pw) * .0118), 18px); letter-spacing: .3em; color: oklch(0.9 0.01 85); }
 .wsec { position: absolute; left: 73.5%; right: 2%; display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: clamp(14px, calc(var(--pw) * .0118), 18px); letter-spacing: .25em; color: oklch(0.92 0.01 85); }
 .wsec::after { content: ''; flex: 1; height: 1px; background: oklch(0.85 0.01 85 / .5); }
 /* 招式：每式一枚圆形墨像，悬停给式名、倍率、效果、熟练；外圈细弧为熟练 */
-.forms5 { position: absolute; left: 73.8%; top: 47%; width: 24%; display: flex; gap: 2.5%; }
+.forms5 { position: absolute; left: 73.8%; top: 47%; width: calc(var(--pw) * .224); display: flex; flex-wrap: wrap; gap: calc(var(--pw) * .01); }
 .fmd { position: relative; flex: 0 0 var(--d); aspect-ratio: 1; border-radius: 50%; overflow: visible; cursor: help;
   background: radial-gradient(circle, oklch(0.86 0.008 85) 55%, oklch(0.55 0.01 262) 70%, oklch(0.25 0.01 262 / 0) 74%); }
 .fmd img { position: absolute; inset: 14%; width: 72%; height: 72%; object-fit: contain; filter: brightness(.25) contrast(1.3); }
@@ -187,7 +187,11 @@ button { font: inherit; color: inherit; }
 /* 属性：标签 + 墨刷条 + 数值 */
 .attrs5 { position: absolute; left: 74.5%; top: 64.5%; width: 23.5%; display: grid; gap: calc(var(--pw) * .0068); }
 .attrs5 .r { display: grid; grid-template-columns: 4.6em 1fr 4.2em; align-items: center; gap: 10px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
-.attrs5 .r .k { text-align: right; font-family: var(--font-display); }
+.attrs5 .r .k { text-align: right; font-family: var(--wgf); } .attrs5 .fxr { font-family: var(--wgf); }
+#sc-wg { --wgf: var(--font-body); }
+#sc-wg[data-font="song"] { --wgf: var(--font-display); }
+#sc-wg[data-font="msz"] { --wgf: 'Ma Shan Zheng', var(--font-display); }
+#sc-wg[data-font="xw"] { --wgf: 'ZCOOL XiaoWei', var(--font-display); }
 .attrs5 .bar { height: 7px; border-radius: 4px; background: oklch(0.2 0.01 262 / .6); overflow: hidden; }
 .attrs5 .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.85 0.01 85), oklch(0.75 0.01 85)); }
 .attrs5 .v { text-align: right; letter-spacing: 0; color: oklch(0.88 0.01 85); }
@@ -203,15 +207,11 @@ button { font: inherit; color: inherit; }
 .wact button:disabled { filter: grayscale(1); opacity: .45; cursor: default; }
 /* 下沿装配：一排圆，圈内方框里是类别图标；第一枚是主修内功（金圈） */
 .eqrow { position: absolute; left: 41%; top: 92%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .011); }
-.eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
-  background: radial-gradient(circle, oklch(0.18 0.008 262 / .95) 60%, oklch(0.18 0.008 262 / 0) 72%); display: grid; place-items: center; }
-.eq::after { content: ''; position: absolute; left: 15%; right: 15%; bottom: -14%; height: 8%; border-radius: 50%; background: oklch(0.1 0.01 262 / .5); filter: blur(2px); }
-.eq i { width: 50%; height: 50%; border-radius: 6px; background: oklch(0.86 0.008 85); display: grid; place-items: center; }
-.eq i img { width: 76%; height: 76%; object-fit: contain; filter: brightness(.2); }
-.eq.main { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .9), 0 0 16px oklch(0.8 0.12 80 / .4); }
-.eq.main i { background: oklch(0.85 0.06 85); }
-.eq.sel { box-shadow: 0 0 0 1.5px oklch(0.92 0.01 85 / .8); } .eq.main.sel { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .9), 0 0 0 4px oklch(0.92 0.01 85 / .5); }
-.eq.empty { cursor: default; } .eq.empty i { background: oklch(0.86 0.008 85 / .12); }
+.eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: none; transition: transform .2s var(--ease); }
+.eq img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 4px oklch(0.1 0.01 262 / .45)); }
+.eq.main { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .45); }
+.eq.sel { box-shadow: 0 0 0 1.5px oklch(0.95 0.01 85 / .85); } .eq.main.sel { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 0 4px oklch(0.95 0.01 85 / .5); }
+.eq.empty { cursor: default; background: radial-gradient(circle, oklch(0.2 0.008 262 / .35) 60%, transparent 72%); box-shadow: inset 0 0 0 1px oklch(0.9 0.01 85 / .25); }
 .eq:not(.empty):hover { transform: translateY(-2px); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
@@ -369,7 +369,7 @@ const NG = [
   { id: 'dingjing', name: '定慧功', quality: '寻常', route: '镇岳', zhong: 61, cap: '大成 · 6 重', attrs: [['气血', 24310], ['攻击', 2210], ['防御', 1390], ['命中', 38], ['闪避', 10]],
     yj: [['护盾', '开战得 <b>18%</b> 气血护盾'], ['反伤', '受击反伤 <b>12%</b>'], ['防御', '防御 <b>+15%</b>'], ['气海', '×<b>1.0</b> · 真气上限 <b>1640</b>']] },
 ];
-let cat = '剑', wpage = 0, open = null, ICSET = 'a';
+let cat = '剑', wpage = 0, open = null, ICSET = 'a', WFONT = 'wk';
 const PER = 8;
 const itemsOf = (c) => c === '内功' ? NG.map((n) => ({ ...n, cat: '内功', ng: true })) : st.wx.filter((w) => w.cat === c);
 /* 属性条按名录里的最大值归一 */
@@ -391,9 +391,9 @@ function drawWg() {
   $('tocpg').querySelectorAll('button').forEach((b) => b.onclick = () => { wpage += +b.dataset.d; drawWg(); });
   // 装配：主修 + 装配位
   const main = NG.find((n) => n.id === st.main);
-  let eqs = `<button class="eq main${open === 'ng:' + st.main ? ' sel' : ''}" data-k="ng:${st.main}" data-tip="主修 · ${main.name} · 第 ${main.zhong} 重"><i><img src="${ART}/wugong/ic-neigong.png" alt=""></i></button>`;
+  let eqs = `<button class="eq main${open === 'ng:' + st.main ? ' sel' : ''}" data-k="ng:${st.main}" data-tip="主修 · ${main.name} · 第 ${main.zhong} 重"><img src="${ART}/wugong/icset/a-neigong.png" alt=""></button>`;
   for (let i = 0; i < st.slots; i++) { const id = st.eq[i], w = id && st.wx.find((x) => x.id === id);
-    eqs += w ? `<button class="eq${open === 'wx:' + id ? ' sel' : ''}" data-k="wx:${id}" data-tip="${w.name} · ${w.quality} · 触发 ${Math.round(w.p * 100)}%"><i><img src="${ART}/wugong/ic-${CAT_FILE[w.cat]}.png" alt=""></i></button>` : '<span class="eq empty" data-tip="空位"><i></i></span>'; }
+    eqs += w ? `<button class="eq${open === 'wx:' + id ? ' sel' : ''}" data-k="wx:${id}" data-tip="${w.name} · ${w.quality} · 触发 ${Math.round(w.p * 100)}%"><img src="${ART}/wugong/icset/a-${CAT_FILE[w.cat]}.png" alt=""></button>` : '<span class="eq empty" data-tip="空位"></span>'; }
   $('eqrow').innerHTML = eqs;
   $('eqrow').querySelectorAll('button.eq').forEach((b) => b.onclick = () => { open = b.dataset.k; const [kd, id] = open.split(':'); cat = kd === 'ng' ? '内功' : st.wx.find((x) => x.id === id).cat;
     wpage = Math.floor(itemsOf(cat).findIndex((x) => x.id === id) / PER); drawWg(); });
@@ -403,7 +403,8 @@ function drawWg() {
 function drawDetail() {
   const [kd, id] = open.split(':'), pw = parseFloat(getComputedStyle($('stage')).getPropertyValue('--pw')), ph = pw * 9 / 16;
   const d = kd === 'ng' ? NG.find((n) => n.id === id) : st.wx.find((w) => w.id === id);
-  const tf = Math.min(pw * .06, ph * .32 / d.name.length);
+  const longF = kd === 'wx' && d.forms.length > 4;
+  const tf = Math.min(pw * .06, ph * (longF ? .25 : .32) / d.name.length);
   const ep = (d.ep || (kd === 'ng' ? '散功重修，根骨不失' : '')).split(/[，,]/);
   let html = `<div class="ttl q${QN[d.quality]}" style="--tf:${tf}px">${d.name}</div>`
     + `<div class="tseal" style="left:calc(82.5% + ${tf * .55}px);top:calc(6% + ${tf * d.name.length - pw * .02}px)">${d.quality.slice(0, 2)}</div>`
@@ -419,14 +420,15 @@ function drawDetail() {
   const need = ghost ? '缺第一式残页' : on ? '' : full ? '装配已满 · 先卸下一门'
     : d.big === '器械' && d.cat !== weapon ? `须持${d.cat}方可装配` : '';
   const learned = ghost ? 0 : Math.min(d.forms.length, 2 + (d.name.length % 3));
-  const n = d.forms.length, dia = Math.min(pw * .053, pw * .24 / n * .86);
+  const n = d.forms.length, dia = pw * .046, rows = n > 4 ? 2 : 1, rowH = (dia + pw * .01) / ph * 100;
   const forms = d.forms.map((f, i) => { const k = i + 1, ok = k <= learned, tier = !ok ? 0 : k < learned ? 3 : 1 + (k % 2), frac = ok ? [0.12, 0.4, 0.72, 1][tier] : 0, C = 2 * Math.PI * 46;
     const tip = `第${CN[k]}式 · ${f.t}<br>×${f.m}%${f.fx ? ' · ' + f.fx : ''}<br>${ok ? TIER[tier] : (d.quality === '寻常' || k === learned + 1 ? '待前式圆满' : '缺残页')}`;
     return `<div class="fmd${ok ? '' : ' lock'}${ok && tier === 3 ? ' t3' : ''}" style="--d:${dia}px" data-tip="${tip}"><img src="${figOf(d.cat, d.id + k)}" alt="">`
       + `<svg viewBox="0 0 100 100"><circle class="bgc" cx="50" cy="50" r="46"/><circle class="fg" cx="50" cy="50" r="46" stroke-dasharray="${C * frac} ${C}"/></svg></div>`; }).join('');
   const M = MAXV(), bars = [['伤害', d.mult0 / M.mult, `×${Math.round(d.mult0 * 100)}%`], ['触发', d.p / M.p, `${Math.round(d.p * 100)}%`], ['耗气', d.cost / M.cost, d.cost], ['冷却', d.cd / M.cd, `${d.cd} 回合`]];
-  html += `<div class="wsec" style="top:41%">招式</div><div class="forms5">${forms}</div>`
-    + `<div class="wsec" style="top:59.5%">属性</div><div class="attrs5">${bars.map(([k, v, t]) => `<div class="r"><span class="k">${k}</span><span class="bar"><i style="width:${Math.round(v * 100)}%"></i></span><span class="v">${t}</span></div>`).join('')}`
+  const y0 = rows > 1 ? 34 : 41, ya = y0 + 5.5 + rows * rowH + 2;
+  html += `<div class="wsec" style="top:${y0}%">招式</div><div class="forms5" style="top:${y0 + 5.5}%">${forms}</div>`
+    + `<div class="wsec" style="top:${ya}%">属性</div><div class="attrs5" style="top:${ya + 4.5}%">${bars.map(([k, v, t]) => `<div class="r"><span class="k">${k}</span><span class="bar"><i style="width:${Math.round(v * 100)}%"></i></span><span class="v">${t}</span></div>`).join('')}`
     + `<div class="fxr"><img src="${ART}/wugong/fx-${FX_FILE[d.effect]}.png" alt="">${d.effect} · ${d.tag}</div></div>`
     + `<div class="wact">${need ? `<span class="need">${need}</span>` : ''}${on ? '<button class="quiet" data-a="off">卸下</button>' : `<button data-a="on" ${need ? 'disabled' : ''}>装配</button>`}</div>`;
   $('wdetail').innerHTML = html;
@@ -437,10 +439,12 @@ const tip = $('tip');
 document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) return; tip.innerHTML = t.dataset.tip; tip.classList.add('on');
   const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
 document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
+const FONTS = [['wk', '文楷'], ['song', '宋体'], ['msz', '马善政'], ['xw', '小薇']];
 const icv = document.createElement('span'); icv.id = 'icv'; icv.style.display = 'none';
-icv.innerHTML = '｜类别图标 ' + [['a', '甲 墨圆'], ['b', '乙 朱印'], ['c', '丙 墨笔'], ['d', '丁 圆画'], ['o', '原']].map(([k, n]) => `<button data-ic="${k}" class="${k === 'a' ? 'on' : ''}">${n}</button>`).join('');
+icv.innerHTML = '｜红框字体 ' + FONTS.map(([k, n]) => `<button data-f="${k}" class="${k === WFONT ? 'on' : ''}">${n}</button>`).join('');
 $('proto').appendChild(icv);
-icv.querySelectorAll('button').forEach((b) => b.onclick = () => { ICSET = b.dataset.ic; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawWg(); });
+icv.querySelectorAll('button').forEach((b) => b.onclick = () => { WFONT = b.dataset.f; $('sc-wg').dataset.font = WFONT; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); });
+$('sc-wg').dataset.font = WFONT;
 document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sel) { sel = null; drawBag(); } });
 function show(p) { page = p; document.querySelectorAll('#nav button[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));

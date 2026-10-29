@@ -82,11 +82,13 @@ button { font: inherit; color: inherit; }
 .wear .fr { position: relative; width: calc(var(--pw) * .046); aspect-ratio: 1; border-radius: 3px; background: oklch(0.13 0.012 262 / .82); box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 0 1px oklch(0.78 0.11 78 / .45), 0 4px 10px #000; }
 .wear .fr img { position: absolute; inset: 8%; width: 84%; height: 84%; object-fit: contain; }
 .wear .lb { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 13px; letter-spacing: .2em; color: var(--gold); background: oklch(0.12 0.012 262 / .8); padding: 6px 3px; border-radius: 2px; text-shadow: 0 0 4px #000; }
+.wear.l { transform: translate(-100%, -50%); flex-direction: row-reverse; }
 .wear.empty .fr { box-shadow: inset 0 0 0 1px oklch(0.7 0.02 262 / .45); background: oklch(0.13 0.012 262 / .5); }
 .wear.empty .lb { color: var(--faint); }
 .wear:hover .fr, .wear.sel .fr { box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 0 1.5px var(--gold), 0 0 14px oklch(0.8 0.13 78 / .5); }
-.wsum { position: absolute; font-size: 12.5px; color: var(--muted); line-height: 1.8; text-shadow: 0 0 6px #000, 0 0 3px #000; }
-.wsum b { color: var(--ink); font-weight: 600; }
+.wsum { position: absolute; transform: translateX(-50%); display: flex; gap: 14px; padding: 10px 48px; font-size: 14px; color: var(--muted); white-space: nowrap;
+  background: radial-gradient(closest-side, oklch(0.1 0.01 262 / .85), oklch(0.1 0.01 262 / .6) 70%, transparent); }
+.wsum b { color: var(--ink); font-weight: 600; margin-left: 3px; }
 
 .cloth { position: absolute; display: grid; grid-auto-flow: dense; }
 .cloth .cell { border: 1px dashed oklch(0.88 0.02 240 / .22); border-radius: 2px; margin: 1px; }
@@ -120,21 +122,20 @@ button { font: inherit; color: inherit; }
 .tag .row .d.up { color: oklch(0.45 0.13 145); } .tag .row .d.dn { color: var(--paper-red); }
 .tag .afx { font-size: 12px; line-height: 1.7; color: var(--paper-mute); }
 .tag .acts { margin-top: auto; display: flex; gap: 6px; }
-.tag .acts button { flex: 1; border: 0; cursor: pointer; padding: 7px 0; border-radius: 2px; font-family: var(--font-display); font-size: 13.5px; letter-spacing: .15em; }
-.tag .acts .main { background: oklch(0.46 0.15 32); color: oklch(0.95 0.02 80); box-shadow: inset 0 0 0 1px oklch(0.35 0.12 30); }
-.tag .acts .main:hover { filter: brightness(1.1); }
-.tag .acts .sub { background: none; color: var(--paper-ink); box-shadow: inset 0 0 0 1px oklch(0.4 0.02 60 / .55); }
-.tag .acts .sub:hover { background: oklch(0.4 0.02 60 / .1); }
+.tag .acts button { flex: 1; border: 0; cursor: pointer; padding: 10px 0; font-family: var(--font-display); font-weight: 700; font-size: 13.5px; letter-spacing: .12em; white-space: nowrap; transition: transform .15s;
+  background: center / 100% 100% no-repeat; }
+.tag .acts button:hover { transform: scale(1.04); }
+.tag .acts .main { background-image: url('../../code/public/art/btn-red.png'); color: oklch(0.96 0.02 80); text-shadow: 0 1px 2px oklch(0.3 0.1 30); }
+.tag .acts .sub { background-image: url('../../code/public/art/btn-ink.png'); color: var(--paper-ink); }
 
 /* ═══════════ 武功：崖洞壁刻 · 拓片 · 石印 ═══════════ */
-/* 石柱分类：刻在 AI 画好的空白石盘上 */
-.med { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .042); aspect-ratio: 1; border: 0; border-radius: 50%; background: none; cursor: pointer; padding: 0;
-  display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; line-height: 1.05; font-size: clamp(16px, calc(var(--pw) * .016), 24px);
-  color: oklch(0.84 0.02 85); text-shadow: 0 1px 0 #000, 0 0 6px #000, 0 0 2px #000; }
-.med.two { font-size: clamp(12px, calc(var(--pw) * .0108), 16px); writing-mode: vertical-rl; letter-spacing: .05em; }
-.med:hover:not(:disabled) { color: var(--ink-gold); }
-.med.on { color: var(--gold); text-shadow: 0 0 8px oklch(0.8 0.13 78 / .9), 0 0 2px #000; box-shadow: 0 0 0 1.5px oklch(0.78 0.11 78 / .6), 0 0 16px oklch(0.8 0.13 78 / .35); }
-.med:disabled { cursor: default; opacity: .45; }
+/* 石柱分类：AI 墨笔图标落在 AI 画好的空白石盘上；没有藏书的类别置灰不可点 */
+.med { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .042); aspect-ratio: 1; border: 0; border-radius: 50%; background: none; cursor: pointer; padding: 0; display: grid; place-items: center; }
+.med img { width: 62%; height: 62%; object-fit: contain; filter: invert(1) brightness(.95) drop-shadow(0 1px 1px #000) drop-shadow(0 0 2px #000) drop-shadow(0 0 4px #000); opacity: 1; transition: transform .2s var(--ease); }
+.med:hover:not(:disabled) img { transform: scale(1.08); }
+.med.on { box-shadow: 0 0 0 1.5px oklch(0.75 0.075 76 / .75), 0 0 12px oklch(0.75 0.075 76 / .35); }
+.med.on img { filter: invert(.82) sepia(1) saturate(1.3) hue-rotate(-12deg) drop-shadow(0 1px 1px #000); opacity: 1; }
+.med:disabled { cursor: not-allowed; } .med:disabled img { filter: brightness(0) drop-shadow(0 1px 0 oklch(0.85 0.01 262 / .5)); opacity: .45; }
 .med:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 
 /* 壁刻：AI 画的空白石板上刻这一类的各门武学；招式像为 AI 墨线，滤镜调成阴刻 / 鎏金 / 风化 */
@@ -144,14 +145,16 @@ button { font: inherit; color: inherit; }
   color: oklch(0.22 0.01 262 / .9); text-shadow: 0 1px 0 oklch(0.82 0.01 262 / .45), 0 -1px 0 oklch(0.05 0.01 262 / .7); }
 .panel img { flex: 1; min-height: 0; max-width: 78%; object-fit: contain; margin: 3% 0 6%; opacity: .62;
   filter: brightness(0) drop-shadow(0 1px 0 oklch(0.8 0.01 262 / .5)); transition: transform .25s var(--ease); }
-.panel .q { position: absolute; right: 7%; bottom: 7%; font-size: 10.5px; padding: 1px 3px; border-radius: 2px; letter-spacing: .05em; }
-.panel .q.q2 { color: oklch(0.82 0.08 215); background: oklch(0.2 0.03 230 / .7); }
-.panel .q.q3 { color: oklch(0.93 0.03 80); background: oklch(0.5 0.16 30 / .85); }
-.panel.on img { opacity: 1; filter: brightness(0) invert(.86) sepia(1) saturate(2.4) hue-rotate(-8deg) drop-shadow(0 0 6px oklch(0.8 0.13 80 / .7)); }
-.panel.on .nm { color: var(--gold); text-shadow: 0 0 6px oklch(0.8 0.13 78 / .7), 0 0 2px #000; }
+.panel { border-radius: 3px; }
+/* 品质靠颜色：上乘石青、绝学朱砂，名字与石板内缘一线同色；寻常不着色 */
+.panel.q2 { box-shadow: inset 0 0 0 1.5px oklch(0.62 0.09 230 / .75); } .panel.q2 .nm { color: oklch(0.36 0.1 235); }
+.panel.q3 { box-shadow: inset 0 0 0 1.5px oklch(0.55 0.15 32 / .8); } .panel.q3 .nm { color: oklch(0.42 0.15 30); }
+/* 已装配：墨金描出招式像，不发光 */
+.panel.on img { opacity: 1; filter: brightness(0) invert(.62) sepia(.9) saturate(1.1) hue-rotate(-10deg) drop-shadow(0 1px 0 #000); }
+.panel.on .nm::after { content: ''; display: block; width: 60%; height: 1.5px; margin: 2px auto 0; background: oklch(0.6 0.08 75); }
 .panel.ghost img { opacity: .25; filter: brightness(0) blur(1.2px); }
 .panel.ghost .nm { opacity: .55; }
-.panel.sel { box-shadow: 0 0 0 1.5px oklch(0.8 0.11 80 / .7), 0 0 18px oklch(0.8 0.13 78 / .25); border-radius: 3px; }
+.panel.sel { outline: 2px solid oklch(0.75 0.075 76 / .8); outline-offset: 1px; }
 .panel:hover img { transform: scale(1.05); }
 .panel:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 .pager { position: absolute; transform: translateX(-50%); display: flex; gap: 14px; align-items: center; font-family: var(--font-display); font-size: 15px; color: var(--ink); text-shadow: 0 0 6px #000; }
@@ -166,6 +169,10 @@ button { font: inherit; color: inherit; }
 .rub .fig img { max-width: 100%; max-height: 100%; opacity: .85; filter: brightness(.25) contrast(1.2); }
 .rub .ttl { flex: 1; min-width: 0; }
 .rub .ttl .nm { font-family: var(--font-display); font-weight: 700; font-size: max(20px, 6.2cqw); letter-spacing: .12em; line-height: 1.15; }
+/* 名字随品质：寻常墨、上乘石青、绝学朱砂 */
+.rub .nm.q2 { color: oklch(0.38 0.11 240); } .rub .nm.q3 { color: oklch(0.45 0.16 30); }
+.rub .params .fxi { display: inline-flex; align-items: center; gap: 4px; }
+.rub .params .fxi img { width: 1.5em; height: 1.5em; object-fit: contain; opacity: .85; }
 .rub .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .rub .tags span { font-size: max(11px, 2.4cqw); padding: 1px 6px; border-radius: 2px; box-shadow: inset 0 0 0 1px oklch(0.4 0.02 60 / .45); color: var(--paper-mute); }
 .rub .tags .q2 { color: oklch(0.42 0.1 230); box-shadow: inset 0 0 0 1px oklch(0.45 0.1 230 / .6); }
@@ -179,25 +186,26 @@ button { font: inherit; color: inherit; }
 .rub .params b { color: var(--paper-ink); font-weight: 600; }
 .rub h3 { margin: 3.5% 0 1%; font-family: var(--font-display); font-size: max(13px, 2.9cqw); letter-spacing: .3em; font-weight: 700; }
 .rub .forms { flex: 1; min-height: 0; overflow: auto; }
-.rub .fm { display: grid; grid-template-columns: 3.4em auto 1fr auto auto; gap: 0 8px; align-items: baseline; font-size: max(12px, 2.65cqw); line-height: 1.55; padding: 2px 0; border-bottom: 1px dashed oklch(0.45 0.02 60 / .2); }
+.rub .fm { display: grid; grid-template-columns: 3.4em 1fr auto 4.2em; gap: 0 8px; align-items: baseline; font-size: max(12px, 2.65cqw); line-height: 1.55; padding: 2px 0; border-bottom: 1px dashed oklch(0.45 0.02 60 / .2); }
 .rub .fm .k { color: var(--paper-mute); }
 .rub .fm .t { font-family: var(--font-display); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rub .fm .m { font-weight: 600; }
-.rub .fm .pf { display: flex; gap: 3px; align-items: center; cursor: help; }
-.rub .fm .pf i { width: 7px; height: 7px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(0.35 0.02 60 / .7); }
-.rub .fm .pf i.on { background: oklch(0.35 0.02 60); }
-.rub .fm .fx { font-size: .88em; color: var(--paper-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rub .fm.lock { opacity: .55; } .rub .fm.lock .fx { visibility: hidden; } .rub .fm.lock .pf { font-size: .85em; color: var(--paper-mute); }
+.rub .fm .pf { justify-self: end; cursor: help; font-size: .9em; color: var(--paper-mute); letter-spacing: .1em; }
+/* 熟练：写档名；圆满盖一枚朱印 */
+.rub .fm .pf.t3 { color: oklch(0.95 0.02 80); background: url('../../code/public/art/qianchen/seal.png') center / 100% 100% no-repeat; padding: 1px 6px; font-family: var(--font-display); font-weight: 700; letter-spacing: .05em; }
+.rub .fm .fx { grid-column: 2 / -1; font-size: .88em; color: var(--paper-mute); line-height: 1.35; }
+.rub .fm.lock { opacity: .55; } .rub .fm.lock .pf { font-size: .85em; color: var(--paper-mute); }
 .rub .yj { display: grid; grid-template-columns: 3.6em 1fr; gap: 0 8px; font-size: max(12px, 2.65cqw); line-height: 1.6; padding: 2px 0; border-bottom: 1px dashed oklch(0.45 0.02 60 / .2); }
 .rub .yj .k { font-family: var(--font-display); font-weight: 700; } .rub .yj b { font-weight: 700; }
 .rub .foot { margin-top: 3%; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 10px; }
 .rub .need { flex: 1 1 100%; text-align: right; font-size: max(12px, 2.6cqw); color: var(--paper-mute); }
 .rub .need.bad { color: var(--paper-red); }
-.rub .act { border: 0; cursor: pointer; padding: 7px 22px; border-radius: 2px; font-family: var(--font-display); font-size: max(13px, 2.9cqw); letter-spacing: .25em;
-  background: oklch(0.46 0.15 32); color: oklch(0.95 0.02 80); box-shadow: inset 0 0 0 1px oklch(0.35 0.12 30); }
+.rub .act { border: 0; cursor: pointer; padding: 10px 34px; font-family: var(--font-display); font-weight: 700; font-size: max(14px, 3.1cqw); letter-spacing: .35em;
+  background: url('../../code/public/art/btn-red.png') center / 100% 100% no-repeat; color: oklch(0.96 0.02 80); text-shadow: 0 1px 2px oklch(0.3 0.1 30); transition: transform .15s, filter .2s; }
+.rub .act:hover:not(:disabled) { transform: scale(1.04); }
 .rub .act:hover:not(:disabled) { filter: brightness(1.1); }
 .rub .act:disabled { filter: grayscale(1); opacity: .5; cursor: default; }
-.rub .act.quiet { background: none; color: var(--paper-ink); box-shadow: inset 0 0 0 1px oklch(0.4 0.02 60 / .55); }
+.rub .act.quiet { background-image: url('../../code/public/art/btn-ink.png'); color: var(--paper-ink); text-shadow: none; }
 .rub.flip { animation: rubin .35s var(--ease); }
 @keyframes rubin { from { opacity: .2; transform: translateY(-6px) rotate(-.6deg); } }
 
@@ -206,11 +214,11 @@ button { font: inherit; color: inherit; }
 .seal { position: relative; flex: none; width: calc(var(--pw) * .034); aspect-ratio: 155 / 240; border: 0; padding: 0; cursor: pointer;
   background: url('../../code/public/art/wugong/seal.png') center / 100% 100% no-repeat; filter: drop-shadow(0 4px 6px #000);
   display: grid; place-items: center; transition: transform .2s var(--ease); }
-.seal span { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: clamp(10px, calc(var(--pw) * .0085), 13px); letter-spacing: 0; line-height: 1; white-space: nowrap;
-  color: oklch(0.86 0.02 85); text-shadow: 0 1px 2px #000; }
+.seal span { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: clamp(11px, calc(var(--pw) * .0092), 14px); letter-spacing: 0; line-height: 1; white-space: nowrap;
+  padding: 5px 2px; border-radius: 2px; background: oklch(0.12 0.01 262 / .78); color: oklch(0.93 0.015 85); }
 .seal.main { width: calc(var(--pw) * .042); }
-.seal.main span { color: oklch(0.86 0.1 75); font-size: clamp(11px, calc(var(--pw) * .0098), 15px); }
-.seal.empty { opacity: .45; cursor: default; filter: grayscale(1) drop-shadow(0 4px 6px #000); }
+.seal.main span { color: oklch(0.86 0.1 78); font-size: clamp(12px, calc(var(--pw) * .0102), 15px); }
+.seal.empty { opacity: .7; cursor: default; filter: grayscale(1) drop-shadow(0 4px 6px #000); }
 .seal:not(.empty):hover { transform: translateY(-3px); }
 .seal.sel { filter: drop-shadow(0 0 8px oklch(0.8 0.13 78 / .8)) drop-shadow(0 4px 6px #000); }
 .seal.sel span { color: var(--gold); }
@@ -273,7 +281,8 @@ new ResizeObserver(() => { place(); if (page === 'bag') drawBag(); }).observe($(
 
 /* ═══════════ 行囊 ═══════════ */
 /* 人影四处挂点（画幅 %，按 bg.jpg 中人影量取）与对应小框的位置 */
-const WEAR_AT = { 佩饰: [[27, 28], [37.5, 22]], 衣甲: [[28, 37], [37.5, 34]], 暗器: [[27, 47], [37.5, 46]], 兵器: [[32, 55], [37.5, 58]] };
+const WEAR_AT = { 佩饰: [[27, 28], [37.5, 24]], 衣甲: [[25.5, 37], [12, 33]], 暗器: [[27, 47], [37.5, 46]], 兵器: [[20.5, 56], [12, 58]] };
+const LEFT = { 衣甲: 1, 兵器: 1 };
 /* 包袱布面（画幅 %）：格子在这块里按格数排、居中 */
 const CLOTH = { x: 50, y: 33.5, w: 42, h: 52 };
 let sort = 'new', sel = null;
@@ -295,11 +304,11 @@ function drawBag() {
     lines += `<line x1="${px}" y1="${py}" x2="${fx}" y2="${fy}" style="${it ? '' : 'stroke:oklch(0.7 0.02 262 / .4)'}"/>`;
     wears += `<div class="ring${it ? '' : ' empty'}" style="left:${px}%;top:${py}%"></div>`;
     wears += it
-      ? `<button class="wear${sel === it.id ? ' sel' : ''}" data-id="${it.id}" style="left:${fx}%;top:${fy}%;--gc:var(--g${it.grade})" data-tip="${it.pre}${it.name} · ${GN[it.grade]}"><span class="fr"><img src="${ART}/gear/${it.img}.png" alt=""></span><span class="lb">${slot}</span></button>`
-      : `<div class="wear empty" style="left:${fx}%;top:${fy}%"><span class="fr"></span><span class="lb">${slot}</span></div>`;
+      ? `<button class="wear${LEFT[slot] ? ' l' : ''}${sel === it.id ? ' sel' : ''}" data-id="${it.id}" style="left:${fx}%;top:${fy}%;--gc:var(--g${it.grade})" data-tip="${it.pre}${it.name} · ${GN[it.grade]}"><span class="fr"><img src="${ART}/gear/${it.img}.png" alt=""></span><span class="lb">${slot}</span></button>`
+      : `<div class="wear empty${LEFT[slot] ? ' l' : ''}" style="left:${fx}%;top:${fy}%"><span class="fr"></span><span class="lb">${slot}</span></div>`;
   }
   const sum = {}; Object.values(st.worn).forEach((it) => BASE.forEach((k) => { if (it.base[k]) sum[k] = (sum[k] || 0) + it.base[k]; }));
-  wears += `<div class="wsum" style="left:37.6%;top:66%">${BASE.filter((k) => sum[k]).map((k) => `${k} <b>+${fmt(sum[k])}</b>`).join('<br>')}</div>`;
+  wears += `<div class="wsum" style="left:25%;top:84%">${BASE.filter((k) => sum[k]).map((k) => `<span>${k}<b>+${fmt(sum[k])}</b></span>`).join('')}</div>`;
   $('blinks').innerHTML = lines; $('wears').innerHTML = wears;
 
   // 包袱上的形态格：10 列，行数随容量；格子取正方形、在布面里居中
@@ -361,6 +370,12 @@ const PANEL_X = [17.8, 30.3, 43], PANEL_Y = [19, 38.6, 58.2];
 /* 左下那块石板被打坐的人挡住，不刻字：一页八门 */
 const SLOTS = [0, 1, 2, 3, 4, 5, 7, 8], PER = SLOTS.length;
 const CN = ['', '一', '二', '三', '四', '五', '六', '七'];
+const QN = { 寻常: 1, 上乘: 2, 绝学: 3 };
+/* 招式像：每类四张 AI 墨像，同类各门按名字散列取一张 */
+const hash = (t) => [...t].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const figOf = (c, id) => `${ART}/wugong/st-${CAT_FILE[c]}-${hash(id) % 4}.png`;
+const FX_FILE = { 必暴: 'bibao', 透劲: 'toujin', 连击: 'lianji', 蓄势: 'xushi', 反震: 'fanzhen', 运劲: 'yunjin', 凝眸: 'ningmou', 轻身: 'qingshen',
+  回气: 'huiqi', 回元: 'huiyuan', 护体: 'huti', 封穴: 'fengxue', 卸力: 'xieli', 迷目: 'mimu', 破绽: 'pozhan', 附毒: 'fudu', 引爆: 'yinbao' };
 const TIER = ['生疏', '熟练', '精通', '圆满'];
 const NG = [
   { id: 'shigu', name: '蚀骨心法', quality: '寻常', route: '蚀骨', zhong: 64, cap: '大成 · 6 重', attrs: [['气血', 22092], ['攻击', 2455], ['防御', 1160], ['命中', 38], ['闪避', 10]],
@@ -377,17 +392,16 @@ const itemsOf = (c) => c === '内功' ? NG.map((n) => ({ ...n, cat: '内功', ng
 function drawWg() {
   // 石柱分类
   $('meds').innerHTML = CATS.map((c, i) => { const n = itemsOf(c).length;
-    return `<button class="med${c.length > 1 ? ' two' : ''}${cat === c ? ' on' : ''}" style="left:4.05%;top:${MED_Y[i]}%" ${n ? '' : 'disabled'} data-c="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}">${c}</button>`; }).join('');
+    return `<button class="med${cat === c ? ' on' : ''}" style="left:4.05%;top:${MED_Y[i]}%" ${n ? '' : 'disabled'} aria-label="${c}" data-c="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ART}/wugong/ic-${CAT_FILE[c]}.png" alt=""></button>`; }).join('');
   $('meds').querySelectorAll('.med').forEach((b) => b.onclick = () => { cat = b.dataset.c; wpage = 0; drawWg(); });
   // 壁刻：这一类的各门，九门一页
   const items = itemsOf(cat), pages = Math.max(1, Math.ceil(items.length / PER));
   wpage = Math.min(wpage, pages - 1);
   $('panels').innerHTML = items.slice(wpage * PER, wpage * PER + PER).map((w, j) => { const i = SLOTS[j];
     const on = w.ng ? w.id === st.main : st.eq.includes(w.id), ghost = !w.ng && st.ghost.includes(w.id);
-    const q = w.quality === '上乘' ? '<span class="q q2">上乘</span>' : w.quality === '绝学' ? '<span class="q q3">绝学</span>' : '';
     const k = `${w.ng ? 'ng' : 'wx'}:${w.id}`;
-    return `<button class="panel${on ? ' on' : ''}${ghost ? ' ghost' : ''}${open === k ? ' sel' : ''}" data-k="${k}" style="left:${PANEL_X[i % 3]}%;top:${PANEL_Y[Math.floor(i / 3)]}%">`
-      + `${q}<span class="nm">${w.name}</span><img src="${ART}/wugong/st-${CAT_FILE[cat]}.png" alt=""></button>`; }).join('');
+    return `<button class="panel q${QN[w.quality]}${on ? ' on' : ''}${ghost ? ' ghost' : ''}${open === k ? ' sel' : ''}" data-k="${k}" style="left:${PANEL_X[i % 3]}%;top:${PANEL_Y[Math.floor(i / 3)]}%">`
+      + `<span class="nm">${w.name}</span><img src="${figOf(cat, w.id)}" alt=""></button>`; }).join('');
   $('panels').querySelectorAll('.panel').forEach((b) => b.onclick = () => { open = b.dataset.k; drawWg(); flip(); });
   $('pager').innerHTML = pages > 1 ? `<button ${wpage ? '' : 'disabled'} data-d="-1">‹</button><span>${wpage + 1} / ${pages}</span><button ${wpage < pages - 1 ? '' : 'disabled'} data-d="1">›</button>` : '';
   $('pager').querySelectorAll('button').forEach((b) => b.onclick = () => { wpage += +b.dataset.d; drawWg(); });
@@ -407,7 +421,7 @@ function drawRub() {
   const [kd, id] = open.split(':'), r = $('rub');
   if (kd === 'ng') {
     const d = NG.find((n) => n.id === id), main = id === st.main;
-    r.innerHTML = `<div class="top"><div class="fig"><img src="${ART}/wugong/st-neigong.png" alt=""></div><div class="ttl"><div class="nm">${d.name}</div>`
+    r.innerHTML = `<div class="top"><div class="fig"><img src="${figOf('内功', d.id)}" alt=""></div><div class="ttl"><div class="nm">${d.name}</div>`
       + `<div class="tags"><span>${d.quality}</span><span>${d.route}</span>${main ? '<span class="q3">主修</span>' : ''}</div>`
       + `<div class="zh">第 ${main ? d.zhong : d.zhong - 3}<small>重</small></div><div class="zcap">最高至${d.cap}</div></div></div>`
       + `<div class="params">${d.attrs.map(([k, v]) => `<span>${k}<b>+${fmt(v)}</b></span>`).join('')}</div>`
@@ -424,16 +438,17 @@ function drawRub() {
   const learned = ghost ? 0 : Math.min(d.forms.length, 2 + (d.name.length % 3));
   const forms = d.forms.map((f, i) => { const k = i + 1;
     if (k <= learned) { const tier = k < learned ? 3 : 1 + (k % 2);
-      return `<div class="fm"><span class="k">第${CN[k]}式</span><span class="t">${f.t}</span><span class="fx" data-tip="${f.fx}">${f.fx}</span><span class="m">×${f.m}%</span>`
-        + `<span class="pf" data-tip="${TIER[tier]} · 已出 ${[0, 120, 360, 800][tier] + 37} 招">${[0, 1, 2, 3].map((j) => `<i class="${j <= tier ? 'on' : ''}"></i>`).join('')}</span></div>`; }
-    return `<div class="fm lock"><span class="k">第${CN[k]}式</span><span class="t">${f.t}</span><span class="fx"></span><span class="m">×${f.m}%</span><span class="pf">${d.quality === '寻常' || k === learned + 1 ? `待第${CN[k - 1] || '一'}式圆满` : '缺少残页'}</span></div>`; }).join('');
-  r.innerHTML = `<div class="top"><div class="fig"><img src="${ART}/wugong/st-${CAT_FILE[d.cat]}.png" alt=""></div><div class="ttl"><div class="nm">${d.name}</div>`
+      return `<div class="fm"><span class="k">第${CN[k]}式</span><span class="t">${f.t}</span><span class="m">×${f.m}%</span>`
+        + `<span class="pf t${tier}" data-tip="已出 ${[0, 120, 360, 800][tier] + 37} 招${tier < 3 ? ` · ${[120, 360, 800][tier]} 招入「${TIER[tier + 1]}」` : ''}">${TIER[tier]}</span>`
+        + `${f.fx ? `<span class="fx">${f.fx}</span>` : ''}</div>`; }
+    return `<div class="fm lock"><span class="k">第${CN[k]}式</span><span class="t">${f.t}</span><span class="m">×${f.m}%</span><span class="pf">${d.quality === '寻常' || k === learned + 1 ? '待前式圆满' : '缺残页'}</span>${f.fx ? `<span class="fx">${f.fx}</span>` : ''}</div>`; }).join('');
+  r.innerHTML = `<div class="top"><div class="fig"><img src="${figOf(d.cat, d.id)}" alt=""></div><div class="ttl"><div class="nm q${QN[d.quality]}">${d.name}</div>`
     + `<div class="tags"><span class="${d.quality === '上乘' ? 'q2' : d.quality === '绝学' ? 'q3' : ''}">${d.quality}</span><span>${d.tag}</span><span>${d.cat}</span>${d.tag === '阴毒' ? '<span class="res">共鸣</span>' : ''}</div>`
     + `<div class="ep">${d.ep || ''}</div></div></div>`
     + `<div class="params"><span>倍率<b>×${Math.round(d.mult0 * 100)}%</b></span><span>耗气<b>${d.cost}</b></span><span>冷却<b>${d.cd}</b></span>`
-    + `<span>触发<b>${Math.round(d.p * 100)}%</b></span><span style="grid-column:span 2">特效<b>${d.effect}</b></span></div>`
+    + `<span>触发<b>${Math.round(d.p * 100)}%</b></span><span style="grid-column:span 2">特效<b class="fxi"><img src="${ART}/wugong/fx-${FX_FILE[d.effect]}.png" alt="">${d.effect}</b></span></div>`
     + `<h3>招式</h3><div class="forms">${forms}</div>`
-    + `<div class="foot"><span class="need${need[1] ? '' : ' bad'}">${need[0]}</span>${on ? '<button class="act quiet" data-a="off">卸下</button>' : `<button class="act" data-a="on" ${need[1] ? '' : 'disabled'}>装配</button>`}</div>`;
+    + `<div class="foot">${need[1] ? '' : `<span class="need bad">${need[0]}</span>`}${on ? '<button class="act quiet" data-a="off">卸下</button>' : `<button class="act" data-a="on" ${need[1] ? '' : 'disabled'}>装配</button>`}</div>`;
   r.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => {
     if (b.dataset.a === 'on') st.eq.push(id); if (b.dataset.a === 'off') st.eq = st.eq.filter((x) => x !== id); drawWg(); });
 }

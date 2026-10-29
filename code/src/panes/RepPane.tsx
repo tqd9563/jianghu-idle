@@ -59,7 +59,7 @@ export function RepPane({ sub, onSub }: { sub: RepSub; onSub: (s: RepSub) => voi
 
   const vars = L ? { '--pw': `${L.pw}px`, '--pl': `${L.pl}px`, '--pt': `${L.pt}px` } as CSSProperties : undefined;
   return (
-    <div className={`qc${L?.short ? ' short' : ''}${L ? '' : ' unready'}`} ref={stageRef} style={vars}>
+    <div className={`qc${L ? '' : ' unready'}`} ref={stageRef} style={vars}>
       {sub === 'diyun' && <Diyun />}
       {sub === 'jiyuan' && <Jiyuan />}
       {sub === 'xiaming' && <Xiaming stage={stageRef} />}
@@ -95,7 +95,7 @@ function Diyun(): JSX.Element {
   }, [flare]);
   return (
     <div className="qc-pic">
-      <div className="bg" style={{ backgroundImage: `url('${ART}/xiang-empty.jpg')` }} />
+      <div className="bg" style={{ backgroundImage: `url('${ART}/xiang-empty-tall.jpg')` }} />
       <div className="qc-ghosts">
         {XIANG.map(({ id, fig: [cx, cy, rx, ry] }) => {
           const r = reveal(diyun[id]);
@@ -133,7 +133,7 @@ function Jiyuan(): JSX.Element {
   const [stamped, setStamped] = useState<string | null>(null);
   return (
     <div className="qc-pic">
-      <div className="bg" style={{ backgroundImage: `url('${ART}/jiyuan.jpg')` }} />
+      <div className="bg" style={{ backgroundImage: `url('${ART}/jiyuan-tall.jpg')` }} />
       {REP_NODES.map((n, i) => {
         const [x, y] = jiyuanSlipAt(i), owned = s.ownedRepNodes.includes(n.id);
         return (
@@ -178,7 +178,7 @@ function Xiaming({ stage }: { stage: RefObject<HTMLDivElement | null> }): JSX.El
   return (
     <>
       <div className="qc-pic">
-        <div className="bg map" style={{ backgroundImage: `url('${ART}/xiaming-map.jpg')` }} />
+        <div className="bg map" style={{ backgroundImage: `url('${ART}/xiaming-map-tall.jpg')` }} />
         <div className="qc-veil" />
         <svg className="qc-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {ZONES.flatMap((z) => z.at.slice(1).map((b, i) => {

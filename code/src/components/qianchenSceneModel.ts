@@ -40,11 +40,12 @@ export const ZONES: ZoneDef[] = [
   { name: '世情', ids: ['yinliang', 'yueli', 'heishi', 'zhanbai'], at: [[70, 62], [80, 55], [92, 57], [86, 77]], label: [65, 77] },
 ];
 
-/** 画在舞台上的摆放：按宽铺满（左右最多裁 1.5%），舞台偏高时放大；画比舞台矮时上下要羽化 */
-export interface PicLayout { pw: number; pl: number; pt: number; short: boolean }
+/** 画在舞台上的摆放：按宽铺满（左右最多裁 1.5%），舞台偏高时放大，上下居中；画幅外上下各有 AI 续画的一截
+ *  （*-tall.jpg，原图原样嵌在中段），铺满舞台高，页头浮在画上（同修炼页、战斗舆图）。坐标仍按中段 16:9 计 */
+export interface PicLayout { pw: number; pl: number; pt: number }
 export function picLayout(W: number, H: number): PicLayout {
   const pw = Math.min(Math.max(W, (H * 16) / 9), W / 0.985), ph = (pw * 9) / 16;
-  return { pw, pl: (W - pw) / 2, pt: ph >= H ? (H - ph) / 2 : Math.max(0, (H - ph) * 0.45), short: ph < H - 4 };
+  return { pw, pl: (W - pw) / 2, pt: (H - ph) / 2 };
 }
 
 /** 点选手卷的位置（舞台坐标）：默认在徽记下方，下面放不下改到上方，左右不出舞台、上不压页头 */

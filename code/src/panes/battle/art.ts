@@ -16,7 +16,8 @@ export const cnNum = (n: number) => {
   return (h ? D[h] + '百' : '') + (t ? (t === 1 && !h ? '' : D[t]) + '十' : h && o ? '零' : '') + (o ? D[o] : '');
 };
 
-export const WORLD_MAP = '/art/jianghu-map-2.jpg';
+/** 江湖舆图：原 16:9 舆图（jianghu-map-2.jpg）上下由 AI 续画成方幅，原图原样居中，卷名坐标仍按中段 16:9 计 */
+export const WORLD_MAP = '/art/jianghu-map-tall.jpg';
 
 /** 十卷在舆图上的位置（% 坐标，按样张二调过） */
 export const VOL_PINS: readonly (readonly [number, number])[] = [

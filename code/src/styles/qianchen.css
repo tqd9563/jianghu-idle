@@ -12,9 +12,8 @@ html.qc-own-art .jh-art { display: none; }
 .qc.unready > * { visibility: hidden; }
 .qc-pic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; animation: qc-in .5s var(--ease-quart); }
 @keyframes qc-in { from { opacity: 0; } }
-.qc-pic > .bg { position: absolute; inset: 0; background: center / 100% 100% no-repeat; }
-/* 舞台偏高、画铺不满时：画的上下边羽化融进夜底，同战斗页舆图 */
-.qc.short .qc-pic > .bg, .qc.short .qc-ghosts { -webkit-mask: linear-gradient(to bottom, transparent, #000 9%, #000 86%, transparent); mask: linear-gradient(to bottom, transparent, #000 9%, #000 86%, transparent); }
+/* 底图是方幅续画版（*-tall.jpg）：中段即 16:9 原画，上下各伸出 38.89%，铺满舞台高 */
+.qc-pic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
 .qc-vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 30px #0b0d12;
   background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .85), transparent 24%), linear-gradient(to top, oklch(0.1 0.01 262 / .55), transparent 18%); }
 

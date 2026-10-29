@@ -219,12 +219,14 @@ button { font: inherit; color: inherit; }
 .eq .nm { position: absolute; left: 50%; top: 108%; transform: translateX(-50%); white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0082), 13px); letter-spacing: .04em;
   color: oklch(0.22 0.01 262); padding: 1px 6px; border-radius: 8px; background: oklch(0.93 0.006 85 / .72); pointer-events: none; }
 .eq.main .nm { color: oklch(0.42 0.1 72); font-weight: 700; }
-.eq.q2 .nm { color: oklch(0.38 0.1 235); } .eq.q3 .nm { color: oklch(0.46 0.15 30); }
+.eq.q2 .nm { color: oklch(0.38 0.1 235); font-weight: 700; } .eq.q3 .nm { color: oklch(0.46 0.15 30); font-weight: 700; }
 .eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: none; transition: transform .2s var(--ease); }
 .eq img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 4px oklch(0.1 0.01 262 / .45)); }
 .eq.main { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .45); }
 .eq.sel { box-shadow: 0 0 0 1.5px oklch(0.95 0.01 85 / .85); } .eq.main.sel { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 0 4px oklch(0.95 0.01 85 / .5); }
-.eq.q2 { box-shadow: 0 0 0 2px oklch(0.6 0.1 235 / .9); } .eq.q3 { box-shadow: 0 0 0 2px oklch(0.58 0.16 30 / .9); }
+/* 装配圈外缘按品质着色：寻常素银、上乘石青、绝学朱砂（主修内功为金） */
+.eq.q1 { box-shadow: 0 0 0 2.5px oklch(0.86 0.01 85 / .9); } .eq.q2 { box-shadow: 0 0 0 2.5px oklch(0.6 0.11 235), 0 0 10px oklch(0.6 0.11 235 / .45); } .eq.q3 { box-shadow: 0 0 0 2.5px oklch(0.58 0.17 30), 0 0 10px oklch(0.58 0.17 30 / .45); }
+.eq.q1.sel, .eq.q2.sel, .eq.q3.sel { outline: 1.5px solid oklch(0.95 0.01 85 / .8); outline-offset: 3px; }
 .eq.empty { cursor: default; background: radial-gradient(circle, oklch(0.2 0.008 262 / .35) 60%, transparent 72%); box-shadow: inset 0 0 0 1px oklch(0.9 0.01 85 / .25); }
 .eq:not(.empty):hover { transform: translateY(-2px); }
 
@@ -463,7 +465,7 @@ document.querySelectorAll('#nav button[data-p]').forEach((b) => b.onclick = () =
 const firstOf = (c, n) => MOCK.wx.filter((w) => w.cat === c).slice(0, n).map((w) => w.id);
 const PRESETS = {
   mid: { label: '中期', make: () => ({ bag: clone(MOCK.bag), worn: clone(MOCK.worn), cells: 80, silver: 2140,
-    wx: clone(MOCK.wx), eq: ['songtaojian', 'jinghongzhaoyingjian', 'liuyunjian', ...firstOf('掌', 2), ...firstOf('暗器', 1)].filter((id) => MOCK.wx.some((w) => w.id === id)), slots: 8, main: 'shigu', ghost: [MOCK.wx.filter((w) => w.cat === '剑')[7].id, MOCK.wx.filter((w) => w.cat === '掌')[10].id] }) },
+    wx: clone(MOCK.wx), eq: ['songtaojian', 'jinghongjian', 'cangyajianjue', 'liuyunjian', ...firstOf('掌', 2), ...firstOf('暗器', 1)].filter((id) => MOCK.wx.some((w) => w.id === id)), slots: 8, main: 'shigu', ghost: [MOCK.wx.filter((w) => w.cat === '剑')[7].id, MOCK.wx.filter((w) => w.cat === '掌')[10].id] }) },
   full: { label: '包满 · 包罗万象', make: () => { const p = PRESETS.mid.make(); const more = []; let i = 0;
     while (p.bag.concat(more).reduce((a, it) => a + cellsOf(it), 0) < 92) { const b = clone(MOCK.bag[i % MOCK.bag.length]); b.id += 'x' + i; b.fresh = false; more.push(b); i++; }
     return { ...p, bag: p.bag.concat(more), cells: 100 }; } },

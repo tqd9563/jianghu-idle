@@ -1,0 +1,117 @@
+/* 武功页（基准 docs/design/bag-wugong-prototype.html + DESIGN.md「武功页」）：崖边舞剑 · 类别圈 · 目录竖写 · 题跋 · 装配圈。全部挂在 .wgs 下。 */
+html.wgs-own-art .jh-art { display: none; }
+.jh-page:has(> .wgs) { max-width: none; }
+.wgs { position: relative; overflow: hidden; background: #0b0d12; height: 100vh; min-height: 560px; margin: -30px calc(-1 * clamp(18px, 3.2vw, 48px)) -60px;
+  --paper-ink: oklch(0.24 0.02 60); --paper-mute: oklch(0.45 0.025 60); --paper-red: oklch(0.48 0.14 35);
+  --g1: oklch(0.70 0.012 262); --g2: oklch(0.74 0.12 145); --g3: oklch(0.74 0.10 215); --g4: oklch(0.72 0.13 300); --g5: oklch(0.74 0.15 55);
+  --pg1: oklch(0.42 0.01 262); --pg2: oklch(0.45 0.11 145); --pg3: oklch(0.45 0.10 230); --pg4: oklch(0.43 0.13 300); --pg5: oklch(0.52 0.15 50); --ease: var(--ease-quart); }
+.wgs.unready > * { visibility: hidden; }
+.wgs .wpic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
+.wgs .wpic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
+.wgs .vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .7); background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .45), transparent 16%); }
+.wgs .whead { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
+.wgs .whead > * { pointer-events: auto; }
+.wgs .whead h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
+.wgs .whead .sub { font-size: 14px; color: var(--muted); letter-spacing: .1em; text-shadow: 0 1px 6px #000; }
+.wgs .whead .sub b { color: var(--ink); font-weight: 600; font-size: 16px; }
+.wgs .wseg { display: flex; gap: 24px; margin-top: 12px; }
+.wgs .wseg button { border: 0; background: none; cursor: pointer; padding: 6px 2px 8px; font-family: var(--font-display); font-size: 16px; letter-spacing: .25em; color: var(--muted); border-bottom: 2px solid transparent; text-shadow: 0 1px 6px #000; }
+.wgs .wseg button[aria-pressed="true"] { color: var(--gold); border-bottom-color: var(--ink-gold); } .wgs .wseg button:hover { color: var(--ink); }
+.wgs .whead .right { margin-left: auto; }
+.wgs .btn-ghost { border: 1px solid oklch(0.75 0.075 76 / .55); background: oklch(0.12 0.012 262 / .7); color: var(--ink-gold); border-radius: 4px; padding: 8px 16px; font-family: var(--font-display); letter-spacing: .2em; font-size: 14px; cursor: pointer; }
+.wgs .btn-ghost:hover:not(:disabled) { color: var(--gold); border-color: var(--gold); } .wgs .btn-ghost:disabled { opacity: .4; cursor: default; }
+
+/* ═══════════ 武功：松崖打坐 · 目录 · 题跋（定稿概念图 docs/design/concepts/wg5-wd-1.jpg） ═══════════
+   底图为 AI 画（人坐崖上、右半暗云），左缘类别圈、目录竖写、右侧题跋、招式圆、属性条、下沿装配圈，全部按概念图位置叠字。 */
+.wgs { background: #3a3c42; }
+.wgs .wpic > .bg { top: -38.89%; height: 177.78%; }
+.wgs .vig { background: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .5); }
+/* 左缘：类别圈 + 一道细竖线 */
+.wgs .wcat { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .04); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  background: radial-gradient(circle, oklch(0.2 0.008 262 / .92) 58%, oklch(0.2 0.008 262 / 0) 72%); display: grid; place-items: center; }
+.wgs .wcat img { position: absolute; inset: 21%; width: 58%; height: 58%; object-fit: contain; filter: invert(1); }
+.wgs .wcat.on { background: radial-gradient(circle, oklch(0.2 0.008 262 / .92) 56%, oklch(0.78 0.11 78 / .9) 60%, oklch(0.78 0.11 78 / 0) 74%); box-shadow: 0 0 14px oklch(0.8 0.12 80 / .45); border-radius: 50%; }
+.wgs .wcat.on img { filter: invert(.85) sepia(1) saturate(1.6) hue-rotate(-12deg); }
+.wgs .wcat { background: none; }
+.wgs .wcat img, .wgs .wcat.on img { inset: 4%; width: 92%; height: 92%; filter: drop-shadow(0 2px 3px oklch(0.1 0.01 262 / .5)); }
+.wgs .wcat.on { background: none; box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .5); }
+.wgs .wcat:disabled img { opacity: .4; filter: grayscale(1) brightness(1.4); }
+.wgs .wcat:disabled { cursor: not-allowed; } .wgs .wcat:disabled img { opacity: .3; }
+.wgs .wcat:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+.wgs .wrule { position: absolute; left: 6.4%; top: 10%; height: 78%; width: 1px; background: linear-gradient(to bottom, transparent, oklch(0.85 0.01 85 / .55) 8%, oklch(0.85 0.01 85 / .55) 92%, transparent); }
+/* 目录：淡色宣纸晕底上竖写这一类各门，选中金字带点、未得淡灰 */
+/* 目录：AI 画的宣纸板（toc.png，板上已有七道竖线分八列），名字落在列中；选中金字、顶上一点 */
+.wgs .toc { position: absolute; left: 6.6%; top: 9.5%; width: 32%; aspect-ratio: 1400 / 684; background: url('/art/wugong/toc.png') center / 100% 100% no-repeat; }
+.wgs .toc button { position: absolute; top: 17%; height: 64%; width: 10.3%; border: 0; background: none; padding: 0; cursor: pointer; display: flex; justify-content: center; }
+.wgs .toc button span { writing-mode: vertical-rl; font-family: var(--wgf); font-weight: 500; font-size: clamp(14px, calc(var(--pw) * .0142), 22px); letter-spacing: .14em; color: oklch(0.26 0.01 262); }
+.wgs .toc button.on span { color: oklch(0.5 0.11 72); font-weight: 700; text-shadow: 0 0 10px oklch(0.92 0.06 85); }
+.wgs .toc button.on::before { content: ''; position: absolute; top: -7%; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: oklch(0.62 0.12 75); box-shadow: 0 0 6px oklch(0.8 0.13 78); }
+.wgs .toc button.q2 span { color: oklch(0.38 0.1 235); } .wgs .toc button.q3 span { color: oklch(0.46 0.15 30); }
+.wgs .toc button.on.q2 span, .wgs .toc button.on.q3 span { text-decoration: underline 1.5px oklch(0.6 0.12 75); text-underline-offset: 4px; }
+.wgs .toc button.ghost span { color: oklch(0.6 0.01 262 / .75); }
+.wgs .toc button.equipped::after { content: ''; position: absolute; bottom: -6%; left: 50%; width: 14px; height: 1.5px; margin-left: -7px; background: oklch(0.6 0.1 72); }
+.wgs .toc button:hover span { color: oklch(0.42 0.09 72); }
+.wgs .tocpg { position: absolute; left: 22.6%; top: 37.5%; z-index: 1; padding: 2px 10px; border-radius: 10px; background: oklch(0.9 0.006 85 / .6); transform: translateX(-50%); display: flex; gap: 12px; align-items: center; font-size: 13px; color: oklch(0.3 0.01 262); }
+.wgs .tocpg button { border: 0; background: none; cursor: pointer; font-size: 16px; color: oklch(0.3 0.01 262); } .wgs .tocpg button:disabled { opacity: .3; cursor: default; }
+/* 右侧题跋：大字竖写名 + 两列批注 + 朱印 */
+.wgs .ttl { position: absolute; left: 82.5%; top: 6%; transform: translateX(-50%); writing-mode: vertical-rl; font-weight: 700; line-height: 1.05;
+  font-size: var(--tf); color: oklch(0.93 0.01 85); text-shadow: 0 2px 10px oklch(0.1 0.01 262 / .6); }
+.wgs .ttl.q2 { color: oklch(0.82 0.06 230); } .wgs .ttl.q3 { color: oklch(0.8 0.1 40); }
+.wgs .tseal { position: absolute; width: calc(var(--pw) * .014); aspect-ratio: 3 / 4; background: oklch(0.5 0.17 28 / .9); color: oklch(0.93 0.03 80); font-size: calc(var(--pw) * .0055);
+  writing-mode: vertical-rl; display: grid; place-items: center; border-radius: 1px; font-family: var(--font-display); }
+.wgs .verse { position: absolute; top: 7%; display: flex; flex-direction: row-reverse; gap: calc(var(--pw) * .012); right: 3.5%; }
+.wgs .verse span { writing-mode: vertical-rl; font-family: var(--wgf); font-size: clamp(13px, calc(var(--pw) * .0118), 18px); letter-spacing: .3em; color: oklch(0.9 0.01 85); }
+.wgs .zh5 { position: absolute; left: 73.5%; font-size: clamp(14px, calc(var(--pw) * .0118), 18px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
+.wgs .zh5 b { font-size: 1.9em; color: oklch(0.86 0.1 78); font-weight: 700; margin: 0 .15em; }
+.wgs .zh5 span { margin-left: 1em; font-size: .8em; color: oklch(0.8 0.01 85); }
+.wgs .wsec { position: absolute; left: 73.5%; right: 2%; display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: clamp(14px, calc(var(--pw) * .0118), 18px); letter-spacing: .25em; color: oklch(0.92 0.01 85); }
+.wgs .wsec::after { content: ''; flex: 1; height: 1px; background: oklch(0.85 0.01 85 / .5); }
+/* 招式：每式一枚圆形墨像，悬停给式名、倍率、效果、熟练；外圈细弧为熟练 */
+.wgs .forms5 { position: absolute; left: 73.8%; top: 47%; width: calc(var(--pw) * .224); display: flex; flex-wrap: wrap; gap: calc(var(--pw) * .01); }
+.wgs .fmd { position: relative; flex: 0 0 var(--d); aspect-ratio: 1; border-radius: 50%; overflow: visible; cursor: help;
+  background: radial-gradient(circle, oklch(0.86 0.008 85) 55%, oklch(0.55 0.01 262) 70%, oklch(0.25 0.01 262 / 0) 74%); }
+.wgs .fmd img { position: absolute; inset: 14%; width: 72%; height: 72%; object-fit: contain; filter: brightness(.25) contrast(1.3); }
+.wgs .fmd svg { position: absolute; inset: -5%; width: 110%; height: 110%; transform: rotate(-90deg); }
+.wgs .fmd svg circle { fill: none; stroke-width: 3; }
+.wgs .fmd .bgc { stroke: oklch(0.85 0.01 85 / .2); } .wgs .fmd .fg { stroke: oklch(0.78 0.11 78); }
+.wgs .fmd.lock { opacity: .35; filter: grayscale(1); }
+
+/* 属性：标签 + 墨刷条 + 数值 */
+.wgs .attrs5 { position: absolute; left: 74.5%; top: 64.5%; width: 23.5%; display: grid; gap: calc(var(--pw) * .0068); }
+.wgs .attrs5 .r { display: grid; grid-template-columns: 4.6em 1fr 4.2em; align-items: center; gap: 10px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
+.wgs .attrs5 .r .k { text-align: right; font-family: var(--wgf); } .wgs .attrs5 .fxr { font-family: var(--wgf); }
+/* 武功页文字一律霞鹜文楷（页头「武功」随全站） */
+.wgs { --wgf: var(--font-body); }
+.wgs .wpic, .wgs .wpic * { font-family: var(--font-body) !important; }
+.wgs .wpic .ttl { font-family: 'Ma Shan Zheng', var(--font-display) !important; font-weight: 400; }
+
+.wgs .attrs5 .bar { height: 7px; border-radius: 4px; background: oklch(0.2 0.01 262 / .6); overflow: hidden; }
+.wgs .attrs5 .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.85 0.01 85), oklch(0.75 0.01 85)); }
+.wgs .attrs5 .v { text-align: right; letter-spacing: 0; color: oklch(0.88 0.01 85); }
+.wgs .attrs5 .fxr { display: flex; align-items: center; gap: 8px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); padding-left: 1.4em; }
+.wgs .attrs5 .fxr img { width: 1.6em; height: 1.6em; object-fit: contain; filter: invert(.92); }
+.wgs .attrs5 .yj { font-size: clamp(12px, calc(var(--pw) * .0102), 15px); color: oklch(0.88 0.01 85); line-height: 1.5; }
+.wgs .attrs5 .yj b { color: oklch(0.85 0.09 78); font-weight: 600; }
+.wgs .wact { position: absolute; right: 3%; top: 85.5%; display: flex; align-items: center; gap: 12px; }
+.wgs .wact .need { font-size: 13px; color: oklch(0.82 0.08 40); text-shadow: 0 0 4px #000; }
+.wgs .wact button { border: 0; cursor: pointer; padding: 9px 30px; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .35em; background: url('/art/btn-red.png') center / 100% 100% no-repeat; color: oklch(0.96 0.02 80); }
+.wgs .wact button.quiet { background: none; color: oklch(0.92 0.01 85); box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .55); border-radius: 2px; }
+.wgs .wact button.quiet:hover { box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .9); }
+.wgs .wact button:disabled { filter: grayscale(1); opacity: .45; cursor: default; }
+/* 下沿装配：一排圆，圈内方框里是类别图标；第一枚是主修内功（金圈） */
+.wgs .eqrow { position: absolute; left: 41%; top: 87.5%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .024); }
+/* 每枚装配圈下写武学名（文楷小字，垫一抹雾色），不必悬停 */
+.wgs .eq .nm { position: absolute; left: 50%; top: 108%; transform: translateX(-50%); white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0082), 13px); letter-spacing: .04em;
+  color: oklch(0.22 0.01 262); padding: 1px 6px; border-radius: 8px; background: oklch(0.93 0.006 85 / .72); pointer-events: none; }
+.wgs .eq.main .nm { color: oklch(0.42 0.1 72); font-weight: 700; }
+.wgs .eq.q2 .nm { color: oklch(0.38 0.1 235); font-weight: 700; } .wgs .eq.q3 .nm { color: oklch(0.46 0.15 30); font-weight: 700; }
+.wgs .eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: none; transition: transform .2s var(--ease); }
+.wgs .eq img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 4px oklch(0.1 0.01 262 / .45)); }
+.wgs .eq.main { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .45); }
+.wgs .eq.sel { box-shadow: 0 0 0 1.5px oklch(0.95 0.01 85 / .85); } .wgs .eq.main.sel { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 0 4px oklch(0.95 0.01 85 / .5); }
+/* 装配圈外缘按品质着色：寻常素银、上乘石青、绝学朱砂（主修内功为金） */
+.wgs .eq.q1 { box-shadow: 0 0 0 2.5px oklch(0.86 0.01 85 / .9); } .wgs .eq.q2 { box-shadow: 0 0 0 2.5px oklch(0.6 0.11 235), 0 0 10px oklch(0.6 0.11 235 / .45); } .wgs .eq.q3 { box-shadow: 0 0 0 2.5px oklch(0.58 0.17 30), 0 0 10px oklch(0.58 0.17 30 / .45); }
+.wgs .eq.q1.sel, .wgs .eq.q2.sel, .wgs .eq.q3.sel { outline: 1.5px solid oklch(0.95 0.01 85 / .8); outline-offset: 3px; }
+.wgs .eq.empty { cursor: default; background: radial-gradient(circle, oklch(0.2 0.008 262 / .35) 60%, transparent 72%); box-shadow: inset 0 0 0 1px oklch(0.9 0.01 85 / .25); }
+.wgs .eq:not(.empty):hover { transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .wgs .eq, .wgs .wcat img { transition: none; } }

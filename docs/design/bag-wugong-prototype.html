@@ -392,7 +392,7 @@ const itemsOf = (c) => c === '内功' ? NG.map((n) => ({ ...n, cat: '内功', ng
 const MAXV = () => ({ mult: Math.max(...MOCK.wx.map((w) => w.mult0)), p: Math.max(...MOCK.wx.map((w) => w.p)), cost: Math.max(...MOCK.wx.map((w) => w.cost)), cd: 6 });
 
 function drawWg() {
-  const ic = (c) => ICSET === 'o' ? `${ART}/wugong/ic-${CAT_FILE[c]}.png` : `${ART}/wugong/icset/${ICSET}-${CAT_FILE[c]}.png`;
+  const ic = (c) => `${ART}/wugong/icset/a-${CAT_FILE[c]}.png`;
   $('sc-wg').dataset.ic = ICSET;
   $('wcats').innerHTML = CATS.map((c, i) => { const n = itemsOf(c).length;
     return `<button class="wcat${cat === c ? ' on' : ''}" style="left:3.6%;top:${CAT_Y[i]}%" ${n ? '' : 'disabled'} data-c="${c}" aria-label="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ic(c)}" alt=""></button>`; }).join('');

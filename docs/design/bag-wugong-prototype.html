@@ -195,8 +195,7 @@ button { font: inherit; color: inherit; }
 #sc-wg { --wgf: var(--font-body); }
 #sc-wg .pic, #sc-wg .pic * { font-family: var(--font-body) !important; }
 #sc-wg .pic .ttl { font-family: 'Ma Shan Zheng', var(--font-display) !important; font-weight: 400; }
-/* 候选底图只有 16:9 一段，预览时不伸出上下 */
-#wgBg.opt { top: 0; height: 100%; }
+
 .attrs5 .bar { height: 7px; border-radius: 4px; background: oklch(0.2 0.01 262 / .6); overflow: hidden; }
 .attrs5 .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.85 0.01 85), oklch(0.75 0.01 85)); }
 .attrs5 .v { text-align: right; letter-spacing: 0; color: oklch(0.88 0.01 85); }
@@ -445,16 +444,9 @@ const tip = $('tip');
 document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) return; tip.innerHTML = t.dataset.tip; tip.classList.add('on');
   const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
 document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
-const icv = document.createElement('span'); icv.id = 'icv'; icv.style.display = 'none';
-const BGS = [['cur', '现版 · 松崖打坐'], ['bamboo', '竹林练剑 1'], ['bamboo-1', '竹林练剑 2'], ['fall', '瀑下推掌 1'], ['fall-1', '瀑下推掌 2'], ['snow', '崖边舞剑 1'], ['snow-1', '崖边舞剑 2'], ['stele', '残碑木桩 1'], ['stele-1', '残碑木桩 2']];
-icv.innerHTML = '｜武功底图 ' + BGS.map(([k, n], i) => `<button data-v="${k}" class="${i ? '' : 'on'}">${n}</button>`).join('');
-$('proto').appendChild(icv);
-icv.querySelectorAll('button').forEach((b) => b.onclick = () => { const v = b.dataset.v; $('wgBg').classList.toggle('opt', v !== 'cur');
-  $('wgBg').style.backgroundImage = `url('../../code/public/art/wugong/${v === 'cur' ? 'bg-tall' : 'opt/' + v}.jpg')`; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); });
 document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sel) { sel = null; drawBag(); } });
 function show(p) { page = p; document.querySelectorAll('#nav button[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
-  $('icv').style.display = p === 'wg' ? '' : 'none';
   $('sc-bag').classList.toggle('off', p !== 'bag'); $('sc-wg').classList.toggle('off', p !== 'wg'); p === 'bag' ? drawBag() : drawWg(); }
 document.querySelectorAll('#nav button[data-p]').forEach((b) => b.onclick = () => show(b.dataset.p));
 

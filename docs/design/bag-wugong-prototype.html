@@ -51,6 +51,9 @@ button { font: inherit; color: inherit; }
 .scene.off { opacity: 0; pointer-events: none; visibility: hidden; }
 .pic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
 .pic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
+/* 武功底图是 4:3 的一整幅（摩崖 + 松 + 石台），中段即 16:9 画幅 */
+#sc-wg { background: oklch(0.42 0.01 262); }
+#sc-wg .pic > .bg { top: -16.67%; height: 133.33%; }
 .vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .7);
   background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .45), transparent 16%); }
 .head { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
@@ -130,8 +133,9 @@ button { font: inherit; color: inherit; }
 
 /* ═══════════ 武功：崖洞壁刻 · 拓片 · 石印 ═══════════ */
 /* 石柱分类：AI 墨笔图标落在 AI 画好的空白石盘上；没有藏书的类别置灰不可点 */
-.med { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .042); aspect-ratio: 1; border: 0; border-radius: 50%; background: none; cursor: pointer; padding: 0; display: grid; place-items: center; }
-.med img { width: 62%; height: 62%; object-fit: contain; filter: drop-shadow(0 1px 0 oklch(0.95 0.01 262 / .6)); opacity: .82; transition: transform .2s var(--ease); }
+.med { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .036); aspect-ratio: 1; border: 0; border-radius: 50%; cursor: pointer; padding: 0; display: grid; place-items: center;
+  background: radial-gradient(circle, oklch(0.86 0.008 262 / .85) 50%, oklch(0.86 0.008 262 / 0) 72%); }
+.med img { width: 64%; height: 64%; object-fit: contain; filter: drop-shadow(0 1px 0 oklch(0.95 0.01 262 / .6)); opacity: .85; transition: transform .2s var(--ease); }
 .med:hover:not(:disabled) img { transform: scale(1.08); }
 .med.on { box-shadow: 0 0 0 1.5px oklch(0.75 0.075 76 / .75), 0 0 12px oklch(0.75 0.075 76 / .35); }
 .med.on img { filter: invert(.38) sepia(1) saturate(1.8) hue-rotate(-12deg); opacity: 1; }
@@ -139,22 +143,18 @@ button { font: inherit; color: inherit; }
 .med:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 
 /* 壁刻：AI 画的空白石板上刻这一类的各门武学；招式像为 AI 墨线，滤镜调成阴刻 / 鎏金 / 风化 */
-.panel { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .103); height: calc(var(--pw) * .088); border: 0; background: none; padding: 0; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; }
-.panel .nm { font-family: var(--font-display); font-weight: 700; font-size: clamp(12px, calc(var(--pw) * .0102), 15px); letter-spacing: .06em; white-space: nowrap; margin-top: 4%;
-  color: oklch(0.22 0.01 262 / .9); text-shadow: 0 1px 0 oklch(0.82 0.01 262 / .45), 0 -1px 0 oklch(0.05 0.01 262 / .7); }
-.panel img { flex: 1; min-height: 0; max-width: 78%; object-fit: contain; margin: 3% 0 6%; opacity: .55;
-  filter: brightness(0) drop-shadow(0 1px 0 oklch(0.8 0.01 262 / .5)); transition: transform .25s var(--ease); }
-.panel { border-radius: 3px; }
-/* 品质靠颜色：上乘石青、绝学朱砂，名字与石板内缘一线同色；寻常不着色 */
-.panel.q2 { box-shadow: inset 0 0 0 1.5px oklch(0.62 0.09 230 / .75); } .panel.q2 .nm { color: oklch(0.36 0.1 235); }
-.panel.q3 { box-shadow: inset 0 0 0 1.5px oklch(0.55 0.15 32 / .8); } .panel.q3 .nm { color: oklch(0.42 0.15 30); }
-/* 已装配：墨金描出招式像，不发光 */
-.panel.on img { opacity: 1; filter: brightness(0) invert(.42) sepia(1) saturate(1.6) hue-rotate(-12deg); }
-.panel.on .nm { color: oklch(0.42 0.09 70); } .panel.on .nm::after { content: ''; display: block; width: 60%; height: 1.5px; margin: 2px auto 0; background: oklch(0.5 0.09 70); }
-.panel.ghost img { opacity: .25; filter: brightness(0) blur(1.2px); }
-.panel.ghost .nm { opacity: .55; }
-.panel.sel { outline: 2px solid oklch(0.75 0.075 76 / .8); outline-offset: 1px; }
+/* 壁刻：名字与招式像直接刻在崖面上，不画框；品质靠名字颜色与名下一道短色线 */
+.panel { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .1); height: calc(var(--pw) * .085); border: 0; padding: 0; cursor: pointer; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; background: radial-gradient(ellipse 52% 54% at 50% 52%, oklch(0.84 0.008 262 / .78) 35%, oklch(0.84 0.008 262 / 0) 80%); }
+.panel .nm { font-family: var(--font-display); font-weight: 700; font-size: clamp(12px, calc(var(--pw) * .0102), 15px); letter-spacing: .06em; white-space: nowrap;
+  color: oklch(0.2 0.01 262); text-shadow: 0 1px 0 oklch(0.9 0.01 262 / .55); }
+.panel .nm::after { content: ''; display: block; width: 50%; height: 2px; margin: 2px auto 0; border-radius: 1px; background: transparent; }
+.panel.q2 .nm { color: oklch(0.36 0.1 235); } .panel.q2 .nm::after { background: oklch(0.5 0.1 235 / .8); }
+.panel.q3 .nm { color: oklch(0.42 0.15 30); } .panel.q3 .nm::after { background: oklch(0.52 0.15 30 / .85); }
+.panel img { flex: 1; min-height: 0; max-width: 80%; object-fit: contain; margin: 2% 0 4%; opacity: .72; filter: brightness(0) drop-shadow(0 1px 0 oklch(0.9 0.01 262 / .5)); transition: transform .25s var(--ease); }
+.panel.on img { opacity: 1; filter: brightness(0) invert(.42) sepia(1) saturate(1.6) hue-rotate(-12deg) drop-shadow(0 1px 0 oklch(0.9 0.01 262 / .4)); }
+.panel.ghost img { opacity: .22; filter: brightness(0) blur(1.2px); } .panel.ghost .nm { opacity: .5; }
+.panel.sel { background: radial-gradient(ellipse 52% 54% at 50% 52%, oklch(0.86 0.05 80 / .9) 35%, oklch(0.86 0.05 80 / 0) 80%); }
 .panel:hover img { transform: scale(1.05); }
 .panel:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
 .pager { position: absolute; transform: translateX(-50%); display: flex; gap: 14px; align-items: center; font-family: var(--font-display); font-size: 15px; color: var(--ink); text-shadow: 0 0 6px #000; }
@@ -162,7 +162,7 @@ button { font: inherit; color: inherit; }
 .pager button:disabled { opacity: .3; cursor: default; }
 
 /* 拓片：AI 画的空白拓片纸钉在石壁上，写选中那门的详情 */
-.rub { position: absolute; left: 51.5%; top: 2%; width: 37%; height: 68%; background: url('../../code/public/art/wugong/rubbing.png') center / 100% 100% no-repeat;
+.rub { position: absolute; left: 55%; top: 6%; width: 33%; height: 70%; background: url('../../code/public/art/wugong/rubbing.png') center / 100% 100% no-repeat;
   filter: drop-shadow(0 8px 18px #000); padding: 6.5% 6.5% 4.5%; color: var(--paper-ink); display: flex; flex-direction: column; container-type: inline-size; }
 .rub .top { display: flex; gap: 4%; }
 .rub .fig { width: 24%; aspect-ratio: 1; flex: none; display: grid; place-items: center; }
@@ -210,13 +210,13 @@ button { font: inherit; color: inherit; }
 @keyframes rubin { from { opacity: .2; transform: translateY(-6px) rotate(-.6deg); } }
 
 /* 石印装配：AI 画的空白石印立在石台上，刻装配的名字；第一枚大印是主修内功 */
-.seals { position: absolute; left: 39.5%; bottom: 20%; width: 58%; display: flex; align-items: flex-end; gap: .55%; }
-.seal { position: relative; flex: none; width: calc(var(--pw) * .034); aspect-ratio: 155 / 240; border: 0; padding: 0; cursor: pointer;
+.seals { position: absolute; left: 54%; bottom: 13%; width: 46%; display: flex; align-items: flex-end; gap: .55%; }
+.seal { position: relative; flex: none; width: calc(var(--pw) * .03); aspect-ratio: 155 / 240; border: 0; padding: 0; cursor: pointer;
   background: url('../../code/public/art/wugong/seal.png') center / 100% 100% no-repeat; filter: drop-shadow(0 4px 6px #000);
   display: grid; place-items: center; transition: transform .2s var(--ease); }
 .seal span { writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700; font-size: clamp(11px, calc(var(--pw) * .0092), 14px); letter-spacing: 0; line-height: 1; white-space: nowrap;
   padding: 5px 2px; border-radius: 2px; background: oklch(0.12 0.01 262 / .78); color: oklch(0.93 0.015 85); }
-.seal.main { width: calc(var(--pw) * .042); }
+.seal.main { width: calc(var(--pw) * .037); }
 .seal.main span { color: oklch(0.86 0.1 78); font-size: clamp(12px, calc(var(--pw) * .0102), 15px); }
 .seal.empty { opacity: .7; cursor: default; filter: grayscale(1) drop-shadow(0 4px 6px #000); }
 .seal:not(.empty):hover { transform: translateY(-3px); }
@@ -248,7 +248,7 @@ button { font: inherit; color: inherit; }
   </section>
   <section class="scene off" id="sc-wg">
     <div class="pic"><div class="bg" style="background-image:url('../../code/public/art/wugong/bg-tall.jpg')"></div>
-      <div id="meds"></div><div id="panels"></div><div class="pager" id="pager" style="left:30.4%;top:68.5%"></div>
+      <div id="meds"></div><div id="panels"></div><div class="pager" id="pager" style="left:42%;top:63%"></div>
       <div class="rub" id="rub"></div><div class="seals" id="seals"></div></div>
     <div class="vig"></div>
     <div class="head"><div><h1>武功</h1></div></div>
@@ -284,7 +284,7 @@ new ResizeObserver(() => { place(); if (page === 'bag') drawBag(); }).observe($(
 const WEAR_AT = { 佩饰: [[27, 28], [37.5, 24]], 衣甲: [[25.5, 37], [12, 33]], 暗器: [[27, 47], [37.5, 46]], 兵器: [[20.5, 56], [12, 58]] };
 const LEFT = { 衣甲: 1, 兵器: 1 };
 /* 包袱布面（画幅 %）：格子在这块里按格数排、居中 */
-const CLOTH = { x: 50, y: 33.5, w: 42, h: 52 };
+const CLOTH = { x: 47.5, y: 37.5, w: 44, h: 47 };
 let sort = 'new', sel = null;
 const cellsOf = (it) => SHAPE[it.slot][0] * SHAPE[it.slot][1];
 const better = (it) => { const w = st.worn[it.slot]; if (!w) return false; const sum = (g) => BASE.reduce((a, k) => a + (g.base[k] || 0) * (k === '气血' ? .1 : 1), 0); return sum(it) > sum(w); };
@@ -364,11 +364,11 @@ $('sellLow').onclick = () => { const low = st.bag.filter((g) => g.grade < 3); st
 /* 石柱十枚石盘（画幅 %），自上而下：内功 + 九类 */
 const CATS = ['内功', '剑', '刀', '枪', '棍', '拳', '掌', '指', '腿', '暗器'];
 const CAT_FILE = { 内功: 'neigong', 剑: 'jian', 刀: 'dao', 枪: 'qiang', 棍: 'gun', 拳: 'quan', 掌: 'zhang', 指: 'zhi', 腿: 'tui', 暗器: 'anqi' };
-const MED_Y = [7.6, 16, 24.4, 32.6, 41, 49.3, 57.4, 65.6, 73.8, 82];
+const MED_Y = [6, 13, 20, 27, 34, 41, 48, 55, 62, 69];
 /* 壁上 3 × 3 空白石板中心（画幅 %） */
-const PANEL_X = [17.8, 30.3, 43], PANEL_Y = [19, 38.6, 58.2];
+const PANEL_X = [16, 29, 42], PANEL_Y = [13, 32, 51];
 /* 左下那块石板被打坐的人挡住，不刻字：一页八门 */
-const SLOTS = [0, 1, 2, 3, 4, 5, 7, 8], PER = SLOTS.length;
+const SLOTS = [0, 1, 2, 3, 4, 5, 7, 8], PER = SLOTS.length; // 左下是打坐的人
 const CN = ['', '一', '二', '三', '四', '五', '六', '七'];
 const QN = { 寻常: 1, 上乘: 2, 绝学: 3 };
 /* 招式像：每类四张 AI 墨像，同类各门按名字散列取一张 */
@@ -392,7 +392,7 @@ const itemsOf = (c) => c === '内功' ? NG.map((n) => ({ ...n, cat: '内功', ng
 function drawWg() {
   // 石柱分类
   $('meds').innerHTML = CATS.map((c, i) => { const n = itemsOf(c).length;
-    return `<button class="med${cat === c ? ' on' : ''}" style="left:4.05%;top:${MED_Y[i]}%" ${n ? '' : 'disabled'} aria-label="${c}" data-c="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ART}/wugong/ic-${CAT_FILE[c]}.png" alt=""></button>`; }).join('');
+    return `<button class="med${cat === c ? ' on' : ''}" style="left:3.6%;top:${MED_Y[i]}%" ${n ? '' : 'disabled'} aria-label="${c}" data-c="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ART}/wugong/ic-${CAT_FILE[c]}.png" alt=""></button>`; }).join('');
   $('meds').querySelectorAll('.med').forEach((b) => b.onclick = () => { cat = b.dataset.c; wpage = 0; drawWg(); });
   // 壁刻：这一类的各门，九门一页
   const items = itemsOf(cat), pages = Math.max(1, Math.ceil(items.length / PER));

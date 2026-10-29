@@ -214,7 +214,12 @@ button { font: inherit; color: inherit; }
 .wact button.quiet:hover { box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .9); }
 .wact button:disabled { filter: grayscale(1); opacity: .45; cursor: default; }
 /* 下沿装配：一排圆，圈内方框里是类别图标；第一枚是主修内功（金圈） */
-.eqrow { position: absolute; left: 41%; top: 92%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .011); }
+.eqrow { position: absolute; left: 41%; top: 87.5%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .024); }
+/* 每枚装配圈下写武学名（文楷小字，垫一抹雾色），不必悬停 */
+.eq .nm { position: absolute; left: 50%; top: 108%; transform: translateX(-50%); white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0082), 13px); letter-spacing: .04em;
+  color: oklch(0.22 0.01 262); padding: 1px 6px; border-radius: 8px; background: oklch(0.93 0.006 85 / .72); pointer-events: none; }
+.eq.main .nm { color: oklch(0.42 0.1 72); font-weight: 700; }
+.eq.q2 .nm { color: oklch(0.38 0.1 235); } .eq.q3 .nm { color: oklch(0.46 0.15 30); }
 .eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: none; transition: transform .2s var(--ease); }
 .eq img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 4px oklch(0.1 0.01 262 / .45)); }
 .eq.main { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .45); }
@@ -400,9 +405,9 @@ function drawWg() {
   $('tocpg').querySelectorAll('button').forEach((b) => b.onclick = () => { wpage += +b.dataset.d; drawWg(); });
   // 装配：主修 + 装配位
   const main = NG.find((n) => n.id === st.main);
-  let eqs = `<button class="eq main${open === 'ng:' + st.main ? ' sel' : ''}" data-k="ng:${st.main}" data-tip="主修 · ${main.name} · 第 ${main.zhong} 重"><img src="${ic('内功')}" alt=""></button>`;
+  let eqs = `<button class="eq main${open === 'ng:' + st.main ? ' sel' : ''}" data-k="ng:${st.main}" data-tip="主修 · ${main.name} · 第 ${main.zhong} 重"><img src="${ic('内功')}" alt=""><span class="nm">${main.name}</span></button>`;
   for (let i = 0; i < st.slots; i++) { const id = st.eq[i], w = id && st.wx.find((x) => x.id === id);
-    eqs += w ? `<button class="eq q${QN[w.quality]}${open === 'wx:' + id ? ' sel' : ''}" data-k="wx:${id}" data-tip="${w.name} · ${w.quality} · 触发 ${Math.round(w.p * 100)}%"><img src="${ic(w.cat)}" alt=""></button>` : '<span class="eq empty" data-tip="空位"></span>'; }
+    eqs += w ? `<button class="eq q${QN[w.quality]}${open === 'wx:' + id ? ' sel' : ''}" data-k="wx:${id}" data-tip="${w.name} · ${w.quality} · 触发 ${Math.round(w.p * 100)}%"><img src="${ic(w.cat)}" alt=""><span class="nm">${w.name}</span></button>` : '<span class="eq empty" data-tip="空位"></span>'; }
   $('eqrow').innerHTML = eqs;
   $('eqrow').querySelectorAll('button.eq').forEach((b) => b.onclick = () => { open = b.dataset.k; const [kd, id] = open.split(':'); cat = kd === 'ng' ? '内功' : st.wx.find((x) => x.id === id).cat;
     wpage = Math.floor(itemsOf(cat).findIndex((x) => x.id === id) / PER); drawWg(); });
@@ -449,14 +454,9 @@ const tip = $('tip');
 document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) return; tip.innerHTML = t.dataset.tip; tip.classList.add('on');
   const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
 document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
-const icv = document.createElement('span'); icv.id = 'icv'; icv.style.display = 'none';
-icv.innerHTML = '｜类别图标 ' + [['a', '甲 现版 · 兵器'], ['p', '乙 人形招式'], ['q', '丙 篆字'], ['r', '丁 意象'], ['s', '戊 特写']].map(([k, n]) => `<button data-ic="${k}" class="${k === 'a' ? 'on' : ''}">${n}</button>`).join('');
-$('proto').appendChild(icv);
-icv.querySelectorAll('button').forEach((b) => b.onclick = () => { ICSET = b.dataset.ic; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawWg(); });
 document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sel) { sel = null; drawBag(); } });
 function show(p) { page = p; document.querySelectorAll('#nav button[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
-  $('icv').style.display = p === 'wg' ? '' : 'none';
   $('sc-bag').classList.toggle('off', p !== 'bag'); $('sc-wg').classList.toggle('off', p !== 'wg'); p === 'bag' ? drawBag() : drawWg(); }
 document.querySelectorAll('#nav button[data-p]').forEach((b) => b.onclick = () => show(b.dataset.p));
 

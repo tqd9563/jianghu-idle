@@ -165,13 +165,16 @@ button { font: inherit; color: inherit; }
 .tocpg { position: absolute; left: 22.6%; top: 37.5%; z-index: 1; padding: 2px 10px; border-radius: 10px; background: oklch(0.9 0.006 85 / .6); transform: translateX(-50%); display: flex; gap: 12px; align-items: center; font-size: 13px; color: oklch(0.3 0.01 262); }
 .tocpg button { border: 0; background: none; cursor: pointer; font-size: 16px; color: oklch(0.3 0.01 262); } .tocpg button:disabled { opacity: .3; cursor: default; }
 /* 右侧题跋：大字竖写名 + 两列批注 + 朱印 */
-.ttl { position: absolute; left: 82.5%; top: 6%; transform: translateX(-50%); writing-mode: vertical-rl; font-family: 'Ma Shan Zheng', var(--font-display); line-height: 1;
+.ttl { position: absolute; left: 82.5%; top: 6%; transform: translateX(-50%); writing-mode: vertical-rl; font-weight: 700; line-height: 1.05;
   font-size: var(--tf); color: oklch(0.93 0.01 85); text-shadow: 0 2px 10px oklch(0.1 0.01 262 / .6); }
 .ttl.q2 { color: oklch(0.82 0.06 230); } .ttl.q3 { color: oklch(0.8 0.1 40); }
 .tseal { position: absolute; width: calc(var(--pw) * .014); aspect-ratio: 3 / 4; background: oklch(0.5 0.17 28 / .9); color: oklch(0.93 0.03 80); font-size: calc(var(--pw) * .0055);
   writing-mode: vertical-rl; display: grid; place-items: center; border-radius: 1px; font-family: var(--font-display); }
 .verse { position: absolute; top: 7%; display: flex; flex-direction: row-reverse; gap: calc(var(--pw) * .012); right: 3.5%; }
 .verse span { writing-mode: vertical-rl; font-family: var(--wgf); font-size: clamp(13px, calc(var(--pw) * .0118), 18px); letter-spacing: .3em; color: oklch(0.9 0.01 85); }
+.zh5 { position: absolute; left: 73.5%; font-size: clamp(14px, calc(var(--pw) * .0118), 18px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
+.zh5 b { font-size: 1.9em; color: oklch(0.86 0.1 78); font-weight: 700; margin: 0 .15em; }
+.zh5 span { margin-left: 1em; font-size: .8em; color: oklch(0.8 0.01 85); }
 .wsec { position: absolute; left: 73.5%; right: 2%; display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: clamp(14px, calc(var(--pw) * .0118), 18px); letter-spacing: .25em; color: oklch(0.92 0.01 85); }
 .wsec::after { content: ''; flex: 1; height: 1px; background: oklch(0.85 0.01 85 / .5); }
 /* 招式：每式一枚圆形墨像，悬停给式名、倍率、效果、熟练；外圈细弧为熟练 */
@@ -188,10 +191,9 @@ button { font: inherit; color: inherit; }
 .attrs5 { position: absolute; left: 74.5%; top: 64.5%; width: 23.5%; display: grid; gap: calc(var(--pw) * .0068); }
 .attrs5 .r { display: grid; grid-template-columns: 4.6em 1fr 4.2em; align-items: center; gap: 10px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
 .attrs5 .r .k { text-align: right; font-family: var(--wgf); } .attrs5 .fxr { font-family: var(--wgf); }
+/* 武功页文字一律霞鹜文楷（页头「武功」随全站） */
 #sc-wg { --wgf: var(--font-body); }
-#sc-wg[data-font="song"] { --wgf: var(--font-display); }
-#sc-wg[data-font="msz"] { --wgf: 'Ma Shan Zheng', var(--font-display); }
-#sc-wg[data-font="xw"] { --wgf: 'ZCOOL XiaoWei', var(--font-display); }
+#sc-wg .pic, #sc-wg .pic * { font-family: var(--font-body) !important; }
 .attrs5 .bar { height: 7px; border-radius: 4px; background: oklch(0.2 0.01 262 / .6); overflow: hidden; }
 .attrs5 .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.85 0.01 85), oklch(0.75 0.01 85)); }
 .attrs5 .v { text-align: right; letter-spacing: 0; color: oklch(0.88 0.01 85); }
@@ -237,7 +239,7 @@ button { font: inherit; color: inherit; }
     <div id="tagHost"></div>
   </section>
   <section class="scene off" id="sc-wg">
-    <div class="pic"><div class="bg" style="background-image:url('../../code/public/art/wugong/bg-tall.jpg')"></div>
+    <div class="pic"><div class="bg" id="wgBg" style="background-image:url('../../code/public/art/wugong/bg-tall.jpg')"></div>
       <div class="wrule"></div><div id="wcats"></div><div class="toc" id="toc"></div><div class="tocpg" id="tocpg"></div>
       <div id="wdetail"></div><div class="eqrow" id="eqrow"></div></div>
     <div class="vig"></div>
@@ -403,7 +405,7 @@ function drawWg() {
 function drawDetail() {
   const [kd, id] = open.split(':'), pw = parseFloat(getComputedStyle($('stage')).getPropertyValue('--pw')), ph = pw * 9 / 16;
   const d = kd === 'ng' ? NG.find((n) => n.id === id) : st.wx.find((w) => w.id === id);
-  const longF = kd === 'wx' && d.forms.length > 4;
+  const longF = kd === 'ng' || d.forms.length > 4;
   const tf = Math.min(pw * .06, ph * (longF ? .25 : .32) / d.name.length);
   const ep = (d.ep || (kd === 'ng' ? '散功重修，根骨不失' : '')).split(/[，,]/);
   let html = `<div class="ttl q${QN[d.quality]}" style="--tf:${tf}px">${d.name}</div>`
@@ -411,7 +413,8 @@ function drawDetail() {
     + `<div class="verse">${ep.map((t) => `<span>${t}</span>`).join('')}</div>`;
   if (kd === 'ng') {
     const isMain = id === st.main, mx = { 气血: 30000, 攻击: 3500, 防御: 1800, 命中: 60, 闪避: 20 };
-    html += `<div class="wsec" style="top:41%">心法</div><div class="attrs5" style="top:45%;gap:0">${d.yj.slice(0, 5).map(([k, v]) => `<div class="yj">${k}　${v}</div>`).join('')}</div>`
+    html += `<div class="zh5" style="top:33.5%">第 <b>${isMain ? d.zhong : d.zhong - 3}</b> 重<span>${isMain ? '主修 · ' : '转修后 · '}最高至${d.cap}</span></div>`
+      + `<div class="wsec" style="top:41%">心法</div><div class="attrs5" style="top:45%;gap:0">${d.yj.slice(0, 5).map(([k, v]) => `<div class="yj">${k}　${v}</div>`).join('')}</div>`
       + `<div class="wsec" style="top:62%">属性</div><div class="attrs5" style="top:66%;gap:calc(var(--pw) * .003)">${d.attrs.map(([k, v]) => `<div class="r"><span class="k">${k}</span><span class="bar"><i style="width:${Math.min(100, v / mx[k] * 100)}%"></i></span><span class="v">+${fmt(v)}</span></div>`).join('')}</div>`
       + `<div class="wact">${isMain ? '<span class="need">还差 3.2万 内力</span><button disabled>精进一重</button>' : `<button class="${d.route === '蚀骨' ? '' : 'quiet'}">${d.route === '蚀骨' ? '转修' : '散功重修'}</button>`}</div>`;
     $('wdetail').innerHTML = html; return;
@@ -439,12 +442,10 @@ const tip = $('tip');
 document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) return; tip.innerHTML = t.dataset.tip; tip.classList.add('on');
   const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
 document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
-const FONTS = [['wk', '文楷'], ['song', '宋体'], ['msz', '马善政'], ['xw', '小薇']];
 const icv = document.createElement('span'); icv.id = 'icv'; icv.style.display = 'none';
-icv.innerHTML = '｜红框字体 ' + FONTS.map(([k, n]) => `<button data-f="${k}" class="${k === WFONT ? 'on' : ''}">${n}</button>`).join('');
+icv.innerHTML = '｜武功底图 <button data-v="2" class="on">新 · 冷灰调</button><button data-v="1">旧</button>';
 $('proto').appendChild(icv);
-icv.querySelectorAll('button').forEach((b) => b.onclick = () => { WFONT = b.dataset.f; $('sc-wg').dataset.font = WFONT; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); });
-$('sc-wg').dataset.font = WFONT;
+icv.querySelectorAll('button').forEach((b) => b.onclick = () => { $('wgBg').style.backgroundImage = `url('../../code/public/art/wugong/bg-tall${b.dataset.v === '1' ? '-v1' : ''}.jpg')`; icv.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); });
 document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sel) { sel = null; drawBag(); } });
 function show(p) { page = p; document.querySelectorAll('#nav button[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));

@@ -78,14 +78,15 @@ export function NeigongBook({ id }: { id: NeigongId }) {
       <div className="zh5" style={{ top: '33.5%' }} data-tip={`火候折合 ${foldRealms(zhong, d.quality).toFixed(2)} 个境界：每 20 重折合一个境界`}>
         第 <b>{zhong}</b> 重<span>{main ? '主修 · ' : '转修后 · '}最高至{peak.name} · {peak.at} 重</span>
       </div>
-      <div className="wsec" style={{ top: '41%' }}>心法</div>
-      <div className="attrs5" style={{ top: '45%', gap: 0 }}>
+      <div className="wcol">
+      <div className="wsec">心法</div>
+      <div className="attrs5" style={{ gap: 0 }}>
         {rowsOf(d.route, d.quality, zhong, passed, build, s.realm).map((r) => (
           <div key={r.lb} className={`yj${r.lock ? ' lock' : ''}`}>{r.lb}　{r.v}</div>
         ))}
       </div>
-      <div className="wsec" style={{ top: '62%' }}>属性</div>
-      <div className="attrs5" style={{ top: '66%', gap: 'calc(var(--pw) * .003)' }}>
+      <div className="wsec">属性</div>
+      <div className="attrs5" style={{ gap: 2 }}>
         {attrs.map(([k, v, peakV, tip]) => (
           <div key={k} className="r" data-tip={tip}>
             <span className="k">{k}</span>
@@ -93,6 +94,7 @@ export function NeigongBook({ id }: { id: NeigongId }) {
             <span className="v">{v > 0 ? `+${fmtBig(Math.round(v))}` : '—'}</span>
           </div>
         ))}
+      </div>
       </div>
       <div className="wact">{need && <span className="need">{need}</span>}{btn}</div>
       {switchTo && <SwitchDialog to={switchTo} onClose={() => setSwitchTo(null)} />}

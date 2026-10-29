@@ -115,3 +115,8 @@ html.wgs-own-art .jh-art { display: none; }
 .wgs .eq.empty { cursor: default; background: radial-gradient(circle, oklch(0.2 0.008 262 / .35) 60%, transparent 72%); box-shadow: inset 0 0 0 1px oklch(0.9 0.01 85 / .25); }
 .wgs .eq:not(.empty):hover { transform: translateY(-2px); }
 @media (prefers-reduced-motion: reduce) { .wgs .eq, .wgs .wcat img { transition: none; } }
+/* 内功详情：心法与属性两段顺排，窄屏也不会互相压住 */
+.wgs .wcol { position: absolute; left: 73.5%; right: 2%; top: 39.5%; display: flex; flex-direction: column; gap: 4px; }
+.wgs .wcol .attrs5 .r { line-height: 1.35; }
+.wgs .wcol .wsec, .wgs .wcol .attrs5 { position: static; width: auto; }
+.wgs .wcol .attrs5 { margin-left: 1%; }

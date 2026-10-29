@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-28",
+  "generated": "2026-10-29",
   "note": "由 code/src/telemetry/pace.sim.test.ts 生成（WRITE_PACE=1）：真实代码的首达日（各路线 4 个种子），对照 pacing/design.md 里程碑。",
   "milestone": {
     "2": 1,
@@ -42,7 +42,7 @@
         "3": 5,
         "4": 20,
         "5": 33.5,
-        "6": 86
+        "6": 87.3
       }
     }
   ],
@@ -191,12 +191,12 @@
         "3": 5,
         "4": 20,
         "5": 35,
-        "6": 85
+        "6": 90
       },
-      "lives": 33,
+      "lives": 34,
       "sect": {
         "firstJuexue": 38,
-        "ownShelf": 49,
+        "ownShelf": 54,
         "allShelves": null
       }
     },
@@ -213,7 +213,7 @@
       "lives": 32,
       "sect": {
         "firstJuexue": 35,
-        "ownShelf": 46,
+        "ownShelf": 51,
         "allShelves": null
       }
     },
@@ -225,12 +225,12 @@
         "3": 5,
         "4": 20,
         "5": 35,
-        "6": 85
+        "6": 95
       },
-      "lives": 33,
+      "lives": 35,
       "sect": {
         "firstJuexue": 38,
-        "ownShelf": 49,
+        "ownShelf": 54,
         "allShelves": null
       }
     },
@@ -242,12 +242,12 @@
         "3": 5,
         "4": 20,
         "5": 32,
-        "6": 92
+        "6": 82
       },
-      "lives": 34,
+      "lives": 32,
       "sect": {
         "firstJuexue": 35,
-        "ownShelf": 46,
+        "ownShelf": 51,
         "allShelves": null
       }
     }

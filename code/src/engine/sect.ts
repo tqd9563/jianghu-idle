@@ -57,8 +57,10 @@ export interface SectDef {
   ranks: [string, string, string, string, string, string];
   /** 入门 / 进阶 / 镇派；兼修按其档位（入门 rank 1、进阶 rank 3）解锁 */
   neigong: { entry: NeigongId; adv?: NeigongId; peak?: NeigongId; extra?: { id: NeigongId; rank: 1 | 3 } };
-  /** 已实装的本门绝学 */
+  /** 本门绝学（残页，地位四） */
   juexue: WuxueId[];
+  /** 镇宗上乘（中小派没有绝学时的看家武学）：残页排在货架二级最前 */
+  zhenzong?: WuxueId[];
   /** 本门装备：低档、高档 */
   gear: [SectGear, SectGear];
   /** 六档差事，第 k 档地位 k 解锁 */
@@ -129,7 +131,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'qianyan', name: '千岩寺', vol: 3, camp: '正', size: '大', kind: '寺', tierName: '二宗', route: 'shaolin', cats: ['棍', '腿', '拳'],
     ranks: ranks('俗家弟子 沙弥 比丘 执事僧 首座 长老'),
     neigong: { entry: 'zhenyuegong', adv: 'panshigong', peak: 'putixingong', extra: { id: 'wuzhuxinfa', rank: 1 } },
-    juexue: ['luohanfumogun'],
+    juexue: ['luohanfumogun', 'luohanshibatui'],
     gear: gear('qianyan', '兵器', 'boss', ['枣木禅棍', 'gun-wumu'], ['九环锡杖', 'gun-shutong'], '棍'),
     errands: errands('后山担水 经阁值夜 下山化缘 护送经卷 坐镇禅堂 主持法会', [
       '寺里百余口人吃水，全靠后山那眼泉，一天要担三十趟。',
@@ -145,7 +147,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'huaying', name: '花影坊', vol: 3, camp: '邪', size: '中', kind: '坊', tierName: '五秀', route: 'xuanji', cats: ['暗器', '掌'],
     ranks: ranks('侍儿 坊中弟子 执事 花使 护法 长老'),
     neigong: { entry: 'jinghuajue', adv: 'hanxianggong' },
-    juexue: ['luoyingfeizhen', 'qianjibiao'],
+    juexue: ['luoyingfeizhen', 'qianjibiao', 'qiansiwanlvzhen'],
     gear: gear('huaying', '暗器', 'hit', ['蝶影镖', 'anqi-liuye'], ['海棠针匣', 'anqi-meihua']),
     errands: errands('调制迷香 守夜花楼 入城打探 运送胭脂 主理分坊 结交权贵', [
       '坊中迷香用罢，照方子配一炉新的，分量错一钱便伤人。',
@@ -161,7 +163,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'lingfeng', name: '凌风山庄', vol: 4, camp: '正', size: '中', kind: '庄', tierName: '八奇', route: 'jinghong', cats: ['腿', '剑'],
     ranks: ranks('庄客 门客 管事 总管 供奉 客卿'),
     neigong: { entry: 'lingxugong', adv: 'fuyaojue' },
-    juexue: [],
+    juexue: ['hexiangzixiaotui'],
     gear: gear('lingfeng', '佩饰', 'dodge', ['踏云靴', 'pei-taxue'], ['鹤羽战靴', 'pei-baiyu']),
     errands: errands('庄前迎客 夜巡庄院 递送拜帖 迎送贵客 坐镇别院 广宴群雄', [
       '庄主好客，门前来客不问贵贱，一律由你迎进厅中奉茶。',
@@ -177,7 +179,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'shenhai', name: '蜃海教', vol: 4, camp: '邪', size: '大', kind: '教', tierName: '三教', route: 'taixu', cats: ['掌', '暗器'],
     ranks: ranks('教众 香主 坛主 堂主 护法 长老'),
     neigong: { entry: 'tingchaojue', adv: 'shenqihuaxugong', peak: 'guixudafa' },
-    juexue: [],
+    juexue: ['haichaotunyuezhang'],
     gear: gear('shenhai', '佩饰', 'dodge', ['鲨皮手套', 'pei-hongsheng'], ['鲛绡手套', 'pei-baiyu']),
     errands: errands('海边采珠 守夜灯塔 出海寻蜃 押送珠贡 镇守海岛 海上会盟', [
       '教中以珠换粮，退潮时下海采珠，潮涨前必须上岸。',
@@ -209,7 +211,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'huxiao', name: '虎啸山庄', vol: 5, camp: '正', size: '大', kind: '庄', tierName: '七绝 · 拳', route: 'huashan', cats: ['拳'],
     ranks: ranks('庄客 门客 管事 总管 供奉 客卿'),
     neigong: { entry: 'fenghuxinfa', adv: 'hupogong', peak: 'baihuxiaofengjing' },
-    juexue: [],
+    juexue: ['juaofushanquan', 'changjingxihaiquan'],
     gear: gear('huxiao', '佩饰', 'dodge', ['铜环护腕', 'pei-tongqian'], ['白额拳套', 'pei-yingyan']),
     errands: errands('后山劈柴 看守兵房 进城采办 押运药材 驱除虎患 登台守擂', [
       '庄里灶多，柴火一日不够烧，新来的先去后山劈一冬的柴。',
@@ -225,7 +227,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'beimang', name: '北邙门', vol: 5, camp: '邪', size: '小', kind: '门', tierName: '八奇', route: 'shaolin', cats: ['掌'],
     ranks: ranks('门下弟子 执事 堂主 护法 长老 太上长老'),
     neigong: { entry: 'dishagong', adv: 'zhenmingxinjing' },
-    juexue: [],
+    juexue: [], zhenzong: ['wuducuanxinzhang'],
     gear: gear('beimang', '佩饰', 'dodge', ['鹿皮手套', 'pei-xiangnang'], ['金缕手套', 'pei-feicui']),
     errands: errands('清理墓道 夜巡乱坟 收买墓图 押运冥器 坐镇义庄 打点官府', [
       '新开的墓道塌了半截，土石要一筐筐运出去，别惊了里头的东西。',
@@ -241,7 +243,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'qianyuan', name: '乾元观', vol: 6, camp: '正', size: '大', kind: '观', tierName: '二宗', route: 'taixu', cats: ['拳', '腿'],
     ranks: ranks('记名弟子 道童 道人 真传弟子 监院 长老'),
     neigong: { entry: 'shouyigong', adv: 'qingjingzuowangjue', peak: 'qianyuanyiqijing', extra: { id: 'zifuxinfa', rank: 3 } },
-    juexue: ['zhenwudangmoquan'],
+    juexue: ['zhenwudangmoquan', 'tagangbudoutui'],
     gear: gear('qianyuan', '佩饰', 'dodge', ['青布护腕', 'pei-pingan'], ['紫绶护腕', 'pei-hongsheng']),
     errands: errands('洒扫丹房 夜守丹炉 云游采药 送经下山 坐镇下院 主持斋醮', [
       '丹房一尘不染才能开炉，每日卯时洒扫，不许用湿布。',
@@ -273,7 +275,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'shuiyue', name: '水月庵', vol: 8, camp: '正', size: '中', kind: '庵', tierName: '五秀', route: 'xuanji', cats: ['指', '掌'],
     ranks: ranks('俗家弟子 沙弥尼 比丘尼 知客 首座 长老'),
     neigong: { entry: 'zhishuixinfa', adv: 'shuiyueguanxinjing' },
-    juexue: [],
+    juexue: ['jiuqufengmaizhi'],
     gear: gear('shuiyue', '佩饰', 'dodge', ['羊脂指环', 'pei-baiyu'], ['玉莲扳指', 'pei-feicui']),
     errands: errands('抄写经卷 佛前守灯 山下施药 接引香客 坐镇佛堂 法会讲经', [
       '庵中经卷旧了，要抄一部新的，一日抄三页，错一字重来。',
@@ -289,7 +291,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'tiangong', name: '天工坊', vol: 8, camp: '正', size: '小', kind: '坊', tierName: '八奇', route: 'jinghong', cats: ['暗器'],
     ranks: ranks('学徒 匠人 大匠 掌墨 总管 供奉'),
     neigong: { entry: 'linglongxinfa', adv: 'tianshujue' },
-    juexue: [],
+    juexue: [], zhenzong: ['mantianxingdoubiao'],
     gear: gear('tiangong', '暗器', 'hit', ['机簧袖弩', 'anqi-xiujian'], ['九星弩匣', 'anqi-tougu']),
     errands: errands('打磨机件 看守料库 进城修弩 押送机弩 督造城防 进京献器', [
       '新铸的机括毛刺多，一件件磨到严丝合缝，手不能抖。',
@@ -321,7 +323,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'zhangyue', name: '瘴月教', vol: 9, camp: '邪', size: '大', kind: '教', tierName: '三教', route: 'tangmen', cats: ['掌', '指'],
     ranks: ranks('教众 香主 坛主 堂主 护法 长老'),
     neigong: { entry: 'shiguxinfa', adv: 'xuanyinjue', peak: 'qianguxinjue', extra: { id: 'xueguranyuangong', rank: 3 } },
-    juexue: [],
+    juexue: ['wanduguizongzhang'],
     gear: gear('zhangyue', '佩饰', 'dodge', ['银丝手套', 'pei-hongsheng'], ['苗银掌套', 'pei-yingyan']),
     errands: errands('喂养蛊虫 看守蛊坛 瘴林采毒 押送蛊种 执掌分坛 召集各寨', [
       '教中蛊虫以血喂养，每日定时放血入盅，一滴不能多。',
@@ -337,7 +339,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'cangwu', name: '苍梧派', vol: 9, camp: '正', size: '大', kind: '派', tierName: '七绝 · 枪', route: 'jinghong', cats: ['枪'],
     ranks: ranks('记名弟子 外门弟子 内门弟子 亲传弟子 护法 长老'),
     neigong: { entry: 'qiwujue', adv: 'fengmingxinjing', peak: 'fengzhuqingminggong' },
-    juexue: ['bawangxiejiaqiang'],
+    juexue: ['bainiaochaofengqiang', 'liuxingguanyueqiang', 'bawangxiejiaqiang'],
     gear: gear('cangwu', '兵器', 'hit', ['青梧枪', 'qiang-bailayan'], ['凤喙枪', 'qiang-longdan'], '枪'),
     errands: errands('擦拭枪架 校场值守 采办枪杆 押粮南下 戍守岭南 出使南诏', [
       '校场枪架上百杆长枪，每日擦净上油，锈一杆罚一月。',
@@ -353,7 +355,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'bilin', name: '碧磷洞', vol: 9, camp: '邪', size: '中', kind: '洞', tierName: '六隐', route: 'tangmen', cats: ['指', '暗器'],
     ranks: ranks('洞下弟子 执事 堂主 护法 长老 太上长老'),
     neigong: { entry: 'guilinjue', adv: 'jiuyouhuadujing' },
-    juexue: [],
+    juexue: [], zhenzong: ['lenglinzhaoguzhi'],
     gear: gear('bilin', '佩饰', 'dodge', ['枯骨指环', 'pei-tongqian'], ['碧磷扳指', 'pei-feicui']),
     errands: errands('添灯守洞 看守毒池 入沼采磷 押送毒药 封守洞口 受托解毒', [
       '洞中长年无光，壁灯一灭就辨不得路，每隔一个时辰添一回油。',
@@ -369,7 +371,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'fenglei', name: '风雷堡', vol: 10, camp: '正', size: '大', kind: '堡', tierName: '七绝 · 刀', route: 'huashan', cats: ['刀'],
     ranks: ranks('堡丁 刀客 教头 统领 总教头 客卿'),
     neigong: { entry: 'yinleijue', adv: 'bentinggong', peak: 'leigangzhenjing' },
-    juexue: [],
+    juexue: ['fengleiduanyuedao', 'tiemabinghedao'],
     gear: gear('fenglei', '兵器', 'atk', ['惊霆刀', 'dao-guitou'], ['奔雷刀', 'dao-longque'], '刀'),
     errands: errands('喂马刷马 堡墙值哨 采买刀铁 押镖西行 塞外巡边 护送使节', [
       '堡里战马百匹，草料一日三顿，马鬃马蹄都要刷到。',
@@ -385,7 +387,7 @@ export const SECTS: Record<SectId, SectDef> = {
     id: 'yinshan', name: '阴山派', vol: 10, camp: '邪', size: '大', kind: '派', tierName: '七绝 · 指', route: 'xuanji', cats: ['指'],
     ranks: ranks('记名弟子 外门弟子 内门弟子 亲传弟子 护法 长老'),
     neigong: { entry: 'shuanghuajue', adv: 'hanposuomaigong', peak: 'guijizhenjing' },
-    juexue: [],
+    juexue: ['qichongduanhunzhi', 'yinyunbiyuezhi'],
     gear: gear('yinshan', '佩饰', 'dodge', ['寒铁指套', 'pei-qingyu'], ['寒玉扳指', 'pei-baiyu']),
     errands: errands('凿冰取水 守夜冰窟 雪原采药 押送寒铁 扼守关口 递送战书', [
       '阴山冬天泉眼都冻住了，每日凿冰取水，手冻裂了也得凿。',
@@ -486,7 +488,7 @@ export const juanceKey = (ng: NeigongId) => `juance:${ng}`;
 const idleWuxueOf = (cat: WuxueCat, quality: '寻常' | '上乘', n: number): WuxueId[] =>
   WUXUE_IDS.filter((id) => WUXUE[id].cat === cat && WUXUE[id].quality === quality && WUXUE[id].source === '挂机').slice(0, n);
 
-/** 本派货架，按解锁地位陈列：寻常整门与入门内功；上乘残页与低档装备；进阶内功；绝学残页；镇派内功、高档装备、归真卷册 */
+/** 本派货架，按解锁地位陈列：寻常整门与入门内功；上乘残页（镇宗在前，挂机的补足两门）与低档装备；进阶内功；绝学残页；镇派内功、高档装备、归真卷册 */
 export function sectShelf(id: SectId): SectItem[] {
   const d = SECTS[id];
   const ng = (n: NeigongId, price: number, rank: number): SectItem => ({ id: `sect:${n}`, kind: 'neigong', label: NEIGONG[n].name, price, rank, neigong: n });
@@ -496,11 +498,12 @@ export function sectShelf(id: SectId): SectItem[] {
     }));
   const gearRow = (g: SectGear, price: number, rank: number): SectItem => ({ id: `sect:gear:${g.id}`, kind: 'gear', label: g.name, price, rank, gear: g });
   const extra = d.neigong.extra;
+  const zhenzong = d.zhenzong ?? [];
   return [
     ...idleWuxueOf(d.cats[0], '寻常', 2).map((w): SectItem => ({ id: `sect:${w}:book`, kind: 'wuxue', label: WUXUE[w].name, price: SECT_PRICE.wuxue, rank: 1, wuxue: w })),
     ng(d.neigong.entry, SECT_PRICE.entry, 1),
     ...(extra?.rank === 1 ? [ng(extra.id, SECT_PRICE.entry, 1)] : []),
-    ...idleWuxueOf(d.cats[0], '上乘', 2).flatMap((w) => pages(w, '上乘', 2)),
+    ...[...zhenzong, ...idleWuxueOf(d.cats[0], '上乘', 2 - zhenzong.length)].flatMap((w) => pages(w, '上乘', 2)),
     gearRow(d.gear[0], SECT_PRICE.lowGear, 2),
     ...(d.neigong.adv ? [ng(d.neigong.adv, SECT_PRICE.adv, 3)] : []),
     ...(extra?.rank === 3 ? [ng(extra.id, SECT_PRICE.adv, 3)] : []),
@@ -511,7 +514,7 @@ export function sectShelf(id: SectId): SectItem[] {
   ];
 }
 
-/** 这门武学是不是所拜门派的本门绝学 */
+/** 这门武学是不是所拜门派的本门看家武学（绝学或镇宗上乘） */
 export function isBenmen(sect: SectId | null, id: WuxueId): boolean {
-  return sect !== null && SECTS[sect].juexue.includes(id);
+  return sect !== null && (SECTS[sect].juexue.includes(id) || (SECTS[sect].zhenzong?.includes(id) ?? false));
 }

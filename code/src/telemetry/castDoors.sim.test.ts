@@ -6,8 +6,9 @@
  * 日常 CI 不跑（SIM_DOORS=1 才跑）。
  *
  * 用法：SIM_DOORS=1 npx vitest run src/telemetry/castDoors.sim.test.ts → docs/systems/sim/cast_doors_measured.json
+ * 校准新批时加 SIM_DOORS_IDS=a,b,c 只跑这几门，结果按 id 并入旧记录（其余门不动）。
  */
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it } from 'vitest';
 import { fight } from '../engine/combat';
@@ -17,6 +18,7 @@ import { QUALITY_PARAMS, WUXUE, WUXUE_IDS, formKey, type WuxueId } from '../engi
 import { buildLoadout, playerBuild, qiMaxOf } from '../store/gameStore';
 
 const OUT = resolve(process.cwd(), '../docs/systems/sim/cast_doors_measured.json');
+const ONLY = process.env.SIM_DOORS_IDS?.split(',').filter(Boolean);
 const TRIALS = 300;
 const STEP = 0.05;
 /** 同款份数：寻常触发几率高，装 5 份会撞 75% 上限，改装 4 份 */
@@ -63,14 +65,19 @@ function frontier(s: State): number {
 
 describe.skipIf(!process.env.SIM_DOORS)('逐门余量复核', () => {
   it('写出 cast_doors_measured.json', () => {
-    const rows: { id: string; name: string; quality: Quality; type: string; effect: string; p: number; margin: number }[] = [];
+    type Row = { id: string; name: string; quality: Quality; type: string; effect: string; p: number; margin: number };
+    const fresh: Row[] = [];
     for (const q of ['寻常', '上乘', '绝学'] as Quality[]) {
+      const ids = WUXUE_IDS.filter((i) => WUXUE[i].quality === q && !WUXUE[i].signature && (!ONLY || ONLY.includes(i)));
+      if (!ids.length) continue;
       const bare = frontier(stateOf(q, null));
-      for (const id of WUXUE_IDS.filter((i) => WUXUE[i].quality === q && !WUXUE[i].signature)) {
+      for (const id of ids) {
         const d = WUXUE[id];
-        rows.push({ id, name: d.name, quality: q, type: d.type, effect: d.effect, p: d.p, margin: Math.round((frontier(stateOf(q, id)) - bare) * 1000) / 1000 });
+        fresh.push({ id, name: d.name, quality: q, type: d.type, effect: d.effect, p: d.p, margin: Math.round((frontier(stateOf(q, id)) - bare) * 1000) / 1000 });
       }
     }
+    const prev: Row[] = ONLY && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : [];
+    const rows = [...prev.filter((r) => !fresh.some((n) => n.id === r.id)), ...fresh];
     const lines: string[] = [];
     for (const q of ['寻常', '上乘', '绝学'] as Quality[]) {
       const g = rows.filter((r) => r.quality === q).sort((a, b) => a.margin - b.margin);

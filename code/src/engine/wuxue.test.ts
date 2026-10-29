@@ -13,8 +13,8 @@ import { legacyLength, legacyStage } from './legacyStage.testutil';
 const seeded = (seed: number) => { let x = seed; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 2 ** 32; }; };
 
 describe('名录读表', () => {
-  it('第一批 66 门：寻常 36 / 上乘 18 / 绝学 12，每门五项参数齐全、都有式名与特点标签', () => {
-    expect(WUXUE_IDS).toHaveLength(66);
+  it('第一批 66 门 + 第三批门派前置 18 门：寻常 36 / 上乘 21 / 绝学 27，每门五项参数齐全、都有式名与特点标签', () => {
+    expect(WUXUE_IDS).toHaveLength(84);
     const q = { 寻常: 0, 上乘: 0, 绝学: 0 };
     for (const id of WUXUE_IDS) {
       const d = WUXUE[id];
@@ -27,10 +27,17 @@ describe('名录读表', () => {
       expect(BIG_OF[d.cat]).toBeDefined();
       expect(FORM_NAMES[id]).toHaveLength(QUALITY_PARAMS[d.quality].forms);
     }
-    expect(q).toEqual({ 寻常: 36, 上乘: 18, 绝学: 12 });
+    expect(q).toEqual({ 寻常: 36, 上乘: 21, 绝学: 27 });
     expect(WUXUE.liuyunjian.name).toBe('流云剑法');
-    expect(WUXUE.xiangmochufa).toMatchObject({ name: '金刚降魔杵', cat: '棍', signature: true, source: '擎天门' });
-    expect(WUXUE.tianhedaoxuandao.source).toBe('鸣沙教');
+    // 三门改名 id 不变（living-jianghu/design.md §2.6 改名表）
+    expect(WUXUE.xiangmochufa).toMatchObject({ name: '不周擎天棍', cat: '棍', signature: true, source: '擎天门' });
+    expect(WUXUE.lianhualuodigun).toMatchObject({ name: '万岳镇川棍', source: '擎天门' });
+    expect(WUXUE.tianhedaoxuandao).toMatchObject({ name: '烈日熔金刀', source: '鸣沙教' });
+    // 海潮吞月掌提为绝学；三门镇宗上乘来路是本家
+    expect(WUXUE.haichaotunyuezhang).toMatchObject({ quality: '绝学', source: '蜃海教' });
+    expect(WUXUE.wuducuanxinzhang).toMatchObject({ quality: '上乘', source: '北邙门' });
+    expect(WUXUE.mantianxingdoubiao.source).toBe('天工坊');
+    expect(WUXUE.lenglinzhaoguzhi.source).toBe('碧磷洞');
   });
 
   it('批注：每门一联，寻常四字、上乘与绝学五字', () => {

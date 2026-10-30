@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>行囊与武功</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" rel="stylesheet">
+<style>
+/* 原型：行囊「雾中人影 · 蓝印花布包袱」与武功「崖洞壁刻 · 拓片 · 石印」。
+   底图、拓片纸、石印、纸签、招式像全部出自 AI（code/public/art/xingnang/、art/wugong/），代码只叠字、格子与按钮。
+   画上坐标一律为画幅百分比（中段 16:9）；底图是上下 AI 续画的方幅（*-tall.jpg），铺满舞台高。 */
+:root {
+  --bg: oklch(0.155 0.013 262); --bg-deep: oklch(0.125 0.012 262);
+  --ink: oklch(0.91 0.012 85); --muted: oklch(0.76 0.015 85); --faint: oklch(0.64 0.014 262);
+  --hair: oklch(0.30 0.016 262 / 0.7); --gold: oklch(0.78 0.13 78); --ink-gold: oklch(0.75 0.075 76);
+  --paper-ink: oklch(0.24 0.02 60); --paper-mute: oklch(0.45 0.025 60); --paper-red: oklch(0.48 0.14 35);
+  --g1: oklch(0.70 0.012 262); --g2: oklch(0.74 0.12 145); --g3: oklch(0.74 0.10 215); --g4: oklch(0.72 0.13 300); --g5: oklch(0.74 0.15 55);
+  /* 纸上用的深一档品阶色 */
+  --pg1: oklch(0.42 0.01 262); --pg2: oklch(0.45 0.11 145); --pg3: oklch(0.45 0.10 230); --pg4: oklch(0.43 0.13 300); --pg5: oklch(0.52 0.15 50);
+  --font-body: "LXGW WenKai", "PingFang SC", system-ui, sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", STSong, serif;
+  --ease: cubic-bezier(.25, 1, .5, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); }
+body { display: grid; grid-template-columns: 248px 1fr 52px; height: 100vh; overflow: hidden; }
+button { font: inherit; color: inherit; }
+.rail { background: var(--bg-deep); padding: 28px 22px; display: flex; flex-direction: column; min-width: 0; }
+.rail .brand { font-size: 13px; letter-spacing: .3em; color: var(--muted); }
+.rail .realm { margin-top: 26px; font-family: var(--font-display); font-size: 30px; font-weight: 700; }
+.rail .realm small { font-size: 13px; color: var(--gold); font-weight: 400; margin-left: 8px; }
+.rail .life { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.rail .res { margin-top: 26px; font-size: 11px; color: var(--muted); }
+.rail .res b { display: block; font-size: 22px; color: var(--ink); font-weight: 500; }
+.rail .res .two { display: flex; gap: 22px; margin-top: 12px; } .rail .res .two b { font-size: 17px; }
+.rail hr { border: 0; height: 1px; background: var(--hair); margin: 22px 0 18px; }
+.rail nav button { display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 12px; font-family: var(--font-display); font-size: 18px; letter-spacing: .3em; color: var(--muted); border-radius: 6px; margin-bottom: 4px; }
+.rail nav button.on { background: oklch(0.24 0.03 70 / .55); color: var(--gold); }
+.rail nav button:disabled { cursor: default; }
+.rail .foot { margin-top: auto; display: flex; gap: 8px; }
+.rail .foot span { border: 1px solid var(--hair); border-radius: 6px; padding: 9px 12px; font-size: 13px; color: var(--muted); }
+.rail .foot span:first-child { flex: 1; text-align: center; border-color: oklch(0.78 0.13 78 / .6); color: var(--gold); letter-spacing: .4em; }
+.dock { background: var(--bg-deep); writing-mode: vertical-rl; letter-spacing: .3em; font-size: 14px; color: var(--muted); padding: 26px 14px; }
+
+/* ─── 舞台：画按宽铺满、上下居中；底图为续画方幅，铺满舞台高 ─── */
+.stage { position: relative; overflow: hidden; background: #0b0d12; min-width: 0; }
+.scene { position: absolute; inset: 0; transition: opacity .4s var(--ease); }
+.scene.off { opacity: 0; pointer-events: none; visibility: hidden; }
+.pic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
+.pic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
+/* 武功底图是 4:3 的一整幅（摩崖 + 松 + 石台），中段即 16:9 画幅 */
+.vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .7);
+  background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .45), transparent 16%); }
+.head { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
+.head > * { pointer-events: auto; }
+.head h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
+.head .sub { font-size: 14px; color: var(--muted); letter-spacing: .1em; text-shadow: 0 1px 6px #000; }
+.head .sub b { color: var(--ink); font-weight: 600; font-size: 16px; }
+.seg { display: flex; gap: 24px; margin-top: 12px; }
+.seg button { border: 0; background: none; cursor: pointer; padding: 6px 2px 8px; font-family: var(--font-display); font-size: 16px; letter-spacing: .25em; color: var(--muted); border-bottom: 2px solid transparent; text-shadow: 0 1px 6px #000; }
+.seg button.on { color: var(--gold); border-bottom-color: var(--ink-gold); } .seg button:hover { color: var(--ink); }
+.head .right { margin-left: auto; }
+.btn-ghost { border: 1px solid oklch(0.75 0.075 76 / .55); background: oklch(0.12 0.012 262 / .7); color: var(--ink-gold); border-radius: 4px; padding: 8px 16px; font-family: var(--font-display); letter-spacing: .2em; font-size: 14px; cursor: pointer; }
+.btn-ghost:hover:not(:disabled) { color: var(--gold); border-color: var(--gold); }
+.btn-ghost:disabled { opacity: .4; cursor: default; }
+.tip { position: fixed; z-index: 50; pointer-events: none; background: oklch(0.13 0.011 262 / .94); border: 1px solid var(--hair); padding: 8px 12px; border-radius: 4px; font-size: 13px; line-height: 1.7; max-width: 300px; opacity: 0; transition: opacity .15s; }
+.tip.on { opacity: 1; }
+.proto { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 60; display: flex; gap: 2px; align-items: center; background: oklch(0.2 0.02 262 / .94); border: 1px dashed oklch(0.6 0.1 215 / .6); border-radius: 999px; padding: 4px 8px; font-family: system-ui, sans-serif; font-size: 12px; }
+.proto span { color: oklch(0.74 0.10 215); padding: 0 6px; }
+.proto button { border: 0; background: none; color: var(--muted); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
+.proto button.on { background: oklch(0.74 0.10 215 / .2); color: var(--ink); }
+
+/* ═══════════ 行囊：雾中人影 + 蓝印花布包袱 ═══════════ */
+.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.links line { stroke: oklch(0.78 0.11 78 / .7); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ring { position: absolute; width: calc(var(--pw) * .011); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
+  border: 1.5px solid var(--gold); box-shadow: 0 0 8px oklch(0.8 0.13 78 / .8), inset 0 0 4px oklch(0.8 0.13 78 / .6); pointer-events: none; }
+.ring.empty { border-color: oklch(0.7 0.02 262 / .7); box-shadow: none; }
+.wear { position: absolute; transform: translate(0, -50%); display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; cursor: pointer; }
+.wear .fr { position: relative; width: calc(var(--pw) * .046); aspect-ratio: 1; border-radius: 3px; background: oklch(0.13 0.012 262 / .82); box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 0 1px oklch(0.78 0.11 78 / .45), 0 4px 10px #000; }
+.wear .fr img { position: absolute; inset: 8%; width: 84%; height: 84%; object-fit: contain; }
+.wear .lb { writing-mode: vertical-rl; font-family: var(--font-display); font-size: 13px; letter-spacing: .2em; color: var(--gold); background: oklch(0.12 0.012 262 / .8); padding: 6px 3px; border-radius: 2px; text-shadow: 0 0 4px #000; }
+.wear.l { transform: translate(-100%, -50%); flex-direction: row-reverse; }
+.wear.empty .fr { box-shadow: inset 0 0 0 1px oklch(0.7 0.02 262 / .45); background: oklch(0.13 0.012 262 / .5); }
+.wear.empty .lb { color: var(--faint); }
+.wear:hover .fr, .wear.sel .fr { box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 0 1.5px var(--gold), 0 0 14px oklch(0.8 0.13 78 / .5); }
+.wsum { position: absolute; transform: translateX(-50%); display: flex; gap: 14px; padding: 10px 48px; font-size: 14px; color: var(--muted); white-space: nowrap;
+  background: radial-gradient(closest-side, oklch(0.1 0.01 262 / .85), oklch(0.1 0.01 262 / .6) 70%, transparent); }
+.wsum b { color: var(--ink); font-weight: 600; margin-left: 3px; }
+
+.cloth { position: absolute; display: grid; grid-auto-flow: dense; }
+.cloth .cell { background: oklch(0.9 0.02 240 / .05); border-radius: 2px; margin: 1px; }
+.cloth .it { position: relative; margin: 1px; border: 0; padding: 0; cursor: pointer; border-radius: 3px;
+  background: linear-gradient(to top, color-mix(in oklch, var(--gc) 18%, transparent), transparent 55%), oklch(0.2 0.02 255 / .45);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--gc) 75%, transparent); transition: transform .15s var(--ease), box-shadow .15s; }
+.cloth .it img { position: absolute; inset: 6%; width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 2px 3px #000); }
+.cloth .it.g1 { box-shadow: none; background: oklch(0.2 0.02 255 / .35); }
+.cloth .it.g1 img { opacity: .78; }
+.cloth .it.g5 { box-shadow: inset 0 0 0 1.5px var(--gc); }
+.cloth .it:hover, .cloth .it.sel { transform: translateY(-2px); box-shadow: inset 0 0 0 1.5px var(--gc), 0 0 0 1.5px var(--gold), 0 6px 14px #000; z-index: 2; }
+.cloth .it .fresh { position: absolute; left: 4px; top: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.cloth .it .up { position: absolute; right: 3px; top: 1px; font-size: 10px; color: oklch(0.8 0.14 145); text-shadow: 0 0 3px #000; }
+.cloth .it:focus-visible, .wear:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+
+/* 物品纸签（AI 画的布贴纸签）：名、品阶、基础属性与对比、词条、操作 */
+.tag { position: absolute; z-index: 7; width: 280px; aspect-ratio: 384 / 560; background: url('../../code/public/art/xingnang/tag.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 10px 22px #000); padding: 64px 42px 34px; color: var(--paper-ink); display: flex; flex-direction: column; animation: tagin .2s var(--ease); }
+@keyframes tagin { from { opacity: 0; transform: translateY(6px); } }
+.tag .art { height: 74px; display: grid; place-items: center; }
+.tag .art img { max-height: 74px; max-width: 90%; filter: drop-shadow(0 2px 3px oklch(0.3 0.02 60 / .5)); }
+.tag .nm { margin-top: 6px; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 16px; line-height: 1.3; color: var(--pgc); }
+.tag .pre { display: block; font-size: 11.5px; font-weight: 500; letter-spacing: .05em; opacity: .85; }
+.tag .meta { text-align: center; font-size: 12px; color: var(--paper-mute); margin-top: 3px; letter-spacing: .1em; }
+.tag .meta .gr { color: var(--pgc); font-weight: 700; }
+.tag hr { border: 0; height: 1px; background: oklch(0.45 0.02 60 / .35); margin: 8px 0 6px; }
+.tag .row { display: flex; font-size: 13px; line-height: 1.75; }
+.tag .row .k { color: var(--paper-mute); width: 3.2em; }
+.tag .row .v { font-weight: 600; }
+.tag .row .d { margin-left: auto; font-size: 12px; }
+.tag .row .d.up { color: oklch(0.45 0.13 145); } .tag .row .d.dn { color: var(--paper-red); }
+.tag .afx { font-size: 12px; line-height: 1.7; color: var(--paper-mute); }
+.tag .acts { margin-top: auto; display: flex; gap: 6px; }
+.tag .acts button { flex: 1; border: 0; cursor: pointer; padding: 10px 0; font-family: var(--font-display); font-weight: 700; font-size: 13.5px; letter-spacing: .12em; white-space: nowrap; transition: transform .15s;
+  background: center / 100% 100% no-repeat; }
+.tag .acts button:hover { transform: scale(1.04); }
+.tag .acts .main { background-image: url('../../code/public/art/btn-red.png'); color: oklch(0.96 0.02 80); text-shadow: 0 1px 2px oklch(0.3 0.1 30); }
+.tag .acts .sub { background-image: url('../../code/public/art/btn-ink.png'); color: var(--paper-ink); }
+
+/* ═══════════ 武功：松崖打坐 · 目录 · 题跋（定稿概念图 docs/design/concepts/wg5-wd-1.jpg） ═══════════
+   底图为 AI 画（人坐崖上、右半暗云），左缘类别圈、目录竖写、右侧题跋、招式圆、属性条、下沿装配圈，全部按概念图位置叠字。 */
+#sc-wg { background: #3a3c42; }
+#sc-wg .pic > .bg { top: -38.89%; height: 177.78%; }
+#sc-wg .vig { background: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .5); }
+/* 左缘：类别圈 + 一道细竖线 */
+.wcat { position: absolute; transform: translate(-50%, -50%); width: calc(var(--pw) * .04); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  background: radial-gradient(circle, oklch(0.2 0.008 262 / .92) 58%, oklch(0.2 0.008 262 / 0) 72%); display: grid; place-items: center; }
+.wcat img { position: absolute; inset: 21%; width: 58%; height: 58%; object-fit: contain; filter: invert(1); }
+.wcat.on { background: radial-gradient(circle, oklch(0.2 0.008 262 / .92) 56%, oklch(0.78 0.11 78 / .9) 60%, oklch(0.78 0.11 78 / 0) 74%); box-shadow: 0 0 14px oklch(0.8 0.12 80 / .45); border-radius: 50%; }
+.wcat.on img { filter: invert(.85) sepia(1) saturate(1.6) hue-rotate(-12deg); }
+#sc-wg:not([data-ic="o"]) .wcat { background: none; }
+#sc-wg:not([data-ic="o"]) .wcat img, #sc-wg:not([data-ic="o"]) .wcat.on img { inset: 4%; width: 92%; height: 92%; filter: drop-shadow(0 2px 3px oklch(0.1 0.01 262 / .5)); }
+#sc-wg:not([data-ic="a"]) .eq:not(.empty) { background: radial-gradient(circle, oklch(0.93 0.006 85 / .9) 55%, transparent 72%); }
+#sc-wg:not([data-ic="a"]) .wcat { background: radial-gradient(circle, oklch(0.92 0.006 85 / .8) 45%, transparent 70%); }
+#sc-wg:not([data-ic="a"]) .wcat img, #sc-wg:not([data-ic="a"]) .wcat.on img { inset: 17%; width: 66%; height: 66%; filter: none; }
+#sc-wg:not([data-ic="a"]) .eq:not(.empty) img { inset: 18%; width: 64%; height: 64%; filter: none; }
+#sc-wg[data-ic="c"] .wcat { background: radial-gradient(circle, oklch(0.92 0.006 85 / .85) 50%, transparent 70%); }
+#sc-wg[data-ic="c"] .wcat img, #sc-wg[data-ic="c"] .wcat.on img { inset: 15%; width: 70%; height: 70%; }
+#sc-wg:not([data-ic="o"]) .wcat.on { background: none; box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .5); }
+#sc-wg[data-ic="b"] .wcat, #sc-wg[data-ic="b"] .wcat.on { border-radius: 6px; }
+#sc-wg:not([data-ic="o"]) .wcat:disabled img { opacity: .4; filter: grayscale(1) brightness(1.4); }
+.wcat:disabled { cursor: not-allowed; } .wcat:disabled img { opacity: .3; }
+.wcat:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 2px; }
+.wrule { position: absolute; left: 6.4%; top: 10%; height: 78%; width: 1px; background: linear-gradient(to bottom, transparent, oklch(0.85 0.01 85 / .55) 8%, oklch(0.85 0.01 85 / .55) 92%, transparent); }
+/* 目录：淡色宣纸晕底上竖写这一类各门，选中金字带点、未得淡灰 */
+/* 目录：AI 画的宣纸板（toc.png，板上已有七道竖线分八列），名字落在列中；选中金字、顶上一点 */
+.toc { position: absolute; left: 6.6%; top: 9.5%; width: 32%; aspect-ratio: 1400 / 684; background: url('../../code/public/art/wugong/toc.png') center / 100% 100% no-repeat; }
+.toc button { position: absolute; top: 17%; height: 64%; width: 10.3%; border: 0; background: none; padding: 0; cursor: pointer; display: flex; justify-content: center; }
+.toc button span { writing-mode: vertical-rl; font-family: var(--wgf); font-weight: 500; font-size: clamp(14px, calc(var(--pw) * .0142), 22px); letter-spacing: .14em; color: oklch(0.26 0.01 262); }
+.toc button.on span { color: oklch(0.5 0.11 72); font-weight: 700; text-shadow: 0 0 10px oklch(0.92 0.06 85); }
+.toc button.on::before { content: ''; position: absolute; top: -7%; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: oklch(0.62 0.12 75); box-shadow: 0 0 6px oklch(0.8 0.13 78); }
+.toc button.q2 span { color: oklch(0.38 0.1 235); } .toc button.q3 span { color: oklch(0.46 0.15 30); }
+.toc button.on.q2 span, .toc button.on.q3 span { text-decoration: underline 1.5px oklch(0.6 0.12 75); text-underline-offset: 4px; }
+.toc button.ghost span { color: oklch(0.6 0.01 262 / .75); }
+.toc button.equipped::after { content: ''; position: absolute; bottom: -6%; left: 50%; width: 14px; height: 1.5px; margin-left: -7px; background: oklch(0.6 0.1 72); }
+.toc button:hover span { color: oklch(0.42 0.09 72); }
+.tocpg { position: absolute; left: 22.6%; top: 37.5%; z-index: 1; padding: 2px 10px; border-radius: 10px; background: oklch(0.9 0.006 85 / .6); transform: translateX(-50%); display: flex; gap: 12px; align-items: center; font-size: 13px; color: oklch(0.3 0.01 262); }
+.tocpg button { border: 0; background: none; cursor: pointer; font-size: 16px; color: oklch(0.3 0.01 262); } .tocpg button:disabled { opacity: .3; cursor: default; }
+/* 右侧题跋：大字竖写名 + 两列批注 + 朱印 */
+.ttl { position: absolute; left: 82.5%; top: 6%; transform: translateX(-50%); writing-mode: vertical-rl; font-weight: 700; line-height: 1.05;
+  font-size: var(--tf); color: oklch(0.93 0.01 85); text-shadow: 0 2px 10px oklch(0.1 0.01 262 / .6); }
+.ttl.q2 { color: oklch(0.82 0.06 230); } .ttl.q3 { color: oklch(0.8 0.1 40); }
+.tseal { position: absolute; width: calc(var(--pw) * .014); aspect-ratio: 3 / 4; background: oklch(0.5 0.17 28 / .9); color: oklch(0.93 0.03 80); font-size: calc(var(--pw) * .0055);
+  writing-mode: vertical-rl; display: grid; place-items: center; border-radius: 1px; font-family: var(--font-display); }
+.verse { position: absolute; top: 7%; display: flex; flex-direction: row-reverse; gap: calc(var(--pw) * .012); right: 3.5%; }
+.verse span { writing-mode: vertical-rl; font-family: var(--wgf); font-size: clamp(13px, calc(var(--pw) * .0118), 18px); letter-spacing: .3em; color: oklch(0.9 0.01 85); }
+.zh5 { position: absolute; left: 73.5%; font-size: clamp(14px, calc(var(--pw) * .0118), 18px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
+.zh5 b { font-size: 1.9em; color: oklch(0.86 0.1 78); font-weight: 700; margin: 0 .15em; }
+.zh5 span { margin-left: 1em; font-size: .8em; color: oklch(0.8 0.01 85); }
+.wsec { position: absolute; left: 73.5%; right: 2%; display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: clamp(14px, calc(var(--pw) * .0118), 18px); letter-spacing: .25em; color: oklch(0.92 0.01 85); }
+.wsec::after { content: ''; flex: 1; height: 1px; background: oklch(0.85 0.01 85 / .5); }
+/* 招式：每式一枚圆形墨像，悬停给式名、倍率、效果、熟练；外圈细弧为熟练 */
+.forms5 { position: absolute; left: 73.8%; top: 47%; width: calc(var(--pw) * .224); display: flex; flex-wrap: wrap; gap: calc(var(--pw) * .01); }
+.fmd { position: relative; flex: 0 0 var(--d); aspect-ratio: 1; border-radius: 50%; overflow: visible; cursor: help;
+  background: radial-gradient(circle, oklch(0.86 0.008 85) 55%, oklch(0.55 0.01 262) 70%, oklch(0.25 0.01 262 / 0) 74%); }
+.fmd img { position: absolute; inset: 14%; width: 72%; height: 72%; object-fit: contain; filter: brightness(.25) contrast(1.3); }
+.fmd svg { position: absolute; inset: -5%; width: 110%; height: 110%; transform: rotate(-90deg); }
+.fmd svg circle { fill: none; stroke-width: 3; }
+.fmd .bgc { stroke: oklch(0.85 0.01 85 / .2); } .fmd .fg { stroke: oklch(0.78 0.11 78); }
+.fmd.lock { opacity: .35; filter: grayscale(1); }
+
+/* 属性：标签 + 墨刷条 + 数值 */
+.attrs5 { position: absolute; left: 74.5%; top: 64.5%; width: 23.5%; display: grid; gap: calc(var(--pw) * .0068); }
+.attrs5 .r { display: grid; grid-template-columns: 4.6em 1fr 4.2em; align-items: center; gap: 10px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); letter-spacing: .1em; }
+.attrs5 .r .k { text-align: right; font-family: var(--wgf); } .attrs5 .fxr { font-family: var(--wgf); }
+/* 武功页文字一律霞鹜文楷（页头「武功」随全站） */
+#sc-wg { --wgf: var(--font-body); }
+#sc-wg .pic, #sc-wg .pic * { font-family: var(--font-body) !important; }
+#sc-wg .pic .ttl { font-family: 'Ma Shan Zheng', var(--font-display) !important; font-weight: 400; }
+
+.attrs5 .bar { height: 7px; border-radius: 4px; background: oklch(0.2 0.01 262 / .6); overflow: hidden; }
+.attrs5 .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, oklch(0.85 0.01 85), oklch(0.75 0.01 85)); }
+.attrs5 .v { text-align: right; letter-spacing: 0; color: oklch(0.88 0.01 85); }
+.attrs5 .fxr { display: flex; align-items: center; gap: 8px; font-size: clamp(13px, calc(var(--pw) * .0108), 16px); color: oklch(0.9 0.01 85); padding-left: 1.4em; }
+.attrs5 .fxr img { width: 1.6em; height: 1.6em; object-fit: contain; filter: invert(.92); }
+.attrs5 .yj { font-size: clamp(12px, calc(var(--pw) * .0102), 15px); color: oklch(0.88 0.01 85); line-height: 1.5; }
+.attrs5 .yj b { color: oklch(0.85 0.09 78); font-weight: 600; }
+.wact { position: absolute; right: 3%; top: 85.5%; display: flex; align-items: center; gap: 12px; }
+.wact .need { font-size: 13px; color: oklch(0.82 0.08 40); text-shadow: 0 0 4px #000; }
+.wact button { border: 0; cursor: pointer; padding: 9px 30px; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .35em; background: url('../../code/public/art/btn-red.png') center / 100% 100% no-repeat; color: oklch(0.96 0.02 80); }
+.wact button.quiet { background: none; color: oklch(0.92 0.01 85); box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .55); border-radius: 2px; }
+.wact button.quiet:hover { box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .9); }
+.wact button:disabled { filter: grayscale(1); opacity: .45; cursor: default; }
+/* 下沿装配：一排圆，圈内方框里是类别图标；第一枚是主修内功（金圈） */
+.eqrow { position: absolute; left: 41%; top: 87.5%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .024); }
+/* 每枚装配圈下写武学名（文楷小字，垫一抹雾色），不必悬停 */
+.eq .nm { position: absolute; left: 50%; top: 108%; transform: translateX(-50%); white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0082), 13px); letter-spacing: .04em;
+  color: oklch(0.22 0.01 262); padding: 1px 6px; border-radius: 8px; background: oklch(0.93 0.006 85 / .72); pointer-events: none; }
+.eq.main .nm { color: oklch(0.42 0.1 72); font-weight: 700; }
+.eq.q2 .nm { color: oklch(0.38 0.1 235); font-weight: 700; } .eq.q3 .nm { color: oklch(0.46 0.15 30); font-weight: 700; }
+.eq { position: relative; width: calc(var(--pw) * .042); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: none; transition: transform .2s var(--ease); }
+.eq img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 4px oklch(0.1 0.01 262 / .45)); }
+.eq.main { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 14px oklch(0.8 0.12 80 / .45); }
+.eq.sel { box-shadow: 0 0 0 1.5px oklch(0.95 0.01 85 / .85); } .eq.main.sel { box-shadow: 0 0 0 2px oklch(0.78 0.11 78 / .95), 0 0 0 4px oklch(0.95 0.01 85 / .5); }
+/* 装配圈外缘按品质着色：寻常素银、上乘石青、绝学朱砂（主修内功为金） */
+.eq.q1 { box-shadow: 0 0 0 2.5px oklch(0.86 0.01 85 / .9); } .eq.q2 { box-shadow: 0 0 0 2.5px oklch(0.6 0.11 235), 0 0 10px oklch(0.6 0.11 235 / .45); } .eq.q3 { box-shadow: 0 0 0 2.5px oklch(0.58 0.17 30), 0 0 10px oklch(0.58 0.17 30 / .45); }
+.eq.q1.sel, .eq.q2.sel, .eq.q3.sel { outline: 1.5px solid oklch(0.95 0.01 85 / .8); outline-offset: 3px; }
+.eq.empty { cursor: default; background: radial-gradient(circle, oklch(0.2 0.008 262 / .35) 60%, transparent 72%); box-shadow: inset 0 0 0 1px oklch(0.9 0.01 85 / .25); }
+.eq:not(.empty):hover { transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+<aside class="rail">
+  <div class="brand">江湖无尽录</div>
+  <div class="realm">炉火纯青<small>第四境</small></div>
+  <div class="life">第 35 世 · 63 岁 · 江湖历 1625 年</div>
+  <div class="res">内力<b>1,286.5万</b><div class="two"><div>银两<b id="silver">2,140</b></div><div>声望<b>150</b></div></div></div>
+  <hr>
+  <nav id="nav"><button disabled>修炼</button><button disabled>战斗</button><button data-p="bag" class="on">行囊</button><button data-p="wg">武功</button><button disabled>门派</button><button disabled>前尘</button></nav>
+  <div class="foot"><span>转世</span><span>⚙</span><span>报</span></div>
+</aside>
+<main class="stage" id="stage">
+  <section class="scene" id="sc-bag">
+    <div class="pic"><div class="bg" style="background-image:url('../../code/public/art/xingnang/bg-tall.jpg')"></div>
+      <svg class="links" id="blinks" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div id="wears"></div><div class="cloth" id="cloth"></div></div>
+    <div class="vig"></div>
+    <div class="head"><div><h1>行囊</h1><div class="sub" id="bagSub"></div><div class="seg" id="sortSeg"></div></div>
+      <div class="right"><button class="btn-ghost" id="sellLow">一键出售 上乘以下</button></div></div>
+    <div id="tagHost"></div>
+  </section>
+  <section class="scene off" id="sc-wg">
+    <div class="pic"><div class="bg" id="wgBg" style="background-image:url('../../code/public/art/wugong/bg-tall.jpg')"></div>
+      <div class="wrule"></div><div id="wcats"></div><div class="toc" id="toc"></div><div class="tocpg" id="tocpg"></div>
+      <div id="wdetail"></div><div class="eqrow" id="eqrow"></div></div>
+    <div class="vig"></div>
+    <div class="head"><div><h1>武功</h1></div></div>
+  </section>
+</main>
+<aside class="dock">江湖编年</aside>
+<div class="tip" id="tip"></div>
+<div class="proto" id="proto"><span>原型状态</span></div>
+<script>/* mock：引擎 rollGear / WUXUE 导出（装备等级 6.2–7.1，day35 档） */
+const MOCK = {"bag": [{"id": "gmvt5st261yu7", "slot": "兵器", "cat": "刀", "grade": 5, "name": "龙雀刀", "img": "dao-longque", "base": {"攻击": 155}, "afxT": ["会心伤害 +2pp", "会心率 +1pp", "攻击 +2%", "命中 +5"], "sell": 4800, "fresh": true, "pre": "精准凌厉锋锐穿心的"}, {"id": "gmvt5st262878z", "slot": "衣甲", "grade": 4, "name": "蝮蛇甲", "img": "jia-fushe", "base": {"气血": 418, "防御": 29}, "afxT": ["闪避 +3", "防御 +2%", "气血 +2%", "真气上限 +30"], "sell": 1600, "fresh": true, "pre": "轻灵坚韧强健蕴气的"}, {"id": "gmvt5st263aft", "slot": "衣甲", "grade": 4, "name": "蝮蛇甲", "img": "jia-fushe", "base": {"气血": 455, "防御": 34}, "afxT": ["气血 +2%", "真气上限 +40", "闪避 +2", "防御 +2%"], "sell": 1600, "fresh": true, "pre": "轻灵蕴气强健坚韧的"}, {"id": "gmvt5st2643kmo", "slot": "佩饰", "grade": 3, "name": "青玉佩", "img": "pei-qingyu", "base": {"命中": 4}, "afxT": ["真气上限 +40", "武学伤害 +2%", "会心率 +1pp"], "sell": 640, "fresh": true, "pre": "凌厉蕴气通玄的"}, {"id": "gmvt5st2657jd7", "slot": "兵器", "cat": "棍", "grade": 3, "name": "藤棍", "img": "gun-teng", "base": {"攻击": 95, "命中": 1}, "afxT": ["对精英 / Boss 伤害 +2%", "会心伤害 +2pp", "命中 +4"], "sell": 640, "fresh": false, "pre": "精准穿心破军的"}, {"id": "gmvt5st266948u", "slot": "佩饰", "grade": 3, "name": "白玉环", "img": "pei-baiyu", "base": {"闪避": 4}, "afxT": ["命中 +3", "会心率 +1pp", "闪避 +2"], "sell": 640, "fresh": false, "pre": "轻灵精准凌厉的"}, {"id": "gmvt5st267a4e2", "slot": "衣甲", "grade": 2, "name": "皮甲", "img": "jia-pi", "base": {"气血": 416, "防御": 16}, "afxT": ["闪避 +2"], "sell": 320, "fresh": false, "pre": "轻灵的"}, {"id": "gmvt5st268kzt7", "slot": "佩饰", "grade": 2, "name": "香囊", "img": "pei-xiangnang", "base": {"命中": 3}, "afxT": ["闪避 +2", "武学伤害 +2%"], "sell": 320, "fresh": false, "pre": "轻灵通玄的"}, {"id": "gmvt5st269bf6g", "slot": "衣甲", "grade": 2, "name": "皮甲", "img": "jia-pi", "base": {"气血": 448, "防御": 19}, "afxT": ["真气上限 +30", "气血 +2%"], "sell": 320, "fresh": false, "pre": "强健蕴气的"}, {"id": "gmvt5st26ahppa", "slot": "衣甲", "grade": 2, "name": "皮甲", "img": "jia-pi", "base": {"气血": 468, "防御": 19}, "afxT": ["闪避 +2"], "sell": 320, "fresh": false, "pre": "轻灵的"}, {"id": "gmvt5st26b5mhv", "slot": "兵器", "cat": "棍", "grade": 1, "name": "竹棍", "img": "gun-zhu", "base": {"攻击": 68, "命中": 1}, "afxT": ["会心伤害 +1pp"], "sell": 160, "fresh": false, "pre": "穿心的"}, {"id": "gmvt5st26c6c47", "slot": "兵器", "cat": "剑", "grade": 1, "name": "柳叶剑", "img": "jian-liuye", "base": {"攻击": 70, "命中": 1}, "afxT": ["对精英 / Boss 伤害 +2%"], "sell": 160, "fresh": false, "pre": "破军的"}, {"id": "gmvt5st26de0dx", "slot": "佩饰", "grade": 1, "name": "铜钱串", "img": "pei-tongqian", "base": {"命中": 2}, "afxT": [], "sell": 160, "fresh": false, "pre": ""}, {"id": "gmvt5st26edclr", "slot": "暗器", "grade": 1, "name": "铁蒺藜", "img": "anqi-jili", "base": {"攻击": 50, "命中": 1}, "afxT": [], "sell": 160, "fresh": false, "pre": ""}, {"id": "gmvt5st26fdhur", "slot": "衣甲", "grade": 1, "name": "粗布短打", "img": "jia-cubu", "base": {"气血": 455, "防御": 16}, "afxT": ["气血 +1%"], "sell": 160, "fresh": false, "pre": "强健的"}, {"id": "gmvt5st26gc9e6", "slot": "暗器", "grade": 4, "name": "飞蝗石囊", "img": "anqi-feihuang", "base": {"攻击": 97, "命中": 2}, "afxT": ["武学伤害 +2%", "会心率 +1pp", "对精英 / Boss 伤害 +3%", "会心伤害 +2pp"], "sell": 1600, "fresh": false, "pre": "凌厉破军通玄穿心的"}, {"id": "gmvt5st26hetjj", "slot": "兵器", "cat": "刀", "grade": 3, "name": "苗刀", "img": "dao-miao", "base": {"攻击": 115, "命中": 1}, "afxT": ["会心伤害 +2pp", "攻击 +2%", "对精英 / Boss 伤害 +2%"], "sell": 640, "fresh": false, "pre": "锋锐穿心破军的"}, {"id": "gmvt5st26id6ak", "slot": "佩饰", "grade": 2, "name": "香囊", "img": "pei-xiangnang", "base": {"命中": 3}, "afxT": ["武学伤害 +2%", "会心率 +1pp"], "sell": 320, "fresh": false, "pre": "凌厉通玄的"}, {"id": "gmvt5st26jle64", "slot": "暗器", "grade": 1, "name": "铁蒺藜", "img": "anqi-jili", "base": {"攻击": 59, "命中": 1}, "afxT": [], "sell": 160, "fresh": false, "pre": ""}, {"id": "gmvt5st26klac8", "slot": "衣甲", "grade": 2, "name": "锁子甲", "img": "jia-suozi", "base": {"气血": 423, "防御": 27}, "afxT": ["真气上限 +30"], "sell": 320, "fresh": false, "pre": "蕴气的"}, {"id": "gmvt5st26liei0", "slot": "兵器", "cat": "枪", "grade": 3, "name": "银枪", "img": "qiang-yin", "base": {"攻击": 124, "命中": 1}, "afxT": ["对精英 / Boss 伤害 +2%", "攻击 +2%"], "sell": 640, "fresh": false, "pre": "锋锐破军的"}, {"id": "gmvt5st26mi0h5", "slot": "暗器", "grade": 1, "name": "石囊", "img": "anqi-shi", "base": {"攻击": 40, "命中": 2}, "afxT": ["武学伤害 +1%"], "sell": 160, "fresh": false, "pre": "通玄的"}, {"id": "gmvt5st26nglvx", "slot": "兵器", "cat": "剑", "grade": 2, "name": "青萍剑", "img": "jian-qingping", "base": {"攻击": 96, "命中": 1}, "afxT": ["会心率 +1pp", "命中 +3"], "sell": 320, "fresh": false, "pre": "精准凌厉的"}, {"id": "gmvt5st26ol2tj", "slot": "兵器", "cat": "枪", "grade": 1, "name": "竹枪", "img": "qiang-zhu", "base": {"攻击": 86, "命中": 1}, "afxT": ["会心率 +1pp"], "sell": 160, "fresh": false, "pre": "凌厉的"}], "worn": {"兵器": {"id": "gmvt5st26pe686", "slot": "兵器", "cat": "剑", "grade": 4, "name": "龙泉剑", "img": "jian-longquan", "base": {"攻击": 150}, "afxT": ["攻击 +2%", "会心率 +1pp", "对精英 / Boss 伤害 +3%", "命中 +5"], "sell": 1600, "fresh": true, "pre": "精准凌厉破军锋锐的"}, "暗器": {"id": "gmvt5st26q7gk", "slot": "暗器", "grade": 4, "name": "飞蝗石囊", "img": "anqi-feihuang", "base": {"攻击": 90, "命中": 2}, "afxT": ["命中 +5", "会心伤害 +2pp", "会心率 +1pp", "对精英 / Boss 伤害 +2%"], "sell": 1600, "fresh": true, "pre": "精准凌厉穿心破军的"}, "衣甲": {"id": "gmvt5st26r8nrp", "slot": "衣甲", "grade": 4, "name": "蝮蛇甲", "img": "jia-fushe", "base": {"气血": 599, "防御": 36}, "afxT": ["真气上限 +30", "防御 +2%", "气血 +2%"], "sell": 1600, "fresh": true, "pre": "坚韧强健蕴气的"}, "佩饰": {"id": "gmvt5st26s2nz5", "slot": "佩饰", "grade": 4, "name": "燕尾佩", "img": "pei-yanwei", "base": {"闪避": 5}, "afxT": ["真气上限 +30", "会心率 +1pp", "命中 +5", "武学伤害 +2%"], "sell": 1600, "fresh": true, "pre": "精准凌厉通玄蕴气的"}}, "wx": [{"id": "liuyunjian", "name": "流云剑法", "cat": "剑", "big": "器械", "quality": "寻常", "tag": "刚猛", "effect": "必暴", "ep": "白云出岫，青锋无心", "p": 0.051, "cd": 2, "cost": 250, "mult0": 1.65, "forms": [{"t": "流云出岫", "m": 165, "fx": "必定会心 · 会心伤害 +0%"}, {"t": "回风拂柳", "m": 182, "fx": "必定会心 · 会心伤害 +3%"}, {"t": "云断秋江", "m": 207, "fx": "必定会心 · 会心伤害 +5%"}]}, {"id": "qingpingjian", "name": "青萍剑法", "cat": "剑", "big": "器械", "quality": "寻常", "tag": "绵长", "effect": "运劲", "ep": "风起萍末，寒透青锋", "p": 0.136, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "风起青萍", "m": 148, "fx": "3 回合攻击 +15%"}, {"t": "点水浮萍", "m": 169, "fx": "3 回合攻击 +18%"}, {"t": "一池萍碎", "m": 186, "fx": "3 回合攻击 +20%"}]}, {"id": "songtaojian", "name": "松涛剑法", "cat": "剑", "big": "器械", "quality": "寻常", "tag": "守御", "effect": "回气", "ep": "松声入剑，涛起空山", "p": 0.185, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "空山听松", "m": 148, "fx": "返还耗气 63%"}, {"t": "松针落雪", "m": 169, "fx": "返还耗气 78%"}, {"t": "涛生林壑", "m": 186, "fx": "返还耗气 94%"}]}, {"id": "jiyujian", "name": "疾雨剑法", "cat": "剑", "big": "器械", "quality": "寻常", "tag": "刚猛", "effect": "连击", "ep": "檐声急雨，剑影疏灯", "p": 0.116, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "檐前急雨", "m": 148, "fx": "44% 追加一次普攻"}, {"t": "雨打芭蕉", "m": 165, "fx": "53% 追加一次普攻"}, {"t": "骤雨收声", "m": 186, "fx": "63% 追加一次普攻"}]}, {"id": "jinghongjian", "name": "惊鸿照影剑", "cat": "剑", "big": "器械", "quality": "上乘", "tag": "守御", "effect": "回气", "ep": "惊鸿曾照影，剑过不留痕", "p": 0.087, "cd": 3, "cost": 400, "mult0": 1.9, "forms": [{"t": "惊鸿一瞥", "m": 190, "fx": "返还耗气 50%"}, {"t": "翩若游龙", "m": 202, "fx": "返还耗气 63%"}, {"t": "鸿飞冥冥", "m": 230, "fx": "返还耗气 75%"}, {"t": "孤鸿掠影", "m": 259, "fx": "返还耗气 88%"}, {"t": "惊鸿照影", "m": 299, "fx": "返还耗气 100%"}]}, {"id": "feipuduanyajian", "name": "飞瀑断崖剑", "cat": "剑", "big": "器械", "quality": "上乘", "tag": "绵长", "effect": "运劲", "ep": "绝壁垂白练，寒光落深潭", "p": 0.058, "cd": 4, "cost": 400, "mult0": 2.28, "forms": [{"t": "断崖临渊", "m": 228, "fx": "3 回合攻击 +6%"}, {"t": "白练垂空", "m": 246, "fx": "3 回合攻击 +7%"}, {"t": "飞流千尺", "m": 283, "fx": "3 回合攻击 +8%"}, {"t": "珠碎深潭", "m": 316, "fx": "3 回合攻击 +9%"}, {"t": "崖断水穷", "m": 359, "fx": "3 回合攻击 +10%"}]}, {"id": "cangyajianjue", "name": "苍崖九叠剑", "cat": "剑", "big": "器械", "quality": "绝学", "tag": "刚猛", "effect": "必暴", "ep": "苍崖云九叠，孤剑雪千秋", "p": 0.028, "cd": 4, "cost": 550, "mult0": 2.36, "forms": [{"t": "苍松迎客", "m": 236, "fx": "必定会心 · 会心伤害 +5%"}, {"t": "崖前观云", "m": 276, "fx": "必定会心 · 会心伤害 +7%"}, {"t": "白虹贯日", "m": 303, "fx": "必定会心 · 会心伤害 +8%"}, {"t": "苍龙出海", "m": 328, "fx": "必定会心 · 会心伤害 +10%"}, {"t": "危崖独立", "m": 371, "fx": "必定会心 · 会心伤害 +12%"}, {"t": "万壑松风", "m": 437, "fx": "必定会心 · 会心伤害 +13%"}, {"t": "苍崖一剑", "m": 466, "fx": "必定会心 · 会心伤害 +15%"}]}, {"id": "luoxingjian", "name": "落星沉海剑", "cat": "剑", "big": "器械", "quality": "绝学", "tag": "刚猛", "effect": "蓄势", "ep": "星垂沧海夜，剑落暮潮寒", "p": 0.045, "cd": 5, "cost": 550, "mult0": 2.36, "forms": [{"t": "星垂平野", "m": 236, "fx": "本场每出过一招，本式倍率 +10%"}, {"t": "北斗横斜", "m": 277, "fx": "本场每出过一招，本式倍率 +10%"}, {"t": "流星追月", "m": 321, "fx": "本场每出过一招，本式倍率 +10%"}, {"t": "银河倒挂", "m": 372, "fx": "本场每出过一招，本式倍率 +10%"}, {"t": "天璇落照", "m": 397, "fx": "本场每出过一招，本式倍率 +10%"}, {"t": "七星连珠", "m": 436, "fx": "本场每出过一招，本式倍率 +10%"}, {"t": "落星沉海", "m": 466, "fx": "本场每出过一招，本式倍率 +10%"}]}, {"id": "pofengdao", "name": "破风刀法", "cat": "刀", "big": "器械", "quality": "寻常", "tag": "守御", "effect": "回气", "ep": "风裂长空，刃留秋声", "p": 0.197, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "迎风出鞘", "m": 148, "fx": "返还耗气 63%"}, {"t": "风裂长空", "m": 160, "fx": "返还耗气 78%"}, {"t": "风回刃转", "m": 186, "fx": "返还耗气 94%"}]}, {"id": "kaibeidao", "name": "开碑刀法", "cat": "刀", "big": "器械", "quality": "寻常", "tag": "绵长", "effect": "凝眸", "ep": "断碣残碑，刀痕犹新", "p": 0.068, "cd": 3, "cost": 320, "mult0": 1.98, "forms": [{"t": "碑前立刀", "m": 198, "fx": "3 回合会心 +18 pp"}, {"t": "刻石留痕", "m": 215, "fx": "3 回合会心 +21 pp"}, {"t": "开碑裂碣", "m": 248, "fx": "3 回合会心 +24 pp"}]}, {"id": "shuangfengdao", "name": "霜锋刀法", "cat": "刀", "big": "器械", "quality": "寻常", "tag": "刚猛", "effect": "透劲", "ep": "月照寒锋，霜满关河", "p": 0.144, "cd": 2, "cost": 250, "mult0": 1.65, "forms": [{"t": "晓霜初降", "m": 165, "fx": "无视防御 25%"}, {"t": "锋上凝寒", "m": 190, "fx": "无视防御 30%"}, {"t": "霜天一斩", "m": 207, "fx": "无视防御 35%"}]}, {"id": "kaishanzhang", "name": "摧峰掌法", "cat": "掌", "big": "肉身", "quality": "寻常", "tag": "守御", "effect": "护体", "ep": "巨灵擘山，大河东去", "p": 0.153, "cd": 2, "cost": 250, "mult0": 1.65, "forms": [{"t": "巨灵擘山", "m": 165, "fx": "护体 3% 气血"}, {"t": "劈峡分流", "m": 186, "fx": "护体 4% 气血"}, {"t": "万仞开天", "m": 207, "fx": "护体 4% 气血"}]}, {"id": "zhushazhang", "name": "落霞掌法", "cat": "掌", "big": "肉身", "quality": "寻常", "tag": "诡谲", "effect": "封穴", "ep": "落霞孤鹜，掌底秋红", "p": 0.078, "cd": 3, "cost": 320, "mult0": 1.98, "forms": [{"t": "霞染眉心", "m": 198, "fx": "30% 封穴"}, {"t": "落霞孤鹜", "m": 225, "fx": "38% 封穴"}, {"t": "丹砂封脉", "m": 248, "fx": "45% 封穴"}]}, {"id": "mianrouzhang", "name": "拂柳掌法", "cat": "掌", "big": "肉身", "quality": "寻常", "tag": "刚猛", "effect": "透劲", "ep": "拂面如柳，穿石如泉", "p": 0.26, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "柳絮迎面", "m": 148, "fx": "无视防御 31%"}, {"t": "绵里藏针", "m": 174, "fx": "无视防御 38%"}, {"t": "春水穿石", "m": 186, "fx": "无视防御 44%"}]}, {"id": "baguazhang", "name": "穿宫掌法", "cat": "掌", "big": "肉身", "quality": "寻常", "tag": "诡谲", "effect": "破绽", "ep": "九宫星转，八卦门开", "p": 0.198, "cd": 2, "cost": 190, "mult0": 1.65, "forms": [{"t": "乾坤走转", "m": 165, "fx": "3 回合敌防御 −16%"}, {"t": "坎离换位", "m": 180, "fx": "3 回合敌防御 −20%"}, {"t": "八门洞开", "m": 207, "fx": "3 回合敌防御 −24%"}]}, {"id": "kaibeilieshizhang", "name": "开碑裂石掌", "cat": "掌", "big": "肉身", "quality": "上乘", "tag": "守御", "effect": "护体", "ep": "古碑苔藓尽，掌下石成尘", "p": 0.054, "cd": 4, "cost": 520, "mult0": 2.28, "forms": [{"t": "立掌如碑", "m": 228, "fx": "护体 5% 气血"}, {"t": "铁掌摩崖", "m": 263, "fx": "护体 5% 气血"}, {"t": "石破天惊", "m": 292, "fx": "护体 6% 气血"}, {"t": "碎石成尘", "m": 313, "fx": "护体 7% 气血"}, {"t": "开碑裂石", "m": 359, "fx": "护体 8% 气血"}]}, {"id": "yinfengguikuzhang", "name": "阴风鬼哭掌", "cat": "掌", "big": "肉身", "quality": "上乘", "tag": "守御", "effect": "回元", "ep": "荒冢阴风起，寒林鬼火青", "p": 0.068, "cd": 3, "cost": 520, "mult0": 2.28, "forms": [{"t": "夜起阴风", "m": 228, "fx": "回真气 240"}, {"t": "磷火幽幽", "m": 255, "fx": "回真气 300"}, {"t": "寒鸦啼夜", "m": 290, "fx": "回真气 360"}, {"t": "孤坟鬼哭", "m": 333, "fx": "回真气 420"}, {"t": "阴风过岗", "m": 359, "fx": "回真气 480"}]}, {"id": "wuducuanxinzhang", "name": "五毒攒心掌", "cat": "掌", "big": "肉身", "quality": "上乘", "tag": "刚猛", "effect": "透劲", "ep": "荒坟蛇蝎伏，寒侵五内深", "p": 0.074, "cd": 4, "cost": 400, "mult0": 2.28, "forms": [{"t": "蟾吐阴雾", "m": 228, "fx": "无视防御 13%"}, {"t": "蜈蚣攀棺", "m": 254, "fx": "无视防御 15%"}, {"t": "蛛垂古墓", "m": 284, "fx": "无视防御 18%"}, {"t": "青蛇绕碑", "m": 311, "fx": "无视防御 20%"}, {"t": "五毒攒心", "m": 359, "fx": "无视防御 23%"}]}, {"id": "haichaotunyuezhang", "name": "海潮吞月掌", "cat": "掌", "big": "肉身", "quality": "绝学", "tag": "绵长", "effect": "运劲", "ep": "海上生明月，潮至月无痕", "p": 0.05, "cd": 4, "cost": 550, "mult0": 2.36, "forms": [{"t": "夜潮初涨", "m": 236, "fx": "3 回合攻击 +16%"}, {"t": "浪涌海市", "m": 272, "fx": "3 回合攻击 +17%"}, {"t": "雾海生烟", "m": 308, "fx": "3 回合攻击 +19%"}, {"t": "暗流噬岸", "m": 330, "fx": "3 回合攻击 +20%"}, {"t": "千浪叠月", "m": 355, "fx": "3 回合攻击 +22%"}, {"t": "月沉沧海", "m": 406, "fx": "3 回合攻击 +23%"}, {"t": "潮吞明月", "m": 466, "fx": "3 回合攻击 +25%"}]}, {"id": "qianshesixinzhang", "name": "千蛇噬心掌", "cat": "掌", "big": "肉身", "quality": "绝学", "tag": "诡谲", "effect": "迷目", "ep": "幽窟千蛇出，寒心寸寸灰", "p": 0.053, "cd": 5, "cost": 550, "mult0": 2.83, "forms": [{"t": "蛇蜕新衣", "m": 283, "fx": "3 回合敌命中 −12"}, {"t": "群蛇出窟", "m": 316, "fx": "3 回合敌命中 −13"}, {"t": "金环缠腕", "m": 346, "fx": "3 回合敌命中 −15"}, {"t": "竹叶藏青", "m": 384, "fx": "3 回合敌命中 −16"}, {"t": "五步回眸", "m": 437, "fx": "3 回合敌命中 −17"}, {"t": "腹中蛊动", "m": 490, "fx": "3 回合敌命中 −19"}, {"t": "千蛇噬心", "m": 559, "fx": "3 回合敌命中 −20"}]}, {"id": "wanduguizongzhang", "name": "万毒归宗掌", "cat": "掌", "big": "肉身", "quality": "绝学", "tag": "诡谲", "effect": "封穴", "ep": "蛮烟千嶂合，群蛊暮归宗", "p": 0.038, "cd": 4, "cost": 720, "mult0": 2.83, "forms": [{"t": "瘴雨侵林", "m": 283, "fx": "45% 封穴"}, {"t": "腐叶生烟", "m": 326, "fx": "50% 封穴"}, {"t": "毒雾锁江", "m": 368, "fx": "55% 封穴"}, {"t": "蛇蝎同穴", "m": 397, "fx": "60% 封穴"}, {"t": "苗岭吐瘴", "m": 462, "fx": "65% 封穴"}, {"t": "黑水吞山", "m": 491, "fx": "70% 封穴"}, {"t": "万蛊朝宗", "m": 559, "fx": "75% 封穴"}]}, {"id": "hanchanqiqiezhang", "name": "寒蝉凄切掌", "cat": "掌", "big": "肉身", "quality": "绝学", "tag": "阴毒", "effect": "附毒", "ep": "长亭骤雨歇，掌底噤寒蝉", "p": 0.055, "cd": 4, "cost": 410, "mult0": 2.36, "forms": [{"t": "对长亭晚", "m": 236, "fx": "叠毒 +1 层 · 25% 再 +1"}, {"t": "骤雨初歇", "m": 254, "fx": "叠毒 +1 层 · 33% 再 +1"}, {"t": "执手相看", "m": 275, "fx": "叠毒 +1 层 · 42% 再 +1"}, {"t": "千里烟波", "m": 319, "fx": "叠毒 +1 层 · 50% 再 +1"}, {"t": "暮霭沉沉", "m": 357, "fx": "叠毒 +1 层 · 58% 再 +1"}, {"t": "杨柳岸边", "m": 406, "fx": "叠毒 +1 层 · 67% 再 +1"}, {"t": "晓风残月", "m": 466, "fx": "叠毒 +1 层 · 75% 再 +1"}]}, {"id": "cunjinzhi", "name": "点睛指法", "cat": "指", "big": "肉身", "quality": "寻常", "tag": "守御", "effect": "回气", "ep": "龙成待点，指落云生", "p": 0.207, "cd": 2, "cost": 190, "mult0": 1.65, "forms": [{"t": "一点灵犀", "m": 165, "fx": "返还耗气 50%"}, {"t": "方寸之间", "m": 188, "fx": "返还耗气 63%"}, {"t": "画龙点睛", "m": 207, "fx": "返还耗气 75%"}]}, {"id": "chuomaizhi", "name": "溯泉指法", "cat": "指", "big": "肉身", "quality": "寻常", "tag": "守御", "effect": "回元", "ep": "循溪到源，泉出空山", "p": 0.26, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "循溪溯源", "m": 148, "fx": "回真气 200"}, {"t": "一指截流", "m": 173, "fx": "回真气 250"}, {"t": "泉归故渠", "m": 186, "fx": "回真气 300"}]}, {"id": "xiulizhen", "name": "暗香飞针", "cat": "暗器", "big": "暗器", "quality": "寻常", "tag": "阴毒", "effect": "附毒", "ep": "梅边月下，香暗针寒", "p": 0.137, "cd": 2, "cost": 250, "mult0": 1.65, "forms": [{"t": "暗香浮动", "m": 165, "fx": "叠毒 +1 层"}, {"t": "疏影横斜", "m": 188, "fx": "叠毒 +1 层 · 13% 再 +1"}, {"t": "梅落寒枝", "m": 207, "fx": "叠毒 +1 层 · 25% 再 +1"}]}, {"id": "liuyebiao", "name": "折柳飞镖", "cat": "暗器", "big": "暗器", "quality": "寻常", "tag": "刚猛", "effect": "透劲", "ep": "灞桥折柳，此去无归", "p": 0.26, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "灞桥折柳", "m": 148, "fx": "无视防御 31%"}, {"t": "百步穿杨", "m": 164, "fx": "无视防御 38%"}, {"t": "柳下飞刃", "m": 186, "fx": "无视防御 44%"}]}, {"id": "jiliding", "name": "疏星飞钉", "cat": "暗器", "big": "暗器", "quality": "寻常", "tag": "守御", "effect": "回元", "ep": "疏星满地，夜路生寒", "p": 0.143, "cd": 3, "cost": 320, "mult0": 1.98, "forms": [{"t": "星落满地", "m": 198, "fx": "回真气 240"}, {"t": "寸步荆榛", "m": 221, "fx": "回真气 300"}, {"t": "收星入囊", "m": 248, "fx": "回真气 360"}]}, {"id": "lianhuantui", "name": "穿花腿法", "cat": "腿", "big": "肉身", "quality": "寻常", "tag": "守御", "effect": "护体", "ep": "蛱蝶穿花，落红不惊", "p": 0.13, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "穿花三叠", "m": 148, "fx": "护体 4% 气血"}, {"t": "落红成阵", "m": 166, "fx": "护体 4% 气血"}, {"t": "花影护身", "m": 186, "fx": "护体 5% 气血"}]}, {"id": "chuanlintui", "name": "烟雨腿法", "cat": "腿", "big": "肉身", "quality": "寻常", "tag": "绵长", "effect": "轻身", "ep": "何妨吟啸，且自徐行", "p": 0.139, "cd": 1, "cost": 190, "mult0": 1.48, "forms": [{"t": "穿林打叶", "m": 148, "fx": "3 回合闪避 +20"}, {"t": "竹杖芒鞋", "m": 170, "fx": "3 回合闪避 +25"}, {"t": "一蓑烟雨", "m": 186, "fx": "3 回合闪避 +30"}]}, {"id": "tongbiquan", "name": "啸猿拳法", "cat": "拳", "big": "肉身", "quality": "寻常", "tag": "刚猛", "effect": "必暴", "ep": "猿啸千峰，月冷空山", "p": 0.047, "cd": 3, "cost": 250, "mult0": 1.98, "forms": [{"t": "猿臂轻舒", "m": 198, "fx": "必定会心 · 会心伤害 +0%"}, {"t": "啼猿过涧", "m": 224, "fx": "必定会心 · 会心伤害 +1%"}, {"t": "千峰啸月", "m": 248, "fx": "必定会心 · 会心伤害 +3%"}]}]};
+</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => Math.round(n).toLocaleString('en-US');
+const GN = ['', '凡品', '良品', '上乘', '珍品', '极品'];
+const SHAPE = { 兵器: [1, 3], 暗器: [1, 2], 衣甲: [2, 2], 佩饰: [1, 1] };
+const BASE = ['攻击', '气血', '防御', '命中', '闪避'];
+const SLOT_ORDER = { 兵器: 0, 暗器: 1, 衣甲: 2, 佩饰: 3 };
+const ART = '../../code/public/art';
+const clone = (o) => JSON.parse(JSON.stringify(o));
+let st, page = 'bag';
+
+/* 画在舞台上：按宽铺满（左右最多裁 1.5%），上下居中 */
+function place() {
+  const s = $('stage'), W = s.clientWidth, H = s.clientHeight;
+  const pw = Math.min(Math.max(W, H * 16 / 9), W / 0.985), ph = pw * 9 / 16;
+  s.style.setProperty('--pw', `${pw}px`); s.style.setProperty('--pl', `${(W - pw) / 2}px`); s.style.setProperty('--pt', `${(H - ph) / 2}px`);
+}
+new ResizeObserver(() => { place(); if (!st) return; page === 'bag' ? drawBag() : drawWg(); }).observe($('stage'));
+
+/* ═══════════ 行囊 ═══════════ */
+/* 人影四处挂点（画幅 %，按 bg.jpg 中人影量取）与对应小框的位置 */
+const WEAR_AT = { 佩饰: [[27, 28], [37.5, 24]], 衣甲: [[25.5, 37], [12, 33]], 暗器: [[27, 47], [37.5, 46]], 兵器: [[20.5, 56], [12, 58]] };
+const LEFT = { 衣甲: 1, 兵器: 1 };
+/* 包袱布面（画幅 %）：格子在这块里按格数排、居中 */
+const CLOTH = { x: 47.5, y: 37.5, w: 44, h: 47 };
+let sort = 'new', sel = null;
+const cellsOf = (it) => SHAPE[it.slot][0] * SHAPE[it.slot][1];
+const better = (it) => { const w = st.worn[it.slot]; if (!w) return false; const sum = (g) => BASE.reduce((a, k) => a + (g.base[k] || 0) * (k === '气血' ? .1 : 1), 0); return sum(it) > sum(w); };
+
+function drawBag() {
+  const pw = parseFloat(getComputedStyle($('stage')).getPropertyValue('--pw')), ph = pw * 9 / 16;
+  const used = st.bag.reduce((a, it) => a + cellsOf(it), 0);
+  $('bagSub').innerHTML = `背包 <b>${used}</b> / ${st.cells} 格`;
+  $('sortSeg').innerHTML = [['new', '新得'], ['grade', '品阶'], ['slot', '部位']].map(([k, n]) => `<button class="${sort === k ? 'on' : ''}" data-s="${k}">${n}</button>`).join('');
+  $('sortSeg').querySelectorAll('button').forEach((b) => b.onclick = () => { sort = b.dataset.s; drawBag(); });
+  $('sellLow').disabled = !st.bag.some((g) => g.grade < 3);
+
+  // 人影四处挂点 → 金线 → 小框
+  let lines = '', wears = '';
+  for (const slot of ['佩饰', '衣甲', '暗器', '兵器']) {
+    const [[px, py], [fx, fy]] = WEAR_AT[slot], it = st.worn[slot];
+    lines += `<line x1="${px}" y1="${py}" x2="${fx}" y2="${fy}" style="${it ? '' : 'stroke:oklch(0.7 0.02 262 / .4)'}"/>`;
+    wears += `<div class="ring${it ? '' : ' empty'}" style="left:${px}%;top:${py}%"></div>`;
+    wears += it
+      ? `<button class="wear${LEFT[slot] ? ' l' : ''}${sel === it.id ? ' sel' : ''}" data-id="${it.id}" style="left:${fx}%;top:${fy}%;--gc:var(--g${it.grade})" data-tip="${it.pre}${it.name} · ${GN[it.grade]}"><span class="fr"><img src="${ART}/gear/${it.img}.png" alt=""></span><span class="lb">${slot}</span></button>`
+      : `<div class="wear empty${LEFT[slot] ? ' l' : ''}" style="left:${fx}%;top:${fy}%"><span class="fr"></span><span class="lb">${slot}</span></div>`;
+  }
+  const sum = {}; Object.values(st.worn).forEach((it) => BASE.forEach((k) => { if (it.base[k]) sum[k] = (sum[k] || 0) + it.base[k]; }));
+  wears += `<div class="wsum" style="left:25%;top:84%">${BASE.filter((k) => sum[k]).map((k) => `<span>${k}<b>+${fmt(sum[k])}</b></span>`).join('')}</div>`;
+  $('blinks').innerHTML = lines; $('wears').innerHTML = wears;
+
+  // 包袱上的形态格：10 列，行数随容量；格子取正方形、在布面里居中
+  const cols = 10, rows = st.cells / cols;
+  const cw = CLOTH.w / 100 * pw, chh = CLOTH.h / 100 * ph, cs = Math.floor(Math.min(cw / cols, chh / rows));
+  const c = $('cloth');
+  Object.assign(c.style, { left: `calc(${CLOTH.x}% + ${(cw - cs * cols) / 2}px)`, top: `calc(${CLOTH.y}% + ${(chh - cs * rows) / 2}px)`,
+    gridTemplateColumns: `repeat(${cols}, ${cs}px)`, gridTemplateRows: `repeat(${rows}, ${cs}px)` });
+  const list = [...st.bag].sort(sort === 'new' ? (a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0) || b.grade - a.grade
+    : sort === 'grade' ? (a, b) => b.grade - a.grade : (a, b) => SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot] || b.grade - a.grade);
+  c.innerHTML = list.map((it) => { const [w, h] = SHAPE[it.slot];
+    return `<button class="it g${it.grade}${sel === it.id ? ' sel' : ''}" data-id="${it.id}" style="grid-column:span ${w};grid-row:span ${h};--gc:var(--g${it.grade})" data-tip="${it.pre}${it.name} · ${GN[it.grade]}">`
+      + `${it.fresh ? '<span class="fresh"></span>' : ''}${better(it) ? '<span class="up">▲</span>' : ''}<img src="${ART}/gear/${it.img}.png" alt=""></button>`; }).join('')
+    + Array.from({ length: Math.max(0, st.cells - used) }, () => '<i class="cell"></i>').join('');
+  document.querySelectorAll('#cloth .it, #wears .wear[data-id]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); sel = sel === b.dataset.id ? null : b.dataset.id; drawBag(); });
+  drawTag();
+}
+
+function drawTag() {
+  const host = $('tagHost'); host.innerHTML = '';
+  if (!sel) return;
+  const isWorn = Object.values(st.worn).some((g) => g.id === sel);
+  const it = isWorn ? Object.values(st.worn).find((g) => g.id === sel) : st.bag.find((g) => g.id === sel);
+  if (!it) { sel = null; return; }
+  const cur = isWorn ? null : st.worn[it.slot];
+  const keys = BASE.filter((k) => it.base[k] || (cur && cur.base[k]));
+  const rows = keys.map((k) => { const a = it.base[k] || 0, d = a - (cur ? cur.base[k] || 0 : 0);
+    return `<div class="row"><span class="k">${k}</span><span class="v">+${fmt(a)}</span><span class="d ${d > 0 ? 'up' : d < 0 ? 'dn' : ''}">${isWorn ? '' : d > 0 ? `▲ ${fmt(d)}` : d < 0 ? `▼ ${fmt(-d)}` : '—'}</span></div>`; }).join('');
+  const t = document.createElement('div'); t.className = 'tag'; t.style.setProperty('--pgc', `var(--pg${it.grade})`);
+  t.innerHTML = `<div class="nm"><span class="pre">${it.pre}</span>${it.name}</div><div class="meta"><span class="gr">${GN[it.grade]}</span> · ${it.slot}${it.cat ? ' · ' + it.cat : ''}</div><hr>`
+    + rows + `<hr><div class="afx">${it.afxT.join('<br>')}</div>`
+    + `<div class="acts">${isWorn ? '<button class="sub" data-a="off">卸下</button>' : `<button class="main" data-a="on">穿戴</button><button class="sub" data-a="sell">卖 ${fmt(it.sell)} 两</button>`}</div>`;
+  host.appendChild(t);
+  t.onclick = (e) => e.stopPropagation();
+  t.querySelectorAll('button').forEach((b) => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === 'on') { const old = st.worn[it.slot]; st.bag = st.bag.filter((g) => g.id !== it.id); if (old) st.bag.unshift({ ...old, fresh: false }); st.worn[it.slot] = { ...it, fresh: false }; sel = it.id; }
+    if (a === 'off') { st.bag.unshift({ ...it, fresh: false }); delete st.worn[it.slot]; sel = null; }
+    if (a === 'sell') { st.bag = st.bag.filter((g) => g.id !== it.id); st.silver += it.sell; $('silver').textContent = fmt(st.silver); sel = null; }
+    drawBag();
+  });
+  // 纸签放在选中物件旁：包袱上的放左边，放不下放右边；身上的放小框右边
+  const S = $('stage').getBoundingClientRect(), el = document.querySelector(`[data-id="${sel}"]`).getBoundingClientRect();
+  const w = t.offsetWidth, h = t.offsetHeight;
+  let x = el.right - S.left + 12;
+  if (x + w > S.width - 8) x = el.left - S.left - w - 12;
+  let y = el.top - S.top + el.height / 2 - h / 2;
+  t.style.left = `${Math.max(8, Math.min(S.width - w - 8, x))}px`; t.style.top = `${Math.max(110, Math.min(S.height - h - 10, y))}px`;
+}
+$('sellLow').onclick = () => { const low = st.bag.filter((g) => g.grade < 3); st.silver += low.reduce((a, g) => a + g.sell, 0); st.bag = st.bag.filter((g) => g.grade >= 3); $('silver').textContent = fmt(st.silver); sel = null; drawBag(); };
+
+/* ═══════════ 武功（甲一 · 目录竖写）═══════════ */
+const CATS = ['剑', '刀', '枪', '棍', '拳', '掌', '指', '腿', '暗器', '内功'];
+const CAT_FILE = { 内功: 'neigong', 剑: 'jian', 刀: 'dao', 枪: 'qiang', 棍: 'gun', 拳: 'quan', 掌: 'zhang', 指: 'zhi', 腿: 'tui', 暗器: 'anqi' };
+const CAT_Y = [11.5, 18.9, 26.3, 33.7, 41.1, 48.5, 55.9, 63.3, 70.7, 78.1];
+const CN = ['', '一', '二', '三', '四', '五', '六', '七'];
+const QN = { 寻常: 1, 上乘: 2, 绝学: 3 };
+const hash = (t) => [...t].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const figOf = (c, id) => `${ART}/wugong/st-${CAT_FILE[c]}-${hash(id) % 4}.png`;
+const FX_FILE = { 必暴: 'bibao', 透劲: 'toujin', 连击: 'lianji', 蓄势: 'xushi', 反震: 'fanzhen', 运劲: 'yunjin', 凝眸: 'ningmou', 轻身: 'qingshen',
+  回气: 'huiqi', 回元: 'huiyuan', 护体: 'huti', 封穴: 'fengxue', 卸力: 'xieli', 迷目: 'mimu', 破绽: 'pozhan', 附毒: 'fudu', 引爆: 'yinbao' };
+const TIER = ['生疏', '熟练', '精通', '圆满'];
+const NG = [
+  { id: 'shigu', name: '蚀骨心法', quality: '寻常', route: '蚀骨', zhong: 64, cap: '大成 · 6 重', attrs: [['气血', 22092], ['攻击', 2455], ['防御', 1160], ['命中', 38], ['闪避', 10]],
+    yj: [['施毒', '开战施毒 <b>3</b> 层，每次命中 <b>+1</b> 层'], ['毒伤', '攻击 × <b>30%</b> × 层数，<b>无视防御</b>'], ['毒层', '上限 <b>10</b> 层'], ['毒爆', '满层引爆 <b>80%</b>'], ['代价', '普攻伤害 <b>×0.60</b>'], ['气海', '×<b>1.0</b> · 真气上限 <b>1640</b>']] },
+  { id: 'baichuan', name: '百川诀', quality: '寻常', route: '狂澜', zhong: 61, cap: '大成 · 6 重', attrs: [['气血', 20110], ['攻击', 2702], ['防御', 1040], ['命中', 38], ['闪避', 10]],
+    yj: [['会心', '会心率 <b>+8pp</b>，会心伤害 <b>+30pp</b>'], ['先手', '开战首击<b>必定会心</b>'], ['叠浪', '每次会心叠 1 重，叠满 <b>3</b> 重'], ['排山倒海', '叠满时施展 <b>550%</b>'], ['气海', '×<b>1.0</b> · 真气上限 <b>1640</b>']] },
+  { id: 'dingjing', name: '定慧功', quality: '寻常', route: '镇岳', zhong: 61, cap: '大成 · 6 重', attrs: [['气血', 24310], ['攻击', 2210], ['防御', 1390], ['命中', 38], ['闪避', 10]],
+    yj: [['护盾', '开战得 <b>18%</b> 气血护盾'], ['反伤', '受击反伤 <b>12%</b>'], ['防御', '防御 <b>+15%</b>'], ['气海', '×<b>1.0</b> · 真气上限 <b>1640</b>']] },
+];
+let cat = '剑', wpage = 0, open = null, ICSET = 'a', WFONT = 'wk';
+const PER = 8;
+const itemsOf = (c) => c === '内功' ? NG.map((n) => ({ ...n, cat: '内功', ng: true })) : st.wx.filter((w) => w.cat === c);
+/* 属性条按名录里的最大值归一 */
+const MAXV = () => ({ mult: Math.max(...MOCK.wx.map((w) => w.mult0)), p: Math.max(...MOCK.wx.map((w) => w.p)), cost: Math.max(...MOCK.wx.map((w) => w.cost)), cd: 6 });
+
+function drawWg() {
+  const ic = (c) => `${ART}/wugong/icset/a-${CAT_FILE[c]}.png`;
+  $('sc-wg').dataset.ic = ICSET;
+  $('wcats').innerHTML = CATS.map((c, i) => { const n = itemsOf(c).length;
+    return `<button class="wcat${cat === c ? ' on' : ''}" style="left:3.6%;top:${CAT_Y[i]}%" ${n ? '' : 'disabled'} data-c="${c}" aria-label="${c}" data-tip="${c} · ${n ? n + (c === '内功' ? ' 部' : ' 门') : '尚无'}"><img src="${ic(c)}" alt=""></button>`; }).join('');
+  $('wcats').querySelectorAll('.wcat').forEach((b) => b.onclick = () => { cat = b.dataset.c; wpage = 0; const it = itemsOf(cat); open = it.length ? `${it[0].ng ? 'ng' : 'wx'}:${it[0].id}` : open; drawWg(); });
+  const items = itemsOf(cat), pages = Math.max(1, Math.ceil(items.length / PER)); wpage = Math.min(wpage, pages - 1);
+  if (!open || !items.some((w) => open.endsWith(':' + w.id))) open = items.length ? `${items[0].ng ? 'ng' : 'wx'}:${items[0].id}` : `ng:${st.main}`;
+  $('toc').innerHTML = items.slice(wpage * PER, wpage * PER + PER).map((w, ci) => { const k = `${w.ng ? 'ng' : 'wx'}:${w.id}`;
+    const eq = w.ng ? w.id === st.main : st.eq.includes(w.id), ghost = !w.ng && st.ghost.includes(w.id);
+    return `<button class="q${QN[w.quality]}${open === k ? ' on' : ''}${ghost ? ' ghost' : ''}${eq ? ' equipped' : ''}" data-k="${k}" style="left:${8.5 + ci * 10.3}%" data-tip="${w.quality}${eq ? (w.ng ? ' · 主修' : ' · 已装配') : ghost ? ' · 未得整本' : ''}"><span>${w.name}</span></button>`; }).join('');
+  $('toc').querySelectorAll('button').forEach((b) => b.onclick = () => { open = b.dataset.k; drawWg(); });
+  $('tocpg').innerHTML = pages > 1 ? `<button ${wpage ? '' : 'disabled'} data-d="-1">‹</button><span>${wpage + 1} / ${pages}</span><button ${wpage < pages - 1 ? '' : 'disabled'} data-d="1">›</button>` : '';
+  $('tocpg').querySelectorAll('button').forEach((b) => b.onclick = () => { wpage += +b.dataset.d; drawWg(); });
+  // 装配：主修 + 装配位
+  const main = NG.find((n) => n.id === st.main);
+  let eqs = `<button class="eq main${open === 'ng:' + st.main ? ' sel' : ''}" data-k="ng:${st.main}" data-tip="主修 · ${main.name} · 第 ${main.zhong} 重"><img src="${ic('内功')}" alt=""><span class="nm">${main.name}</span></button>`;
+  for (let i = 0; i < st.slots; i++) { const id = st.eq[i], w = id && st.wx.find((x) => x.id === id);
+    eqs += w ? `<button class="eq q${QN[w.quality]}${open === 'wx:' + id ? ' sel' : ''}" data-k="wx:${id}" data-tip="${w.name} · ${w.quality} · 触发 ${Math.round(w.p * 100)}%"><img src="${ic(w.cat)}" alt=""><span class="nm">${w.name}</span></button>` : '<span class="eq empty" data-tip="空位"></span>'; }
+  $('eqrow').innerHTML = eqs;
+  $('eqrow').querySelectorAll('button.eq').forEach((b) => b.onclick = () => { open = b.dataset.k; const [kd, id] = open.split(':'); cat = kd === 'ng' ? '内功' : st.wx.find((x) => x.id === id).cat;
+    wpage = Math.floor(itemsOf(cat).findIndex((x) => x.id === id) / PER); drawWg(); });
+  drawDetail();
+}
+
+function drawDetail() {
+  const [kd, id] = open.split(':'), pw = parseFloat(getComputedStyle($('stage')).getPropertyValue('--pw')), ph = pw * 9 / 16;
+  const d = kd === 'ng' ? NG.find((n) => n.id === id) : st.wx.find((w) => w.id === id);
+  const longF = kd === 'ng' || d.forms.length > 4;
+  const tf = Math.min(pw * .06, ph * (longF ? .25 : .32) / d.name.length);
+  const ep = (d.ep || (kd === 'ng' ? '散功重修，根骨不失' : '')).split(/[，,]/);
+  let html = `<div class="ttl q${QN[d.quality]}" style="--tf:${tf}px">${d.name}</div>`
+    + `<div class="tseal" style="left:calc(82.5% + ${tf * .55}px);top:calc(6% + ${tf * d.name.length - pw * .02}px)">${d.quality.slice(0, 2)}</div>`
+    + `<div class="verse">${ep.map((t) => `<span>${t}</span>`).join('')}</div>`;
+  if (kd === 'ng') {
+    const isMain = id === st.main, mx = { 气血: 30000, 攻击: 3500, 防御: 1800, 命中: 60, 闪避: 20 };
+    html += `<div class="zh5" style="top:33.5%">第 <b>${isMain ? d.zhong : d.zhong - 3}</b> 重<span>${isMain ? '主修 · ' : '转修后 · '}最高至${d.cap}</span></div>`
+      + `<div class="wsec" style="top:41%">心法</div><div class="attrs5" style="top:45%;gap:0">${d.yj.slice(0, 5).map(([k, v]) => `<div class="yj">${k}　${v}</div>`).join('')}</div>`
+      + `<div class="wsec" style="top:62%">属性</div><div class="attrs5" style="top:66%;gap:calc(var(--pw) * .003)">${d.attrs.map(([k, v]) => `<div class="r"><span class="k">${k}</span><span class="bar"><i style="width:${Math.min(100, v / mx[k] * 100)}%"></i></span><span class="v">+${fmt(v)}</span></div>`).join('')}</div>`
+      + `<div class="wact">${isMain ? '<span class="need">还差 3.2万 内力</span><button disabled>精进一重</button>' : `<button class="${d.route === '蚀骨' ? '' : 'quiet'}">${d.route === '蚀骨' ? '转修' : '散功重修'}</button>`}</div>`;
+    $('wdetail').innerHTML = html; return;
+  }
+  const on = st.eq.includes(id), ghost = st.ghost.includes(id), full = st.eq.length >= st.slots, weapon = '剑';
+  const need = ghost ? '缺第一式残页' : on ? '' : full ? '装配已满 · 先卸下一门'
+    : d.big === '器械' && d.cat !== weapon ? `须持${d.cat}方可装配` : '';
+  const learned = ghost ? 0 : Math.min(d.forms.length, 2 + (d.name.length % 3));
+  const n = d.forms.length, dia = pw * .046, rows = n > 4 ? 2 : 1, rowH = (dia + pw * .01) / ph * 100;
+  const forms = d.forms.map((f, i) => { const k = i + 1, ok = k <= learned, tier = !ok ? 0 : k < learned ? 3 : 1 + (k % 2), frac = ok ? [0.12, 0.4, 0.72, 1][tier] : 0, C = 2 * Math.PI * 46;
+    const tip = `第${CN[k]}式 · ${f.t}<br>×${f.m}%${f.fx ? ' · ' + f.fx : ''}<br>${ok ? TIER[tier] : (d.quality === '寻常' || k === learned + 1 ? '待前式圆满' : '缺残页')}`;
+    return `<div class="fmd${ok ? '' : ' lock'}${ok && tier === 3 ? ' t3' : ''}" style="--d:${dia}px" data-tip="${tip}"><img src="${figOf(d.cat, d.id + k)}" alt="">`
+      + `<svg viewBox="0 0 100 100"><circle class="bgc" cx="50" cy="50" r="46"/><circle class="fg" cx="50" cy="50" r="46" stroke-dasharray="${C * frac} ${C}"/></svg></div>`; }).join('');
+  const M = MAXV(), bars = [['伤害', d.mult0 / M.mult, `×${Math.round(d.mult0 * 100)}%`], ['触发', d.p / M.p, `${Math.round(d.p * 100)}%`], ['耗气', d.cost / M.cost, d.cost], ['冷却', d.cd / M.cd, `${d.cd} 回合`]];
+  const y0 = rows > 1 ? 34 : 41, ya = y0 + 5.5 + rows * rowH + 2;
+  html += `<div class="wsec" style="top:${y0}%">招式</div><div class="forms5" style="top:${y0 + 5.5}%">${forms}</div>`
+    + `<div class="wsec" style="top:${ya}%">属性</div><div class="attrs5" style="top:${ya + 4.5}%">${bars.map(([k, v, t]) => `<div class="r"><span class="k">${k}</span><span class="bar"><i style="width:${Math.round(v * 100)}%"></i></span><span class="v">${t}</span></div>`).join('')}`
+    + `<div class="fxr"><img src="${ART}/wugong/fx-${FX_FILE[d.effect]}.png" alt="">${d.effect} · ${d.tag}</div></div>`
+    + `<div class="wact">${need ? `<span class="need">${need}</span>` : ''}${on ? '<button class="quiet" data-a="off">卸下</button>' : `<button data-a="on" ${need ? 'disabled' : ''}>装配</button>`}</div>`;
+  $('wdetail').innerHTML = html;
+  $('wdetail').querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'on') st.eq.push(id); else st.eq = st.eq.filter((x) => x !== id); drawWg(); });
+}
+/* ─── 悬停、切页、预设 ─── */
+const tip = $('tip');
+document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) return; tip.innerHTML = t.dataset.tip; tip.classList.add('on');
+  const r = t.getBoundingClientRect(); tip.style.left = `${Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`; tip.style.top = `${r.bottom + 8}px`; });
+document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tip.classList.remove('on'); });
+document.addEventListener('click', () => { tip.classList.remove('on'); if (sel) { sel = null; drawBag(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sel) { sel = null; drawBag(); } });
+function show(p) { page = p; document.querySelectorAll('#nav button[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
+  $('sc-bag').classList.toggle('off', p !== 'bag'); $('sc-wg').classList.toggle('off', p !== 'wg'); p === 'bag' ? drawBag() : drawWg(); }
+document.querySelectorAll('#nav button[data-p]').forEach((b) => b.onclick = () => show(b.dataset.p));
+
+const firstOf = (c, n) => MOCK.wx.filter((w) => w.cat === c).slice(0, n).map((w) => w.id);
+const PRESETS = {
+  mid: { label: '中期', make: () => ({ bag: clone(MOCK.bag), worn: clone(MOCK.worn), cells: 80, silver: 2140,
+    wx: clone(MOCK.wx), eq: ['songtaojian', 'jinghongjian', 'cangyajianjue', 'liuyunjian', ...firstOf('掌', 2), ...firstOf('暗器', 1)].filter((id) => MOCK.wx.some((w) => w.id === id)), slots: 8, main: 'shigu', ghost: [MOCK.wx.filter((w) => w.cat === '剑')[7].id, MOCK.wx.filter((w) => w.cat === '掌')[10].id] }) },
+  full: { label: '包满 · 包罗万象', make: () => { const p = PRESETS.mid.make(); const more = []; let i = 0;
+    while (p.bag.concat(more).reduce((a, it) => a + cellsOf(it), 0) < 92) { const b = clone(MOCK.bag[i % MOCK.bag.length]); b.id += 'x' + i; b.fresh = false; more.push(b); i++; }
+    return { ...p, bag: p.bag.concat(more), cells: 100 }; } },
+  fresh: { label: '初入江湖', make: () => ({ bag: clone(MOCK.bag.slice(10, 15)), worn: { 兵器: clone(MOCK.worn['兵器']) }, cells: 80, silver: 120,
+    wx: clone(MOCK.wx.filter((w) => w.quality === '寻常').slice(0, 3)), eq: [MOCK.wx[0].id], slots: 5, main: 'shigu', ghost: [] }) },
+};
+function load(k) { st = PRESETS[k].make(); sel = null; open = null; cat = '剑'; wpage = 0; $('silver').textContent = fmt(st.silver);
+  document.querySelectorAll('.proto > button').forEach((b) => b.classList.toggle('on', b.dataset.k === k)); show(page); }
+Object.entries(PRESETS).forEach(([k, p]) => { const b = document.createElement('button'); b.textContent = p.label; b.dataset.k = k; b.onclick = () => load(k); $('proto').appendChild(b); });
+place(); load('mid');
+</script>
+</body>
+</html>

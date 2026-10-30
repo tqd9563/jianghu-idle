@@ -1,12 +1,10 @@
 /**
- * 武功页 · 内功书页（磁青书两页）—— docs/design/gongfa-prototype.html。
- * 左页：竖写书名、品质 / 路数章、第几重与最高可至、「主修」朱印；内功提供的基础属性（气血 / 攻击 / 防御 / 命中 / 闪避）；
- *       主修那本底部「精进一重」（临关、缺卷册、内力不足时置灰，缘由写在按钮上方），其它的写转修 / 散功重修。
- * 右页：心法要诀，每条一行：名目 + 当前生效值，右侧挂会改它的关名（改了什么只放悬停）。
+ * 武功页 · 内功详情（题跋右侧）—— docs/design/bag-wugong-prototype.html。旧版磁青书页见 gongfa-prototype.html。
+ * 重数行 → 心法要诀（每条名目 + 当前生效值）→ 五项属性条（以练到最高重为满格）→ 右下精进一重 / 转修 / 散功重修（不能做时缘由写在按钮左侧）。
  * 非主修那本按转修后的样子显示：同路重数减 3、跨路从 0 重起，已过之关须重新顿悟（engine zhongAfterSwitch）。
  * 数值出自 sect-neigong/spec.md §1；要诀一律显示当前生效值（battle-copy §3.2）。
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { assertNever } from '../../engine/exhaustive';
 import type { Build } from '../../engine/combat';
@@ -19,38 +17,10 @@ import { ROUTES } from '../../engine/routes';
 import { SECTS } from '../../engine/sect';
 import { effIdleRate, playerBuild, useGameStore, zhongGate } from '../../store/gameStore';
 import { fmtBig } from '../../fmt';
-import { Q_NO, ROUTE_TAG } from './shared';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const pp = (v: number) => `${Math.round(v * 1000) / 10}pp`;
 
-/** 关口对某部心法的状态：done 已过 / wait 到了重数等顿悟 / next 下一关 / later 更后 / na 本品质够不着 */
-type TierState = 'done' | 'wait' | 'next' | 'later' | 'na';
-function tierState(i: number, q: Quality, zhong: number, passed: number): TierState {
-  if (i >= TIER_COUNT[q]) return 'na';
-  if (i < passed) return 'done';
-  if (i === passed) return zhong >= TIERS[i].at ? 'wait' : 'next';
-  return 'later';
-}
-
-/** 数字上涨时从旧值一格格跳到新值（约 0.9 秒）；减少动态效果时直接换 */
-function RollNum({ v, tip }: { v: number; tip: string }) {
-  const [shown, setShown] = useState(v);
-  const [up, setUp] = useState(false);
-  const prev = useRef(v);
-  useEffect(() => {
-    const from = prev.current;
-    prev.current = v;
-    if (v <= from || matchMedia('(prefers-reduced-motion: reduce)').matches) { setShown(v); return; }
-    const steps = Math.min(v - from, 18);
-    const timers = Array.from({ length: steps }, (_, i) => setTimeout(() => setShown(Math.round(from + ((v - from) * (i + 1)) / steps)), (900 / steps) * (i + 1)));
-    setUp(true);
-    timers.push(setTimeout(() => setUp(false), 1300));
-    return () => timers.forEach(clearTimeout);
-  }, [v]);
-  if (!v) return <b className="nil">—</b>;
-  return <b className={up ? 'up' : undefined} data-tip={tip}>+{fmtBig(shown)}</b>;
-}
 
 export function NeigongBook({ id }: { id: NeigongId }) {
   const s = useGameStore();
@@ -59,25 +29,25 @@ export function NeigongBook({ id }: { id: NeigongId }) {
   const zhong = main ? s.zhong : zhongAfterSwitch(s.neigong!, id, s.zhong);
   const passed = main ? s.tiersPassed : 0;
   const peak = TIERS[TIER_COUNT[d.quality] - 1];
-  const tag = ROUTE_TAG[d.route];
   const [switchTo, setSwitchTo] = useState<NeigongId | null>(null);
 
-  // 内功提供的基础属性 = 此内功此重数下的构筑 − 境界底数（engine neigongBuild）
+  // 内功提供的基础属性 = 此内功此重数下的构筑 − 境界底数（engine neigongBuild）；属性条以此内功练到最高重的值为满格
   const base = REALMS[s.realm - 1];
   const nb = neigongBuild(id, s.realm, zhong, passed);
+  const nbPeak = neigongBuild(id, s.realm, peak.at, TIER_COUNT[d.quality]);
   const M = Math.pow(1.7, foldRealms(zhong, d.quality));
   const L = zhaoshiLevel(zhong);
   const g = ROUTES[d.route].grant, per = ROUTES[d.route].perLevel;
   const routeTip = (x: number) => `火候 ×${M.toFixed(2)}${x ? ` · ${ROUTES[d.route].name}一路 +${pct(x)}` : ''}`;
-  const attrs: [string, number, string][] = [
-    ['气血', Math.round(nb.hp - base.hp), routeTip((per.hpPct ?? 0) * L)],
-    ['攻击', Math.round(nb.atk - base.atk), routeTip((per.atkPct ?? 0) * L)],
-    ['防御', Math.round(nb.def - base.def), routeTip((g.defPct ?? 0) + (per.defPct ?? 0) * L)],
-    ['命中', Math.round(nb.hit - base.accuracy), '火候折合境界 × 12'],
-    ['闪避', Math.round(nb.dodge - base.evasion), '火候折合境界 × 3'],
+  const attrs: [string, number, number, string][] = [
+    ['气血', nb.hp - base.hp, nbPeak.hp - base.hp, routeTip((per.hpPct ?? 0) * L)],
+    ['攻击', nb.atk - base.atk, nbPeak.atk - base.atk, routeTip((per.atkPct ?? 0) * L)],
+    ['防御', nb.def - base.def, nbPeak.def - base.def, routeTip((g.defPct ?? 0) + (per.defPct ?? 0) * L)],
+    ['命中', nb.hit - base.accuracy, nbPeak.hit - base.accuracy, '火候折合境界 × 12'],
+    ['闪避', nb.dodge - base.evasion, nbPeak.dodge - base.evasion, '火候折合境界 × 3'],
   ];
 
-  let act: ReactNode;
+  let need: ReactNode = null, btn: ReactNode;
   if (main) {
     const gate = zhongGate(s);
     const cost = zhongCost(s.zhong + 1);
@@ -86,72 +56,47 @@ export function NeigongBook({ id }: { id: NeigongId }) {
       const p = dunwuChance(gate.tier, s.wuxing ?? 1);
       const hours = DUNWU_INTERVAL_SEC / p / 3600;
       const expect = hours < 1 ? `${Math.round(hours * 60)} 分钟` : `${hours.toFixed(1)} 小时`;
-      act = gate.needScroll ? (
-        <>
-          <div className="wg-need">临「{gate.tier.name}」之关 · 须得《归真卷册》（{SECTS[d.sect].name}贡献商店）</div>
-          <button className="wg-btn" disabled>静候顿悟</button>
-        </>
-      ) : (
-        <>
-          <div className="wg-need">临「{gate.tier.name}」之关</div>
-          <button className="wg-btn" disabled data-tip={`挂机修炼每 10 分钟一判，此刻概率 ${(p * 100).toFixed(1)}%，期望约 ${expect}；闭关照判。内力照常积累`}>静候顿悟</button>
-        </>
-      );
+      need = gate.needScroll ? `临「${gate.tier.name}」之关 · 须得《归真卷册》（${SECTS[d.sect].name}贡献商店）` : `临「${gate.tier.name}」之关`;
+      btn = <button type="button" disabled data-tip={gate.needScroll ? undefined : `挂机修炼每 10 分钟一判，此刻概率 ${(p * 100).toFixed(1)}%，期望约 ${expect}；闭关照判。内力照常积累`}>静候顿悟</button>;
     } else if (short > 0) {
       const sec = short / Math.max(effIdleRate(s), 1e-9);
-      const eta = sec < 3600 ? `约 ${Math.max(1, Math.ceil(sec / 60))} 分钟` : `约 ${(sec / 3600).toFixed(1)} 小时`;
-      act = (
-        <>
-          <div className="wg-need">还差 {fmtBig(short)} 内力 · {eta}</div>
-          <button className="wg-btn" disabled>精进一重　{fmtBig(cost)} 内力</button>
-        </>
-      );
+      need = `还差 ${fmtBig(short)} 内力 · ${sec < 3600 ? `约 ${Math.max(1, Math.ceil(sec / 60))} 分钟` : `约 ${(sec / 3600).toFixed(1)} 小时`}`;
+      btn = <button type="button" disabled>精进一重　{fmtBig(cost)}</button>;
     } else {
-      act = (
-        <>
-          <div className="wg-need" />
-          <button className="wg-btn" onClick={s.upgradeZhong} data-tip="价格每重 ×1.08；重数只在这一世有效，转世即散">精进一重　{fmtBig(cost)} 内力</button>
-        </>
-      );
+      btn = <button type="button" onClick={s.upgradeZhong} data-tip="价格每重 ×1.08；重数只在这一世有效，转世即散">精进一重　{fmtBig(cost)}</button>;
     }
   } else {
     const same = d.route === NEIGONG[s.neigong!].route;
-    act = (
-      <>
-        <div className="wg-need" />
-        {same
-          ? <button className="wg-btn" onClick={() => setSwitchTo(id)}>转修 · 保留八成功力</button>
-          : <button className="wg-btn quiet" onClick={() => setSwitchTo(id)}>散功重修</button>}
-      </>
-    );
+    btn = same
+      ? <button type="button" onClick={() => setSwitchTo(id)}>转修</button>
+      : <button type="button" className="quiet" onClick={() => setSwitchTo(id)}>散功重修</button>;
   }
 
   const build = main ? playerBuild(s) : nb;
   return (
     <>
-      <div className="wg-pg l">
-        <div className="wg-ttl">
-          <span className="nm">{d.name}</span>
-          <div className="side">
-            <span className={`ptag q${Q_NO[d.quality]}`}>{d.quality}</span>
-            <span className={`ptag rt t-${tag}`}>{ROUTES[d.route].name}</span>
-            <div className="wg-zline" data-tip={`火候折合 ${foldRealms(zhong, d.quality).toFixed(2)} 个境界：每 20 重折合一个境界`}>第 {zhong}<small>重</small></div>
-            <span className="wg-zcap">最高至{peak.name} · {peak.at} 重</span>
+      <div className="zh5" style={{ top: '33.5%' }} data-tip={`火候折合 ${foldRealms(zhong, d.quality).toFixed(2)} 个境界：每 20 重折合一个境界`}>
+        第 <b>{zhong}</b> 重<span>{main ? '主修 · ' : '转修后 · '}最高至{peak.name} · {peak.at} 重</span>
+      </div>
+      <div className="wcol">
+      <div className="wsec">心法</div>
+      <div className="attrs5" style={{ gap: 0 }}>
+        {rowsOf(d.route, d.quality, zhong, passed, build, s.realm).map((r) => (
+          <div key={r.lb} className={`yj${r.lock ? ' lock' : ''}`}>{r.lb}　{r.v}</div>
+        ))}
+      </div>
+      <div className="wsec">属性</div>
+      <div className="attrs5" style={{ gap: 2 }}>
+        {attrs.map(([k, v, peakV, tip]) => (
+          <div key={k} className="r" data-tip={tip}>
+            <span className="k">{k}</span>
+            <span className="bar"><i style={{ width: `${Math.min(100, (v / Math.max(1, peakV)) * 100)}%` }} /></span>
+            <span className="v">{v > 0 ? `+${fmtBig(Math.round(v))}` : '—'}</span>
           </div>
-        </div>
-        {main && <span className="wg-zhu">主修</span>}
-        <div className="wg-rows">
-          {attrs.map(([k, v, tip]) => <span key={k}>{k}<RollNum v={v} tip={tip} /></span>)}
-        </div>
-        {act}
+        ))}
       </div>
-
-      <div className="wg-pg r">
-        <div className="wg-yjh">心法要诀</div>
-        <Yaojue route={d.route} q={d.quality} zhong={zhong} passed={passed} build={build} realm={s.realm} />
-        <div className="wg-foot">{d.quality}内功</div>
       </div>
-
+      <div className="wact">{need && <span className="need">{need}</span>}{btn}</div>
       {switchTo && <SwitchDialog to={switchTo} onClose={() => setSwitchTo(null)} />}
     </>
   );
@@ -223,34 +168,6 @@ function rowsOf(route: RouteId, q: Quality, zhong: number, passed: number, build
     default:
       return assertNever(route, 'rowsOf 未处理的路数');
   }
-}
-
-/** 心法要诀：悬停关名时，同一关影响的几条一起亮 */
-function Yaojue({ route, q, zhong, passed, build, realm }: { route: RouteId; q: Quality; zhong: number; passed: number; build: Build; realm: number }) {
-  const [hl, setHl] = useState<number | null>(null);
-  return (
-    <>
-      {rowsOf(route, q, zhong, passed, build, realm).map((r) => (
-        <div key={r.lb} className={`wg-yj${r.lock ? ' lock' : ''}${hl !== null && r.tiers.includes(hl) ? ' hl' : ''}`}>
-          <div className="h">
-            <span className="lb">{r.lb}</span>
-            <span className="chips">
-              {r.tiers.map((i) => {
-                const t = TIERS[i];
-                const st = tierState(i, q, zhong, passed);
-                const note = st === 'na' ? ` · ${i === 3 ? '上乘' : '绝学'}内功可达` : st === 'done' ? ' · 已得' : st === 'wait' ? ' · 静候顿悟' : '';
-                return (
-                  <span key={i} className={`wg-ch ${st}${hl === i ? ' hl' : ''}`} data-tip={`${t.name}（第 ${t.at} 重）：${t.effect[route]}${note}`}
-                    onMouseEnter={() => setHl(i)} onMouseLeave={() => setHl(null)}>{t.name}</span>
-                );
-              })}
-            </span>
-          </div>
-          <div className="v">{r.v}</div>
-        </div>
-      ))}
-    </>
-  );
 }
 
 function SwitchDialog({ to, onClose }: { to: NeigongId; onClose: () => void }) {

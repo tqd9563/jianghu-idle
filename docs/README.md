@@ -53,7 +53,7 @@
 | `systems/living-jianghu/sim.py` | 活江湖结构 sim（卷 · 章 · 图 · 关单线的台阶高度、停留天数、首杀体量；读 longline_sim） | — |
 | `systems/wudao-yuanliu/design.md` | 武道源流（原「路数」）：三路扩七路、七大源流门派与因缘拜入 | — |
 | `systems/sect-overhaul/design.md` | 门派改造：21 家可拜门派的体量、源流、六级地位与六档差事、内功 / 装备 / 差事定名、门派页原型（驻地图 + 百务殿 / 典籍院 / 天工库）、旧九派迁移；设计定稿，数值待 sim | `design/sect-overhaul-prototype.html` |
-| `systems/jianghu-bianju/design.md` | 江湖变局：世内事件（跨世因果、奇遇、江湖大事、岁时小事）的定位、硬规则、触发与效果挂点；草案，七条待裁 | — |
+| `systems/jianghu-bianju/design.md` | 江湖变局：世内事件（跨世因果、奇遇、江湖大事、岁时小事）的定位、硬规则、触发与效果挂点；草案，裁决 J1–J9 已定，数值待 sim、界面待原型 | — |
 | `systems/jianghu-bianju/copy-draft.md` | 江湖变局文案样张：六条事件，用来定口味，不是冻结文案 | — |
 | `systems/sect-overhaul/copy-draft.md` | 门派改造文案草稿：前置 21 门武学 141 式招式名与战报句、21 条批注、21 家 126 句差事交代；招式名、战报句、批注已由 `battle-loot/export_wuxue.py` 读入名录并同步进冻结文案 | sect.ts（§2）、`data/wuxue-catalog.json`（§1 / §3 / §4） |
 | `systems/sect-overhaul/spec.md` | 门派改造数值：200 天实测每世门派天数、六档差事收益、六级门槛（每级 1.25 天）、货架价格、门派装备品阶与等级；定稿待实装 | `sim/sect_rank_sim.py`、`sim/sect_life_measured.json` |

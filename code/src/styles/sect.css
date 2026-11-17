@@ -7,7 +7,7 @@ html.sx-own-art .jh-art { display: none; }
 .jh-page:has(> .sx) { max-width: none; }
 .sx { position: relative; overflow: hidden; background: #0b0d12; height: 100vh; min-height: 560px;
   margin: -30px calc(-1 * clamp(18px, 3.2vw, 48px)) -60px;
-  --brush: url('/art/scene/brush.png'); --scroll: url('/art/scene/duel-btn2.png');
+  --brush: url('/art/scene/brush.png');
   --short: oklch(0.68 0.15 28); --seal-red: oklch(0.5 0.17 28 / 0.92);
   --q1: oklch(0.72 0.015 85); --q2: oklch(0.78 0.09 215); --q3: var(--gold); --g5: oklch(0.72 0.16 50); }
 .sx.unready > * { visibility: hidden; }
@@ -69,7 +69,7 @@ html.sx-own-art .jh-art { display: none; }
 /* ═══ 内景通用：右侧暗区题跋 ═══ */
 .sx-insc { position: absolute; right: 40px; top: var(--ty, 18%); width: var(--tw, 320px); z-index: 5; text-shadow: 0 1px 8px oklch(0.08 0.01 262), 0 0 3px #000; }
 .sx-shade { position: absolute; inset: 0 0 0 auto; width: var(--sw, 40%); pointer-events: none; z-index: 4;
-  background: linear-gradient(to left, oklch(0.10 0.012 262 / .82), oklch(0.10 0.012 262 / .7) 30%, oklch(0.10 0.012 262 / .42) 58%, oklch(0.10 0.012 262 / .14) 82%, transparent); }
+  background: linear-gradient(to left, oklch(0.10 0.012 262 / .94), oklch(0.10 0.012 262 / .88) 40%, oklch(0.10 0.012 262 / .6) 66%, oklch(0.10 0.012 262 / .2) 86%, transparent); }
 /* 黑宣纸：极淡的竖排古籍暗纹与栏线，只在暗区里隐约可见 */
 .sx-paper { position: absolute; inset: 0; overflow: hidden; opacity: .022; writing-mode: vertical-rl; padding: 34px 26px 0 0;
   font-family: var(--font-display); font-size: 20px; line-height: 44px; letter-spacing: .5em; color: oklch(0.92 0.03 85);
@@ -78,20 +78,11 @@ html.sx-own-art .jh-art { display: none; }
 .sx-stroke { height: 7px; margin: 20px -6px 18px; background: oklch(0.6 0.04 80 / .45); -webkit-mask: var(--brush) center / 100% 100%; mask: var(--brush) center / 100% 100%; }
 .sx-big { margin: 0; font-family: var(--font-display); font-size: 40px; font-weight: 700; letter-spacing: .2em; line-height: 1.2; }
 .sx-tag { margin-top: 10px; font-size: 14px; letter-spacing: .16em; color: var(--ink-gold); }
-.sx-desc { margin: 14px 0 0; font-size: 15px; line-height: 1.85; letter-spacing: .06em; color: #8A8F99; }
-/* 主按钮：卷轴；次按钮：暗底墨金双线框，与卷轴形态不同 */
-.sx-scroll { display: block; margin: 26px auto 0; width: 260px; max-width: 100%; height: 72px; border: 0; cursor: pointer; background: var(--scroll) center / 100% 100% no-repeat;
-  font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: .5em; padding-left: .5em; color: oklch(0.17 0.012 262); text-shadow: none; transition: filter .2s, transform .15s; }
-.sx-scroll:hover:not([aria-disabled="true"]) { filter: brightness(1.15); }
+.sx-desc { margin: 14px 0 0; font-size: 15px; line-height: 1.85; letter-spacing: .06em; color: oklch(0.84 0.012 85); }
+/* 主按钮：朱砂一笔（笔触、等待态见 shell.css「按钮」） */
+.sx-scroll { display: block; margin: 26px auto 0; width: 250px; max-width: 100%; height: 62px; font-size: 20px; letter-spacing: .5em; padding-left: .5em; transition: filter .2s, transform .15s; }
 .sx-scroll:active:not([aria-disabled="true"]) { transform: scale(.97); }
 .sx-scroll.long { letter-spacing: .28em; padding-left: .28em; }
-.sx-scroll[aria-disabled="true"] { cursor: default; filter: saturate(.15) brightness(.55); }
-.sx-scroll:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
-.sx-ghost { display: block; margin: 26px auto 0; width: 260px; max-width: 100%; height: 50px; cursor: pointer; background: oklch(0.14 0.012 262 / .6);
-  border: 1px solid oklch(0.75 0.03 80 / .4); border-radius: 3px; box-shadow: inset 0 0 0 3px oklch(0.14 0.012 262 / .6), inset 0 0 0 4px oklch(0.75 0.03 80 / .14);
-  font-family: var(--font-display); font-size: 17px; letter-spacing: .6em; padding-left: .6em; color: var(--muted); text-shadow: none; transition: color .2s, border-color .2s, background .2s; }
-.sx-ghost:hover { color: var(--ink); border-color: oklch(0.8 0.05 80 / .65); background: oklch(0.18 0.014 262 / .75); }
-.sx-ghost:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
 
 /* ═══ 百务殿 ═══ */
 .sx-bian { position: absolute; left: 43.1%; top: 13.9%; transform: translate(-50%, -50%) rotate(8.4deg) skewX(-6deg); pointer-events: none; white-space: nowrap;
@@ -149,17 +140,17 @@ html.sx-own-art .jh-art { display: none; }
 
 /* ═══ 典籍院 / 天工库：右侧一列可换之物 + 选中详情 ═══ */
 .sx-list { display: grid; }
-.sx-row { display: flex; align-items: center; gap: 14px; border: 0; background: none; cursor: pointer; padding: 8px 6px 8px 4px; position: relative; text-align: left; color: var(--ink); text-shadow: inherit; opacity: .6; transition: opacity .2s; }
+.sx-row { display: flex; align-items: center; gap: 14px; border: 0; background: none; cursor: pointer; padding: 8px 6px 8px 4px; position: relative; text-align: left; color: var(--ink); text-shadow: inherit; opacity: .86; transition: opacity .2s; }
 .sx-row::after { content: ''; position: absolute; left: -4px; right: 0; bottom: 0; height: 3px; background: oklch(0.6 0.02 85 / .22); -webkit-mask: var(--brush) center / 100% 100%; mask: var(--brush) center / 100% 100%; }
 .sx-row .ic { width: 26px; height: 26px; flex: none; background: center / contain no-repeat; opacity: .8; }
 .sx-row .ic.gear { filter: brightness(0) invert(.72) sepia(.5) saturate(1.6) hue-rotate(-8deg); }
 .sx-row .rn { font-family: var(--font-display); font-size: 17px; letter-spacing: .14em; white-space: nowrap; }
-.sx-row .rn small { font-family: var(--font-body); font-size: 12px; letter-spacing: .08em; color: var(--faint); margin-left: 8px; }
-.sx-row .rp { margin-left: auto; font-size: 12px; letter-spacing: .14em; color: var(--faint); white-space: nowrap; }
+.sx-row .rn small { font-family: var(--font-body); font-size: 12px; letter-spacing: .08em; color: oklch(0.76 0.012 85); margin-left: 8px; }
+.sx-row .rp { margin-left: auto; font-size: 12px; letter-spacing: .14em; color: oklch(0.76 0.012 85); white-space: nowrap; }
 .sx-row .rp b { font-size: 17px; font-weight: 600; letter-spacing: 0; color: var(--ink-gold); margin-right: 4px; }
 .sx-row .rp.short b { color: var(--short); }
 .sx-row .rp.own { font-size: 14px; letter-spacing: .3em; color: var(--faint); }
-.sx-row:hover { opacity: .85; }
+.sx-row:hover { opacity: 1; }
 .sx-row.on { opacity: 1; background: linear-gradient(to right, oklch(0.78 0.13 78 / .16), oklch(0.78 0.13 78 / .05) 55%, transparent 90%); }
 .sx-row.on .ic { opacity: 1; filter: drop-shadow(0 0 4px oklch(0.78 0.13 78 / .5)); }
 .sx-row.on .ic.gear { filter: brightness(0) invert(.86) sepia(.6) saturate(2.2) hue-rotate(-8deg) drop-shadow(0 0 4px oklch(0.78 0.13 78 / .5)); }
@@ -203,7 +194,7 @@ html.sx-own-art .jh-art { display: none; }
 .sx-insc.dense .sx-desc { margin-top: 8px; line-height: 1.7; }
 .sx-insc.dense .sx-attrs { margin-top: 8px; }
 .sx-insc.dense .sx-attrs .a { padding: 5px 2px 4px; }
-.sx-insc.dense .sx-scroll { margin-top: 14px; height: 62px; }
+.sx-insc.dense .sx-scroll { margin-top: 14px; height: 56px; }
 
 /* 操作反馈：浮在对象旁 */
 .sx-float { position: absolute; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; z-index: 8; font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: .2em;

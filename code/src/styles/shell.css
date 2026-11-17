@@ -66,10 +66,11 @@ button { font: inherit; color: inherit; }
 .jh-fresh { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
 .jh-rail-foot { margin-top: auto; display: flex; gap: 8px; position: relative; }
 .jh-ghost {
-  flex: 1; border: 1px solid var(--hair); background: none; border-radius: 8px; cursor: pointer;
-  padding: 8px 0; font-family: var(--font-display); letter-spacing: 0.3em; color: var(--faint);
+  flex: 1; border: 0; background: none; cursor: pointer;
+  padding: 8px 0; font-family: var(--font-display); letter-spacing: 0.3em; color: var(--muted);
 }
-.jh-ghost.ready { color: var(--gold); border-color: oklch(0.78 0.13 78 / 0.5); }
+.jh-ghost:hover:not(:disabled) { color: var(--ink); }
+.jh-ghost.ready { color: var(--gold); text-align: left; padding-left: 4px; font-size: 16px; }
 .jh-ghost:disabled { cursor: not-allowed; opacity: 0.7; }
 .jh-ghost.icon { flex: 0 0 40px; letter-spacing: 0; }
 
@@ -118,21 +119,53 @@ button { font: inherit; color: inherit; }
 .jh-buy { display: grid; justify-items: end; gap: 3px; }
 .jh-buy small { font-size: 11.5px; color: var(--faint); }
 
-/* ═══════ 按钮 ═══════ */
-.jh-btn {
-  position: relative; border: 0; cursor: pointer; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.16em;
-  padding: 11px 26px; border-radius: 10px; color: var(--gold);
-  background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.16), oklch(0.78 0.13 78 / 0.05));
-  box-shadow: inset 0 0 0 1px oklch(0.78 0.13 78 / 0.55), inset 0 1px 0 oklch(0.92 0.08 82 / 0.18);
-  transition: background .2s, box-shadow .25s, color .2s;
+/* ═══════ 按钮（docs/design/ui-unify-prototype.html）═══════
+   全站只有两种按钮：主按钮朱砂一笔、次按钮淡墨一笔；点不了的等待态不画成按钮，只是一行题字、上下各一道干笔。
+   各页只管尺寸与位置，笔触、字色、悬停都在这里。 */
+.cv-scroll, .sx-scroll, .page-battle .bt-duel-btn, .jh-btn, .wgs .wact button {
+  --zhu-f: saturate(.74) brightness(.9) hue-rotate(4deg);
+  border: 0; border-radius: 0; box-shadow: none; cursor: pointer;
+  background: url('/art/btn-red.png') center / 100% 100% no-repeat; filter: var(--zhu-f);
+  font-family: var(--font-display); font-weight: 700; color: oklch(0.96 0.02 80); text-shadow: 0 1px 2px oklch(0.28 0.1 30 / .85);
+  transition: filter .2s;
 }
-.jh-btn:hover:not(:disabled) { background: linear-gradient(to bottom, oklch(0.78 0.13 78 / 0.26), oklch(0.78 0.13 78 / 0.10)); box-shadow: inset 0 0 0 1px oklch(0.82 0.13 78 / 0.85), 0 0 22px oklch(0.78 0.13 78 / 0.22); }
-.jh-btn:disabled { color: var(--faint); background: none; box-shadow: inset 0 0 0 1px var(--hair); cursor: default; font-size: 14px; letter-spacing: 0.12em; font-weight: 500; }
-.jh-btn small { display: block; font-family: var(--font-body); font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--muted); margin-top: 1px; }
-.jh-btn.quiet { color: var(--muted); background: none; box-shadow: inset 0 0 0 1px var(--hair); }
-.jh-btn.quiet:hover:not(:disabled) { color: var(--ink); background: oklch(0.3 0.016 262 / 0.3); box-shadow: inset 0 0 0 1px oklch(0.5 0.02 262); }
-.jh-btn.breathe:not(:disabled) { animation: jh-ready 2.4s var(--ease-sharp) infinite; }
-@keyframes jh-ready { 50% { filter: brightness(1.18) drop-shadow(0 0 10px oklch(0.78 0.13 78 / 0.35)); } }
+.cv-scroll:hover:not(:disabled), .sx-scroll:hover:not([aria-disabled="true"]), .page-battle .bt-duel-btn:hover:not(:disabled),
+.jh-btn:not(.quiet):hover:not(:disabled), .wgs .wact button:not(.quiet):hover:not(:disabled) { filter: saturate(.8) brightness(1.04) hue-rotate(4deg); }
+.cv-scroll:focus-visible, .sx-scroll:focus-visible, .page-battle .bt-duel-btn:focus-visible, .jh-btn:focus-visible, .wgs .wact button:focus-visible,
+.jh-btn.quiet:focus-visible, .cv-ghost:focus-visible, .xn .btn-ghost:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
+/* 可以动手了（突破、择功）：朱砂缓缓起亮 */
+@keyframes zhu-ready { 50% { filter: saturate(.8) brightness(1.1) hue-rotate(4deg) drop-shadow(0 0 12px oklch(0.6 0.16 30 / .5)); } }
+
+/* 等待 / 不可用 */
+.cv-scroll:disabled, .sx-scroll[aria-disabled="true"], .page-battle .bt-duel-btn:disabled, .jh-btn:disabled, .wgs .wact button:disabled {
+  position: relative; cursor: default; background: none; filter: none; animation: none; text-shadow: 0 1px 4px #000; opacity: 1;
+  font-weight: 500; font-size: 15px; letter-spacing: .32em; padding: 14px 0 14px .32em; line-height: 1.5; color: oklch(0.8 0.014 85);
+}
+.cv-scroll:disabled::before, .cv-scroll:disabled::after, .sx-scroll[aria-disabled="true"]::before, .sx-scroll[aria-disabled="true"]::after,
+.page-battle .bt-duel-btn:disabled::before, .page-battle .bt-duel-btn:disabled::after, .jh-btn:disabled::before, .jh-btn:disabled::after,
+.wgs .wact button:disabled::before, .wgs .wact button:disabled::after {
+  content: ''; position: absolute; left: 12%; right: 12%; height: 3px; background: oklch(0.72 0.02 85 / .42);
+  -webkit-mask: url('/art/scene/brush.png') center / 100% 100% no-repeat; mask: url('/art/scene/brush.png') center / 100% 100% no-repeat;
+}
+.cv-scroll:disabled::before, .sx-scroll[aria-disabled="true"]::before, .page-battle .bt-duel-btn:disabled::before, .jh-btn:disabled::before, .wgs .wact button:disabled::before { top: 6px; }
+.cv-scroll:disabled::after, .sx-scroll[aria-disabled="true"]::after, .page-battle .bt-duel-btn:disabled::after, .jh-btn:disabled::after, .wgs .wact button:disabled::after { bottom: 6px; transform: scaleX(-1); }
+
+/* 次按钮 */
+.cv-ghost, .jh-btn.quiet, .wgs .wact button.quiet, .xn .btn-ghost {
+  position: relative; isolation: isolate; cursor: pointer; border: 0; border-radius: 0; box-shadow: none; background: none; filter: none;
+  font-family: var(--font-display); font-weight: 600; letter-spacing: .3em; color: oklch(0.9 0.012 85); text-shadow: 0 1px 3px #000;
+}
+.cv-ghost::before, .jh-btn.quiet::before, .wgs .wact button.quiet::before, .xn .btn-ghost::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: oklch(0.4 0.012 262); transition: background .2s;
+  -webkit-mask: url('/art/btn-ink.png') center / 100% 100% no-repeat; mask: url('/art/btn-ink.png') center / 100% 100% no-repeat;
+}
+.cv-ghost:hover::before, .jh-btn.quiet:hover:not(:disabled)::before, .wgs .wact button.quiet:hover::before, .xn .btn-ghost:hover:not(:disabled)::before { background: oklch(0.5 0.014 262); }
+.xn .btn-ghost:disabled { opacity: .4; cursor: default; }
+
+.jh-btn { position: relative; font-size: 17px; letter-spacing: .3em; padding: 13px 44px; min-width: 200px; }
+.jh-btn small { display: block; font-family: var(--font-body); font-size: 12px; font-weight: 400; letter-spacing: 0; color: oklch(0.9 0.03 60); margin-top: 1px; }
+.jh-btn:disabled small { color: var(--muted); }
+.jh-btn.breathe:not(:disabled) { animation: zhu-ready 2.4s var(--ease-sharp) infinite; }
 .jh-btn .n { letter-spacing: 0.02em; margin: 0 0.1em; }
 
 .jh-btn2 {

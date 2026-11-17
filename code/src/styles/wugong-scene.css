@@ -9,6 +9,9 @@ html.wgs-own-art .jh-art { display: none; }
 .wgs .wpic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
 .wgs .wpic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
 .wgs .vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .7); background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .45), transparent 16%); }
+/* 右栏字下垫一团晕开的墨：挂在底图上，压画不压字 */
+.wgs .wpic > .bg::after { content: ''; position: absolute; left: 68%; right: -4%; top: 40%; height: 36%; pointer-events: none;
+  background: radial-gradient(closest-side, oklch(0.11 0.012 262 / .9), oklch(0.11 0.012 262 / .72) 58%, oklch(0.11 0.012 262 / .3) 84%, transparent); filter: blur(10px); }
 .wgs .whead { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
 .wgs .whead > * { pointer-events: auto; }
 .wgs .whead h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
@@ -94,10 +97,10 @@ html.wgs-own-art .jh-art { display: none; }
 .wgs .attrs5 .yj b { color: oklch(0.85 0.09 78); font-weight: 600; }
 .wgs .wact { position: absolute; right: 3%; top: 85.5%; display: flex; align-items: center; gap: 12px; }
 .wgs .wact .need { font-size: 13px; color: oklch(0.82 0.08 40); text-shadow: 0 0 4px #000; }
-.wgs .wact button { border: 0; cursor: pointer; padding: 9px 30px; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .35em; background: url('/art/btn-red.png') center / 100% 100% no-repeat; color: oklch(0.96 0.02 80); }
-.wgs .wact button.quiet { background: none; color: oklch(0.92 0.01 85); box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .55); border-radius: 2px; }
-.wgs .wact button.quiet:hover { box-shadow: inset 0 0 0 1px oklch(0.85 0.01 85 / .9); }
-.wgs .wact button:disabled { filter: grayscale(1); opacity: .45; cursor: default; }
+.wgs .wact button { padding: 9px 30px; font-size: 15px; letter-spacing: .35em; }
+.wgs .wact { isolation: isolate; }
+.wgs .wact::before { content: ''; position: absolute; inset: -16px -36px; z-index: -1; pointer-events: none; filter: blur(8px);
+  background: radial-gradient(closest-side, oklch(0.11 0.012 262 / .94), oklch(0.11 0.012 262 / .72) 62%, transparent); }
 /* 下沿装配：一排圆，圈内方框里是类别图标；第一枚是主修内功（金圈） */
 .wgs .eqrow { position: absolute; left: 41%; top: 87.5%; transform: translate(-50%, -50%); display: flex; gap: calc(var(--pw) * .024); }
 /* 每枚装配圈下写武学名（文楷小字，垫一抹雾色），不必悬停 */

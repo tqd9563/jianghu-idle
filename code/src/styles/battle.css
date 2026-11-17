@@ -34,11 +34,11 @@ html.bt-own-art .jh-art { display: none; }
 .page-battle .vlab { isolation: isolate; position: absolute; transform: translate(-50%, -50%) scale(calc(1 / var(--k))); display: grid; justify-items: center; gap: 4px; border: 0; background: none; padding: 6px 8px; cursor: pointer; transition: opacity .35s; }
 .page-battle .vlab .dot { width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; background: oklch(0.12 0.01 262 / 0.75); box-shadow: inset 0 0 0 1px oklch(0.6 0.02 262 / 0.7); }
 .page-battle .vlab .dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: oklch(0.42 0.012 262); }
-.page-battle .vlab .nm { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.25em; color: var(--faint); text-shadow: 0 0 8px #000, 0 0 3px #000; white-space: nowrap; }
-.page-battle .vlab .tt { font-size: 11.5px; color: var(--faint); text-shadow: 0 0 6px #000; letter-spacing: 0.1em; white-space: nowrap; }
+.page-battle .vlab .nm { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.25em; color: oklch(0.74 0.012 85); text-shadow: 0 0 8px #000, 0 0 3px #000; white-space: nowrap; }
+.page-battle .vlab .tt { font-size: 13px; color: oklch(0.72 0.012 85); text-shadow: 0 0 8px #000, 0 0 3px #000, 0 0 2px #000; letter-spacing: 0.1em; white-space: nowrap; }
 .page-battle .vlab.open .dot::after { background: var(--ink-gold); }
 .page-battle .vlab.open .nm { color: var(--ink); }
-.page-battle .vlab.open .tt { color: var(--muted); }
+.page-battle .vlab.open .tt { color: oklch(0.9 0.012 85); }
 .page-battle .vlab.here .dot { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 14px oklch(0.78 0.13 78 / 0.55); }
 .page-battle .vlab.here .dot::after { background: var(--gold); }
 .page-battle .vlab.here .nm { color: var(--gold); }
@@ -64,9 +64,9 @@ html.bt-own-art .jh-art { display: none; }
 .page-battle .spot.locked .mist { opacity: 1; }
 .page-battle .spot .lab { position: absolute; left: 50%; top: 96%; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; white-space: nowrap; pointer-events: none; isolation: isolate; }
 /* 字下一团墨晕：浅色地图上也认得清 */
-.page-battle .spot .lab::before, .page-battle .vlab::before { content: ''; position: absolute; inset: -6px -14px; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, oklch(0.12 0.012 262 / 0.78), oklch(0.12 0.012 262 / 0.45) 60%, transparent); filter: blur(4px); pointer-events: none; }
-.page-battle .spot .nm { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000, 0 0 14px #000; display: flex; align-items: center; gap: 6px; }
-.page-battle .spot .sm { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); text-shadow: 0 0 6px #000, 0 0 3px #000; }
+.page-battle .spot .lab::before, .page-battle .vlab::before { content: ''; position: absolute; inset: -8px -18px; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, oklch(0.1 0.012 262 / .92), oklch(0.1 0.012 262 / .62) 62%, transparent); filter: blur(4px); pointer-events: none; }
+.page-battle .spot .nm { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.15em; color: var(--ink); text-shadow: 0 0 8px #000, 0 0 3px #000, 0 0 14px #000; display: flex; align-items: center; gap: 6px; }
+.page-battle .spot .sm { display: flex; align-items: center; gap: 5px; font-size: 13px; color: oklch(0.88 0.012 85); text-shadow: 0 0 6px #000, 0 0 3px #000; }
 .page-battle .spot .al { font-family: var(--font-display); font-size: 10.5px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 3px; background: oklch(0.12 0.01 262 / 0.8); }
 .page-battle .spot .al.z { color: var(--camp-zheng); box-shadow: inset 0 0 0 1px oklch(0.76 0.09 245 / 0.7); }
 .page-battle .spot .al.x { color: var(--camp-xie); box-shadow: inset 0 0 0 1px oklch(0.72 0.11 320 / 0.7); }
@@ -189,13 +189,10 @@ html.bt-own-art .jh-art { display: none; }
 .page-battle .bt-pops .dmg { position: absolute; top: 38%; font-family: var(--font-display); font-weight: 700; font-size: 26px; color: oklch(0.72 0.17 30); text-shadow: 0 0 10px #000, 0 0 3px #000; animation: bt-dmgup 1.1s var(--ease-quart) forwards; }
 .page-battle .bt-pops .dmg.crit { font-size: 36px; color: var(--gold); }
 @keyframes bt-dmgup { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.8); } 15% { opacity: 1; transform: translate(-50%, -6px) scale(1.08); } 100% { opacity: 0; transform: translate(-50%, -54px) scale(1); } }
-/* 挑战按钮落在带内：金底卷云龙纹牌 */
+/* 挑战按钮落在带内：朱砂一笔（笔触、等待态见 shell.css「按钮」） */
 .page-battle .bt-act { position: relative; margin-top: -70px; margin-bottom: 20px; display: grid; justify-items: center; gap: 12px; }
-.page-battle .bt-duel-btn { border: 0; min-width: 320px; padding: 22px 56px; cursor: pointer; font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: 0.4em; color: oklch(0.17 0.012 262);
-  background: url('/art/scene/duel-btn2.png') center / 100% 100% no-repeat; transition: filter .2s; }
-.page-battle .bt-duel-btn:hover:not(:disabled) { filter: brightness(1.15); }
-.page-battle .bt-duel-btn:disabled { cursor: default; filter: saturate(0.4) brightness(0.8); }
-.page-battle .bt-duel-btn:focus-visible { outline: 1.5px solid var(--gold); outline-offset: 3px; }
+.page-battle .bt-duel-btn { min-width: 300px; padding: 17px 60px; font-size: 21px; letter-spacing: 0.4em; }
+.page-battle .bt-duel-btn:disabled { min-width: 240px; padding: 16px 0 16px .32em; }
 .page-battle .bt-act-sub { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; }
 
 /* 增减益标记（battle-status-prototype.html）：石印一行，己方靠左、敌方靠右；下挂三点 = 余几回合，最后一回合明暗呼吸；毒右下角标层数 */
@@ -363,8 +360,8 @@ html.bt-own-art .jh-art { display: none; }
 
 /* 推关失败二选一：退回按钮带 5 秒倒计时，底边金线随之缩短（docs/design/idle-ux-prototype.html ②） */
 .jh-btn.count { overflow: hidden; }
-.jh-btn.count .left { display: inline-block; min-width: 1.2em; margin-left: 0.4em; color: var(--muted); font-family: var(--font-body); letter-spacing: 0; }
-.jh-btn.count::after { content: ''; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--gold); opacity: 0.6;
+.jh-btn.count .left { display: inline-block; min-width: 1.2em; margin-left: 0.4em; color: oklch(0.9 0.03 60); font-family: var(--font-body); letter-spacing: 0; }
+.jh-btn.count::after { content: ''; position: absolute; left: 18%; right: 18%; bottom: 9px; height: 1.5px; background: oklch(0.95 0.02 80 / .7);
   transform-origin: left; animation: count-down 5s linear forwards; }
 @keyframes count-down { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .jh-btn.count::after { display: none; } }

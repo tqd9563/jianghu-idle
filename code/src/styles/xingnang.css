@@ -9,17 +9,19 @@ html.xn-own-art .jh-art { display: none; }
 .xn .wpic { position: absolute; left: var(--pl); top: var(--pt); width: var(--pw); aspect-ratio: 16 / 9; }
 .xn .wpic > .bg { position: absolute; left: 0; right: 0; top: -38.89%; height: 177.78%; background: center / 100% 100% no-repeat; }
 .xn .vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px 10px oklch(0.1 0.01 262 / .7); background: linear-gradient(to bottom, oklch(0.1 0.01 262 / .45), transparent 16%); }
+/* 页头字下垫一团晕开的墨：挂在底图上，压画不压字 */
+.xn .wpic > .bg::after { content: ''; position: absolute; left: -3%; top: 10.5%; width: 30%; height: 17%; pointer-events: none;
+  background: radial-gradient(closest-side, oklch(0.1 0.012 262 / .9), oklch(0.1 0.012 262 / .65) 58%, oklch(0.1 0.012 262 / .25) 84%, transparent); filter: blur(10px); }
 .xn .whead { position: absolute; left: 44px; right: 44px; top: 26px; z-index: 5; display: flex; align-items: flex-start; pointer-events: none; }
 .xn .whead > * { pointer-events: auto; }
 .xn .whead h1 { margin: 0; font-family: var(--font-display); font-size: 34px; letter-spacing: .24em; font-weight: 700; text-shadow: 0 2px 14px #000; }
-.xn .whead .sub { font-size: 14px; color: var(--muted); letter-spacing: .1em; text-shadow: 0 1px 6px #000; }
+.xn .whead .sub { font-size: 14px; color: oklch(0.86 0.012 85); letter-spacing: .1em; text-shadow: 0 1px 6px #000; }
 .xn .whead .sub b { color: var(--ink); font-weight: 600; font-size: 16px; }
 .xn .wseg { display: flex; gap: 24px; margin-top: 12px; }
-.xn .wseg button { border: 0; background: none; cursor: pointer; padding: 6px 2px 8px; font-family: var(--font-display); font-size: 16px; letter-spacing: .25em; color: var(--muted); border-bottom: 2px solid transparent; text-shadow: 0 1px 6px #000; }
+.xn .wseg button { border: 0; background: none; cursor: pointer; padding: 6px 2px 8px; font-family: var(--font-display); font-size: 16px; letter-spacing: .25em; color: oklch(0.86 0.012 85); border-bottom: 2px solid transparent; text-shadow: 0 1px 6px #000; }
 .xn .wseg button[aria-pressed="true"] { color: var(--gold); border-bottom-color: var(--ink-gold); } .xn .wseg button:hover { color: var(--ink); }
 .xn .whead .right { margin-left: auto; }
-.xn .btn-ghost { border: 1px solid oklch(0.75 0.075 76 / .55); background: oklch(0.12 0.012 262 / .7); color: var(--ink-gold); border-radius: 4px; padding: 8px 16px; font-family: var(--font-display); letter-spacing: .2em; font-size: 14px; cursor: pointer; }
-.xn .btn-ghost:hover:not(:disabled) { color: var(--gold); border-color: var(--gold); } .xn .btn-ghost:disabled { opacity: .4; cursor: default; }
+.xn .btn-ghost { padding: 11px 26px; font-size: 14px; } /* 次按钮笔触见 shell.css「按钮」 */
 
 .xn .links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .xn .links line { stroke: oklch(0.78 0.11 78 / .7); stroke-width: 1; vector-effect: non-scaling-stroke; }

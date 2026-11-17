@@ -98,13 +98,13 @@ html.qc-own-art .jh-art { display: none; }
 .qc-node .em { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, oklch(0.1 0.01 262 / .5) 30%, oklch(0.1 0.01 262 / 0) 70%); }
 /* 徽记纹线先压成纯黑，再按档位调成阴刻暗印 / 暗金 / 亮金 */
 .qc-node .em img { position: absolute; inset: 12%; width: 76%; transition: transform .25s var(--ease-quart); }
-.qc-node.t0 .em img { filter: brightness(0) drop-shadow(0 1px 0 oklch(0.7 0.01 262 / .55)); opacity: .62; }
+.qc-node.t0 .em img { filter: brightness(0) drop-shadow(0 1px 0 oklch(0.7 0.01 262 / .55)); opacity: .9; }
 .qc-node.t1 .em img { filter: brightness(0) invert(.55) sepia(1) saturate(1.6) hue-rotate(-6deg); }
 .qc-node.t2 .em img, .qc-node.t3 .em img { filter: brightness(0) invert(.86) sepia(1) saturate(2.6) hue-rotate(-8deg) drop-shadow(0 0 5px oklch(0.8 0.13 80 / .6)); }
 .qc-node .seal { position: absolute; right: -14%; bottom: -6%; width: 46%; aspect-ratio: 240 / 178; display: grid; place-items: center; transform: rotate(-10deg);
   background: url('/art/qianchen/seal.png') center / 100% 100% no-repeat; color: oklch(0.93 0.025 80); font-family: var(--font-display); font-weight: 700; font-size: max(9px, calc(var(--pw) * .0062)); }
-.qc-node .n { position: relative; isolation: isolate; margin-top: 3px; white-space: nowrap; font-size: clamp(11px, calc(var(--pw) * .0078), 13px); letter-spacing: .08em; color: oklch(0.6 0.01 262); text-shadow: 0 0 6px #000, 0 0 3px #000; }
-.qc-node.t1 .n { color: oklch(0.72 0.06 75); } .qc-node.t2 .n, .qc-node.t3 .n { color: oklch(0.86 0.09 82); }
+.qc-node .n { position: relative; isolation: isolate; margin-top: 3px; white-space: nowrap; font-size: clamp(12px, calc(var(--pw) * .0086), 14px); letter-spacing: .08em; color: oklch(0.84 0.012 85); text-shadow: 0 0 6px #000, 0 0 3px #000; }
+.qc-node.t1 .n { color: oklch(0.8 0.07 75); } .qc-node.t2 .n, .qc-node.t3 .n { color: oklch(0.88 0.1 82); }
 .qc-node:hover .em img, .qc-node.sel .em img { transform: scale(1.12); }
 .qc-node.sel .em { box-shadow: 0 0 0 1px oklch(0.8 0.11 80 / .5); }
 .qc-node:focus-visible { outline: none; } .qc-node:focus-visible .em { box-shadow: 0 0 0 1.5px var(--gold); }
@@ -114,6 +114,7 @@ html.qc-own-art .jh-art { display: none; }
 /* 字下垫一团晕开的墨，淡雾上也读得清（同战斗舆图的地名） */
 .qc-node .n::before, .qc-zone::before { content: ''; position: absolute; inset: -5px -12px; z-index: -1; border-radius: 50%;
   background: radial-gradient(closest-side, oklch(0.12 0.012 262 / .8), oklch(0.12 0.012 262 / .45) 60%, transparent); filter: blur(4px); }
+.qc-node .n::before { inset: -5px -14px; background: radial-gradient(closest-side, oklch(0.1 0.012 262 / .95), oklch(0.1 0.012 262 / .7) 65%, transparent); }
 .qc-zone::before { inset: -12px -8px; }
 
 /* 点选手卷（AI 水墨手卷）：左徽记，右「当前 / 下一重 / 解锁条件」 */

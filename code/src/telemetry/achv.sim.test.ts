@@ -1,5 +1,5 @@
 /**
- * 侠名录实测 —— 标准玩家在第 7 / 21 / 50 / 100 天各条成就线的计量（prestige-shop/design.md §2c）。
+ * 历练实测 —— 标准玩家在第 7 / 21 / 50 / 100 天各条成就线的计量（prestige-shop/design.md §2c）。
  *
  * 门槛按这份实测定：标准玩家约第 7 / 21 / 50 天摸到一二三层。与节奏守卫同一个模拟玩家（simBot.ts），
  * 三条路线各跑若干种子取中位数；九类器械线另记「本路线主修类目」的计量，其余类目多半为 0。
@@ -50,7 +50,7 @@ function play(route: RouteId, seed: number) {
   return { route, seed, mainCat, days: out };
 }
 
-describe.skipIf(!process.env.SIM_ACHV)('侠名录实测（SIM_ACHV=1）', () => {
+describe.skipIf(!process.env.SIM_ACHV)('历练实测（SIM_ACHV=1）', () => {
   beforeAll(() => { vi.useFakeTimers(); });
   afterAll(() => {
     vi.useRealTimers();

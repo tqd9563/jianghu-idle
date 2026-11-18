@@ -1,5 +1,5 @@
 /* 前尘页（基准 docs/design/qianchen-xiang-prototype.html + DESIGN.md「前尘页」）
- * 三段各一幅 AI 水墨画：底蕴「往世八相」、机缘江边挂签、侠名录「江湖百景」；代码只叠字与按钮。全部挂在 .qc 下，
+ * 三段各一幅 AI 水墨画：底蕴「往世八相」、机缘江边挂签、历练「江湖百景」；代码只叠字与按钮。全部挂在 .qc 下，
  * 画上坐标一律为画幅百分比（--pw 为画宽）。 */
 
 /* 页自带画：收起页底图，舞台去掉版心铺满 */
@@ -87,7 +87,7 @@ html.qc-own-art .jh-art { display: none; }
 .qc-jslip.stamp .got { animation: qc-stamp .45s var(--ease-quart); }
 @keyframes qc-stamp { 0% { transform: rotate(-8deg) scale(2.2); opacity: 0; } 100% { transform: rotate(-8deg) scale(1); opacity: 1; } }
 
-/* ═══════ 侠名录 · 江湖百景：二十二枚散在四处地界，同类暗金细线串连；一套金色分层 ═══════ */
+/* ═══════ 历练 · 江湖百景：二十二枚散在四处地界，同类暗金细线串连；一套金色分层 ═══════ */
 .qc-pic > .bg.map { filter: saturate(.7); }
 .qc-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 55% at 50% 50%, oklch(0.1 0.01 262 / .35), transparent 70%); }
 .qc-links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }

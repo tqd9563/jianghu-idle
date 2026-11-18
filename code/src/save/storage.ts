@@ -172,7 +172,7 @@ function migrateFormPagesV12ToV13<T>(state: T): T {
 /** v10 → v11（实装五九派）：拜山传闻从布尔改为「哪张图」的编号，true → 1 */
 /**
  * v12（prestige-shop/design.md）：声望阁改前尘。再入江湖改名重出江湖；武道笔记 / 师门指引 / 破关心得退出购买
- * （效果并入侠名录成就，实装二迁为对应成就一层）；新增底蕴八条级数，旧档补零。
+ * （效果并入历练成就，实装二迁为对应成就一层）；新增底蕴八条级数，旧档补零。
  */
 function migratePrestigeV11ToV12<T>(state: T): T {
   const s = state as Record<string, unknown>;
@@ -563,7 +563,7 @@ function v17Stage(key: string): { kind: string; x: number } | null {
  * v17 → v18：三档难度取消、改为卷章图关单线（living-jianghu/design.md §2.2）。按当量折算：
  * - 本世已过：取旧进度打到的最高当量 F，新表从卷一起按开放次序，当量不超过 F 的关依次记为已过（每张图从第 1 关连续）；
  * - 已开放的图（跨世）：旧已解锁前沿中起点最深者的起点当量 U，新表按开放次序开到起点不超过 U 的图；
- * - 首杀（跨世）：每个旧精英 / Boss 首杀换成新表里当量最接近、尚未占用的同类关卡，侠名录计数不变；
+ * - 首杀（跨世）：每个旧精英 / Boss 首杀换成新表里当量最接近、尚未占用的同类关卡，历练计数不变；
  * - 历来最深 Boss 与 Boss 必掉记录：按境界段换成卷；挂机：换到不超过原挂机关当量的最高一关已过关卡；尝试次数清空。
  */
 function migrateStageLineV17ToV18<T>(state: T): T {

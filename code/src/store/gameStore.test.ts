@@ -1011,7 +1011,7 @@ describe('gameStore · 转世（reincarnation/spec.md v1.1）', () => {
     expect(getEvents().some((e) => e.e === 'forced_reincarnation')).toBe(false);
   });
 
-  it('侠名录挂钩：胜场按装配武学类目计、银两进账计入；战败计数，战败线点亮后首次战败不受伤', () => {
+  it('历练挂钩：胜场按装配武学类目计、银两进账计入；战败计数，战败线点亮后首次战败不受伤', () => {
     useGameStore.setState({
       realm: 5, route: 'huashan', neigong: 'jingleijue', zhong: 10, tiersPassed: 3,
       ownedWuxue: ['liuyunjian'], equipped: ['liuyunjian'], achv: {},

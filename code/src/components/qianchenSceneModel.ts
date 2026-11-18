@@ -29,7 +29,7 @@ export function jiyuanSlipAt(i: number): [number, number] {
   return [x, ROPE[row](x) - 0.6];
 }
 
-/** 侠名录 · 江湖百景：四处地界，徽记按串连顺序排，label 为地界名的位置 */
+/** 历练 · 江湖百景：四处地界，徽记按串连顺序排，label 为地界名的位置 */
 export interface ZoneDef { name: string; ids: AchvId[]; at: [number, number][]; label: [number, number] }
 export const ZONES: ZoneDef[] = [
   { name: '武道', ids: ['jian', 'dao', 'qiang', 'gun', 'quan', 'zhang', 'zhi', 'tui', 'anqi'],

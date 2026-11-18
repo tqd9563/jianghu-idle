@@ -8,7 +8,7 @@ import { allStages, stageKey, trackLength, VOLUMES } from './enemies';
 const boss = (v: number, c = 1) => { const g = VOLUMES[v - 1].maps[2 * c]; return `stage:${stageKey(g, trackLength(g))}`; };
 const elites = allStages().filter((e) => e.kind === 'elite').map((e) => `stage:${stageKey(e.map, e.stage)}`);
 
-describe('侠名录（prestige-shop/design.md §2c）', () => {
+describe('历练（prestige-shop/design.md §2c）', () => {
   it('二十二条线，三层门槛递增、三层值递增', () => {
     expect(ACHV).toHaveLength(22);
     for (const a of ACHV) {

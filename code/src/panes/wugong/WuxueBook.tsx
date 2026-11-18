@@ -40,7 +40,7 @@ export function WuxueBook({ id, pw }: { id: WuxueId; pw: number }) {
   const res = d.route !== null && s.neigong !== null && NEIGONG[s.neigong].route === d.route;
   const benmen = isBenmen(s.sect ?? null, id);
   const learned = learnedFormsOf(s, id);
-  // 侠名录·招式线加速后熟练可带小数，界面只显示整招
+  // 历练·招式线加速后熟练可带小数，界面只显示整招
   const casts = (k: number) => Math.floor((s.formCasts ?? {})[formKey(id, k)] ?? 0);
   const th = shulianThresholds(d.quality, benmen);
   const hands = handsOf(s);

@@ -20,7 +20,7 @@ export interface RepNodeDef {
 
 /**
  * 十四件机缘（prestige-shop/design.md §2b；价表由 pacing_sim 标定，合计 4,040）。
- * 旧五件传承：再入江湖改名重出江湖；武道笔记 / 师门指引 / 破关心得退出购买，效果并入侠名录成就。
+ * 旧五件传承：再入江湖改名重出江湖；武道笔记 / 师门指引 / 破关心得退出购买，效果并入历练成就。
  * 卡面文案逐字取自 retire-copy §5.1。
  */
 export const REP_NODES: RepNodeDef[] = [
@@ -195,7 +195,7 @@ export interface RetireSettle {
  * 口径与 pacing_sim 表五一致（c = NODE_P0 = 10）。
  */
 export function settleRetire(args: {
-  /** 侠名录·转世线：基础声望 +5 / 10 / 15% */
+  /** 历练·转世线：基础声望 +5 / 10 / 15% */
   baseMult?: number;
   weightedHours: number;
   clearedStages: readonly string[];

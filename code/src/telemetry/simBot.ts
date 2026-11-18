@@ -358,7 +358,7 @@ export function playDay(route: RouteId): void {
 
 /** 新开局时清空武学预算（hardReset 之后调用） */
 export function resetBot(): void {
-  // 排查开关：ACHV_OFF=jian,dao,…（或 all）关掉侠名录指定线的效果，计量照记
+  // 排查开关：ACHV_OFF=jian,dao,…（或 all）关掉历练指定线的效果，计量照记
   const off = process.env.ACHV_OFF;
   setAchvOff(!off ? [] : off === 'all' ? ACHV.map((a) => a.id) : (off.split(',') as AchvId[]));
   skillBudget = 0;

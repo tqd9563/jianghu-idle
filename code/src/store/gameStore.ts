@@ -132,11 +132,11 @@ interface PersistedState {
   ganwuLevel: number;
   /** 底蕴八条的级数（跨世保留，prestige-shop/design.md §2） */
   diyun: DiyunLevels;
-  /** 侠名录计数（跨世保留，prestige-shop/design.md §2c）；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世由已有字段推导 */
+  /** 历练计数（跨世保留，prestige-shop/design.md §2c）；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世由已有字段推导 */
   achv: AchvCounts;
   /** 退出购买的旧传承（存档 v12 迁移记下）：对应成就至少给一层 */
   retiredNodes?: string[];
-  /** 本世已用掉的免伤次数（侠名录·战败线） */
+  /** 本世已用掉的免伤次数（历练·战败线） */
   freeHurtUsed: number;
   /** 自动连战（issue #77）：勾上 = 推关打赢后接着挑战下一关；默认不勾，打赢就停。玩家偏好，跨世保留 */
   autoChain: boolean;
@@ -595,7 +595,7 @@ export function buildLoadout(s: WuxueState): CombatSkill[] {
       id, name: d.name, p: d.p,
       forms: forms.map((k, i) => ({
         key: formKey(id, k), name: formName(k),
-        // 侠名录九类器械线：该类武学伤害 +10 / 20 / 30%
+        // 历练九类器械线：该类武学伤害 +10 / 20 / 30%
         mult: formMult(d, k, res) * wxMult * (1 + catDmgBonus(s, d.cat)),
         effect: d.effect, fx: effectValue(d, k),
         cost: formCost(d, k, tiers[i]), baseCost: formBaseCost(d, k), cd: formCd(d),
@@ -631,7 +631,7 @@ function settleWuxue(
   s: WuxueState, stats: FightStats,
 ): { formCasts: Record<string, number>; learned: string[]; yuanman: number } {
   const formCasts = { ...(s.formCasts ?? {}) };
-  // 侠名录·招式线：熟练增速；某一式跨入「圆满」记一次
+  // 历练·招式线：熟练增速；某一式跨入「圆满」记一次
   const speed = 1 + achvVal(s, 'zhaoshi');
   let yuanman = 0;
   for (const [k, n] of Object.entries(stats.formCasts)) {
@@ -705,7 +705,7 @@ function settleSectTask(
 ): { patch: Partial<PersistedState>; gain: number } | null {
   const t = s.sectTask;
   if (!t || now < t.endsAt) return null;
-  // 侠名录·门派线：贡献 +10 / 20 / 30%
+  // 历练·门派线：贡献 +10 / 20 / 30%
   const gain = Math.round(sectTaskGain(t.tier, t.hours) * (1 + achvVal(s, 'menpai')));
   const contribTotal = (s.contribTotal ?? 0) + gain;
   return { patch: { sectTask: null, contrib: (s.contrib ?? 0) + gain, contribTotal, sectRank: rankOf(contribTotal) }, gain };
@@ -714,16 +714,16 @@ function settleSectTask(
 /** 全身伤势档位之和：自愈前后相减即「养好的伤」 */
 const sevSum = (inj: ReturnType<typeof freshInjuries>) => Object.values(inj).reduce((a, x) => a + x.severity, 0);
 
-/** 武学掉落倍率（侠名录·阅历线管整式、残页线管残页） */
+/** 武学掉落倍率（历练·阅历线管整式、残页线管残页） */
 const dropMults = (s: Partial<Pick<PersistedState, 'achv' | 'ownedWuxue' | 'pages' | 'retiredNodes'>>) =>
   ({ book: 1 + achvVal(s, 'yueli'), page: 1 + achvVal(s, 'canye') });
 
-/** 黑市每世件数：20 + 侠名录·黑市线 */
+/** 黑市每世件数：20 + 历练·黑市线 */
 export function blackCapOf(s: Partial<Pick<PersistedState, 'achv' | 'retiredNodes'>>): number {
   return BLACK_PER_LIFE + achvVal(s, 'heishi');
 }
 
-/** 侠名录跨层埋点 */
+/** 历练跨层埋点 */
 function trackUps(ctx: { run: number; realm: number; route: RouteId | null }, ups: { id: AchvId; tier: number }[]) {
   for (const u of ups) track('achv_tier', ctx, { line: u.id, tier: u.tier });
 }
@@ -912,7 +912,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const k = r.effectiveMin > deathMin ? deathMin / r.effectiveMin : 1;
           const liveMin = r.effectiveMin * k;
           merged.dantian += r.neili * k;
-          // 侠名录·银两线：银两掉落 +10 / 20 / 30%
+          // 历练·银两线：银两掉落 +10 / 20 / 30%
           const offSilver = Math.round(r.silver * k * (1 + achvVal(merged, 'yinliang')));
           merged.silver += offSilver;
           const offAdd: AchvCounts = { yinliang: offSilver };
@@ -1113,7 +1113,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       // 伤势自愈：与挂机共用同一游戏内时钟（injury/spec.md §5）
       const prevInj = s.injuries ?? freshInjuries();
-      // 侠名录·养伤线：恢复 +20 / 35 / 50%；养好一档记一次
+      // 历练·养伤线：恢复 +20 / 35 / 50%；养好一档记一次
       const injuries = isHurt(prevInj) ? healInjuries(prevInj, (dt / 60) * (1 + achvVal(s, 'yangshang')), s.realm) : prevInj;
       const healed = sevSum(prevInj) - sevSum(injuries);
       // 年岁同一时钟（reincarnation/spec.md §2）：角色老一岁，江湖历走一年
@@ -1236,7 +1236,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
     if (gate !== 'ok') return;
 
-    // 侠名录·冲穴线：耗内力 −5 / 10 / 15%
+    // 历练·冲穴线：耗内力 −5 / 10 / 15%
     const neiliCost = neiliCostFor(realm, acupointId, segmentQuota) * (1 - achvVal(s, 'chongxue'));
     const cxAch = bumpAchv(s, { chongxue: 1 });
     const current = progress[acupointId] ?? { failCount: 0, opened: false };
@@ -2123,12 +2123,12 @@ function resolveBattle(
     // 已通关卡给首通银两的五成，不再有连刷递减（battle-loot/design.md 裁决 14）：一场要演两三秒，产出已被时长卡住
     const reward = firstClear ? enemy.reward : refarmReward(enemy);
     // 关卡不掉内力（formulas.md §6.1 v1.6）：推完前沿即归隐，关卡内力落在一世末尾等于白拿
-    // 侠名录·银两线：银两掉落 +10 / 20 / 30%
+    // 历练·银两线：银两掉落 +10 / 20 / 30%
     const silverGot = Math.round(reward.silver * (1 + achvVal(s, 'yinliang')));
     silver += silverGot;   // 阅历冻结（spec §4.4）：关卡不再发阅历
     // 首次击败精英 / Boss：名号传开（economy.md §1.3），跨世只领一次
     if (isEliteKey(key) || isBossKey(key)) {
-      // 侠名录·精英线：名号声望 +15 / 30 / 50%
+      // 历练·精英线：名号声望 +15 / 30 / 50%
       const { fame, ...rest } = claimFame(s, `stage:${key}`, (isBossKey(key) ? FAME_BOSS : FAME_ELITE) * (1 + achvVal(s, 'elite')));
       fameGained = fame;
       if (fame > 0) fameState = rest;
@@ -2202,7 +2202,7 @@ function resolveBattle(
   let lifespanLost = s.lifespanLost ?? 0;
   let lethal = false;
   const hurtRaw = injuryFromBattle(enemy, result.win, result.playerHpPct);
-  // 侠名录·战败线：每世前几次战败不受伤
+  // 历练·战败线：每世前几次战败不受伤
   const freeHurt = !!hurtRaw && !result.win && (s.freeHurtUsed ?? 0) < achvVal(s, 'zhanbai');
   const hurtBy = freeHurt ? null : hurtRaw;
   if (hurtBy) {
@@ -2233,7 +2233,7 @@ function resolveBattle(
 
   // 武学：累计熟练、判新招顿悟（胜负都算，出过招就算练过）
   const wx = settleWuxue(s, result.stats);
-  // 侠名录计数：胜场按装配武学的类目、银两按本场进账；败一场记一次
+  // 历练计数：胜场按装配武学的类目、银两按本场进账；败一场记一次
   const btAch = bumpAchv(s, {
     ...(result.win ? { ...winCounts(s.equipped, 1), yinliang: Math.max(0, silver - s.silver) } : { zhanbai: 1 }),
     zhaoshi: wx.yuanman,

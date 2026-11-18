@@ -257,7 +257,7 @@ export type WuxueDrop = { id: WuxueId; k: number; kind: 'book' | 'page' };
 /** 掷一次武学掉落：寻常掉整门，上乘掉某一式残页；绝学与镇宗上乘不进池（W2）。掉哪门、哪式纯随机（裁决 12） */
 export function rollWuxueDrop(
   realm: number, kind: 'normal' | 'elite' | 'boss', rng: () => number,
-  /** 侠名录：阅历线管寻常整门、残页线管残页；都为 1 时随机序列与旧版一致 */
+  /** 历练：阅历线管寻常整门、残页线管残页；都为 1 时随机序列与旧版一致 */
   mult: { book: number; page: number } = { book: 1, page: 1 },
 ): WuxueDrop | null {
   const roll = rng();

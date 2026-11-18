@@ -96,7 +96,7 @@
 |---|---|---|
 | `fame_gained` | 首次击败精英 / Boss、首次贯通经脉（跨世一次） | `source`（`elite` / `boss` / `meridian`）, `key`, `reputation` |
 | `ganwu_bought` | 购买修行感悟（一级或尽数） | `level_from`, `level_to`, `price`, `balance_after` |
-| `achv_tier` | 侠名录某条线跨入新一层（计数类线；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世为推导计量，不发） | `line`, `tier`（1 铜 / 2 银 / 3 金） |
+| `achv_tier` | 历练某条线跨入新一层（计数类线；头目 / 精英 / 经脉 / 残页 / 阅历 / 转世为推导计量，不发） | `line`, `tier`（1 铜 / 2 银 / 3 金） |
 | `diyun_bought` | 购买底蕴一级（`../systems/prestige-shop/design.md` §2） | `line`（八条之一）, `level_to`, `price`, `balance_after` |
 | `map_unlocked` | 打通一张图的末关开出新图（跨世保留；v3.5 前为 `tier_unlocked`） | `by`（关卡键）, `opened`（图 ID 列表） |
 

@@ -1,7 +1,7 @@
 /**
- * 前尘 —— 底蕴（修行感悟 + 八条属性，可反复购买）、机缘（十四件一次性）、侠名录（二十二条成就）；转世后的落地页（§8.6-4）。
+ * 前尘 —— 底蕴（修行感悟 + 八条属性，可反复购买）、机缘（十四件一次性）、历练（二十二条成就）；转世后的落地页（§8.6-4）。
  * 基准 docs/design/qianchen-xiang-prototype.html + DESIGN.md「前尘页」：三段各一幅 AI 水墨画，代码只叠字与按钮。
- * 文案逐字取自 docs/rules/copy/retire.md v2.4 §5；侠名录 §5.3。
+ * 文案逐字取自 docs/rules/copy/retire.md v2.4 §5；历练 §5.3。
  */
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type JSX, type Ref, type RefObject } from 'react';
 import { REALMS } from '../engine/content';
@@ -71,7 +71,7 @@ export function RepPane({ sub, onSub }: { sub: RepSub; onSub: (s: RepSub) => voi
             ? <>得名 <b>{tiers.filter((t) => t > 0).length}</b> / {ACHV.length} · 点亮 <b>{tiers.reduce((a, b) => a + b, 0)}</b> / {ACHV.length * 3} 重</>
             : <>持有 <b>{fmtBig(s.reputation)}</b> 声望</>}</div>
           <div className="qc-seg" role="tablist" aria-label="前尘">
-            {([['diyun', '底蕴'], ['jiyuan', '机缘'], ['xiaming', '侠名录']] as const).map(([k, name]) => (
+            {([['diyun', '底蕴'], ['jiyuan', '机缘'], ['xiaming', '历练']] as const).map(([k, name]) => (
               <button key={k} type="button" role="tab" aria-selected={sub === k} onClick={() => onSub(k)}>{name}</button>
             ))}
           </div>
@@ -150,7 +150,7 @@ function Jiyuan(): JSX.Element {
   );
 }
 
-/** 侠名录 · 江湖百景：徽记散在四处地界，点选弹出手卷 */
+/** 历练 · 江湖百景：徽记散在四处地界，点选弹出手卷 */
 function Xiaming({ stage }: { stage: RefObject<HTMLDivElement | null> }): JSX.Element {
   const s = useGameStore();
   const [sel, setSel] = useState<AchvId | null>(null);
